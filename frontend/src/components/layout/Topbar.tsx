@@ -1,6 +1,69 @@
-import { Search, ShieldCheck, ExternalLink } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { LoaderCircle, Search, Server, ShieldCheck, ShieldX, ExternalLink } from 'lucide-react';
 
 export function Topbar() {
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '');
+  const [backendStatus, setBackendStatus] = useState<'idle' | 'checking' | 'online' | 'offline'>(
+    apiBaseUrl ? 'checking' : 'idle'
+  );
+
+  useEffect(() => {
+    if (!apiBaseUrl) {
+      setBackendStatus('idle');
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function checkBackend(): Promise<void> {
+      try {
+        const response = await fetch(`${apiBaseUrl}/health`, {
+          method: 'GET',
+          signal: controller.signal,
+        });
+        setBackendStatus(response.ok ? 'online' : 'offline');
+      } catch {
+        setBackendStatus('offline');
+      }
+    }
+
+    void checkBackend();
+    return () => controller.abort();
+  }, [apiBaseUrl]);
+
+  const statusConfig =
+    backendStatus === 'online'
+      ? {
+          container: 'bg-emerald-400/10 border-emerald-300/15',
+          iconShell: 'bg-white/10 border-white/10',
+          icon: <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />,
+          label: 'Backend: Online',
+          text: 'text-emerald-200',
+        }
+      : backendStatus === 'checking'
+        ? {
+            container: 'bg-cyan-300/10 border-cyan-200/15',
+            iconShell: 'bg-white/10 border-white/10',
+            icon: <LoaderCircle className="w-3.5 h-3.5 text-cyan-200 animate-spin" />,
+            label: 'Backend: Checking',
+            text: 'text-cyan-100',
+          }
+        : backendStatus === 'offline'
+          ? {
+              container: 'bg-rose-400/10 border-rose-300/15',
+              iconShell: 'bg-white/10 border-white/10',
+              icon: <ShieldX className="w-3.5 h-3.5 text-rose-300" />,
+              label: 'Backend: Offline',
+              text: 'text-rose-200',
+            }
+          : {
+              container: 'bg-white/5 border-white/10',
+              iconShell: 'bg-white/10 border-white/10',
+              icon: <Server className="w-3.5 h-3.5 text-slate-300" />,
+              label: 'Backend: Not Set',
+              text: 'text-slate-200',
+            };
+
   return (
     <header className="h-16 border-b border-white/10 bg-slate-950/35 z-10 sticky top-0 flex-shrink-0 shadow-lg shadow-slate-950/20 backdrop-blur-xl">
       <div className="flex h-full items-center justify-between px-6">
@@ -21,11 +84,11 @@ export function Topbar() {
         <div className="flex items-center gap-4">
           
           {/* System Health Pill */}
-          <div className="hidden sm:flex items-center gap-2 bg-emerald-400/10 border border-emerald-300/15 px-3 py-1.5 rounded-full backdrop-blur-md">
-            <div className="w-6 h-6 rounded-full bg-white/10 border border-white/10 backdrop-blur-md flex items-center justify-center shadow-inner shadow-white/10">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
+          <div className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md border ${statusConfig.container}`}>
+            <div className={`w-6 h-6 rounded-full backdrop-blur-md flex items-center justify-center shadow-inner shadow-white/10 border ${statusConfig.iconShell}`}>
+              {statusConfig.icon}
             </div>
-            <span className="text-xs font-semibold tracking-wide text-emerald-200 uppercase">System Health: Optimal</span>
+            <span className={`text-xs font-semibold tracking-wide uppercase ${statusConfig.text}`}>{statusConfig.label}</span>
           </div>
           
           <div className="w-px h-6 bg-white/10 mx-1 hidden sm:block"></div>

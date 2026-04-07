@@ -21,6 +21,8 @@ register_exception_handlers(app)
 
 @app.on_event("startup")
 def startup() -> None:
+    if not settings.bootstrap_db_on_startup:
+        return
     Base.metadata.create_all(bind=engine)
     with SessionLocal() as db:
         seed_phase_one_data(db)

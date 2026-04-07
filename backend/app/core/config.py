@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     app_env: str = Field(default="local", alias="APP_ENV")
     debug: bool = Field(default=True, alias="DEBUG")
     api_prefix: str = Field(default="/api/v1", alias="API_PREFIX")
+    bootstrap_db_on_startup: bool = Field(default=True, alias="BOOTSTRAP_DB_ON_STARTUP")
 
     secret_key: str = Field(default="change-me", alias="SECRET_KEY")
     algorithm: str = "HS256"
