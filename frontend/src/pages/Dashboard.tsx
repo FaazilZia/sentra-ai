@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrainCircuit, ShieldCheck, AlertOctagon, Activity, ShieldAlert } from 'lucide-react';
 import { StatCard } from '../components/ui/StatCard';
 import { DataChartEmpty } from '../components/ui/DataChartEmpty';
@@ -10,8 +9,8 @@ export default function DashboardPage() {
       
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Governance Overview</h1>
-        <p className="text-slate-500 text-sm mt-1">Real-time risk posture and operational metrics for all autonomous systems.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-50">Governance Overview</h1>
+        <p className="text-slate-400 text-sm mt-1">Real-time risk posture and operational metrics for all autonomous systems.</p>
       </div>
 
       {/* 4-column Stats Row with Empty Data */}
