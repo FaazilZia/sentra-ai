@@ -25,3 +25,10 @@ frontend/vite.config.d.ts
 *.njsproj
 *.sln
 *.sw?
+
+# Backend local environment and build artifacts
+backend/.env
+backend/.venv/
+backend/**/__pycache__/
+backend/build/
+backend/*.egg-info/

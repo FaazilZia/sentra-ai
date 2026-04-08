@@ -1,7 +1,7 @@
 import logging
 import sys
 
-from pythonjsonlogger.json import JsonFormatter
+from pythonjsonlogger.jsonlogger import JsonFormatter
 
 
 def configure_logging() -> None:
