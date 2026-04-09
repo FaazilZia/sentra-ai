@@ -43,6 +43,43 @@ export interface PolicyListResponse {
   total: number;
 }
 
+export interface PolicyVersionResponse {
+  id: string;
+  policy_id: string;
+  tenant_id: string;
+  version: number;
+  name: string;
+  description: string;
+  enabled: boolean;
+  priority: number;
+  effect: string;
+  status: string;
+  scope: Record<string, unknown>;
+  conditions: Record<string, unknown>;
+  obligations: Array<Record<string, unknown>>;
+  is_published_snapshot: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TenantResponse {
+  id: string;
+  name: string;
+  slug: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BackendHealthResponse {
+  status: string;
+}
+
+export interface PolicyHealthResponse {
+  status: string;
+  evaluator: string;
+}
+
 export class ApiError extends Error {
   status: number;
 
@@ -101,4 +138,23 @@ export function fetchCurrentUser(accessToken: string): Promise<AuthUser> {
 
 export function fetchPolicies(accessToken: string): Promise<PolicyListResponse> {
   return apiRequest<PolicyListResponse>('/policies', {}, accessToken);
+}
+
+export function fetchPolicyVersions(
+  accessToken: string,
+  policyId: string
+): Promise<PolicyVersionResponse[]> {
+  return apiRequest<PolicyVersionResponse[]>(`/policies/${policyId}/versions`, {}, accessToken);
+}
+
+export function fetchTenant(accessToken: string, tenantId: string): Promise<TenantResponse> {
+  return apiRequest<TenantResponse>(`/tenants/${tenantId}`, {}, accessToken);
+}
+
+export function fetchBackendHealth(): Promise<BackendHealthResponse> {
+  return apiRequest<BackendHealthResponse>('/health');
+}
+
+export function fetchPolicyHealth(): Promise<PolicyHealthResponse> {
+  return apiRequest<PolicyHealthResponse>('/policy-health');
 }
