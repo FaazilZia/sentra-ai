@@ -6,13 +6,21 @@ interface StatCardProps {
   value?: string | number;
   icon: LucideIcon;
   iconClassName?: string;
+  trend?: string;
 }
 
-export function StatCard({ title, value = "---", icon: Icon, iconClassName }: StatCardProps) {
-  const isSkeleton = value === "---";
+export function StatCard({
+  title,
+  value = '---',
+  icon: Icon,
+  iconClassName,
+  trend = 'Waiting for data...',
+}: StatCardProps) {
+  const isSkeleton = value === '---';
 
   return (
-    <div className="bg-white/6 backdrop-blur-xl border border-white/10 text-card-foreground shadow-lg shadow-slate-950/20 rounded-2xl p-5 hover:shadow-xl hover:shadow-cyan-950/10 transition-shadow relative overflow-hidden group">
+    <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/6 p-5 text-card-foreground shadow-lg shadow-slate-950/20 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-cyan-950/10 backdrop-blur-xl">
+      <div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-cyan-200/50 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
       <div className="flex flex-row items-center justify-between pb-2 relative z-10">
         <h3 className="tracking-tight text-sm font-medium text-slate-400">{title}</h3>
         <div className="w-9 h-9 rounded-xl bg-white/8 border border-white/10 backdrop-blur-md flex items-center justify-center shadow-inner shadow-white/10">
@@ -27,13 +35,13 @@ export function StatCard({ title, value = "---", icon: Icon, iconClassName }: St
           </div>
         ) : (
           <>
-            <div className="text-2xl font-bold text-slate-50">{value}</div>
+            <div className="text-3xl font-semibold tracking-[-0.04em] text-slate-50">{value}</div>
             <p className="text-xs text-slate-400 mt-2 inline-flex items-center gap-1.5 opacity-80">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-300 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-300"></span>
               </span>
-              Waiting for data...
+              {trend}
             </p>
           </>
         )}

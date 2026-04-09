@@ -57,11 +57,40 @@
     @apply text-foreground antialiased;
     background-color: hsl(var(--background));
     background-image:
-      radial-gradient(circle at top left, rgba(56, 189, 248, 0.18), transparent 32%),
-      radial-gradient(circle at top right, rgba(20, 184, 166, 0.16), transparent 28%),
-      radial-gradient(circle at bottom center, rgba(59, 130, 246, 0.12), transparent 30%),
-      linear-gradient(180deg, #07111f 0%, #0b1324 45%, #0f172a 100%);
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      radial-gradient(circle at top left, rgba(56, 189, 248, 0.22), transparent 28%),
+      radial-gradient(circle at top right, rgba(20, 184, 166, 0.14), transparent 24%),
+      radial-gradient(circle at bottom right, rgba(250, 204, 21, 0.09), transparent 22%),
+      linear-gradient(180deg, #04101e 0%, #091524 35%, #0b1527 65%, #111827 100%);
+    font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
     min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 80px 80px;
+    mask-image: radial-gradient(circle at center, black 35%, transparent 85%);
+    opacity: 0.35;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+}
+
+@layer utilities {
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
   }
 }

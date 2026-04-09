@@ -1,180 +1,104 @@
 # Sentra AI
 
-Sentra AI is an AI-agent data security platform designed to help enterprises control how autonomous agents access sensitive internal data.
+Sentra AI is an enterprise AI governance platform for teams that need visibility and control over how autonomous agents access internal data, policies, and approvals.
 
-It combines:
+This repository currently includes:
 
-- a modern governance dashboard frontend
-- a multi-tenant backend foundation
-- a policy and decision layer for secure access evaluation
+- a React + Vite frontend for a governance dashboard
+- a FastAPI backend with multi-tenant and policy foundations
+- policy versioning and evaluation-oriented backend modules
 - deployment-ready configuration for Vercel
 
-The goal is simple: let organizations use AI agents safely, with clear visibility, controlled access, explainable decisions, and room to scale into a full production platform.
+## Product Direction
 
-## What Sentra AI Does
+Sentra AI is designed to become a trust layer for enterprise AI operations. The platform is moving toward a workflow where organizations can:
 
-Sentra AI is built for environments where AI agents interact with enterprise systems such as documents, datasets, databases, and internal knowledge.
+- define policy controls for agent access
+- evaluate whether an AI action should be allowed, blocked, masked, or escalated
+- track policy versions and approval state
+- maintain audit visibility for decisions and exceptions
+- expose clean executive-facing summaries of posture and risk
 
-The platform is designed to support:
+## Current Experience
 
-- multi-tenant enterprise organizations
-- agent identities and machine access
-- secure access decisions for sensitive assets
-- policy-based controls for AI behavior
-- approval workflows for risky requests
-- audit-friendly platform architecture
+The frontend now presents Sentra AI as a more polished governance command center with:
 
-In practical terms, this means Sentra AI can evolve into a system that answers questions like:
+- an executive-style overview dashboard
+- live policy counts loaded from the backend
+- placeholders for observability, inventory, risk, audit, and governance views
+- backend health visibility in the application shell
 
-- Can this AI agent access this asset?
-- Should the response be blocked, masked, redacted, or approved first?
-- Why was that decision made?
-- Which policies matched?
-- Which data sources, assets, and classifications were involved?
+The backend already contains the early platform building blocks for:
 
-## Live App
+- authentication and tenant-aware routing
+- policies, policy versions, and validation
+- decision and audit related modules
+- supporting models for roles, users, agents, and integrations
 
-This repository is prepared for a two-project Vercel deployment:
+## Repository Structure
 
-- `frontend/` as the dashboard UI
-- `backend/` as the FastAPI API layer
+```text
+Sentra AI/
+├── frontend/                 # Vite + React + Tailwind dashboard
+├── backend/                  # FastAPI API and platform services
+├── VERCEL_DEPLOY.md          # Vercel deployment notes
+└── README.md                 # Project overview
+```
 
-After deployment, your live app links can be added here:
+## Key Paths
 
-- Frontend URL: `https://your-frontend-project.vercel.app`
-- Backend URL: `https://your-backend-project.vercel.app/api/v1/health`
+Frontend:
 
-### How To View The Live App
+- [frontend/src/pages/Dashboard.tsx](/Users/mohammadfaazilzia/Desktop/Sentra AI/frontend/src/pages/Dashboard.tsx)
+- [frontend/src/components/layout/AppLayout.tsx](/Users/mohammadfaazilzia/Desktop/Sentra AI/frontend/src/components/layout/AppLayout.tsx)
+- [frontend/src/components/layout/Sidebar.tsx](/Users/mohammadfaazilzia/Desktop/Sentra AI/frontend/src/components/layout/Sidebar.tsx)
+- [frontend/src/components/layout/Topbar.tsx](/Users/mohammadfaazilzia/Desktop/Sentra AI/frontend/src/components/layout/Topbar.tsx)
+- [frontend/src/index.css](/Users/mohammadfaazilzia/Desktop/Sentra AI/frontend/src/index.css)
 
-1. Open the frontend Vercel URL in your browser.
-2. Look at the top bar status pill.
-3. If the frontend is correctly connected to the backend, it will show:
-   - `Backend: Online`
-   - `Backend: Offline`
-   - `Backend: Checking`
-   - `Backend: Not Set`
+Backend:
 
-To make the live frontend talk to the live backend, the frontend Vercel project should include:
+- [backend/app/main.py](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/app/main.py)
+- [backend/app/api/router.py](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/app/api/router.py)
+- [backend/app/core/config.py](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/app/core/config.py)
+- [backend/app/modules/policies/service.py](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/app/modules/policies/service.py)
+- [backend/app/modules/policies/router.py](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/app/modules/policies/router.py)
+- [backend/app/models/policy.py](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/app/models/policy.py)
+- [backend/app/models/policy_version.py](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/app/models/policy_version.py)
+
+## Local Development
+
+Frontend:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Backend:
+
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .
+uvicorn app.main:app --reload
+```
+
+If the frontend should talk to the backend locally or on Vercel, set:
 
 ```bash
 VITE_API_BASE_URL=https://your-backend-project.vercel.app/api/v1
 ```
 
-## Project Structure
+## Deployment
 
-```text
-Sentra AI/
-├── frontend/                 # Vite + React dashboard
-├── backend/                  # FastAPI backend
-├── VERCEL_DEPLOY.md          # Deployment instructions
-└── README.md                 # Main project overview
-```
+This repo is prepared for a split Vercel deployment:
 
-## Key Files Added
+- `frontend/` as the dashboard UI
+- `backend/` as the FastAPI API layer
 
-These are the most important files currently added to support the product and deployment flow.
-
-### Frontend
-
-- [frontend/src/App.tsx](/Users/mohammadfaazilzia/Desktop/Sentra AI/frontend/src/App.tsx)
-  Main application routing for the dashboard.
-
-- [frontend/src/components/layout/Topbar.tsx](/Users/mohammadfaazilzia/Desktop/Sentra AI/frontend/src/components/layout/Topbar.tsx)
-  Displays backend connection status in the UI.
-
-- [frontend/src/index.css](/Users/mohammadfaazilzia/Desktop/Sentra AI/frontend/src/index.css)
-  Global styling, including the dark visual theme.
-
-- [frontend/vercel.json](/Users/mohammadfaazilzia/Desktop/Sentra AI/frontend/vercel.json)
-  Handles SPA rewrites so React Router works on Vercel.
-
-- [frontend/.env.example](/Users/mohammadfaazilzia/Desktop/Sentra AI/frontend/.env.example)
-  Example environment configuration for connecting the frontend to the backend API.
-
-- [frontend/src/vite-env.d.ts](/Users/mohammadfaazilzia/Desktop/Sentra AI/frontend/src/vite-env.d.ts)
-  Adds Vite environment typing support for `import.meta.env`.
-
-### Backend
-
-- [backend/app/main.py](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/app/main.py)
-  FastAPI application entrypoint and startup wiring.
-
-- [backend/app/core/config.py](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/app/core/config.py)
-  Central application settings and environment variables.
-
-- [backend/app/api/router.py](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/app/api/router.py)
-  Main API route registration.
-
-- [backend/index.py](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/index.py)
-  Vercel backend entrypoint.
-
-- [backend/vercel.json](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/vercel.json)
-  Routes backend traffic to the FastAPI app on Vercel.
-
-- [backend/.env.example](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/.env.example)
-  Example backend environment variables.
-
-### Platform / Security Backend Modules
-
-- [backend/app/models/tenant.py](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/app/models/tenant.py)
-  Tenant model for multi-tenant isolation.
-
-- [backend/app/models/user.py](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/app/models/user.py)
-  User model for platform identities.
-
-- [backend/app/models/api_key.py](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/app/models/api_key.py)
-  Machine/API key authentication model.
-
-- [backend/app/modules/auth/router.py](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/app/modules/auth/router.py)
-  Auth endpoints such as login, token refresh, and API key creation.
-
-- [backend/app/modules/tenants/router.py](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/app/modules/tenants/router.py)
-  Tenant-facing API routes.
-
-### Policy Layer
-
-- [backend/app/models/policy.py](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/app/models/policy.py)
-  Canonical policy model.
-
-- [backend/app/models/policy_version.py](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/app/models/policy_version.py)
-  Immutable policy version snapshots.
-
-- [backend/app/schemas/policy.py](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/app/schemas/policy.py)
-  Strong validation for policy documents, conditions, and obligations.
-
-- [backend/app/modules/policies/service.py](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/app/modules/policies/service.py)
-  Policy creation, update, publish, and versioning logic.
-
-- [backend/app/modules/policies/router.py](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/app/modules/policies/router.py)
-  Policy CRUD and publish API routes.
-
-## Current Capabilities
-
-At the current stage, the repository includes:
-
-- a production-style frontend dashboard
-- backend platform/auth scaffolding
-- multi-tenant foundation
-- policy models and versioning
-- Vercel deployment setup for frontend and backend
-- frontend backend-health visibility
-
-## Deployment Summary
-
-### Frontend Vercel Project
-
-- Root Directory: `frontend`
-- Framework: `Vite`
-- Build Command: `npm run build`
-- Output Directory: `dist`
-
-### Backend Vercel Project
-
-- Root Directory: `backend`
-- Entry file: `index.py`
-- Health check endpoint: `/api/v1/health`
-
-Recommended backend environment values:
+Recommended backend production values:
 
 ```bash
 APP_ENV=production
@@ -184,28 +108,14 @@ SECRET_KEY=your-secret
 BOOTSTRAP_DB_ON_STARTUP=false
 ```
 
-Detailed deployment steps are in [VERCEL_DEPLOY.md](/Users/mohammadfaazilzia/Desktop/Sentra AI/VERCEL_DEPLOY.md).
+More detailed deployment notes live in [VERCEL_DEPLOY.md](/Users/mohammadfaazilzia/Desktop/Sentra AI/VERCEL_DEPLOY.md).
 
 ## Tech Stack
 
 - Frontend: React, Vite, TypeScript, Tailwind CSS
-- Backend: FastAPI, SQLAlchemy 2.0, Pydantic v2, PostgreSQL, Alembic
-- Infra: Redis, Celery, Docker, Vercel
+- Backend: FastAPI, SQLAlchemy, Pydantic, Alembic
+- Infrastructure: Vercel, PostgreSQL, Redis, Celery, Docker
 
-## Vision
+## Status
 
-Sentra AI is not just a dashboard. It is intended to become a trust layer for enterprise AI operations.
-
-The long-term platform vision includes:
-
-- agent-aware access control
-- explainable policy decisions
-- sensitive data classification
-- approval and incident workflows
-- enterprise-grade auditability
-
-## Repository Notes
-
-- The frontend can already be deployed independently and viewed live.
-- The backend is prepared for Vercel deployment for API visibility and health validation.
-- Full production-grade worker, Redis, and database-backed backend flows will still need external infrastructure beyond Vercel alone.
+Sentra AI is in an active build phase. The foundation is in place, the UI is becoming more product-like, and the backend structure is ready for deeper policy, audit, approval, and data security workflows.

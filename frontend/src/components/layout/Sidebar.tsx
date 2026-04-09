@@ -25,14 +25,29 @@ export function Sidebar() {
   const { user } = useAuth();
 
   return (
-    <div className="w-64 flex-shrink-0 bg-slate-950/45 border-r border-white/10 h-full hidden md:flex flex-col shadow-2xl shadow-slate-950/30 backdrop-blur-xl z-20">
-      <div className="h-16 flex items-center px-6 border-b border-white/8">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-white/10 border border-white/10 backdrop-blur-md flex items-center justify-center shadow-lg shadow-cyan-950/20">
-            <span className="text-cyan-200 font-bold text-sm">S</span>
+    <div className="z-20 hidden h-full w-72 flex-shrink-0 flex-col border-r border-white/10 bg-slate-950/55 shadow-2xl shadow-slate-950/30 backdrop-blur-xl md:flex">
+      <div className="border-b border-white/8 px-6 py-5">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-cyan-200/15 bg-[linear-gradient(135deg,rgba(34,211,238,0.2),rgba(250,204,21,0.18))] shadow-lg shadow-cyan-950/20">
+            <span className="text-sm font-bold text-white">S</span>
           </div>
-          <span className="font-semibold text-[17px] tracking-tight text-slate-100">Sentra AI</span>
+          <div>
+            <span className="block font-semibold text-[17px] tracking-tight text-slate-100">Sentra AI</span>
+            <span className="block text-[11px] uppercase tracking-[0.24em] text-slate-500">
+              Governance OS
+            </span>
+          </div>
         </div>
+      </div>
+
+      <div className="mx-4 mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-cyan-100/70">
+          Current focus
+        </p>
+        <p className="mt-2 text-sm font-medium text-white">Enterprise AI trust orchestration</p>
+        <p className="mt-2 text-sm leading-6 text-slate-400">
+          Policies, telemetry, and approvals brought into one operator view.
+        </p>
       </div>
 
       <div className="flex-1 overflow-y-auto py-5 px-3 custom-scrollbar flex flex-col gap-1.5">
@@ -45,15 +60,21 @@ export function Sidebar() {
       </div>
 
       <div className="p-4 border-t border-white/8 bg-slate-950/25">
-        <div className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10 hover:shadow-sm cursor-pointer transition-all">
-          <div className="w-9 h-9 rounded-full bg-white/10 border border-white/10 backdrop-blur-md flex items-center justify-center text-cyan-200 shadow-inner shadow-white/10">
+        <div className="cursor-pointer rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3 transition-all hover:bg-white/5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/10 text-cyan-200 shadow-inner shadow-white/10 backdrop-blur-md">
             <User className="w-4 h-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-slate-100">
+                {user?.full_name ?? 'Signed In User'}
+              </p>
+              <p className="truncate text-xs text-slate-400">{user?.email ?? 'No email loaded'}</p>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-slate-100 truncate">
-              {user?.full_name ?? 'Signed In User'}
-            </p>
-            <p className="text-xs text-slate-400 truncate">{user?.email ?? 'No email loaded'}</p>
+          <div className="mt-3 flex items-center justify-between rounded-xl border border-white/10 bg-slate-950/35 px-3 py-2 text-xs text-slate-400">
+            <span>Workspace</span>
+            <span className="font-medium text-emerald-300">Secure</span>
           </div>
         </div>
       </div>

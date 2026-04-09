@@ -16,7 +16,7 @@ export function EmptyStateList({
   emptyIcon: EmptyIcon = ShieldCheck 
 }: EmptyStateListProps) {
   return (
-    <div className="bg-white/6 backdrop-blur-xl border border-white/10 shadow-lg shadow-slate-950/20 rounded-2xl overflow-hidden flex flex-col h-full">
+    <div className="flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/6 shadow-lg shadow-slate-950/20 backdrop-blur-xl">
       <div className="p-5 border-b border-white/10 flex items-center justify-between bg-white/4">
         <div>
           <h3 className="font-semibold text-slate-100 leading-none">{title}</h3>
@@ -24,14 +24,15 @@ export function EmptyStateList({
         </div>
         {headerAction && <div>{headerAction}</div>}
       </div>
-      
-      <div className="flex-1 p-8 flex flex-col items-center justify-center text-center min-h-[300px] bg-slate-950/10">
-        <div className="w-16 h-16 bg-white/10 border border-white/10 backdrop-blur-md rounded-full flex items-center justify-center mb-4 ring-8 ring-white/5 shadow-inner shadow-white/10">
+
+      <div className="relative flex min-h-[300px] flex-1 flex-col items-center justify-center bg-slate-950/10 p-8 text-center">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.08),transparent_30%),radial-gradient(circle_at_bottom,rgba(74,222,128,0.06),transparent_28%)]" />
+        <div className="relative flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-white/10 ring-8 ring-white/5 shadow-inner shadow-white/10 backdrop-blur-md mb-4">
           <EmptyIcon className="w-8 h-8 text-emerald-300" />
         </div>
-        <h4 className="font-semibold text-slate-100 mb-1">System Secure</h4>
-        <p className="text-sm text-slate-400 max-w-[250px]">{emptyMessage}</p>
-        <button className="mt-6 px-4 py-2 border border-white/10 bg-white/5 text-sm font-medium rounded-xl text-slate-200 hover:bg-white/10 transition-colors backdrop-blur-md">
+        <h4 className="relative mb-1 font-semibold text-slate-100">System Secure</h4>
+        <p className="relative max-w-[280px] text-sm leading-6 text-slate-400">{emptyMessage}</p>
+        <button className="relative mt-6 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-white/10 backdrop-blur-md">
           View Historical Data
         </button>
       </div>
