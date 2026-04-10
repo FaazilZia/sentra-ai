@@ -5,56 +5,53 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { AuthUser, fetchCurrentUser, loginRequest } from './api';
+import { User } from '@supabase/supabase-js';
+import { supabase } from './supabaseClient';
 
-interface StoredTokens {
-  accessToken: string;
-  refreshToken: string;
-}
+export type AppUser = User & {
+  full_name?: string;
+  tenant_id?: string;
+  is_active?: boolean;
+};
 
 interface AuthContextValue {
-  user: AuthUser | null;
+  user: AppUser | null;
   accessToken: string | null;
   loading: boolean;
   loginPending: boolean;
   loginError: string | null;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  signUp: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
 }
-
-const storageKey = 'sentra-auth-session';
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loginPending, setLoginPending] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
   useEffect(() => {
-    const rawSession = window.localStorage.getItem(storageKey);
-    if (!rawSession) {
+    // Fetch initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser((session?.user as AppUser) ?? null);
+      setAccessToken(session?.access_token ?? null);
       setLoading(false);
-      return;
-    }
+    });
 
-    const storedTokens = JSON.parse(rawSession) as StoredTokens;
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser((session?.user as AppUser) ?? null);
+      setAccessToken(session?.access_token ?? null);
+      setLoading(false);
+    });
 
-    async function restoreSession() {
-      try {
-        const currentUser = await fetchCurrentUser(storedTokens.accessToken);
-        setAccessToken(storedTokens.accessToken);
-        setUser(currentUser);
-      } catch {
-        window.localStorage.removeItem(storageKey);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    void restoreSession();
+    return () => subscription.unsubscribe();
   }, []);
 
   async function login(email: string, password: string) {
@@ -62,18 +59,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoginError(null);
 
     try {
-      const tokens = await loginRequest(email, password);
-      const currentUser = await fetchCurrentUser(tokens.access_token);
-
-      setAccessToken(tokens.access_token);
-      setUser(currentUser);
-      window.localStorage.setItem(
-        storageKey,
-        JSON.stringify({
-          accessToken: tokens.access_token,
-          refreshToken: tokens.refresh_token,
-        } satisfies StoredTokens)
-      );
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to sign in';
       setLoginError(message);
@@ -83,11 +73,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  function logout() {
-    setAccessToken(null);
-    setUser(null);
+  async function signUp(email: string, password: string) {
+    setLoginPending(true);
     setLoginError(null);
-    window.localStorage.removeItem(storageKey);
+
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+      if (error) throw error;
+      // Depending on config, email confirmation might be required.
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to sign up';
+      setLoginError(message);
+      throw error;
+    } finally {
+      setLoginPending(false);
+    }
+  }
+
+  async function logout() {
+    await supabase.auth.signOut();
+    setUser(null);
+    setAccessToken(null);
+    setLoginError(null);
   }
 
   return (
@@ -99,6 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginPending,
         loginError,
         login,
+        signUp,
         logout,
       }}
     >

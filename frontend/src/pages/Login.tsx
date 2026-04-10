@@ -3,13 +3,18 @@ import { Activity, Database, LoaderCircle, LockKeyhole, Server, ShieldCheck, Ale
 import { useAuth } from '../lib/auth';
 
 export default function LoginPage() {
-  const { login, loginPending, loginError } = useAuth();
-  const [email, setEmail] = useState('admin@nemoguard.local');
-  const [password, setPassword] = useState('ChangeMe123!');
+  const { login, signUp, loginPending, loginError } = useAuth();
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await login(email, password);
+    if (isSignUp) {
+      await signUp(email, password);
+    } else {
+      await login(email, password);
+    }
   }
 
   return (
@@ -115,8 +120,12 @@ export default function LoginPage() {
               <LockKeyhole className="h-5 w-5 text-slate-700" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold tracking-tight text-slate-950">Sign in</h2>
-              <p className="mt-1 text-sm text-slate-500/80">Use the seeded backend admin credentials.</p>
+              <h2 className="text-2xl font-bold tracking-tight text-slate-950">
+                {isSignUp ? 'Create an account' : 'Sign in'}
+              </h2>
+              <p className="mt-1 text-sm text-slate-500/80">
+                {isSignUp ? 'Sign up to start your workspace.' : 'Enter your credentials to continue.'}
+              </p>
             </div>
           </div>
 
@@ -130,6 +139,7 @@ export default function LoginPage() {
                 type="email"
                 autoComplete="email"
                 placeholder="admin@example.com"
+                required
               />
             </label>
 
@@ -140,8 +150,9 @@ export default function LoginPage() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 type="password"
-                autoComplete="current-password"
+                autoComplete={isSignUp ? "new-password" : "current-password"}
                 placeholder="••••••••"
+                required
               />
             </label>
 
@@ -161,13 +172,31 @@ export default function LoginPage() {
                 {loginPending ? (
                   <LoaderCircle className="h-4 w-4 animate-spin text-slate-300" />
                 ) : null}
-                <span>{loginPending ? 'Signing in...' : 'Open workspace'}</span>
+                <span>
+                  {loginPending 
+                    ? (isSignUp ? 'Signing up...' : 'Signing in...') 
+                    : (isSignUp ? 'Create account' : 'Open workspace')}
+                </span>
                 
                 {/* Subtle glow effect overlay on hover */}
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
               </button>
             </div>
           </form>
+
+          <div className="mt-6 text-center text-sm">
+            <span className="text-slate-500">
+              {isSignUp ? 'Already have an account?' : "Don't have an account?"}
+            </span>{' '}
+            <button
+              type="button"
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="font-medium text-slate-900 hover:underline focus:outline-none"
+            >
+              {isSignUp ? 'Sign in' : 'Sign up'}
+            </button>
+          </div>
+
         </section>
       </main>
     </div>

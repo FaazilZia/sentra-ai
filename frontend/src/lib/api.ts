@@ -158,3 +158,17 @@ export function fetchBackendHealth(): Promise<BackendHealthResponse> {
 export function fetchPolicyHealth(): Promise<PolicyHealthResponse> {
   return apiRequest<PolicyHealthResponse>('/policy-health');
 }
+
+import { supabase } from './supabaseClient';
+
+export async function askAI(prompt: string): Promise<string> {
+  const { data, error } = await supabase.functions.invoke('generate', {
+    body: { prompt }
+  });
+  
+  if (error) {
+    throw new Error(error.message || 'Error communicating with AI');
+  }
+  
+  return data.response;
+}

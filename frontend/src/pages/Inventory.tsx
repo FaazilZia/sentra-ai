@@ -24,7 +24,7 @@ export default function InventoryPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!accessToken || !user) {
+    if (!accessToken || !user || !user.tenant_id) {
       setLoading(false);
       return;
     }
