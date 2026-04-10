@@ -26,6 +26,10 @@ app.add_middleware(CorrelationIdMiddleware)
 app.include_router(api_router, prefix=settings.api_prefix)
 register_exception_handlers(app)
 
+@app.get("/")
+def read_root():
+    return {"status": "ok", "message": "Sentra AI Backend is running successfully!"}
+
 
 @app.on_event("startup")
 def startup() -> None:
