@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Radio, ShieldAlert, ShieldCheck, Terminal, AlertTriangle, Info } from 'lucide-react';
-import { fetchIncidents, IncidentResponse } from '../lib/api';
+import { Radio, ShieldAlert, ShieldCheck, Terminal, AlertTriangle, Info, CheckCircle2, xCircle, Archive } from 'lucide-react';
+import { fetchIncidents, updateIncidentStatus, IncidentResponse } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { StatCard } from '../components/ui/StatCard';
 import { StatusBadge } from '../components/ui/StatusBadge';
@@ -26,6 +26,8 @@ export default function SecurityFeedPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isLive, setIsLive] = useState(true);
+  const [filter, setFilter] = useState<'unresolved' | 'resolved' | 'all'>('unresolved');
+  const [actingOn, setActingOn] = useState<string | null>(null);
 
   useEffect(() => {
     if (!accessToken) {
@@ -38,7 +40,8 @@ export default function SecurityFeedPage() {
 
     async function loadIncidents() {
       try {
-        const response = await fetchIncidents(token, 20);
+        const statusFilter = filter === 'all' ? undefined : filter;
+        const response = await fetchIncidents(token, 40, statusFilter);
         if (!active) return;
         setIncidents(response.items);
         setError(null);
@@ -63,7 +66,25 @@ export default function SecurityFeedPage() {
       active = false;
       clearInterval(interval);
     };
-  }, [accessToken, isLive]);
+  }, [accessToken, isLive, filter]);
+
+  const handleAction = async (id: string, newStatus: string) => {
+    if (!accessToken) return;
+    setActingOn(id);
+    try {
+      await updateIncidentStatus(accessToken, id, newStatus);
+      // Optimistically update or just let the next poll catch it
+      setIncidents(prev => prev.filter(i => {
+        if (i.id !== id) return true;
+        if (filter === 'all') return true;
+        return false; // Remove from list if it no longer matches the filter
+      }));
+    } catch (err) {
+      alert('Failed to update incident status');
+    } finally {
+      setActingOn(null);
+    }
+  };
 
   const criticalCount = incidents.filter(i => i.severity >= 80).length;
   const recentCount = incidents.length;
@@ -131,6 +152,29 @@ export default function SecurityFeedPage() {
         />
       </div>
 
+      <div className="flex items-center justify-between">
+         <div className="flex bg-slate-900/50 p-1 rounded-xl border border-white/5">
+            <button 
+              onClick={() => setFilter('unresolved')}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${filter === 'unresolved' ? 'bg-white text-slate-950 shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+            >
+              Unresolved
+            </button>
+            <button 
+              onClick={() => setFilter('resolved')}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${filter === 'resolved' ? 'bg-white text-slate-950 shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+            >
+              Resolved
+            </button>
+            <button 
+              onClick={() => setFilter('all')}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${filter === 'all' ? 'bg-white text-slate-950 shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+            >
+              All
+            </button>
+         </div>
+      </div>
+
       {error ? (
         <EmptyStateList
           title="Telemetry Connection Failed"
@@ -140,29 +184,32 @@ export default function SecurityFeedPage() {
       ) : (
         <div className="grid gap-6">
           <SurfaceCard
-            title="Incident Feed"
+            title={filter === 'unresolved' ? "Active Incident Feed" : filter === 'resolved' ? "Resolved History" : "Total Incident Ledger"}
             description="Automatic updates every 5 seconds. Highest severity events are prioritized."
           >
             {incidents.length === 0 ? (
-               <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 bg-slate-950/20 py-12 text-center">
+               <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 bg-slate-950/20 py-12 text-center text-sm">
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-800/50 text-slate-500">
                      <ShieldCheck className="h-6 w-6" />
                   </div>
-                  <p className="mt-4 text-sm font-medium text-slate-300">No active incidents detected</p>
-                  <p className="mt-1 text-sm text-slate-500">Waiting for external SDK heartbeats...</p>
+                  <p className="mt-4 font-medium text-slate-300">No {filter} incidents detected</p>
+                  <p className="mt-1 text-slate-500">Waiting for external SDK heartbeats...</p>
                </div>
             ) : (
               <div className="space-y-4">
                 {incidents.map((incident) => {
                   const Icon = getSeverityIcon(incident.severity);
+                  const isActing = actingOn === incident.id;
+
                   return (
                     <div 
                       key={incident.id}
-                      className="group relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/35 p-5 transition-all hover:bg-slate-900/50 md:flex-row md:items-start"
+                      className={`group relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/35 p-5 transition-all hover:bg-slate-900/50 md:flex-row md:items-start ${isActing ? 'opacity-50 grayscale' : ''}`}
                     >
                       {/* Severity Side Border */}
                       <div 
                         className={`absolute left-0 top-0 h-full w-1 ${
+                          incident.status === 'resolved' ? 'bg-green-500/30' : 
                           incident.severity >= 80 ? 'bg-red-500' : 
                           incident.severity >= 50 ? 'bg-amber-500' : 'bg-cyan-500'
                         }`} 
@@ -170,6 +217,7 @@ export default function SecurityFeedPage() {
 
                       <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-white/5 text-slate-300">
                         <Icon className={`h-5 w-5 ${
+                          incident.status === 'resolved' ? 'text-green-500/50' :
                           incident.severity >= 80 ? 'text-red-400' : 
                           incident.severity >= 50 ? 'text-amber-400' : 'text-cyan-400'
                         }`} />
@@ -180,26 +228,45 @@ export default function SecurityFeedPage() {
                           <div className="flex items-center gap-3">
                             <span className="text-sm font-bold text-white uppercase tracking-tight">{incident.agent_id}</span>
                             <StatusBadge 
-                              label={incident.action.replace('_', ' ')} 
-                              tone={getSeverityTone(incident.severity)} 
+                              label={incident.status === 'resolved' ? 'Resolved' : incident.action.replace('_', ' ')} 
+                              tone={incident.status === 'resolved' ? 'success' : getSeverityTone(incident.severity)} 
                             />
                             <span className="text-[11px] text-slate-500 font-mono">{new Date(incident.created_at).toLocaleTimeString()}</span>
                           </div>
-                          <div className="flex items-center gap-2">
-                             <span className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Severity</span>
-                             <span className={`text-sm font-bold ${
-                                incident.severity >= 80 ? 'text-red-400' : 
-                                incident.severity >= 50 ? 'text-amber-400' : 'text-cyan-400'
-                             }`}>{incident.severity}</span>
+                          
+                          <div className="flex items-center gap-4">
+                             {incident.status === 'unresolved' && (
+                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                   <button 
+                                      onClick={() => handleAction(incident.id, 'resolved')}
+                                      className="flex items-center gap-1.5 rounded-lg bg-green-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-green-500 border border-green-500/20 hover:bg-green-500/20 transition-all"
+                                   >
+                                      <CheckCircle2 className="h-3 w-3" /> Resolve
+                                   </button>
+                                   <button 
+                                      onClick={() => handleAction(incident.id, 'muted')}
+                                      className="flex items-center gap-1.5 rounded-lg bg-white/5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 border border-white/5 hover:bg-white/10 transition-all"
+                                   >
+                                      <Archive className="h-3 w-3" /> Mute
+                                   </button>
+                                </div>
+                             )}
+                             <div className="flex items-center gap-2">
+                                <span className={`text-sm font-bold ${
+                                   incident.status === 'resolved' ? 'text-green-500/50' :
+                                   incident.severity >= 80 ? 'text-red-400' : 
+                                   incident.severity >= 50 ? 'text-amber-400' : 'text-cyan-400'
+                                }`}>{incident.severity}</span>
+                             </div>
                           </div>
                         </div>
 
-                        <p className="mt-2 text-sm leading-relaxed text-slate-300">
+                        <p className={`mt-2 text-sm leading-relaxed ${incident.status === 'resolved' ? 'text-slate-500 line-through' : 'text-slate-300'}`}>
                           {incident.details || `Policy violation detected during AI execution phase.`}
                         </p>
 
                         {(incident.prompt_excerpt || incident.response_excerpt) && (
-                           <div className="mt-4 rounded-xl bg-slate-950/80 p-3 border border-white/5 font-mono text-[12px] overflow-x-auto">
+                           <div className={`mt-4 rounded-xl bg-slate-950/80 p-3 border border-white/5 font-mono text-[12px] overflow-x-auto ${incident.status === 'resolved' ? 'opacity-30' : ''}`}>
                               {incident.prompt_excerpt && (
                                 <div className="mb-2">
                                   <span className="text-cyan-500/80 uppercase text-[10px] block mb-1">Prompt Excerpt</span>
@@ -236,3 +303,4 @@ export default function SecurityFeedPage() {
     </div>
   );
 }
+

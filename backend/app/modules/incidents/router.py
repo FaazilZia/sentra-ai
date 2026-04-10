@@ -56,10 +56,16 @@ def list_incidents(
     db: DbSession,
     tenant: Annotated[Tenant, Depends(get_current_tenant)],
     limit: int = 50,
+    status_filter: str | None = None,
 ) -> dict:
     from sqlalchemy import select, desc
     
-    query = select(Incident).where(Incident.tenant_id == tenant.id).order_by(desc(Incident.created_at)).limit(limit)
+    query = select(Incident).where(Incident.tenant_id == tenant.id)
+    
+    if status_filter:
+        query = query.where(Incident.status == status_filter)
+        
+    query = query.order_by(desc(Incident.created_at)).limit(limit)
     incidents = db.scalars(query).all()
     
     return {
@@ -71,6 +77,7 @@ def list_incidents(
                 "severity": inc.severity,
                 "action": inc.action,
                 "details": inc.details,
+                "status": inc.status,
                 "prompt_excerpt": inc.prompt_excerpt,
                 "response_excerpt": inc.response_excerpt,
                 "metadata": inc.event_metadata,
@@ -80,3 +87,27 @@ def list_incidents(
         ],
         "total": len(incidents)
     }
+
+class IncidentUpdate(BaseModel):
+    status: str
+
+@router.patch("/{incident_id}", status_code=status.HTTP_200_OK)
+def update_incident_status(
+    incident_id: UUID,
+    incident_in: IncidentUpdate,
+    db: DbSession,
+    tenant: Annotated[Tenant, Depends(get_current_tenant)],
+) -> dict:
+    from sqlalchemy import select
+    
+    query = select(Incident).where(Incident.id == incident_id, Incident.tenant_id == tenant.id)
+    incident = db.scalar(query)
+    
+    if not incident:
+        raise HTTPException(status_code=404, detail="Incident not found")
+        
+    incident.status = incident_in.status
+    db.commit()
+    db.refresh(incident)
+    
+    return {"status": "ok", "incident_id": str(incident.id), "new_status": incident.status}

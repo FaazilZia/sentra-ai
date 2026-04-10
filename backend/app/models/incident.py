@@ -18,6 +18,7 @@ class Incident(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     severity: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     action: Mapped[str] = mapped_column(String(255), nullable=False)
     details: Mapped[str] = mapped_column(String(1000), default="", nullable=False)
+    status: Mapped[str] = mapped_column(String(50), default="unresolved", nullable=False)
     
     prompt_excerpt: Mapped[str] = mapped_column(String(1000), default="", nullable=False)
     response_excerpt: Mapped[str] = mapped_column(String(1000), default="", nullable=False)

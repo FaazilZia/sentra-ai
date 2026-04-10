@@ -87,6 +87,7 @@ export interface IncidentResponse {
   severity: number;
   action: string;
   details: string;
+  status: string;
   prompt_excerpt: string;
   response_excerpt: string;
   metadata: Record<string, unknown>;
@@ -190,8 +191,19 @@ export function fetchPolicyHealth(): Promise<PolicyHealthResponse> {
   return apiRequest<PolicyHealthResponse>('/policy-health');
 }
 
-export function fetchIncidents(accessToken: string, limit: number = 50): Promise<IncidentListResponse> {
-  return apiRequest<IncidentListResponse>(`/incidents?limit=${limit}`, {}, accessToken);
+export function fetchIncidents(accessToken: string, limit: number = 50, status?: string): Promise<IncidentListResponse> {
+  let url = `/incidents?limit=${limit}`;
+  if (status) {
+    url += `&status_filter=${status}`;
+  }
+  return apiRequest<IncidentListResponse>(url, {}, accessToken);
+}
+
+export function updateIncidentStatus(accessToken: string, incidentId: string, status: string): Promise<any> {
+  return apiRequest<any>(`/incidents/${incidentId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  }, accessToken);
 }
 
 export function fetchApiKeys(accessToken: string): Promise<APIKeyResponse[]> {
