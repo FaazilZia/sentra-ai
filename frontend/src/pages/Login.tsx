@@ -1,6 +1,7 @@
 import { FormEvent, useState } from 'react';
 import { Activity, Database, LoaderCircle, LockKeyhole, Server, ShieldCheck, AlertCircle } from 'lucide-react';
 import { useAuth } from '../lib/auth';
+import { apiBaseUrl } from '../lib/api';
 
 export default function LoginPage() {
   const { login, signUp, loginPending, loginError } = useAuth();
@@ -67,7 +68,7 @@ export default function LoginPage() {
           <div className="mt-3 space-y-2 text-xs text-slate-300">
             <div className="flex items-center gap-2">
               <Server className="h-3.5 w-3.5 text-slate-500" />
-              <span className="truncate font-mono">http://127.0.0.1:8000/api/v1</span>
+              <span className="truncate font-mono">{apiBaseUrl}</span>
             </div>
             <div className="flex items-center gap-2">
               <Database className="h-3.5 w-3.5 text-slate-500" />
