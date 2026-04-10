@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Radio, ShieldAlert, ShieldCheck, Terminal, AlertTriangle, Info, CheckCircle2, XCircle, Archive } from 'lucide-react';
+import { Radio, ShieldAlert, Terminal, TriangleAlert, Info, CircleCheck, Archive } from 'lucide-react';
 import { fetchIncidents, updateIncidentStatus, IncidentResponse } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { StatCard } from '../components/ui/StatCard';
@@ -16,7 +16,7 @@ function getSeverityTone(severity: number): 'success' | 'warning' | 'danger' | '
 
 function getSeverityIcon(severity: number) {
   if (severity >= 80) return ShieldAlert;
-  if (severity >= 50) return AlertTriangle;
+  if (severity >= 50) return TriangleAlert;
   return Info;
 }
 
@@ -241,7 +241,7 @@ export default function SecurityFeedPage() {
                                       onClick={() => handleAction(incident.id, 'resolved')}
                                       className="flex items-center gap-1.5 rounded-lg bg-green-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-green-500 border border-green-500/20 hover:bg-green-500/20 transition-all"
                                    >
-                                      <CheckCircle2 className="h-3 w-3" /> Resolve
+                                      <CircleCheck className="h-3 w-3" /> Resolve
                                    </button>
                                    <button 
                                       onClick={() => handleAction(incident.id, 'muted')}
