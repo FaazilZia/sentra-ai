@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -26,6 +26,13 @@ class Settings(BaseSettings):
         default="postgresql+psycopg://nemoguard:nemoguard@localhost:5432/nemoguard",
         alias="DATABASE_URL",
     )
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def assemble_db_connection(cls, v: str | None) -> str:
+        if isinstance(v, str) and v.startswith("postgresql://"):
+            return v.replace("postgresql://", "postgresql+psycopg://", 1)
+        return v or ""
     redis_url: str = Field(default="redis://localhost:6379/0", alias="REDIS_URL")
 
     default_tenant_slug: str = Field(default="demo-tenant", alias="DEFAULT_TENANT_SLUG")
