@@ -50,3 +50,33 @@ def log_incident(
     db.commit()
     db.refresh(incident)
     return {"status": "ok", "id": str(incident.id)}
+
+@router.get("/", status_code=status.HTTP_200_OK)
+def list_incidents(
+    db: DbSession,
+    tenant: Annotated[Tenant, Depends(get_current_tenant)],
+    limit: int = 50,
+) -> dict:
+    from sqlalchemy import select, desc
+    
+    query = select(Incident).where(Incident.tenant_id == tenant.id).order_by(desc(Incident.created_at)).limit(limit)
+    incidents = db.scalars(query).all()
+    
+    return {
+        "items": [
+            {
+                "id": str(inc.id),
+                "agent_id": inc.agent_id,
+                "policy_id": str(inc.policy_id) if inc.policy_id else None,
+                "severity": inc.severity,
+                "action": inc.action,
+                "details": inc.details,
+                "prompt_excerpt": inc.prompt_excerpt,
+                "response_excerpt": inc.response_excerpt,
+                "metadata": inc.event_metadata,
+                "created_at": inc.created_at.isoformat()
+            }
+            for inc in incidents
+        ],
+        "total": len(incidents)
+    }

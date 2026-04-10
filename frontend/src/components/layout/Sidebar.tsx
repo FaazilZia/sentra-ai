@@ -9,6 +9,7 @@ import {
   User,
   PanelLeftClose,
   PanelLeftOpen,
+  Radio,
 } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import { SidebarItem } from '../ui/SidebarItem';
@@ -16,6 +17,7 @@ import { cn } from '../../lib/utils';
 
 const navigation = [
   { name: 'Overview', href: '/', icon: LayoutDashboard },
+  { name: 'Security Feed', href: '/security', icon: Radio },
   { name: 'Inventory', href: '/inventory', icon: Box },
   { name: 'Observability', href: '/observability', icon: Activity },
   { name: 'Risk Center', href: '/risk', icon: ShieldAlert },

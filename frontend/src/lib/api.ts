@@ -80,6 +80,24 @@ export interface PolicyHealthResponse {
   evaluator: string;
 }
 
+export interface IncidentResponse {
+  id: string;
+  agent_id: string;
+  policy_id: string | null;
+  severity: number;
+  action: string;
+  details: string;
+  prompt_excerpt: string;
+  response_excerpt: string;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface IncidentListResponse {
+  items: IncidentResponse[];
+  total: number;
+}
+
 export class ApiError extends Error {
   status: number;
 
@@ -157,6 +175,10 @@ export function fetchBackendHealth(): Promise<BackendHealthResponse> {
 
 export function fetchPolicyHealth(): Promise<PolicyHealthResponse> {
   return apiRequest<PolicyHealthResponse>('/policy-health');
+}
+
+export function fetchIncidents(accessToken: string, limit: number = 50): Promise<IncidentListResponse> {
+  return apiRequest<IncidentListResponse>(`/incidents?limit=${limit}`, {}, accessToken);
 }
 
 import { supabase } from './supabaseClient';
