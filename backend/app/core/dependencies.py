@@ -20,6 +20,9 @@ def get_correlation_id(request: Request) -> str | None:
     return getattr(request.state, "correlation_id", None)
 
 
+from app.core.config import settings
+import jwt
+
 def get_current_principal(
     db: DbSession,
     authorization: Annotated[str | None, Header()] = None,
@@ -28,16 +31,56 @@ def get_current_principal(
     auth_service = AuthService(db)
 
     if authorization and authorization.startswith("Bearer "):
-        # MVP DEMO BYPASS: We are accepting the Supabase JWT without strictly decoding
-        # and associating to a local PostgreSQL user model to keep the MVP moving!
-        import uuid
-        return User(
-            id=uuid.uuid4(),
-            email="demo@sentra.ai",
-            is_active=True,
-            is_superuser=True,
-            tenant_id=uuid.uuid4()
-        )
+        token = authorization.split(" ")[1]
+        
+        # 1. Verification Step
+        if not settings.supabase_jwt_secret:
+            # Fallback for local dev if secret is not yet configured
+            if settings.app_env == "local":
+                 return User(
+                    email="admin@nemoguard.local",
+                    full_name="Local Admin",
+                    tenant_id=db.scalar(select(Tenant.id).limit(1)),
+                    password_hash="BYPASS"
+                )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+                detail="Auth misconfigured: SUPABASE_JWT_SECRET missing"
+            )
+
+        try:
+            payload = jwt.decode(
+                token, 
+                settings.supabase_jwt_secret, 
+                algorithms=["HS256"],
+                options={"verify_aud": False} # Supabase tokens often use 'authenticated' or custom aud
+            )
+            email = payload.get("email")
+            if not email:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token claims")
+
+            # 2. Lookup/Provision User
+            user = auth_service.repository.get_user_by_email(email)
+            if not user:
+                # Auto-provision user into local DB for first-time login
+                tenant = db.scalar(select(Tenant).limit(1))
+                if not tenant:
+                    raise HTTPException(status_code=500, detail="Default tenant missing")
+                
+                user = User(
+                    email=email,
+                    full_name=email.split("@")[0].title(),
+                    tenant_id=tenant.id,
+                    password_hash="EXTERNAL_OAUTH" # No local password for Supabase users
+                )
+                db.add(user)
+                db.commit()
+                db.refresh(user)
+            
+            return user
+
+        except jwt.PyJWTError as e:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Invalid token: {str(e)}")
 
     if x_api_key:
         api_key = auth_service.authenticate_api_key(x_api_key)

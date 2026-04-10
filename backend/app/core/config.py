@@ -21,6 +21,7 @@ class Settings(BaseSettings):
         default="http://localhost:5173,http://127.0.0.1:5173,https://sentra-ai-tau.vercel.app",
         alias="CORS_ORIGINS",
     )
+    supabase_jwt_secret: str = Field(default="", alias="SUPABASE_JWT_SECRET")
 
     database_url: str = Field(
         default="postgresql+psycopg://nemoguard:nemoguard@localhost:5432/nemoguard",
