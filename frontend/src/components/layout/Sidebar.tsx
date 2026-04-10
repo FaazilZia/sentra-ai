@@ -35,12 +35,12 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'z-20 hidden h-full flex-shrink-0 flex-col border-r border-slate-800 bg-slate-900 text-slate-100 shadow-xl transition-all duration-300 md:flex',
+        'relative z-20 hidden h-full flex-shrink-0 flex-col border-r border-slate-800 bg-slate-900 text-slate-100 shadow-xl transition-[width] duration-300 ease-out md:flex',
         collapsed ? 'w-20' : 'w-64'
       )}
     >
       <div className="border-b border-slate-800 px-4 py-4">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white text-sm font-bold text-slate-900">
               S
@@ -56,14 +56,6 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
               </div>
             ) : null}
           </div>
-          <button
-            type="button"
-            onClick={() => onCollapsedChange(!collapsed)}
-            className="rounded-md p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white"
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          >
-            {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-          </button>
         </div>
       </div>
 
@@ -101,6 +93,14 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
           </div>
         </div>
       </div>
+      <button
+        type="button"
+        onClick={() => onCollapsedChange(!collapsed)}
+        className="absolute -right-3 bottom-24 flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-md transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-slate-50 hover:text-slate-900"
+        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+      >
+        {collapsed ? <PanelLeftOpen className="h-3.5 w-3.5" /> : <PanelLeftClose className="h-3.5 w-3.5" />}
+      </button>
     </aside>
   );
 }
