@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Radio, ShieldAlert, ShieldCheck, Terminal, AlertTriangle, Info, CheckCircle2, xCircle, Archive } from 'lucide-react';
+import { Radio, ShieldAlert, ShieldCheck, Terminal, AlertTriangle, Info, CheckCircle2, XCircle, Archive } from 'lucide-react';
 import { fetchIncidents, updateIncidentStatus, IncidentResponse } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { StatCard } from '../components/ui/StatCard';
