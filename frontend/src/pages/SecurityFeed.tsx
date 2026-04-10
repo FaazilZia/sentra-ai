@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Radio, ShieldAlert, Terminal, TriangleAlert, Info, CircleCheck, Archive } from 'lucide-react';
+import { Radio, ShieldAlert, ShieldCheck, Terminal, TriangleAlert, Info, CircleCheck, Archive } from 'lucide-react';
 import { fetchIncidents, updateIncidentStatus, IncidentResponse } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { StatCard } from '../components/ui/StatCard';
