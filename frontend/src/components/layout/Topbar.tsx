@@ -39,12 +39,7 @@ export function Topbar() {
     <header className="sticky top-0 z-10 h-16 flex-shrink-0 border-b border-slate-200/80 bg-white/85 shadow-sm backdrop-blur-xl">
       <div className="flex h-full items-center justify-between gap-4 px-5 md:px-6">
         <div className="flex min-w-0 flex-1 items-center gap-4">
-          <div className="hidden min-w-0 text-sm md:block">
-            <p className="font-semibold text-slate-900">Compliance Control Center</p>
-            <p className="text-xs text-slate-500">Home / Dashboard / Real-time Scans</p>
-          </div>
-
-          <div className="relative hidden w-full max-w-xl lg:block">
+          <div className="relative hidden w-full max-w-xl md:block">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
