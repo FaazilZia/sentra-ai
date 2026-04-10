@@ -1,13 +1,5 @@
 import { useEffect, useState } from 'react';
-import {
-  LoaderCircle,
-  Search,
-  Server,
-  ShieldCheck,
-  ShieldX,
-  ExternalLink,
-  LogOut,
-} from 'lucide-react';
+import { ChevronDown, LogOut, Search, Server, ShieldCheck, ShieldX } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import { apiBaseUrl } from '../../lib/api';
 
@@ -41,90 +33,58 @@ export function Topbar() {
     return () => controller.abort();
   }, []);
 
-  const statusConfig =
-    backendStatus === 'online'
-      ? {
-          container: 'bg-emerald-400/10 border-emerald-300/15',
-          iconShell: 'bg-white/10 border-white/10',
-          icon: <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />,
-          label: 'Backend: Online',
-          text: 'text-emerald-200',
-        }
-      : backendStatus === 'checking'
-        ? {
-            container: 'bg-cyan-300/10 border-cyan-200/15',
-            iconShell: 'bg-white/10 border-white/10',
-            icon: <LoaderCircle className="w-3.5 h-3.5 text-cyan-200 animate-spin" />,
-            label: 'Backend: Checking',
-            text: 'text-cyan-100',
-          }
-        : backendStatus === 'offline'
-          ? {
-              container: 'bg-rose-400/10 border-rose-300/15',
-              iconShell: 'bg-white/10 border-white/10',
-              icon: <ShieldX className="w-3.5 h-3.5 text-rose-300" />,
-              label: 'Backend: Offline',
-              text: 'text-rose-200',
-            }
-          : {
-              container: 'bg-white/5 border-white/10',
-              iconShell: 'bg-white/10 border-white/10',
-              icon: <Server className="w-3.5 h-3.5 text-slate-300" />,
-              label: 'Backend: Not Set',
-              text: 'text-slate-200',
-            };
+  const online = backendStatus === 'online';
 
   return (
-    <header className="sticky top-0 z-10 h-20 flex-shrink-0 border-b border-white/10 bg-slate-950/35 shadow-lg shadow-slate-950/20 backdrop-blur-xl">
-      <div className="flex h-full items-center justify-between gap-4 px-6">
-        <div className="flex items-center flex-1">
-          <div className="hidden items-center gap-3 lg:flex">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2.5">
-              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Mission mode</p>
-              <p className="mt-1 text-sm font-medium text-white">AI access governance</p>
-            </div>
+    <header className="sticky top-0 z-10 h-16 flex-shrink-0 border-b border-slate-200/80 bg-white/85 shadow-sm backdrop-blur-xl">
+      <div className="flex h-full items-center justify-between gap-4 px-5 md:px-6">
+        <div className="flex min-w-0 flex-1 items-center gap-4">
+          <div className="hidden min-w-0 text-sm md:block">
+            <p className="font-semibold text-slate-900">Compliance Control Center</p>
+            <p className="text-xs text-slate-500">Home / Dashboard / Real-time Scans</p>
           </div>
 
-          <div className="relative ml-0 w-full max-w-lg md:ml-6 hidden md:flex items-center">
-            <Search className="absolute left-3 text-slate-500 w-4 h-4" />
+          <div className="relative hidden w-full max-w-xl lg:block">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Search policies, agents, or compliance logs..."
-              className="w-full rounded-2xl border border-white/10 bg-white/5 py-3 pl-10 pr-4 text-sm text-slate-100 transition-all placeholder:text-slate-500 focus:border-cyan-200/25 focus:outline-none focus:ring-2 focus:ring-cyan-300/25 backdrop-blur-md"
+              placeholder="Search policies, agents, files, users..."
+              className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-900/5"
             />
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div
-            className={`hidden rounded-full border px-3 py-1.5 backdrop-blur-md sm:flex items-center gap-2 ${statusConfig.container}`}
-          >
-            <div
-              className={`w-6 h-6 rounded-full backdrop-blur-md flex items-center justify-center shadow-inner shadow-white/10 border ${statusConfig.iconShell}`}
-            >
-              {statusConfig.icon}
-            </div>
-            <span className={`text-xs font-semibold tracking-wide uppercase ${statusConfig.text}`}>
-              {statusConfig.label}
+        <div className="flex items-center gap-3">
+          <div className="hidden items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 shadow-sm sm:flex">
+            <span className="relative flex h-2 w-2">
+              {online ? (
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-70" />
+              ) : null}
+              <span
+                className={`relative inline-flex h-2 w-2 rounded-full ${
+                  online ? 'bg-emerald-500' : backendStatus === 'offline' ? 'bg-rose-600' : 'bg-amber-500'
+                }`}
+              />
             </span>
+            <span>{online ? 'All Systems Nominal' : backendStatus === 'offline' ? 'System Degraded' : 'Checking'}</span>
+            {online ? <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> : backendStatus === 'offline' ? <ShieldX className="h-3.5 w-3.5 text-rose-600" /> : <Server className="h-3.5 w-3.5 text-amber-600" />}
           </div>
 
-          <div className="w-px h-6 bg-white/10 mx-1 hidden sm:block"></div>
-
-          <button className="group flex items-center gap-2 rounded-2xl border border-cyan-200/15 bg-cyan-300/12 px-4 py-3 text-sm font-medium text-cyan-50 shadow-sm transition-all duration-300 ease-in-out hover:bg-cyan-300/18 hover:shadow-lg hover:shadow-cyan-950/25 active:scale-95 backdrop-blur-md">
-            <span>Board View</span>
-            <ExternalLink className="w-4 h-4 opacity-70 group-hover:opacity-100 transition-opacity" />
+          <button className="hidden items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-left shadow-sm transition hover:bg-slate-50 md:flex">
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-900 text-xs font-semibold text-white">
+              {user?.full_name?.slice(0, 1) ?? 'S'}
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-xs font-semibold text-slate-900">Sentra AI Org</p>
+              <p className="truncate text-[11px] text-slate-500">{user?.email ?? 'No user loaded'}</p>
+            </div>
+            <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
           </button>
-
-          <div className="hidden lg:block text-right">
-            <p className="text-sm font-medium text-slate-100">{user?.full_name}</p>
-            <p className="text-xs text-slate-400">{user?.email}</p>
-          </div>
 
           <button
             type="button"
             onClick={logout}
-            className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200 transition hover:bg-white/10"
+            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
           >
             <LogOut className="h-4 w-4" />
             <span className="hidden sm:inline">Sign out</span>

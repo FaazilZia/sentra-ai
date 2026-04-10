@@ -1,39 +1,41 @@
-import { ShieldCheck, LucideIcon } from 'lucide-react';
+import { Box, LucideIcon } from 'lucide-react';
+import { ReactNode } from 'react';
 
 interface EmptyStateListProps {
   title: string;
   description?: string;
-  headerAction?: React.ReactNode;
+  headerAction?: ReactNode;
   emptyMessage?: string;
   emptyIcon?: LucideIcon;
+  actionLabel?: string;
 }
 
-export function EmptyStateList({ 
-  title, 
-  description, 
-  headerAction, 
-  emptyMessage = "No active incidents detected", 
-  emptyIcon: EmptyIcon = ShieldCheck 
+export function EmptyStateList({
+  title,
+  description,
+  headerAction,
+  emptyMessage = 'Nothing to see here — yet',
+  emptyIcon: EmptyIcon = Box,
+  actionLabel = 'Start Scan',
 }: EmptyStateListProps) {
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/6 shadow-lg shadow-slate-950/20 backdrop-blur-xl">
-      <div className="p-5 border-b border-white/10 flex items-center justify-between bg-white/4">
+    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-white/60 bg-white/80 shadow-[0_4px_18px_rgba(15,23,42,0.06)] backdrop-blur">
+      <div className="flex items-center justify-between border-b border-slate-200/80 bg-white/65 p-4">
         <div>
-          <h3 className="font-semibold text-slate-100 leading-none">{title}</h3>
-          {description && <p className="text-sm text-slate-400 mt-1.5">{description}</p>}
+          <h3 className="text-sm font-semibold leading-none text-slate-900">{title}</h3>
+          {description ? <p className="mt-1.5 text-xs text-slate-500">{description}</p> : null}
         </div>
-        {headerAction && <div>{headerAction}</div>}
+        {headerAction ? <div>{headerAction}</div> : null}
       </div>
 
-      <div className="relative flex min-h-[300px] flex-1 flex-col items-center justify-center bg-slate-950/10 p-8 text-center">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.08),transparent_30%),radial-gradient(circle_at_bottom,rgba(74,222,128,0.06),transparent_28%)]" />
-        <div className="relative flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-white/10 ring-8 ring-white/5 shadow-inner shadow-white/10 backdrop-blur-md mb-4">
-          <EmptyIcon className="w-8 h-8 text-emerald-300" />
+      <div className="flex min-h-[280px] flex-1 flex-col items-center justify-center p-8 text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-400">
+          <EmptyIcon className="h-7 w-7" />
         </div>
-        <h4 className="relative mb-1 font-semibold text-slate-100">System Secure</h4>
-        <p className="relative max-w-[280px] text-sm leading-6 text-slate-400">{emptyMessage}</p>
-        <button className="relative mt-6 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-white/10 backdrop-blur-md">
-          View Historical Data
+        <h4 className="mt-4 text-sm font-semibold text-slate-900">Nothing to see here — yet</h4>
+        <p className="mt-2 max-w-[300px] text-sm leading-6 text-slate-500">{emptyMessage}</p>
+        <button className="mt-5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50">
+          {actionLabel}
         </button>
       </div>
     </div>

@@ -6,18 +6,18 @@ interface StatusBadgeProps {
 }
 
 const toneClasses: Record<NonNullable<StatusBadgeProps['tone']>, string> = {
-  default: 'border-white/10 bg-white/5 text-slate-200',
-  success: 'border-emerald-300/15 bg-emerald-400/10 text-emerald-200',
-  warning: 'border-amber-300/15 bg-amber-400/10 text-amber-200',
-  danger: 'border-rose-300/15 bg-rose-400/10 text-rose-200',
-  info: 'border-cyan-300/15 bg-cyan-400/10 text-cyan-100',
+  default: 'border-slate-200 bg-slate-50 text-slate-600 before:bg-slate-400',
+  success: 'border-emerald-200 bg-emerald-50 text-emerald-700 before:bg-emerald-500',
+  warning: 'border-amber-200 bg-amber-50 text-amber-700 before:bg-amber-500',
+  danger: 'border-rose-200 bg-rose-50 text-rose-700 before:bg-rose-600',
+  info: 'border-sky-200 bg-sky-50 text-sky-700 before:bg-sky-500',
 };
 
 export function StatusBadge({ label, tone = 'default' }: StatusBadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.22em]',
+        'inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-medium before:h-1.5 before:w-1.5 before:rounded-full',
         toneClasses[tone]
       )}
     >
