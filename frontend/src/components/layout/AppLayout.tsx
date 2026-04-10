@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
+import { CopilotChat } from '../ui/CopilotChat';
 
 export function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
@@ -15,6 +16,9 @@ export function AppLayout() {
           <Outlet />
         </main>
       </div>
+      
+      {/* Global AI Copilot Overlay */}
+      <CopilotChat />
     </div>
   );
 }
