@@ -80,27 +80,27 @@ export default function DashboardPage() {
   }, [riskyPolicies]);
 
   return (
-    <div className="mx-auto max-w-[1440px] space-y-5 pb-8">
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+    <div className="mx-auto max-w-[1440px] space-y-4 pb-6">
+      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
-          <nav className="text-xs font-medium text-slate-500">
+          <nav className="text-[10px] font-medium text-slate-500">
             Home <span className="mx-1 text-slate-300">/</span> Dashboard{' '}
             <span className="mx-1 text-slate-300">/</span> Real-time Scans
           </nav>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+          <h1 className="mt-1.5 text-base font-semibold tracking-tight text-slate-950">
             Data Access Compliance Dashboard
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-xs text-slate-500">
             DPO view for policy coverage, risky AI access patterns, and scan readiness for{' '}
             {user?.full_name ?? 'current operator'}.
           </p>
         </div>
-        <button className="inline-flex h-9 items-center justify-center rounded-lg bg-slate-900 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800">
+        <button className="inline-flex h-8 items-center justify-center rounded-md bg-slate-900 px-3 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800">
           Start Scan
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           title="Compliant Access"
           value={loading ? '---' : `${compliantRate}%`}
@@ -137,14 +137,14 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.4fr_0.8fr]">
+      <div className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-[1.4fr_0.8fr]">
         <SurfaceCard
           title="Recent Violations"
           description="AI and application access attempts that require review."
           contentClassName="p-0"
         >
           {error ? (
-            <div className="p-4">
+            <div className="p-3">
               <EmptyStateList
                 title="Policy Load Failed"
                 description="The frontend reached the backend, but policy data did not load cleanly."
@@ -154,13 +154,13 @@ export default function DashboardPage() {
               />
             </div>
           ) : loading ? (
-            <div className="space-y-3 p-4">
+            <div className="space-y-2 p-3">
               {[1, 2, 3, 4].map((item) => (
-                <div key={item} className="h-12 animate-pulse rounded-lg bg-slate-100" />
+                <div key={item} className="h-10 animate-pulse rounded-md bg-slate-100" />
               ))}
             </div>
           ) : recentViolations.length === 0 ? (
-            <div className="p-4">
+            <div className="p-3">
               <EmptyStateList
                 title="Recent Violations"
                 description="No risky access attempts are visible yet."
@@ -171,22 +171,22 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="border-b border-slate-200 bg-slate-50/80 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+              <table className="w-full text-left text-xs">
+                <thead className="border-b border-slate-200 bg-slate-50/80 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-500">
                   <tr>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Policy</th>
-                    <th className="px-4 py-3">AI / App / Agent</th>
-                    <th className="px-4 py-3">Data Source</th>
-                    <th className="px-4 py-3">Severity</th>
-                    <th className="px-4 py-3">Timestamp</th>
-                    <th className="px-4 py-3" />
+                    <th className="px-3 py-2.5">Status</th>
+                    <th className="px-3 py-2.5">Policy</th>
+                    <th className="px-3 py-2.5">AI / App / Agent</th>
+                    <th className="px-3 py-2.5">Data Source</th>
+                    <th className="px-3 py-2.5">Severity</th>
+                    <th className="px-3 py-2.5">Timestamp</th>
+                    <th className="px-3 py-2.5" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {recentViolations.map((violation) => (
                     <tr key={violation.id} className="transition hover:bg-slate-50/80">
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-2.5">
                         <StatusBadge
                           label={violation.status}
                           tone={
@@ -198,19 +198,19 @@ export default function DashboardPage() {
                           }
                         />
                       </td>
-                      <td className="max-w-[220px] truncate px-4 py-3 font-medium text-slate-900">
+                      <td className="max-w-[220px] truncate px-3 py-2.5 text-xs font-medium text-slate-900">
                         {violation.policy}
                       </td>
-                      <td className="px-4 py-3 font-mono text-xs text-slate-600">{violation.actor}</td>
-                      <td className="px-4 py-3 font-mono text-xs text-slate-600">{violation.resource}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-2.5 font-mono text-[10px] text-slate-600">{violation.actor}</td>
+                      <td className="px-3 py-2.5 font-mono text-[10px] text-slate-600">{violation.resource}</td>
+                      <td className="px-3 py-2.5">
                         <StatusBadge
                           label={violation.severity}
                           tone={violation.severity === 'High' ? 'danger' : violation.severity === 'Medium' ? 'warning' : 'success'}
                         />
                       </td>
-                      <td className="px-4 py-3 font-mono text-xs text-slate-500">{violation.timestamp}</td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-3 py-2.5 font-mono text-[10px] text-slate-500">{violation.timestamp}</td>
+                      <td className="px-3 py-2.5 text-right">
                         <button className="rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-900" aria-label="Open row actions">
                           <MoreVertical className="h-4 w-4" />
                         </button>
@@ -219,7 +219,7 @@ export default function DashboardPage() {
                   ))}
                 </tbody>
               </table>
-              <div className="border-t border-slate-100 bg-slate-50/70 px-4 py-3 text-xs text-slate-500">
+              <div className="border-t border-slate-100 bg-slate-50/70 px-3 py-2 text-[10px] text-slate-500">
                 Actions available from row menu: Ignore, Remediate, Export.
               </div>
             </div>
@@ -230,16 +230,16 @@ export default function DashboardPage() {
           title="Scan Readiness"
           description="Current controls ready for data source scanning."
         >
-          <div className="space-y-3">
+          <div className="space-y-2">
             {[
               ['Policy Sync', `${policies.length} policies loaded`, policies.length > 0 ? 'success' : 'warning'],
               ['Access Decisions', `${publishedPolicies} published`, publishedPolicies > 0 ? 'success' : 'warning'],
               ['Risk Rules', `${criticalPolicies} critical`, criticalPolicies > 0 ? 'danger' : 'success'],
             ].map(([label, value, tone]) => (
-              <div key={label} className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">
+              <div key={label} className="flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-2.5 py-2">
                 <div>
-                  <p className="text-sm font-medium text-slate-900">{label}</p>
-                  <p className="font-mono text-xs text-slate-500">{value}</p>
+                  <p className="text-xs font-medium text-slate-900">{label}</p>
+                  <p className="font-mono text-[10px] text-slate-500">{value}</p>
                 </div>
                 <StatusBadge label={String(tone)} tone={tone as 'success' | 'warning' | 'danger'} />
               </div>
@@ -248,7 +248,7 @@ export default function DashboardPage() {
         </SurfaceCard>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
+      <div className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-3">
         <DataChartEmpty
           title="Real-time Scan Trend"
           description="Sensitive record findings by scan window."
@@ -257,15 +257,15 @@ export default function DashboardPage() {
           title="Sensitive Data Inventory"
           description="Placeholder until a simple data source is connected."
         >
-          <div className="flex min-h-[278px] flex-col items-center justify-center text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-400">
-              <Box className="h-7 w-7" />
+          <div className="flex min-h-[260px] flex-col items-center justify-center text-center">
+            <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-400">
+              <Box className="h-5 w-5" />
             </div>
-            <h4 className="mt-4 text-sm font-semibold text-slate-900">Nothing to see here — yet</h4>
-            <p className="mt-2 max-w-[280px] text-sm leading-6 text-slate-500">
+            <h4 className="mt-3 text-sm font-semibold text-slate-900">Nothing to see here — yet</h4>
+            <p className="mt-1 max-w-[280px] text-xs leading-5 text-slate-500">
               Add one small database or sample file source to populate sensitive emails, IDs, and risky rows.
             </p>
-            <button className="mt-5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50">
+            <button className="mt-4 rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50">
               Configure Integration
             </button>
           </div>
