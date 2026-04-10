@@ -12,6 +12,7 @@ const RiskCenterPage = lazy(() => import('./pages/RiskCenter'));
 const AuditLogPage = lazy(() => import('./pages/AuditLog'));
 const GovernancePage = lazy(() => import('./pages/Governance'));
 const SecurityFeedPage = lazy(() => import('./pages/SecurityFeed'));
+const ConnectPage = lazy(() => import('./pages/Connect'));
 
 function RouteFallback() {
   return (
@@ -48,6 +49,7 @@ function AppRoutes() {
         <Routes>
           <Route element={<AppLayout />}>
             <Route path="/" element={<DashboardPage />} />
+            <Route path="/connect" element={<ConnectPage />} />
             <Route path="/security" element={<SecurityFeedPage />} />
             <Route path="/inventory" element={<InventoryPage />} />
             <Route path="/observability" element={<ObservabilityPage />} />

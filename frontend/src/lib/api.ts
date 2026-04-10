@@ -98,6 +98,19 @@ export interface IncidentListResponse {
   total: number;
 }
 
+export interface APIKeyResponse {
+  id: string;
+  name: string;
+  key_prefix: string;
+  created_at: string;
+  is_active: boolean;
+}
+
+export interface APIKeyBundle {
+  name: string;
+  api_key: string;
+}
+
 export class ApiError extends Error {
   status: number;
 
@@ -179,6 +192,21 @@ export function fetchPolicyHealth(): Promise<PolicyHealthResponse> {
 
 export function fetchIncidents(accessToken: string, limit: number = 50): Promise<IncidentListResponse> {
   return apiRequest<IncidentListResponse>(`/incidents?limit=${limit}`, {}, accessToken);
+}
+
+export function fetchApiKeys(accessToken: string): Promise<APIKeyResponse[]> {
+  return apiRequest<APIKeyResponse[]>('/api-keys', {}, accessToken);
+}
+
+export function createApiKey(accessToken: string, name: string): Promise<APIKeyBundle> {
+  return apiRequest<APIKeyBundle>('/api-keys', {
+    method: 'POST',
+    body: JSON.stringify({ name }),
+  }, accessToken);
+}
+
+export function deleteApiKey(accessToken: string, keyId: string): Promise<void> {
+  return apiRequest<void>(`/api-keys/${keyId}`, { method: 'DELETE' }, accessToken);
 }
 
 import { supabase } from './supabaseClient';
