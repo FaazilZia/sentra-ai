@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { LoaderCircle, LockKeyhole, Server } from 'lucide-react';
+import { Activity, Database, LoaderCircle, LockKeyhole, Server, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 
 export default function LoginPage() {
@@ -13,50 +13,90 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.16),_transparent_34%),linear-gradient(160deg,_#020617_0%,_#0f172a_55%,_#111827_100%)] text-slate-50 flex items-center justify-center p-6">
-      <div className="w-full max-w-5xl grid gap-8 lg:grid-cols-[1.15fr_0.85fr] items-stretch">
-        <section className="rounded-[32px] border border-white/10 bg-white/6 backdrop-blur-2xl shadow-2xl shadow-slate-950/40 p-8 lg:p-10">
-          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200/15 bg-cyan-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-cyan-100">
-            <Server className="h-3.5 w-3.5" />
-            Sentra AI Control Plane
-          </div>
-
-          <h1 className="mt-6 text-4xl font-semibold tracking-tight text-white">
-            Connect the dashboard to your live backend
-          </h1>
-          <p className="mt-4 max-w-xl text-sm leading-6 text-slate-300">
-            Your Supabase-backed API is ready. Sign in with the seeded demo admin to verify the
-            frontend, backend, and database are all talking to each other.
-          </p>
-
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Backend URL</p>
-              <p className="mt-2 text-sm font-medium text-slate-100">http://127.0.0.1:8000/api/v1</p>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Database</p>
-              <p className="mt-2 text-sm font-medium text-slate-100">Supabase Postgres</p>
-            </div>
-          </div>
-        </section>
-
-        <section className="rounded-[32px] border border-white/10 bg-slate-950/45 backdrop-blur-2xl shadow-2xl shadow-slate-950/50 p-8">
+    <div className="flex min-h-screen bg-[#F8FAFC] text-slate-900">
+      <section className="hidden min-h-screen w-[360px] flex-col justify-between border-r border-slate-800 bg-slate-900 p-6 text-slate-100 shadow-xl lg:flex">
+        <div>
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/10">
-              <LockKeyhole className="h-5 w-5 text-cyan-200" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-sm font-bold text-slate-900">
+              S
             </div>
             <div>
-              <h2 className="text-2xl font-semibold text-white">Sign In</h2>
-              <p className="text-sm text-slate-400">Use the seeded backend admin credentials.</p>
+              <p className="text-[15px] font-semibold tracking-tight text-white">Sentra AI</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                Compliance OS
+              </p>
+            </div>
+          </div>
+
+          <h1 className="mt-14 max-w-[280px] text-3xl font-semibold leading-tight tracking-tight text-white">
+            Access governance for AI systems and sensitive data.
+          </h1>
+          <p className="mt-4 max-w-[300px] text-sm leading-6 text-slate-400">
+            Review policy coverage, risky agent activity, and approval readiness from one operator workspace.
+          </p>
+
+          <div className="mt-10 space-y-3">
+            <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-3">
+              <div className="flex items-center gap-2 text-sm font-semibold text-white">
+                <ShieldCheck className="h-4 w-4 text-cyan-200" />
+                Policy coverage
+              </div>
+              <p className="mt-1 text-xs leading-5 text-slate-500">Track published controls and access exceptions.</p>
+            </div>
+            <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-3">
+              <div className="flex items-center gap-2 text-sm font-semibold text-white">
+                <Activity className="h-4 w-4 text-cyan-200" />
+                Risk signals
+              </div>
+              <p className="mt-1 text-xs leading-5 text-slate-500">Surface agent and app access that needs review.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">Environment</p>
+          <div className="mt-3 space-y-2 text-xs text-slate-300">
+            <div className="flex items-center gap-2">
+              <Server className="h-3.5 w-3.5 text-slate-500" />
+              <span className="truncate">http://127.0.0.1:8000/api/v1</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Database className="h-3.5 w-3.5 text-slate-500" />
+              <span>Supabase Postgres</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <main className="flex min-h-screen flex-1 items-center justify-center p-5 md:p-8">
+        <section className="w-full max-w-[430px] rounded-lg border border-slate-200 bg-white p-5 shadow-[0_4px_16px_rgba(15,23,42,0.05)] md:p-6">
+          <div className="mb-8 flex items-center gap-3 lg:hidden">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-900 text-sm font-bold text-white">
+              S
+            </div>
+            <div>
+              <p className="text-[15px] font-semibold tracking-tight text-slate-950">Sentra AI</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                Compliance OS
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-slate-50">
+              <LockKeyhole className="h-4 w-4 text-slate-700" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold tracking-tight text-slate-950">Sign in</h2>
+              <p className="text-sm text-slate-500">Use the seeded backend admin credentials.</p>
             </div>
           </div>
 
           <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
             <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-200">Email</span>
+              <span className="mb-2 block text-sm font-medium text-slate-700">Email</span>
               <input
-                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-200/30 focus:bg-white/10"
+                className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-900/5"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 type="email"
@@ -65,9 +105,9 @@ export default function LoginPage() {
             </label>
 
             <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-200">Password</span>
+              <span className="mb-2 block text-sm font-medium text-slate-700">Password</span>
               <input
-                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-200/30 focus:bg-white/10"
+                className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-900/5"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 type="password"
@@ -76,7 +116,7 @@ export default function LoginPage() {
             </label>
 
             {loginError ? (
-              <div className="rounded-2xl border border-rose-300/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+              <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
                 {loginError}
               </div>
             ) : null}
@@ -84,14 +124,14 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loginPending}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-cyan-200/20 bg-cyan-300/15 px-4 py-3 text-sm font-semibold text-cyan-50 transition hover:bg-cyan-300/20 disabled:cursor-not-allowed disabled:opacity-70"
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {loginPending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : null}
-              {loginPending ? 'Signing In...' : 'Connect Dashboard'}
+              {loginPending ? 'Signing in...' : 'Open workspace'}
             </button>
           </form>
         </section>
-      </div>
+      </main>
     </div>
   );
 }
