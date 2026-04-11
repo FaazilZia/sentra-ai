@@ -4,7 +4,6 @@ import logging
 from pathlib import Path
 from typing import List, Dict
 from sqlalchemy import create_engine, inspect, text
-from .ai_brain import AIBrainService
 
 logger = logging.getLogger(__name__)
 
@@ -102,6 +101,7 @@ class SQLConnector(BaseConnector):
 
 class GovernanceScanner:
     def __init__(self, db_session=None):
+        from .ai_brain import AIBrainService
         self.ai_brain = AIBrainService()
         self.connectors: List[BaseConnector] = []
         
