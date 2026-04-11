@@ -235,17 +235,15 @@ export async function askAI(prompt: string): Promise<string> {
   return data.response;
 }
 export async function grantConsent(token: string): Promise<any> {
-  return fetchApi('/consent/grant', {
-    method: 'POST',
-    token
-  });
+  return apiRequest<any>('/consent/grant', {
+    method: 'POST'
+  }, token);
 }
 
 export async function withdrawConsent(token: string): Promise<any> {
-  return fetchApi('/consent/withdraw', {
-    method: 'POST',
-    token
-  });
+  return apiRequest<any>('/consent/withdraw', {
+    method: 'POST'
+  }, token);
 }
 
 export type ConsentEvent = {
@@ -257,15 +255,20 @@ export type ConsentEvent = {
 };
 
 export async function fetchConsentHistory(token: string): Promise<ConsentEvent[]> {
-  return fetchApi('/consent/history', {
-    method: 'GET',
-    token
-  });
+  return apiRequest<ConsentEvent[]>('/consent/history', {
+    method: 'GET'
+  }, token);
 }
 
 export async function triggerScan(token: string): Promise<any> {
-  return fetchApi('/incidents/scan', {
+  return apiRequest<any>('/incidents/scan', {
+    method: 'POST'
+  }, token);
+}
+
+export async function chatWithCopilot(message: string, token: string): Promise<any> {
+  return apiRequest<any>('/ai/chat', {
     method: 'POST',
-    token
-  });
+    body: JSON.stringify({ message })
+  }, token);
 }

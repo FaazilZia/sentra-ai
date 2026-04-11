@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
-import { Reveal } from '../ui/Reveal';
-import { siteContent } from '../../lib/content';
+import { Reveal } from '@/components/ui/Reveal';
+import { siteContent } from '@/lib/content';
 import { Shield, Lock, Fingerprint, Code2, LineChart, CheckCircle2, Zap, Building2, Rocket, Activity } from 'lucide-react';
 
 export const HowItWorks = () => {
@@ -19,7 +19,7 @@ export const HowItWorks = () => {
         <div className="grid md:grid-cols-3 gap-20 relative">
           <div className="hidden md:block absolute top-[80px] left-[15%] right-[15%] h-[1px] bg-gradient-to-r from-transparent via-blue-500/20 to-transparent -z-10" />
           
-          {siteContent.howItWorks.steps.map((step, i) => (
+          {siteContent.howItWorks.steps.map((step: any, i: number) => (
             <Reveal key={step.title} delay={0.2 * i} yOffset={50}>
               <div className="relative group flex flex-col items-center text-center px-6">
                 <div className="w-40 h-40 rounded-[3rem] glass-card flex items-center justify-center mb-12 relative z-10 transition-all duration-700 group-hover:scale-110 group-hover:shadow-[0_40px_80px_rgba(37,99,235,0.15)] bg-white border-blue-100 group-hover:border-blue-400">
@@ -58,7 +58,7 @@ export const ProblemSolution = () => {
             </Reveal>
 
             <div className="space-y-8">
-              {content.problems.map((prob, i) => (
+              {content.problems.map((prob: any, i: number) => (
                 <Reveal key={prob.title} delay={0.1 * i} yOffset={30}>
                   <div className="flex gap-8 p-10 rounded-3xl glass-card border-slate-100 hover:border-blue-200 transition-all group bg-white/50">
                     <div className="shrink-0 w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all font-black text-xl">
@@ -89,7 +89,7 @@ export const ProblemSolution = () => {
                  </p>
                  
                  <div className="space-y-6 mb-12">
-                    {["Deep visibility across 50+ LLMs", "Sub-millisecond latency guardrails", "Enterprise-wide compliance policy sync"].map(item => (
+                    {["Deep visibility across 50+ LLMs", "Sub-millisecond latency guardrails", "Enterprise-wide compliance policy sync"].map((item: string) => (
                       <div key={item} className="flex items-center gap-4 text-slate-700 font-bold text-lg tracking-tight">
                         <div className="w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100">
                            <CheckCircle2 size={14} className="text-blue-600" />
@@ -204,7 +204,7 @@ export const UseCases = () => {
         </Reveal>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-           {siteContent.useCases.items.map((item, i) => (
+           {siteContent.useCases.items.map((item: any, i: number) => (
              <Reveal key={item.title} delay={0.1 * i} yOffset={40}>
                <div className="glass-card group p-12 bg-white border-blue-50 hover:border-blue-400 transition-all flex flex-col h-full shadow-sm hover:shadow-[0_40px_100px_-20px_rgba(37,99,235,0.15)] relative overflow-hidden">
                   <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-50 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-700 blur-3xl -z-10" />
@@ -237,7 +237,7 @@ export const TrustSecurity = () => {
               </div>
             </Reveal>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-12">
-               {siteContent.security.badges.map((badge, i) => (
+               {siteContent.security.badges.map((badge: any, i: number) => (
                  <Reveal key={badge.title} delay={0.1 * i} yOffset={30}>
                    <div className="flex flex-col items-center text-center p-12 glass-card bg-slate-50 border-slate-100 hover:border-blue-400 hover:bg-white transition-all group shadow-sm">
                       <div className="shrink-0 w-20 h-20 rounded-[2rem] bg-white border border-slate-100 flex items-center justify-center text-blue-600 mb-8 group-hover:scale-110 group-hover:shadow-2xl transition-all shadow-sm">

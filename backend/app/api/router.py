@@ -9,6 +9,7 @@ from app.modules.tenants.router import router as tenant_router
 from app.modules.incidents.router import router as incidents_router
 from app.modules.api_keys.router import router as api_keys_router
 from app.modules.consent.router import router as consent_router
+from app.modules.ai.router import router as ai_router
 
 api_router = APIRouter()
 api_router.include_router(health_router, tags=["health"])
@@ -20,3 +21,4 @@ api_router.include_router(policies_router, tags=["policies"])
 api_router.include_router(incidents_router, tags=["incidents"])
 api_router.include_router(api_keys_router, tags=["api-keys"])
 api_router.include_router(consent_router, prefix="/consent", tags=["consent"])
+api_router.include_router(ai_router, tags=["ai"])

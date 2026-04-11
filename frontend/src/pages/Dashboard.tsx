@@ -1,3 +1,5 @@
+import { useState, useEffect, useMemo } from 'react';
+import {
   AlertTriangle,
   Box,
   BrainCircuit,
@@ -60,17 +62,17 @@ export default function DashboardPage() {
     }
   };
 
-  const publishedPolicies = policies.filter((policy) => policy.status === 'published').length;
-  const enabledPolicies = policies.filter((policy) => policy.enabled).length;
-  const criticalPolicies = policies.filter((policy) => policy.priority >= 500).length;
+  const publishedPolicies = policies.filter((policy: PolicyResponse) => policy.status === 'published').length;
+  const enabledPolicies = policies.filter((policy: PolicyResponse) => policy.enabled).length;
+  const criticalPolicies = policies.filter((policy: PolicyResponse) => policy.priority >= 500).length;
   const riskyPolicies = policies.filter(
-    (policy) => policy.priority >= 500 || policy.effect === 'deny' || policy.effect === 'require_approval'
+    (policy: PolicyResponse) => policy.priority >= 500 || policy.effect === 'deny' || policy.effect === 'require_approval'
   );
   const compliantRate =
     policies.length === 0 ? 0 : Math.round((enabledPolicies / Math.max(policies.length, 1)) * 100);
 
   const recentViolations = useMemo(() => {
-    return riskyPolicies.slice(0, 6).map((policy, index) => ({
+    return riskyPolicies.slice(0, 6).map((policy: PolicyResponse, index: number) => ({
       id: policy.id,
       status: policy.effect === 'deny' ? 'Blocked' : policy.status === 'draft' ? 'Pending' : 'Flagged',
       policy: policy.name,
@@ -203,7 +205,7 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {recentViolations.map((violation) => (
+                  {recentViolations.map((violation: any) => (
                     <tr key={violation.id} className="transition hover:bg-slate-50/80">
                       <td className="px-3 py-2.5">
                         <StatusBadge

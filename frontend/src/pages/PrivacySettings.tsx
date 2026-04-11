@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Shield, ShieldAlert, ShieldCheck, History, ArrowLeft, Trash2, Clock, Key } from 'lucide-react';
+import { Shield, ShieldAlert, ShieldCheck, ArrowLeft, Trash2, Clock, Key } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { fetchConsentHistory, withdrawConsent, grantConsent, ConsentEvent } from '../lib/api';
@@ -7,7 +7,7 @@ import { SurfaceCard } from '../components/ui/SurfaceCard';
 import { StatusBadge } from '../components/ui/StatusBadge';
 
 export default function PrivacySettingsPage() {
-  const { accessToken, user, signOut } = useAuth();
+  const { accessToken, logout } = useAuth();
   const [history, setHistory] = useState<ConsentEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
@@ -35,7 +35,7 @@ export default function PrivacySettingsPage() {
     try {
       await withdrawConsent(accessToken);
       alert('Consent withdrawn. Your data is being purged. You will be signed out.');
-      signOut();
+      logout();
     } catch (err) {
       alert('Failed to withdraw consent');
       setIsWithdrawing(false);
@@ -84,7 +84,7 @@ export default function PrivacySettingsPage() {
               </div>
             ) : (
               <div className="relative space-y-6 before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
-                {history.map((event, idx) => (
+                {history.map((event) => (
                   <div key={event.id} className="relative flex items-start gap-4">
                     <div className={`mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border-4 border-white ring-1 ring-slate-200 shadow-sm ${event.action === 'GRANT' ? 'bg-green-50 text-green-600' : 'bg-rose-50 text-rose-600'}`}>
                       {event.action === 'GRANT' ? <ShieldCheck className="h-5 w-5" /> : <ShieldAlert className="h-5 w-5" />}

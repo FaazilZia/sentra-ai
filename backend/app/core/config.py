@@ -22,6 +22,7 @@ class Settings(BaseSettings):
         alias="CORS_ORIGINS",
     )
     supabase_jwt_secret: str = Field(default="", alias="SUPABASE_JWT_SECRET")
+    openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
 
     database_url: str = Field(
         default="postgresql+psycopg://nemoguard:nemoguard@localhost:5432/nemoguard",

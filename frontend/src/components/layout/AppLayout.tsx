@@ -1,9 +1,4 @@
-import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
-import { AtomBackground } from '../ui/AtomBackground';
-import { Sidebar } from './Sidebar';
-import { Topbar } from './Topbar';
-import { CopilotChat } from '../ui/CopilotChat';
+import { CopilotDrawer } from '../ui/CopilotDrawer';
 
 export function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
@@ -20,7 +15,7 @@ export function AppLayout() {
       </div>
       
       {/* Global AI Copilot Overlay */}
-      <CopilotChat />
+      <CopilotDrawer />
     </div>
   );
 }

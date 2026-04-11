@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
-import { Reveal } from '../ui/Reveal';
-import { siteContent } from '../../lib/content';
+import { Reveal } from '@/components/ui/Reveal';
+import { siteContent } from '@/lib/content';
 import { ArrowRight, Play, Menu, X, Lock, Sun, Moon } from 'lucide-react';
 
 export const Navbar = () => {
@@ -36,7 +36,7 @@ export const Navbar = () => {
         </div>
         
         <div className="hidden md:flex items-center gap-1 px-1.5 py-1.5 rounded-full bg-white/40 border border-white/60 backdrop-blur-xl shadow-sm">
-          {siteContent.nav.links.map(link => (
+          {siteContent.nav.links.map((link: any) => (
             <motion.a 
               key={link.label} 
               href={link.href} 
@@ -80,7 +80,7 @@ export const Navbar = () => {
         className="md:hidden bg-white/95 backdrop-blur-xl border-b border-blue-50/50 overflow-hidden px-6"
       >
         <div className="py-8 flex flex-col gap-4">
-          {siteContent.nav.links.map(link => (
+          {siteContent.nav.links.map((link: any) => (
             <a key={link.label} href={link.href} className="text-lg font-bold text-slate-900 py-2">{link.label}</a>
           ))}
           <div className="h-px bg-blue-50 my-4" />
@@ -327,7 +327,7 @@ export const FeatureGrid = () => {
         </Reveal>
         
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
-          {siteContent.features.items.map((feature, i) => (
+          {siteContent.features.items.map((feature: any, i: number) => (
             <FeatureCard key={feature.title} feature={feature} index={i} />
           ))}
         </div>
@@ -388,11 +388,11 @@ export const Footer = () => {
                ))}
             </div>
           </div>
-          {siteContent.footer.columns.map(col => (
+          {siteContent.footer.columns.map((col: any) => (
             <div key={col.title}>
               <h4 className="font-black text-slate-900 mb-10 uppercase tracking-[0.3em] text-[11px]">{col.title}</h4>
               <ul className="space-y-5">
-                {col.links.map(link => (
+                {col.links.map((link: string) => (
                   <li key={link}>
                     <a href="#" className="text-slate-500 hover:text-blue-600 transition-colors font-bold text-[15px]">{link}</a>
                   </li>
