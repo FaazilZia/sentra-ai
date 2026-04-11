@@ -112,6 +112,17 @@ export interface APIKeyBundle {
   api_key: string;
 }
 
+export interface AIChatResponse {
+  response: string;
+  is_mock: boolean;
+  error?: string;
+}
+
+export interface ScanResponse {
+  message: string;
+  count: number;
+}
+
 export class ApiError extends Error {
   status: number;
 
@@ -199,8 +210,8 @@ export function fetchIncidents(accessToken: string, limit: number = 50, status?:
   return apiRequest<IncidentListResponse>(url, {}, accessToken);
 }
 
-export function updateIncidentStatus(accessToken: string, incidentId: string, status: string): Promise<any> {
-  return apiRequest<any>(`/incidents/${incidentId}`, {
+export function updateIncidentStatus(accessToken: string, incidentId: string, status: string): Promise<{ success: boolean }> {
+  return apiRequest<{ success: boolean }>(`/incidents/${incidentId}`, {
     method: 'PATCH',
     body: JSON.stringify({ status }),
   }, accessToken);
@@ -234,9 +245,9 @@ export async function askAI(prompt: string): Promise<string> {
   
   return data.response;
 }
-export async function grantConsent(token: string | null): Promise<any> {
+export async function grantConsent(token: string | null): Promise<{ status: string }> {
   if (!token) throw new Error("Auth token missing");
-  return apiRequest<any>('/consent/grant', {
+  return apiRequest<{ status: string }>('/consent/grant', {
     method: 'POST'
   }, token);
 }
@@ -263,16 +274,16 @@ export async function fetchConsentHistory(token: string | null): Promise<Consent
   }, token);
 }
 
-export async function triggerScan(token: string | null): Promise<any> {
+export async function triggerScan(token: string | null): Promise<ScanResponse> {
   if (!token) throw new Error("Auth token missing");
-  return apiRequest<any>('/incidents/scan', {
+  return apiRequest<ScanResponse>('/incidents/scan', {
     method: 'POST'
   }, token);
 }
 
-export async function chatWithCopilot(message: string, token: string | null): Promise<any> {
+export async function chatWithCopilot(message: string, token: string | null): Promise<AIChatResponse> {
   if (!token) throw new Error("Auth token missing");
-  return apiRequest<any>('/ai/chat', {
+  return apiRequest<AIChatResponse>('/ai/chat', {
     method: 'POST',
     body: JSON.stringify({ message })
   }, token);
