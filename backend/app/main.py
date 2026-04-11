@@ -18,17 +18,21 @@ try:
     from app.db.session import SessionLocal, engine
 
     print(">>> [SENTRA-DIAGNOSTICS] Core modules imported successfully.")
+    sys.stdout.flush()
 except Exception as e:
     print("!!! [SENTRA-DIAGNOSTICS] CRITICAL IMPORT ERROR DURING STARTUP !!!")
     traceback.print_exc()
+    sys.stdout.flush()
     sys.exit(1)
 
 try:
     configure_logging()
     print(">>> [SENTRA-DIAGNOSTICS] Logging configured.")
+    sys.stdout.flush()
 except Exception as e:
     print("!!! [SENTRA-DIAGNOSTICS] LOGGING CONFIGURATION FAILED !!!")
     traceback.print_exc()
+    sys.stdout.flush()
     sys.exit(1)
 
 app = FastAPI(title=settings.app_name, debug=settings.debug)
