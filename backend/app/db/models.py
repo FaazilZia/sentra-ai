@@ -6,5 +6,6 @@ from app.models.role import Role
 from app.models.tenant import Tenant
 from app.models.user import User
 from app.models.user_role import UserRole
+from app.models.consent import ConsentRecord
 
-__all__ = ["APIKey", "Incident", "Policy", "PolicyVersion", "Role", "Tenant", "User", "UserRole"]
+__all__ = ["APIKey", "Incident", "Policy", "PolicyVersion", "Role", "Tenant", "User", "UserRole", "ConsentRecord"]
