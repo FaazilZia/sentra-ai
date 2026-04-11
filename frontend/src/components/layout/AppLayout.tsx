@@ -1,5 +1,3 @@
-// @ts-nocheck
-/* eslint-disable */
 import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';

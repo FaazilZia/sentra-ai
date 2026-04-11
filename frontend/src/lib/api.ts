@@ -1,5 +1,4 @@
-// @ts-nocheck
-/* eslint-disable */
+
 const defaultApiBaseUrl = 'https://sentra-ai-wz6m.onrender.com/api/v1';
 
 export const apiBaseUrl = (
@@ -121,8 +120,18 @@ export interface AIChatResponse {
 }
 
 export interface ScanResponse {
+  status: string;
   message: string;
-  count: number;
+  task_id: string;
+}
+
+export interface ScanStatusResponse {
+  task_id: string;
+  status: string;
+  result?: {
+    status: string;
+    incidents_detected: number;
+  };
 }
 
 export class ApiError extends Error {
@@ -281,6 +290,11 @@ export async function triggerScan(token: string | null): Promise<ScanResponse> {
   return apiRequest<ScanResponse>('/incidents/scan', {
     method: 'POST'
   }, token);
+}
+
+export async function fetchScanStatus(taskId: string, token: string | null): Promise<ScanStatusResponse> {
+  if (!token) throw new Error("Auth token missing");
+  return apiRequest<ScanStatusResponse>(`/incidents/scan/${taskId}`, {}, token);
 }
 
 export async function chatWithCopilot(message: string, token: string | null): Promise<AIChatResponse> {

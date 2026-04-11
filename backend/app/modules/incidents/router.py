@@ -8,6 +8,8 @@ from app.core.dependencies import DbSession, get_current_tenant, get_current_use
 from app.models.incident import Incident
 from app.models.tenant import Tenant
 from pydantic import BaseModel
+from celery.result import AsyncResult
+from app.workers.celery_app import celery_app
 
 router = APIRouter(prefix="/incidents", tags=["Incidents"])
 
@@ -114,22 +116,37 @@ def update_incident_status(
 
 @router.post("/scan", status_code=status.HTTP_201_CREATED)
 def trigger_deep_scan(
-    db: DbSession,
     tenant: Annotated[Tenant, Depends(get_current_tenant)],
     current_user: Annotated[dict, Depends(get_current_user)],
 ) -> dict:
     """
-    Triggers the Deep Scan simulator to generate 3-5 realistic incidents.
+    Triggers the Deep Scan as a background task.
     """
-    from app.modules.incidents.service import IncidentService
+    from app.workers.tasks import perform_security_scan
     
-    # We pass current_user['id'] which is a UUID string or object depending on deps
     user_id = current_user.id if hasattr(current_user, 'id') else uuid.UUID(current_user['id'])
     
-    incidents = IncidentService.trigger_scan(db, user_id=user_id, tenant_id=tenant.id)
+    task = perform_security_scan.delay(str(user_id), str(tenant.id))
     
     return {
-        "status": "success",
-        "message": f"Deep Scan complete. {len(incidents)} incidents detected.",
-        "count": len(incidents)
+        "status": "pending",
+        "message": "Deep Scan triggered in background.",
+        "task_id": task.id
     }
+
+@router.get("/scan/{task_id}", status_code=status.HTTP_200_OK)
+def get_scan_status(task_id: str) -> dict:
+    """
+    Checks the status of a Deep Scan task.
+    """
+    res = AsyncResult(task_id, app=celery_app)
+    
+    data = {
+        "task_id": task_id,
+        "status": res.status, # PENDING, STARTED, SUCCESS, FAILURE
+    }
+    
+    if res.ready():
+        data["result"] = res.result
+        
+    return data

@@ -236,12 +236,18 @@ export default function SecurityFeedPage() {
                           
                           <div className="flex items-center gap-4">
                              {incident.status === 'unresolved' && (
-                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex items-center gap-2 transition-all">
                                    <button 
                                       onClick={() => handleAction(incident.id, 'resolved')}
                                       className="flex items-center gap-1.5 rounded-lg bg-green-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-green-500 border border-green-500/20 hover:bg-green-500/20 transition-all"
                                    >
                                       <CircleCheck className="h-3 w-3" /> Resolve
+                                   </button>
+                                   <button 
+                                      onClick={() => handleAction(incident.id, 'blocked')}
+                                      className="flex items-center gap-1.5 rounded-lg bg-rose-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-rose-500 border border-rose-500/20 hover:bg-rose-500/20 transition-all"
+                                   >
+                                      <ShieldAlert className="h-3 w-3" /> Block
                                    </button>
                                    <button 
                                       onClick={() => handleAction(incident.id, 'muted')}

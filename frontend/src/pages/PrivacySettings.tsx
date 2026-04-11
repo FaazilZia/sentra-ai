@@ -1,5 +1,3 @@
-// @ts-nocheck
-/* eslint-disable */
 import { useEffect, useState } from 'react';
 import { Shield, ShieldAlert, ShieldCheck, ArrowLeft, Trash2, Clock, Key } from 'lucide-react';
 import { Link } from 'react-router-dom';

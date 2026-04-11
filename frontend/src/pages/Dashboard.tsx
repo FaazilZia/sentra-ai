@@ -1,5 +1,3 @@
-// @ts-nocheck
-/* eslint-disable */
 import { useState, useEffect, useMemo } from 'react';
 import {
   AlertTriangle,
@@ -15,28 +13,35 @@ import { EmptyStateList } from '../components/ui/EmptyStateList';
 import { StatCard } from '../components/ui/StatCard';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { SurfaceCard } from '../components/ui/SurfaceCard';
-import { fetchPolicies, PolicyResponse, triggerScan } from '../lib/api';
+import { fetchPolicies, PolicyResponse, triggerScan, fetchScanStatus, fetchIncidents, updateIncidentStatus, IncidentResponse } from '../lib/api';
+import { CircleCheck, ShieldAlert, Archive } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 
 export default function DashboardPage() {
   const { accessToken, user } = useAuth();
-  const [policies, setPolicies] = useState<PolicyResponse[]>([]);
+   const [policies, setPolicies] = useState<PolicyResponse[]>([]);
+  const [incidents, setIncidents] = useState<IncidentResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [isScanning, setIsScanning] = useState(false);
+  const [isActing, setIsActing] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const loadData = async () => {
+   const loadData = async () => {
     if (!accessToken) {
       setLoading(false);
       return;
     }
     setLoading(true);
     try {
-      const response = await fetchPolicies(accessToken);
-      setPolicies(response.items);
+      const [policiesRes, incidentsRes] = await Promise.all([
+        fetchPolicies(accessToken),
+        fetchIncidents(accessToken, 6, 'unresolved')
+      ]);
+      setPolicies(policiesRes.items);
+      setIncidents(incidentsRes.items);
       setError(null);
     } catch (fetchError) {
-      const message = fetchError instanceof Error ? fetchError.message : 'Unable to load policies';
+      const message = fetchError instanceof Error ? fetchError.message : 'Unable to load platform data';
       setError(message);
     } finally {
       setLoading(false);
@@ -52,11 +57,33 @@ export default function DashboardPage() {
     
     setIsScanning(true);
     try {
-      await triggerScan(accessToken);
-      // Wait a bit for the "Deep Scan" feel
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      await loadData();
-      alert('Deep Scan complete! 3-5 randomized incidents have been detected and logged to the Security Feed.');
+      const response = await triggerScan(accessToken);
+      const taskId = response.task_id;
+      
+      // Polling logic to wait for real backend completion
+      let isDone = false;
+      let attempts = 0;
+      const maxAttempts = 60; // 60 seconds timeout
+      
+      while (!isDone && attempts < maxAttempts) {
+        const statusResponse = await fetchScanStatus(taskId, accessToken);
+        
+        if (statusResponse.status === 'SUCCESS') {
+          isDone = true;
+          await loadData();
+          alert(`Deep Scan complete! ${statusResponse.result?.incidents_detected || 0} incidents have been detected and logged.`);
+        } else if (['FAILURE', 'REVOKED'].includes(statusResponse.status)) {
+          throw new Error(`Scan process failed on server (${statusResponse.status})`);
+        } else {
+          // Wait 1 second before next poll
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          attempts++;
+        }
+      }
+      
+      if (!isDone) {
+        alert('Scan is still processing in the background. Results will appear in the Security Feed shortly.');
+      }
     } catch (err) {
       alert('Scan failed: ' + (err instanceof Error ? err.message : 'Unknown error'));
     } finally {
@@ -64,28 +91,54 @@ export default function DashboardPage() {
     }
   };
 
-  const publishedPolicies = policies.filter((policy: PolicyResponse) => policy.status === 'published').length;
-  const enabledPolicies = policies.filter((policy: PolicyResponse) => policy.enabled).length;
-  const criticalPolicies = policies.filter((policy: PolicyResponse) => policy.priority >= 500).length;
+  const handleAction = async (id: string, newStatus: string) => {
+    if (!accessToken) return;
+    setIsActing(id);
+    try {
+      await updateIncidentStatus(accessToken, id, newStatus);
+      await loadData();
+    } catch (err) {
+      alert('Failed to update incident: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    } finally {
+      setIsActing(null);
+    }
+  };
+
+  const publishedPolicies = policies.filter((p) => p.status === 'published').length;
+  const enabledPolicies = policies.filter((p) => p.enabled).length;
+  const criticalPolicies = policies.filter((p) => p.priority >= 500).length;
   const riskyPolicies = policies.filter(
-    (policy: PolicyResponse) => policy.priority >= 500 || policy.effect === 'deny' || policy.effect === 'require_approval'
+    (p) => p.priority >= 500 || p.effect === 'deny' || p.effect === 'require_approval'
   );
   const compliantRate =
     policies.length === 0 ? 0 : Math.round((enabledPolicies / Math.max(policies.length, 1)) * 100);
 
-  const recentViolations = useMemo(() => {
-    return riskyPolicies.slice(0, 6).map((policy: PolicyResponse, index: number) => ({
-      id: policy.id,
-      status: policy.effect === 'deny' ? 'Blocked' : policy.status === 'draft' ? 'Pending' : 'Flagged',
-      policy: policy.name,
-      actor: index % 2 === 0 ? 'support-agent@sentra.ai' : 'analytics-copilot@sentra.ai',
-      resource: Array.isArray(policy.scope.asset_types) && policy.scope.asset_types.length > 0
-        ? String(policy.scope.asset_types[0])
-        : 'customer_records',
-      severity: policy.priority >= 700 ? 'High' : policy.priority >= 500 ? 'Medium' : 'Low',
-      timestamp: new Date(policy.updated_at).toLocaleString(),
+  const processedIncidents = useMemo(() => {
+    return incidents.map((inc) => ({
+      id: inc.id,
+      status: inc.status === 'unresolved' ? 'Flagged' : inc.status.charAt(0).toUpperCase() + inc.status.slice(1),
+      agent: inc.agent_id,
+      details: inc.details,
+      severity: inc.severity >= 80 ? 'High' : inc.severity >= 50 ? 'Medium' : 'Low',
+      timestamp: new Date(inc.created_at).toLocaleTimeString(),
     }));
-  }, [riskyPolicies]);
+  }, [incidents]);
+
+  const inventoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    incidents.forEach(inc => {
+      const type = (inc.metadata as any)?.pii_type || 'General Risk';
+      counts[type] = (counts[type] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+      .map(([label, value]) => ({
+        label,
+        value,
+        tone: value > 5 ? 'danger' : value > 2 ? 'warning' : 'success'
+      }));
+  }, [incidents]);
 
   return (
     <div className="mx-auto max-w-[1440px] space-y-4 pb-6">
@@ -182,7 +235,7 @@ export default function DashboardPage() {
                 <div key={item} className="h-10 animate-pulse rounded-md bg-slate-100" />
               ))}
             </div>
-          ) : recentViolations.length === 0 ? (
+          ) : incidents.length === 0 ? (
             <div className="p-3">
               <EmptyStateList
                 title="Recent Violations"
@@ -198,52 +251,67 @@ export default function DashboardPage() {
                 <thead className="border-b border-slate-200 bg-slate-50/80 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-500">
                   <tr>
                     <th className="px-3 py-2.5">Status</th>
-                    <th className="px-3 py-2.5">Policy</th>
-                    <th className="px-3 py-2.5">AI / App / Agent</th>
-                    <th className="px-3 py-2.5">Data Source</th>
+                    <th className="px-3 py-2.5">Agent / Actor</th>
+                    <th className="px-3 py-2.5">Violation Details</th>
                     <th className="px-3 py-2.5">Severity</th>
                     <th className="px-3 py-2.5">Timestamp</th>
-                    <th className="px-3 py-2.5" />
+                    <th className="px-3 py-2.5 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {recentViolations.map((violation) => (
-                    <tr key={violation.id} className="transition hover:bg-slate-50/80">
+                  {processedIncidents.map((inc) => (
+                    <tr key={inc.id} className={`transition hover:bg-slate-50/80 ${isActing === inc.id ? 'opacity-50' : ''}`}>
                       <td className="px-3 py-2.5">
                         <StatusBadge
-                          label={violation.status}
+                          label={inc.status}
                           tone={
-                            violation.status === 'Blocked'
+                            inc.status === 'Blocked'
                               ? 'danger'
-                              : violation.status === 'Pending'
-                                ? 'warning'
-                                : 'info'
+                              : inc.status === 'Resolved'
+                                ? 'success'
+                                : 'warning'
                           }
                         />
                       </td>
-                      <td className="max-w-[220px] truncate px-3 py-2.5 text-xs font-medium text-slate-900">
-                        {violation.policy}
+                      <td className="px-3 py-2.5 font-bold text-slate-900">
+                        {inc.agent}
                       </td>
-                      <td className="px-3 py-2.5 font-mono text-[10px] text-slate-600">{violation.actor}</td>
-                      <td className="px-3 py-2.5 font-mono text-[10px] text-slate-600">{violation.resource}</td>
+                      <td className="max-w-[300px] truncate px-3 py-2.5 font-medium text-slate-600">
+                        {inc.details}
+                      </td>
                       <td className="px-3 py-2.5">
                         <StatusBadge
-                          label={violation.severity}
-                          tone={violation.severity === 'High' ? 'danger' : violation.severity === 'Medium' ? 'warning' : 'success'}
+                          label={inc.severity}
+                          tone={inc.severity === 'High' ? 'danger' : inc.severity === 'Medium' ? 'warning' : 'success'}
                         />
                       </td>
-                      <td className="px-3 py-2.5 font-mono text-[10px] text-slate-500">{violation.timestamp}</td>
+                      <td className="px-3 py-2.5 font-mono text-[10px] text-slate-500">{inc.timestamp}</td>
                       <td className="px-3 py-2.5 text-right">
-                        <button className="rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-900" aria-label="Open row actions">
-                          <MoreVertical className="h-4 w-4" />
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <button 
+                            onClick={() => handleAction(inc.id, 'resolved')}
+                            disabled={!!isActing}
+                            title="Resolve Incident"
+                            className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white text-green-600 shadow-sm transition hover:bg-green-50"
+                          >
+                            <CircleCheck className="h-4 w-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleAction(inc.id, 'blocked')}
+                            disabled={!!isActing}
+                            title="Block Agent/Access"
+                            className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white text-rose-600 shadow-sm transition hover:bg-rose-50"
+                          >
+                            <ShieldAlert className="h-4 w-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
               <div className="border-t border-slate-100 bg-slate-50/70 px-3 py-2 text-[10px] text-slate-500">
-                Actions available from row menu: Ignore, Remediate, Export.
+                Action Center: Resolve dismisses the alert, Block restricts the associated agent access.
               </div>
             </div>
           )}
@@ -278,20 +346,45 @@ export default function DashboardPage() {
         />
         <SurfaceCard
           title="Sensitive Data Inventory"
-          description="Placeholder until a simple data source is connected."
+          description="Live findings from the last infrastructure scan."
         >
-          <div className="flex min-h-[260px] flex-col items-center justify-center text-center">
-            <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-400">
-              <Box className="h-5 w-5" />
+          {inventoryCounts.length === 0 ? (
+            <div className="flex min-h-[160px] flex-col items-center justify-center text-center">
+              <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-400">
+                <Box className="h-5 w-5" />
+              </div>
+              <p className="mt-3 text-xs text-slate-500">No inventory found. Run a scan.</p>
             </div>
-            <h4 className="mt-3 text-sm font-semibold text-slate-900">Nothing to see here — yet</h4>
-            <p className="mt-1 max-w-[280px] text-xs leading-5 text-slate-500">
-              Add one small database or sample file source to populate sensitive emails, IDs, and risky rows.
-            </p>
-            <button className="mt-4 rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50">
-              Configure Integration
-            </button>
-          </div>
+          ) : (
+            <div className="space-y-3">
+              {inventoryCounts.map((item) => (
+                <div key={item.label} className="flex items-center justify-between rounded-md border border-slate-200 bg-white p-3 shadow-sm">
+                  <div>
+                    <h5 className="text-xs font-bold text-slate-900 uppercase tracking-tight">{item.label}</h5>
+                    <p className="text-[10px] text-slate-500">Detected in active sources</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm font-bold text-slate-900">{item.value}</span>
+                    <div className={`mt-1 h-1.5 w-12 rounded-full overflow-hidden bg-slate-100`}>
+                      <div 
+                        className={`h-full rounded-full ${
+                          item.tone === 'danger' ? 'bg-rose-500' : 
+                          item.tone === 'warning' ? 'bg-amber-500' : 'bg-green-500'
+                        }`} 
+                        style={{ width: `${Math.min(100, (item.value / 10) * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <button 
+                onClick={handleStartScan}
+                className="w-full mt-2 rounded-lg border border-slate-200 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-600 hover:bg-slate-50 transition-all"
+              >
+                Scan for more
+              </button>
+            </div>
+          )}
         </SurfaceCard>
       </div>
     </div>
