@@ -124,6 +124,7 @@ export default function DashboardPage() {
       details: inc.details,
       severity: inc.severity >= 80 ? 'High' : inc.severity >= 50 ? 'Medium' : 'Low',
       timestamp: new Date(inc.created_at).toLocaleTimeString(),
+      isAiDetected: (inc.metadata as any)?.ai_insight === true,
     }));
   }, [incidents]);
 
@@ -277,7 +278,10 @@ export default function DashboardPage() {
                         />
                       </td>
                       <td className="px-3 py-2.5 font-bold text-slate-900">
-                        {inc.agent}
+                        <div className="flex items-center gap-1.5">
+                          {inc.isAiDetected && <span title="AI-Detected Risk Insight">✨</span>}
+                          {inc.agent}
+                        </div>
                       </td>
                       <td className="max-w-[300px] truncate px-3 py-2.5 font-medium text-slate-600">
                         {inc.details}

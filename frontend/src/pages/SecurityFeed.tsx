@@ -229,7 +229,10 @@ export default function SecurityFeedPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center justify-between gap-3">
                           <div className="flex items-center gap-3">
-                            <span className="text-sm font-bold text-white uppercase tracking-tight">{incident.agent_id}</span>
+                             <span className="text-sm font-bold text-white uppercase tracking-tight">
+                               {(incident.metadata as any)?.ai_insight && <span className="mr-1.5" title="AI-Detected Risk Insight">✨</span>}
+                               {incident.agent_id}
+                             </span>
                             <StatusBadge 
                               label={incident.status === 'resolved' ? 'Resolved' : incident.action.replace('_', ' ')} 
                               tone={incident.status === 'resolved' ? 'success' : getSeverityTone(incident.severity)} 
