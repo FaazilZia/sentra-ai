@@ -2,7 +2,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user, get_db
+from app.core.dependencies import get_current_user
+from app.db.session import get_db
 from app.models.user import User
 from app.modules.consent.service import ConsentService
 from app.workers.purge_tasks import purge_user_data
