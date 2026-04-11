@@ -5,7 +5,7 @@ import {
   AlertTriangle,
   Box,
   BrainCircuit,
-  LoaderCircle,
+  Loader2,
   MoreVertical,
   ShieldCheck,
   ShieldX,
@@ -114,7 +114,7 @@ export default function DashboardPage() {
         >
           {isScanning ? (
             <span className="flex items-center gap-2">
-              <LoaderCircle className="h-3 w-3 animate-spin" />
+              <Loader2 className="h-3 w-3 animate-spin" />
               Scanning Deep...
             </span>
           ) : (
