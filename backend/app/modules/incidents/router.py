@@ -7,6 +7,7 @@ import uuid
 from app.core.dependencies import DbSession, get_current_tenant, get_current_user
 from app.models.incident import Incident
 from app.models.tenant import Tenant
+import datetime
 from pydantic import BaseModel
 from celery.result import AsyncResult
 from app.workers.celery_app import celery_app
@@ -113,6 +114,11 @@ def update_incident_status(
         
     incident.status = incident_in.status
     
+    # Audit Proof: Record who did this and when
+    if incident.status in ["resolved", "blocked"]:
+        incident.resolved_by_id = current_user.id if hasattr(current_user, 'id') else uuid.UUID(current_user['id'])
+        incident.resolved_at = datetime.datetime.now(datetime.UTC)
+    
     # NEW: Trigger policy enforcement if blocked
     if incident.status == "blocked":
         policy_service = PolicyService(db)
@@ -147,6 +153,46 @@ def update_incident_status(
         "incident_id": str(incident.id), 
         "new_status": incident.status,
         "policy_enforced": True if incident.status == "blocked" else False
+    }
+
+@router.get("/history", status_code=status.HTTP_200_OK)
+def list_incident_history(
+    db: DbSession,
+    tenant: Annotated[Tenant, Depends(get_current_tenant)],
+    limit: int = 100,
+) -> dict:
+    """
+    Returns legal audit trail of all resolved or blocked incidents.
+    """
+    from sqlalchemy import select, desc
+    from app.models.user import User
+
+    # Join with User to get operator names
+    query = (
+        select(Incident, User.full_name)
+        .outerjoin(User, Incident.resolved_by_id == User.id)
+        .where(Incident.tenant_id == tenant.id)
+        .where(Incident.status.in_(["resolved", "blocked"]))
+        .order_by(desc(Incident.resolved_at))
+        .limit(limit)
+    )
+    
+    results = db.execute(query).all()
+    
+    return {
+        "items": [
+            {
+                "id": str(inc.id),
+                "agent_id": inc.agent_id,
+                "status": inc.status,
+                "details": inc.details,
+                "operator": operator_name or "Scanner (Auto)",
+                "resolved_at": inc.resolved_at.isoformat() if inc.resolved_at else None,
+                "severity": inc.severity
+            }
+            for inc, operator_name in results
+        ],
+        "total": len(results)
     }
 
 @router.post("/scan", status_code=status.HTTP_201_CREATED)

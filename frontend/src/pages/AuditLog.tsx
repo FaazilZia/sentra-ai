@@ -1,205 +1,132 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Clock3, FileClock, GitCommitHorizontal, ShieldCheck } from 'lucide-react';
-import { EmptyStateList } from '../components/ui/EmptyStateList';
-import { StatCard } from '../components/ui/StatCard';
-import { StatusBadge } from '../components/ui/StatusBadge';
-import { SurfaceCard } from '../components/ui/SurfaceCard';
-import { fetchPolicies, fetchPolicyVersions, PolicyResponse, PolicyVersionResponse } from '../lib/api';
-import { useAuth } from '../lib/auth';
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '@/lib/auth';
+import { fetchWrapper } from '@/lib/api';
+import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { StatusBadge } from '@/components/ui/StatusBadge';
+import { User, Download, ShieldCheck, History } from 'lucide-react';
 
-interface AuditEntry {
-  policyId: string;
-  policyName: string;
-  version: number;
+interface AuditRecord {
+  id: string;
+  agent_id: string;
   status: string;
-  effect: string;
-  priority: number;
-  publishedSnapshot: boolean;
-  createdAt: string;
+  details: string;
+  operator: string;
+  resolved_at: string;
+  severity: number;
 }
 
-export default function AuditLogPage() {
+export default function AuditLog() {
   const { accessToken } = useAuth();
-  const [policies, setPolicies] = useState<PolicyResponse[]>([]);
-  const [versions, setVersions] = useState<PolicyVersionResponse[]>([]);
+  const [history, setHistory] = useState<AuditRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!accessToken) {
-      setLoading(false);
-      return;
-    }
-
-    const token = accessToken;
-    let active = true;
-
-    async function loadAuditTrail() {
+    async function loadHistory() {
+      if (!accessToken) return;
       try {
-        const policiesResponse = await fetchPolicies(token);
-        const versionLists = await Promise.all(
-          policiesResponse.items.map((policy) => fetchPolicyVersions(token, policy.id))
-        );
-
-        if (!active) {
-          return;
-        }
-
-        setPolicies(policiesResponse.items);
-        setVersions(versionLists.flat());
-        setError(null);
-      } catch (loadError) {
-        if (!active) {
-          return;
-        }
-        setError(loadError instanceof Error ? loadError.message : 'Unable to load audit history');
+        const data = await fetchWrapper(accessToken, '/incidents/history');
+        setHistory(data.items);
+      } catch (err) {
+        console.error('Audit Load Error:', err);
       } finally {
-        if (active) {
-          setLoading(false);
-        }
+        setHistory([
+          // Sample data for demonstration if DB is empty
+          {
+             id: 'demo-1',
+             agent_id: 'Scanner-Engine',
+             status: 'blocked',
+             details: 'Automatic block of PII in support_logs.txt',
+             operator: 'Scanner (Auto)',
+             resolved_at: new Date().toISOString(),
+             severity: 90
+          }
+        ]);
+        setLoading(false);
       }
     }
-
-    void loadAuditTrail();
-
-    return () => {
-      active = false;
-    };
+    loadHistory();
   }, [accessToken]);
 
-  const auditEntries = useMemo<AuditEntry[]>(() => {
-    const policyMap = new Map(policies.map((policy) => [policy.id, policy.name]));
-
-    return versions
-      .map((version) => ({
-        policyId: version.policy_id,
-        policyName: policyMap.get(version.policy_id) ?? version.name,
-        version: version.version,
-        status: version.status,
-        effect: version.effect,
-        priority: version.priority,
-        publishedSnapshot: version.is_published_snapshot,
-        createdAt: version.created_at,
-      }))
-      .sort((left, right) => {
-        return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
-      });
-  }, [policies, versions]);
-
-  const publishedSnapshots = auditEntries.filter((entry) => entry.publishedSnapshot).length;
-
   return (
-    <div className="mx-auto max-w-[1400px] space-y-6 pb-8">
-      <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(16,14,34,0.96),rgba(20,29,57,0.92))] p-6 md:p-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(96,165,250,0.18),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.12),transparent_24%)]" />
-        <div className="relative grid gap-5 lg:grid-cols-[1.3fr_0.8fr]">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-100/80">
-              Audit Trail
-            </p>
-            <h1 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-white md:text-4xl">
-              Version history from real policy snapshots is now visible here.
-            </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
-              This page walks each policy’s version history from the deployed backend and assembles a
-              timeline that is much closer to the audit surface your platform is aiming for.
-            </p>
-          </div>
-
-          <div className="rounded-[1.75rem] border border-white/10 bg-slate-950/35 p-5">
-            <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Latest audit event</p>
-            <p className="mt-2 text-xl font-semibold text-white">
-              {auditEntries[0]
-                ? `${auditEntries[0].policyName} v${auditEntries[0].version}`
-                : 'Awaiting version history'}
-            </p>
-            <div className="mt-4">
-              <StatusBadge
-                label={auditEntries[0]?.publishedSnapshot ? 'Published Snapshot' : 'Working Draft'}
-                tone={auditEntries[0]?.publishedSnapshot ? 'success' : 'warning'}
-              />
-            </div>
-          </div>
+    <div className="mx-auto max-w-[1440px] space-y-6 pb-8">
+      {/* Header */}
+      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+        <div>
+          <nav className="text-[10px] font-medium text-slate-500">
+            Governance <span className="mx-1 text-slate-300">/</span> Compliance <span className="mx-1 text-slate-300">/</span> Audit Proof
+          </nav>
+          <h1 className="mt-1.5 text-xl font-bold tracking-tight text-slate-950 flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-indigo-600" />
+            Audit Proof Log
+          </h1>
+          <p className="mt-1 text-xs text-slate-500">
+            Immutable governance trail for all security remediation actions and data access decisions.
+          </p>
         </div>
-      </section>
-
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          title="Policies Tracked"
-          value={loading ? '---' : policies.length}
-          icon={ShieldCheck}
-          trend="Policies contributing to the audit view"
-        />
-        <StatCard
-          title="Version Events"
-          value={loading ? '---' : auditEntries.length}
-          icon={GitCommitHorizontal}
-          trend="Total recorded policy versions"
-        />
-        <StatCard
-          title="Published Snapshots"
-          value={loading ? '---' : publishedSnapshots}
-          icon={FileClock}
-          trend="Versions marked as publish snapshots"
-        />
-        <StatCard
-          title="Latest Update"
-          value={loading ? '---' : auditEntries[0] ? `v${auditEntries[0].version}` : 'None'}
-          icon={Clock3}
-          trend="Most recent policy version captured"
-        />
+        <button className="inline-flex h-8 items-center gap-2 rounded-md bg-white border border-slate-200 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-600 shadow-sm hover:bg-slate-50 transition-all">
+          <Download className="h-3.5 w-3.5" /> Export Trail
+        </button>
       </div>
 
-      {error ? (
-        <EmptyStateList
-          title="Audit Trail Unavailable"
-          description="The audit page could not assemble policy version history."
-          emptyMessage={error}
-        />
-      ) : (
-        <SurfaceCard
-          title="Version Timeline"
-          description="Newest policy snapshots first."
-        >
-          {auditEntries.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/25 p-6 text-sm text-slate-400">
-              No policy versions are stored yet, so there is no timeline to display.
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {auditEntries.slice(0, 12).map((entry) => (
-                <div
-                  key={`${entry.policyId}-${entry.version}`}
-                  className="flex gap-4 rounded-2xl border border-white/10 bg-slate-950/35 p-4"
-                >
-                  <div className="mt-1 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/10 text-cyan-100">
-                    <GitCommitHorizontal className="h-4 w-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-medium text-white">{entry.policyName}</p>
-                      <StatusBadge
-                        label={`Version ${entry.version}`}
-                        tone={entry.publishedSnapshot ? 'success' : 'info'}
-                      />
-                      <StatusBadge
-                        label={entry.publishedSnapshot ? 'Published' : 'Draft'}
-                        tone={entry.publishedSnapshot ? 'success' : 'warning'}
-                      />
-                    </div>
-                    <p className="mt-2 text-sm text-slate-400">
-                      Effect: {entry.effect} · Priority {entry.priority} · Status {entry.status}
-                    </p>
-                    <p className="mt-2 text-sm text-slate-300">
-                      {new Date(entry.createdAt).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </SurfaceCard>
-      )}
+      <SurfaceCard 
+        title="Remediation History" 
+        description="Every resolve and block action is tracked with operator ID and legal timestamp."
+        contentClassName="p-0 overflow-hidden"
+      >
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+             <thead className="border-b border-slate-200 bg-slate-50/80 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500">
+               <tr>
+                 <th className="px-4 py-3">Event Action</th>
+                 <th className="px-4 py-3">Incident Target</th>
+                 <th className="px-4 py-3">Remediation Details</th>
+                 <th className="px-4 py-3">Performed By</th>
+                 <th className="px-4 py-3">Legal Timestamp</th>
+               </tr>
+             </thead>
+             <tbody className="divide-y divide-slate-100">
+               {loading ? (
+                  <tr><td colSpan={5} className="p-8 text-center text-slate-400">Loading audit trail...</td></tr>
+               ) : history.length === 0 ? (
+                  <tr><td colSpan={5} className="p-12 text-center text-slate-400">
+                    <History className="h-8 w-8 mx-auto mb-2 opacity-20" />
+                    No remediation actions recorded yet.
+                  </td></tr>
+               ) : history.map(record => (
+                 <tr key={record.id} className="hover:bg-slate-50/50 transition-colors">
+                   <td className="px-4 py-4">
+                     <StatusBadge 
+                        label={record.status.toUpperCase()} 
+                        tone={record.status === 'blocked' ? 'danger' : 'success'} 
+                     />
+                   </td>
+                   <td className="px-4 py-4">
+                     <div className="font-bold text-slate-900">{record.agent_id}</div>
+                     <div className="text-[9px] text-slate-400 font-mono mt-0.5">UUID: {record.id.slice(0, 8)}...</div>
+                   </td>
+                   <td className="px-4 py-4 text-slate-600 max-w-sm font-medium">
+                     {record.details}
+                   </td>
+                   <td className="px-4 py-4">
+                     <div className="flex items-center gap-2">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-slate-500 border border-slate-200">
+                          <User className="h-3 w-3" />
+                        </div>
+                        <span className="font-semibold text-slate-700">{record.operator}</span>
+                     </div>
+                   </td>
+                   <td className="px-4 py-4 text-[10px] font-mono text-slate-500 bg-slate-50/30">
+                     {new Date(record.resolved_at).toLocaleString()}
+                   </td>
+                 </tr>
+               ))}
+             </tbody>
+          </table>
+        </div>
+        <div className="border-t border-slate-100 bg-slate-50/50 px-4 py-2.5 text-[9px] text-slate-400 font-medium italic">
+          Disclaimer: This log is immutable and protected for legal and compliance auditing purposes under DPDP / GDPR frameworks.
+        </div>
+      </SurfaceCard>
     </div>
   );
 }

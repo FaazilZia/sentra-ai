@@ -25,3 +25,7 @@ class Incident(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     response_excerpt: Mapped[str] = mapped_column(String(1000), default="", nullable=False)
     
     event_metadata: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    
+    # Audit Proof Fields
+    resolved_by_id: Mapped[UUID | None] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), index=True, nullable=True)
+    resolved_at: Mapped[datetime | None] = mapped_column(nullable=True)

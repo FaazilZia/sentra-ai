@@ -24,7 +24,7 @@ const navigation = [
   { name: 'Inventory', href: '/app/inventory', icon: Box },
   { name: 'Observability', href: '/app/observability', icon: Activity },
   { name: 'Risk Center', href: '/app/risk', icon: ShieldAlert },
-  { name: 'Audit Log', href: '/app/audit', icon: History },
+  { name: 'Audit Proof', href: '/app/audit', icon: History },
   { name: 'Governance', href: '/app/governance', icon: FileSignature },
   { name: 'Privacy & Consent', href: '/app/privacy', icon: ShieldCheck },
   { name: 'Board Review', href: '/app/board-review', icon: Presentation },
