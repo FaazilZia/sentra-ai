@@ -234,13 +234,15 @@ export async function askAI(prompt: string): Promise<string> {
   
   return data.response;
 }
-export async function grantConsent(token: string): Promise<any> {
+export async function grantConsent(token: string | null): Promise<any> {
+  if (!token) throw new Error("Auth token missing");
   return apiRequest<any>('/consent/grant', {
     method: 'POST'
   }, token);
 }
 
-export async function withdrawConsent(token: string): Promise<any> {
+export async function withdrawConsent(token: string | null): Promise<any> {
+  if (!token) throw new Error("Auth token missing");
   return apiRequest<any>('/consent/withdraw', {
     method: 'POST'
   }, token);
@@ -254,19 +256,22 @@ export type ConsentEvent = {
   hash: string;
 };
 
-export async function fetchConsentHistory(token: string): Promise<ConsentEvent[]> {
+export async function fetchConsentHistory(token: string | null): Promise<ConsentEvent[]> {
+  if (!token) return [];
   return apiRequest<ConsentEvent[]>('/consent/history', {
     method: 'GET'
   }, token);
 }
 
-export async function triggerScan(token: string): Promise<any> {
+export async function triggerScan(token: string | null): Promise<any> {
+  if (!token) throw new Error("Auth token missing");
   return apiRequest<any>('/incidents/scan', {
     method: 'POST'
   }, token);
 }
 
-export async function chatWithCopilot(message: string, token: string): Promise<any> {
+export async function chatWithCopilot(message: string, token: string | null): Promise<any> {
+  if (!token) throw new Error("Auth token missing");
   return apiRequest<any>('/ai/chat', {
     method: 'POST',
     body: JSON.stringify({ message })

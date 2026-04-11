@@ -205,7 +205,7 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {recentViolations.map((violation: any) => (
+                  {recentViolations.map((violation) => (
                     <tr key={violation.id} className="transition hover:bg-slate-50/80">
                       <td className="px-3 py-2.5">
                         <StatusBadge

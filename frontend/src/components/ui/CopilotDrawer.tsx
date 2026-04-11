@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BrainCircuit, X, Send, Sparkles, MessageSquare, ShieldCheck, Loader2 } from 'lucide-react';
+import { BrainCircuit, X, Send, Sparkles, ShieldCheck, Loader2 } from 'lucide-react';
 import { chatWithCopilot } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 
