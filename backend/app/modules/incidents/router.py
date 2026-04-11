@@ -111,3 +111,25 @@ def update_incident_status(
     db.refresh(incident)
     
     return {"status": "ok", "incident_id": str(incident.id), "new_status": incident.status}
+
+@router.post("/scan", status_code=status.HTTP_201_CREATED)
+def trigger_deep_scan(
+    db: DbSession,
+    tenant: Annotated[Tenant, Depends(get_current_tenant)],
+    current_user: Annotated[dict, Depends(get_current_user)],
+) -> dict:
+    """
+    Triggers the Deep Scan simulator to generate 3-5 realistic incidents.
+    """
+    from app.modules.incidents.service import IncidentService
+    
+    # We pass current_user['id'] which is a UUID string or object depending on deps
+    user_id = current_user.id if hasattr(current_user, 'id') else uuid.UUID(current_user['id'])
+    
+    incidents = IncidentService.trigger_scan(db, user_id=user_id, tenant_id=tenant.id)
+    
+    return {
+        "status": "success",
+        "message": f"Deep Scan complete. {len(incidents)} incidents detected.",
+        "count": len(incidents)
+    }

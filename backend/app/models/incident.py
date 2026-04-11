@@ -12,6 +12,7 @@ class Incident(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "incidents"
 
     tenant_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("tenants.id"), index=True)
+    user_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), index=True, nullable=False)
     agent_id: Mapped[str] = mapped_column(String(255), index=True, nullable=False)
     policy_id: Mapped[UUID | None] = mapped_column(PGUUID(as_uuid=True), ForeignKey("policies.id"), index=True, nullable=True)
     

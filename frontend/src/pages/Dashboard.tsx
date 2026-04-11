@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
-import {
   AlertTriangle,
   Box,
   BrainCircuit,
+  LoaderCircle,
   MoreVertical,
   ShieldCheck,
   ShieldX,
@@ -12,49 +11,54 @@ import { EmptyStateList } from '../components/ui/EmptyStateList';
 import { StatCard } from '../components/ui/StatCard';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { SurfaceCard } from '../components/ui/SurfaceCard';
-import { fetchPolicies, PolicyResponse } from '../lib/api';
+import { fetchPolicies, PolicyResponse, triggerScan } from '../lib/api';
 import { useAuth } from '../lib/auth';
 
 export default function DashboardPage() {
   const { accessToken, user } = useAuth();
   const [policies, setPolicies] = useState<PolicyResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const loadData = async () => {
     if (!accessToken) {
       setLoading(false);
       return;
     }
-
-    const token = accessToken;
-    let active = true;
-
-    async function loadPolicies() {
-      try {
-        const response = await fetchPolicies(token);
-        if (active) {
-          setPolicies(response.items);
-          setError(null);
-        }
-      } catch (fetchError) {
-        if (active) {
-          const message = fetchError instanceof Error ? fetchError.message : 'Unable to load policies';
-          setError(message);
-        }
-      } finally {
-        if (active) {
-          setLoading(false);
-        }
-      }
+    setLoading(true);
+    try {
+      const response = await fetchPolicies(accessToken);
+      setPolicies(response.items);
+      setError(null);
+    } catch (fetchError) {
+      const message = fetchError instanceof Error ? fetchError.message : 'Unable to load policies';
+      setError(message);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    void loadPolicies();
-
-    return () => {
-      active = false;
-    };
+  useEffect(() => {
+    loadData();
   }, [accessToken]);
+
+  const handleStartScan = async () => {
+    if (!accessToken || isScanning) return;
+    
+    setIsScanning(true);
+    try {
+      await triggerScan(accessToken);
+      // Wait a bit for the "Deep Scan" feel
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      await loadData();
+      alert('Deep Scan complete! 3-5 randomized incidents have been detected and logged to the Security Feed.');
+    } catch (err) {
+      alert('Scan failed: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    } finally {
+      setIsScanning(false);
+    }
+  };
 
   const publishedPolicies = policies.filter((policy) => policy.status === 'published').length;
   const enabledPolicies = policies.filter((policy) => policy.enabled).length;
@@ -95,8 +99,23 @@ export default function DashboardPage() {
             {user?.full_name ?? 'current operator'}.
           </p>
         </div>
-        <button className="inline-flex h-8 items-center justify-center rounded-md bg-slate-900 px-3 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800">
-          Start Scan
+        <button 
+          onClick={handleStartScan}
+          disabled={isScanning}
+          className={`inline-flex h-8 items-center justify-center rounded-md px-3 text-xs font-semibold shadow-sm transition ${
+            isScanning 
+              ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
+              : 'bg-slate-900 text-white hover:bg-slate-800'
+          }`}
+        >
+          {isScanning ? (
+            <span className="flex items-center gap-2">
+              <LoaderCircle className="h-3 w-3 animate-spin" />
+              Scanning Deep...
+            </span>
+          ) : (
+            'Start Deep Scan'
+          )}
         </button>
       </div>
 

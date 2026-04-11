@@ -234,3 +234,38 @@ export async function askAI(prompt: string): Promise<string> {
   
   return data.response;
 }
+export async function grantConsent(token: string): Promise<any> {
+  return fetchApi('/consent/grant', {
+    method: 'POST',
+    token
+  });
+}
+
+export async function withdrawConsent(token: string): Promise<any> {
+  return fetchApi('/consent/withdraw', {
+    method: 'POST',
+    token
+  });
+}
+
+export type ConsentEvent = {
+  id: string;
+  action: 'GRANT' | 'WITHDRAW';
+  timestamp: string;
+  version: string;
+  hash: string;
+};
+
+export async function fetchConsentHistory(token: string): Promise<ConsentEvent[]> {
+  return fetchApi('/consent/history', {
+    method: 'GET',
+    token
+  });
+}
+
+export async function triggerScan(token: string): Promise<any> {
+  return fetchApi('/incidents/scan', {
+    method: 'POST',
+    token
+  });
+}

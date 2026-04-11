@@ -11,6 +11,7 @@ import {
   PanelLeftOpen,
   Radio,
   Zap,
+  ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import { SidebarItem } from '../ui/SidebarItem';
@@ -25,6 +26,7 @@ const navigation = [
   { name: 'Risk Center', href: '/app/risk', icon: ShieldAlert },
   { name: 'Audit Log', href: '/app/audit', icon: History },
   { name: 'Governance', href: '/app/governance', icon: FileSignature },
+  { name: 'Privacy & Consent', href: '/app/privacy', icon: ShieldCheck },
   { name: 'Board Review', href: '/app/board-review', icon: Presentation },
 ];
 
