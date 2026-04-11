@@ -1,123 +1,74 @@
-# Sentra AI
+# Sentra AI — The Intelligent Control Tower for AI Agent Governance
 
 **Live Demo:** [https://sentra-ai-nudb.vercel.app](https://sentra-ai-nudb.vercel.app)
 
-Sentra AI is an enterprise AI governance platform for teams that need visibility and control over how autonomous agents access internal data, policies, and approvals.
+Sentra AI is an enterprise-grade AI governance and security platform designed for the age of autonomous agents. It provides organizations with the centralized oversight and real-time control necessary to deploy AI agents safely. Sentra AI acts as a "Trust Layer," ensuring that every action taken by an AI agent aligns with corporate policies, data privacy regulations (like India's DPDP Act), and security guardrails.
 
-This repository currently includes:
+---
 
-- a React + Vite frontend for a governance dashboard
-- a FastAPI backend with multi-tenant and policy foundations
-- policy versioning and evaluation-oriented backend modules
-- deployment-ready configuration for Vercel
+## 🚀 Recent Platform Updates
 
-## Product Direction
+We have recently transitioned the platform from a simulated prototype to a **functional governance engine**. Key updates include:
 
-Sentra AI is designed to become a trust layer for enterprise AI operations. The platform is moving toward a workflow where organizations can:
+- **Stability & Type Safety**: Conducted a full codebase cleanup, removing all TypeScript suppressions and ensuring a 100% type-safe frontend foundation.
+- **Real Asynchronous Scanning**: Implemented a robust architecture using **Celery and Redis**. "Deep Scans" now run as true background tasks, allowing the platform to process large-scale infrastructure without blocking the UI.
+- **Interactive Action Center**: Launched a real-time remediation suite. Security operators can now **Resolve**, **Block**, or **Mute** detected threats directly from the Dashboard and Security Feed.
+- **Real Data Integration**: Built the `GovernanceScanner` engine. The platform now scans actual data sources (Logs, CSVs, and localized files) to detect real-world PII leaks, rather than relying on mock templates.
 
-- define policy controls for agent access
-- evaluate whether an AI action should be allowed, blocked, masked, or escalated
-- track policy versions and approval state
-- maintain audit visibility for decisions and exceptions
-- expose clean executive-facing summaries of posture and risk
+---
 
-## Current Experience
+## 🛠️ Product Capabilities
 
-The frontend now presents Sentra AI as a more polished governance command center with:
+Sentra AI allows organizations to:
 
-- an executive-style overview dashboard
-- live policy counts loaded from the backend
-- placeholders for observability, inventory, risk, audit, and governance views
-- backend health visibility in the application shell
+- **Unified Visibility**: Monitor real-time telemetry from AI agents via the Sentra Edge SDK.
+- **Policy Enforcement**: Define and evaluate sophisticated access controls (Allow, Block, Mask, or Escalate).
+- **Incident Remediation**: Track and resolve policy violations through a centralized Incident Ledger.
+- **Compliance Mapping**: Ensure adherence to global privacy standards (GDPR, DPDP) through automatic scanning and classification.
+- **Executive Oversight**: Access premium, high-level summaries of organizational AI risk and security posture.
 
-The backend already contains the early platform building blocks for:
+---
 
-- authentication and tenant-aware routing
-- policies, policy versions, and validation
-- decision and audit related modules
-- supporting models for roles, users, agents, and integrations
-
-## Repository Structure
+## 📂 Repository Structure
 
 ```text
 Sentra AI/
-├── frontend/                 # Vite + React + Tailwind dashboard
-├── backend/                  # FastAPI API and platform services
-├── VERCEL_DEPLOY.md          # Vercel deployment notes
-└── README.md                 # Project overview
+├── frontend/                 # React + Vite + TypeScript dashboard
+├── backend/                  # FastAPI + Celery + SQLAlchemy governance engine
+├── VERCEL_DEPLOY.md          # Production deployment documentation
+└── README.md                 # Project overview & recent updates
 ```
 
-## Key Paths
+## 🏗️ Technical Stack
 
-Frontend:
+- **Frontend**: React 18, Vite, TypeScript, Tailwind CSS (Glassmorphism UI)
+- **Backend**: FastAPI, SQLAlchemy (PostgreSQL), Pydantic v2
+- **Worker/Task Queue**: Celery, Redis (Asynchronous scanning architecture)
+- **Infrastructure**: Vercel (Frontend/API), Docker (Local Dev)
 
-- [frontend/src/pages/Dashboard.tsx](/Users/mohammadfaazilzia/Desktop/Sentra AI/frontend/src/pages/Dashboard.tsx)
-- [frontend/src/components/layout/AppLayout.tsx](/Users/mohammadfaazilzia/Desktop/Sentra AI/frontend/src/components/layout/AppLayout.tsx)
-- [frontend/src/components/layout/Sidebar.tsx](/Users/mohammadfaazilzia/Desktop/Sentra AI/frontend/src/components/layout/Sidebar.tsx)
-- [frontend/src/components/layout/Topbar.tsx](/Users/mohammadfaazilzia/Desktop/Sentra AI/frontend/src/components/layout/Topbar.tsx)
-- [frontend/src/index.css](/Users/mohammadfaazilzia/Desktop/Sentra AI/frontend/src/index.css)
+## 💻 Local Development
 
-Backend:
+### Prerequisites
+- Python 3.12+
+- Node.js 18+
+- Redis (Required for background scanning)
 
-- [backend/app/main.py](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/app/main.py)
-- [backend/app/api/router.py](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/app/api/router.py)
-- [backend/app/core/config.py](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/app/core/config.py)
-- [backend/app/modules/policies/service.py](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/app/modules/policies/service.py)
-- [backend/app/modules/policies/router.py](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/app/modules/policies/router.py)
-- [backend/app/models/policy.py](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/app/models/policy.py)
-- [backend/app/models/policy_version.py](/Users/mohammadfaazilzia/Desktop/Sentra AI/backend/app/models/policy_version.py)
-
-## Local Development
-
-Frontend:
-
+### Frontend Setup
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-Backend:
-
+### Backend Setup
 ```bash
 cd backend
 python -m venv .venv
 source .venv/bin/activate
-pip install -e .
+pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-If the frontend should talk to the backend locally or on Vercel, set:
+## 📈 Platform Status
 
-```bash
-VITE_API_BASE_URL=https://your-backend-project.vercel.app/api/v1
-```
-
-## Deployment
-
-This repo is prepared for a split Vercel deployment:
-
-- `frontend/` as the dashboard UI
-- `backend/` as the FastAPI API layer
-
-Recommended backend production values:
-
-```bash
-APP_ENV=production
-DEBUG=false
-API_PREFIX=/api/v1
-SECRET_KEY=your-secret
-BOOTSTRAP_DB_ON_STARTUP=false
-```
-
-More detailed deployment notes live in [VERCEL_DEPLOY.md](/Users/mohammadfaazilzia/Desktop/Sentra AI/VERCEL_DEPLOY.md).
-
-## Tech Stack
-
-- Frontend: React, Vite, TypeScript, Tailwind CSS
-- Backend: FastAPI, SQLAlchemy, Pydantic, Alembic
-- Infrastructure: Vercel, PostgreSQL, Redis, Celery, Docker
-
-## Status
-
-Sentra AI is in an active build phase. The foundation is in place, the UI is becoming more product-like, and the backend structure is ready for deeper policy, audit, approval, and data security workflows.
+Sentra AI is currently in **Active Build Phase**. The platform core is stable, real-time scanning is live, and we are actively expanding our data connector library to support AWS S3, Google Cloud Storage, and SQL databases.
