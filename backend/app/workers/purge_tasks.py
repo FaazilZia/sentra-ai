@@ -1,7 +1,6 @@
 from sqlalchemy import delete
 from app.db.session import SessionLocal
 from app.models.incident import Incident
-from app.models.request import Request
 from app.models.user import User
 from app.workers.celery_app import celery_app
 
@@ -16,10 +15,7 @@ def purge_user_data(user_id: str):
         # 1. Delete all security incidents
         db.execute(delete(Incident).where(Incident.user_id == user_id))
         
-        # 2. Delete all AI requests/logs
-        db.execute(delete(Request).where(Request.user_id == user_id))
-        
-        # 3. Mark user as inactive or delete depending on policy
+        # 2. Mark user as inactive or delete depending on policy
         user = db.query(User).filter(User.id == user_id).first()
         if user:
             user.is_active = False
