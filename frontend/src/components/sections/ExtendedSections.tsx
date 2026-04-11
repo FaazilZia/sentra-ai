@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
-import { Reveal } from '@/components/ui/Reveal';
-import { siteContent } from '@/lib/content';
+import { Reveal } from '../ui/Reveal';
+import { siteContent } from '../../lib/content';
 import { Shield, Lock, Fingerprint, Code2, LineChart, CheckCircle2, Zap, Building2, Rocket, Activity } from 'lucide-react';
 
 export const HowItWorks = () => {
@@ -162,7 +162,7 @@ export const LivePreview = () => {
                   <div className="flex flex-col h-full justify-center">
                      <div className="glass-card bg-slate-50 p-10 border-slate-100 h-full flex flex-col justify-end gap-6 shadow-inner">
                         <div className="flex justify-between items-end h-40 gap-3">
-                        {[30, 45, 40, 65, 55, 50, 85, 75, 95, 80, 100, 85, 75, 65, 80, 75, 60, 45, 55, 40].map((h, i) => (
+                        {[30, 45, 40, 65, 55, 50, 85, 75, 95, 80, 100, 85, 75, 65, 80, 75, 60, 45, 55, 40].map((h: number, i: number) => (
                           <motion.div 
                               key={i}
                               className="flex-1 bg-gradient-to-t from-blue-400/20 to-blue-600 rounded-full"

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
-import { Reveal } from '@/components/ui/Reveal';
-import { siteContent } from '@/lib/content';
+import { Reveal } from '../ui/Reveal';
+import { siteContent } from '../../lib/content';
 import { ArrowRight, Play, Menu, X, Lock, Sun, Moon } from 'lucide-react';
 
 export const Navbar = () => {
@@ -116,7 +116,7 @@ const LiveLogStream = () => {
 
   return (
     <div className="space-y-3 font-mono text-[10px] md:text-sm">
-      {logs.map(log => (
+      {logs.map((log: any) => (
         <motion.div 
           key={log.id} 
           initial={{ opacity: 0, x: -10 }} 
@@ -215,7 +215,7 @@ export const Hero = () => {
                       <div className="text-xl font-black text-blue-700">99.8%</div>
                     </div>
                   </div>
-                  {[40, 70, 45, 90, 65, 80, 50, 100, 75, 60, 85, 55, 95, 70, 40, 100, 80, 60, 40, 90].map((height, i) => (
+                  {[40, 70, 45, 90, 65, 80, 50, 100, 75, 60, 85, 55, 95, 70, 40, 100, 80, 60, 40, 90].map((height: number, i: number) => (
                     <motion.div 
                       key={i} 
                       className="flex-1 bg-gradient-to-t from-blue-400/20 to-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.15)] rounded-t-[2px]"
@@ -377,7 +377,7 @@ export const Footer = () => {
               {siteContent.footer.description}
             </p>
             <div className="flex gap-4">
-               {[1, 2, 3].map(i => (
+               {[1, 2, 3].map((i: number) => (
                  <motion.div 
                    key={i} 
                    whileHover={{ scale: 1.1, backgroundColor: '#2563eb', color: '#fff' }}
