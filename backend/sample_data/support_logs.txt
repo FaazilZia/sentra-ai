@@ -1,0 +1,4 @@
+TIMESTAMP: 2026-04-12T10:15:22Z
+AGENT: CustomerSupport-Bot
+MESSAGE: User requested refund. Provided Aadhaar: 5544-2211-9988.
+ACTION: PROCESSED

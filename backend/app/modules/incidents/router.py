@@ -10,6 +10,9 @@ from app.models.tenant import Tenant
 from pydantic import BaseModel
 from celery.result import AsyncResult
 from app.workers.celery_app import celery_app
+from app.modules.policies.service import PolicyService
+from app.schemas.policy import PolicyCreate, PolicyDocument, PolicyScope, PolicyConditions, PolicyUpdate
+from app.models.enums import PolicyEffect
 
 router = APIRouter(prefix="/incidents", tags=["Incidents"])
 
@@ -109,10 +112,42 @@ def update_incident_status(
         raise HTTPException(status_code=404, detail="Incident not found")
         
     incident.status = incident_in.status
+    
+    # NEW: Trigger policy enforcement if blocked
+    if incident.status == "blocked":
+        policy_service = PolicyService(db)
+        if incident.policy_id:
+            # Disable the existing policy that caused the violation
+            policy_service.disable_and_publish_policy(tenant.id, incident.policy_id)
+        else:
+            # Fallback: Create a new Deny-All policy for this agent
+            new_policy_in = PolicyCreate(
+                tenant_id=tenant.id,
+                name=f"Auto-Block: {incident.agent_id}",
+                description=f"Automated restriction created after blocking incident {incident_id}.",
+                enabled=True,
+                priority=10, # High priority
+                effect=PolicyEffect.deny,
+                document=PolicyDocument(
+                    scope=PolicyScope(agents=[incident.agent_id]),
+                    conditions=PolicyConditions(match_all=True),
+                    obligations=[]
+                )
+            )
+            created_policy = policy_service.create_policy(new_policy_in)
+            policy_service.publish_policy(tenant.id, created_policy.id)
+            # Link it for future reference
+            incident.policy_id = created_policy.id
+
     db.commit()
     db.refresh(incident)
     
-    return {"status": "ok", "incident_id": str(incident.id), "new_status": incident.status}
+    return {
+        "status": "ok", 
+        "incident_id": str(incident.id), 
+        "new_status": incident.status,
+        "policy_enforced": True if incident.status == "blocked" else False
+    }
 
 @router.post("/scan", status_code=status.HTTP_201_CREATED)
 def trigger_deep_scan(

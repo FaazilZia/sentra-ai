@@ -79,8 +79,11 @@ export default function SecurityFeedPage() {
         if (filter === 'all') return true;
         return false; // Remove from list if it no longer matches the filter
       }));
+      if (newStatus === 'blocked') {
+        alert('Security Policy updated: The offending agent access has been restricted.');
+      }
     } catch (err) {
-      alert('Failed to update incident status');
+      alert('Failed to update incident: ' + (err instanceof Error ? err.message : 'Unknown error'));
     } finally {
       setActingOn(null);
     }

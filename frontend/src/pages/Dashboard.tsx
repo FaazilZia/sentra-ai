@@ -97,6 +97,9 @@ export default function DashboardPage() {
     try {
       await updateIncidentStatus(accessToken, id, newStatus);
       await loadData();
+      if (newStatus === 'blocked') {
+        alert('Security Policy updated: The offending agent access has been restricted.');
+      }
     } catch (err) {
       alert('Failed to update incident: ' + (err instanceof Error ? err.message : 'Unknown error'));
     } finally {
