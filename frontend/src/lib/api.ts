@@ -1,8 +1,9 @@
 
 const defaultApiBaseUrl = 'https://sentra-ai-wz6m.onrender.com/api/v1';
 
+const apiEnvUrl = import.meta.env.VITE_API_BASE_URL || defaultApiBaseUrl;
 export const apiBaseUrl = (
-  import.meta.env.VITE_API_BASE_URL || defaultApiBaseUrl
+  apiEnvUrl.includes('/api/v') ? apiEnvUrl : `${apiEnvUrl.replace(/\/$/, '')}/api/v1`
 ).replace(/\/$/, '');
 
 export interface TokenResponse {
@@ -248,7 +249,6 @@ export function deleteApiKey(accessToken: string, keyId: string): Promise<void> 
   return apiRequest<void>(`/api-keys/${keyId}`, { method: 'DELETE' }, accessToken);
 }
 
-import { supabase } from './supabaseClient';
 
 export async function askAI(prompt: string): Promise<string> {
   const { data, error } = await supabase.functions.invoke('generate', {
