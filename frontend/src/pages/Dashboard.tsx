@@ -124,7 +124,7 @@ export default function DashboardPage() {
       details: inc.details,
       severity: inc.severity >= 80 ? 'High' : inc.severity >= 50 ? 'Medium' : 'Low',
       timestamp: new Date(inc.created_at).toLocaleTimeString(),
-      isAiDetected: (inc.metadata as any)?.ai_insight === true,
+      isAiDetected: inc.metadata?.ai_insight === true,
     }));
   }, [incidents]);
 

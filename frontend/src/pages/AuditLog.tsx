@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '@/lib/auth';
-import { fetchWrapper } from '@/lib/api';
-import { SurfaceCard } from '@/components/ui/SurfaceCard';
-import { StatusBadge } from '@/components/ui/StatusBadge';
+import { useAuth } from '../lib/auth';
+import { apiRequest } from '../lib/api';
+import { SurfaceCard } from '../components/ui/SurfaceCard';
+import { StatusBadge } from '../components/ui/StatusBadge';
 import { User, Download, ShieldCheck, History } from 'lucide-react';
 
 interface AuditRecord {
@@ -24,8 +24,8 @@ export default function AuditLog() {
     async function loadHistory() {
       if (!accessToken) return;
       try {
-        const data = await fetchWrapper(accessToken, '/incidents/history');
-        setHistory(data.items);
+        const data = await apiRequest<any>('/incidents/history', { method: 'GET' }, accessToken);
+        setHistory(data.items || []);
       } catch (err) {
         console.error('Audit Load Error:', err);
       } finally {

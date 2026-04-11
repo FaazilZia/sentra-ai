@@ -91,7 +91,12 @@ export interface IncidentResponse {
   status: string;
   prompt_excerpt: string;
   response_excerpt: string;
-  metadata: Record<string, unknown>;
+  metadata: {
+    pii_type?: string;
+    ai_insight?: boolean;
+    source?: string;
+    [key: string]: any;
+  };
   created_at: string;
 }
 
