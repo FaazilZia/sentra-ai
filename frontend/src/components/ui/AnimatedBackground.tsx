@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 interface AtomProps {
   size: number;
@@ -10,6 +10,7 @@ interface AtomProps {
 }
 
 const Atom: React.FC<AtomProps> = ({ size, top, left, rings, speedMultiplier, angle }) => {
+  const floatDuration = 6 + speedMultiplier * 4;
   return (
     <div
       className="absolute flex items-center justify-center pointer-events-none"
@@ -19,6 +20,7 @@ const Atom: React.FC<AtomProps> = ({ size, top, left, rings, speedMultiplier, an
         top,
         left,
         transform: `rotate(${angle}deg)`,
+        animation: `atom-float ${floatDuration}s ease-in-out infinite`,
       }}
     >
       {/* Nucleus */}
@@ -67,6 +69,7 @@ const Atom: React.FC<AtomProps> = ({ size, top, left, rings, speedMultiplier, an
 
 const AtomBackground: React.FC = () => {
   const [atoms, setAtoms] = useState<AtomProps[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const atomCount = Math.floor(Math.random() * 4) + 5; // 5-8 atoms
@@ -86,20 +89,36 @@ const AtomBackground: React.FC = () => {
     setAtoms(newAtoms);
   }, []);
 
+  const handleScroll = useCallback(() => {
+    if (!containerRef.current) return;
+    const scrollY = window.scrollY;
+    const blur = Math.min(scrollY / 80, 6); // max 6px blur
+    const opacity = Math.max(1 - scrollY / 800, 0.15); // fade to 0.15
+    containerRef.current.style.filter = `blur(${blur}px)`;
+    containerRef.current.style.opacity = String(opacity);
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
+
   return (
-    <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+    <div ref={containerRef} className="fixed inset-0 z-0 overflow-hidden pointer-events-none transition-[filter,opacity] duration-200">
       {atoms.map((atom, index) => (
         <Atom key={index} {...atom} />
       ))}
 
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes orbit {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes atom-float {
+          0%, 100% { transform: translate(0, 0); }
+          25% { transform: translate(6px, -10px); }
+          50% { transform: translate(-4px, -18px); }
+          75% { transform: translate(8px, -8px); }
         }
       `}} />
     </div>
