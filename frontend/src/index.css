@@ -81,3 +81,66 @@
     }
   }
 }
+
+/* ── Atom particle background ── */
+
+.atom-bg-container {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.atom-body {
+  position: absolute;
+}
+
+.atom-nucleus {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #000000;
+  border-radius: 50%;
+}
+
+.atom-ring-wrapper {
+  position: absolute;
+  inset: 0;
+}
+
+.atom-ring {
+  width: 100%;
+  height: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 50%;
+  position: relative;
+}
+
+.atom-electron {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background: #000000;
+  border-radius: 50%;
+  top: -2.5px;
+  left: 50%;
+  margin-left: -2.5px;
+  transform: scaleY(2.86);
+}
+
+@keyframes atom-orbit {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.atom-ring-speed-1 {
+  animation: atom-orbit 8s linear infinite;
+}
+.atom-ring-speed-2 {
+  animation: atom-orbit 12s linear infinite reverse;
+}
+.atom-ring-speed-3 {
+  animation: atom-orbit 16s linear infinite;
+}
