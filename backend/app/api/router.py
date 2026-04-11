@@ -10,6 +10,7 @@ from app.modules.incidents.router import router as incidents_router
 from app.modules.api_keys.router import router as api_keys_router
 from app.modules.consent.router import router as consent_router
 from app.modules.ai.router import router as ai_router
+from app.modules.connectors.router import router as connectors_router
 
 api_router = APIRouter()
 
@@ -26,6 +27,7 @@ api_router.include_router(tenants_router, tags=["tenants"])
 api_router.include_router(policies_router, tags=["policies"])
 api_router.include_router(incidents_router, tags=["incidents"])
 api_router.include_router(api_keys_router, tags=["api-keys"])
+api_router.include_router(connectors_router, tags=["connectors"])
 
 # Compliance & AI Advisory
 api_router.include_router(consent_router, prefix="/consent", tags=["consent"])

@@ -304,3 +304,22 @@ export async function chatWithCopilot(message: string, token: string | null): Pr
     body: JSON.stringify({ message })
   }, token);
 }
+export async function fetchConnectors(token: string | null): Promise<any> {
+  if (!token) return { items: [] };
+  return apiRequest<any>('/connectors/', { method: 'GET' }, token);
+}
+
+export async function createConnector(token: string | null, payload: any): Promise<any> {
+  if (!token) throw new Error("Auth token missing");
+  return apiRequest<any>('/connectors/', {
+    method: 'POST',
+    body: payload
+  }, token);
+}
+
+export async function testConnector(token: string | null, id: string): Promise<any> {
+  if (!token) throw new Error("Auth token missing");
+  return apiRequest<any>(`/connectors/${id}/test`, {
+    method: 'POST'
+  }, token);
+}
