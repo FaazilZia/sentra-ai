@@ -12,7 +12,7 @@ class BaseConnector:
         raise NotImplementedError
 
 class FileConnector(BaseConnector):
-    def __init__(self, target_dir: str, ai_brain: AIBrainService):
+    def __init__(self, target_dir: str, ai_brain: "AIBrainService"):
         self.target_dir = Path(target_dir)
         self.ai_brain = ai_brain
 
@@ -65,7 +65,7 @@ class FileConnector(BaseConnector):
         return incidents
 
 class SQLConnector(BaseConnector):
-    def __init__(self, connection_url: str, ai_brain: AIBrainService, name: str = "SQL-DB"):
+    def __init__(self, connection_url: str, ai_brain: "AIBrainService", name: str = "SQL-DB"):
         self.connection_url = connection_url
         self.ai_brain = ai_brain
         self.name = name
