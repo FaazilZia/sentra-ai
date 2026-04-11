@@ -96,7 +96,7 @@ export default function DashboardPage() {
             <span className="mx-1 text-slate-300">/</span> Real-time Scans
           </nav>
           <h1 className="mt-1.5 text-base font-semibold tracking-tight text-slate-950">
-            Data Access Compliance Dashboard
+            Governance Control Tower
           </h1>
           <p className="mt-1 text-xs text-slate-500">
             DPO view for policy coverage, risky AI access patterns, and scan readiness for{' '}
