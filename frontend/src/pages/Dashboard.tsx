@@ -225,6 +225,11 @@ export default function DashboardPage() {
         >
           {error ? (
             <div className="p-3">
+              <h3 className="text-sm font-bold text-slate-900">Policy Sync Issues</h3>
+              <p className="mt-1 text-xs text-slate-500 max-w-xs mx-auto">
+                Sentra AI reached the frontend, but the governance engine data did not load. 
+                <span className="block mt-2 font-semibold text-indigo-600 italic">Tip: Check if your Render backend is cold-starting or verify VITE_API_BASE_URL in Vercel.</span>
+              </p>
               <EmptyStateList
                 title="Policy Load Failed"
                 description="The frontend reached the backend, but policy data did not load cleanly."
