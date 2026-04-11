@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Navbar, Hero, FeatureGrid, CtaBanner, Footer } from '../components/sections/HomeSections';
 import { HowItWorks, TrustSecurity, ProblemSolution, LivePreview, UseCases } from '../components/sections/ExtendedSections';
 import AtomBackground from '../components/ui/AnimatedBackground'; // Reusing file for Atom logic

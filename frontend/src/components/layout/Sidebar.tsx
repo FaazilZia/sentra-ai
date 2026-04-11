@@ -17,15 +17,15 @@ import { SidebarItem } from '../ui/SidebarItem';
 import { cn } from '../../lib/utils';
 
 const navigation = [
-  { name: 'Overview', href: '/', icon: LayoutDashboard },
-  { name: 'Connect', href: '/connect', icon: Zap },
-  { name: 'Security Feed', href: '/security', icon: Radio },
-  { name: 'Inventory', href: '/inventory', icon: Box },
-  { name: 'Observability', href: '/observability', icon: Activity },
-  { name: 'Risk Center', href: '/risk', icon: ShieldAlert },
-  { name: 'Audit Log', href: '/audit', icon: History },
-  { name: 'Governance', href: '/governance', icon: FileSignature },
-  { name: 'Board Review', href: '/board-review', icon: Presentation },
+  { name: 'Overview', href: '/app', icon: LayoutDashboard },
+  { name: 'Connect', href: '/app/connect', icon: Zap },
+  { name: 'Security Feed', href: '/app/security', icon: Radio },
+  { name: 'Inventory', href: '/app/inventory', icon: Box },
+  { name: 'Observability', href: '/app/observability', icon: Activity },
+  { name: 'Risk Center', href: '/app/risk', icon: ShieldAlert },
+  { name: 'Audit Log', href: '/app/audit', icon: History },
+  { name: 'Governance', href: '/app/governance', icon: FileSignature },
+  { name: 'Board Review', href: '/app/board-review', icon: Presentation },
 ];
 
 interface SidebarProps {

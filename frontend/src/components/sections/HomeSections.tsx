@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import { Reveal } from '../ui/Reveal';
 import { siteContent } from '../../lib/content';
@@ -58,10 +58,11 @@ export const Navbar = () => {
           >
             {isDark ? <Sun size={16} /> : <Moon size={16} />}
           </motion.button>
-          <a href="/app" className="text-[13px] font-bold text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors px-4 uppercase tracking-widest">Sign In</a>
+          <a href="/login" className="text-[13px] font-bold text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors px-4 uppercase tracking-widest">Sign In</a>
           <motion.button 
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
+            onClick={() => window.location.href = '/app'}
             className="bg-blue-600 text-white font-black text-[13px] px-8 py-3 rounded-full transition-all shadow-[0_10px_25px_rgba(37,99,235,0.2)] hover:shadow-[0_15px_35px_rgba(37,99,235,0.3)] uppercase tracking-widest"
           >
             {siteContent.hero.ctas.primary}
@@ -164,6 +165,7 @@ export const Hero = () => {
             <motion.button 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => window.location.href = '/app'}
               className="w-full sm:w-auto bg-blue-600 text-white font-black px-12 py-6 rounded-2xl transition-all shadow-[0_20px_50px_rgba(37,99,235,0.3)] hover:shadow-[0_25px_70px_rgba(37,99,235,0.4)] flex items-center justify-center gap-3 text-lg uppercase tracking-widest"
             >
               {siteContent.cta.primary} <ArrowRight size={20} />
@@ -345,7 +347,10 @@ export const CtaBanner = () => {
             <p className="text-xl md:text-2xl text-blue-100/80 font-medium leading-relaxed max-w-2xl mx-auto mb-16 relative z-10">{siteContent.cta.subheading}</p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-10 relative z-10">
-              <button className="w-full sm:w-auto bg-white hover:bg-slate-50 text-blue-900 font-black px-14 py-6 rounded-2xl transition-all duration-300 shadow-2xl hover:scale-105 text-xl flex items-center gap-3 uppercase tracking-tighter">
+              <button 
+                onClick={() => window.location.href = '/app'}
+                className="w-full sm:w-auto bg-white hover:bg-slate-50 text-blue-900 font-black px-14 py-6 rounded-2xl transition-all duration-300 shadow-2xl hover:scale-105 text-xl flex items-center gap-3 uppercase tracking-tighter"
+              >
                 {siteContent.cta.primary} <ArrowRight size={24} />
               </button>
             </div>

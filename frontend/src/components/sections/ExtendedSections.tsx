@@ -1,8 +1,7 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { Reveal } from '../ui/Reveal';
 import { siteContent } from '../../lib/content';
-import { Shield, Lock, Fingerprint, Code2, LineChart, CheckCircle2, Zap, Building2, Rocket, ExternalLink, Activity } from 'lucide-react';
+import { Shield, Lock, Fingerprint, Code2, LineChart, CheckCircle2, Zap, Building2, Rocket, Activity } from 'lucide-react';
 
 export const HowItWorks = () => {
   return (
