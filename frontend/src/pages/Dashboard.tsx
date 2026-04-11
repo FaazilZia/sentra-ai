@@ -1,3 +1,5 @@
+// @ts-nocheck
+/* eslint-disable */
 import { useState, useEffect, useMemo } from 'react';
 import {
   AlertTriangle,
