@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = Field(default=60, alias="ACCESS_TOKEN_EXPIRE_MINUTES")
     refresh_token_expire_minutes: int = Field(default=60 * 24 * 7, alias="REFRESH_TOKEN_EXPIRE_MINUTES")
     cors_origins: str = Field(
-        default="http://localhost:5173,http://127.0.0.1:5173,https://sentra-ai-nudb.vercel.app,https://sentra-ai-tau.vercel.app",
+        default="http://localhost:5173,http://127.0.0.1:5173,https://sentra-ai-nudb.vercel.app,https://sentra-ai-tau.vercel.app,https://sentra-h9khz3zmh-faazilzias-projects.vercel.app",
         alias="CORS_ORIGINS",
     )
     supabase_jwt_secret: str = Field(default="", alias="SUPABASE_JWT_SECRET")
