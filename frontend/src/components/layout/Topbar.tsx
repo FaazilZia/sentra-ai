@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ChevronDown, LogOut, Search, Server, ShieldCheck, ShieldX } from 'lucide-react';
+import { ChevronDown, LogOut, RefreshCw, Search, Server, ShieldCheck, ShieldX } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import { apiBaseUrl } from '../../lib/api';
 
