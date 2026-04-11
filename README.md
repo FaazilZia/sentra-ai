@@ -1,5 +1,7 @@
 # Sentra AI
 
+**Live Demo:** [https://sentra-ai-nudb.vercel.app](https://sentra-ai-nudb.vercel.app)
+
 Sentra AI is an enterprise AI governance platform for teams that need visibility and control over how autonomous agents access internal data, policies, and approvals.
 
 This repository currently includes:
