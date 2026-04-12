@@ -46,18 +46,18 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
         collapsed ? 'w-20' : 'w-64'
       )}
     >
-      <div className="p-8 border-b border-white/5">
-        <Link to="/" className="flex items-center gap-3 group transition-transform hover:scale-[1.02]">
-          <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] group-hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] transition-all">
-            <span className="font-black text-xl italic">S</span>
+      <div className="border-b border-slate-800 px-6 py-8">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-white text-slate-950 shadow-lg">
+            <span className="text-xl font-bold tracking-tighter italic">S</span>
           </div>
-          <span className={cn(
-            "text-xl font-black text-white tracking-tighter group-hover:text-blue-400 transition-colors",
-            collapsed && "hidden"
-          )}>
-            SENTRA AI
-          </span>
-        </Link>
+          {!collapsed && (
+            <div className="flex flex-col min-w-0">
+              <span className="truncate text-lg font-bold tracking-tight text-white">Sentra AI</span>
+              <span className="truncate text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Compliance OS</span>
+            </div>
+          )}
+        </div>
       </div>
 
       <nav className="custom-scrollbar flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
