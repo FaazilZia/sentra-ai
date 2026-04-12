@@ -1,3 +1,4 @@
+import { supabase } from './supabaseClient';
 
 const defaultApiBaseUrl = 'https://sentra-ai-wz6m.onrender.com/api/v1';
 

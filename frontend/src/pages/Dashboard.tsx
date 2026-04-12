@@ -4,7 +4,6 @@ import {
   Box,
   BrainCircuit,
   Loader2,
-  MoreVertical,
   ShieldCheck,
   ShieldX,
 } from 'lucide-react';
@@ -14,7 +13,7 @@ import { StatCard } from '../components/ui/StatCard';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { SurfaceCard } from '../components/ui/SurfaceCard';
 import { fetchPolicies, PolicyResponse, triggerScan, fetchScanStatus, fetchIncidents, updateIncidentStatus, IncidentResponse } from '../lib/api';
-import { CircleCheck, ShieldAlert, Archive } from 'lucide-react';
+import { CircleCheck, ShieldAlert } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 
 export default function DashboardPage() {

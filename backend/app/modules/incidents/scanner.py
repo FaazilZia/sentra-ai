@@ -2,8 +2,11 @@ import re
 import os
 import logging
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, TYPE_CHECKING
 from sqlalchemy import create_engine, inspect, text
+
+if TYPE_CHECKING:
+    from .ai_brain import AIBrainService
 
 logger = logging.getLogger(__name__)
 
