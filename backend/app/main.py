@@ -17,7 +17,10 @@ configure_logging()
 app = FastAPI(title=settings.app_name, debug=settings.debug)
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex="https://.*\\.onrender\\.com",
+    allow_origins=[
+        "https://sentra-ai.onrender.com",
+        "https://sentra-ai-1.onrender.com",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
