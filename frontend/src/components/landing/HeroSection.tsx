@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { siteContent } from '../../lib/content';
 import { ArrowRight, Play } from 'lucide-react';
 import { MagneticButton } from '../ui/MagneticButton';
@@ -64,9 +65,11 @@ export const HeroSection = () => {
           className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20"
         >
           <MagneticButton strength={20}>
-            <button className="bg-gradient-to-r from-cyan-600 to-cyan-500 text-white font-black px-10 py-5 rounded-2xl transition-all shadow-xl shadow-cyan-900/30 hover:shadow-cyan-500/40 flex items-center gap-2 group text-sm uppercase tracking-[0.2em]">
-              {hero.ctas.primary} <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-            </button>
+            <Link to="/app">
+              <button className="bg-gradient-to-r from-cyan-600 to-cyan-500 text-white font-black px-10 py-5 rounded-2xl transition-all shadow-xl shadow-cyan-900/30 hover:shadow-cyan-500/40 flex items-center gap-2 group text-sm uppercase tracking-[0.2em]">
+                {hero.ctas.primary} <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+              </button>
+            </Link>
           </MagneticButton>
           
           <button className="w-full sm:w-auto px-8 py-4 rounded-xl border border-slate-800 text-white font-semibold hover:bg-white/5 transition-all flex items-center justify-center gap-2">
