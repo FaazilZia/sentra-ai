@@ -12,7 +12,8 @@ dist
 dist-ssr
 *.local
 *.tsbuildinfo
-
+frontend/vite.config.js
+frontend/vite.config.d.ts
 
 # Editor directories and files
 .vscode/*
@@ -25,12 +26,15 @@ dist-ssr
 *.sln
 *.sw?
 
-# Backend local environment and build artifacts
-backend/.env
-backend/.venv/
-backend/**/__pycache__/
-backend/build/
-backend/*.egg-info/
+# Environment & Security
+.env
+*.env
+.venv/
+venv/
+ENV/
 
-# Frontend local environment
-frontend/.env
+# Build Artifacts
+dist/
+build/
+*.egg-info/
+__pycache__/

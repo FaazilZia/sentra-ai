@@ -14,6 +14,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
+import { Link } from 'react-router-dom';
 import { SidebarItem } from '../ui/SidebarItem';
 import { cn } from '../../lib/utils';
 
@@ -45,24 +46,18 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
         collapsed ? 'w-20' : 'w-64'
       )}
     >
-      <div className="border-b border-slate-800 px-4 py-4">
-        <div className="flex items-center gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white text-sm font-bold text-slate-900">
-              S
-            </div>
-            {!collapsed ? (
-              <div className="min-w-0">
-                <span className="block truncate text-[15px] font-semibold tracking-tight text-white">
-                  Sentra AI
-                </span>
-                <span className="block truncate text-[10px] uppercase tracking-[0.22em] text-slate-500">
-                  Compliance OS
-                </span>
-              </div>
-            ) : null}
+      <div className="p-8 border-b border-white/5">
+        <Link to="/" className="flex items-center gap-3 group transition-transform hover:scale-[1.02]">
+          <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] group-hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] transition-all">
+            <span className="font-black text-xl italic">S</span>
           </div>
-        </div>
+          <span className={cn(
+            "text-xl font-black text-white tracking-tighter group-hover:text-blue-400 transition-colors",
+            collapsed && "hidden"
+          )}>
+            SENTRA AI
+          </span>
+        </Link>
       </div>
 
       <nav className="custom-scrollbar flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
