@@ -106,8 +106,8 @@ export const siteContent = {
   },
   security: {
     label: "SECURITY",
-    heading: "Enterprise-grade trust.",
-    items: [
+    heading: "Enterprise grade trust.",
+    badges: [
       {
         title: "End-to-End Encryption",
         desc: "All data is encrypted in transit and at rest using DPDP.",

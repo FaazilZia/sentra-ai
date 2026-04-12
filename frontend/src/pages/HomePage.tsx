@@ -1,4 +1,4 @@
-import { Reveal } from '../ui/Reveal';
+import { Reveal } from '../components/ui/Reveal';
 import { BackgroundLayer } from '../components/ui/BackgroundLayer';
 import { HeroSection } from '../components/landing/HeroSection';
 import { HowItWorks, ProblemSolution, LivePreview, UseCases, TrustSecurity } from '../components/sections/ExtendedSections';
