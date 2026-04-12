@@ -8,16 +8,7 @@ from pwdlib import PasswordHash
 from app.core.config import settings
 
 
-password_hash = PasswordHash(
-    "argon2",
-    argon2_id={
-        "type": "id",
-        "version": 19,
-        "memory_cost": 65536,
-        "time_cost": 3,
-        "parallelism": 4,
-    },
-)
+password_hash = PasswordHash("argon2")
 
 
 def hash_password(password: str) -> str:
