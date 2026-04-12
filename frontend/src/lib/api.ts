@@ -167,22 +167,20 @@ export async function apiRequest<T>(
     headers,
   });
 
-  if (!response.ok) {
-    let message = `Request failed with status ${response.status}`;
-
-    try {
-      const errorPayload = (await response.json()) as { detail?: string };
-      if (errorPayload.detail) {
-        message = errorPayload.detail;
-      }
-    } catch {
-      // Keep the generic message if the payload is not JSON.
-    }
-
-    throw new ApiError(message, response.status);
+  const responseData = await response.text();
+  let data;
+  try {
+    data = responseData ? JSON.parse(responseData) : {};
+  } catch (e) {
+    data = { detail: responseData || "Invalid server response" };
   }
 
-  return (await response.json()) as T;
+  if (!response.ok) {
+    const errorMsg = data?.detail || data?.message || `Request failed with status ${response.status}`;
+    throw new ApiError(errorMsg, response.status);
+  }
+
+  return data as T;
 }
 
 export function loginRequest(email: string, password: string): Promise<TokenResponse> {
