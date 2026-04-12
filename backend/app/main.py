@@ -17,7 +17,10 @@ configure_logging()
 app = FastAPI(title=settings.app_name, debug=settings.debug)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[origin.strip() for origin in settings.cors_origins.split(",") if origin.strip()],
+    allow_origins=[
+        "https://sentra-ai.onrender.com",
+        "https://sentra-ai-1.onrender.com",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -25,6 +28,10 @@ app.add_middleware(
 app.add_middleware(CorrelationIdMiddleware)
 app.include_router(api_router, prefix=settings.api_prefix)
 register_exception_handlers(app)
+
+@app.get("/")
+def read_root():
+    return {"status": "ok", "message": "Sentra AI Backend is running successfully!"}
 
 
 @app.on_event("startup")

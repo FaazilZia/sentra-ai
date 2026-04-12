@@ -58,33 +58,6 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        // --- CYBER BLUE THEME ---
-        // Overriding the previous palette with Electric Cyan for better blending with the Royal Blue background
-        cyan: {
-          50: '#ecfeff',
-          100: '#cffafe',
-          200: '#a5f3fc',
-          300: '#67e8f9',
-          400: '#22d3ee',
-          500: '#00F5FF', // Electric Cyan
-          600: '#08d1ea',
-          700: '#0e7490',
-          800: '#155e75',
-          900: '#164e63',
-        },
-        // Refined Royal Blue primitive
-        royal: {
-          50: '#f0f3ff',
-          100: '#e0e7ff',
-          200: '#c7d2fe',
-          300: '#a5b4fc',
-          400: '#818cf8',
-          500: '#3563E9', // The core background color
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
-        }
       },
       borderRadius: {
         lg: "var(--radius)",

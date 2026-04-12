@@ -107,6 +107,13 @@ class PolicyService:
         self.db.refresh(policy)
         return policy
 
+    def disable_and_publish_policy(self, tenant_id: UUID, policy_id: UUID) -> Policy:
+        """
+        Disables a policy and publishes the change immediately.
+        """
+        self.update_policy(tenant_id, policy_id, PolicyUpdate(enabled=False))
+        return self.publish_policy(tenant_id, policy_id)
+
     def list_versions(self, tenant_id: UUID, policy_id: UUID) -> list[PolicyVersion]:
         policy = self.get_policy(tenant_id, policy_id)
         return self.repository.list_versions(policy.id)

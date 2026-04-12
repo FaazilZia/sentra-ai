@@ -194,7 +194,15 @@ export const siteContent = {
       { q: "Do you store my prompts?", a: "We employ strict zero-data-retention policies by default, meaning prompts are analyzed in-memory and discarded." }
     ]
   },
-    ],
+  comparison: {
+    heading: "Why Sentra AI?",
+    rows: [
+      { feature: "Prompt Injection Detection", sentra: "Yes", langsmith: "Partial", proxy: "No" },
+      { feature: "PII Auto-Masking", sentra: "Yes", langsmith: "No", proxy: "Partial" },
+      { feature: "Real-time Alerts", sentra: "Yes", langsmith: "Yes", proxy: "No" },
+      { feature: "SOC2 Compliance", sentra: "Yes", langsmith: "Yes", proxy: "No" },
+      { feature: "Self-host Option", sentra: "Yes", langsmith: "No", proxy: "No" },
+    ]
   },
   problemSection: {
     label: "THE CHALLENGE",

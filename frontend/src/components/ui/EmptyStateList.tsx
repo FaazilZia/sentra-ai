@@ -1,38 +1,41 @@
-import { ShieldCheck, LucideIcon } from 'lucide-react';
+import { Box, LucideIcon } from 'lucide-react';
+import { ReactNode } from 'react';
 
 interface EmptyStateListProps {
   title: string;
   description?: string;
-  headerAction?: React.ReactNode;
+  headerAction?: ReactNode;
   emptyMessage?: string;
   emptyIcon?: LucideIcon;
+  actionLabel?: string;
 }
 
-export function EmptyStateList({ 
-  title, 
-  description, 
-  headerAction, 
-  emptyMessage = "No active incidents detected", 
-  emptyIcon: EmptyIcon = ShieldCheck 
+export function EmptyStateList({
+  title,
+  description,
+  headerAction,
+  emptyMessage = 'Nothing to see here — yet',
+  emptyIcon: EmptyIcon = Box,
+  actionLabel = 'Start Scan',
 }: EmptyStateListProps) {
   return (
-    <div className="bg-white/6 backdrop-blur-xl border border-white/10 shadow-lg shadow-slate-950/20 rounded-2xl overflow-hidden flex flex-col h-full">
-      <div className="p-5 border-b border-white/10 flex items-center justify-between bg-white/4">
+    <div className="flex h-full flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_4px_16px_rgba(15,23,42,0.05)]">
+      <div className="flex items-center justify-between border-b border-slate-200 bg-white p-3">
         <div>
-          <h3 className="font-semibold text-slate-100 leading-none">{title}</h3>
-          {description && <p className="text-sm text-slate-400 mt-1.5">{description}</p>}
+          <h3 className="text-base font-semibold leading-5 text-slate-900">{title}</h3>
+          {description ? <p className="mt-1 text-[10px] leading-4 text-slate-500">{description}</p> : null}
         </div>
-        {headerAction && <div>{headerAction}</div>}
+        {headerAction ? <div>{headerAction}</div> : null}
       </div>
-      
-      <div className="flex-1 p-8 flex flex-col items-center justify-center text-center min-h-[300px] bg-slate-950/10">
-        <div className="w-16 h-16 bg-white/10 border border-white/10 backdrop-blur-md rounded-full flex items-center justify-center mb-4 ring-8 ring-white/5 shadow-inner shadow-white/10">
-          <EmptyIcon className="w-8 h-8 text-emerald-300" />
+
+      <div className="flex min-h-[240px] flex-1 flex-col items-center justify-center p-5 text-center">
+        <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-400">
+          <EmptyIcon className="h-5 w-5" />
         </div>
-        <h4 className="font-semibold text-slate-100 mb-1">System Secure</h4>
-        <p className="text-sm text-slate-400 max-w-[250px]">{emptyMessage}</p>
-        <button className="mt-6 px-4 py-2 border border-white/10 bg-white/5 text-sm font-medium rounded-xl text-slate-200 hover:bg-white/10 transition-colors backdrop-blur-md">
-          View Historical Data
+        <h4 className="mt-3 text-sm font-semibold text-slate-900">Nothing to see here — yet</h4>
+        <p className="mt-1 max-w-[300px] text-xs leading-5 text-slate-500">{emptyMessage}</p>
+        <button className="mt-4 rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50">
+          {actionLabel}
         </button>
       </div>
     </div>

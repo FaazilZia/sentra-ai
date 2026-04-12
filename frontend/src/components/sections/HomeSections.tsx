@@ -1,94 +1,69 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import { Reveal } from '../ui/Reveal';
 import { siteContent } from '../../lib/content';
-import { ArrowRight, Play, Menu, X, Lock, User } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
-import PillNav from '../ui/PillNav';
-import { MagneticButton } from '../ui/MagneticButton';
+import { ArrowRight, Play, Menu, X, Lock, Sun, Moon } from 'lucide-react';
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const location = useLocation();
+  const [isDark, setIsDark] = useState(() => typeof document !== 'undefined' && document.documentElement.classList.contains('dark'));
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
-      setScrollProgress(totalHeight > 0 ? (window.scrollY / totalHeight) * 100 : 0);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-
+  const toggleTheme = () => {
+    const next = !isDark;
+    setIsDark(next);
+    document.documentElement.classList.toggle('dark', next);
+    localStorage.setItem('theme', next ? 'dark' : 'light');
+  };
 
   return (
-    <nav
-      className={`fixed top-0 w-full transition-all duration-700 ease-[0.16,1,0.3,1] ${isScrolled ? 'py-0' : 'py-4'}`}
-      style={{
-        zIndex: 1000,
-        background: isScrolled
-          ? 'rgba(3, 6, 28, 0.92)'
-          : 'rgba(5, 10, 68, 0)',
-        backdropFilter: isScrolled ? 'blur(32px) saturate(200%)' : 'blur(0px)',
-        WebkitBackdropFilter: isScrolled ? 'blur(32px) saturate(200%)' : 'blur(0px)',
-        borderBottom: isScrolled ? '1px solid rgba(0, 245, 255, 0.12)' : '1px solid transparent',
-        boxShadow: isScrolled ? '0 4px 30px rgba(0,0,0,0.6)' : 'none',
-      }}
-    >
-      {/* Scroll Progress Bar */}
-      <div
-        className="absolute bottom-0 left-0 h-[2px] transition-all duration-150"
-        style={{
-          width: `${scrollProgress}%`,
-          background: 'linear-gradient(90deg, #00F5FF, #3563E9)',
-          opacity: isScrolled ? 1 : 0,
-        }}
-      />
+    <nav className={`fixed top-0 w-full transition-all duration-500 ease-premium ${isScrolled ? 'bg-white/40 backdrop-blur-2xl border-b border-blue-500/5 shadow-sm' : 'bg-transparent pt-6'}`} style={{ zIndex: 1000 }}>
       <div className={`container-wide flex items-center justify-between transition-all duration-500 ${isScrolled ? 'h-16' : 'h-20'}`}>
         <div className="flex items-center gap-3 group cursor-pointer">
           <motion.div 
             whileHover={{ scale: 1.1, rotate: 5 }}
-            className="w-10 h-10 rounded-full overflow-hidden shadow-[0_8px_20px_rgba(0,0,0,0.3)]"
+            className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center font-bold text-white shadow-[0_8px_20px_rgba(37,99,235,0.25)]"
           >
-            <img src="/logo-s.png" alt="Sentra AI Logo" className="w-full h-full object-cover" />
+            S
           </motion.div>
-          <span className="text-2xl font-black text-gradient-purple tracking-tighter uppercase drop-shadow-md">
-            {siteContent.nav.logo}
-          </span>
+          <span className="text-2xl font-black text-slate-900 tracking-tighter uppercase">{siteContent.nav.logo}</span>
         </div>
         
-        <div className="hidden md:flex items-center">
-          <PillNav 
-            items={siteContent.nav.links}
-            activeHref={location.hash || '#'}
-            isScrolled={isScrolled}
-            linkComponent={Link}
-            className="px-2"
-          />
+        <div className="hidden md:flex items-center gap-1 px-1.5 py-1.5 rounded-full bg-white/40 border border-white/60 backdrop-blur-xl shadow-sm">
+          {siteContent.nav.links.map((link: any) => (
+            <motion.a 
+              key={link.label} 
+              href={link.href} 
+              whileHover={{ backgroundColor: 'rgba(37, 99, 235, 0.05)', color: '#2563eb' }}
+              className="px-6 py-2 rounded-full text-[13px] font-bold text-slate-600 transition-all duration-300"
+            >
+              {link.label}
+            </motion.a>
+          ))}
         </div>
 
         <div className="hidden md:flex items-center gap-4">
-
-          <MagneticButton strength={20} distance={100}>
-            <a 
-              href="/app" 
-              className="group relative px-6 py-2.5 rounded-full overflow-hidden transition-all duration-500 border border-white/10 bg-white/5 flex items-center gap-2"
-            >
-              {/* Shimmer Sweep Effect */}
-              <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 bg-gradient-to-r from-transparent via-pink-500/10 to-transparent" />
-              
-              <User size={14} className="text-slate-400 group-hover:text-pink-400 transition-colors" />
-              <span className="text-[12px] font-bold text-slate-300 group-hover:text-white uppercase tracking-[0.2em]">Sign In</span>
-            </a>
-          </MagneticButton>
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={toggleTheme}
+            className="w-9 h-9 rounded-full flex items-center justify-center border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm text-slate-600 dark:text-yellow-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+            aria-label="Toggle theme"
+          >
+            {isDark ? <Sun size={16} /> : <Moon size={16} />}
+          </motion.button>
+          <a href="/login" className="text-[13px] font-bold text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors px-4 uppercase tracking-widest">Sign In</a>
           <motion.button 
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="bg-cyan-600 text-white font-black text-[13px] px-8 py-3 rounded-full transition-all shadow-[0_10px_25px_rgba(0, 245, 255, 0.2)] hover:shadow-[0_15px_35px_rgba(0, 245, 255, 0.3)] uppercase tracking-widest"
+            onClick={() => window.location.href = '/app'}
+            className="bg-blue-600 text-white font-black text-[13px] px-8 py-3 rounded-full transition-all shadow-[0_10px_25px_rgba(37,99,235,0.2)] hover:shadow-[0_15px_35px_rgba(37,99,235,0.3)] uppercase tracking-widest"
           >
             {siteContent.hero.ctas.primary}
           </motion.button>
@@ -102,14 +77,14 @@ export const Navbar = () => {
       <motion.div 
         initial={false}
         animate={isOpen ? { height: 'auto', opacity: 1 } : { height: 0, opacity: 0 }}
-        className="md:hidden bg-[#050a44]/95 backdrop-blur-xl border-b border-pink-500/10 overflow-hidden px-6"
+        className="md:hidden bg-white/95 backdrop-blur-xl border-b border-blue-50/50 overflow-hidden px-6"
       >
         <div className="py-8 flex flex-col gap-4">
-          {siteContent.nav.links.map(link => (
-            <a key={link.label} href={link.href} className="text-lg font-bold text-white/90 hover:text-cyan-500 transition-colors py-2">{link.label}</a>
+          {siteContent.nav.links.map((link: any) => (
+            <a key={link.label} href={link.href} className="text-lg font-bold text-slate-900 py-2">{link.label}</a>
           ))}
-          <div className="h-px bg-cyan-500/10 my-4" />
-          <button className="w-full bg-cyan-600 text-white font-black py-4 rounded-xl uppercase tracking-widest">{siteContent.hero.ctas.primary}</button>
+          <div className="h-px bg-blue-50 my-4" />
+          <button className="w-full bg-blue-600 text-white font-black py-4 rounded-xl uppercase tracking-widest">{siteContent.hero.ctas.primary}</button>
         </div>
       </motion.div>
     </nav>
@@ -141,7 +116,7 @@ const LiveLogStream = () => {
 
   return (
     <div className="space-y-3 font-mono text-[10px] md:text-sm">
-      {logs.map(log => (
+      {logs.map((log: any) => (
         <motion.div 
           key={log.id} 
           initial={{ opacity: 0, x: -10 }} 
@@ -149,7 +124,7 @@ const LiveLogStream = () => {
           className="flex items-start gap-3 bg-slate-100 p-2 rounded border border-slate-200"
         >
           <span className="text-slate-400">{log.t}</span>
-          <span className={`${log.status.replace('cyan', 'pink')} font-medium`}>{log.msg}</span>
+          <span className={`${log.status.replace('cyan', 'blue')} font-medium`}>{log.msg}</span>
         </motion.div>
       ))}
     </div>
@@ -160,7 +135,7 @@ export const Hero = () => {
   return (
     <section className="relative pt-48 pb-20 md:pt-64 md:pb-32 overflow-visible flex flex-col items-center min-h-screen" style={{ isolation: 'isolate' }}>
       {/* Immersive Mesh Glows */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-screen h-screen opacity-40 pointer-events-none -z-10 bg-[radial-gradient(circle_at_50%_0%,rgba(168,127,251,0.15)_0%,transparent_50%)]" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-screen h-screen opacity-40 pointer-events-none -z-10 bg-[radial-gradient(circle_at_50%_0%,rgba(37,99,235,0.15)_0%,transparent_50%)]" />
       
       <div className="container-wide text-center relative z-10 w-full mb-24 px-4">
         <Reveal delay={0.1}>
@@ -190,7 +165,8 @@ export const Hero = () => {
             <motion.button 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="w-full sm:w-auto bg-blue-600 text-white font-black px-12 py-6 rounded-2xl transition-all shadow-[0_20px_50px_rgba(168,127,251,0.3)] hover:shadow-[0_25px_70px_rgba(168,127,251,0.4)] flex items-center justify-center gap-3 text-lg uppercase tracking-widest"
+              onClick={() => window.location.href = '/app'}
+              className="w-full sm:w-auto bg-blue-600 text-white font-black px-12 py-6 rounded-2xl transition-all shadow-[0_20px_50px_rgba(37,99,235,0.3)] hover:shadow-[0_25px_70px_rgba(37,99,235,0.4)] flex items-center justify-center gap-3 text-lg uppercase tracking-widest"
             >
               {siteContent.cta.primary} <ArrowRight size={20} />
             </motion.button>
@@ -239,10 +215,10 @@ export const Hero = () => {
                       <div className="text-xl font-black text-blue-700">99.8%</div>
                     </div>
                   </div>
-                  {[40, 70, 45, 90, 65, 80, 50, 100, 75, 60, 85, 55, 95, 70, 40, 100, 80, 60, 40, 90].map((height, i) => (
+                  {[40, 70, 45, 90, 65, 80, 50, 100, 75, 60, 85, 55, 95, 70, 40, 100, 80, 60, 40, 90].map((height: number, i: number) => (
                     <motion.div 
                       key={i} 
-                      className="flex-1 bg-gradient-to-t from-blue-400/20 to-blue-600 shadow-[0_0_15px_rgba(168,127,251,0.15)] rounded-t-[2px]"
+                      className="flex-1 bg-gradient-to-t from-blue-400/20 to-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.15)] rounded-t-[2px]"
                       animate={{ height: `${height}%` }}
                       transition={{ duration: 2, repeat: Infinity, repeatType: "reverse", delay: i * 0.1 }}
                     />
@@ -253,7 +229,7 @@ export const Hero = () => {
               <div className="glass-card p-5 space-y-4 bg-white border-slate-200 flex flex-col shadow-inner">
                   <h4 className="text-slate-400 text-[10px] font-bold uppercase mb-2 tracking-widest flex items-center justify-between">
                     <span className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-blue-600 animate-pulse shadow-[0_0_10px_rgba(168,127,251,0.4)]"></div> Guardian Feed
+                        <div className="w-2 h-2 rounded-full bg-blue-600 animate-pulse shadow-[0_0_10px_rgba(37,99,235,0.4)]"></div> Guardian Feed
                     </span>
                     <span className="opacity-50 font-mono">LIVE</span>
                   </h4>
@@ -304,10 +280,10 @@ const FeatureCard = ({ feature, index }: { feature: any, index: number }) => {
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
-        <div className="relative h-full glass-card bg-white p-10 flex flex-col group-hover:border-blue-400 group-hover:shadow-[0_40px_80px_-15px_rgba(168,127,251,0.15)] transition-all duration-700">
+        <div className="relative h-full glass-card bg-white p-10 flex flex-col group-hover:border-blue-400 group-hover:shadow-[0_40px_80px_-15px_rgba(37,99,235,0.15)] transition-all duration-700">
            {/* Moving Aura Glow */}
            <motion.div 
-             className="absolute -inset-20 opacity-0 group-hover:opacity-40 transition-opacity bg-[radial-gradient(circle_at_50%_50%,rgba(168,127,251,0.1),transparent_70%)] -z-10" 
+             className="absolute -inset-20 opacity-0 group-hover:opacity-40 transition-opacity bg-[radial-gradient(circle_at_50%_50%,rgba(37,99,235,0.1),transparent_70%)] -z-10" 
              style={{
                left: useTransform(mouseXSpring, [-0.5, 0.5], ["-30%", "10%"]),
                top: useTransform(mouseYSpring, [-0.5, 0.5], ["-30%", "10%"]),
@@ -351,7 +327,7 @@ export const FeatureGrid = () => {
         </Reveal>
         
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
-          {siteContent.features.items.map((feature, i) => (
+          {siteContent.features.items.map((feature: any, i: number) => (
             <FeatureCard key={feature.title} feature={feature} index={i} />
           ))}
         </div>
@@ -371,7 +347,10 @@ export const CtaBanner = () => {
             <p className="text-xl md:text-2xl text-blue-100/80 font-medium leading-relaxed max-w-2xl mx-auto mb-16 relative z-10">{siteContent.cta.subheading}</p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-10 relative z-10">
-              <button className="w-full sm:w-auto bg-white hover:bg-slate-50 text-blue-900 font-black px-14 py-6 rounded-2xl transition-all duration-300 shadow-2xl hover:scale-105 text-xl flex items-center gap-3 uppercase tracking-tighter">
+              <button 
+                onClick={() => window.location.href = '/app'}
+                className="w-full sm:w-auto bg-white hover:bg-slate-50 text-blue-900 font-black px-14 py-6 rounded-2xl transition-all duration-300 shadow-2xl hover:scale-105 text-xl flex items-center gap-3 uppercase tracking-tighter"
+              >
                 {siteContent.cta.primary} <ArrowRight size={24} />
               </button>
             </div>
@@ -398,7 +377,7 @@ export const Footer = () => {
               {siteContent.footer.description}
             </p>
             <div className="flex gap-4">
-               {[1, 2, 3].map(i => (
+               {[1, 2, 3].map((i: number) => (
                  <motion.div 
                    key={i} 
                    whileHover={{ scale: 1.1, backgroundColor: '#2563eb', color: '#fff' }}
@@ -409,11 +388,11 @@ export const Footer = () => {
                ))}
             </div>
           </div>
-          {siteContent.footer.columns.map(col => (
+          {siteContent.footer.columns.map((col: any) => (
             <div key={col.title}>
               <h4 className="font-black text-slate-900 mb-10 uppercase tracking-[0.3em] text-[11px]">{col.title}</h4>
               <ul className="space-y-5">
-                {col.links.map(link => (
+                {col.links.map((link: string) => (
                   <li key={link}>
                     <a href="#" className="text-slate-500 hover:text-blue-600 transition-colors font-bold text-[15px]">{link}</a>
                   </li>
