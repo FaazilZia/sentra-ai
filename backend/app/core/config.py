@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
 
     database_url: str = Field(
-        default="postgresql+psycopg://nemoguard:nemoguard@localhost:5432/nemoguard",
+        default="sqlite:///./sentra.db",
         alias="DATABASE_URL",
     )
 
