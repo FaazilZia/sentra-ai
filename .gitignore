@@ -25,3 +25,16 @@ frontend/vite.config.d.ts
 *.njsproj
 *.sln
 *.sw?
+
+# Environment & Security
+.env
+*.env
+.venv/
+venv/
+ENV/
+
+# Build Artifacts
+dist/
+build/
+*.egg-info/
+__pycache__/

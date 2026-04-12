@@ -194,14 +194,46 @@ export const siteContent = {
       { q: "Do you store my prompts?", a: "We employ strict zero-data-retention policies by default, meaning prompts are analyzed in-memory and discarded." }
     ]
   },
-  comparison: {
-    heading: "Why Sentra AI?",
-    rows: [
-      { feature: "Prompt Injection Detection", sentra: "Yes", langsmith: "Partial", proxy: "No" },
-      { feature: "PII Auto-Masking", sentra: "Yes", langsmith: "No", proxy: "Partial" },
-      { feature: "Real-time Alerts", sentra: "Yes", langsmith: "Yes", proxy: "No" },
-      { feature: "SOC2 Compliance", sentra: "Yes", langsmith: "Yes", proxy: "No" },
-      { feature: "Self-host Option", sentra: "Yes", langsmith: "No", proxy: "No" },
+    ],
+  },
+  problemSection: {
+    label: "THE CHALLENGE",
+    heading: "AI is moving fast. Security is lagging.",
+    problems: [
+      {
+        title: "DATA LEAKAGE",
+        desc: "Sensitive credentials and PII accidentally leak into model prompts or responses."
+      },
+      {
+        title: "MODEL DRIFT",
+        desc: "Autonomous agents making unpredictable decisions outside their original guardrails."
+      },
+      {
+        title: "COMPLIANCE GAPS",
+        desc: "Missing audit trails and policy enforcement in rapidly scaling AI systems."
+      }
+    ],
+    solution: {
+      title: "The Secure Gateway",
+      desc: "Sentra AI acts as the trust layer, intercepting every token to ensure compliance, safety, and operational excellence."
+    }
+  },
+  useCases: {
+    label: "ONE PLATFORM",
+    heading: "One Platform. Infinite Protection.",
+    items: [
+      {
+        title: "Enterprise SaaS",
+        desc: "Secure customer-facing AI features from prompt injection and data exfiltration."
+      },
+      {
+        title: "Banking & FinTech",
+        desc: "Enforce strict DPDP and PCI compliance across every autonomous financial agent."
+      },
+      {
+        title: "Healthcare",
+        desc: "Mask PHI in real-time while maintaining model accuracy for clinical decision support."
+      }
     ]
   }
 };

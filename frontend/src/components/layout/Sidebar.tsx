@@ -8,6 +8,7 @@ import {
   Presentation,
   User
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { SidebarItem } from '../ui/SidebarItem';
 
 const navigation = [
@@ -24,13 +25,15 @@ export function Sidebar() {
   return (
     <div className="w-64 flex-shrink-0 bg-slate-950/45 border-r border-white/10 h-full hidden md:flex flex-col shadow-2xl shadow-slate-950/30 backdrop-blur-xl z-20">
       {/* Logo Area */}
-      <div className="h-16 flex items-center px-6 border-b border-white/8">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-white/10 border border-white/10 backdrop-blur-md flex items-center justify-center shadow-lg shadow-cyan-950/20">
-            <span className="text-cyan-200 font-bold text-sm">S</span>
+      <div className="p-8 border-b border-white/5">
+        <Link to="/" className="flex items-center gap-3 group transition-transform hover:scale-[1.02]">
+          <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] group-hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] transition-all">
+            <span className="font-black text-xl italic">S</span>
           </div>
-          <span className="font-semibold text-[17px] tracking-tight text-slate-100">Sentra AI</span>
-        </div>
+          <span className="text-xl font-black text-white tracking-tighter group-hover:text-blue-400 transition-colors">
+            SENTRA AI
+          </span>
+        </Link>
       </div>
       
       {/* Main Navigation */}
