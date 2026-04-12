@@ -1,58 +1,54 @@
-import { useEffect, useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { motion, useInView, useAnimation } from 'framer-motion';
 
 interface RevealProps {
   children: React.ReactNode;
-  width?: "fit-content" | "100%";
+  width?: 'fit-content' | '100%';
   delay?: number;
+  duration?: number;
   yOffset?: number;
+  staggerChildren?: number;
 }
 
-export const Reveal = ({ children, width = "fit-content", delay = 0.25, yOffset = 75 }: RevealProps) => {
+export const Reveal = ({ 
+  children, 
+  width = '100%', 
+  delay = 0.2, 
+  duration = 0.8,
+  yOffset = 40,
+  staggerChildren = 0
+}: RevealProps) => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true });
-
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
   const mainControls = useAnimation();
-  const slideControls = useAnimation();
 
   useEffect(() => {
     if (isInView) {
-      mainControls.start("visible");
-      slideControls.start("visible");
+      mainControls.start('visible');
     }
-  }, [isInView, mainControls, slideControls]);
+  }, [isInView, mainControls]);
 
   return (
-    <div ref={ref} style={{ position: "relative", width, overflow: "hidden" }}>
+    <div ref={ref} style={{ position: 'relative', width, overflow: 'visible' }}>
       <motion.div
         variants={{
           hidden: { opacity: 0, y: yOffset },
-          visible: { opacity: 1, y: 0 },
+          visible: { 
+            opacity: 1, 
+            y: 0,
+            transition: {
+              duration,
+              delay,
+              ease: [0.16, 1, 0.3, 1], // Cubic Out (Premium Snap)
+              staggerChildren: staggerChildren
+            }
+          },
         }}
         initial="hidden"
         animate={mainControls}
-        transition={{ duration: 0.5, delay }}
       >
         {children}
       </motion.div>
-      <motion.div
-        variants={{
-          hidden: { left: 0 },
-          visible: { left: "100%" },
-        }}
-        initial="hidden"
-        animate={slideControls}
-        transition={{ duration: 0.5, ease: "easeIn", delay }}
-        style={{
-          position: "absolute",
-          top: 4,
-          bottom: 4,
-          left: 0,
-          right: 0,
-          background: "var(--reveal-overlay, #2563eb)",
-          zIndex: 20,
-        }}
-      />
     </div>
   );
 };
