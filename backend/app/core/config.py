@@ -38,8 +38,8 @@ class Settings(BaseSettings):
     redis_url: str = Field(default="redis://localhost:6379/0", alias="REDIS_URL")
 
     default_tenant_slug: str = Field(default="demo-tenant", alias="DEFAULT_TENANT_SLUG")
-    default_admin_email: str = Field(default="admin@nemoguard.local", alias="DEFAULT_ADMIN_EMAIL")
-    default_admin_password: str = Field(default="ChangeMe123!", alias="DEFAULT_ADMIN_PASSWORD")
+    default_admin_email: str = Field(default="admin@sentra.ai", alias="DEFAULT_ADMIN_EMAIL")
+    default_admin_password: str = Field(default="SentraAdmin2024!", alias="DEFAULT_ADMIN_PASSWORD")
 
 
 @lru_cache
