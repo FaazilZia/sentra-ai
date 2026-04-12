@@ -3,7 +3,7 @@ name = "nemoguard-backend"
 version = "0.1.0"
 description = "NemoGuard backend modular monolith MVP"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.9"
 dependencies = [
   "alembic>=1.13.2,<2.0.0",
   "argon2-cffi>=25.1.0,<26.0.0",

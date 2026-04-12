@@ -1,6 +1,8 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
+from typing import Optional
 
+from datetime import datetime
 from sqlalchemy import DateTime, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column

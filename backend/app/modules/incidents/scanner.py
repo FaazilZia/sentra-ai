@@ -2,7 +2,7 @@ import re
 import os
 import logging
 from pathlib import Path
-from typing import List, Dict
+from typing import Dict, List
 from sqlalchemy import create_engine, inspect, text
 from .ai_brain import AIBrainService
 

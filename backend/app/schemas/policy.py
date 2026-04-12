@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 from uuid import UUID
 
 from pydantic import BaseModel, Field, StringConstraints, field_validator, model_validator
@@ -50,27 +50,27 @@ class PolicyCondition(BaseModel):
 
 
 class PolicyConditions(BaseModel):
-    all: list[PolicyCondition] = Field(default_factory=list)
-    any: list[PolicyCondition] = Field(default_factory=list)
-    not_: list[PolicyCondition] = Field(default_factory=list, alias="not")
+    all: List[PolicyCondition] = Field(default_factory=list)
+    any: List[PolicyCondition] = Field(default_factory=list)
+    not_: List[PolicyCondition] = Field(default_factory=list, alias="not")
 
 
 class PolicyScope(BaseModel):
-    actions: list[Annotated[str, StringConstraints(min_length=1)]] = Field(min_length=1)
-    asset_types: list[str] = Field(default_factory=list)
-    agent_types: list[str] = Field(default_factory=list)
-    actor_types: list[str] = Field(default_factory=list)
+    actions: List[Annotated[str, StringConstraints(min_length=1)]] = Field(min_length=1)
+    asset_types: List[str] = Field(default_factory=list)
+    agent_types: List[str] = Field(default_factory=list)
+    actor_types: List[str] = Field(default_factory=list)
 
 
 class PolicyObligation(BaseModel):
     type: ObligationType
-    params: dict[str, Any] = Field(default_factory=dict)
+    params: Dict[str, Any] = Field(default_factory=dict)
 
 
 class PolicyDocument(BaseModel):
     scope: PolicyScope
     conditions: PolicyConditions = Field(default_factory=PolicyConditions)
-    obligations: list[PolicyObligation] = Field(default_factory=list)
+    obligations: List[PolicyObligation] = Field(default_factory=list)
 
 
 class PolicyCreateRequest(BaseModel):
@@ -97,12 +97,12 @@ class PolicyCreate(PolicyCreateRequest):
 
 
 class PolicyUpdate(BaseModel):
-    name: Annotated[str, StringConstraints(min_length=3, max_length=255)] | None = None
-    description: Annotated[str, StringConstraints(max_length=1000)] | None = None
-    enabled: bool | None = None
-    priority: int | None = Field(default=None, ge=0, le=1000)
-    effect: PolicyEffect | None = None
-    document: PolicyDocument | None = None
+    name: Optional[Annotated[str, StringConstraints(min_length=3, max_length=255)]] = None
+    description: Optional[Annotated[str, StringConstraints(max_length=1000)]] = None
+    enabled: Optional[bool] = None
+    priority: Optional[int] = Field(default=None, ge=0, le=1000)
+    effect: Optional[PolicyEffect] = None
+    document: Optional[PolicyDocument] = None
 
 
 class PolicyVersionResponse(TimestampedSchema):
@@ -115,9 +115,9 @@ class PolicyVersionResponse(TimestampedSchema):
     priority: int
     effect: PolicyEffect
     status: PolicyStatus
-    scope: dict[str, Any]
-    conditions: dict[str, Any]
-    obligations: list[dict[str, Any]]
+    scope: Dict[str, Any]
+    conditions: Dict[str, Any]
+    obligations: List[Dict[str, Any]]
     is_published_snapshot: bool
 
 
@@ -130,14 +130,14 @@ class PolicyResponse(TimestampedSchema):
     effect: PolicyEffect
     status: PolicyStatus
     current_version: int
-    published_version: int | None
-    scope: dict[str, Any]
-    conditions: dict[str, Any]
-    obligations: list[dict[str, Any]]
+    published_version: Optional[int]
+    scope: Dict[str, Any]
+    conditions: Dict[str, Any]
+    obligations: List[Dict[str, Any]]
 
 
 class PolicyListResponse(BaseModel):
-    items: list[PolicyResponse]
+    items: List[PolicyResponse]
     total: int
 
 

@@ -1,5 +1,5 @@
-from datetime import UTC, datetime, timedelta
-from typing import Any
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
 
 import jwt
@@ -25,10 +25,10 @@ def create_token(
     tenant_id: UUID,
     token_type: str,
     expires_delta: timedelta,
-    additional_claims: dict[str, Any] | None = None,
+    additional_claims: Optional[Dict[str, Any]] = None,
 ) -> str:
-    now = datetime.now(UTC)
-    payload: dict[str, Any] = {
+    now = datetime.now(timezone.utc)
+    payload: Dict[str, Any] = {
         "sub": subject,
         "tenant_id": str(tenant_id),
         "type": token_type,
@@ -40,7 +40,7 @@ def create_token(
     return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
 
 
-def decode_token(token: str) -> dict[str, Any]:
+def decode_token(token: str) -> Dict[str, Any]:
     return jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
 
 

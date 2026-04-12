@@ -1,3 +1,4 @@
+from typing import Tuple
 from uuid import uuid4
 
 from app.models.enums import PolicyEffect, PolicyStatus
@@ -52,7 +53,7 @@ class FakeRepository:
         return [version for version in self.versions if version.policy_id == policy_id]
 
 
-def build_service() -> tuple[PolicyService, FakeRepository]:
+def build_service() -> Tuple[PolicyService, FakeRepository]:
     service = PolicyService(FakeSession())
     repository = FakeRepository()
     service.repository = repository

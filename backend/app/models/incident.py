@@ -1,3 +1,5 @@
+from datetime import datetime
+from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import ForeignKey, Integer, JSON, String
@@ -12,9 +14,9 @@ class Incident(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "incidents"
 
     tenant_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("tenants.id"), index=True)
-    user_id: Mapped[UUID | None] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), index=True, nullable=True)
+    user_id:Mapped[Optional[UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), index=True, nullable=True)
     agent_id: Mapped[str] = mapped_column(String(255), index=True, nullable=False)
-    policy_id: Mapped[UUID | None] = mapped_column(PGUUID(as_uuid=True), ForeignKey("policies.id"), index=True, nullable=True)
+    policy_id:Mapped[Optional[UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("policies.id"), index=True, nullable=True)
     
     severity: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     action: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -27,5 +29,5 @@ class Incident(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     event_metadata: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
     
     # Audit Proof Fields
-    resolved_by_id: Mapped[UUID | None] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), index=True, nullable=True)
-    resolved_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    resolved_by_id:Mapped[Optional[UUID]] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"), index=True, nullable=True)
+    resolved_at:Mapped[Optional[datetime]] = mapped_column(nullable=True)
