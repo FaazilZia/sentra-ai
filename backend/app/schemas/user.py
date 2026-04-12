@@ -1,5 +1,5 @@
-from uuid import UUID
-
+from uuid import UUID, uuid4
+from pydantic import Field
 from app.schemas.common import TimestampedSchema
 
 
