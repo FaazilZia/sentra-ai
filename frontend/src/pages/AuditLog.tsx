@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../lib/auth';
 import { apiRequest } from '../lib/api';
 import { SurfaceCard } from '../components/ui/SurfaceCard';

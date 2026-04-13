@@ -14,7 +14,6 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
-import { Link } from 'react-router-dom';
 import { SidebarItem } from '../ui/SidebarItem';
 import { cn } from '../../lib/utils';
 

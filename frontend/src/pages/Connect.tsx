@@ -6,9 +6,9 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { 
-  createApiKey, fetchApiKeys, deleteApiKey, 
+  createApiKey, fetchApiKeys, 
   APIKeyResponse, APIKeyBundle,
-  fetchConnectors, createConnector, testConnector
+  fetchConnectors, createConnector
 } from '../lib/api';
 import { SurfaceCard } from '../components/ui/SurfaceCard';
 
@@ -27,7 +27,6 @@ export default function ConnectPage() {
   const [connectors, setConnectors] = useState<any[]>([]);
   const [isConnecting, setIsConnecting] = useState(false);
   
-  const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -38,7 +37,6 @@ export default function ConnectPage() {
   }, [accessToken]);
 
   const loadData = async () => {
-    setLoading(true);
     try {
       const [keysData, connsData] = await Promise.all([
         fetchApiKeys(accessToken!),
@@ -49,7 +47,7 @@ export default function ConnectPage() {
     } catch (err) {
       console.error('Failed to load data', err);
     } finally {
-      setLoading(false);
+      // Data load complete
     }
   };
 
