@@ -9,15 +9,15 @@ from pwdlib.hashers.argon2 import Argon2Hasher
 from app.core.config import settings
 
 
-password_hash = PasswordHash(hashers=[Argon2Hasher()])
+pwd_hasher = PasswordHash(hashers=[Argon2Hasher()])
 
 
 def hash_password(password: str) -> str:
-    return password_hash.hash(password)
+    return pwd_hasher.hash(password)
 
 
 def verify_password(password: str, password_hash_value: str) -> bool:
-    return password_hash.verify(password, password_hash_value)
+    return pwd_hasher.verify(password, password_hash_value)
 
 
 def create_token(
