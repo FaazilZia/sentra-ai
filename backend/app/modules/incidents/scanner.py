@@ -2,11 +2,9 @@ import re
 import os
 import logging
 from pathlib import Path
-from typing import List, Dict, TYPE_CHECKING
+from typing import Dict, List
 from sqlalchemy import create_engine, inspect, text
-
-if TYPE_CHECKING:
-    from .ai_brain import AIBrainService
+from .ai_brain import AIBrainService
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +13,7 @@ class BaseConnector:
         raise NotImplementedError
 
 class FileConnector(BaseConnector):
-    def __init__(self, target_dir: str, ai_brain: "AIBrainService"):
+    def __init__(self, target_dir: str, ai_brain: AIBrainService):
         self.target_dir = Path(target_dir)
         self.ai_brain = ai_brain
 
@@ -68,7 +66,7 @@ class FileConnector(BaseConnector):
         return incidents
 
 class SQLConnector(BaseConnector):
-    def __init__(self, connection_url: str, ai_brain: "AIBrainService", name: str = "SQL-DB"):
+    def __init__(self, connection_url: str, ai_brain: AIBrainService, name: str = "SQL-DB"):
         self.connection_url = connection_url
         self.ai_brain = ai_brain
         self.name = name
@@ -104,7 +102,6 @@ class SQLConnector(BaseConnector):
 
 class GovernanceScanner:
     def __init__(self, db_session=None):
-        from .ai_brain import AIBrainService
         self.ai_brain = AIBrainService()
         self.connectors: List[BaseConnector] = []
         

@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -21,7 +21,7 @@ class IncidentCreate(BaseModel):
     agent_id: str
     action: str
     severity: int = 0
-    policy_id: str | None = None
+    policy_id: Optional[str] = None
     details: str = ""
     prompt_excerpt: str = ""
     response_excerpt: str = ""
@@ -62,7 +62,7 @@ def list_incidents(
     db: DbSession,
     tenant: Annotated[Tenant, Depends(get_current_tenant)],
     limit: int = 50,
-    status_filter: str | None = None,
+    status_filter: Optional[str] = None,
 ) -> dict:
     from sqlalchemy import select, desc
     
@@ -118,7 +118,7 @@ def update_incident_status(
     # Audit Proof: Record who did this and when
     if incident.status in ["resolved", "blocked"]:
         incident.resolved_by_id = current_user.id if hasattr(current_user, 'id') else uuid.UUID(current_user['id'])
-        incident.resolved_at = datetime.datetime.now(datetime.UTC)
+        incident.resolved_at = datetime.datetime.now(datetime.timezone.utc)
     
     # NEW: Trigger policy enforcement if blocked
     if incident.status == "blocked":

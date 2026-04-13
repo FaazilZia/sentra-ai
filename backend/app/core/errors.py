@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Dict, Optional
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import HTTPException, RequestValidationError
@@ -9,8 +9,8 @@ def error_response(
     *,
     code: str,
     message: str,
-    correlation_id: str | None,
-    details: dict[str, Any] | None = None,
+    correlation_id: Optional[str],
+    details: Optional[Dict[str, Any]] = None,
     status_code: int,
 ) -> JSONResponse:
     return JSONResponse(

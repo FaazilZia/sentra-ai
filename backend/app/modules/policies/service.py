@@ -1,4 +1,5 @@
-from datetime import UTC, datetime
+from typing import List, Tuple
+from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -17,7 +18,7 @@ class PolicyService:
         self.db = db
         self.repository = PolicyRepository(db)
 
-    def list_policies(self, tenant_id: UUID) -> tuple[list[Policy], int]:
+    def list_policies(self, tenant_id: UUID) -> Tuple[List[Policy], int]:
         return self.repository.list_by_tenant(tenant_id)
 
     def get_policy(self, tenant_id: UUID, policy_id: UUID) -> Policy:
@@ -114,7 +115,7 @@ class PolicyService:
         self.update_policy(tenant_id, policy_id, PolicyUpdate(enabled=False))
         return self.publish_policy(tenant_id, policy_id)
 
-    def list_versions(self, tenant_id: UUID, policy_id: UUID) -> list[PolicyVersion]:
+    def list_versions(self, tenant_id: UUID, policy_id: UUID) -> List[PolicyVersion]:
         policy = self.get_policy(tenant_id, policy_id)
         return self.repository.list_versions(policy.id)
 
@@ -140,4 +141,4 @@ class PolicyService:
 
     @staticmethod
     def published_at(policy: Policy) -> datetime:
-        return datetime.now(UTC)
+        return datetime.now(timezone.utc)

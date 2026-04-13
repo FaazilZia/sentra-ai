@@ -1,3 +1,4 @@
+from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import Boolean, Enum, ForeignKey, Integer, JSON, String, UniqueConstraint
@@ -25,7 +26,7 @@ class Policy(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         Enum(PolicyStatus, name="policy_status"), default=PolicyStatus.draft, nullable=False, index=True
     )
     current_version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
-    published_version: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    published_version:Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     scope: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
     conditions: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
     obligations: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
