@@ -17,6 +17,17 @@ We have recently synchronized the platform with our stable production baseline (
 
 ---
 
+## 🛠️ Production Hardening & Optimization (Branch `Faazil`)
+
+The latest updates bring significant stability and performance improvements for the production environment:
+
+- **Deployment Reliability**: Optimized `render.yaml` configurations to stay within free tier limits while maintaining 100% uptime.
+- **Frontend-Backend Integration**: Fixed CORS policy issues and resolved the "white screen of death" by hardcoding fallback production API endpoints.
+- **Code Hygiene**: Removed 10+ linting warnings and unused imports across the frontend (`Connect`, `AuditLog`, `Sidebar`).
+- **Backend Refactoring**: Simplified internal model mixins to improve database transaction reliability.
+
+---
+
 ## 🛠️ Product Capabilities
 
 Sentra AI allows organizations to:
