@@ -9,14 +9,9 @@ services:
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: sentra-db
-          property: connectionString
+        sync: false
       - key: REDIS_URL
-        fromService:
-          type: keyvalue
-          name: sentra-redis
-          property: connectionString
+        sync: false
       - key: APP_ENV
         value: production
       - key: OPENAI_API_KEY
@@ -41,15 +36,3 @@ services:
           property: host
       - key: VITE_BYPASS_AUTH
         value: "true"
-
-  # Managed Redis (Key Value)
-  - type: keyvalue
-    name: sentra-redis
-    ipAllowList: [] # Only allow internal traffic
-
-# Managed Database
-databases:
-  - name: sentra-db
-    plan: free
-    databaseName: sentra
-    user: sentra_user
