@@ -35,6 +35,8 @@ staticSites:
           type: web
           name: sentra-ai-backend
           property: host
+      - key: VITE_BYPASS_AUTH
+        value: "true"
 
 # Managed Database
 databases:
