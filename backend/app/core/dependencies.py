@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Any, Dict, List, Optional, Union
 from uuid import UUID
 
 from fastapi import Depends, Header, HTTPException, Request, status
@@ -17,7 +17,7 @@ from app.modules.tenants.service import TenantService
 DbSession = Annotated[Session, Depends(get_db)]
 
 
-def get_correlation_id(request: Request) -> str | None:
+def get_correlation_id(request: Request) -> Optional[str]:
     return getattr(request.state, "correlation_id", None)
 
 
@@ -26,9 +26,9 @@ import jwt
 
 def get_current_principal(
     db: DbSession,
-    authorization: Annotated[str | None, Header()] = None,
-    x_api_key: Annotated[str | None, Header()] = None,
-) -> User | APIKey:
+    authorization: Annotated[Optional[str], Header()] = None,
+    x_api_key: Annotated[Optional[str], Header()] = None,
+) -> Union[User, APIKey]:
     auth_service = AuthService(db)
 
     if authorization and authorization.startswith("Bearer "):
@@ -108,7 +108,7 @@ def get_current_principal(
     )
 
 
-def get_current_user(principal: Annotated[User | APIKey, Depends(get_current_principal)]) -> User:
+def get_current_user(principal: Annotated[Union[User, APIKey], Depends(get_current_principal)]) -> User:
     if not isinstance(principal, User):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User token required")
     return principal
@@ -117,7 +117,7 @@ def get_current_user(principal: Annotated[User | APIKey, Depends(get_current_pri
 def get_current_tenant(
     db: DbSession,
     current_user: Annotated[User, Depends(get_current_user)],
-    x_tenant_id: Annotated[str | None, Header()] = None,
+    x_tenant_id: Annotated[Optional[str], Header()] = None,
 ) -> Tenant:
     tenant_id = UUID(x_tenant_id) if x_tenant_id else current_user.tenant_id
     if tenant_id != current_user.tenant_id:

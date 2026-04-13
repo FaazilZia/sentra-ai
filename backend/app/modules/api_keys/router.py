@@ -1,5 +1,5 @@
 import secrets
-from typing import Annotated, Any
+from typing import Annotated, Any, List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -55,7 +55,7 @@ def create_key(
         "api_key": raw_key
     }
 
-@router.get("/", response_model=list[APIKeyResponse])
+@router.get("/", response_model=List[APIKeyResponse])
 def list_keys(
     db: DbSession,
     tenant: Annotated[Tenant, Depends(get_current_tenant)],

@@ -1,3 +1,4 @@
+from typing import Optional
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -11,5 +12,5 @@ class TenantService:
         self.db = db
         self.repository = TenantRepository(db)
 
-    def get_by_id(self, tenant_id: UUID) -> Tenant | None:
+    def get_by_id(self, tenant_id: UUID) ->Optional[ Tenant ]:
         return self.repository.get_by_id(tenant_id)

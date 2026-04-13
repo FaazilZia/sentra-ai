@@ -1,3 +1,4 @@
+from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
@@ -82,12 +83,12 @@ def publish_policy(
     )
 
 
-@router.get("/{policy_id}/versions", response_model=list[PolicyVersionResponse])
+@router.get("/{policy_id}/versions", response_model=List[PolicyVersionResponse])
 def list_policy_versions(
     policy_id: UUID,
     db: DbSession,
     _: User = Depends(get_current_user),
     current_tenant: Tenant = Depends(get_current_tenant),
-) -> list[PolicyVersionResponse]:
+) -> List[PolicyVersionResponse]:
     versions = PolicyService(db).list_versions(current_tenant.id, policy_id)
     return [PolicyVersionResponse.model_validate(item) for item in versions]

@@ -1,3 +1,4 @@
+from typing import Optional, Dict, Tuple
 import secrets
 from uuid import UUID
 
@@ -20,7 +21,7 @@ class AuthService:
         self.db = db
         self.repository = AuthRepository(db)
 
-    def authenticate_user(self, email: str, password: str) -> User | None:
+    def authenticate_user(self, email: str, password: str) ->Optional[ User ]:
         user = self.repository.get_user_by_email(email)
         if user is None or not user.is_active:
             return None
@@ -28,22 +29,22 @@ class AuthService:
             return None
         return user
 
-    def create_token_pair(self, user: User) -> dict[str, str]:
+    def create_token_pair(self, user: User) -> Dict[str, str]:
         return {
             "access_token": create_access_token(str(user.id), user.tenant_id),
             "refresh_token": create_refresh_token(str(user.id), user.tenant_id),
         }
 
-    def refresh_token_pair(self, user_id: UUID) -> dict[str, str] | None:
+    def refresh_token_pair(self, user_id: UUID) ->Optional[ Dict[str, str] ]:
         user = self.repository.get_user_by_id(user_id)
         if user is None or not user.is_active:
             return None
         return self.create_token_pair(user)
 
-    def get_user_for_token_subject(self, subject: str) -> User | None:
+    def get_user_for_token_subject(self, subject: str) ->Optional[ User ]:
         return self.repository.get_user_by_id(UUID(subject))
 
-    def issue_api_key(self, *, tenant_id: UUID, name: str) -> tuple[APIKey, str]:
+    def issue_api_key(self, *, tenant_id: UUID, name: str) -> Tuple[APIKey, str]:
         raw_key = f"ng_{secrets.token_urlsafe(24)}"
         prefix = raw_key[:12]
         api_key = APIKey(
@@ -59,7 +60,7 @@ class AuthService:
         self.db.refresh(api_key)
         return api_key, raw_key
 
-    def authenticate_api_key(self, raw_key: str) -> APIKey | None:
+    def authenticate_api_key(self, raw_key: str) ->Optional[ APIKey ]:
         prefix = raw_key[:12]
         api_key = self.repository.get_api_key_by_prefix(prefix)
         if api_key is None:
