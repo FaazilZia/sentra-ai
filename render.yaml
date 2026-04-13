@@ -30,9 +30,6 @@ services:
     staticPublishPath: dist
     envVars:
       - key: VITE_API_BASE_URL
-        fromService:
-          type: web
-          name: sentra-ai-backend
-          property: host
+        value: "https://sentra-ai-backend.onrender.com"
       - key: VITE_BYPASS_AUTH
         value: "true"
