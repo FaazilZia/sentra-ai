@@ -3,6 +3,7 @@ services:
   - type: web
     name: sentra-ai-backend
     env: python
+    plan: free
     rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
@@ -13,7 +14,7 @@ services:
           property: connectionString
       - key: REDIS_URL
         fromService:
-          type: redis
+          type: keyvalue
           name: sentra-redis
           property: connectionString
       - key: APP_ENV
@@ -25,9 +26,10 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.8
 
-staticSites:
   # Frontend Static Site
-  - name: sentra-ai-frontend
+  - type: static
+    name: sentra-ai-frontend
+    plan: free
     rootDir: frontend
     buildCommand: npm run build
     publishDir: dist
@@ -40,13 +42,15 @@ staticSites:
       - key: VITE_BYPASS_AUTH
         value: "true"
 
+  # Managed Redis (Key Value)
+  - type: keyvalue
+    name: sentra-redis
+    plan: free
+    ipAllowList: [] # Only allow internal traffic
+
 # Managed Database
 databases:
   - name: sentra-db
+    plan: free
     databaseName: sentra
     user: sentra_user
-
-# Managed Redis
-redis:
-  - name: sentra-redis
-    ipAllowList: [] # Only allow internal traffic
