@@ -14,6 +14,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
+import { Link } from 'react-router-dom';
 import { SidebarItem } from '../ui/SidebarItem';
 import { cn } from '../../lib/utils';
 
@@ -45,23 +46,17 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
         collapsed ? 'w-20' : 'w-64'
       )}
     >
-      <div className="border-b border-slate-800 px-4 py-4">
+      <div className="border-b border-slate-800 px-6 py-8">
         <div className="flex items-center gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white text-sm font-bold text-slate-900">
-              S
-            </div>
-            {!collapsed ? (
-              <div className="min-w-0">
-                <span className="block truncate text-[15px] font-semibold tracking-tight text-white">
-                  Sentra AI
-                </span>
-                <span className="block truncate text-[10px] uppercase tracking-[0.22em] text-slate-500">
-                  Compliance OS
-                </span>
-              </div>
-            ) : null}
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-white text-slate-950 shadow-lg">
+            <span className="text-xl font-bold tracking-tighter italic">S</span>
           </div>
+          {!collapsed && (
+            <div className="flex flex-col min-w-0">
+              <span className="truncate text-lg font-bold tracking-tight text-white">Sentra AI</span>
+              <span className="truncate text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Compliance OS</span>
+            </div>
+          )}
         </div>
       </div>
 

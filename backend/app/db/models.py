@@ -7,5 +7,6 @@ from app.models.tenant import Tenant
 from app.models.user import User
 from app.models.user_role import UserRole
 from app.models.consent import ConsentRecord
+from app.models.connector import Connector
 
-__all__ = ["APIKey", "Incident", "Policy", "PolicyVersion", "Role", "Tenant", "User", "UserRole", "ConsentRecord"]
+__all__ = ["APIKey", "Incident", "Policy", "PolicyVersion", "Role", "Tenant", "User", "UserRole", "ConsentRecord", "Connector"]

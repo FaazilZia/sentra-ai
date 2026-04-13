@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
+from datetime import datetime
 
 from sqlalchemy import ForeignKey, Integer, JSON, String
 from sqlalchemy.dialects.postgresql import UUID as PGUUID

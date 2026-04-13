@@ -9,6 +9,11 @@ COPY pyproject.toml README.md ./
 COPY app ./app
 COPY alembic ./alembic
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir .
 
 EXPOSE 8000

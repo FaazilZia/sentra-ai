@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
-  Zap, Key, Copy, Check, Terminal, Code2, Shield, 
-  ArrowRight, Database, Cloud, Link2, Globe, Server,
+  Zap, Copy, Check, 
+  Database, Cloud, Link2, 
   Lock, RefreshCw, Smartphone
 } from 'lucide-react';
 import { useAuth } from '../lib/auth';

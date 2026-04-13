@@ -4,7 +4,6 @@ import {
   Box,
   BrainCircuit,
   Loader2,
-  MoreVertical,
   ShieldCheck,
   ShieldX,
 } from 'lucide-react';
@@ -14,7 +13,7 @@ import { StatCard } from '../components/ui/StatCard';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { SurfaceCard } from '../components/ui/SurfaceCard';
 import { fetchPolicies, PolicyResponse, triggerScan, fetchScanStatus, fetchIncidents, updateIncidentStatus, IncidentResponse } from '../lib/api';
-import { CircleCheck, ShieldAlert, Archive } from 'lucide-react';
+import { CircleCheck, ShieldAlert } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 
 export default function DashboardPage() {
@@ -225,6 +224,11 @@ export default function DashboardPage() {
         >
           {error ? (
             <div className="p-3">
+              <h3 className="text-sm font-bold text-slate-900">Policy Sync Issues</h3>
+              <p className="mt-1 text-xs text-slate-500 max-w-xs mx-auto">
+                Sentra AI reached the frontend, but the governance engine data did not load. 
+                <span className="block mt-2 font-semibold text-indigo-600 italic">Tip: Check if your Render backend is cold-starting or verify VITE_API_BASE_URL in Vercel.</span>
+              </p>
               <EmptyStateList
                 title="Policy Load Failed"
                 description="The frontend reached the backend, but policy data did not load cleanly."

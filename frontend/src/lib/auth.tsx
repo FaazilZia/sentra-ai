@@ -7,6 +7,7 @@ import {
 } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from './supabaseClient';
+import { loginRequest, fetchCurrentUser } from './api';
 
 export type AppUser = User & {
   full_name?: string;
@@ -35,23 +36,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loginError, setLoginError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Fetch initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser((session?.user as AppUser) ?? null);
-      setAccessToken(session?.access_token ?? null);
+    const token = localStorage.getItem('sentra_access_token');
+    
+    if (!token) {
       setLoading(false);
-    });
+      return;
+    }
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser((session?.user as AppUser) ?? null);
-      setAccessToken(session?.access_token ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    setAccessToken(token);
+    fetchCurrentUser(token)
+      .then((currentUser) => {
+        setUser(currentUser as unknown as AppUser);
+      })
+      .catch(() => {
+        localStorage.removeItem('sentra_access_token');
+        setAccessToken(null);
+        setUser(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   async function login(email: string, password: string) {
@@ -59,11 +63,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoginError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) throw error;
+      const { access_token } = await loginRequest(email, password);
+      localStorage.setItem('sentra_access_token', access_token);
+      setAccessToken(access_token);
+      
+      const currentUser = await fetchCurrentUser(access_token);
+      setUser(currentUser as unknown as AppUser);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to sign in';
       setLoginError(message);
@@ -94,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function logout() {
-    await supabase.auth.signOut();
+    localStorage.removeItem('sentra_access_token');
     setUser(null);
     setAccessToken(null);
     setLoginError(null);

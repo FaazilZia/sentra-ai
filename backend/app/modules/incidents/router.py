@@ -103,6 +103,7 @@ def update_incident_status(
     incident_in: IncidentUpdate,
     db: DbSession,
     tenant: Annotated[Tenant, Depends(get_current_tenant)],
+    current_user: Annotated[any, Depends(get_current_user)],
 ) -> dict:
     from sqlalchemy import select
     

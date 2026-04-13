@@ -1,7 +1,7 @@
 from datetime import datetime
-from uuid import UUID
+from uuid import UUID, uuid4
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ORMModel(BaseModel):
@@ -9,6 +9,6 @@ class ORMModel(BaseModel):
 
 
 class TimestampedSchema(ORMModel):
-    id: UUID
-    created_at: datetime
-    updated_at: datetime
+    id: UUID | None = Field(default_factory=uuid4)
+    created_at: datetime | None = Field(default_factory=datetime.utcnow)
+    updated_at: datetime | None = Field(default_factory=datetime.utcnow)

@@ -1,8 +1,10 @@
+import { supabase } from './supabaseClient';
 
 const defaultApiBaseUrl = 'https://sentra-ai-wz6m.onrender.com/api/v1';
 
+const apiEnvUrl = import.meta.env.VITE_API_BASE_URL || defaultApiBaseUrl;
 export const apiBaseUrl = (
-  import.meta.env.VITE_API_BASE_URL || defaultApiBaseUrl
+  apiEnvUrl.includes('/api/v') ? apiEnvUrl : `${apiEnvUrl.replace(/\/$/, '')}/api/v1`
 ).replace(/\/$/, '');
 
 export interface TokenResponse {
@@ -166,22 +168,20 @@ export async function apiRequest<T>(
     headers,
   });
 
-  if (!response.ok) {
-    let message = `Request failed with status ${response.status}`;
-
-    try {
-      const errorPayload = (await response.json()) as { detail?: string };
-      if (errorPayload.detail) {
-        message = errorPayload.detail;
-      }
-    } catch {
-      // Keep the generic message if the payload is not JSON.
-    }
-
-    throw new ApiError(message, response.status);
+  const responseData = await response.text();
+  let data;
+  try {
+    data = responseData ? JSON.parse(responseData) : {};
+  } catch (e) {
+    data = { detail: responseData || "Invalid server response" };
   }
 
-  return (await response.json()) as T;
+  if (!response.ok) {
+    const errorMsg = data?.detail || data?.message || `Request failed with status ${response.status}`;
+    throw new ApiError(errorMsg, response.status);
+  }
+
+  return data as T;
 }
 
 export function loginRequest(email: string, password: string): Promise<TokenResponse> {
@@ -248,7 +248,6 @@ export function deleteApiKey(accessToken: string, keyId: string): Promise<void> 
   return apiRequest<void>(`/api-keys/${keyId}`, { method: 'DELETE' }, accessToken);
 }
 
-import { supabase } from './supabaseClient';
 
 export async function askAI(prompt: string): Promise<string> {
   const { data, error } = await supabase.functions.invoke('generate', {

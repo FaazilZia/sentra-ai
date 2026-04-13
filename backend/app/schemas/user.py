@@ -1,10 +1,10 @@
-from uuid import UUID
-
+from uuid import UUID, uuid4
+from pydantic import Field
 from app.schemas.common import TimestampedSchema
 
 
 class MeResponse(TimestampedSchema):
-    email: str
-    full_name: str
-    tenant_id: UUID
-    is_active: bool
+    email: str = ""
+    full_name: str = ""
+    tenant_id: UUID | None = Field(default_factory=uuid4)
+    is_active: bool | None = True

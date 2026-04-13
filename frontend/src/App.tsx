@@ -4,7 +4,6 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
 import { AuthProvider, useAuth } from './lib/auth';
 import LoginPage from './pages/Login';
-import HomePage from './pages/HomePage';
 
 const DashboardPage = lazy(() => import('./pages/Dashboard'));
 const InventoryPage = lazy(() => import('./pages/Inventory'));
@@ -45,8 +44,8 @@ function AppRoutes() {
     <BrowserRouter>
       <Suspense fallback={<RouteFallback />}>
         <Routes>
-          {/* Public Landing Page */}
-          <Route path="/" element={<HomePage />} />
+          {/* Direct to Dashboard */}
+          <Route path="/" element={<Navigate to="/app" replace />} />
           
           {/* Login Route */}
           <Route 
