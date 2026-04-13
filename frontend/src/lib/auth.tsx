@@ -38,6 +38,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const token = localStorage.getItem('sentra_access_token');
     
+    // Auth Bypass for local development/demo
+    if (!token && import.meta.env.VITE_BYPASS_AUTH === 'true') {
+      console.info('🛡️ Sentra AI: Auth bypass enabled. Session restored with demo credentials.');
+      setUser({
+        id: '00000000-0000-0000-0000-000000000000',
+        email: 'admin@sentra.ai',
+        full_name: 'Demo Administrator',
+        app_metadata: {},
+        user_metadata: {},
+        aud: 'authenticated',
+        role: 'authenticated',
+        created_at: new Date().toISOString(),
+        tenant_id: '00000000-0000-0000-0000-000000000000',
+        is_active: true,
+      } as any);
+      setAccessToken('demo-bypass-token');
+      setLoading(false);
+      return;
+    }
+
     if (!token) {
       setLoading(false);
       return;
