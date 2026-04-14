@@ -35,7 +35,7 @@ export function CopilotDrawer() {
     setIsLoading(true);
 
     try {
-      const data = await chatWithCopilot(userMessage, accessToken);
+      const data = await chatWithCopilot(userMessage);
       setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
     } catch (err) {
       setMessages(prev => [...prev, { role: 'assistant', content: 'I encountered an error. Please ensure your OpenAI key is configured correctly.' }]);

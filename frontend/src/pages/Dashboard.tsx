@@ -12,7 +12,16 @@ import { EmptyStateList } from '../components/ui/EmptyStateList';
 import { StatCard } from '../components/ui/StatCard';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { SurfaceCard } from '../components/ui/SurfaceCard';
-import { fetchPolicies, PolicyResponse, triggerScan, fetchScanStatus, fetchIncidents, updateIncidentStatus, IncidentResponse } from '../lib/api';
+import {
+  fetchPolicies,
+  PolicyResponse,
+  triggerScan,
+  fetchScanStatus,
+  fetchIncidents,
+  updateIncidentStatus,
+  IncidentResponse,
+  ScanStatusPayload,
+} from '../lib/api';
 import { CircleCheck, ShieldAlert } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 
@@ -52,32 +61,33 @@ export default function DashboardPage() {
     
     setIsScanning(true);
     try {
-      const response = await triggerScan();
-      const taskId = response.task_id;
-      
-      // Polling logic to wait for real backend completion
+      await triggerScan();
+
       let isDone = false;
       let attempts = 0;
-      const maxAttempts = 60; // 60 seconds timeout
-      
+      const maxAttempts = 90;
+      const pollMs = 400;
+
       while (!isDone && attempts < maxAttempts) {
-        const statusResponse = await fetchScanStatus();
-        
+        const statusResponse: ScanStatusPayload = await fetchScanStatus();
+
         if (statusResponse.status === 'SUCCESS') {
           isDone = true;
           await loadData();
-          alert(`Deep Scan complete! ${statusResponse.result?.incidents_detected || 0} incidents have been detected and logged.`);
-        } else if (['FAILURE', 'REVOKED'].includes(statusResponse.status)) {
-          throw new Error(`Scan process failed on server (${statusResponse.status})`);
-        } else {
-          // Wait 1 second before next poll
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          attempts++;
+          alert(
+            `Deep Scan complete! ${statusResponse.result?.incidents_detected ?? 0} new incident(s) logged from connected sources.`
+          );
+          break;
         }
+
+        await new Promise((resolve) => setTimeout(resolve, pollMs));
+        attempts++;
       }
-      
+
       if (!isDone) {
-        alert('Scan is still processing in the background. Results will appear in the Security Feed shortly.');
+        alert(
+          'Scan is still running or the server is slow to respond. Refresh the dashboard or open Security Feed in a moment.'
+        );
       }
     } catch (err) {
       alert('Scan failed: ' + (err instanceof Error ? err.message : 'Unknown error'));

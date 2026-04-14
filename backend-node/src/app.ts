@@ -10,6 +10,8 @@ import incidentRoutes from './routes/incident.routes';
 import consentRoutes from './routes/consent.routes';
 import policyRoutes from './routes/policy.routes';
 import tenantRoutes from './routes/tenant.routes';
+import aiRoutes from './routes/ai.routes';
+import connectorRoutes from './routes/connector.routes';
 import { apiRateLimiter } from './config/rateLimit';
 
 const app: Application = express();
@@ -54,10 +56,12 @@ app.use('/api/incidents', incidentRoutes);
 app.use('/api/consent', consentRoutes);
 app.use('/api/policies', policyRoutes);
 app.use('/api/tenants', tenantRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/connectors', connectorRoutes);
 
 // Basic Health Check
 app.get('/api/health', (req, res) => {
-  res.status(200).json({ success: true, message: 'Server is healthy' });
+  res.status(200).json({ success: true, status: 'healthy', message: 'Server is healthy' });
 });
 
 // Root route to check version

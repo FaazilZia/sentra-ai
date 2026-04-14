@@ -8,10 +8,10 @@
       "port": 5173
     },
     {
-      "name": "Backend (FastAPI)",
-      "runtimeExecutable": "uvicorn",
-      "runtimeArgs": ["app.main:app", "--reload", "--port", "8000"],
-      "port": 8000
+      "name": "Backend (Node.js)",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "backend-node", "run", "dev"],
+      "port": 5001
     }
   ]
 }

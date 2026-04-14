@@ -1,7 +1,7 @@
-import { supabase } from './supabaseClient';
+// Supabase Edge Functions removed — all AI calls now route through Node.js backend
 
 // Node.js Backend base URL — must NOT have a trailing slash
-const defaultApiBaseUrl = 'https://sentra-ai-wz6m.onrender.com/api';
+const defaultApiBaseUrl = 'https://sentra-backend-node.onrender.com/api';
 
 // Use the env variable directly — no extra path manipulation to avoid double /api
 export const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || defaultApiBaseUrl).replace(/\/$/, '');
@@ -45,13 +45,27 @@ export interface PolicyResponse {
   id: string;
   name: string;
   description: string;
-  severity: string;
-  is_active: boolean;
-  version: string;
+  severity?: string;
+  is_active?: boolean;
+  status: string;
+  enabled: boolean;
+  priority: number;
+  effect: string;
+  version?: string;
+  /** Present on Prisma-backed policy records */
+  current_version?: number;
+  scope?: { actions?: string[] } | Record<string, unknown>;
+}
+
+export interface BackendHealthResponse {
+  success: boolean;
+  status: 'healthy' | 'unknown';
+  message: string;
 }
 
 export interface PolicyHealthResponse {
   status: 'healthy' | 'degraded' | 'failing';
+  evaluator?: string;
   checks: any[];
 }
 
@@ -80,6 +94,17 @@ export interface IncidentResponse {
 export interface IncidentListResponse {
   success: boolean;
   data: IncidentResponse[];
+}
+
+/** Unwrapped from GET /incidents/scan/status (`apiRequest` returns `data`) */
+export interface ScanStatusPayload {
+  status: 'IDLE' | 'PROCESSING' | 'SUCCESS';
+  progress: number;
+  result: {
+    incidents_detected: number;
+    sources_scanned: number;
+    timestamp: string;
+  } | null;
 }
 
 export class ApiError extends Error {
@@ -243,14 +268,10 @@ export function updateIncidentStatus(incidentId: string, status: string): Promis
  * AI & COPILOT
  */
 export async function askAI(prompt: string): Promise<string> {
-  const { data, error } = await supabase.functions.invoke('generate', {
-    body: { prompt }
+  const data = await apiRequest<{ response: string }>('/ai/chat', {
+    method: 'POST',
+    body: JSON.stringify({ message: prompt })
   });
-  
-  if (error) {
-    throw new Error(error.message || 'Error communicating with AI');
-  }
-  
   return data.response;
 }
 
@@ -264,8 +285,8 @@ export async function chatWithCopilot(message: string): Promise<{ response: stri
 /**
  * HEALTH CHECKS
  */
-export function fetchBackendHealth(): Promise<{ success: boolean; message: string }> {
-  return apiRequest<{ success: boolean; message: string }>('/health');
+export function fetchBackendHealth(): Promise<BackendHealthResponse> {
+  return apiRequest<BackendHealthResponse>('/health');
 }
 
 /**
@@ -288,14 +309,15 @@ export function deleteApiKey(keyId: string): Promise<void> {
   return apiRequest<void>(`/admin/api-keys/${keyId}`, { method: 'DELETE' });
 }
 
-export async function triggerScan(): Promise<any> {
-  return apiRequest<any>('/incidents/scan', {
-    method: 'POST'
+export async function triggerScan(): Promise<{ message: string }> {
+  return apiRequest<{ message: string }>('/incidents/scan', {
+    method: 'POST',
+    body: JSON.stringify({}),
   });
 }
 
-export async function fetchScanStatus(): Promise<any> {
-  return apiRequest<any>('/incidents/scan/status');
+export async function fetchScanStatus(): Promise<ScanStatusPayload> {
+  return apiRequest<ScanStatusPayload>('/incidents/scan/status');
 }
 
 export async function fetchConnectors(): Promise<any> {
@@ -331,4 +353,3 @@ export async function grantConsent(_token?: string): Promise<void> {
 export async function withdrawConsent(_token?: string): Promise<void> {
   return apiRequest<void>('/consent/withdraw', { method: 'POST' });
 }
-

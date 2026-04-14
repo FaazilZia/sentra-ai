@@ -36,16 +36,23 @@ export default function ConnectPage() {
 
   const loadData = async () => {
     try {
-      const [keysData, connsData] = await Promise.all([
+      const [keysResult, connsResult] = await Promise.allSettled([
         fetchApiKeys(),
-        fetchConnectors()
+        fetchConnectors(),
       ]);
-      setKeys(keysData);
-      setConnectors(connsData.items || []);
+      if (keysResult.status === 'fulfilled') {
+        setKeys(keysResult.value);
+      } else {
+        setKeys([]);
+      }
+      if (connsResult.status === 'fulfilled') {
+        const connsData = connsResult.value as { items?: unknown[] };
+        setConnectors(connsData.items || []);
+      } else {
+        setConnectors([]);
+      }
     } catch (err) {
       console.error('Failed to load data', err);
-    } finally {
-      // Data load complete
     }
   };
 

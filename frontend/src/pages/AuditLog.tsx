@@ -24,23 +24,14 @@ export default function AuditLog() {
     async function loadHistory() {
       if (!accessToken) return;
       try {
-        const data = await apiRequest<any>('/incidents/history', { method: 'GET' });
-        setHistory(data.items || []);
+        const data = await apiRequest<{ items: AuditRecord[] }>('/incidents/history', {
+          method: 'GET',
+        });
+        setHistory(Array.isArray(data.items) ? data.items : []);
       } catch (err) {
         console.error('Audit Load Error:', err);
+        setHistory([]);
       } finally {
-        setHistory([
-          // Sample data for demonstration if DB is empty
-          {
-             id: 'demo-1',
-             agent_id: 'Scanner-Engine',
-             status: 'blocked',
-             details: 'Automatic block of PII in support_logs.txt',
-             operator: 'Scanner (Auto)',
-             resolved_at: new Date().toISOString(),
-             severity: 90
-          }
-        ]);
         setLoading(false);
       }
     }
