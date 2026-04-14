@@ -218,7 +218,7 @@ export function fetchPolicyVersions(policyId: string): Promise<any[]> {
 }
 
 export function fetchPolicyHealth(): Promise<any> {
-  return apiRequest<any>('/policy-health');
+  return apiRequest<any>('/policies/health');
 }
 
 /**

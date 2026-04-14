@@ -7,6 +7,9 @@ import authRoutes from './routes/auth.routes';
 import adminRoutes from './routes/admin.routes';
 import userRoutes from './routes/user.routes';
 import incidentRoutes from './routes/incident.routes';
+import consentRoutes from './routes/consent.routes';
+import policyRoutes from './routes/policy.routes';
+import tenantRoutes from './routes/tenant.routes';
 import { apiRateLimiter } from './config/rateLimit';
 
 const app: Application = express();
@@ -48,6 +51,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/incidents', incidentRoutes);
+app.use('/api/consent', consentRoutes);
+app.use('/api/policies', policyRoutes);
+app.use('/api/tenants', tenantRoutes);
 
 // Basic Health Check
 app.get('/api/health', (req, res) => {
