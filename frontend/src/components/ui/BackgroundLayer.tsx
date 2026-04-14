@@ -1,5 +1,3 @@
-import React from 'react';
-
 export const BackgroundLayer = () => {
   return (
     <div className="fixed inset-0 -z-10 bg-[#020617] overflow-hidden pointer-events-none">

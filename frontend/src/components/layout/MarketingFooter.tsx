@@ -1,4 +1,3 @@
-import React from 'react';
 import { Activity } from 'lucide-react';
 
 export function MarketingFooter() {
@@ -7,12 +6,33 @@ export function MarketingFooter() {
       <div className="max-w-screen-xl mx-auto lg:px-10">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-10 mb-16">
           <div className="col-span-2 flex flex-col gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-md bg-white flex items-center justify-center">
-                <Activity className="w-4 h-4 text-[#0c1324]" strokeWidth={2.5} />
-              </div>
-              <span className="font-semibold text-[0.95rem] tracking-[-0.01em]">Sentra AI</span>
-            </div>
+            <a href="/" className="logo-container flex items-center gap-3 group w-max">
+              <svg className="logo-svg w-[38px] h-[44px]" viewBox="13 8 65 75" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <line x1="63" y1="20" x2="45" y2="12" stroke="#F59E0B" strokeWidth="1.1" opacity="0.3"/>
+                <line x1="45" y1="12" x2="27" y2="20" stroke="#F59E0B" strokeWidth="1.1" opacity="0.3"/>
+                <line x1="27" y1="20" x2="22" y2="38" stroke="#F59E0B" strokeWidth="1.1" opacity="0.3"/>
+                <line x1="22" y1="38" x2="45" y2="46" stroke="#F59E0B" strokeWidth="1.1" opacity="0.3"/>
+                <line x1="45" y1="46" x2="68" y2="55" stroke="#F59E0B" strokeWidth="1.1" opacity="0.3"/>
+                <line x1="68" y1="55" x2="63" y2="72" stroke="#F59E0B" strokeWidth="1.1" opacity="0.3"/>
+                <line x1="63" y1="72" x2="45" y2="79" stroke="#F59E0B" strokeWidth="1.1" opacity="0.3"/>
+                <line x1="45" y1="79" x2="27" y2="72" stroke="#F59E0B" strokeWidth="1.1" opacity="0.3"/>
+
+                <circle className="n1" cx="63" cy="20" r="4.5" fill="#F59E0B"/>
+                <circle cx="45" cy="12" r="3" fill="#F59E0B" opacity="0.65"/>
+                <circle className="n2" cx="27" cy="20" r="3.8" fill="#F59E0B" opacity="0.85"/>
+                <circle cx="22" cy="38" r="2.8" fill="#F59E0B" opacity="0.6"/>
+                <circle cx="45" cy="46" r="5.5" fill="#FFFFFF"/>
+                <circle cx="45" cy="46" r="2.5" fill="#F59E0B"/>
+                <circle cx="68" cy="55" r="2.8" fill="#F59E0B" opacity="0.6"/>
+                <circle className="n3" cx="63" cy="72" r="3.8" fill="#F59E0B" opacity="0.85"/>
+                <circle cx="45" cy="79" r="3" fill="#F59E0B" opacity="0.65"/>
+                <circle className="n4" cx="27" cy="72" r="4.5" fill="#F59E0B"/>
+                <circle cx="27" cy="72" r="2" fill="#FFFFFF"/>
+              </svg>
+              <span className="font-manrope font-extrabold text-[1.2rem] tracking-tight leading-[1] text-white">
+                <span className="logo-word-sentra">SENTRA</span> <span className="logo-word-ai text-amber-500">AI</span>
+              </span>
+            </a>
             <p className="text-white/30 text-[0.85rem] leading-relaxed max-w-[260px] font-inter">
               The control plane for enterprise AI security, governance, and observability.
             </p>

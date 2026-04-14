@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../lib/auth';
 import { apiRequest } from '../lib/api';
 import { SurfaceCard } from '../components/ui/SurfaceCard';
@@ -124,7 +124,7 @@ export default function AuditLog() {
           </table>
         </div>
         <div className="border-t border-slate-100 bg-slate-50/50 px-4 py-2.5 text-[9px] text-slate-400 font-medium italic">
-          Disclaimer: This log is immutable and protected for legal and compliance auditing purposes under DPDP / GDPR frameworks.
+          Disclaimer: This log is immutable and protected for legal and compliance auditing purposes under DPDP framework.
         </div>
       </SurfaceCard>
     </div>

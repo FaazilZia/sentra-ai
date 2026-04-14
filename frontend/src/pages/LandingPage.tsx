@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Eye, Lock, Zap, ArrowRight, Activity, ChevronRight, AlertTriangle, CheckCircle, BarChart3, Globe, Database } from 'lucide-react';
 import { MarketingNav } from '../components/layout/MarketingNav';
 import { MarketingFooter } from '../components/layout/MarketingFooter';
+import { Particles } from '../components/ui/Particles';
+import { BorderGlow } from '../components/ui/BorderGlow';
+import LightRays from '../components/ui/LightRays';
 
 /* ─────────────────── fade-up variant ─────────────────── */
 const fadeUp = {
@@ -11,7 +14,7 @@ const fadeUp = {
   visible: (d = 0) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1], delay: d },
+    transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] as any, delay: d },
   }),
 };
 
@@ -34,8 +37,42 @@ export default function LandingPage() {
       {/* ═══════════════════════════════════════════
           GLOBAL BACKGROUND
       ═══════════════════════════════════════════ */}
-      <div className="fixed inset-0 pointer-events-none z-0">
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         <div className="absolute inset-0 bg-[#0c1324]" />
+
+        {/* LightRays Background */}
+        <div className="absolute top-0 inset-x-0 h-[600px] z-[1] mix-blend-screen opacity-70">
+          <LightRays
+            raysOrigin="top-center"
+            raysColor="#95d3ba"
+            raysSpeed={1.5}
+            lightSpread={0.6}
+            rayLength={3.5}
+            followMouse={false}
+            mouseInfluence={0}
+            noiseAmount={0}
+            distortion={0}
+            pulsating={false}
+            fadeDistance={1.3}
+            saturation={1}
+          />
+        </div>
+
+        {/* Particles Background */}
+        <div className="absolute inset-0 opacity-40 z-[2]">
+          <Particles
+            particleColors={["#ffffff", "#95d3ba", "#3b82f6"]}
+            particleCount={600}
+            particleSpread={20}
+            speed={0.1}
+            particleBaseSize={100}
+            moveParticlesOnHover={false}
+            alphaParticles
+            disableRotation={false}
+            pixelRatio={1}
+          />
+        </div>
+
         {/* Soft mint orb */}
         <div className="absolute top-[28%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full bg-[#95d3ba] opacity-[0.06] blur-[160px] animate-slow-float" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_35%,#0c1324_90%)]" />
@@ -80,7 +117,7 @@ export default function LandingPage() {
         >
           <button
             onClick={() => navigate('/login')}
-            className="group flex items-center gap-2 rounded-full bg-[#c6c6c7] text-[#2f3131] px-7 py-3.5 text-[0.95rem] font-bold hover:bg-white transition-all w-full sm:w-auto justify-center active:scale-95"
+            className="group flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white px-7 py-3.5 text-[0.95rem] font-bold hover:bg-white/20 hover:border-white/30 hover:shadow-[0_4px_25px_rgba(255,255,255,0.1)] transition-all duration-300 w-full sm:w-auto justify-center active:scale-95"
           >
             Start for free
             <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
@@ -243,7 +280,7 @@ export default function LandingPage() {
               {
                 icon: BarChart3,
                 title: 'Compliance Automation',
-                desc: 'Auto-generate audit reports for SOC 2, ISO 27001, HIPAA, and GDPR. Continuous control monitoring with real-time dashboards.',
+                desc: 'Auto-generate audit reports for DPDP. Continuous control monitoring with real-time dashboards.',
                 wide: true,
                 accent: 'border-white/10',
               },
@@ -260,18 +297,33 @@ export default function LandingPage() {
                 variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
                 whileHover={{ y: -4 }}
                 transition={{ duration: 0.2 }}
-                className={`group relative rounded-2xl border ${accent || 'border-white/5'} bg-[#151b2d] p-8 flex flex-col gap-4 cursor-default transition-all duration-300 hover:shadow-2xl hover:border-white/20 ${wide ? 'md:col-span-2' : ''}`}
+                className={wide ? 'md:col-span-2' : ''}
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-[#0c1324] text-[#95d3ba] transition-colors">
-                  <Icon className="w-5 h-5" strokeWidth={2} />
-                </div>
-                <div>
-                  <h3 className="text-[1.1rem] font-bold text-white mb-2">{title}</h3>
-                  <p className="text-[0.95rem] text-white/50 leading-relaxed">{desc}</p>
-                </div>
-                <div className="mt-auto pt-4 flex items-center gap-1.5 text-[#95d3ba] font-semibold text-[0.88rem] opacity-0 group-hover:opacity-100 transition-opacity">
-                  Explore <ChevronRight className="w-4 h-4" />
-                </div>
+                <BorderGlow
+                  edgeSensitivity={23}
+                  glowColor="40 80 80"
+                  backgroundColor="#0c1324"
+                  borderRadius={16}
+                  glowRadius={40}
+                  glowIntensity={1.4}
+                  coneSpread={25}
+                  animated={false}
+                  colors={['#95d3ba', '#3b82f6', '#1e40af']}
+                  className="h-full group"
+                >
+                  <div className="flex flex-col gap-4 p-8 h-full">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-[#151b2d] text-[#95d3ba] transition-colors">
+                      <Icon className="w-5 h-5" strokeWidth={2} />
+                    </div>
+                    <div>
+                      <h3 className="text-[1.1rem] font-bold text-white mb-2">{title}</h3>
+                      <p className="text-[0.95rem] text-white/50 leading-relaxed">{desc}</p>
+                    </div>
+                    <div className="mt-auto pt-4 flex items-center gap-1.5 text-[#95d3ba] font-semibold text-[0.88rem] opacity-0 group-hover:opacity-100 transition-opacity">
+                      Explore <ChevronRight className="w-4 h-4" />
+                    </div>
+                  </div>
+                </BorderGlow>
               </motion.div>
             ))}
           </div>
@@ -300,11 +352,11 @@ export default function LandingPage() {
               { step: '01', title: 'Connect your models', desc: 'Integrate via our lightweight SDK or proxy. Works with any LLM provider.' },
               { step: '02', title: 'Configure your policies', desc: 'Set threat thresholds, compliance rules, and governance policies easily.' },
               { step: '03', title: 'Ship with confidence', desc: 'Sentra runs silently in the background — monitoring and protecting every inference.' },
-            ].map(({ step, title, desc }) => (
-              <motion.div key={step} variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="flex flex-col gap-5 group border-l-2 border-white/10 pl-6 hover:border-[#95d3ba] transition-colors duration-500">
+            ].map(({ step, title, desc }, index) => (
+              <motion.div key={step} initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6, delay: index * 0.2 }} className="flex flex-col gap-5 group border-l-2 border-white/10 pl-6 hover:border-[#95d3ba] transition-colors duration-500">
                 <div className="text-[1.2rem] font-manrope font-bold text-[#95d3ba]">{step}</div>
                 <h3 className="text-[1.2rem] font-bold text-white">{title}</h3>
-                <p className="text-[0.95rem] font-inter text-white/50 leading-relaxed">{desc}</p>
+                <motion.p initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: index * 0.2 + 0.3 }} className="text-[0.95rem] font-inter text-white/50 leading-relaxed">{desc}</motion.p>
               </motion.div>
             ))}
           </div>

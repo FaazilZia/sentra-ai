@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Activity, ChevronRight, Menu, X } from 'lucide-react';
@@ -10,7 +10,7 @@ export function MarketingNav() {
   const { scrollY } = useScroll();
   
   // Transition background from transparent to an opaque dark blue/frost on scroll
-  const navBg = useTransform(scrollY, [0, 80], ['rgba(46, 52, 71, 0.1)', 'rgba(46, 52, 71, 0.4)']);
+  const navBg = useTransform(scrollY, [0, 80], ['rgba(12, 19, 36, 0)', 'rgba(12, 19, 36, 1)']);
   const navBackdropBlur = useTransform(scrollY, [0, 80], ['blur(0px)', 'blur(20px)']);
 
   const links = [
@@ -25,13 +25,51 @@ export function MarketingNav() {
       style={{ backgroundColor: navBg as any, backdropFilter: navBackdropBlur as any }}
       className="fixed top-0 inset-x-0 z-[100] border-b border-white/[0.05] transition-colors pointer-events-auto"
     >
-      <div className="max-w-screen-xl mx-auto px-6 lg:px-10 h-[68px] flex items-center justify-between">
+      <div className="max-w-screen-xl mx-auto px-6 lg:px-10 h-[84px] flex items-center justify-between">
         {/* Logo */}
-        <button onClick={() => navigate('/')} className="flex items-center gap-2.5 group pointer-events-auto">
-          <div className="w-7 h-7 rounded-md bg-white flex items-center justify-center">
-            <Activity className="w-4 h-4 text-[#0c1324]" strokeWidth={2.5} />
+        <button
+          onClick={() => {
+            if (window.location.pathname === '/') {
+              window.location.reload();
+            } else {
+              window.location.href = '/';
+            }
+          }}
+          className="logowrap logo-container flex items-center gap-3 group pointer-events-auto"
+        >
+          {/* SVG */}
+          <svg className="logo-svg w-[48px] h-[56px]" viewBox="13 8 65 75" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <line x1="63" y1="20" x2="45" y2="12" stroke="#F59E0B" strokeWidth="1.1" opacity="0.3"/>
+            <line x1="45" y1="12" x2="27" y2="20" stroke="#F59E0B" strokeWidth="1.1" opacity="0.3"/>
+            <line x1="27" y1="20" x2="22" y2="38" stroke="#F59E0B" strokeWidth="1.1" opacity="0.3"/>
+            <line x1="22" y1="38" x2="45" y2="46" stroke="#F59E0B" strokeWidth="1.1" opacity="0.3"/>
+            <line x1="45" y1="46" x2="68" y2="55" stroke="#F59E0B" strokeWidth="1.1" opacity="0.3"/>
+            <line x1="68" y1="55" x2="63" y2="72" stroke="#F59E0B" strokeWidth="1.1" opacity="0.3"/>
+            <line x1="63" y1="72" x2="45" y2="79" stroke="#F59E0B" strokeWidth="1.1" opacity="0.3"/>
+            <line x1="45" y1="79" x2="27" y2="72" stroke="#F59E0B" strokeWidth="1.1" opacity="0.3"/>
+
+            <circle className="n1" cx="63" cy="20" r="4.5" fill="#F59E0B"/>
+            <circle cx="45" cy="12" r="3" fill="#F59E0B" opacity="0.65"/>
+            <circle className="n2" cx="27" cy="20" r="3.8" fill="#F59E0B" opacity="0.85"/>
+            <circle cx="22" cy="38" r="2.8" fill="#F59E0B" opacity="0.6"/>
+            <circle cx="45" cy="46" r="5.5" fill="#FFFFFF"/>
+            <circle cx="45" cy="46" r="2.5" fill="#F59E0B"/>
+            <circle cx="68" cy="55" r="2.8" fill="#F59E0B" opacity="0.6"/>
+            <circle className="n3" cx="63" cy="72" r="3.8" fill="#F59E0B" opacity="0.85"/>
+            <circle cx="45" cy="79" r="3" fill="#F59E0B" opacity="0.65"/>
+            <circle className="n4" cx="27" cy="72" r="4.5" fill="#F59E0B"/>
+          </svg>
+
+          {/* TEXT */}
+          <div className="logo-text flex flex-col text-left hidden sm:flex">
+            <div className="flex items-baseline gap-1.5" style={{ lineHeight: 1.1 }}>
+              <span className="logo-word-sentra font-sans text-[26px] font-bold tracking-[0.1em] text-white uppercase">Sentra</span>
+              <span className="logo-word-ai font-sans text-[26px] font-bold text-[#F59E0B]">AI</span>
+            </div>
+            <div className="logo-subtext text-[9px] font-light tracking-[0.22em] text-white/40 uppercase mt-0.5">
+              Intelligent at the center
+            </div>
           </div>
-          <span className="font-semibold text-[0.95rem] tracking-[-0.01em] text-white">Sentra AI</span>
         </button>
 
         {/* Desktop Links */}

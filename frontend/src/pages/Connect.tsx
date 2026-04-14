@@ -5,10 +5,10 @@ import {
   Lock, RefreshCw, Smartphone
 } from 'lucide-react';
 import { useAuth } from '../lib/auth';
-import { 
-  createApiKey, fetchApiKeys, deleteApiKey, 
+import {
+  createApiKey, fetchApiKeys,
   APIKeyResponse, APIKeyBundle,
-  fetchConnectors, createConnector, testConnector
+  fetchConnectors, createConnector
 } from '../lib/api';
 import { SurfaceCard } from '../components/ui/SurfaceCard';
 
@@ -26,8 +26,7 @@ export default function ConnectPage() {
   // Connectors state
   const [connectors, setConnectors] = useState<any[]>([]);
   const [isConnecting, setIsConnecting] = useState(false);
-  
-  const [loading, setLoading] = useState(true);
+
   const [isCreating, setIsCreating] = useState(false);
   const [copied, setCopied] = useState(false);
 
