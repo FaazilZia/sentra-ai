@@ -1,13 +1,10 @@
 import { supabase } from './supabaseClient';
 
-// Node.js Backend uses /api prefix in app.ts
+// Node.js Backend base URL — must NOT have a trailing slash
 const defaultApiBaseUrl = 'https://sentra-ai-wz6m.onrender.com/api';
 
-const apiEnvUrl = import.meta.env.VITE_API_BASE_URL || defaultApiBaseUrl;
-// Standardize to use /api without v1 for the new Node backend
-export const apiBaseUrl = (
-  apiEnvUrl.includes('/api') ? apiEnvUrl : `${apiEnvUrl.replace(/\/$/, '')}/api`
-).replace(/\/$/, '');
+// Use the env variable directly — no extra path manipulation to avoid double /api
+export const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || defaultApiBaseUrl).replace(/\/$/, '');
 
 export interface TokenResponse {
   accessToken: string;
@@ -23,12 +20,47 @@ export interface TokenResponse {
 export interface AuthUser {
   id: string;
   email: string;
-  fullName: string; // Changed from full_name to match Node backend
+  fullName: string;
+  full_name?: string; 
   role: string;
   tenant_id?: string;
   is_active?: boolean;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface APIKeyResponse {
+  id: string;
+  name: string;
+  key_prefix: string;
+  created_at: string;
+}
+
+export interface APIKeyBundle {
+  api_key: string;
+  name: string;
+}
+
+export interface PolicyResponse {
+  id: string;
+  name: string;
+  description: string;
+  severity: string;
+  is_active: boolean;
+  version: string;
+}
+
+export interface PolicyHealthResponse {
+  status: 'healthy' | 'degraded' | 'failing';
+  checks: any[];
+}
+
+export interface TenantResponse {
+  id: string;
+  name: string;
+  slug: string;
+  is_active: boolean;
+  created_at: string;
 }
 
 export interface IncidentResponse {
@@ -262,6 +294,17 @@ export async function triggerScan(): Promise<any> {
   });
 }
 
+export async function fetchScanStatus(): Promise<any> {
+  return apiRequest<any>('/incidents/scan/status');
+}
+
 export async function fetchConnectors(): Promise<any> {
   return apiRequest<any>('/connectors', { method: 'GET' });
+}
+
+export async function createConnector(payload: any): Promise<any> {
+  return apiRequest<any>('/connectors', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
 }
