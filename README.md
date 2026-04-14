@@ -1,6 +1,6 @@
 # Sentra AI — The Intelligent Control Tower for AI Agent Governance
 
-**Live Production URL:** [https://sentra-ai.vercel.app](https://sentra-ai.vercel.app)
+**Live Production URL:** [https://sentra-ai-tau.vercel.app/app]https://sentra-ai-tau.vercel.app/app
 
 Sentra AI is an enterprise-grade AI governance and security platform designed for the age of autonomous agents. It provides organizations with the centralized oversight and real-time control necessary to deploy AI agents safely. Sentra AI acts as a "Trust Layer," ensuring that every action taken by an AI agent aligns with corporate policies, data privacy regulations, and security guardrails.
 
