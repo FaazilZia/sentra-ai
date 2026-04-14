@@ -308,3 +308,27 @@ export async function createConnector(payload: any): Promise<any> {
     body: JSON.stringify(payload)
   });
 }
+
+/**
+ * CONSENT ENDPOINTS (stub — pending Node.js migration)
+ */
+export interface ConsentEvent {
+  id: string;
+  action: 'GRANT' | 'WITHDRAW';
+  timestamp: string;
+  version: string;
+  hash: string;
+}
+
+export async function fetchConsentHistory(_token?: string): Promise<ConsentEvent[]> {
+  return apiRequest<ConsentEvent[]>('/consent/history');
+}
+
+export async function grantConsent(_token?: string): Promise<void> {
+  return apiRequest<void>('/consent/grant', { method: 'POST' });
+}
+
+export async function withdrawConsent(_token?: string): Promise<void> {
+  return apiRequest<void>('/consent/withdraw', { method: 'POST' });
+}
+
