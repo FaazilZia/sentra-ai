@@ -5,24 +5,25 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { User } from '@supabase/supabase-js';
-import { supabase } from './supabaseClient';
 import { loginRequest, fetchCurrentUser } from './api';
 
-export type AppUser = User & {
-  full_name?: string;
+export interface AppUser {
+  id: string;
+  email: string;
+  fullName: string;
+  role: string;
   tenant_id?: string;
   is_active?: boolean;
-};
+  created_at?: string;
+  updated_at?: string;
+}
 
 interface AuthContextValue {
   user: AppUser | null;
-  accessToken: string | null;
   loading: boolean;
   loginPending: boolean;
   loginError: string | null;
   login: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -30,12 +31,17 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loginPending, setLoginPending] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Listen for auth expiration events from api.ts
+    const handleAuthExpired = () => {
+      logout();
+    };
+    window.addEventListener('auth:expired', handleAuthExpired);
+
     const token = localStorage.getItem('sentra_access_token');
     
     // Auth Bypass for local development/demo
@@ -44,16 +50,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser({
         id: '00000000-0000-0000-0000-000000000000',
         email: 'admin@sentra.ai',
-        full_name: 'Demo Administrator',
-        app_metadata: {},
-        user_metadata: {},
-        aud: 'authenticated',
-        role: 'authenticated',
+        fullName: 'Demo Administrator',
+        role: 'admin',
         created_at: new Date().toISOString(),
-        tenant_id: '00000000-0000-0000-0000-000000000000',
         is_active: true,
       } as any);
-      setAccessToken('demo-bypass-token');
       setLoading(false);
       return;
     }
@@ -63,19 +64,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    setAccessToken(token);
-    fetchCurrentUser(token)
+    // Attempt to fetch current user (api.ts will use the token in localStorage)
+    fetchCurrentUser()
       .then((currentUser) => {
-        setUser(currentUser as unknown as AppUser);
+        setUser(currentUser);
       })
       .catch(() => {
-        localStorage.removeItem('sentra_access_token');
-        setAccessToken(null);
-        setUser(null);
+        logout();
       })
       .finally(() => {
         setLoading(false);
       });
+
+    return () => {
+      window.removeEventListener('auth:expired', handleAuthExpired);
+    };
   }, []);
 
   async function login(email: string, password: string) {
@@ -83,12 +86,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoginError(null);
 
     try {
-      const { access_token } = await loginRequest(email, password);
-      localStorage.setItem('sentra_access_token', access_token);
-      setAccessToken(access_token);
-      
-      const currentUser = await fetchCurrentUser(access_token);
-      setUser(currentUser as unknown as AppUser);
+      // loginRequest in api.ts automatically stores tokens in localStorage
+      const { user: loggedInUser } = await loginRequest(email, password);
+      setUser(loggedInUser);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to sign in';
       setLoginError(message);
@@ -98,30 +98,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function signUp(email: string, password: string) {
-    setLoginPending(true);
-    setLoginError(null);
-
-    try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-      if (error) throw error;
-      // Depending on config, email confirmation might be required.
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to sign up';
-      setLoginError(message);
-      throw error;
-    } finally {
-      setLoginPending(false);
-    }
-  }
-
   async function logout() {
     localStorage.removeItem('sentra_access_token');
+    localStorage.removeItem('sentra_refresh_token');
     setUser(null);
-    setAccessToken(null);
     setLoginError(null);
   }
 
@@ -129,12 +109,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
-        accessToken,
         loading,
         loginPending,
         loginError,
         login,
-        signUp,
         logout,
       }}
     >
