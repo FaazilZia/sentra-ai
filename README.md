@@ -1,6 +1,6 @@
 # Sentra AI — The Intelligent Control Tower for AI Agent Governance
 
-**Live Production URL:** https://sentra-ai-tau.vercel.app/app
+🚀 **Live Dashboard:** [https://sentra-ai.vercel.app](https://sentra-ai.vercel.app)
 
 Sentra AI is an enterprise-grade AI governance and security platform designed for the age of autonomous agents. It provides organizations with the centralized oversight and real-time control necessary to deploy AI agents safely. Sentra AI acts as a "Trust Layer," ensuring that every action taken by an AI agent aligns with corporate policies, data privacy regulations, and security guardrails.
 
@@ -11,11 +11,12 @@ Sentra AI is an enterprise-grade AI governance and security platform designed fo
 The platform has been successfully stabilized and migrated to a modern Node.js/TypeScript architecture to ensure production-grade reliability and security.
 
 ### Key Enhancements:
-- **Node.js Production Backend**: Fully migrated API services to Node.js (Express/Prisma) for improved performance and robust JWT handling.
+- **Node.js Production Backend**: Fully migrated API services to Node.js (Express/Prisma 7) for improved performance and robust JWT handling.
 - **Automated Infrastructure**: Implemented Render Blueprint (`render.yaml`) for one-click deployment including automatic database migrations and seeding.
 - **Unified Authentication**: Secured the platform with JWT access/refresh token rotation (15m/7d expiry) and robust cross-origin (CORS) security.
 - **Database Hardening**: Harmonized the Supabase schema with the `users` role system for granular Role-Based Access Control (RBAC).
-- **Frontend Resilience**: Fixed critical React/Vite build errors and synchronized API data fetching to match the new backend schema.
+- **Frontend Resilience**: Fixed critical React/Vite build errors, synchronized API data fetching, and resolved scope errors in the Privacy & Consent Ledger.
+- **Privacy Ledger**: Fully implemented the DPDP-compliant Consent Ledger with digital signatures for auditability.
 
 ---
 
@@ -34,7 +35,7 @@ The platform has been successfully stabilized and migrated to a modern Node.js/T
 Sentra AI/
 ├── frontend/                 # React + Vite + TypeScript dashboard
 ├── backend-node/             # [PRIMARY] Node.js (Express) production backend
-├── backend/                  # Python (FastAPI) [LEGACY] service
+├── sdk/                      # Telemetry SDK for external AI agent integration
 ├── render.yaml               # Universal deployment blueprint
 └── README.md                 # Project overview
 ```

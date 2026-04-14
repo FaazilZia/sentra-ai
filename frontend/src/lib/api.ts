@@ -47,6 +47,10 @@ export interface PolicyResponse {
   description: string;
   severity: string;
   is_active: boolean;
+  status: string;    // Added for Dashboard
+  enabled: boolean;  // Added for Dashboard
+  priority: number;  // Added for Dashboard 
+  effect: string;    // Added for Dashboard
   version: string;
 }
 

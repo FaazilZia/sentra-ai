@@ -15,7 +15,7 @@ import { SurfaceCard } from '../components/ui/SurfaceCard';
 type Tab = 'sdk' | 'sources';
 
 export default function ConnectPage() {
-  const { user } = useAuth();
+  useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('sdk');
   
   // API Keys state

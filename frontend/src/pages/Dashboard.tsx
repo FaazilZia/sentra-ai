@@ -52,8 +52,7 @@ export default function DashboardPage() {
     
     setIsScanning(true);
     try {
-      const response = await triggerScan();
-      const taskId = response.task_id;
+      await triggerScan();
       
       // Polling logic to wait for real backend completion
       let isDone = false;

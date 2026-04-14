@@ -15,7 +15,7 @@ export class SentraClient {
   private backendBearerToken: string;
 
   constructor(options: { baseUrl?: string; apiKey?: string; backendBearerToken?: string } = {}) {
-    this.baseUrl = options.baseUrl || 'https://sentra-ai-2u4i.vercel.app/api/v1';
+    this.baseUrl = options.baseUrl || 'https://sentra-backend-node.onrender.com/api';
     this.apiKey = options.apiKey || '';
     this.backendBearerToken = options.backendBearerToken || '';
   }
