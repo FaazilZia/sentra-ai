@@ -7,16 +7,15 @@ import { SurfaceCard } from '../components/ui/SurfaceCard';
 import { StatusBadge } from '../components/ui/StatusBadge';
 
 export default function PrivacySettingsPage() {
-  const { accessToken, logout } = useAuth();
+  const { logout } = useAuth();
   const [history, setHistory] = useState<ConsentEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
   const loadHistory = async () => {
-    if (!accessToken) return;
     try {
-      const data = await fetchConsentHistory(accessToken);
+      const data = await fetchConsentHistory();
       setHistory(data);
     } catch (err) {
       console.error('Failed to load history', err);
@@ -30,10 +29,9 @@ export default function PrivacySettingsPage() {
   }, [accessToken]);
 
   const handleWithdraw = async () => {
-    if (!accessToken) return;
     setIsWithdrawing(true);
     try {
-      await withdrawConsent(accessToken);
+      await withdrawConsent();
       alert('Consent withdrawn. Your data is being purged. You will be signed out.');
       logout();
     } catch (err) {
@@ -76,7 +74,7 @@ export default function PrivacySettingsPage() {
                 <Shield className="h-12 w-12 text-slate-200 mb-4" />
                 <p className="text-sm text-slate-500">No consent history found.</p>
                 <button 
-                  onClick={() => grantConsent(accessToken!).then(loadHistory)}
+                  onClick={() => grantConsent().then(loadHistory)}
                   className="mt-4 rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
                 >
                   Grant Initial Consent
@@ -151,7 +149,7 @@ export default function PrivacySettingsPage() {
             
             {!isConsented && !loading && (
               <button 
-                onClick={() => grantConsent(accessToken!).then(loadHistory)}
+                onClick={() => grantConsent().then(loadHistory)}
                 className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-3 text-sm font-bold text-white transition-all hover:bg-slate-800"
               >
                 <ShieldCheck className="h-4 w-4" /> Grant Consent

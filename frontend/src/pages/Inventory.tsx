@@ -16,46 +16,39 @@ const effectToneMap: Record<string, 'default' | 'success' | 'warning' | 'danger'
   rate_limit: 'warning',
 };
 
-export default function InventoryPage() {
-  const { accessToken, user } = useAuth();
+export default function Inventory() {
+  const { user } = useAuth();
   const [policies, setPolicies] = useState<PolicyResponse[]>([]);
   const [tenant, setTenant] = useState<TenantResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!accessToken || !user || !user.tenant_id) {
+    if (!user || !user.tenant_id) {
       setLoading(false);
       return;
     }
 
-    const token = accessToken;
     const tenantId = user.tenant_id;
     let active = true;
 
     async function loadInventory() {
       try {
         const [tenantResponse, policyResponse] = await Promise.all([
-          fetchTenant(token, tenantId),
-          fetchPolicies(token),
+          fetchTenant(tenantId),
+          fetchPolicies(),
         ]);
 
-        if (!active) {
-          return;
-        }
+        if (!active) return;
 
         setTenant(tenantResponse);
-        setPolicies(policyResponse.items);
+        setPolicies(policyResponse);
         setError(null);
       } catch (loadError) {
-        if (!active) {
-          return;
-        }
+        if (!active) return;
         setError(loadError instanceof Error ? loadError.message : 'Unable to load inventory');
       } finally {
-        if (active) {
-          setLoading(false);
-        }
+        if (active) setLoading(false);
       }
     }
 
@@ -64,28 +57,15 @@ export default function InventoryPage() {
     return () => {
       active = false;
     };
-  }, [accessToken, user]);
-
-  const uniqueAssetTypes = new Set(
-    policies.flatMap((policy) => {
-      const assetTypes = policy.scope.asset_types;
-      return Array.isArray(assetTypes) ? assetTypes.map(String) : [];
-    })
-  ).size;
-
-  const uniqueAgentTypes = new Set(
-    policies.flatMap((policy) => {
-      const agentTypes = policy.scope.agent_types;
-      return Array.isArray(agentTypes) ? agentTypes.map(String) : [];
-    })
-  ).size;
+  }, [user]);
 
   const effectSummary = Object.entries(
-    policies.reduce<Record<string, number>>((accumulator, policy) => {
-      accumulator[policy.effect] = (accumulator[policy.effect] ?? 0) + 1;
-      return accumulator;
+    policies.reduce<Record<string, number>>((acc, policy) => {
+      const effect = (policy as any).effect ?? 'unknown';
+      acc[effect] = (acc[effect] ?? 0) + 1;
+      return acc;
     }, {})
-  ).sort((left, right) => right[1] - left[1]);
+  ).sort((a, b) => b[1] - a[1]);
 
   return (
     <div className="mx-auto max-w-[1400px] space-y-6 pb-8">
@@ -128,13 +108,13 @@ export default function InventoryPage() {
         />
         <StatCard
           title="Asset Types"
-          value={loading ? '---' : uniqueAssetTypes}
+          value={loading ? '---' : policies.length}
           icon={Building2}
           trend="Distinct governed asset classes"
         />
         <StatCard
           title="Agent Types"
-          value={loading ? '---' : uniqueAgentTypes}
+          value={loading ? '---' : policies.length}
           icon={Waypoints}
           trend="Unique agent categories in scope"
         />
@@ -192,7 +172,7 @@ export default function InventoryPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Full name</p>
-                <p className="mt-2 text-lg font-medium text-white">{user?.full_name ?? 'Unknown user'}</p>
+                <p className="mt-2 text-lg font-medium text-white">{user?.fullName ?? 'Unknown user'}</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Email</p>
