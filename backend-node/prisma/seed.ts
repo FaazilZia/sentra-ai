@@ -34,8 +34,10 @@ async function main() {
   // 2. Ensure admin user
   const passwordHash = await bcrypt.hash('Sentra@Admin123', 10);
   const user = await prisma.users.upsert({
-    where: { id: ADMIN_USER_ID },
-    update: {},
+    where: { email: 'admin@sentra.ai' },
+    update: {
+      password_hash: passwordHash,
+    },
     create: {
       id: ADMIN_USER_ID,
       email: 'admin@sentra.ai',

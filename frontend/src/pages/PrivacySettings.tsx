@@ -7,7 +7,7 @@ import { SurfaceCard } from '../components/ui/SurfaceCard';
 import { StatusBadge } from '../components/ui/StatusBadge';
 
 export default function PrivacySettingsPage() {
-  const { logout } = useAuth();
+  const { logout, accessToken } = useAuth();
   const [history, setHistory] = useState<ConsentEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [isWithdrawing, setIsWithdrawing] = useState(false);

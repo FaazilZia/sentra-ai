@@ -1,42 +1,30 @@
 # Sentra AI — The Intelligent Control Tower for AI Agent Governance
 
-**Live Demo:** [https://sentra-ai-1.onrender.com/login](https://sentra-ai-1.onrender.com/login)
+**Live Production URL:** [https://sentra-ai.vercel.app](https://sentra-ai.vercel.app)
 
-Sentra AI is an enterprise-grade AI governance and security platform designed for the age of autonomous agents. It provides organizations with the centralized oversight and real-time control necessary to deploy AI agents safely. Sentra AI acts as a "Trust Layer," ensuring that every action taken by an AI agent aligns with corporate policies, data privacy regulations (like India's DPDP Act), and security guardrails.
-
----
-
-## 🚀 Recent Platform Restoration (Commit `eb1924e`)
-
-We have recently synchronized the platform with our stable production baseline (`eb1924e`) and implemented several critical infrastructure repairs:
-
-- **Enhanced Compatibility**: Standardized the backend for **Python 3.9+** and **SQLAlchemy 2.0**, ensuring cross-platform stability between local dev and Render/Vercel environments.
-- **Surgical Schema Repair**: Optimized the Supabase database schema to resolve incident tracking failures and improve remediation performance.
-- **Authentication Stabilization**: Hardened the Argon2 security logic to ensure 100% login uptime on live environments.
-- **Real Asynchronous Scanning**: Deep Scans now run as true background tasks via Celery and Redis, allowing for non-blocking infrastructure monitoring.
+Sentra AI is an enterprise-grade AI governance and security platform designed for the age of autonomous agents. It provides organizations with the centralized oversight and real-time control necessary to deploy AI agents safely. Sentra AI acts as a "Trust Layer," ensuring that every action taken by an AI agent aligns with corporate policies, data privacy regulations, and security guardrails.
 
 ---
 
-## 🛠️ Production Hardening & Optimization (Branch `Faazil`)
+## 🛠️ Platform Stabilization & Node.js Migration (April 2026)
 
-The latest updates bring significant stability and performance improvements for the production environment:
+The platform has been successfully stabilized and migrated to a modern Node.js/TypeScript architecture to ensure production-grade reliability and security.
 
-- **Production Node.js Backend**: Recently migrated the primary production API from Python to Node.js (Express/Prisma) for improved security, better JWT handling, and seamless Render deployment.
-- **Enterprise Security**: Implemented JWT access/refresh token rotation, Zod request validation, and RBAC (Role-Based Access Control) using Prisma 7.
-- **CORS Hardening**: Dynamically restricted API access to your Vercel frontend URL to prevent unauthorized cross-origin requests.
-- **Render Blueprint Implementation**: Added a `render.yaml` configuration to allow for one-click infrastructure-as-code deployments.
+### Key Enhancements:
+- **Node.js Production Backend**: Fully migrated API services to Node.js (Express/Prisma) for improved performance and robust JWT handling.
+- **Automated Infrastructure**: Implemented Render Blueprint (`render.yaml`) for one-click deployment including automatic database migrations and seeding.
+- **Unified Authentication**: Secured the platform with JWT access/refresh token rotation (15m/7d expiry) and robust cross-origin (CORS) security.
+- **Database Hardening**: Harmonized the Supabase schema with the `users` role system for granular Role-Based Access Control (RBAC).
+- **Frontend Resilience**: Fixed critical React/Vite build errors and synchronized API data fetching to match the new backend schema.
 
 ---
 
-## 🛠️ Product Capabilities
+## 🏗️ Technical Stack
 
-Sentra AI allows organizations to:
-
-- **Unified Visibility**: Monitor real-time telemetry from AI agents via the Sentra Edge SDK.
-- **Policy Enforcement**: Define and evaluate sophisticated access controls (Allow, Block, Mask, or Escalate).
-- **Incident Remediation**: Track and resolve policy violations through a centralized, filterable Incident Ledger.
-- **Compliance Mapping**: Ensure adherence to global privacy standards (GDPR, DPDP) through automatic scanning and classification.
-- **Executive Oversight**: Access premium, high-level summaries of organizational AI risk and security posture.
+- **Frontend**: React 18, Vite, TypeScript, Tailwind CSS (Glassmorphism UI)
+- **Backend (Production)**: Node.js 20, Express, TypeScript, Prisma 7
+- **Database**: Supabase (PostgreSQL)
+- **Infrastructure**: Vercel (Frontend), Render (API)
 
 ---
 
@@ -45,51 +33,55 @@ Sentra AI allows organizations to:
 ```text
 Sentra AI/
 ├── frontend/                 # React + Vite + TypeScript dashboard
-├── backend-node/             # [NEW] Node.js (Express) + Prisma production backend
-├── backend/                  # Python (FastAPI) governance engine (Legacy/Core)
-├── render.yaml               # Deployment blueprint for Render
-└── README.md                 # Project overview & technical documentation
+├── backend-node/             # [PRIMARY] Node.js (Express) production backend
+├── backend/                  # Python (FastAPI) [LEGACY] service
+├── render.yaml               # Universal deployment blueprint
+└── README.md                 # Project overview
 ```
 
-## 🏗️ Technical Stack
-
-- **Frontend**: React 18, Vite, TypeScript, Tailwind CSS (Glassmorphism & Cyber-Blue UI)
-- **Backend (Production)**: Node.js, Express, TypeScript, Prisma 7
-- **Backend (Legacy/Task)**: FastAPI, SQLAlchemy 2.0, Celery, Redis
-- **Database**: Supabase (PostgreSQL)
-- **Worker/Task Queue**: Celery, Redis (Asynchronous scanning architecture)
-- **Infrastructure**: Vercel (Frontend), Render (API), Docker (Local Dev)
+---
 
 ## 💻 Local Development
 
 ### Prerequisites
-- Python 3.9+
-- Node.js 18+
-- Redis (Required for background scanning)
+- Node.js 20+
+- PostgreSQL/Supabase account
 
-### Frontend Setup
+### 1. Frontend Setup
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-### 🚀 Node.js Backend Setup (Production)
+### 2. Backend Setup
 ```bash
 cd backend-node
 npm install
+npx prisma generate
 npm run dev
 ```
 
-### 🐍 Python Backend Setup (Task/Legacy)
+### 3. Database Seeding (First time setup)
+The first time you connect to a new database, run the seed script to create the initial admin user and default tenant:
 ```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate
-pip install .
-uvicorn app.main:app --reload
+cd backend-node
+npm run seed
 ```
+**Default Credentials:**
+- **Email:** `admin@sentra.ai`
+- **Password:** `Sentra@Admin123`
 
-## 📈 Platform Status
+---
 
-Sentra AI is currently in **Active Build Phase**. The platform core is stable, real-time scanning is live, and we are successfully monitoring autonomous agent activity in production environments.
+## 🌐 Production Deployment
+
+Sentra AI is optimized for deployment on **Vercel** and **Render**:
+
+1. **Backend (Render)**: Connect the root repository to Render. It will automatically detect `render.yaml` and deploy the `sentra-backend-node` service.
+2. **Frontend (Vercel)**: Connect the `frontend/` directory to Vercel. Ensure `VITE_API_BASE_URL` is set to your backend URL.
+
+---
+
+## 📈 Current Status: OPERATIONAL
+The dashboard is now fully functional. Users can log in, view live incident telemetry, inspect the AI Inventory, and monitor security feeds in real-time.
