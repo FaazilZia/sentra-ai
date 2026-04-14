@@ -1,7 +1,7 @@
 import { supabase } from './supabaseClient';
 
 // Node.js Backend base URL — must NOT have a trailing slash
-const defaultApiBaseUrl = 'https://sentra-ai-wz6m.onrender.com/api';
+const defaultApiBaseUrl = 'https://sentra-backend-node.onrender.com/api';
 
 // Use the env variable directly — no extra path manipulation to avoid double /api
 export const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || defaultApiBaseUrl).replace(/\/$/, '');
