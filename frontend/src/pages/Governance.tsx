@@ -21,16 +21,16 @@ export default function GovernancePage() {
       return;
     }
 
-    const token = accessToken;
     let active = true;
 
     async function loadPoliciesForGovernance() {
       try {
-        const response = await fetchPolicies(token);
+        const response = await fetchPolicies();
         if (!active) {
           return;
         }
-        setPolicies(response.items);
+        const list = Array.isArray(response) ? response : [];
+        setPolicies(list);
         setError(null);
       } catch (loadError) {
         if (!active) {
@@ -201,7 +201,7 @@ export default function GovernancePage() {
                     <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
                       <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Actions</p>
                       <p className="mt-2 text-sm font-medium text-white">
-                        {Array.isArray(policy.scope.actions) ? policy.scope.actions.join(', ') : 'None'}
+                        {Array.isArray(policy.scope?.actions) ? policy.scope.actions.join(', ') : 'None'}
                       </p>
                     </div>
                   </div>

@@ -4,12 +4,12 @@ export const logIncidentSchema = z.object({
   body: z.object({
     agent_id: z.string().min(1),
     action: z.string().min(1),
-    severity: z.number().int().min(0).max(100),
-    policy_id: z.string().uuid().optional(),
+    severity: z.coerce.number().int().min(0).max(100),
+    policy_id: z.union([z.string().uuid(), z.literal(''), z.null()]).optional(),
     details: z.string().optional(),
     prompt_excerpt: z.string().optional(),
     response_excerpt: z.string().optional(),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.string(), z.any()).optional(),
   }),
 });
 
@@ -28,7 +28,6 @@ export const getIncidentByIdSchema = z.object({
   }),
 });
 
-// For scan endpoints, we don't necessarily need complex body validation yet
 export const triggerScanSchema = z.object({
-  body: z.object({}).optional(),
+  body: z.record(z.string(), z.unknown()).optional(),
 });

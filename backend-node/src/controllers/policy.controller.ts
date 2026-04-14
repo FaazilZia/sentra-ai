@@ -1,5 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import prisma from '../config/db';
+import { resolveTenantId } from '../utils/tenant';
 
 export const getPolicies = async (req: any, res: Response, next: NextFunction) => {
   try {
@@ -39,6 +40,35 @@ export const getPolicyHealth = async (req: any, res: Response, next: NextFunctio
           { name: 'Latency', status: 'pass', value: '14ms' }
         ]
       }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getPolicyVersions = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const policyId = String(req.params['policyId'] ?? '');
+    const tenantId = await resolveTenantId(req);
+    if (!tenantId) {
+      return res.status(200).json({ success: true, data: [] });
+    }
+
+    const policy = await prisma.policies.findFirst({
+      where: { id: policyId, tenant_id: tenantId },
+    });
+    if (!policy) {
+      return res.status(404).json({ success: false, message: 'Policy not found' });
+    }
+
+    const versions = await prisma.policy_versions.findMany({
+      where: { policy_id: policyId, tenant_id: tenantId },
+      orderBy: { version: 'desc' },
+    });
+
+    res.status(200).json({
+      success: true,
+      data: versions,
     });
   } catch (error) {
     next(error);

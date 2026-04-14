@@ -24,18 +24,14 @@ export default function ObservabilityPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!accessToken) {
-      setLoading(false);
-      return;
-    }
-
-    const token = accessToken;
+    // Policies fetch from api.ts automatically uses the token from localStorage
     let active = true;
+
 
     async function loadObservability() {
       try {
-        const [policiesResponse, backendHealthResponse, policyHealthResponse] = await Promise.all([
-          fetchPolicies(token),
+        const [policiesData, backendHealthResponse, policyHealthResponse] = await Promise.all([
+          fetchPolicies(),
           fetchBackendHealth(),
           fetchPolicyHealth(),
         ]);
@@ -44,7 +40,7 @@ export default function ObservabilityPage() {
           return;
         }
 
-        setPolicies(policiesResponse.items);
+        setPolicies(policiesData);
         setBackendHealth(backendHealthResponse);
         setPolicyHealth(policyHealthResponse);
         setError(null);
@@ -101,8 +97,8 @@ export default function ObservabilityPage() {
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <StatusBadge
-                label={backendHealth?.status === 'ok' ? 'Backend Healthy' : 'Backend Unknown'}
-                tone={backendHealth?.status === 'ok' ? 'success' : 'warning'}
+                label={backendHealth?.status === 'healthy' ? 'Backend Healthy' : 'Backend Unknown'}
+                tone={backendHealth?.status === 'healthy' ? 'success' : 'warning'}
               />
               <StatusBadge
                 label={policyHealth?.status === 'ok' ? 'Evaluator Healthy' : 'Evaluator Unknown'}
@@ -182,11 +178,11 @@ export default function ObservabilityPage() {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-medium text-white">API reachability</p>
-                    <p className="mt-1 text-sm text-slate-400">FastAPI `/health` endpoint</p>
+                    <p className="mt-1 text-sm text-slate-400">Node.js `/health` endpoint</p>
                   </div>
                   <StatusBadge
                     label={backendHealth?.status ?? 'unknown'}
-                    tone={backendHealth?.status === 'ok' ? 'success' : 'warning'}
+                    tone={backendHealth?.status === 'healthy' ? 'success' : 'warning'}
                   />
                 </div>
               </div>
