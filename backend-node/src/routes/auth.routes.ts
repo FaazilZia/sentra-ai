@@ -10,6 +10,7 @@ const router = Router();
 router.post('/register', authRateLimiter, validate(registerSchema), register);
 router.post('/login', authRateLimiter, validate(loginSchema), login);
 router.post('/refresh-token', authRateLimiter, validate(refreshTokenSchema), refreshToken);
+router.post('/refresh', authRateLimiter, validate(refreshTokenSchema), refreshToken); // alias
 router.get('/me', authenticate, getMe);
 
 export default router;

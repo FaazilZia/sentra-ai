@@ -15,7 +15,7 @@ import { SurfaceCard } from '../components/ui/SurfaceCard';
 type Tab = 'sdk' | 'sources';
 
 export default function ConnectPage() {
-  const { accessToken } = useAuth();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('sdk');
   
   // API Keys state
@@ -31,16 +31,14 @@ export default function ConnectPage() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (accessToken) {
-      loadData();
-    }
-  }, [accessToken]);
+    loadData();
+  }, []);
 
   const loadData = async () => {
     try {
       const [keysData, connsData] = await Promise.all([
-        fetchApiKeys(accessToken!),
-        fetchConnectors(accessToken!)
+        fetchApiKeys(),
+        fetchConnectors()
       ]);
       setKeys(keysData);
       setConnectors(connsData.items || []);
@@ -56,10 +54,10 @@ export default function ConnectPage() {
     if (!keyName || isCreating) return;
     setIsCreating(true);
     try {
-      const keyBundle = await createApiKey(accessToken!, keyName);
+      const keyBundle = await createApiKey(keyName);
       setNewKey(keyBundle);
       setKeyName('');
-      const updatedKeys = await fetchApiKeys(accessToken!);
+      const updatedKeys = await fetchApiKeys();
       setKeys(updatedKeys);
     } catch (err) {
       alert('Failed to generate key');
@@ -71,7 +69,7 @@ export default function ConnectPage() {
   const handleCreateSqlConnector = async () => {
     setIsConnecting(true);
     try {
-      await createConnector(accessToken!, {
+      await createConnector({
         name: 'Production SQL DB',
         type: 'sql',
         config: { host: 'db.internal.sentra.ai', port: 5432 }

@@ -21,7 +21,7 @@ function getSeverityIcon(severity: number) {
 }
 
 export default function SecurityFeedPage() {
-  const { accessToken } = useAuth();
+  const { user } = useAuth();
   const [incidents, setIncidents] = useState<IncidentResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,9 +41,9 @@ export default function SecurityFeedPage() {
     async function loadIncidents() {
       try {
         const statusFilter = filter === 'all' ? undefined : filter;
-        const response = await fetchIncidents(token, 40, statusFilter);
+        const response = await fetchIncidents(40, statusFilter);
         if (!active) return;
-        setIncidents(response.items);
+        setIncidents(response);
         setError(null);
       } catch (err) {
         if (!active) return;
@@ -66,13 +66,12 @@ export default function SecurityFeedPage() {
       active = false;
       clearInterval(interval);
     };
-  }, [accessToken, isLive, filter]);
+  }, [isLive, filter]);
 
   const handleAction = async (id: string, newStatus: string) => {
-    if (!accessToken) return;
     setActingOn(id);
     try {
-      await updateIncidentStatus(accessToken, id, newStatus);
+      await updateIncidentStatus(id, newStatus);
       // Optimistically update or just let the next poll catch it
       setIncidents(prev => prev.filter(i => {
         if (i.id !== id) return true;
