@@ -1,35 +1,22 @@
 services:
-  # Backend Web Service
   - type: web
-    name: sentra-ai-backend
-    env: python
+    name: sentra-backend-node
+    env: node
     plan: free
-    rootDir: backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    rootDir: backend-node
+    buildCommand: npm install && npx prisma generate && npx prisma db push --accept-data-loss && npm run build && npx ts-node prisma/seed.ts
+    startCommand: npm start
+    healthCheckPath: /api/health
     envVars:
       - key: DATABASE_URL
         sync: false
-      - key: REDIS_URL
-        sync: false
-      - key: APP_ENV
-        value: production
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: SECRET_KEY
+      - key: JWT_SECRET
         generateValue: true
-      - key: PYTHON_VERSION
-        value: 3.11.8
-
-  # Frontend Static Site
-  - type: web
-    name: sentra-ai-frontend
-    runtime: static
-    rootDir: frontend
-    buildCommand: npm run build
-    staticPublishPath: dist
-    envVars:
-      - key: VITE_API_BASE_URL
-        value: "https://sentra-ai-backend.onrender.com"
-      - key: VITE_BYPASS_AUTH
-        value: "true"
+      - key: REFRESH_SECRET
+        generateValue: true
+      - key: NODE_ENV
+        value: production
+      - key: FRONTEND_URL
+        value: https://sentra-ai-tau.vercel.app,https://sentra-ai.vercel.app,http://localhost:5173
+      - key: PORT
+        value: 10000

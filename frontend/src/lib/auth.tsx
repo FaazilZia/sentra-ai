@@ -11,6 +11,7 @@ export interface AppUser {
   id: string;
   email: string;
   fullName: string;
+  full_name?: string; // Legacy alias for compatibility
   role: string;
   tenant_id?: string;
   is_active?: boolean;
@@ -20,6 +21,7 @@ export interface AppUser {
 
 interface AuthContextValue {
   user: AppUser | null;
+  accessToken: string | null;
   loading: boolean;
   loginPending: boolean;
   loginError: string | null;
@@ -109,6 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
+        accessToken: localStorage.getItem('sentra_access_token'),
         loading,
         loginPending,
         loginError,

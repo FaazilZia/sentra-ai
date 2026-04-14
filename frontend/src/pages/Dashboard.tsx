@@ -17,7 +17,7 @@ import { CircleCheck, ShieldAlert } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 
 export default function DashboardPage() {
-  const { accessToken, user } = useAuth();
+  const { user } = useAuth();
    const [policies, setPolicies] = useState<PolicyResponse[]>([]);
   const [incidents, setIncidents] = useState<IncidentResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,18 +26,14 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
    const loadData = async () => {
-    if (!accessToken) {
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     try {
       const [policiesRes, incidentsRes] = await Promise.all([
-        fetchPolicies(accessToken),
-        fetchIncidents(accessToken, 6, 'unresolved')
+        fetchPolicies(),
+        fetchIncidents(6, 'unresolved')
       ]);
-      setPolicies(policiesRes.items);
-      setIncidents(incidentsRes.items);
+      setPolicies(policiesRes);
+      setIncidents(incidentsRes);
       setError(null);
     } catch (fetchError) {
       const message = fetchError instanceof Error ? fetchError.message : 'Unable to load platform data';
@@ -49,14 +45,14 @@ export default function DashboardPage() {
 
   useEffect(() => {
     loadData();
-  }, [accessToken]);
+  }, []);
 
   const handleStartScan = async () => {
-    if (!accessToken || isScanning) return;
+    if (isScanning) return;
     
     setIsScanning(true);
     try {
-      const response = await triggerScan(accessToken);
+      const response = await triggerScan();
       const taskId = response.task_id;
       
       // Polling logic to wait for real backend completion
@@ -65,7 +61,7 @@ export default function DashboardPage() {
       const maxAttempts = 60; // 60 seconds timeout
       
       while (!isDone && attempts < maxAttempts) {
-        const statusResponse = await fetchScanStatus(taskId, accessToken);
+        const statusResponse = await fetchScanStatus();
         
         if (statusResponse.status === 'SUCCESS') {
           isDone = true;
@@ -91,10 +87,9 @@ export default function DashboardPage() {
   };
 
   const handleAction = async (id: string, newStatus: string) => {
-    if (!accessToken) return;
     setIsActing(id);
     try {
-      await updateIncidentStatus(accessToken, id, newStatus);
+      await updateIncidentStatus(id, newStatus);
       await loadData();
       if (newStatus === 'blocked') {
         alert('Security Policy updated: The offending agent access has been restricted.');
@@ -156,7 +151,7 @@ export default function DashboardPage() {
           </h1>
           <p className="mt-1 text-xs text-slate-500">
             DPO view for policy coverage, risky AI access patterns, and scan readiness for{' '}
-            {user?.full_name ?? 'current operator'}.
+            {user?.fullName ?? 'current operator'}.
           </p>
         </div>
         <button 

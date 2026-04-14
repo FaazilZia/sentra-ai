@@ -3,14 +3,12 @@ services:
     name: sentra-backend-node
     env: node
     plan: free
-    buildCommand: npm install && npx prisma generate && npx prisma db push --accept-data-loss && npm run build
+    buildCommand: npm install && npx prisma generate && npx prisma db push --accept-data-loss && npm run build && npx ts-node prisma/seed.ts
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: postgres
-          column: connectionString
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: REFRESH_SECRET
@@ -20,4 +18,4 @@ services:
       - key: FRONTEND_URL
         value: https://sentra-ai-tau.vercel.app,https://sentra-ai.vercel.app,http://localhost:5173
       - key: PORT
-        value: 5001
+        value: 10000

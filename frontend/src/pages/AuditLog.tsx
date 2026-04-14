@@ -24,7 +24,7 @@ export default function AuditLog() {
     async function loadHistory() {
       if (!accessToken) return;
       try {
-        const data = await apiRequest<any>('/incidents/history', { method: 'GET' }, accessToken);
+        const data = await apiRequest<any>('/incidents/history', { method: 'GET' });
         setHistory(data.items || []);
       } catch (err) {
         console.error('Audit Load Error:', err);
