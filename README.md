@@ -21,10 +21,10 @@ We have recently synchronized the platform with our stable production baseline (
 
 The latest updates bring significant stability and performance improvements for the production environment:
 
-- **Deployment Reliability**: Optimized `render.yaml` configurations to stay within free tier limits while maintaining 100% uptime.
-- **Frontend-Backend Integration**: Fixed CORS policy issues and resolved the "white screen of death" by hardcoding fallback production API endpoints.
-- **Code Hygiene**: Removed 10+ linting warnings and unused imports across the frontend (`Connect`, `AuditLog`, `Sidebar`).
-- **Backend Refactoring**: Simplified internal model mixins to improve database transaction reliability.
+- **Production Node.js Backend**: Recently migrated the primary production API from Python to Node.js (Express/Prisma) for improved security, better JWT handling, and seamless Render deployment.
+- **Enterprise Security**: Implemented JWT access/refresh token rotation, Zod request validation, and RBAC (Role-Based Access Control) using Prisma 7.
+- **CORS Hardening**: Dynamically restricted API access to your Vercel frontend URL to prevent unauthorized cross-origin requests.
+- **Render Blueprint Implementation**: Added a `render.yaml` configuration to allow for one-click infrastructure-as-code deployments.
 
 ---
 
@@ -45,16 +45,18 @@ Sentra AI allows organizations to:
 ```text
 Sentra AI/
 ├── frontend/                 # React + Vite + TypeScript dashboard
-├── backend/                  # FastAPI + Celery + SQLAlchemy governance engine
-├── VERCEL_DEPLOY.md          # Production deployment documentation
+├── backend-node/             # [NEW] Node.js (Express) + Prisma production backend
+├── backend/                  # Python (FastAPI) governance engine (Legacy/Core)
+├── render.yaml               # Deployment blueprint for Render
 └── README.md                 # Project overview & technical documentation
 ```
 
 ## 🏗️ Technical Stack
 
 - **Frontend**: React 18, Vite, TypeScript, Tailwind CSS (Glassmorphism & Cyber-Blue UI)
-- **Backend**: FastAPI, SQLAlchemy 2.0 (PostgreSQL), Pydantic v2
-- **Database**: Supabase Protected (PostgreSQL)
+- **Backend (Production)**: Node.js, Express, TypeScript, Prisma 7
+- **Backend (Legacy/Task)**: FastAPI, SQLAlchemy 2.0, Celery, Redis
+- **Database**: Supabase (PostgreSQL)
 - **Worker/Task Queue**: Celery, Redis (Asynchronous scanning architecture)
 - **Infrastructure**: Vercel (Frontend), Render (API), Docker (Local Dev)
 
@@ -72,7 +74,14 @@ npm install
 npm run dev
 ```
 
-### Backend Setup
+### 🚀 Node.js Backend Setup (Production)
+```bash
+cd backend-node
+npm install
+npm run dev
+```
+
+### 🐍 Python Backend Setup (Task/Legacy)
 ```bash
 cd backend
 python -m venv .venv
