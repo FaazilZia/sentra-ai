@@ -7,6 +7,8 @@ import LoginPage from './pages/Login';
 
 const DashboardPage = lazy(() => import('./pages/Dashboard'));
 const InventoryPage = lazy(() => import('./pages/Inventory'));
+const LandingPage = lazy(() => import('./pages/LandingPage'));
+const FeaturesPage = lazy(() => import('./pages/FeaturesPage'));
 const ObservabilityPage = lazy(() => import('./pages/Observability'));
 const RiskCenterPage = lazy(() => import('./pages/RiskCenter'));
 const AuditLogPage = lazy(() => import('./pages/AuditLog'));
@@ -44,8 +46,9 @@ function AppRoutes() {
     <BrowserRouter>
       <Suspense fallback={<RouteFallback />}>
         <Routes>
-          {/* Direct to Dashboard */}
-          <Route path="/" element={<Navigate to="/app" replace />} />
+          {/* Home Routes */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/features" element={<FeaturesPage />} />
           
           {/* Login Route */}
           <Route 

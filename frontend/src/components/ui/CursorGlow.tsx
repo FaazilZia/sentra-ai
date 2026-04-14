@@ -27,7 +27,7 @@ export const CursorGlow: React.FC = () => {
 
   return (
     <motion.div
-      className="pointer-events-none fixed w-[600px] h-[600px] rounded-full blur-[120px] bg-cyan-500/10 z-[100] mix-blend-screen"
+      className="pointer-events-none fixed w-[600px] h-[600px] rounded-full blur-[120px] bg-white/[0.04] z-[100] mix-blend-screen"
       style={{
         x: springX,
         y: springY,
