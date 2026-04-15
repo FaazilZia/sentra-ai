@@ -1,23 +1,18 @@
 import { useEffect, useState } from 'react';
 import { ChevronDown, LogOut, RefreshCw, Search, ShieldCheck, ShieldX } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
-import { apiBaseUrl } from '../../lib/api';
+import { fetchBackendHealth } from '../../lib/api';
 
 export function Topbar() {
   const { user, logout } = useAuth();
   const [status, setStatus] = useState<'checking' | 'waking' | 'online' | 'degraded'>('checking');
 
   useEffect(() => {
-    if (!apiBaseUrl) {
-      setStatus('degraded');
-      return;
-    }
-
     let attempts = 0;
     const checkBackend = async () => {
       try {
-        const response = await fetch(`${apiBaseUrl}/health`, { method: 'GET' });
-        if (response.ok) {
+        const response = await fetchBackendHealth();
+        if (response.status === 'healthy') {
           setStatus('online');
           return true;
         }

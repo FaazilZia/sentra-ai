@@ -25,10 +25,8 @@ const allowedOrigins = process.env.FRONTEND_URL
 
 app.use(cors({
   origin: (origin, callback) => {
-    // If no origin (like mobile apps or curl), allow it
     if (!origin) return callback(null, true);
     
-    // Check if origin matches allowed list or Vercel patterns
     const isAllowed = allowedOrigins.includes(origin) || 
                       origin.endsWith('.vercel.app') || 
                       origin.includes('localhost');
@@ -37,10 +35,13 @@ app.use(cors({
       callback(null, true);
     } else {
       console.warn(`CORS blocked for origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
+      // Return null origin instead of error to avoid breaking preflights
+      callback(null, false);
     }
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 app.use(express.json());
 app.use(morgan('dev'));
@@ -61,7 +62,7 @@ app.use('/api/connectors', connectorRoutes);
 
 // Basic Health Check
 app.get('/api/health', (req, res) => {
-  res.status(200).json({ success: true, status: 'healthy', message: 'Server is healthy' });
+  res.status(200).json({ status: 'healthy' });
 });
 
 // Root route to check version

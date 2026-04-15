@@ -6,6 +6,5 @@ export function serializeIncident(row: incidents) {
   return {
     ...rest,
     metadata: event_metadata ?? {},
-    event_metadata,
   };
 }

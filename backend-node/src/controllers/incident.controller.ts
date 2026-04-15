@@ -91,7 +91,7 @@ export const getIncidents = async (req: any, res: Response, next: NextFunction) 
 
     const tenantId = await resolveTenantId(req);
     if (!tenantId) {
-      return res.status(200).json({ success: true, data: [] });
+      return res.status(200).json([]);
     }
 
     const incidents = await prisma.incidents.findMany({
@@ -103,13 +103,7 @@ export const getIncidents = async (req: any, res: Response, next: NextFunction) 
       take,
     });
 
-    // Map database field event_metadata to API field metadata for frontend compatibility
-    const mappedIncidents = incidents.map(inc => ({
-      ...inc,
-      metadata: inc.event_metadata
-    }));
-
-    res.status(200).json({ success: true, data: mappedIncidents.map(serializeIncident) });
+    res.status(200).json(incidents.map(serializeIncident));
   } catch (error) {
     next(error);
   }
@@ -120,19 +114,16 @@ export const getIncidentById = async (req: any, res: Response, next: NextFunctio
     const id = String(req.params['id'] ?? '');
     const tenantId = await resolveTenantId(req);
     if (!tenantId) {
-      return res.status(404).json({ success: false, message: 'Incident not found' });
+      return res.status(404).json({ message: 'Incident not found' });
     }
 
     const incident = await prisma.incidents.findUnique({ where: { id } });
 
     if (!incident || incident.tenant_id !== tenantId) {
-      return res.status(404).json({ success: false, message: 'Incident not found' });
+      return res.status(404).json({ message: 'Incident not found' });
     }
 
-    res.status(200).json({ 
-      success: true, 
-      data: serializeIncident({ ...incident, metadata: incident.event_metadata }) 
-    });
+    res.status(200).json(serializeIncident(incident));
   } catch (error) {
     next(error);
   }
@@ -143,13 +134,13 @@ export const updateIncidentStatus = async (req: any, res: Response, next: NextFu
     const id = String(req.params['id'] ?? '');
     const tenantId = await resolveTenantId(req);
     if (!tenantId) {
-      return res.status(404).json({ success: false, message: 'Incident not found' });
+      return res.status(404).json({ message: 'Incident not found' });
     }
     const { status } = req.body as { status: string };
 
     const existing = await prisma.incidents.findUnique({ where: { id } });
     if (!existing || existing.tenant_id !== tenantId) {
-      return res.status(404).json({ success: false, message: 'Incident not found' });
+      return res.status(404).json({ message: 'Incident not found' });
     }
 
     const normalized = status.toLowerCase();
@@ -168,11 +159,7 @@ export const updateIncidentStatus = async (req: any, res: Response, next: NextFu
       },
     });
 
-    res.status(200).json({
-      success: true,
-      message: `Incident status updated to ${status}`,
-      data: serializeIncident(updatedIncident),
-    });
+    res.status(200).json(serializeIncident(updatedIncident));
   } catch (error) {
     next(error);
   }
@@ -367,4 +354,3 @@ export const getScanStatus = async (req: any, res: Response, next: NextFunction)
     next(error);
   }
 };
-

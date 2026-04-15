@@ -5,7 +5,7 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { loginRequest, fetchCurrentUser } from './api';
+import { fetchCurrentUser, loginRequest, registerRequest } from './api';
 
 export interface AppUser {
   id: string;
@@ -26,6 +26,7 @@ interface AuthContextValue {
   loginPending: boolean;
   loginError: string | null;
   login: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -100,6 +101,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function signUp(email: string, password: string) {
+    setLoginPending(true);
+    setLoginError(null);
+
+    try {
+      await registerRequest({
+        email,
+        password,
+        fullName: email.split('@')[0] || 'Sentra User',
+      });
+      await login(email, password);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to sign up';
+      setLoginError(message);
+      throw error;
+    } finally {
+      setLoginPending(false);
+    }
+  }
+
   async function logout() {
     localStorage.removeItem('sentra_access_token');
     localStorage.removeItem('sentra_refresh_token');
@@ -116,6 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginPending,
         loginError,
         login,
+        signUp,
         logout,
       }}
     >
