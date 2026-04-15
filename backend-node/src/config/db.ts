@@ -1,12 +1,17 @@
 import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
-import { Pool } from 'pg';
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import Database from 'better-sqlite3';
 
-const pool = new Pool({ 
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+const isSqlite = process.env.DATABASE_URL?.startsWith('file:');
+
+let prisma: PrismaClient;
+
+if (isSqlite) {
+  const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL! });
+  prisma = new PrismaClient({ adapter });
+} else {
+  // Standard Postgres initialization
+  prisma = new PrismaClient();
+}
 
 export default prisma;

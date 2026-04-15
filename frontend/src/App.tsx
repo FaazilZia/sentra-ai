@@ -11,6 +11,7 @@ const ObservabilityPage = lazy(() => import('./pages/Observability'));
 const RiskCenterPage = lazy(() => import('./pages/RiskCenter'));
 const AuditLogPage = lazy(() => import('./pages/AuditLog'));
 const GovernancePage = lazy(() => import('./pages/Governance'));
+const AIActivityLogsPage = lazy(() => import('./pages/AIActivityLogs'));
 const SecurityFeedPage = lazy(() => import('./pages/SecurityFeed'));
 const ConnectPage = lazy(() => import('./pages/Connect'));
 const PrivacySettingsPage = lazy(() => import('./pages/PrivacySettings'));
@@ -65,6 +66,7 @@ function AppRoutes() {
             <Route path="observability" element={<ObservabilityPage />} />
             <Route path="risk" element={<RiskCenterPage />} />
             <Route path="audit" element={<AuditLogPage />} />
+            <Route path="activity-logs" element={<AIActivityLogsPage />} />
             <Route path="governance" element={<GovernancePage />} />
             <Route path="privacy" element={<PrivacySettingsPage />} />
             

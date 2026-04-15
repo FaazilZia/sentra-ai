@@ -1,4 +1,4 @@
-import React from 'react';
+// Background layering with mesh gradients and grid overlay
 
 export const BackgroundLayer = () => {
   return (

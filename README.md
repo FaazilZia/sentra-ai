@@ -1,181 +1,132 @@
-# Sentra AI — The Intelligent Control Tower for AI Agent Governance
+# Sentra AI — AI Governance & Control Layer
 
-🚀 **Live Dashboard:** [https://sentra-ai-88f7.vercel.app](https://sentra-ai-88f7.vercel.app)
+🚀 **Control what AI agents can do AFTER accessing data.**
 
-Sentra AI is an enterprise-grade AI governance and security platform designed for the age of autonomous agents. It provides organizations with the centralized oversight and real-time control necessary to deploy AI agents safely. Sentra AI acts as a "Trust Layer," ensuring that every action taken by an AI agent aligns with corporate policies, data privacy regulations, and security guardrails.
-
----
-
-## 🚀 Production Ready — Node.js Migration Finalized (April 2026)
-
-Sentra AI has been fully transitioned to a production-grade Node.js/TypeScript architecture. This update ensures enterprise reliability, enhanced security coverage, and a unified telemetry system for AI agent governance.
-
-### Major Deliverables:
-- **Production-Grade Node.js Backend**: Fully migrated and operational API services using Express and Prisma 7 for high-performance governance.
-- **Unified Telemetry SDK**: A robust TypeScript SDK (`/sdk`) for seamless integration of external AI agents and LangChain traces into the governance dashboard.
-- **Deep Scan Engine**: Implemented an automated discovery system for identifying policy violations across connected data sources with real-time polling.
-- **Legacy Cleanup**: Successfully removed all legacy FastAPI and Supabase Edge Function artifacts, resulting in a clean, maintainable monorepo structure.
-- **Secured Authentication**: Implemented dual-layer security with JWT rotation for the dashboard and API Key authentication for the SDK.
-- **Auditable Ledger**: Fully operational Privacy & Consent Ledger with digital signatures for DPDP compliance.
+Sentra AI is a production-ready AI governance and control platform designed to ensure AI agents operate safely. Unlike data security tools that focus on access control, Sentra AI acts as an **Active Interceptor**, enforcing granular permissions and blocking unsafe AI actions in real-time.
 
 ---
 
-## 🏗️ Technical Stack
+## 🎯 Core Value Proposition
 
-- **Frontend**: React 18, Vite, TypeScript, Tailwind CSS (Glassmorphism UI)
-- **Backend (Production)**: Node.js 20, Express, TypeScript, Prisma 7
-- **Database**: Supabase (PostgreSQL)
-- **Infrastructure**: Vercel (Frontend), Render (API)
+👉 **Sentra AI = The AI Firewall**
+- **AI Permission Engine**: Define policy-based rules for specific agents.
+- **Action Control (Interception)**: Block unsafe actions (e.g., sending emails, external API calls) before they execute.
+- **Risk Detection**: Automated detection of high-risk requests based on behavioral patterns and keywords.
+- **Activity Logging**: Full audit trail of every AI decision (Allowed vs. Blocked).
 
 ---
 
-## 📂 Repository Structure
+## 🏗️ Technical Architecture
+
+Sentra AI sits between your AI Application and its execution environment:
+
+1. **AI Agent** requests an action (e.g., `send_email`).
+2. **Sentra SDK** intercepts the request and calls the Sentra Backend.
+3. **Sentra Governance Engine** checks the requested action against the **Permission Matrix**.
+4. **Decision (ALLOW/BLOCK)** is returned to the agent.
+5. **Activity Log** is updated for DPO oversight.
+
+---
+
+## 📂 Project Structure
 
 ```text
 Sentra AI/
-├── frontend/                 # React + Vite + TypeScript dashboard
-├── backend-node/             # [PRIMARY] Node.js (Express) production backend
-├── sdk/                      # Telemetry SDK for external AI agent integration
-├── render.yaml               # Universal deployment blueprint
-└── README.md                 # Project overview
+├── frontend/                 # React Dashboard for Policy Management & Logs
+├── backend-node/             # Node.js + Express Governance Engine
+├── sdk/                      # JavaScript/TypeScript SDK for AI integration
+└── README.md                 # Project Overview
 ```
 
 ---
 
-## 💻 Local Development
+## 🚀 Getting Started
 
-### Prerequisites
+### 1. Prerequisites
 - Node.js 20+
-- PostgreSQL/Supabase account
-
-### 1. Frontend Setup
-```bash
-cd frontend
-npm install
-npm run dev
-```
+- PostgreSQL (Supabase recommended)
 
 ### 2. Backend Setup
 ```bash
 cd backend-node
 npm install
 npx prisma generate
+npx prisma migrate deploy
+npm run seed
 npm run dev
 ```
 
-### 3. Database Seeding (First time setup)
-The first time you connect to a new database, run the seed script to create the initial admin user and default tenant:
+### 3. Frontend Setup
 ```bash
-cd backend-node
-npm run seed
+cd frontend
+npm install
+npm run dev
 ```
-**Default Credentials:**
-- **Email:** `admin@sentra.ai`
-- **Password:** `Sentra@Admin123`
 
 ---
 
-## 🌐 Production Deployment
+## 🛠️ SDK Integration Example
 
-Sentra AI is optimized for deployment on **Vercel** and **Render**:
+Integrating Sentra AI into your AI agent is simple:
 
-1. **Backend (Render)**: Connect the root repository to Render. It will automatically detect `render.yaml` and deploy the `sentra-backend-node` service.
-2. **Frontend (Vercel)**: Connect the `frontend/` directory to Vercel. Ensure `VITE_API_BASE_URL` is set to your backend URL.
+```javascript
+import { SentraClient } from '@sentra/sdk';
 
-### Recommended Deployment Order
+const sentra = new SentraClient({
+  apiKey: 'YOUR_API_KEY',
+  baseUrl: 'http://localhost:3000/api'
+});
 
-Follow this order to avoid runtime or build failures:
+// Before the agent executes an action:
+const decision = await sentra.checkAction({
+  agent: 'finance-bot',
+  action: 'send_email',
+  metadata: { recipient: 'victim@example.com' }
+});
 
-1. **Supabase first**
-   Create or confirm the production database connection strings.
-2. **Render second**
-   Add backend environment variables and let the Node.js API deploy successfully.
-3. **Vercel third**
-   Point the frontend to the live Render API URL and redeploy the dashboard.
+if (decision.status === 'blocked') {
+  console.error(`Action blocked: ${decision.reason}`);
+  return;
+}
 
-### Supabase Setup
-
-You need two PostgreSQL connection strings from Supabase:
-
-- `DATABASE_URL`
-  Use the pooled/session connection string for the running backend.
-- `DIRECT_URL`
-  Use the direct database connection string for Prisma migrations.
-
-Then run:
-
-```bash
-cd backend-node
-npx prisma generate
-npx prisma migrate deploy
-npm run seed
+// Proceed with action...
 ```
-
-Use `npm run seed` only if you want the default demo tenant and admin user created.
-
-### Render Setup
-
-Configure the backend service with these values:
-
-- **Root Directory:** `backend-node`
-- **Build Command:** `npm install && npx prisma generate && npx prisma migrate deploy && npm run build`
-- **Start Command:** `npm start`
-- **Health Check Path:** `/api/health`
-
-Required environment variables:
-
-- `DATABASE_URL`
-- `DIRECT_URL`
-- `JWT_SECRET`
-- `REFRESH_SECRET`
-- `NODE_ENV=production`
-- `FRONTEND_URL=https://<your-vercel-domain>,http://localhost:5173`
-- `PORT=10000`
-
-### Vercel Setup
-
-Configure the frontend project with these values:
-
-- **Root Directory:** `frontend`
-- **Build Command:** `npm run build`
-- **Output Directory:** `dist`
-
-Required environment variables:
-
-- `VITE_API_BASE_URL=https://<your-render-backend-url>/api`
-- `VITE_BYPASS_AUTH=false`
-
-Do not use `localhost` in Vercel production settings.
-
-## ✅ April 2026 Demo-Readiness Fixes
-
-The following fixes were completed for the current branch:
-
-- Standardized backend health response to `{"status":"healthy"}`.
-- Fixed incident serialization so Prisma `event_metadata` is always exposed to the frontend as `metadata`.
-- Updated `/api/incidents` to return the raw array shape expected by the dashboard.
-- Fixed Observability health checks to use `status === "healthy"`.
-- Removed hardcoded production API assumptions from the frontend and normalized `VITE_API_BASE_URL`.
-- Fixed the shared topbar health check to use the same API client as the rest of the app.
-- Restored the missing signup flow in the frontend auth context.
-- Updated the SDK client to use env-based URLs instead of hardcoded Render URLs.
-- Updated Render deployment files to run Prisma generate, Prisma migrate deploy, and the TypeScript build.
-- Updated Prisma config to load environment variables and prefer `DIRECT_URL` for migrations.
-- Aligned local development defaults so frontend local API calls point to `http://localhost:3000/api`.
-- Rebuilt and verified the frontend and backend successfully.
-
-## 📝 Report Notes
-
-Use the points below in your project report or progress tracker:
-
-- Backend API contract was normalized so the frontend and SDK consume consistent payloads.
-- Incident telemetry now displays correctly because metadata mapping is fixed end to end.
-- Observability now reflects the actual backend and policy-engine health values.
-- Deployment configuration was hardened for Vercel, Render, and Supabase-based Prisma workflows.
-- Local build verification passed for both the frontend and backend.
-- Local runtime verification passed for `/api/health`, login, `/api/user/me`, `/api/incidents`, and `/api/policies/health`.
 
 ---
 
-## 📈 Current Status: OPERATIONAL
-The dashboard is now fully functional. Users can log in, view live incident telemetry, inspect the AI Inventory, and monitor security feeds in real-time.
+## 📡 API Endpoints
+
+### Check AI Action
+`POST /api/ai/check-action`
+```json
+{
+  "agent": "finance-bot",
+  "action": "send_email"
+}
+```
+**Response:**
+```json
+{
+  "status": "blocked",
+  "risk_score": "high",
+  "reason": "Policy violation: finance-bot is not allowed to send_email"
+}
+```
+
+### Fetch Activity Logs
+`GET /api/ai/logs`
+Returns a list of all intercepted actions and their outcomes.
+
+---
+
+## ✅ Demo Flow
+
+1. **Policy Setup**: Go to the **Governance** page and see the `finance-bot` policy allowing `read_data` but blocking `send_email`.
+2. **Action Attempt**: Simulate an AI agent attempting `send_email`.
+3. **Real-time Blocking**: The system returns a `blocked` status.
+4. **Visibility**: Navigate to **AI Activity Logs** to see the intercepted attempt, time-stamped and risk-scored.
+
+---
+
+## 📝 License
+Sentra AI is proprietary software. All rights reserved.

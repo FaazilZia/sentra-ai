@@ -264,9 +264,24 @@ export function updateIncidentStatus(incidentId: string, status: string): Promis
   });
 }
 
+export interface AIActivityLog {
+  id: string;
+  agent_id: string;
+  action: string;
+  status: 'allowed' | 'blocked';
+  risk_score: 'low' | 'medium' | 'high';
+  reason?: string;
+  metadata?: any;
+  created_at: string;
+}
+
 /**
  * AI & COPILOT
  */
+export async function fetchAIActivityLogs(): Promise<AIActivityLog[]> {
+  return apiRequest<AIActivityLog[]>('/ai/logs');
+}
+
 export async function askAI(prompt: string): Promise<string> {
   const data = await apiRequest<{ response: string }>('/ai/chat', {
     method: 'POST',

@@ -12,6 +12,7 @@ import {
   Radio,
   Zap,
   ShieldCheck,
+  Bot,
 } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import { SidebarItem } from '../ui/SidebarItem';
@@ -24,6 +25,7 @@ const navigation = [
   { name: 'Inventory', href: '/app/inventory', icon: Box },
   { name: 'Observability', href: '/app/observability', icon: Activity },
   { name: 'Risk Center', href: '/app/risk', icon: ShieldAlert },
+  { name: 'AI Activity Logs', href: '/app/activity-logs', icon: Bot },
   { name: 'Audit Proof', href: '/app/audit', icon: History },
   { name: 'Governance', href: '/app/governance', icon: FileSignature },
   { name: 'Privacy & Consent', href: '/app/privacy', icon: ShieldCheck },

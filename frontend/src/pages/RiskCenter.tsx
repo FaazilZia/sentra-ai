@@ -29,16 +29,15 @@ export default function RiskCenterPage() {
       return;
     }
 
-    const token = accessToken;
     let active = true;
 
     async function loadPoliciesForRisk() {
       try {
-        const response = await fetchPolicies(token);
+        const response = await fetchPolicies();
         if (!active) {
           return;
         }
-        setPolicies(response.items);
+        setPolicies(Array.isArray(response) ? response : []);
         setError(null);
       } catch (loadError) {
         if (!active) {

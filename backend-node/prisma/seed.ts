@@ -1,25 +1,21 @@
 /**
- * Sentra AI — Database Seed Script
+ * Sentra AI — Database Seed Script (SQLite compatible)
  * Creates the default tenant and admin user if they don't exist.
- * Run: npx ts-node src/prisma/seed.ts
+ * Run: npx ts-node prisma/seed.ts
  */
 import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
-import { Pool } from 'pg';
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import Database from 'better-sqlite3';
 import bcrypt from 'bcrypt';
 
-const pool = new Pool({ 
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+const adapter = new PrismaBetterSqlite3({ url: 'file:./dev.db' });
+const prisma = new PrismaClient({ adapter: adapter as any });
 
 const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001';
 const ADMIN_USER_ID = '00000000-0000-0000-0000-000000000002';
 
 async function main() {
-  console.log('🌱 Seeding database...');
+  console.log('🌱 Seeding database (SQLite with Better-Sqlite3 Adapter)...');
 
   // 1. Ensure default tenant
   const tenant = await prisma.tenants.upsert({
@@ -53,9 +49,76 @@ async function main() {
   });
   console.log(`✅ Admin user: ${user.email}`);
 
+  // 3. AI Governance Policies
+  console.log('🤖 Seeding AI Governance Policies...');
+  const policies = [
+    {
+      id: '00000000-0000-0000-0000-000000000003',
+      name: 'finance-bot',
+      description: 'Controls actions for the Finance AI Agent',
+      enabled: true,
+      priority: 1,
+      effect: 'deny',
+      status: 'published',
+      current_version: 1,
+      scope: { agent: 'finance-bot' },
+      conditions: {
+        allowed_actions: ['read_data', 'analyze_budget'],
+        blocked_actions: ['send_email', 'external_api', 'delete_record']
+      },
+      obligations: {},
+      tenant_id: DEFAULT_TENANT_ID
+    },
+    {
+      id: '00000000-0000-0000-0000-000000000004',
+      name: 'support-bot',
+      description: 'Controls actions for the Customer Support AI Agent',
+      enabled: true,
+      priority: 2,
+      effect: 'deny',
+      status: 'published',
+      current_version: 1,
+      scope: { agent: 'support-bot' },
+      conditions: {
+        allowed_actions: ['read_faq', 'create_ticket', 'send_email'],
+        blocked_actions: ['external_api', 'read_pii']
+      },
+      obligations: {},
+      tenant_id: DEFAULT_TENANT_ID
+    }
+  ];
+
+  for (const p of policies) {
+    await prisma.policies.upsert({
+      where: { id: p.id },
+      update: p as any,
+      create: p as any
+    });
+  }
+  console.log(`✅ ${policies.length} AI Policies seeded`);
+
+  // 4. API Key for SDK Demo
+  console.log('🔑 Seeding Demo API Key...');
+  const demoApiKey = 'sentra_demo_secretkey123';
+  const hashedApiKey = await bcrypt.hash(demoApiKey, 10);
+  await prisma.api_keys.upsert({
+    where: { id: '00000000-0000-0000-0000-000000000005' },
+    update: {
+      key_hash: hashedApiKey,
+    },
+    create: {
+      id: '00000000-0000-0000-0000-000000000005',
+      tenant_id: DEFAULT_TENANT_ID,
+      name: 'SDK Testing Key',
+      key_prefix: 'demo',
+      key_hash: hashedApiKey,
+      key_type: 'service',
+      is_active: true,
+    },
+  });
+  console.log('✅ Demo API Key: sentra_demo_secretkey123 (Prefix: demo)');
+
   console.log('\n🎉 Seed completed!');
-  console.log('   Login: admin@sentra.ai');
-  console.log('   Password: Sentra@Admin123');
 }
 
 main()
@@ -65,5 +128,4 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
-    await pool.end();
   });

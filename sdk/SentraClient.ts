@@ -122,4 +122,32 @@ export class SentraClient {
         : (raw as ScanStatus);
     return data as ScanStatus;
   }
+
+  /**
+   * Checks if an AI action is permitted based on current governance policies.
+   * Returns a decision (allow/block), risk score, and reason.
+   */
+  async checkAction(params: { agent: string; action: string; metadata?: Record<string, any> }): Promise<{
+    status: 'allowed' | 'blocked';
+    risk_score: 'low' | 'medium' | 'high';
+    reason?: string;
+  }> {
+    const response = await fetch(`${this.baseUrl}/ai/check-action`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(params)
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(`[SentraClient] Failed to check action: ${response.status} ${err}`);
+    }
+
+    const raw = (await response.json()) as { 
+      success: boolean; 
+      data: { status: 'allowed' | 'blocked'; risk_score: 'low' | 'medium' | 'high'; reason?: string } 
+    };
+    
+    return raw.data;
+  }
 }

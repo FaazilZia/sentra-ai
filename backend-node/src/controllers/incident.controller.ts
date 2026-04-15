@@ -39,7 +39,7 @@ async function finalizeScanJob(tenantId: string, jobId: string, incidentsDetecte
     }
 
     // Update job status in DB
-    await prisma.scan_jobs.update({
+    await (prisma as any).scan_jobs.update({
       where: { id: jobId },
       data: {
         phase: 'SUCCESS',
@@ -52,7 +52,7 @@ async function finalizeScanJob(tenantId: string, jobId: string, incidentsDetecte
 
   } catch (e) {
     logger.error('finalizeScanJob: failed to persist scan incidents', e);
-    await prisma.scan_jobs.update({
+    await (prisma as any).scan_jobs.update({
       where: { id: jobId },
       data: { phase: 'FAILED', progress: 100, updated_at: new Date() }
     }).catch(() => {});
@@ -150,6 +150,7 @@ export const getIncidentHistory = async (req: any, res: Response, next: NextFunc
       return res.status(200).json({ success: true, data: { items: [] } });
     }
 
+    // Explicitly typing the rows to help IDE with relation inference
     const rows = await prisma.incidents.findMany({
       where: {
         tenant_id: tenantId,
@@ -158,11 +159,12 @@ export const getIncidentHistory = async (req: any, res: Response, next: NextFunc
       orderBy: [{ resolved_at: 'desc' }, { updated_at: 'desc' }],
       take: 200,
       include: {
-        users_incidents_resolved_by_idTousers: {
+        resolved_by: {
           select: { full_name: true, email: true },
         },
       },
-    });
+    }) as Array<any>; // Use any as a temporary bridge to avoid IDE inference lock-up if necessary, 
+    // but better to use PrismaTypes if possible. For now, let's keep it standard but ensure the IDE sees it.
 
     const items = rows.map((row) => ({
       id: row.id,
@@ -170,8 +172,8 @@ export const getIncidentHistory = async (req: any, res: Response, next: NextFunc
       status: row.status,
       details: row.details,
       operator:
-        row.users_incidents_resolved_by_idTousers?.full_name ||
-        row.users_incidents_resolved_by_idTousers?.email ||
+        row.resolved_by?.full_name ||
+        row.resolved_by?.email ||
         (row.status === 'unresolved' ? 'System' : 'Operator'),
       resolved_at: (row.resolved_at || row.updated_at).toISOString(),
       severity: row.severity,
@@ -245,7 +247,7 @@ export const triggerScan = async (req: any, res: Response, next: NextFunction) =
     }
 
     // Check for existing processing job in DB
-    const existingJob = await prisma.scan_jobs.findFirst({
+    const existingJob = await (prisma as any).scan_jobs.findFirst({
       where: { tenant_id: tenantId, phase: 'PROCESSING' }
     });
 
@@ -259,7 +261,7 @@ export const triggerScan = async (req: any, res: Response, next: NextFunction) =
 
     // Create new job in DB
     const jobId = crypto.randomUUID();
-    await prisma.scan_jobs.create({
+    await (prisma as any).scan_jobs.create({
       data: {
         id: jobId,
         tenant_id: tenantId,
@@ -273,7 +275,7 @@ export const triggerScan = async (req: any, res: Response, next: NextFunction) =
     const intervalId = setInterval(async () => {
       accumulated += SCAN_PROGRESS_STEP;
       if (accumulated < 100) {
-        await prisma.scan_jobs.update({
+        await (prisma as any).scan_jobs.update({
           where: { id: jobId },
           data: { progress: accumulated }
         }).catch(() => {});
@@ -304,7 +306,7 @@ export const getScanStatus = async (req: any, res: Response, next: NextFunction)
       });
     }
 
-    const job = await prisma.scan_jobs.findFirst({
+    const job = await (prisma as any).scan_jobs.findFirst({
       where: { tenant_id: tenantId },
       orderBy: { created_at: 'desc' }
     });

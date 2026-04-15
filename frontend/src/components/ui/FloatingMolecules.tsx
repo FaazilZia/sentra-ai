@@ -179,8 +179,6 @@ export const FloatingMolecules = () => {
         ctx.lineTo(bx, by);
         
         // Gradient stroke for high-end feel
-        const NODE_COLORS = ['#00F5FF', '#cffafe', '#ffffff', '#1A36A8']; // Electric Cyan, Light Cyan, White, Royal Blue
-        const LINK_COLOR_DEFAULT = 'rgba(0, 245, 255, 0.15)';
         const gradient = ctx.createLinearGradient(ax, ay, bx, by);
         gradient.addColorStop(0, `rgba(0, 245, 255, ${0.2 * opacity})`);
         gradient.addColorStop(1, `rgba(207, 250, 254, ${0.2 * opacity})`);

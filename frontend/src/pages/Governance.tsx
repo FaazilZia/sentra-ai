@@ -74,14 +74,13 @@ export default function GovernancePage() {
         <div className="relative grid gap-5 lg:grid-cols-[1.35fr_0.8fr]">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-100/80">
-              Governance Workspace
+              AI Governance Console
             </p>
             <h1 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-white md:text-4xl">
-              Your policy layer is now searchable and browsable instead of static.
+              Control what AI agents can and cannot do.
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
-              This page turns the governance placeholder into a real policy workspace where you can
-              inspect names, effects, versions, rollout state, and scope from live backend records.
+              This workspace allows you to define permission sets for specific AI agents. Sentra AI interceptors enforce these rules in real-time, blocking unauthorized requests before they execute.
             </p>
           </div>
 
@@ -131,8 +130,8 @@ export default function GovernancePage() {
         />
       ) : (
         <SurfaceCard
-          title="Policy Workspace"
-          description="Search and filter live policies returned by `/api/v1/policies`."
+          title="Agent Permission Matrix"
+          description="Manage active control policies and permission sets for your AI agents."
           action={
             <div className="flex flex-col gap-2 sm:flex-row">
               <input

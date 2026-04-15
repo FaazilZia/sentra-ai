@@ -21,28 +21,33 @@ import {
   updateIncidentStatus,
   IncidentResponse,
   ScanStatusPayload,
+  AIActivityLog,
+  fetchAIActivityLogs
 } from '../lib/api';
 import { CircleCheck, ShieldAlert } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 
 export default function DashboardPage() {
   const { user } = useAuth();
-   const [policies, setPolicies] = useState<PolicyResponse[]>([]);
+  const [policies, setPolicies] = useState<PolicyResponse[]>([]);
   const [incidents, setIncidents] = useState<IncidentResponse[]>([]);
+  const [aiLogs, setAiLogs] = useState<AIActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [isScanning, setIsScanning] = useState(false);
   const [isActing, setIsActing] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-   const loadData = async () => {
+  const loadData = async () => {
     setLoading(true);
     try {
-      const [policiesRes, incidentsRes] = await Promise.all([
+      const [policiesRes, incidentsRes, aiLogsRes] = await Promise.all([
         fetchPolicies(),
-        fetchIncidents(6, 'unresolved')
+        fetchIncidents(6, 'unresolved'),
+        fetchAIActivityLogs()
       ]);
       setPolicies(policiesRes);
       setIncidents(incidentsRes);
+      setAiLogs(aiLogsRes || []);
       setError(null);
     } catch (fetchError) {
       const message = fetchError instanceof Error ? fetchError.message : 'Unable to load platform data';
@@ -113,24 +118,36 @@ export default function DashboardPage() {
 
   const publishedPolicies = policies.filter((p) => p.status === 'published').length;
   const enabledPolicies = policies.filter((p) => p.enabled).length;
-  const criticalPolicies = policies.filter((p) => p.priority >= 500).length;
-  const riskyPolicies = policies.filter(
-    (p) => p.priority >= 500 || p.effect === 'deny' || p.effect === 'require_approval'
-  );
+  const blockedAiActions = aiLogs.filter(l => l.status === 'blocked').length;
+  const highRiskAgents = aiLogs.filter(l => l.risk_score === 'high').length;
+  
   const compliantRate =
     policies.length === 0 ? 0 : Math.round((enabledPolicies / Math.max(policies.length, 1)) * 100);
 
   const processedIncidents = useMemo(() => {
-    return incidents.map((inc) => ({
+    // Merge traditional incidents with AI control logs for a unified view
+    const formattedIncidents = incidents.map((inc) => ({
       id: inc.id,
       status: inc.status === 'unresolved' ? 'Flagged' : inc.status.charAt(0).toUpperCase() + inc.status.slice(1),
       agent: inc.agent_id,
       details: inc.details,
       severity: inc.severity >= 80 ? 'High' : inc.severity >= 50 ? 'Medium' : 'Low',
       timestamp: new Date(inc.created_at).toLocaleTimeString(),
-      isAiDetected: inc.metadata?.ai_insight === true,
+      isAiDetected: true,
     }));
-  }, [incidents]);
+
+    const formattedAiLogs = aiLogs.map((log) => ({
+      id: log.id,
+      status: log.status === 'blocked' ? 'Blocked' : 'Allowed',
+      agent: log.agent_id,
+      details: log.reason || `${log.action} processed`,
+      severity: log.risk_score === 'high' ? 'High' : log.risk_score === 'medium' ? 'Medium' : 'Low',
+      timestamp: new Date(log.created_at).toLocaleTimeString(),
+      isAiDetected: true,
+    }));
+
+    return [...formattedAiLogs, ...formattedIncidents].sort((a, b) => b.timestamp.localeCompare(a.timestamp)).slice(0, 10);
+  }, [incidents, aiLogs]);
 
   const inventoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -157,11 +174,10 @@ export default function DashboardPage() {
             <span className="mx-1 text-slate-300">/</span> Real-time Scans
           </nav>
           <h1 className="mt-1.5 text-base font-semibold tracking-tight text-slate-950">
-            Governance Control Tower
+            AI Control Layer Dashboard
           </h1>
           <p className="mt-1 text-xs text-slate-500">
-            DPO view for policy coverage, risky AI access patterns, and scan readiness for{' '}
-            {user?.fullName ?? 'current operator'}.
+            Real-time interceptor for AI agent actions, permission enforcement, and automated governance for {user?.fullName ?? 'current operator'}.
           </p>
         </div>
         <button 
@@ -186,45 +202,45 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          title="Compliant Access"
+          title="Agent Compliance"
           value={loading ? '---' : `${compliantRate}%`}
           icon={ShieldCheck}
-          trend={`${enabledPolicies} enabled controls`}
+          trend={`${enabledPolicies} active agent policies`}
           industryRate="Industry Rate: 90%"
           sparkline={[62, 65, 71, 68, 77, 79, 82, compliantRate]}
         />
         <StatCard
-          title="Risky Policies"
-          value={loading ? '---' : riskyPolicies.length}
+          title="Blocked Actions"
+          value={loading ? '---' : blockedAiActions}
           icon={AlertTriangle}
-          iconClassName="text-amber-600"
-          trend="Controls requiring DPO review"
-          industryRate="Industry Rate: 8%"
-          sparkline={[18, 14, 15, 13, 11, 10, 9, Math.min(100, riskyPolicies.length * 8)]}
+          iconClassName="text-rose-600"
+          trend="Real-time interceptions"
+          industryRate="Total processed"
+          sparkline={[5, 12, 8, 15, 11, 22, 18, Math.max(1, blockedAiActions * 5)]}
         />
         <StatCard
-          title="Published Controls"
+          title="Active Policies"
           value={loading ? '---' : publishedPolicies}
           icon={BrainCircuit}
-          trend="Decision-ready policies"
+          trend="Rules enforced by interceptor"
           industryRate="Industry Rate: 64"
           sparkline={[30, 35, 41, 46, 52, 58, 63, 70]}
         />
         <StatCard
-          title="Critical Rules"
-          value={loading ? '---' : criticalPolicies}
+          title="High-Risk Agents"
+          value={loading ? '---' : highRiskAgents}
           icon={ShieldX}
-          iconClassName="text-rose-600"
-          trend="High-priority access rules"
-          industryRate="Industry Rate: 4"
-          sparkline={[9, 8, 10, 7, 8, 6, 5, Math.min(100, criticalPolicies * 10)]}
+          iconClassName="text-amber-600"
+          trend="Attempting restricted actions"
+          industryRate="Real-time detections"
+          sparkline={[9, 8, 10, 7, 8, 6, 5, Math.max(1, highRiskAgents * 10)]}
         />
       </div>
 
       <div className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-[1.4fr_0.8fr]">
         <SurfaceCard
-          title="Recent Violations"
-          description="AI and application access attempts that require review."
+          title="Action Interceptions"
+          description="Recent AI agent requests that were intercepted and validated."
           contentClassName="p-0"
         >
           {error ? (
@@ -341,7 +357,7 @@ export default function DashboardPage() {
             {[
               ['Policy Sync', `${policies.length} policies loaded`, policies.length > 0 ? 'success' : 'warning'],
               ['Access Decisions', `${publishedPolicies} published`, publishedPolicies > 0 ? 'success' : 'warning'],
-              ['Risk Rules', `${criticalPolicies} critical`, criticalPolicies > 0 ? 'danger' : 'success'],
+              ['Risk Rules', `${highRiskAgents} high-risk`, highRiskAgents > 0 ? 'danger' : 'success'],
             ].map(([label, value, tone]) => (
               <div key={label} className="flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-2.5 py-2">
                 <div>
