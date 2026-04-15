@@ -10,35 +10,11 @@ const SCAN_TICK_MS = 500;
 const SOURCES_SCANNED_DEFAULT = 15;
 const PII_LABELS = ['EMAIL', 'CREDIT_CARD', 'PHONE', 'ADDRESS'] as const;
 
-type ScanJob = {
-  progress: number;
-  phase: 'IDLE' | 'PROCESSING' | 'SUCCESS';
-  result: {
-    incidents_detected: number;
-    sources_scanned: number;
-    timestamp: string;
-  } | null;
-  intervalId: ReturnType<typeof setInterval> | null;
-};
-
-const scanJobs = new Map<string, ScanJob>();
-
-function getOrCreateScanJob(tenantId: string): ScanJob {
-  let job = scanJobs.get(tenantId);
-  if (!job) {
-    job = {
-      progress: 0,
-      phase: 'IDLE',
-      result: null,
-      intervalId: null,
-    };
-    scanJobs.set(tenantId, job);
-  }
-  return job;
-}
-
-async function finalizeScanJob(tenantId: string, job: ScanJob, incidentsDetected: number) {
+async function finalizeScanJob(tenantId: string, jobId: string, incidentsDetected: number) {
   try {
+    const SourcesScanned = 15;
+    
+    // Create actual incidents in DB
     for (let i = 0; i < incidentsDetected; i++) {
       await prisma.incidents.create({
         data: {
@@ -61,25 +37,26 @@ async function finalizeScanJob(tenantId: string, job: ScanJob, incidentsDetected
         },
       });
     }
+
+    // Update job status in DB
+    await prisma.scan_jobs.update({
+      where: { id: jobId },
+      data: {
+        phase: 'SUCCESS',
+        progress: 100,
+        incidents_detected: incidentsDetected,
+        sources_scanned: SourcesScanned,
+        updated_at: new Date()
+      }
+    });
+
   } catch (e) {
     logger.error('finalizeScanJob: failed to persist scan incidents', e);
-    job.phase = 'SUCCESS';
-    job.progress = 100;
-    job.result = {
-      incidents_detected: 0,
-      sources_scanned: SOURCES_SCANNED_DEFAULT,
-      timestamp: new Date().toISOString(),
-    };
-    return;
+    await prisma.scan_jobs.update({
+      where: { id: jobId },
+      data: { phase: 'FAILED', progress: 100, updated_at: new Date() }
+    }).catch(() => {});
   }
-
-  job.phase = 'SUCCESS';
-  job.progress = 100;
-  job.result = {
-    incidents_detected: incidentsDetected,
-    sources_scanned: SOURCES_SCANNED_DEFAULT,
-    timestamp: new Date().toISOString(),
-  };
 }
 
 export const getIncidents = async (req: any, res: Response, next: NextFunction) => {
@@ -267,41 +244,45 @@ export const triggerScan = async (req: any, res: Response, next: NextFunction) =
       return res.status(400).json({ success: false, message: 'Tenant context required to run scan' });
     }
 
-    const job = getOrCreateScanJob(tenantId);
+    // Check for existing processing job in DB
+    const existingJob = await prisma.scan_jobs.findFirst({
+      where: { tenant_id: tenantId, phase: 'PROCESSING' }
+    });
 
-    if (job.phase === 'PROCESSING') {
+    if (existingJob) {
       return res.status(409).json({
         success: false,
         message: 'Scan already in progress',
-        data: { progress: job.progress },
+        data: { progress: existingJob.progress },
       });
     }
 
-    if (job.intervalId) {
-      clearInterval(job.intervalId);
-      job.intervalId = null;
-    }
+    // Create new job in DB
+    const jobId = crypto.randomUUID();
+    await prisma.scan_jobs.create({
+      data: {
+        id: jobId,
+        tenant_id: tenantId,
+        phase: 'PROCESSING',
+        progress: 0
+      }
+    });
 
-    job.phase = 'PROCESSING';
-    job.progress = 0;
-    job.result = null;
-
+    // Simulate async processing (in a real app, use a dedicated worker)
     let accumulated = 0;
-    job.intervalId = setInterval(() => {
+    const intervalId = setInterval(async () => {
       accumulated += SCAN_PROGRESS_STEP;
       if (accumulated < 100) {
-        job.progress = accumulated;
+        await prisma.scan_jobs.update({
+          where: { id: jobId },
+          data: { progress: accumulated }
+        }).catch(() => {});
         return;
       }
 
-      if (job.intervalId) {
-        clearInterval(job.intervalId);
-        job.intervalId = null;
-      }
-
-      job.progress = Math.min(accumulated, 90);
+      clearInterval(intervalId);
       const incidentsDetected = Math.floor(Math.random() * 6) + 1;
-      void finalizeScanJob(tenantId, job, incidentsDetected);
+      await finalizeScanJob(tenantId, jobId, incidentsDetected);
     }, SCAN_TICK_MS);
 
     res.status(202).json({
@@ -319,35 +300,32 @@ export const getScanStatus = async (req: any, res: Response, next: NextFunction)
     if (!tenantId) {
       return res.status(200).json({
         success: true,
-        data: {
-          status: 'IDLE' as const,
-          progress: 0,
-          result: null,
-        },
+        data: { status: 'IDLE', progress: 0, result: null },
       });
     }
 
-    const job = scanJobs.get(tenantId);
+    const job = await prisma.scan_jobs.findFirst({
+      where: { tenant_id: tenantId },
+      orderBy: { created_at: 'desc' }
+    });
+
     if (!job) {
       return res.status(200).json({
         success: true,
-        data: { status: 'IDLE' as const, progress: 0, result: null },
+        data: { status: 'IDLE', progress: 0, result: null },
       });
     }
-
-    const status: 'IDLE' | 'PROCESSING' | 'SUCCESS' =
-      job.phase === 'PROCESSING'
-        ? 'PROCESSING'
-        : job.phase === 'SUCCESS'
-          ? 'SUCCESS'
-          : 'IDLE';
 
     res.status(200).json({
       success: true,
       data: {
-        status,
+        status: job.phase,
         progress: job.progress,
-        result: job.phase === 'SUCCESS' ? job.result : null,
+        result: job.phase === 'SUCCESS' ? {
+          incidents_detected: job.incidents_detected,
+          sources_scanned: job.sources_scanned,
+          timestamp: job.updated_at.toISOString()
+        } : null,
       },
     });
   } catch (error) {

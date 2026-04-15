@@ -12,8 +12,24 @@ export const authenticate = async (req: any, res: Response, next: NextFunction) 
     // 1. Try JWT Authentication
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
-      const payload = verifyAccessToken(token);
-      req.user = payload;
+      const payload: any = verifyAccessToken(token);
+      
+      // Security Check: Verify user and tenant are still active in DB
+      const user = await prisma.users.findUnique({
+        where: { id: payload.id },
+        include: { tenants: true }
+      });
+
+      if (!user || !user.is_active || !user.tenants.is_active) {
+        return res.status(401).json({ success: false, message: 'Account or tenant is inactive or not found' });
+      }
+
+      req.user = {
+        id: user.id,
+        role: user.role,
+        tenant_id: user.tenant_id,
+        email: user.email
+      };
       return next();
     }
 

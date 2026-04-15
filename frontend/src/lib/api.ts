@@ -25,7 +25,6 @@ export interface AuthUser {
   id: string;
   email: string;
   fullName: string;
-  full_name?: string; 
   role: string;
   tenant_id?: string;
   is_active?: boolean;
