@@ -6,7 +6,7 @@ datasource db {
   provider = "postgresql"
 }
 
-
+// Schema Version: 1.0.1 - Forced sync for table renaming
 
 model api_keys {
   tenant_id  String       @db.Uuid
