@@ -4,143 +4,88 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222 47% 11%;
+    /* Default Dark Theme (Sentra/Varonis Dark Inspired) */
+    --background: #020617;
+    --foreground: #f8fafc;
+    --card: rgba(255, 255, 255, 0.03);
+    --card-border: rgba(255, 255, 255, 0.05);
+    --sidebar: #080d18;
+    --primary: #22d3ee;
+    --primary-glow: rgba(34, 211, 238, 0.2);
+    --muted: #64748b;
+    --accent: #818cf8;
+    --grid-opacity: 0.03;
+    --mesh-gradient: radial-gradient(circle at 0px 0px, rgba(34, 211, 238, 0.05) 0%, transparent 50%);
+  }
 
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-
-    --primary: 222 47% 11%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
-
-    --destructive: 346 77% 50%;
-    --destructive-foreground: 355 100% 97%;
-
-    --warning: 38 92% 50%;
-    --warning-foreground: 48 96% 89%;
-
-    --success: 160 84% 39%;
-    --success-foreground: 152 81% 96%;
-
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 222 47% 11%;
-
-    --radius: 0.5rem;
-
-    --sidebar-background: 222 30% 10%;
-    --sidebar-foreground: 213 27% 84%;
-    --sidebar-primary: 196 92% 72%;
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 217 24% 18%;
-    --sidebar-accent-foreground: 210 40% 96%;
-    --sidebar-border: 217 20% 20%;
-    --sidebar-ring: 196 92% 72%;
+  [data-theme="light"] {
+    --background: #f8fafc;
+    --foreground: #020617;
+    --card: #ffffff;
+    --card-border: rgba(0, 0, 0, 0.05);
+    --sidebar: #f1f5f9;
+    --primary: #0ea5e9;
+    --primary-glow: rgba(14, 165, 233, 0.1);
+    --muted: #94a3b8;
+    --accent: #4f46e5;
+    --grid-opacity: 0.05;
+    --mesh-gradient: radial-gradient(circle at 100% 0%, rgba(14, 165, 233, 0.05) 0%, transparent 50%);
   }
 
   * {
-    @apply border-border;
+    @apply border-white/5;
   }
+  
   body {
-    @apply text-foreground antialiased;
-    background: #f8fafc;
+    @apply antialiased transition-colors duration-300;
+    background-color: var(--background);
+    color: var(--foreground);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    font-size: 0.875rem;
-    min-height: 100vh;
-  }
-
-  body::before {
-    content: none;
-  }
-
-  #root {
-    min-height: 100vh;
   }
 }
 
 @layer utilities {
-  @keyframes float {
-    0%,
-    100% {
-      transform: translateY(0px);
-    }
-    50% {
-      transform: translateY(-10px);
-    }
+  .varonis-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-color: var(--background);
+    background-image: var(--mesh-gradient);
+  }
+
+  .varonis-mesh {
+    position: absolute;
+    inset: 0;
+    background-image: 
+      radial-gradient(var(--foreground) 0.5px, transparent 0.5px),
+      radial-gradient(var(--foreground) 0.5px, transparent 0.5px);
+    background-size: 40px 40px;
+    background-position: 0 0, 20px 20px;
+    opacity: var(--grid-opacity);
+  }
+
+  .glass {
+    background-color: var(--card);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--card-border);
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600;
   }
 }
 
-/* ── Atom particle background ── */
-
-.atom-bg-container {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden;
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
 }
-
-.atom-body {
-  position: absolute;
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
 }
-
-.atom-nucleus {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: #000000;
-  border-radius: 50%;
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
 }
-
-.atom-ring-wrapper {
-  position: absolute;
-  inset: 0;
-}
-
-.atom-ring {
-  width: 100%;
-  height: 100%;
-  border: 1px solid rgba(0, 0, 0, 0.15);
-  border-radius: 50%;
-  position: relative;
-}
-
-.atom-electron {
-  position: absolute;
-  width: 5px;
-  height: 5px;
-  background: #000000;
-  border-radius: 50%;
-  top: -2.5px;
-  left: 50%;
-  margin-left: -2.5px;
-  transform: scaleY(2.86);
-}
-
-@keyframes atom-orbit {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-
-.atom-ring-speed-1 {
-  animation: atom-orbit 8s linear infinite;
-}
-.atom-ring-speed-2 {
-  animation: atom-orbit 12s linear infinite reverse;
-}
-.atom-ring-speed-3 {
-  animation: atom-orbit 16s linear infinite;
+[data-theme="light"] .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
 }

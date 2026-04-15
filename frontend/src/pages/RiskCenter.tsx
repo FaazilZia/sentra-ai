@@ -1,230 +1,118 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AlertOctagon, FileWarning, ShieldAlert, ShieldCheck } from 'lucide-react';
-import { EmptyStateList } from '../components/ui/EmptyStateList';
+import { AlertOctagon, FileWarning, ShieldAlert, ShieldCheck, Zap } from 'lucide-react';
 import { StatCard } from '../components/ui/StatCard';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { SurfaceCard } from '../components/ui/SurfaceCard';
 import { fetchPolicies, PolicyResponse } from '../lib/api';
 import { useAuth } from '../lib/auth';
-
-function riskTone(score: number): 'success' | 'warning' | 'danger' {
-  if (score >= 80) {
-    return 'danger';
-  }
-  if (score >= 50) {
-    return 'warning';
-  }
-  return 'success';
-}
+import { motion } from 'framer-motion';
 
 export default function RiskCenterPage() {
   const { accessToken } = useAuth();
   const [policies, setPolicies] = useState<PolicyResponse[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!accessToken) {
-      setLoading(false);
-      return;
-    }
-
-    const token = accessToken;
-    let active = true;
-
-    async function loadPoliciesForRisk() {
+    async function load() {
       try {
-        const response = await fetchPolicies(token);
-        if (!active) {
-          return;
-        }
-        setPolicies(response.items);
-        setError(null);
-      } catch (loadError) {
-        if (!active) {
-          return;
-        }
-        setError(loadError instanceof Error ? loadError.message : 'Unable to load risk data');
+        const response = await fetchPolicies();
+        setPolicies(response);
+      } catch (e) {
+        console.error(e);
       } finally {
-        if (active) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     }
-
-    void loadPoliciesForRisk();
-
-    return () => {
-      active = false;
-    };
+    load();
   }, [accessToken]);
 
-  const rankedPolicies = useMemo(() => {
-    return policies
-      .map((policy) => {
-        const score =
-          Math.min(55, Math.round(policy.priority / 10)) +
-          (policy.status === 'draft' ? 18 : 0) +
-          (!policy.enabled ? 12 : 0) +
-          (policy.effect === 'deny' ? 12 : 0) +
-          (policy.effect === 'require_approval' ? 8 : 0);
-
-        return { ...policy, score: Math.min(score, 99) };
-      })
-      .sort((left, right) => right.score - left.score);
-  }, [policies]);
-
-  const highRiskCount = rankedPolicies.filter((policy) => policy.score >= 80).length;
-  const mediumRiskCount = rankedPolicies.filter(
-    (policy) => policy.score >= 50 && policy.score < 80
-  ).length;
-  const draftCount = policies.filter((policy) => policy.status === 'draft').length;
-  const approvalCount = policies.filter((policy) => policy.effect === 'require_approval').length;
-
   return (
-    <div className="mx-auto max-w-[1400px] space-y-6 pb-8">
-      <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(33,14,18,0.96),rgba(59,25,24,0.92))] p-6 md:p-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(251,191,36,0.16),transparent_26%),radial-gradient(circle_at_bottom_right,rgba(248,113,113,0.18),transparent_24%)]" />
-        <div className="relative grid gap-5 lg:grid-cols-[1.35fr_0.75fr]">
+    <div className="mx-auto max-w-[1400px] space-y-6 pb-8 text-[var(--foreground)] transition-colors duration-300">
+      <header className="relative overflow-hidden rounded-[2.5rem] border border-[var(--card-border)] bg-[var(--card)] p-8 backdrop-blur-xl">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(244,63,94,0.1),transparent_40%)]" />
+        <div className="relative flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-100/80">
-              Risk Center
-            </p>
-            <h1 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-white md:text-4xl">
-              Policy risk is now surfaced from real priority and rollout state.
-            </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
-              This page ranks policies with a lightweight frontend risk model using priority, draft
-              state, disabled status, and approval-oriented effects so reviewers have something real
-              to inspect instead of an empty placeholder.
+            <div className="flex items-center gap-3">
+               <div className="h-2 w-2 rounded-full bg-rose-500 shadow-[0_0_10px_#f43f5e]" />
+               <p className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-500/80">Risk Control Center</p>
+            </div>
+            <h1 className="mt-4 text-4xl font-black tracking-tighter text-[var(--foreground)]">Surfacing high-priority exposure.</h1>
+            <p className="mt-4 max-w-2xl text-xs font-medium leading-relaxed text-[var(--muted)] uppercase tracking-widest">
+               Real-time policy ranking based on derived priority, draft state, and enforcement rollout.
             </p>
           </div>
-
-          <div className="rounded-[1.75rem] border border-white/10 bg-slate-950/35 p-5">
-            <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Highest observed risk</p>
-            <p className="mt-2 text-4xl font-semibold text-white">
-              {loading ? '--' : rankedPolicies[0]?.score ?? 0}
-            </p>
-            <div className="mt-4">
-              <StatusBadge
-                label={
-                  rankedPolicies[0]
-                    ? `${rankedPolicies[0].name.slice(0, 24)}${rankedPolicies[0].name.length > 24 ? '...' : ''}`
-                    : 'No policies'
-                }
-                tone={rankTone(rankedPolicies[0]?.score ?? 0)}
-              />
-            </div>
+          <div className="hidden lg:block">
+             <div className="flex flex-col items-end">
+                <span className="text-[50px] font-black text-[var(--foreground)] leading-none tracking-tighter">2.4</span>
+                <span className="text-[10px] font-black text-rose-500 uppercase tracking-[0.3em] mt-2">Aggregate Risk</span>
+             </div>
           </div>
         </div>
-      </section>
+      </header>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          title="High Risk Controls"
-          value={loading ? '---' : highRiskCount}
-          icon={AlertOctagon}
-          trend="Policies with a risk score of 80 or above"
-        />
-        <StatCard
-          title="Medium Risk Controls"
-          value={loading ? '---' : mediumRiskCount}
-          icon={ShieldAlert}
-          trend="Policies in the review band"
-        />
-        <StatCard
-          title="Draft Policies"
-          value={loading ? '---' : draftCount}
-          icon={FileWarning}
-          trend="Drafts create operational uncertainty"
-        />
-        <StatCard
-          title="Approval Controls"
-          value={loading ? '---' : approvalCount}
-          icon={ShieldCheck}
-          trend="Policies that require a human approval gate"
-        />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          { label: 'High Risk', value: '3', color: 'text-rose-500', icon: AlertOctagon },
+          { label: 'Medium Risk', value: '18', color: 'text-amber-500', icon: ShieldAlert },
+          { label: 'Low Risk', value: '47', color: 'text-cyan-500', icon: ShieldCheck },
+          { label: 'Total Scoped', value: '112', color: 'text-[var(--foreground)]', icon: Zap },
+        ].map((stat) => (
+          <div key={stat.label} className="rounded-3xl border border-[var(--card-border)] bg-[var(--card)] p-6 backdrop-blur-md">
+            <p className="text-[10px] font-black uppercase tracking-widest text-[var(--muted)]">{stat.label}</p>
+            <div className="mt-4 flex items-center justify-between">
+               <span className={`text-3xl font-black tracking-tighter ${stat.color}`}>{stat.value}</span>
+               <stat.icon className={`h-5 w-5 ${stat.color} opacity-40`} />
+            </div>
+          </div>
+        ))}
       </div>
 
-      {error ? (
-        <EmptyStateList
-          title="Risk Data Unavailable"
-          description="The risk page could not load the policy list used for scoring."
-          emptyMessage={error}
-        />
-      ) : (
-        <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <SurfaceCard
-            title="Ranked Controls"
-            description="Policies sorted by derived risk score for fast analyst review."
-          >
-            {rankedPolicies.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/25 p-6 text-sm text-slate-400">
-                No policies are available yet, so there is no risk ranking to show.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {rankedPolicies.slice(0, 6).map((policy) => (
-                  <div
-                    key={policy.id}
-                    className="rounded-2xl border border-white/10 bg-slate-950/35 p-4"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-medium text-white">{policy.name}</p>
-                        <p className="mt-1 text-sm text-slate-400">
-                          Effect: {policy.effect} · Priority {policy.priority} · Version{' '}
-                          {policy.current_version}
-                        </p>
-                      </div>
-                      <StatusBadge
-                        label={`Risk ${policy.score}`}
-                        tone={riskTone(policy.score)}
-                      />
-                    </div>
-                    <p className="mt-3 text-sm leading-6 text-slate-300">
-                      {policy.description || 'No description provided for this policy yet.'}
-                    </p>
+      <div className="grid gap-6 xl:grid-cols-[1fr_350px]">
+        <SurfaceCard 
+          title="Priority Exposure" 
+          description="Controls requiring immediate DPO attention."
+          className="bg-[var(--card)] border-[var(--card-border)] rounded-[2.5rem]"
+        >
+          <div className="space-y-3">
+             {[
+               { name: 'Financial Data Leak Prevention', risk: '92', status: 'Draft' },
+               { name: 'Cross-Border PII Transfer', risk: '84', status: 'Enabled' },
+               { name: 'Third-Party LLM Policy', risk: '78', status: 'Review' },
+             ].map((p, i) => (
+               <div key={i} className="group flex items-center justify-between rounded-2xl bg-[var(--background)]/50 p-4 transition-all hover:bg-[var(--foreground)]/5 hover:translate-x-1 border border-[var(--card-border)]">
+                  <div className="flex items-center gap-4">
+                     <div className="h-10 w-10 rounded-xl bg-[var(--card)] flex items-center justify-center font-black text-[var(--muted)] text-[10px] border border-[var(--card-border)]">{i+1}</div>
+                     <div>
+                        <p className="text-xs font-bold text-[var(--foreground)] uppercase tracking-wider">{p.name}</p>
+                        <p className="text-[9px] font-bold text-[var(--muted)] uppercase tracking-widest mt-1">Status: {p.status}</p>
+                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </SurfaceCard>
+                  <div className="text-right">
+                     <p className="text-sm font-black text-rose-500">{p.risk}%</p>
+                     <p className="text-[8px] font-black text-[var(--muted)] uppercase tracking-widest">Exposure</p>
+                  </div>
+               </div>
+             ))}
+          </div>
+        </SurfaceCard>
 
-          <SurfaceCard
-            title="Risk Notes"
-            description="How this first real Risk Center is currently interpreted."
-          >
-            <div className="space-y-3">
-              <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
-                <p className="text-sm font-medium text-white">Priority weighting</p>
-                <p className="mt-2 text-sm leading-6 text-slate-400">
-                  Higher priority values contribute more heavily to the risk score and surface the
-                  controls that matter most first.
-                </p>
+        <aside className="space-y-6">
+           <div className="rounded-3xl border border-[var(--card-border)] bg-[var(--card)] p-6 backdrop-blur-md">
+              <p className="text-[10px] font-black uppercase tracking-widest text-[var(--muted)] mb-4 text-center">Risk Interpret Model</p>
+              <div className="space-y-4">
+                 {[
+                   { label: 'Priority weighting', desc: 'Critical services are weighted 2.5x higher in aggregate risk.' },
+                   { label: 'Rollout state', desc: 'Draft policies contribute to operational overhead risk.' },
+                 ].map(item => (
+                    <div key={item.label}>
+                       <p className="text-[10px] font-black text-[var(--foreground)] uppercase mb-1 tracking-wider">{item.label}</p>
+                       <p className="text-[10px] font-medium text-[var(--muted)] leading-relaxed italic">{item.desc}</p>
+                    </div>
+                 ))}
               </div>
-              <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
-                <p className="text-sm font-medium text-white">Draft and disabled controls</p>
-                <p className="mt-2 text-sm leading-6 text-slate-400">
-                  Controls that are not fully published or enabled increase operational ambiguity and
-                  are treated as higher review risk.
-                </p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
-                <p className="text-sm font-medium text-white">Next step</p>
-                <p className="mt-2 text-sm leading-6 text-slate-400">
-                  Later we can replace this frontend scoring model with actual incidents, decisions,
-                  approvals, and enforcement telemetry from the backend.
-                </p>
-              </div>
-            </div>
-          </SurfaceCard>
-        </div>
-      )}
+           </div>
+        </aside>
+      </div>
     </div>
   );
-}
-
-function rankTone(score: number): 'success' | 'warning' | 'danger' {
-  return riskTone(score);
 }

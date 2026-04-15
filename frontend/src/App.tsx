@@ -14,6 +14,7 @@ const GovernancePage = lazy(() => import('./pages/Governance'));
 const SecurityFeedPage = lazy(() => import('./pages/SecurityFeed'));
 const ConnectPage = lazy(() => import('./pages/Connect'));
 const PrivacySettingsPage = lazy(() => import('./pages/PrivacySettings'));
+const HomePage = lazy(() => import('./pages/Home'));
 
 function RouteFallback() {
   return (
@@ -44,8 +45,8 @@ function AppRoutes() {
     <BrowserRouter>
       <Suspense fallback={<RouteFallback />}>
         <Routes>
-          {/* Direct to Dashboard */}
-          <Route path="/" element={<Navigate to="/app" replace />} />
+          {/* Landing Page */}
+          <Route path="/" element={<HomePage />} />
           
           {/* Login Route */}
           <Route 
@@ -79,11 +80,15 @@ function AppRoutes() {
   );
 }
 
+import { ThemeProvider } from './lib/useTheme';
+
 function App() {
   return (
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
