@@ -34,6 +34,7 @@ export const getPolicyHealth = async (req: any, res: Response, next: NextFunctio
       success: true,
       data: {
         status: 'healthy',
+        evaluator: 'prisma-policy-engine',
         checks: [
           { name: 'Schema Validation', status: 'pass' },
           { name: 'Policy Consistency', status: 'pass' },

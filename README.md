@@ -81,6 +81,99 @@ Sentra AI is optimized for deployment on **Vercel** and **Render**:
 1. **Backend (Render)**: Connect the root repository to Render. It will automatically detect `render.yaml` and deploy the `sentra-backend-node` service.
 2. **Frontend (Vercel)**: Connect the `frontend/` directory to Vercel. Ensure `VITE_API_BASE_URL` is set to your backend URL.
 
+### Recommended Deployment Order
+
+Follow this order to avoid runtime or build failures:
+
+1. **Supabase first**
+   Create or confirm the production database connection strings.
+2. **Render second**
+   Add backend environment variables and let the Node.js API deploy successfully.
+3. **Vercel third**
+   Point the frontend to the live Render API URL and redeploy the dashboard.
+
+### Supabase Setup
+
+You need two PostgreSQL connection strings from Supabase:
+
+- `DATABASE_URL`
+  Use the pooled/session connection string for the running backend.
+- `DIRECT_URL`
+  Use the direct database connection string for Prisma migrations.
+
+Then run:
+
+```bash
+cd backend-node
+npx prisma generate
+npx prisma migrate deploy
+npm run seed
+```
+
+Use `npm run seed` only if you want the default demo tenant and admin user created.
+
+### Render Setup
+
+Configure the backend service with these values:
+
+- **Root Directory:** `backend-node`
+- **Build Command:** `npm install && npx prisma generate && npx prisma migrate deploy && npm run build`
+- **Start Command:** `npm start`
+- **Health Check Path:** `/api/health`
+
+Required environment variables:
+
+- `DATABASE_URL`
+- `DIRECT_URL`
+- `JWT_SECRET`
+- `REFRESH_SECRET`
+- `NODE_ENV=production`
+- `FRONTEND_URL=https://<your-vercel-domain>,http://localhost:5173`
+- `PORT=10000`
+
+### Vercel Setup
+
+Configure the frontend project with these values:
+
+- **Root Directory:** `frontend`
+- **Build Command:** `npm run build`
+- **Output Directory:** `dist`
+
+Required environment variables:
+
+- `VITE_API_BASE_URL=https://<your-render-backend-url>/api`
+- `VITE_BYPASS_AUTH=false`
+
+Do not use `localhost` in Vercel production settings.
+
+## ✅ April 2026 Demo-Readiness Fixes
+
+The following fixes were completed for the current branch:
+
+- Standardized backend health response to `{"status":"healthy"}`.
+- Fixed incident serialization so Prisma `event_metadata` is always exposed to the frontend as `metadata`.
+- Updated `/api/incidents` to return the raw array shape expected by the dashboard.
+- Fixed Observability health checks to use `status === "healthy"`.
+- Removed hardcoded production API assumptions from the frontend and normalized `VITE_API_BASE_URL`.
+- Fixed the shared topbar health check to use the same API client as the rest of the app.
+- Restored the missing signup flow in the frontend auth context.
+- Updated the SDK client to use env-based URLs instead of hardcoded Render URLs.
+- Updated Render deployment files to run Prisma generate, Prisma migrate deploy, and the TypeScript build.
+- Updated Prisma config to load environment variables and prefer `DIRECT_URL` for migrations.
+- Aligned local development defaults so frontend local API calls point to `http://localhost:3000/api`.
+- Rebuilt and verified the frontend and backend successfully.
+
+## 📝 Report Notes
+
+Use the points below in your project report or progress tracker:
+
+- Backend API contract was normalized so the frontend and SDK consume consistent payloads.
+- Incident telemetry now displays correctly because metadata mapping is fixed end to end.
+- Observability now reflects the actual backend and policy-engine health values.
+- Deployment configuration was hardened for Vercel, Render, and Supabase-based Prisma workflows.
+- Local build verification passed for both the frontend and backend.
+- Local runtime verification passed for `/api/health`, login, `/api/user/me`, `/api/incidents`, and `/api/policies/health`.
+
 ---
 
 ## 📈 Current Status: OPERATIONAL

@@ -1,10 +1,14 @@
 // Supabase Edge Functions removed — all AI calls now route through Node.js backend
 
-// Node.js Backend base URL — must NOT have a trailing slash
-const defaultApiBaseUrl = 'https://sentra-backend-node.onrender.com/api';
+function normalizeApiBaseUrl(value?: string): string {
+  const trimmed = value?.trim().replace(/\/$/, '');
+  if (!trimmed) {
+    return 'http://localhost:3000/api';
+  }
+  return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
+}
 
-// Use the env variable directly — no extra path manipulation to avoid double /api
-export const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || defaultApiBaseUrl).replace(/\/$/, '');
+export const apiBaseUrl = normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL);
 
 export interface TokenResponse {
   accessToken: string;
@@ -58,15 +62,13 @@ export interface PolicyResponse {
 }
 
 export interface BackendHealthResponse {
-  success: boolean;
   status: 'healthy' | 'unknown';
-  message: string;
 }
 
 export interface PolicyHealthResponse {
   status: 'healthy' | 'degraded' | 'failing';
   evaluator?: string;
-  checks: any[];
+  checks: Array<Record<string, unknown>>;
 }
 
 export interface TenantResponse {
@@ -92,7 +94,6 @@ export interface IncidentResponse {
 }
 
 export interface IncidentListResponse {
-  success: boolean;
   data: IncidentResponse[];
 }
 

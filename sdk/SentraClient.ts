@@ -25,10 +25,18 @@ export class SentraClient {
   private backendBearerToken: string;
 
   constructor(options: { baseUrl?: string; apiKey?: string; backendBearerToken?: string } = {}) {
-    // Default to production backend on Render
-    this.baseUrl = options.baseUrl || 'https://sentra-backend-node.onrender.com/api';
+    const envBaseUrl =
+      typeof process !== 'undefined' && process.env?.SENTRA_API_BASE_URL
+        ? process.env.SENTRA_API_BASE_URL
+        : undefined;
+    this.baseUrl = this.normalizeBaseUrl(options.baseUrl || envBaseUrl || 'http://localhost:3000/api');
     this.apiKey = options.apiKey || '';
     this.backendBearerToken = options.backendBearerToken || '';
+  }
+
+  private normalizeBaseUrl(value: string): string {
+    const trimmed = value.replace(/\/$/, '');
+    return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
   }
 
   private getHeaders(): HeadersInit {
@@ -86,9 +94,10 @@ export class SentraClient {
       throw new Error(`[SentraClient] Failed to trigger scan: ${response.status} ${err}`);
     }
 
-    const raw = await response.json();
-    return (raw && typeof raw === 'object' && 'data' in raw ? (raw as { data: unknown }).data : raw) as {
-      message: string;
+    const raw = (await response.json()) as { success?: boolean; data?: { message: string }; message?: string };
+    return {
+      success: raw.success ?? true,
+      message: raw.data?.message || raw.message || 'Deep scan initiated'
     };
   }
 
@@ -114,4 +123,3 @@ export class SentraClient {
     return data as ScanStatus;
   }
 }
-

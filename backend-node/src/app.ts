@@ -61,7 +61,7 @@ app.use('/api/connectors', connectorRoutes);
 
 // Basic Health Check
 app.get('/api/health', (req, res) => {
-  res.status(200).json({ success: true, status: 'healthy', message: 'Server is healthy' });
+  res.status(200).json({ status: 'healthy' });
 });
 
 // Root route to check version

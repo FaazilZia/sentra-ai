@@ -5,7 +5,7 @@ import app from './app';
 import logger from './utils/logger';
 import prisma from './config/db';
 
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 3000;
 
 const startServer = async () => {
   try {

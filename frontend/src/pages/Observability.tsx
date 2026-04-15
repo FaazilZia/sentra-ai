@@ -85,7 +85,7 @@ export default function ObservabilityPage() {
               Backend checks and policy-engine telemetry are now visible here.
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
-              This page uses the deployed `/health`, `/policy-health`, and `/policies` endpoints to
+              This page uses the deployed `/health`, `/policies/health`, and `/policies` endpoints to
               show whether the control plane is reachable and how much of the policy layer is live.
             </p>
           </div>
@@ -101,8 +101,8 @@ export default function ObservabilityPage() {
                 tone={backendHealth?.status === 'healthy' ? 'success' : 'warning'}
               />
               <StatusBadge
-                label={policyHealth?.status === 'ok' ? 'Evaluator Healthy' : 'Evaluator Unknown'}
-                tone={policyHealth?.status === 'ok' ? 'success' : 'warning'}
+                label={policyHealth?.status === 'healthy' ? 'Evaluator Healthy' : 'Evaluator Unknown'}
+                tone={policyHealth?.status === 'healthy' ? 'success' : 'warning'}
               />
             </div>
           </div>
@@ -120,7 +120,7 @@ export default function ObservabilityPage() {
           title="Policy Evaluator"
           value={loading ? '---' : policyHealth?.status ?? 'Unknown'}
           icon={Radar}
-          trend="Live check from /policy-health"
+          trend="Live check from /policies/health"
         />
         <StatCard
           title="Published Coverage"
@@ -192,12 +192,12 @@ export default function ObservabilityPage() {
                   <div>
                     <p className="text-sm font-medium text-white">Policy engine</p>
                     <p className="mt-1 text-sm text-slate-400">
-                      Evaluator reported by `/policy-health`
+                      Evaluator reported by `/policies/health`
                     </p>
                   </div>
                   <StatusBadge
                     label={policyHealth?.status ?? 'unknown'}
-                    tone={policyHealth?.status === 'ok' ? 'success' : 'warning'}
+                    tone={policyHealth?.status === 'healthy' ? 'success' : 'warning'}
                   />
                 </div>
                 <p className="mt-3 text-sm text-slate-300">
