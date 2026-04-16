@@ -11,13 +11,8 @@ if (isSqlite) {
   prisma = new PrismaClient({ adapter });
 } else {
   // Standard Postgres initialization
-  prisma = new PrismaClient({
-    datasources: {
-      db: {
-        url: process.env.DATABASE_URL
-      }
-    }
-  } as any);
+  // Standard Postgres initialization
+  prisma = new PrismaClient();
 }
 
 export default prisma;
