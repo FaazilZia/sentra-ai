@@ -6,6 +6,13 @@ Sentra AI is a production-ready AI governance and control platform designed to e
 
 ---
 
+### 🌐 Live Production
+*   **Production Dashboard**: [https://sentra-ai-tau.vercel.app](https://sentra-ai-tau.vercel.app)
+*   **Production API**: `https://sentra-backend-node.onrender.com/api`
+*   **Status**: All Systems Nominal ✅
+
+---
+
 ## 🎯 Core Value Proposition
 
 👉 **Sentra AI = The AI Firewall**
@@ -74,7 +81,7 @@ import { SentraClient } from '@sentra/sdk';
 
 const sentra = new SentraClient({
   apiKey: 'YOUR_API_KEY',
-  baseUrl: 'http://localhost:3000/api'
+  baseUrl: 'https://sentra-backend-node.onrender.com/api'
 });
 
 // Before the agent executes an action:
