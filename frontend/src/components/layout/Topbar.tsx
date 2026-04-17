@@ -14,8 +14,9 @@ export function Topbar() {
   const pathParts = location.pathname.split('/').filter(Boolean);
 
   return (
-    <header className="sticky top-0 z-10 h-16 flex-shrink-0 border-b border-[var(--card-border)] bg-[var(--background)]/80 shadow-sm backdrop-blur-xl transition-colors duration-300">
-      <div className="flex h-full items-center justify-between gap-3 px-8">
+    <header className="sticky top-0 z-10 h-16 flex-shrink-0 premium-glass !rounded-none !border-t-0 !border-x-0 bg-[var(--background)]/40 backdrop-blur-3xl shadow-sm transition-colors duration-300">
+      <div className="noise-overlay" />
+      <div className="relative z-10 flex h-full items-center justify-between gap-3 px-8">
         {/* Breadcrumb - Image 3 Style */}
         <div className="flex items-center gap-3">
            <div className="h-6 w-6 rounded-full bg-[var(--card)] flex items-center justify-center border border-[var(--card-border)]">

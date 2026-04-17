@@ -1,31 +1,35 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { CopilotDrawer } from '../ui/CopilotDrawer';
 import { motion } from 'framer-motion';
 
+import { AtmosphericBackground } from '../ui/AtmosphericBackground';
+
 export function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="relative flex h-screen w-full overflow-hidden bg-[var(--background)] text-[var(--foreground)] selection:bg-cyan-500/20 transition-colors duration-300">
-      {/* Varonis Background Layers */}
-      <div className="varonis-bg" />
-      <div className="varonis-mesh" />
+    <div className="relative flex h-screen w-full overflow-hidden bg-transparent text-[var(--foreground)] selection:bg-cyan-500/20 transition-colors duration-300">
+      <AtmosphericBackground />
+      
+      {/* Floating Decorative Blobs */}
+      <div className="blob h-[400px] w-[400px] -top-20 -left-20 animate-float-slow opacity-20" />
+      <div className="blob h-[300px] w-[300px] bottom-40 right-10 animate-float-slow opacity-10" style={{ animationDelay: '-2s', background: 'radial-gradient(circle, #818cf8 0%, transparent 70%)' }} />
       
       <Sidebar collapsed={collapsed} onCollapsedChange={setCollapsed} />
       
       <div className="relative z-10 flex min-w-0 flex-1 flex-col">
         <Topbar />
-        <main className="flex-1 overflow-auto p-5 md:p-6 custom-scrollbar">
+        <main className="flex-1 overflow-auto p-5 md:p-6 custom-scrollbar relative">
           <Outlet />
         </main>
       </div>
 
       <CopilotDrawer />
 
-      {/* Floating Active Policy Badge - Image 1 Style */}
+      {/* Floating Active Policy Badge */}
       <div className="fixed bottom-6 left-24 z-30">
           <motion.div 
              initial={{ opacity: 0, x: -20 }}

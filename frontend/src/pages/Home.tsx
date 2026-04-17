@@ -1,15 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Zap, 
   ShieldCheck, 
-  Cpu, 
   ArrowRight,
   CheckCircle2,
   Lock,
   ChevronRight,
   Activity,
-  LayoutDashboard,
   ShieldAlert,
   Search,
   FileText,
@@ -18,63 +16,73 @@ import {
   Globe,
   Database,
   Eye,
-  BarChart,
   Target,
   Workflow,
-  Moon,
+  Server,
+  AlertTriangle,
+  Fingerprint,
+  BarChart3,
+  Scale,
+  LayoutDashboard,
+  Cpu,
   Sun,
-  Home as HomeIcon
+  Moon,
+  Ban,
+  Terminal,
+  Code2,
+  Check,
+  XCircle,
+  PlayCircle,
+  UserPlus,
+  Loader2,
+  BoxSelect,
+  Key,
+  Mail,
+  Phone,
+  Linkedin,
+  Instagram
 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../lib/useTheme';
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid
-} from 'recharts';
-import { siteContent } from '../lib/content';
-import { Link } from 'react-router-dom';
+import { useAuth } from '../lib/auth';
+import { Logo } from '../components/layout/Logo';
+import { AtmosphericBackground } from '../components/ui/AtmosphericBackground';
 
-// --- Polished Components ---
+// --- Shared Premium Components ---
 
 const Button = ({ children, variant = 'primary', className = '', ...props }: any) => {
-  const baseStyles = "inline-flex items-center justify-center rounded-[1.25rem] px-8 py-4 text-sm font-black transition-all duration-300 disabled:opacity-50 active:scale-95 glass-button";
   const variants: any = {
-    primary: "bg-blue-600/80 text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-0.5 border-transparent",
-    secondary: "text-[var(--foreground)]",
-    outline: "border-2 border-[var(--glass-border)] text-[var(--foreground)] hover:border-[var(--primary)]",
-    ghost: "text-[var(--muted)] hover:text-[var(--foreground)]"
+    primary: "bg-blue-600 text-white shadow-xl shadow-blue-500/20 hover:bg-blue-700 hover:-translate-y-0.5",
+    secondary: "bg-[var(--card)] text-[var(--foreground)] border border-[var(--glass-border)] hover:bg-[var(--glass-bg)]",
+    outline: "border border-[var(--glass-border)] text-[var(--foreground)] hover:border-blue-500/50 hover:bg-blue-500/5",
+    ghost: "text-slate-400 hover:text-[var(--foreground)]"
   };
 
   return (
-    <button className={`${baseStyles} ${variants[variant]} ${className}`} {...props}>
+    <button 
+      className={`inline-flex items-center justify-center rounded-xl px-8 py-4 text-xs font-black uppercase tracking-widest transition-all duration-300 active:scale-95 disabled:opacity-50 ${variants[variant]} ${className}`} 
+      {...props}
+    >
       {children}
     </button>
   );
 };
 
+const Badge = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
+  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-black uppercase tracking-widest ${className}`}>
+    <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse" />
+    {children}
+  </div>
+);
+
 const SectionHeading = ({ badge, title, subtitle, centered = true }: any) => (
   <div className={`mb-20 ${centered ? 'text-center' : ''}`}>
-    {badge && (
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.8 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        viewport={{ once: true }}
-        className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--primary)]/10 border border-[var(--primary)]/20 text-[var(--primary)] text-xs font-black uppercase tracking-widest mb-6"
-      >
-        <span className="h-1.5 w-1.5 rounded-full bg-[var(--primary)] animate-pulse" />
-        {badge}
-      </motion.div>
-    )}
+    {badge && <Badge className="mb-6">{badge}</Badge>}
     <motion.h2 
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.6 }}
-      className="text-4xl md:text-6xl font-black text-[var(--foreground)] mb-8 leading-[1.1]"
+      className="text-4xl md:text-6xl font-black text-[var(--foreground)] mb-8 tracking-tighter leading-[1.1] uppercase"
     >
       {title}
     </motion.h2>
@@ -83,8 +91,8 @@ const SectionHeading = ({ badge, title, subtitle, centered = true }: any) => (
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        transition={{ duration: 0.6, delay: 0.1 }}
-        className="text-[var(--muted)] text-lg md:text-xl max-w-3xl mx-auto leading-relaxed"
+        transition={{ delay: 0.1 }}
+        className="text-[var(--muted)] text-lg md:text-xl max-w-3xl mx-auto leading-relaxed font-medium"
       >
         {subtitle}
       </motion.p>
@@ -92,937 +100,916 @@ const SectionHeading = ({ badge, title, subtitle, centered = true }: any) => (
   </div>
 );
 
-const Glow = ({ color = 'blue', className = '' }: { color?: 'blue' | 'purple' | 'cyan', className?: string }) => {
-  const colors = {
-    blue: 'bg-blue-600',
-    purple: 'bg-indigo-600',
-    cyan: 'bg-cyan-500'
-  };
-  return (
-    <div className={`absolute -z-10 blur-[120px] opacity-20 rounded-full animate-pulse-slow ${colors[color]} ${className}`} />
-  );
-};
-
-// --- Main Layout Components ---
+// --- Sections ---
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
-  const { scrollY } = useScroll();
-  const opacity = useTransform(scrollY, [0, 50], [0.4, 0.8]);
-  const scale = useTransform(scrollY, [0, 50], [1, 0.98]);
+  const { demoLogin } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogin = () => navigate('/login');
+
+  const handleRequestDemo = () => {
+    demoLogin();
+    navigate('/app', { replace: true });
+  };
 
   return (
-    <motion.nav 
-      style={{ scale }}
-      className="glass-navbar"
-    >
-      <div className="flex w-full items-center justify-between px-6 md:px-10">
-        {/* Logo Section */}
-        <div className="flex-1 flex justify-start">
-          <Link to="/" className="flex items-center gap-3 group" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <div className="h-10 w-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110">
-              <Lock className="text-white h-5 w-5" />
-            </div>
-            <span className="hidden sm:inline-block text-2xl font-black tracking-tighter text-[var(--foreground)] lowercase">sentra <span className="text-blue-500">ai</span></span>
+    <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-7xl premium-glass !rounded-[1.5rem] bg-[var(--glass-bg)] backdrop-blur-3xl shadow-2xl border border-[var(--glass-border)]">
+      <div className="noise-overlay" />
+      <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between relative z-10">
+        <Link to="/" className="flex items-center gap-4 group">
+          <Logo size="md" />
+        </Link>
+
+        <div className="hidden lg:flex items-center gap-10">
+          {['Platform', 'Solutions', 'Compliance', 'Security'].map((item) => (
+            <a key={item} href={`#${item.toLowerCase()}`} className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors relative group">
+              {item}
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-500 transition-all group-hover:w-full" />
+            </a>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-4">
+          <button
+            onClick={toggleTheme}
+            className="p-2.5 rounded-full bg-[var(--card)] border border-[var(--glass-border)] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--glass-bg)] transition-all"
+            aria-label="Toggle theme"
+          >
+            {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+          </button>
+
+          <button
+            onClick={handleLogin}
+            className="hidden sm:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-[10px] font-black uppercase tracking-widest text-blue-500 backdrop-blur-sm transition-all duration-300 hover:bg-blue-500/20 hover:border-blue-500/30 hover:-translate-y-0.5 hover:shadow-[0_4px_20px_rgba(59,130,246,0.1)] active:scale-95"
+          >
+            <Lock className="h-3.5 w-3.5" />
+            Login
+          </button>
+
+          <button
+            onClick={handleRequestDemo}
+            className="hidden sm:inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-white transition-all duration-300 hover:-translate-y-0.5 active:scale-95"
+            style={{
+              background: 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 50%, #4f46e5 100%)',
+              boxShadow: '0 0 20px rgba(14,165,233,0.4), 0 4px 15px rgba(37,99,235,0.3)',
+            }}
+          >
+            <PlayCircle className="h-3.5 w-3.5" />
+            Request Demo
+          </button>
+
+          <button onClick={() => setIsOpen(!isOpen)} className="lg:hidden text-[var(--foreground)] p-2">
+            {isOpen ? <X /> : <Menu />}
+          </button>
+        </div>
+      </div>
+    </nav>
+  );
+};
+
+const Hero = () => (
+  <section className="relative pt-32 pb-24 lg:pt-40 lg:pb-32 overflow-hidden">
+    <div className="max-w-7xl mx-auto px-6 text-center">
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+      >
+        <Badge className="mb-10">AI Runtime Governance Infrastructure</Badge>
+        <h1 className="text-6xl md:text-9xl font-black text-[var(--foreground)] tracking-tighter leading-[0.9] mb-10 uppercase">
+          Control What Your <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 drop-shadow-[0_0_20px_rgba(59,130,246,0.3)]">
+            AI Can Do — In Real Time
+          </span>
+        </h1>
+        <p className="text-[var(--muted)] text-xl md:text-2xl max-w-3xl mx-auto mb-16 font-medium leading-relaxed">
+          The universal control layer for AI systems. We sit between your models and execution to enforce policies, block unauthorized actions, and ensure total governance.
+        </p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-20">
+          <Link to="/demo" className="w-full sm:w-auto">
+            <Button className="h-16 px-12 w-full shadow-[0_0_40px_rgba(59,130,246,0.4)]">Book Enterprise Demo</Button>
+          </Link>
+          <Link to="/login" className="w-full sm:w-auto">
+            <Button variant="secondary" className="h-16 px-12 w-full sm:w-auto">Get Started <ArrowRight className="ml-2 h-4 w-4" /></Button>
           </Link>
         </div>
-        
-        {/* Centered Navigation (Desktop) / Toggle (Mobile) */}
-        <div className="flex-none items-center justify-center">
-          {/* Desktop Links */}
-          <div className="hidden lg:flex items-center gap-10">
-            {[
-              { name: 'Product', icon: Cpu },
-              { name: 'Showcase', icon: Eye },
-              { name: 'How it Works', icon: Workflow }
-            ].map((item) => (
-              <a key={item.name} href={`#${item.name.toLowerCase().replace(/ /g, '-')}`} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[var(--muted)] hover:text-[var(--foreground)] transition-all relative group">
-                <item.icon className="h-3.5 w-3.5" />
-                {item.name}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-500 transition-all group-hover:w-full" />
-              </a>
-            ))}
-            
-            <div className="h-4 w-px bg-[var(--glass-border)] mx-1" />
 
-            <button 
-              onClick={toggleTheme}
-              className="p-2 rounded-full hover:bg-[var(--foreground)]/5 text-[var(--muted)] hover:text-[var(--foreground)] transition-all glass-button"
-              aria-label="Toggle theme"
-            >
-              {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-            </button>
+        <div className="flex flex-wrap justify-center gap-12 text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-blue-500 text-lg">3,000+</span>
+            <span>AI Startups in India</span>
           </div>
-
-          {/* Mobile Toggle - Centered for better access */}
-          <button 
-            onClick={() => setIsOpen(!isOpen)} 
-            className="lg:hidden flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--foreground)]/5 border border-[var(--card-border)] text-[var(--foreground)]"
-          >
-            {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            <span className="text-[10px] font-black uppercase tracking-widest">Menu</span>
-          </button>
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-indigo-500 text-lg">50,000+</span>
+            <span>Companies using AI</span>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-purple-500 text-lg">80%</span>
+            <span>Enterprise Adoption</span>
+          </div>
         </div>
 
-        {/* Right Section Buttons */}
-        <div className="flex-1 flex items-center justify-end gap-6">
-          <button 
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="hidden sm:flex p-2.5 rounded-full hover:bg-[var(--foreground)]/5 text-[var(--muted)] hover:text-[var(--foreground)] transition-all"
-            aria-label="Home"
-          >
-            <HomeIcon className="h-5 w-5" />
-          </button>
-          
-          <Link to="/login" className="hidden sm:inline-flex text-xs font-black uppercase tracking-widest text-[var(--foreground)] hover:text-[var(--primary)] transition-colors">Login</Link>
-          <Button className="h-10 px-6 text-[10px] uppercase tracking-widest rounded-full">Free Trial</Button>
+        {/* Hero Visual Flow */}
+        <div className="mt-20 max-w-4xl mx-auto relative">
+           <div className="absolute inset-0 bg-blue-500/10 blur-[100px] -z-10" />
+           <div className="flex flex-col md:flex-row items-center justify-between gap-12 p-12 premium-glass !rounded-[3rem]">
+              <div className="flex flex-col items-center gap-4 grow">
+                 <div className="h-16 w-16 rounded-2xl bg-[var(--card)] border border-[var(--glass-border)] flex items-center justify-center shadow-lg">
+                    <UserPlus className="h-8 w-8 text-blue-400" />
+                 </div>
+                 <span className="text-[10px] font-black uppercase text-blue-400 tracking-widest">User / Agent</span>
+              </div>
+              <ArrowRight className="h-8 w-8 text-slate-700 hidden md:block" />
+              <div className="flex flex-col items-center gap-4 grow">
+                 <div className="h-24 w-24 rounded-[2rem] bg-indigo-600/10 border border-indigo-500/50 flex items-center justify-center shadow-[0_0_50px_rgba(99,102,241,0.4)] animate-pulse">
+                    <Logo size="sm" iconOnly />
+                 </div>
+                 <span className="text-[10px] font-black uppercase text-indigo-400 tracking-[0.2em] font-black">Sentra AI Layer</span>
+              </div>
+              <ArrowRight className="h-8 w-8 text-slate-700 hidden md:block" />
+              <div className="flex flex-col items-center gap-4 grow">
+                 <div className="h-16 w-16 rounded-2xl bg-emerald-600/10 border border-emerald-500/50 flex items-center justify-center shadow-lg">
+                    <CheckCircle2 className="h-8 w-8 text-emerald-500" />
+                 </div>
+                 <span className="text-[10px] font-black uppercase text-emerald-500 tracking-widest">Safe Execution</span>
+              </div>
+           </div>
         </div>
+      </motion.div>
+    </div>
+  </section>
+);
+
+const SocialProof = () => (
+  <section className="py-24 border-y border-[var(--glass-border)]">
+    <div className="max-w-7xl mx-auto px-6">
+      <p className="text-center text-[10px] font-black uppercase tracking-[0.3em] text-[var(--muted)] mb-12">
+        Trusted by industries where AI failure is not an option
+      </p>
+      <div className="flex flex-wrap justify-center items-center gap-16 md:gap-24 opacity-50 grayscale hover:grayscale-0 transition-all duration-700">
+        {['TATA CONSULTANCY SERVICES', 'INFOSYS', 'HDFC BANK', 'FLIPKART', 'ZOMATO'].map(brand => (
+          <span key={brand} className="text-xl md:text-2xl font-black tracking-tighter text-[var(--foreground)]">{brand}</span>
+        ))}
       </div>
+    </div>
+  </section>
+);
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="absolute top-20 left-0 right-0 bg-[var(--background)] border-b border-[var(--card-border)] px-6 py-10 lg:hidden"
+const ProblemSection = () => (
+  <section className="py-40 bg-[var(--background)]/50">
+    <div className="max-w-7xl mx-auto px-6">
+      <SectionHeading 
+        badge="Strategic Risk"
+        title="Companies don’t control AI — they trust it blindly."
+        subtitle="Current enterprise AI deployments operate without a perimeter. One prompt injection or unauthorized model decision can lead to irreversible data exposure or system failure."
+      />
+      <div className="grid md:grid-cols-4 gap-8">
+        {[
+          { icon: Lock, title: "Data Exposure", desc: "AI accessing sensitive proprietary data without proper filtering or permission layers.", color: "text-blue-400" },
+          { icon: ShieldAlert, title: "Prompt Injection", desc: "Malicious actors manipulating model outputs to bypass built-in safety constraints.", color: "text-red-400" },
+          { icon: Target, title: "Unpredictability", desc: "No oversight on AI decisions before they are executed in the real-world environment.", color: "text-purple-400" },
+          { icon: Scale, title: "Compliance Risk", desc: "Direct violation of global data mandates like GDPR and HIPAA through autonomous actions.", color: "text-emerald-400" }
+        ].map((p, i) => (
+          <motion.div 
+            key={i}
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className="p-8 premium-glass group hover:bg-[var(--glass-bg)] border-white/5"
           >
-            <div className="flex flex-col gap-8">
-              {['Product', 'Showcase', 'How it Works'].map((item) => (
-                <a key={item} href={`#${item.toLowerCase().replace(/ /g, '-')}`} className="text-xl font-black text-[var(--foreground)]" onClick={() => setIsOpen(false)}>{item}</a>
-              ))}
-              <hr className="border-[var(--card-border)]" />
-              <Button className="w-full">Get Started</Button>
+            <div className="noise-overlay" />
+            <div className={`h-12 w-12 rounded-xl bg-[var(--card)] border border-[var(--glass-border)] flex items-center justify-center mb-6 ${p.color}`}>
+              <p.icon className="h-6 w-6" />
             </div>
+            <h3 className="text-xl font-black text-[var(--foreground)] mb-3 uppercase tracking-tighter">{p.title}</h3>
+            <p className="text-[var(--muted)] text-sm leading-relaxed font-medium">{p.desc}</p>
           </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.nav>
-  );
-};
+        ))}
+      </div>
+    </div>
+  </section>
+);
 
-const Hero = () => {
-  return (
-    <section className="relative pt-40 pb-20 lg:pt-60 lg:pb-40 overflow-hidden bg-[var(--background)] transition-colors duration-300">
-      <div className="varonis-bg opacity-40" />
-      <div className="varonis-mesh opacity-10" />
-      <Glow color="blue" className="top-1/4 left-1/4 h-[600px] w-[600px]" />
-      <Glow color="purple" className="bottom-1/4 right-1/4 h-[500px] w-[500px]" />
-      
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-[var(--primary)]/10 border border-[var(--primary)]/20 text-xs font-black uppercase tracking-widest text-[var(--primary)] mb-10 shadow-inner"
-        >
-          <Zap className="h-4 w-4" />
-          <span>V2.0 has arrived with 50+ new integrations</span>
-          <ChevronRight className="h-4 w-4 opacity-50" />
-        </motion.div>
-
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.1 }}
-          className="text-6xl md:text-9xl font-black tracking-tighter text-[var(--foreground)] mb-10 leading-[0.9] uppercase"
-        >
-          AI Governance <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500 drop-shadow-[0_0_20px_rgba(59,130,246,0.2)]">
-            Redefined.
-          </span>
-        </motion.h1>
-
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-xl md:text-2xl text-[var(--muted)] max-w-3xl mx-auto mb-16 font-medium leading-relaxed"
-        >
-          Sentra AI provides the trust layer for your autonomous future. Secure models, automate compliance, and monitor risk in real-time.
-        </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-32"
-        >
-          <Button className="h-16 px-12 text-lg">Start Free Trial</Button>
-          <Button variant="secondary" className="h-16 px-12 text-lg">Book a Demo</Button>
-        </motion.div>
-
-        {/* Live Dashboard Mockup - matches reference image */}
-        <motion.div
-          initial={{ opacity: 0, y: 60 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.2, delay: 0.5, ease: "easeOut" }}
-          className="relative max-w-7xl mx-auto"
-        >
-          <div className="absolute -inset-2 bg-gradient-to-r from-cyan-600/20 via-blue-600/20 to-purple-600/20 rounded-[2.5rem] blur-2xl opacity-50 animate-pulse-slow" />
-          
-          {/* Dashboard Shell */}
-          <div className="relative bg-[var(--background)] border border-[var(--card-border)] rounded-[2.5rem] overflow-hidden shadow-2xl transition-colors duration-300">
-            {/* Top Bar */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--card-border)] bg-[var(--sidebar)]/50 backdrop-blur-md">
-              <div className="flex items-center gap-3">
-                <div className="h-7 w-7 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-lg flex items-center justify-center">
-                  <Lock className="h-4 w-4 text-white" />
+const MetricsSection = () => (
+  <section className="py-32 bg-[var(--card)]/30 border-y border-[var(--glass-border)] relative">
+    <div className="max-w-7xl mx-auto px-6">
+       <div className="grid grid-cols-2 lg:grid-cols-4 gap-12">
+          {[
+            { v: "99.9%", l: "AI Visibility", d: "Zero blind spots across models" },
+            { v: "<50ms", l: "Latency", d: "Real-time enforcement speed" },
+            { v: "85%", l: "Risk Reduction", d: "In unauthorized AI actions" },
+            { v: "100%", l: "Audit Ready", d: "Cryptographically signed logs" }
+          ].map((m, i) => (
+             <div key={i} className="text-center group">
+                <div className="text-5xl md:text-6xl font-black text-blue-600 dark:text-blue-500 mb-2 tracking-tighter group-hover:scale-110 transition-transform">
+                  {m.v}
                 </div>
-                <span className="text-xs font-black text-[var(--muted)] tracking-widest uppercase">sentra.live / dashboard</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="h-7 w-7 rounded-full bg-[var(--card-border)] flex items-center justify-center">
-                  <div className="h-3 w-3 rounded-full bg-[var(--muted)]" />
+                <div className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--foreground)] mb-4">
+                  {m.l}
                 </div>
-                <div className="flex flex-col gap-1">
-                  <div className="h-1 w-12 bg-[var(--card-border)] rounded" />
-                  <div className="h-1 w-8 bg-[var(--card-border)] rounded" />
-                </div>
-              </div>
-            </div>
+                <p className="text-[var(--muted)] text-xs font-medium uppercase tracking-widest">{m.d}</p>
+             </div>
+          ))}
+       </div>
+    </div>
+  </section>
+);
 
-            <div className="flex">
-              {/* Sidebar */}
-              <div className="hidden md:flex flex-col gap-6 py-8 px-4 border-r border-[var(--card-border)] bg-[var(--sidebar)]/30 min-w-[100px] items-center">
+const MarketOpportunity = () => (
+  <section className="py-40 relative overflow-hidden">
+    <div className="max-w-7xl mx-auto px-6">
+       <div className="premium-glass !rounded-[4rem] p-16 md:p-24 bg-gradient-to-br from-indigo-600/10 to-transparent border-indigo-500/20">
+          <div className="grid lg:grid-cols-2 gap-20 items-center">
+             <div>
+                <Badge className="mb-8">Emerging Category</Badge>
+                <h2 className="text-5xl md:text-7xl font-black text-[var(--foreground)] mb-10 leading-[1.05] uppercase tracking-tighter">
+                   The Future of <br /> <span className="text-blue-500">AI Trust.</span>
+                </h2>
+                <p className="text-[var(--muted)] text-xl font-medium leading-relaxed mb-10">
+                   As the $1T AI market converges with the $200B cybersecurity sector, Runtime Governance has emerged as the most critical pillar of the modern AI stack. 
+                </p>
+                <div className="flex gap-4">
+                   <Button>Read Category Report</Button>
+                </div>
+             </div>
+             <div className="grid gap-6">
                 {[
-                  { icon: LayoutDashboard, label: 'Overview', active: true },
-                  { icon: ShieldAlert, label: 'Threats', active: false },
-                  { icon: Eye, label: 'Observe', active: false },
-                  { icon: FileText, label: 'Reports', active: false },
-                  { icon: Database, label: 'Data', active: false },
-                  { icon: Globe, label: 'Network', active: false },
-                ].map(({ icon: Icon, label, active }) => (
-                  <div key={label} className={`flex flex-col items-center gap-1.5 cursor-pointer group ${active ? 'opacity-100' : 'opacity-40 hover:opacity-70'}`}>
-                    <div className={`h-10 w-10 flex items-center justify-center rounded-xl ${active ? 'bg-cyan-500/20 text-cyan-400' : 'text-[var(--muted)]'}`}>
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <span className={`text-[9px] font-bold uppercase tracking-widest ${active ? 'text-cyan-400' : 'text-[var(--muted)]'}`}>{label}</span>
+                  { t: "$1.2T", l: "AI Opportunity by 2030" },
+                  { t: "92%", l: "Enterprise Security Gap" },
+                  { t: "$15M", l: "Avg. cost of AI Data Breach" }
+                ].map((stat, i) => (
+                  <div key={i} className="p-8 premium-glass flex items-center justify-between border-white/5">
+                     <span className="text-[10px] font-black uppercase tracking-widest text-[var(--muted)]">{stat.l}</span>
+                     <span className="text-3xl font-black text-white">{stat.t}</span>
                   </div>
                 ))}
-              </div>
-
-              {/* Main Content */}
-              <div className="flex-1 p-6 min-w-0 flex flex-col gap-6">
-                {/* Search / Data Input Bar */}
-                <div className="flex items-center gap-4 bg-[var(--card)] rounded-2xl border border-[var(--card-border)] p-3 px-5 backdrop-blur-md shadow-inner group transition-all hover:border-[var(--primary)]/50">
-                   <Search className="h-4 w-4 text-[var(--muted)] group-hover:text-cyan-400 transition-colors" />
-                   <div className="text-xs text-[var(--muted)] font-bold uppercase tracking-widest flex-1">Ask Sentra AI or scan a new model endpoint...</div>
-                   <div className="flex items-center gap-2">
-                      <div className="px-2 py-1 rounded-md bg-[var(--foreground)]/5 text-[8px] font-black text-[var(--muted)] border border-[var(--card-border)]">⌘ K</div>
-                      <Button className="h-8 px-4 text-[9px] rounded-lg">Run Analysis</Button>
-                   </div>
-                </div>
-
-                {/* Top Stats Row */}
-                <div className="grid grid-cols-3 gap-6">
-                  {[
-                    { label: 'Threats Blocked', val: '1,842', color: 'text-[var(--foreground)]' },
-                    { label: 'Avg Response', val: '38ms', color: 'text-blue-400' },
-                    { label: 'Risk Score', val: '2.4 / 10', color: 'text-[var(--foreground)]' }
-                  ].map((stat) => (
-                    <div key={stat.label} className="bg-[var(--card)] rounded-2xl border border-[var(--card-border)] p-5 backdrop-blur-md">
-                      <p className="text-[10px] font-black text-[var(--muted)] uppercase tracking-widest mb-2">{stat.label}</p>
-                      <p className={`text-2xl font-black ${stat.color} tracking-tight`}>{stat.val}</p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex gap-6">
-                  {/* Left Column: Chart + Events */}
-                  <div className="flex-[2] min-w-0 flex flex-col gap-6">
-                    {/* Main Area Chart */}
-                    <div className="bg-[var(--card)] rounded-2xl border border-[var(--card-border)] p-6 backdrop-blur-md">
-                      <div className="flex items-center justify-between mb-4">
-                        <div>
-                          <p className="text-xs font-black text-[var(--foreground)] uppercase tracking-widest mb-1">Threat activity - last 30 days</p>
-                        </div>
-                        <div className="flex gap-3">
-                           <div className="h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee]" />
-                        </div>
-                      </div>
-                      <div className="h-44">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <AreaChart
-                            data={[
-                              { day: 'D1',  threats: 18 },
-                              { day: 'D4',  threats: 55 },
-                              { day: 'D7',  threats: 38 },
-                              { day: 'D10', threats: 95 },
-                              { day: 'D13', threats: 72 },
-                              { day: 'D16', threats: 148 },
-                              { day: 'D19', threats: 195 },
-                              { day: 'D22', threats: 162 },
-                              { day: 'D25', threats: 210 },
-                              { day: 'D28', threats: 188 },
-                              { day: 'D30', threats: 240 },
-                            ]}
-                            margin={{ top: 8, right: 5, left: -25, bottom: 0 }}
-                          >
-                            <defs>
-                              <linearGradient id="heroCyan" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%"   stopColor="#22d3ee" stopOpacity={0.4} />
-                                <stop offset="100%" stopColor="#0ea5e9" stopOpacity={0} />
-                              </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="2 8" stroke="var(--card-border)" vertical={false} />
-                            <XAxis dataKey="day" tick={{ fill: 'var(--muted)', fontSize: 8, fontWeight: 800 }} axisLine={false} tickLine={false} />
-                            <YAxis tick={{ fill: 'var(--muted)', fontSize: 8 }} axisLine={false} tickLine={false} />
-                            <Area type="monotone" dataKey="threats" stroke="#22d3ee" strokeWidth={2} fill="url(#heroCyan)" dot={false} />
-                          </AreaChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-
-                    {/* Security Events List */}
-                    <div className="space-y-3">
-                       {[
-                         { text: 'Prompt injection attempt blocked', time: '2s ago', icon: ShieldAlert, color: 'text-amber-500' },
-                         { text: 'PII automatically redacted', time: '18s ago', icon: Lock, color: 'text-blue-400' },
-                         { text: 'Policy gate enforced on output', time: '1m ago', icon: ShieldCheck, color: 'text-emerald-400' }
-                       ].map((event, i) => (
-                         <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-[var(--card)] border border-[var(--card-border)] backdrop-blur-md">
-                           <div className="flex items-center gap-4">
-                             <event.icon className={`h-4 w-4 ${event.color}`} />
-                             <span className="text-xs font-bold text-[var(--foreground)]">{event.text}</span>
-                           </div>
-                           <span className="text-[10px] font-black text-[var(--muted)] uppercase">{event.time}</span>
-                         </div>
-                       ))}
-                    </div>
-                  </div>
-
-                  {/* Right Column: Other Info */}
-                  <div className="flex-1 flex flex-col gap-6">
-                    {/* Compliance */}
-                    <div className="bg-[var(--card)] rounded-2xl border border-[var(--card-border)] p-6 backdrop-blur-md">
-                      <p className="text-[10px] font-black text-[var(--muted)] uppercase tracking-widest mb-6">Compliance status</p>
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-center text-xs font-black">
-                           <span className="text-[var(--foreground)] lowercase">DPDP</span>
-                           <span className="text-cyan-400">100%</span>
-                        </div>
-                        <div className="h-1.5 w-full bg-[var(--card-border)] rounded-full overflow-hidden">
-                           <div className="h-full bg-cyan-400 w-full shadow-[0_0_10px_#22d3ee]" />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Active Models */}
-                    <div className="bg-[var(--card)] rounded-2xl border border-[var(--card-border)] p-6 backdrop-blur-md flex-1">
-                      <p className="text-[10px] font-black text-[var(--muted)] uppercase tracking-widest mb-6">Active models</p>
-                      <div className="space-y-4">
-                        {[
-                          { name: 'GPT-4o', active: true },
-                          { name: 'Claude 3.5', active: true },
-                          { name: 'Llama 3.1', active: true },
-                        ].map(model => (
-                          <div key={model.name} className="flex items-center gap-3">
-                            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_#10b981]" />
-                            <span className="text-xs font-bold text-[var(--foreground)]">{model.name}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+             </div>
           </div>
+       </div>
+    </div>
+  </section>
+);
 
-          {/* Floating Badges */}
-          <motion.div
-            animate={{ y: [0, -12, 0] }}
-            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -right-6 top-1/3 glass rounded-2xl px-5 py-3 shadow-2xl hidden xl:flex items-center gap-3 border-[var(--primary)]/20"
-          >
-            <div className="h-9 w-9 rounded-xl bg-[var(--primary)] shadow-lg shadow-[var(--primary-glow)] flex items-center justify-center">
-              <ShieldCheck className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <p className="text-xs font-black text-[var(--foreground)] uppercase leading-none mb-1">System Secure</p>
-              <p className="text-[10px] text-[var(--muted)] uppercase font-black tracking-widest">Compliance: 100%</p>
-            </div>
-          </motion.div>
-
-          <motion.div
-            animate={{ y: [0, 12, 0] }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-            className="absolute -left-8 bottom-1/4 glass rounded-2xl px-5 py-3 shadow-2xl hidden xl:flex items-center gap-3 border-purple-500/20"
-          >
-            <div className="h-9 w-9 rounded-xl bg-purple-600 shadow-lg shadow-purple-500/20 flex items-center justify-center">
-              <Target className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <p className="text-xs font-black text-[var(--foreground)] uppercase leading-none mb-1">Active Policy</p>
-              <p className="text-[10px] text-[var(--muted)] uppercase font-black tracking-widest">Auto-mitigating...</p>
-            </div>
-          </motion.div>
-        </motion.div>
-
+const ComparisonTable = () => (
+  <section className="py-40 border-t border-[var(--glass-border)]">
+    <div className="max-w-7xl mx-auto px-6">
+      <SectionHeading 
+        badge="Vs. Traditional"
+        title="Monitoring is not enough."
+        subtitle="Legacy security tools look at what happened. Sentra AI controls what happens."
+      />
+      <div className="overflow-x-auto">
+        <table className="w-full text-left premium-glass !rounded-[2rem] border-separate border-spacing-0">
+          <thead>
+            <tr className="text-[var(--muted)] text-[10px] font-black uppercase tracking-widest">
+              <th className="px-12 py-10 border-b border-[var(--glass-border)]">Feature</th>
+              <th className="px-12 py-10 border-b border-[var(--glass-border)]">Legacy Tools</th>
+              <th className="px-12 py-10 border-b border-[var(--glass-border)] bg-blue-500/5 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400">Sentra AI Infrastructure</th>
+            </tr>
+          </thead>
+          <tbody className="text-[var(--foreground)] font-bold">
+            {[
+              { f: "Control Mode", l: "Static / Passive", s: "Real-time Runtime Control" },
+              { f: "Awareness", l: "Networking Only", s: "Semantic AI-Native" },
+              { f: "Latency", l: "Measured in Minutes", s: "Sub-50ms (Deterministic)" },
+              { f: "Enforcement", l: "Manual Alerts", s: "Automated Policy Layer" },
+              { f: "Auditability", l: "Surface Level", s: "Full Token-Level Observability" }
+            ].map((row, i) => (
+              <tr key={i} className="group hover:bg-[var(--glass-bg)]">
+                <td className="px-12 py-8 border-b border-[var(--glass-border)] opacity-60 uppercase text-[10px] tracking-widest">{row.f}</td>
+                <td className="px-12 py-8 border-b border-[var(--glass-border)]">{row.l}</td>
+                <td className="px-12 py-8 border-b border-[var(--glass-border)] bg-blue-500/5 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 font-black">{row.s}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
-    </section>
-  );
-};
+    </div>
+  </section>
+);
 
-const Features = () => {
-  const features = [
-    {
-      title: "AI Monitoring",
-      desc: "Comprehensive visibility into every agent interaction and token flow.",
-      icon: Eye,
-      color: "blue"
-    },
-    {
-      title: "Risk Automation",
-      desc: "Auto-detect and mitigate data leaks and prompt injections instantly.",
-      icon: ShieldAlert,
-      color: "indigo"
-    },
-    {
-      title: "Policy Engine",
-      desc: "Define granular governance policies for models, teams, and regions.",
-      icon: Workflow,
-      color: "purple"
-    },
-    {
-      title: "Compliant Logs",
-      desc: "Immutable, tamper-proof logs for SOC2, GDPR, and DPDP auditing.",
-      icon: FileText,
-      color: "cyan"
-    }
-  ];
-
-  return (
-    <section id="product" className="py-32 lg:py-60 relative overflow-hidden">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionHeading 
-          badge="Core Capabilities"
-          title="Everything you need to scale safely."
-          subtitle="Sentra AI provides the tools required to govern, secure, and monitor your AI ecosystem from a single pane."
-        />
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {features.map((f, i) => (
-            <motion.div
-              key={f.title}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1, duration: 0.6 }}
-              className="glass-card group p-10 rounded-[2.5rem]"
-            >
-              <div className={`h-16 w-16 rounded-[1.25rem] bg-[var(--muted-background)] border border-[var(--card-border)] flex items-center justify-center mb-8 transition-all duration-500 group-hover:scale-110 group-hover:shadow-[0_0_30px_var(--primary-glow)]`}>
-                <f.icon className="h-8 w-8 text-[var(--primary)]" />
-              </div>
-              <h3 className="text-2xl font-black text-[var(--foreground)] mb-4 tracking-tight">{f.title}</h3>
-              <p className="text-[var(--muted)] font-medium leading-relaxed">{f.desc}</p>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
-
-const Showcase = () => {
-  return (
-    <section id="showcase" className="py-32 lg:py-60 bg-[var(--background)]/40 relative">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-         <div className="grid lg:grid-cols-2 gap-24 items-center">
-            <motion.div
-               initial={{ opacity: 0, x: -50 }}
-               whileInView={{ opacity: 1, x: 0 }}
-               viewport={{ once: true }}
-               transition={{ duration: 0.8 }}
-            >
-               <SectionHeading 
-                 centered={false}
-                 badge="Showcase"
-                 title="Total visibility. Complete control."
-                 subtitle="Stop guessing how your AI is performing. Sentra gives you the data you need to make informed governance decisions."
-               />
-               <ul className="space-y-8">
-                  {[
-                    { t: "Live Threat Matrix", d: "Visualize and block attacks as they happen." },
-                    { t: "Cross-Model Analytics", d: "Performance metrics across all your LLMs." },
-                    { t: "Policy Enforcement", d: "Set it once, enforce it everywhere automatically." }
-                  ].map((item, i) => (
-                    <motion.li 
-                      key={item.t} 
-                      initial={{ opacity: 0, x: -20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: i * 0.2 }}
-                      className="flex gap-6"
-                    >
-                       <div className="h-12 w-12 rounded-xl bg-[var(--primary)]/10 border border-[var(--primary)]/20 flex items-center justify-center shrink-0">
-                          <CheckCircle2 className="text-[var(--primary)] h-6 w-6" />
-                       </div>
-                       <div>
-                          <p className="text-xl font-bold text-[var(--foreground)] mb-2 leading-none">{item.t}</p>
-                          <p className="text-[var(--muted)] font-medium">{item.d}</p>
-                       </div>
-                    </motion.li>
-                  ))}
-               </ul>
-            </motion.div>
-
-            <motion.div
-               initial={{ opacity: 0, scale: 0.9, x: 50 }}
-               whileInView={{ opacity: 1, scale: 1, x: 0 }}
-               viewport={{ once: true }}
-               transition={{ duration: 0.8 }}
-               className="relative lg:col-span-1"
-            >
-               <div className="glass-card p-8 md:p-12 rounded-[3.5rem] shadow-2xl relative overflow-hidden">
-                  {/* Dashboard Header */}
-                  <div className="flex justify-between items-center mb-10">
-                     <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 bg-[var(--primary)] rounded-lg flex items-center justify-center shadow-lg shadow-[var(--primary-glow)]">
-                           <Activity className="h-4 w-4 text-white" />
-                        </div>
-                        <span className="text-[var(--foreground)] text-sm font-black uppercase tracking-widest">Sentra Intelligence</span>
-                     </div>
-                     <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20">
-                        <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-                        <span className="text-[10px] text-green-500 font-black uppercase tracking-tighter">Live Monitor</span>
-                     </div>
-                  </div>
-                  
-                  {/* Top Stats - Screenshot 1 */}
-                  <div className="grid grid-cols-3 gap-6 mb-10">
-                     {[
-                        { label: 'Threats Blocked', val: '1,842', sub: '+12%', color: 'text-[var(--foreground)]' },
-                        { label: 'Avg Response', val: '38ms', sub: 'Stable', color: 'text-[var(--primary)]' },
-                        { label: 'Risk Score', val: '2.4/10', sub: 'Low', color: 'text-[var(--foreground)]' }
-                     ].map((stat) => (
-                        <div key={stat.label} className="bg-[var(--foreground)]/5 p-5 rounded-3xl border border-[var(--card-border)]">
-                           <p className="text-[10px] font-black text-[var(--muted)] uppercase mb-2 leading-none">{stat.label}</p>
-                           <p className={`text-2xl font-black ${stat.color} mb-1 tracking-tight`}>{stat.val}</p>
-                           <p className="text-[8px] font-bold text-[var(--muted)] uppercase tracking-widest">{stat.sub}</p>
-                        </div>
-                     ))}
-                  </div>
-
-                  {/* Main Area Chart - Neon Glow Style matching Reference Image */}
-                  <div className="mb-10 bg-[var(--background)]/60 p-6 rounded-[2rem] border border-[var(--card-border)] overflow-hidden">
-                     <div className="flex justify-between items-center mb-6">
-                        <div>
-                           <p className="text-xs font-black text-[var(--foreground)] uppercase tracking-widest mb-1">Threat Activity</p>
-                           <p className="text-[10px] text-[var(--muted)] font-medium">Last 30 days · 1,842 total blocked</p>
-                        </div>
-                        <div className="flex gap-5">
-                           <div className="flex items-center gap-2">
-                              <div className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]" />
-                              <span className="text-[10px] text-[var(--muted)] font-bold">Threats</span>
-                           </div>
-                           <div className="flex items-center gap-2">
-                              <div className="h-2 w-2 rounded-full bg-purple-400 shadow-[0_0_8px_#c084fc]" />
-                              <span className="text-[10px] text-[var(--muted)] font-bold">Mitigated</span>
-                           </div>
-                        </div>
-                     </div>
-                     <div className="w-full h-56">
-                        <ResponsiveContainer width="100%" height="100%">
-                           <AreaChart
-                              data={[
-                                 { day: 'D1',  threats: 18,  mitigated: 10 },
-                                 { day: 'D4',  threats: 55,  mitigated: 28 },
-                                 { day: 'D7',  threats: 38,  mitigated: 22 },
-                                 { day: 'D10', threats: 95,  mitigated: 60 },
-                                 { day: 'D13', threats: 72,  mitigated: 55 },
-                                 { day: 'D16', threats: 148, mitigated: 110 },
-                                 { day: 'D19', threats: 195, mitigated: 160 },
-                                 { day: 'D22', threats: 162, mitigated: 132 },
-                                 { day: 'D25', threats: 210, mitigated: 178 },
-                                 { day: 'D28', threats: 188, mitigated: 155 },
-                                 { day: 'D30', threats: 240, mitigated: 210 },
-                              ]}
-                              margin={{ top: 10, right: 5, left: -20, bottom: 0 }}
-                           >
-                              <defs>
-                                 {/* Cyan gradient fill */}
-                                 <linearGradient id="glowCyan" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="0%"  stopColor="#22d3ee" stopOpacity={0.55} />
-                                    <stop offset="60%" stopColor="#0ea5e9" stopOpacity={0.15} />
-                                    <stop offset="100%" stopColor="#0c4a6e" stopOpacity={0} />
-                                 </linearGradient>
-                                 {/* Purple gradient fill */}
-                                 <linearGradient id="glowPurple" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="0%"  stopColor="#a855f7" stopOpacity={0.55} />
-                                    <stop offset="60%" stopColor="#7c3aed" stopOpacity={0.15} />
-                                    <stop offset="100%" stopColor="#3b0764" stopOpacity={0} />
-                                 </linearGradient>
-                                 {/* Cyan line glow filter */}
-                                 <filter id="cyanGlow">
-                                    <feGaussianBlur stdDeviation="3" result="blur" />
-                                    <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-                                 </filter>
-                                 {/* Purple line glow filter */}
-                                 <filter id="purpleGlow">
-                                    <feGaussianBlur stdDeviation="3" result="blur" />
-                                    <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-                                 </filter>
-                              </defs>
-                              <CartesianGrid strokeDasharray="2 6" stroke="rgba(255,255,255,0.04)" vertical={false} />
-                              <XAxis dataKey="day" tick={{ fill: '#334155', fontSize: 9, fontWeight: 800, letterSpacing: 1 }} axisLine={false} tickLine={false} />
-                              <YAxis tick={{ fill: '#334155', fontSize: 9, fontWeight: 800 }} axisLine={false} tickLine={false} />
-                              <Tooltip
-                                 contentStyle={{ background: 'rgba(2,6,23,0.95)', border: '1px solid rgba(34,211,238,0.2)', borderRadius: '14px', color: 'white', fontSize: '11px', fontWeight: 700, padding: '10px 14px' }}
-                                 itemStyle={{ color: '#94a3b8' }}
-                                 cursor={{ stroke: 'rgba(34,211,238,0.15)', strokeWidth: 40 }}
-                              />
-                              {/* Purple (mitigated) drawn first so cyan sits on top */}
-                              <Area
-                                 type="monotoneX"
-                                 dataKey="mitigated"
-                                 stroke="#c084fc"
-                                 strokeWidth={2.5}
-                                 fill="url(#glowPurple)"
-                                 dot={false}
-                                 activeDot={{ r: 6, fill: '#c084fc', stroke: '#1e1b4b', strokeWidth: 2, filter: 'url(#purpleGlow)' }}
-                                 style={{ filter: 'url(#purpleGlow)' }}
-                              />
-                              <Area
-                                 type="monotoneX"
-                                 dataKey="threats"
-                                 stroke="#22d3ee"
-                                 strokeWidth={2.5}
-                                 fill="url(#glowCyan)"
-                                 dot={false}
-                                 activeDot={{ r: 6, fill: '#22d3ee', stroke: '#083344', strokeWidth: 2, filter: 'url(#cyanGlow)' }}
-                                 style={{ filter: 'url(#cyanGlow)' }}
-                              />
-                           </AreaChart>
-                        </ResponsiveContainer>
-                     </div>
-                  </div>
-                  
-                  {/* Bottom Layout from Screenshot 2 (Donut + Bars + Compliance) */}
-                  <div className="grid grid-cols-2 gap-8 pt-8 border-t border-[var(--card-border)]">
-                     <div>
-                        <div className="flex justify-between items-center mb-6">
-                           <p className="text-[10px] font-black text-[var(--muted)] uppercase">Risk Distribution</p>
-                           <span className="text-[10px] text-[var(--primary)] font-bold">Low Risk</span>
-                        </div>
-                        <div className="relative h-28 w-28 mx-auto">
-                           <svg className="w-full h-full transform -rotate-90">
-                              <circle cx="56" cy="56" r="45" stroke="currentColor" strokeWidth="10" fill="transparent" className="text-[var(--foreground)]/5" />
-                              <motion.circle 
-                                 cx="56" cy="56" r="45" stroke="var(--primary)" strokeWidth="10" fill="transparent" 
-                                 strokeDasharray="282.7" 
-                                 initial={{ strokeDashoffset: 282.7 }}
-                                 whileInView={{ strokeDashoffset: 282.7 * 0.25 }}
-                                 transition={{ duration: 1.5 }}
-                                 className="drop-shadow-[0_0_8px_var(--primary-glow)]"
-                              />
-                           </svg>
-                           <div className="absolute inset-0 flex flex-col items-center justify-center">
-                              <p className="text-xl font-black text-[var(--foreground)] leading-none">2.4</p>
-                              <p className="text-[8px] text-[var(--muted)] uppercase font-black">Score</p>
-                           </div>
-                        </div>
-                     </div>
-
-                     <div className="flex flex-col justify-center">
-                        <div className="space-y-4">
-                           <div>
-                              <div className="flex justify-between text-[10px] font-black text-[var(--muted)] uppercase mb-2">
-                                 <span>Compliance (DPDP)</span>
-                                 <span>100%</span>
-                              </div>
-                              <div className="h-1.5 w-full bg-[var(--foreground)]/5 rounded-full overflow-hidden">
-                                 <motion.div 
-                                    initial={{ width: 0 }}
-                                    whileInView={{ width: '100%' }}
-                                    transition={{ duration: 1.2 }}
-                                    className="h-full bg-[var(--primary)] shadow-[0_0_10px_var(--primary-glow)]" 
-                                 />
-                              </div>
-                           </div>
-                           <div className="p-4 rounded-2xl bg-[var(--foreground)]/5 border border-[var(--card-border)]">
-                              <div className="flex items-center gap-3">
-                                 <ShieldCheck className="h-5 w-5 text-[var(--primary)]" />
-                                 <div>
-                                    <p className="text-[10px] text-[var(--foreground)] font-black uppercase leading-none mb-1">System Secure</p>
-                                    <p className="text-[8px] text-[var(--muted)] font-medium">All guardrails active</p>
-                                 </div>
-                              </div>
-                           </div>
-                        </div>
-                     </div>
-                  </div>
-
-                  {/* Activity Log Overlay Inspired by Screenshot 1 */}
-                  <div className="mt-8 space-y-3">
-                     {[
-                       { text: 'Prompt injection blocked', time: '2s ago', icon: ShieldAlert, color: 'text-amber-500' },
-                       { text: 'PII redacted', time: '18s ago', icon: Lock, color: 'text-[var(--primary)]' }
-                     ].map((log, i) => (
-                       <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-[var(--foreground)]/5 border border-[var(--card-border)]">
-                          <div className="flex items-center gap-3">
-                             <log.icon className={`h-3 w-3 ${log.color}`} />
-                             <span className="text-[11px] font-medium text-[var(--muted)]">{log.text}</span>
-                          </div>
-                          <span className="text-[9px] font-black text-[var(--muted)]/50 uppercase">{log.time}</span>
-                       </div>
-                     ))}
-                  </div>
-               </div>
-            </motion.div>
-         </div>
-      </div>
-    </section>
-  );
-};
-
-const Steps = () => {
-  const steps = [
-    { title: "Connect systems", icon: Globe, desc: "Plug into any LLM or model endpoint instantly." },
-    { title: "Configure policies", icon: LayoutDashboard, desc: "Set your risk thresholds and compliance rules." },
-    { title: "Scale safely", icon: Zap, desc: "Monitor everything from a secure, unified dashboard." }
-  ];
-
-  return (
-    <section id="how-it-works" className="py-32 lg:py-60">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionHeading 
-          badge="Deployment"
-          title="Getting started is easy."
-          subtitle="Three steps to total governance. No complex infrastructure required."
-        />
-         <div className="grid lg:grid-cols-3 gap-16 relative">
-          <div className="absolute top-12 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--card-border)] to-transparent hidden lg:block" />
-          
-          {steps.map((s, i) => (
-            <motion.div
-              key={s.title}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.2 }}
-              className="relative text-center group"
-            >
-              <div className="glass-card inline-flex h-24 w-24 items-center justify-center rounded-[2rem] text-[var(--foreground)] mb-10 relative z-10">
-                <s.icon className="h-10 w-10 text-[var(--primary)]" />
-              </div>
-              <h4 className="text-3xl font-black text-[var(--foreground)] mb-4 tracking-tighter uppercase">{s.title}</h4>
-              <p className="text-[var(--muted)] font-medium max-w-xs mx-auto leading-relaxed">{s.desc}</p>
-            </motion.div>
-          ))}
-        </div>
-
-      </div>
-    </section>
-  );
-};
-
-const Pricing = () => {
-  const [billing, setBilling] = useState<'monthly' | 'yearly'>('monthly');
-
-  return (
-    <section id="pricing" className="py-32 lg:py-60 bg-[var(--muted-background)]/50 relative">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-24">
-           <SectionHeading 
-             badge="Pricing"
-             title="Scalable plans for scale-up teams."
-           />
-           <div className="flex items-center justify-center gap-6 p-1.5 bg-[var(--card)] rounded-2xl w-fit mx-auto border border-[var(--card-border)]">
-              <button 
-                onClick={() => setBilling('monthly')}
-                className={`px-8 py-3 rounded-xl text-sm font-bold transition-all ${billing === 'monthly' ? 'bg-[var(--primary)] text-white shadow-xl' : 'text-[var(--muted)] hover:text-[var(--foreground)]'}`}
-              >
-                Monthly
-              </button>
-              <button 
-                onClick={() => setBilling('yearly')}
-                className={`px-8 py-3 rounded-xl text-sm font-bold transition-all ${billing === 'yearly' ? 'bg-[var(--primary)] text-white shadow-xl' : 'text-[var(--muted)] hover:text-[var(--foreground)]'}`}
-              >
-                Yearly <span className="text-xs ml-1 opacity-70">(-25%)</span>
-              </button>
-           </div>
-        </div>
-
-        <div className="grid lg:grid-cols-3 gap-10">
-          {siteContent.pricing.tiers.map((tier) => (
-            <motion.div
-              key={tier.name}
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              className={`relative flex flex-col p-12 rounded-[3.5rem] border transition-all duration-500 ${tier.highlighted ? 'bg-[var(--card)] border-[var(--primary)]/50 shadow-2xl' : 'bg-[var(--card)] border-[var(--card-border)]'}`}
-            >
-              {tier.highlighted && (
-                <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[var(--primary)] to-indigo-600 px-6 py-1.5 rounded-full text-xs font-black uppercase text-white shadow-lg">
-                  Most Popular
-                </div>
-              )}
-              <h4 className="text-3xl font-black text-[var(--foreground)] mb-4 tracking-tighter uppercase">{tier.name}</h4>
-              <p className="text-[var(--muted)] font-medium mb-10 pb-10 border-b border-[var(--card-border)]">{tier.desc}</p>
-              
-              <div className="mb-12">
-                 <span className="text-6xl font-black text-[var(--foreground)] tracking-tighter">
-                   ${billing === 'monthly' ? tier.price.monthly : tier.price.yearly}
-                 </span>
-                 <span className="text-[var(--muted)] text-lg font-bold ml-1">/{billing === 'monthly' ? 'mo' : 'yr'}</span>
-              </div>
-
-              <div className="space-y-5 mb-16 flex-1 text-[var(--foreground)] font-medium">
-                 {tier.features.map(f => (
-                   <div key={f} className="flex gap-4">
-                      <CheckCircle2 className="h-5 w-5 text-[var(--primary)] shrink-0" />
-                      <span className="text-sm">{f}</span>
-                   </div>
-                  ))}
-              </div>
-
-              <Button variant={tier.highlighted ? 'primary' : 'secondary'} className="w-full h-16 text-lg">
-                {tier.cta}
-              </Button>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
-
-const Testimonials = () => {
-    return (
-        <section className="py-32 lg:py-60 relative overflow-hidden">
-            <Glow color="blue" className="top-1/2 left-0 h-[400px] w-[400px]" />
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <SectionHeading badge="Success Stories" title="Trusted by the best." />
-                <div className="grid md:grid-cols-3 gap-8">
-                    {siteContent.testimonials.map((t, i) => (                         <motion.div
-                            key={t.author}
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            whileInView={{ opacity: 1, scale: 1 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: i * 0.1, duration: 0.6 }}
-                            className="p-10 rounded-[3rem] bg-[var(--card)] border border-[var(--card-border)] hover:bg-[var(--foreground)]/5 transition-all duration-500 group"
-                        >
-                            <p className="text-xl text-[var(--foreground)] font-medium italic mb-10 leading-relaxed group-hover:text-[var(--primary)] transition-colors">"{t.quote}"</p>
-                            <div className="flex items-center gap-5">
-                                <img src={t.avatar} alt={t.author} className="h-14 w-14 rounded-2xl border border-[var(--card-border)]" />
-                                <div>
-                                    <p className="font-black text-[var(--foreground)] leading-none mb-1">{t.author}</p>
-                                    <p className="text-sm text-[var(--muted)] font-bold uppercase tracking-widest">{t.role}</p>
-                                </div>
-                            </div>
-                        </motion.div>
-
-                    ))}
-                </div>
-            </div>
-        </section>
-    );
-};
-
-const CTA = () => {
-  return (
-    <section className="py-32 lg:py-60">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          className="relative overflow-hidden rounded-[5rem] bg-gradient-to-br from-blue-700 via-indigo-700 to-purple-800 p-16 lg:p-32 text-center"
-        >
-          <div className="absolute inset-0 bg-grid opacity-10" />
-          <div className="relative z-10">
-            <h2 className="text-4xl md:text-8xl font-black text-white mb-10 leading-[0.9] tracking-tighter">
-              Build your AI future <br /> with total confidence.
+const SimplifiedGuide = () => (
+  <section className="py-40 relative">
+    <div className="max-w-7xl mx-auto px-6">
+      <div className="premium-glass !rounded-[4rem] p-12 md:p-24 border-blue-500/10">
+        <div className="grid lg:grid-cols-2 gap-24 items-center">
+          <div>
+            <Badge className="mb-10">Human-Centric AI</Badge>
+            <h2 className="text-5xl md:text-7xl font-black text-[var(--foreground)] mb-10 leading-[1.05] uppercase tracking-tighter">
+              Think of us as <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">
+                Your Smart Filter.
+              </span>
             </h2>
-            <p className="text-xl md:text-2xl text-blue-100/70 mb-16 max-w-3xl mx-auto font-medium">
-              Join 1,000+ companies securing and automating their AI ecosystems with Sentra AI. No credit card required.
+            <p className="text-[var(--muted)] text-xl mb-16 font-medium leading-relaxed max-w-xl">
+              Sentra AI acts as an intelligent layer between your team and the AI. It listens to every request, cross-references your safety rules, and ensures every action is secure.
             </p>
-            <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              <Button className="h-20 px-16 text-xl bg-white text-blue-900 border-none hover:bg-white/90">Get Started Free</Button>
-              <Button variant="outline" className="h-20 px-16 text-xl border-white/20 hover:border-white/50">Book a Demo</Button>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-    </section>
-  );
-};
-
-const Footer = () => {
-  return (     <footer className="py-24 border-t border-[var(--card-border)] bg-[var(--background)]">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-12 gap-16 mb-24">
-          <div className="lg:col-span-5">
-             <div className="flex items-center gap-3 mb-10 group">
-              <div className="h-12 w-12 bg-[var(--primary)] rounded-2xl flex items-center justify-center text-white">
-                <Lock className="h-6 w-6" />
-              </div>
-              <span className="text-3xl font-black text-[var(--foreground)] tracking-tighter uppercase font-mono">SENTRA <span className="text-[var(--primary)]">AI</span></span>
-            </div>
-            <p className="text-[var(--muted)] text-lg leading-relaxed mb-10 max-w-md">
-              The leading enterprise trust layer for autonomous models. We ensure every token is safe, every agent is governed, and every team is protected.
-            </p>
-            <div className="flex gap-8">
-              {['Twitter', 'LinkedIn', 'YouTube'].map(s => (
-                <a key={s} href="#" className="text-[var(--muted)] hover:text-[var(--foreground)] transition-all text-sm font-black uppercase tracking-widest">{s}</a>
+            <div className="space-y-10">
+              {[
+                { t: "Set Your Rules", d: "Easily tell Sentra which data is off-limits (like client secrets or passwords)." },
+                { t: "Constant Oversight", d: "Our engine performs deep semantic analysis on every token, 24/7." },
+                { t: "Instant Protection", d: "Unauthorized or risky actions are blocked in milliseconds before any damage occurs." }
+              ].map((item, i) => (
+                <div key={i} className="flex gap-8 items-start group">
+                  <div className="h-14 w-14 rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center shrink-0 font-black text-blue-500 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-lg shadow-blue-500/5">
+                    {i + 1}
+                  </div>
+                  <div>
+                    <h4 className="text-2xl font-black text-[var(--foreground)] uppercase tracking-tighter mb-2 leading-none">{item.t}</h4>
+                    <p className="text-[var(--muted)] font-medium text-lg leading-relaxed">{item.d}</p>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
           
-          <div className="lg:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-12">
-            {[
-              { t: 'Product', l: ['Features', 'Showcase', 'Security', 'Compliance'] },
-              { t: 'Company', l: ['About', 'Careers', 'Blog', 'Contact'] },
-              { t: 'Legal', l: ['Privacy', 'Terms', 'Cookie Policy', 'DPDP'] },
-              { t: 'Support', l: ['Docs', 'Status', 'API', 'Help'] }
-            ].map(col => (
-              <div key={col.t}>
-                 <h4 className="text-[var(--foreground)] text-sm font-black uppercase tracking-widest mb-8">{col.t}</h4>
-                 <ul className="space-y-5">
-                    {col.l.map(link => (
-                      <li key={link}><a href="#" className="text-sm text-[var(--muted)] font-bold hover:text-[var(--primary)] transition-colors">{link}</a></li>
-                    ))}
-                 </ul>
-              </div>
-            ))}
+          <div className="relative lg:pl-10">
+            {/* Background Glows */}
+            <div className="absolute -top-20 -right-20 w-80 h-80 bg-blue-500/20 blur-[120px] rounded-full animate-pulse" />
+            <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-indigo-500/10 blur-[120px] rounded-full animate-pulse-slow" />
+            
+            <div className="relative p-12 premium-glass !rounded-[3.5rem] bg-slate-900/40 dark:bg-black/40 border-white/5 flex flex-col gap-12 shadow-2xl">
+               <div className="noise-overlay" />
+               
+               {/* Example 1: Allowed */}
+               <motion.div 
+                 initial={{ opacity: 0, x: 20 }}
+                 whileInView={{ opacity: 1, x: 0 }}
+                 viewport={{ once: true }}
+                 className="flex items-center gap-6 p-8 bg-blue-500/[0.03] dark:bg-blue-500/[0.05] rounded-[2rem] border border-blue-500/20 relative z-10"
+               >
+                  <div className="h-14 w-14 rounded-full bg-blue-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                    <Check className="h-8 w-8" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase text-blue-500 tracking-[0.2em] mb-1">SAFE INPUT</p>
+                    <p className="text-[var(--foreground)] font-bold text-lg leading-tight">"Draft a welcome email template"</p>
+                  </div>
+               </motion.div>
+
+               {/* Divider Line */}
+               <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-700 to-transparent opacity-30" />
+
+               {/* Example 2: Blocked */}
+               <motion.div 
+                 initial={{ opacity: 0, x: -20 }}
+                 whileInView={{ opacity: 1, x: 0 }}
+                 viewport={{ once: true }}
+                 transition={{ delay: 0.2 }}
+                 className="flex items-center gap-6 p-8 bg-red-500/[0.03] dark:bg-red-500/[0.05] rounded-[2rem] border border-red-500/30 relative z-10"
+               >
+                  <div className="h-14 w-14 rounded-full bg-red-500 flex items-center justify-center text-white shadow-lg shadow-red-500/30">
+                    <Ban className="h-8 w-8" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase text-red-500 tracking-[0.2em] mb-1">DANGER BLOCKED</p>
+                    <p className="text-[var(--foreground)] font-bold text-lg leading-tight">"Export all customer credit cards"</p>
+                  </div>
+               </motion.div>
+
+               <div className="text-center">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10">
+                    <Activity className="h-3 w-3 text-blue-400 animate-pulse" />
+                    <p className="text-[9px] font-black uppercase text-[var(--muted)] tracking-widest">Sentra Engine: ACTIVE-RESPONSE MODE</p>
+                  </div>
+               </div>
+            </div>
           </div>
         </div>
-        
-        <div className="pt-12 border-t border-[var(--card-border)] flex flex-col md:flex-row justify-between items-center gap-8">
-           <p className="text-xs text-[var(--muted)] font-bold tracking-widest uppercase">© 2025 Sentra AI Inc. Crafted with precision.</p>
-           <div className="flex gap-10 text-xs text-[var(--muted)] font-black uppercase tracking-widest">
-              <a href="#" className="hover:text-[var(--foreground)] transition-colors">Privacy</a>
-              <a href="#" className="hover:text-[var(--foreground)] transition-colors">Terms</a>
-              <a href="#" className="hover:text-[var(--foreground)] transition-colors">SLA</a>
-           </div>
+      </div>
+    </div>
+  </section>
+);
+
+const SolutionSection = () => (
+  <section id="platform" className="py-24 relative scroll-mt-32">
+    <div className="max-w-7xl mx-auto px-6">
+       <SectionHeading 
+         badge="How it Works"
+         title="Total Governance for every bit."
+         subtitle="Sentra AI sits between your models and the execution layer, intercepting every high-risk token stream."
+       />
+       <div className="grid lg:grid-cols-2 gap-24 items-center">
+         <div className="space-y-12">
+            {[
+              { t: "AI Action Request", d: "The agent attempts to execute a task (e.g., 'send email' or 'delete user')." },
+              { t: "Policy & Risk Check", d: "Sentra instantly evaluates the action against your specific safety rules." },
+              { t: "Decision Logic", d: "Action is Allowed if safe, or Blocked if it violates internal security policies." },
+              { t: "Real-time Visibility", d: "Every outcome is instantly logged in the Sentra control dashboard." }
+            ].map((step, i) => (
+              <div key={i} className="flex gap-6 items-start">
+                 <div className="h-10 w-10 rounded-xl bg-blue-600/10 border border-blue-500/30 flex items-center justify-center shrink-0 mt-1 font-black text-blue-500">
+                    {i + 1}
+                 </div>
+                 <div>
+                    <h4 className="text-xl font-black text-[var(--foreground)] uppercase tracking-tighter mb-2">{step.t}</h4>
+                    <p className="text-[var(--muted)] font-medium text-lg leading-relaxed">{step.d}</p>
+                 </div>
+              </div>
+            ))}
+         </div>
+
+         <div className="relative p-12 premium-glass !rounded-[3.5rem] bg-[var(--card)]">
+            <div className="noise-overlay" />
+            <div className="relative z-10 flex flex-col items-center gap-10">
+                <div className="w-full h-24 premium-glass flex flex-col items-center justify-center gap-2 bg-[var(--background)] border-[var(--glass-border)]">
+                   <Cpu className="h-6 w-6 text-blue-600 dark:text-blue-400 z-10" />
+                   <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest z-10">AI Action Request</span>
+                </div>
+               <motion.div animate={{ y: [0, 5, 0] }} transition={{ duration: 2, repeat: Infinity }}>
+                  <ChevronRight className="rotate-90 text-slate-700" />
+               </motion.div>
+               <div className="w-full p-8 premium-glass border-[var(--glass-border)] flex flex-col items-center justify-center gap-4 bg-[var(--background)]">
+                  <Logo size="sm" iconOnly />
+                  <div className="px-4 py-1.5 bg-blue-600 text-[10px] font-black text-white rounded-full uppercase tracking-widest">AI Permission Layer</div>
+               </div>
+               <motion.div animate={{ y: [0, 5, 0] }} transition={{ duration: 2, repeat: Infinity }}>
+                  <ChevronRight className="rotate-90 text-slate-700" />
+               </motion.div>
+               <div className="w-full h-24 premium-glass flex flex-col items-center justify-center gap-2 bg-emerald-500/5 border-emerald-500/20">
+                  <ShieldCheck className="h-6 w-6 text-emerald-500 z-10" />
+                  <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest z-10">Safe Execution</span>
+               </div>
+            </div>
+         </div>
+       </div>
+    </div>
+  </section>
+);
+
+const FeaturesSection = () => {
+  const features = [
+    { t: "Real-time AI Control", d: "Enforce deterministic control over every autonomous action in <50ms.", i: Zap },
+    { t: "AI Permission Management", d: "Granular permission layer for models, agents, and decentralized AI stacks.", i: ShieldCheck },
+    { t: "Audit & Observability", d: "Full-spectrum visibility and immutable logs for every AI decision point.", i: LayoutDashboard },
+    { t: "Security Enforcement", d: "Enterprise-grade protection against prompt injections and data poisoning.", i: Lock }
+  ];
+
+  return (
+    <section id="solutions" className="py-40">
+      <div className="max-w-7xl mx-auto px-6">
+        <SectionHeading 
+          badge="Core Capabilities"
+          title="Engineered for Governance."
+        />
+        <div className="grid md:grid-cols-2 gap-8">
+          {features.map((f, i) => (
+            <div key={i} className={`p-10 premium-glass group ${i === 4 ? 'md:col-span-2 lg:col-span-1' : ''}`}>
+               <div className="noise-overlay" />
+               <div className="relative z-10">
+                  <div className="h-14 w-14 rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center mb-8 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                     <f.i className="h-7 w-7 text-blue-500 group-hover:text-white" />
+                  </div>
+                  <h3 className="text-xl font-black text-[var(--foreground)] mb-4 uppercase tracking-tighter leading-tight">{f.t}</h3>
+                  <p className="text-[var(--muted)] text-sm font-medium leading-relaxed">{f.d}</p>
+               </div>
+            </div>
+          ))}
         </div>
       </div>
-    </footer>
+    </section>
   );
 };
 
-const Home = () => {
-    useEffect(() => {
-        window.scrollTo(0, 0);
-    }, []);
-
-    return (
-        <div className="min-h-screen text-[var(--foreground)] selection:bg-blue-500/30 selection:text-white antialiased">
-            <div className="liquid-mesh" />
-            <Navbar />
-            <main>
-                <Hero />
-                <Features />
-                <Showcase />
-                <Steps />
-                <Testimonials />
-                <CTA />
-            </main>
-            <Footer />
+const SecuritySection = () => (
+  <section id="security" className="py-24 relative scroll-mt-32 overflow-hidden">
+    <div className="max-w-7xl mx-auto px-6">
+      <SectionHeading 
+        badge="Enterprise Security"
+        title="Uncompromising Protection."
+        subtitle="Moving beyond simple firewalls to deep semantic protection for every AI interaction."
+      />
+      
+      <div className="grid lg:grid-cols-2 gap-12">
+        <div className="p-12 premium-glass !rounded-[3rem] border-blue-500/20 bg-blue-500/[0.02]">
+          <div className="noise-overlay" />
+          <div className="relative z-10">
+            <ShieldAlert className="h-12 w-12 text-blue-500 mb-8" />
+            <h3 className="text-3xl font-black text-[var(--foreground)] mb-6 uppercase tracking-tighter">Threat Neutralization</h3>
+            <p className="text-[var(--muted)] text-lg font-medium leading-relaxed mb-8">
+              Sentra AI's engine analyzes token streams in real-time, detecting and blocking malicious sequences before they reach your infrastructure.
+            </p>
+            <ul className="space-y-4">
+              {[
+                "Prompt Injection Prevention",
+                "Malicious Intent Identification",
+                "API Secret Leakage Protection",
+                "DDoS Defense for AI Endpoints"
+              ].map((item, i) => (
+                <li key={i} className="flex items-center gap-3 text-sm font-bold text-slate-400 uppercase tracking-wider">
+                  <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
-    );
+
+        <div className="grid md:grid-cols-2 gap-8">
+          {[
+            { 
+              title: "Agent Sandbox", 
+              desc: "Isolate autonomous agents in secure containers to prevent lateral movement.",
+              icon: BoxSelect
+            },
+            { 
+              title: "Behavioral Guard", 
+              desc: "Monitor AI behavior for deviations from established security baselines.",
+              icon: Activity
+            },
+            { 
+              title: "Access Control", 
+              desc: "Granular RBAC for model usage, ensuring only authorized agents call specific APIs.",
+              icon: Key
+            },
+            { 
+              title: "Encrypted Streams", 
+              desc: "End-to-end encryption for all LLM communications and stored context data.",
+              icon: Lock
+            }
+          ].map((item, i) => (
+            <div key={i} className="p-8 premium-glass rounded-[2rem] group hover:border-blue-500/30 transition-all">
+              <div className="h-10 w-10 rounded-xl bg-[var(--card)] border border-[var(--glass-border)] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <item.icon className="h-5 w-5 text-blue-400" />
+              </div>
+              <h4 className="text-lg font-black text-[var(--foreground)] mb-3 uppercase tracking-tighter">{item.title}</h4>
+              <p className="text-xs font-medium text-[var(--muted)] leading-relaxed">{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+);
+
+const ComplianceSection = () => (
+  <section id="compliance" className="py-24 bg-[var(--background)]/20 scroll-mt-32">
+    <div className="max-w-7xl mx-auto px-6">
+      <SectionHeading 
+        badge="Regulatory Compliance"
+        title="Trust, Built In."
+        subtitle="Automatically stay compliant with global data regulations without slowing down innovation."
+      />
+
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        {[
+          {
+            title: "GDPR & HIPAA",
+            desc: "Native support for European and Healthcare privacy standards with pre-built policy templates.",
+            icon: ShieldCheck,
+            color: "text-emerald-400"
+          },
+          {
+            title: "Automated Audits",
+            desc: "Every interaction is logged with immutable cryptographic signatures for total accountability.",
+            icon: FileText,
+            color: "text-blue-400"
+          },
+          {
+            title: "PII Redaction",
+            desc: "Instantly identify and mask personally identifiable information before it hits public LLMs.",
+            icon: Eye,
+            color: "text-purple-400"
+          },
+          {
+            title: "DPDP Ready",
+            desc: "Stay ahead of Asian data protection laws with specialized governance modules.",
+            icon: Globe,
+            color: "text-orange-400"
+          }
+        ].map((item, i) => (
+          <div key={i} className="p-10 premium-glass flex flex-col items-center text-center group cursor-default">
+            <div className={`h-16 w-16 rounded-[2rem] bg-[var(--card)] border border-[var(--glass-border)] flex items-center justify-center mb-8 group-hover:rotate-12 transition-transform ${item.color}`}>
+              <item.icon className="h-8 w-8" />
+            </div>
+            <h3 className="text-xl font-black text-[var(--foreground)] mb-4 uppercase tracking-tighter">{item.title}</h3>
+            <p className="text-sm font-medium text-[var(--muted)] leading-relaxed">{item.desc}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-20 p-12 premium-glass !rounded-[3rem] border-emerald-500/20 bg-emerald-500/[0.02] flex flex-col md:flex-row items-center gap-12">
+        <div className="flex-1">
+          <h3 className="text-3xl font-black text-[var(--foreground)] mb-6 uppercase tracking-tighter">Certifiable Governance</h3>
+          <p className="text-[var(--muted)] text-lg font-medium leading-relaxed mb-8">
+            Generate auditor-ready reports in seconds. Our platform maps your AI activities directly to compliance frameworks, reducing audit cycles from months to days.
+          </p>
+          <div className="flex flex-wrap gap-4">
+            {['SOC2 Type II', 'ISO 27001', 'HIPAA', 'GDPR'].map(tag => (
+              <span key={tag} className="px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-black text-emerald-500 uppercase tracking-widest">
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="flex-1 w-full max-w-md p-8 bg-[var(--card)] rounded-2xl border border-[var(--glass-border)] font-mono text-[10px] shadow-2xl">
+          <div className="flex justify-between mb-4 pb-2 border-b border-white/5">
+            <span className="text-emerald-400">Compliance_Report_2026.pdf</span>
+            <span className="text-slate-500 italic">Processing...</span>
+          </div>
+          <div className="space-y-3 opacity-60">
+             <div className="flex justify-between"><span>[OK] PII Redaction Active</span><span className="text-emerald-500">99.9%</span></div>
+             <div className="flex justify-between"><span>[OK] Data Sovereignty Logs</span><span className="text-emerald-500">SECURE</span></div>
+             <div className="flex justify-between"><span>[OK] Policy Enforcement</span><span className="text-emerald-500">STRICT</span></div>
+             <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden mt-4">
+                <motion.div 
+                  initial={{ width: "0%" }}
+                  whileInView={{ width: "100%" }}
+                  transition={{ duration: 2 }}
+                  className="h-full bg-emerald-500" 
+                />
+             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+);
+
+const UseCases = () => (
+  <section id="solutions" className="py-40 bg-[var(--background)]/40">
+    <div className="max-w-7xl mx-auto px-6 text-center">
+       <SectionHeading 
+         badge="Use Cases"
+         title="Proven Security Scenarios."
+       />
+       <div className="grid md:grid-cols-3 gap-10">
+          {[
+            { title: "Finance", desc: "Prevents AI from leaking sensitive customer financial data or private transaction history.", icon: Database },
+            { title: "Healthcare", desc: "Blocks AI from accidentally sharing protected patient information (PHI) with external models.", icon: ShieldCheck },
+            { title: "SaaS", desc: "Stops unauthorized or harmful API calls by autonomous AI agents in production environments.", icon: Globe }
+          ].map((u, i) => (
+            <div key={i} className="p-12 premium-glass text-left flex flex-col gap-6">
+               <div className="noise-overlay" />
+               <div className="h-14 w-14 rounded-2xl bg-indigo-600/10 border border-indigo-500/30 flex items-center justify-center">
+                  <u.icon className="h-7 w-7 text-indigo-400" />
+               </div>
+               <h3 className="text-2xl font-black text-[var(--foreground)] uppercase tracking-tighter leading-none">{u.title}</h3>
+               <p className="text-[var(--muted)] text-lg font-medium leading-relaxed">{u.desc}</p>
+            </div>
+          ))}
+       </div>
+    </div>
+  </section>
+);
+
+const BeforeAfter = () => (
+  <section id="solutions" className="pt-12 pb-24 relative scroll-mt-32">
+    <div className="max-w-7xl mx-auto px-6">
+       <SectionHeading 
+         badge="Comparison"
+         title="The Sentra Advantage."
+       />
+       <div className="grid md:grid-cols-2 gap-10">
+          {/* Before */}
+          <div className="premium-glass !rounded-[3rem] p-12 border-red-500/30 bg-red-500/[0.03] dark:bg-red-500/[0.05] flex flex-col gap-8">
+             <div className="flex items-center gap-4">
+                <div className="h-10 w-10 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
+                   <XCircle className="h-6 w-6 text-red-500" />
+                </div>
+                <h4 className="text-2xl font-black text-red-600 dark:text-red-500 uppercase tracking-tighter">Before Sentra</h4>
+             </div>
+             <div className="flex flex-col gap-6 p-8 rounded-3xl bg-white/5 dark:bg-black/20 border border-[var(--glass-border)] font-mono text-sm leading-relaxed shadow-xl">
+                <p className="text-slate-500">// AI Agent executing task...</p>
+                <p className="text-red-400 underline decoration-red-500/50">"Sending credit_card_digits: 4242-4242..."</p>
+                <div className="mt-4 p-4 rounded-xl bg-red-500/20 border border-red-500/40 flex items-center gap-3">
+                   <AlertTriangle className="h-4 w-4 text-red-500" />
+                   <span className="text-[10px] font-black text-red-400 dark:text-red-500 uppercase tracking-widest decoration-none">CRITICAL DATA LEAK</span>
+                </div>
+             </div>
+          </div>
+          {/* After */}
+          <div className="premium-glass !rounded-[3rem] p-12 border-emerald-500/30 bg-emerald-500/[0.03] dark:bg-emerald-500/[0.05] flex flex-col gap-8">
+             <div className="flex items-center gap-4">
+                <div className="h-10 w-10 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
+                   <CheckCircle2 className="h-6 w-6 text-emerald-500" />
+                </div>
+                <h4 className="text-2xl font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-tighter">After Sentra</h4>
+             </div>
+             <div className="flex flex-col gap-6 p-8 rounded-3xl bg-white/5 dark:bg-black/20 border border-[var(--glass-border)] font-mono text-sm leading-relaxed shadow-xl">
+                <p className="text-slate-500">// Intercepted by Sentra...</p>
+                <p className="text-emerald-400">"Policy Violation Found: Action Blocked"</p>
+                <div className="mt-4 p-4 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center gap-3">
+                   <Lock className="h-4 w-4 text-emerald-400 dark:text-emerald-500" />
+                   <span className="text-[10px] font-black text-emerald-400 dark:text-emerald-500 uppercase tracking-widest">THREAT NEUTRALIZED</span>
+                </div>
+             </div>
+          </div>
+       </div>
+    </div>
+  </section>
+);
+
+const Integration = () => (
+  <section id="documentation" className="py-40 bg-[var(--background)]/60">
+    <div className="max-w-7xl mx-auto px-6">
+       <div className="grid lg:grid-cols-2 gap-24 items-center">
+          <div>
+             <Badge className="mb-8">Connectivity</Badge>
+             <h2 className="text-4xl md:text-5xl font-black text-[var(--foreground)] mb-10 leading-[1.1] uppercase">
+                Works with your <br /> <span className="text-blue-500">existing AI stack.</span>
+             </h2>
+             <p className="text-[var(--muted)] text-xl mb-12 font-medium">
+                Sentra AI integrates flawlessly with OpenAI, custom APIs, and decentralized AI agents with a single line of code.
+             </p>
+             <div className="flex flex-wrap gap-12 opacity-50 grayscale hover:grayscale-0 transition-all">
+                <span className="text-xl font-black tracking-widest italic">OPENAI</span>
+                <span className="text-xl font-black tracking-widest italic">ANTHROPIC</span>
+                <span className="text-xl font-black tracking-widest italic">LLAMA</span>
+                <span className="text-xl font-black tracking-widest italic">VIRTUALS</span>
+             </div>
+          </div>
+          <div className="p-10 premium-glass bg-slate-950 shadow-2xl overflow-hidden font-mono text-sm border-white/5">
+             <div className="flex gap-2 mb-6">
+                <div className="h-2.5 w-2.5 rounded-full bg-red-500/40" />
+                <div className="h-2.5 w-2.5 rounded-full bg-yellow-500/40" />
+                <div className="h-2.5 w-2.5 rounded-full bg-emerald-500/40" />
+             </div>
+             <div className="space-y-2">
+                <p><span className="text-purple-400">await</span> <span className="text-blue-400">sentra</span>.<span className="text-yellow-400">safeAction</span>(</p>
+                <p className="pl-6">"<span className="text-emerald-400">send_email</span>",</p>
+                <p className="pl-6"><span className="text-blue-400">()</span> <span className="text-purple-400">=&gt;</span> <span className="text-yellow-400">sendEmail</span>()</p>
+                <p>);</p>
+             </div>
+          </div>
+       </div>
+    </div>
+  </section>
+);
+
+const TrustSection = () => (
+  <section className="py-40 border-y border-[var(--glass-border)]">
+    <div className="max-w-7xl mx-auto px-6">
+       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12 text-center">
+          {[
+            { t: "Prevent Data Leaks", d: "Zero exposure of proprietary assets." },
+            { t: "Reduce Risk", d: "Scale AI without legal liabilities." },
+            { t: "Control Behavior", d: "Define the bounds of your agents." },
+            { t: "Protect Reputation", d: "Build trust through safe innovation." }
+          ].map(b => (
+             <div key={b.t}>
+                <h4 className="text-lg font-black text-[var(--foreground)] uppercase tracking-tighter mb-2">{b.t}</h4>
+                <p className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest leading-relaxed">{b.d}</p>
+             </div>
+          ))}
+       </div>
+    </div>
+  </section>
+);
+
+const CTA = () => {
+  const { demoLogin } = useAuth();
+  const navigate = useNavigate();
+  const [demoLoading, setDemoLoading] = useState(false);
+
+  const handleRequestDemo = async () => {
+    setDemoLoading(true);
+    await new Promise(res => setTimeout(res, 600));
+    demoLogin();
+    navigate('/app', { replace: true });
+  };
+
+  const handleGetStarted = () => {
+    navigate('/login?signup=true');
+  };
+
+  return (
+    <section className="py-40 relative">
+       <div className="max-w-5xl mx-auto px-6 text-center bg-blue-600 rounded-[3rem] p-24 shadow-[0_0_100px_rgba(59,130,246,0.3)] relative overflow-hidden">
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
+          <h2 className="text-5xl md:text-7xl font-black text-white mb-10 leading-[1.05] uppercase tracking-tighter">
+              Start Securing your <br /> <span className="text-blue-200">AI Stack today.</span>
+           </h2>
+           <p className="text-blue-100/60 text-xl font-medium mb-12 max-w-2xl mx-auto">
+              Deploy the world's most advanced AI Runtime Governance Infrastructure in minutes.
+           </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+             <button
+               onClick={handleRequestDemo}
+               disabled={demoLoading}
+               className="group relative h-16 px-12 w-full sm:w-auto inline-flex items-center justify-center gap-3 rounded-xl bg-white text-blue-700 text-[11px] font-black uppercase tracking-widest shadow-[0_0_30px_rgba(255,255,255,0.3)] transition-all duration-300 hover:bg-blue-50 hover:-translate-y-1 hover:shadow-[0_0_50px_rgba(255,255,255,0.5)] active:scale-95 disabled:opacity-70 disabled:pointer-events-none"
+             >
+               {demoLoading ? (
+                 <Loader2 className="h-4 w-4 animate-spin" />
+               ) : (
+                 <PlayCircle className="h-4 w-4 group-hover:scale-110 transition-transform" />
+               )}
+               {demoLoading ? 'Launching...' : 'Deploy in Minutes'}
+             </button>
+
+             <button
+               onClick={handleGetStarted}
+               className="group h-16 px-12 w-full sm:w-auto inline-flex items-center justify-center gap-3 rounded-xl border-2 border-white/60 text-white text-[11px] font-black uppercase tracking-widest backdrop-blur-sm transition-all duration-300 hover:bg-white/10 hover:border-white hover:-translate-y-1 hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] active:scale-95"
+             >
+               <UserPlus className="h-4 w-4 group-hover:scale-110 transition-transform" />
+               Get Started
+             </button>
+          </div>
+          <p className="mt-10 text-[9px] font-black uppercase text-blue-200 tracking-[0.2em]">SOC2 Ready • Zero Credit Card • sub-10ms Latency</p>
+       </div>
+    </section>
+  );
 };
 
-export default Home;
+const ContactSection = () => (
+  <section className="py-32 relative overflow-hidden bg-[var(--background)]/30 backdrop-blur-md">
+    <div className="max-w-7xl mx-auto px-6">
+       <div className="grid lg:grid-cols-2 gap-24 items-center">
+          <div>
+             <Badge className="mb-8">Get In Touch</Badge>
+             <h2 className="text-4xl md:text-6xl font-black text-[var(--foreground)] mb-10 leading-[1.1] uppercase tracking-tighter">
+                Let's secure your <br /> <span className="text-blue-500">AI Future.</span>
+             </h2>
+             <p className="text-[var(--muted)] text-xl mb-12 font-medium">
+                Our team of security experts is ready to help you deploy safe, compliant, and powerful AI systems today.
+             </p>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-8">
+             {[
+               { icon: Mail, title: "Email Us", link: "mailto:hello@sentraai.com", val: "hello@sentraai.com" },
+               { icon: Phone, title: "Call Us", link: "tel:+1234567890", val: "+1 (234) 567-890" },
+               { icon: Linkedin, title: "LinkedIn", link: "https://linkedin.com/company/sentra-ai", val: "Sentra AI Official" },
+               { icon: Instagram, title: "Instagram", link: "https://instagram.com/sentra.ai", val: "@sentra.ai" }
+             ].map((contact, i) => (
+               <a 
+                 key={i} 
+                 href={contact.link} 
+                 target="_blank" 
+                 rel="noopener noreferrer"
+                 className="p-8 premium-glass group hover:border-blue-500/30 transition-all text-center sm:text-left"
+               >
+                 <div className="h-12 w-12 rounded-xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center mb-6 mx-auto sm:mx-0 group-hover:scale-110 transition-transform">
+                   <contact.icon className="h-6 w-6 text-blue-500" />
+                 </div>
+                 <h4 className="text-[10px] font-black uppercase text-[var(--muted)] tracking-widest mb-1">{contact.title}</h4>
+                 <p className="text-sm font-bold text-[var(--foreground)] break-all">{contact.val}</p>
+               </a>
+             ))}
+          </div>
+       </div>
+    </div>
+  </section>
+);
+
+const Footer = () => (
+  <footer className="py-32 border-t border-[var(--glass-border)] bg-[var(--background)]/50 backdrop-blur-xl">
+     <div className="max-w-7xl mx-auto px-6 text-center">
+        <div className="flex flex-col items-center gap-8 mb-16">
+           <Link to="/" className="group">
+             <Logo size="lg" />
+           </Link>
+           <p className="text-[var(--muted)] max-w-sm text-sm font-medium italic">
+             "The universal trust layer for the autonomous agent era."
+           </p>
+        </div>
+        <div className="flex justify-center gap-12 text-[10px] font-black uppercase tracking-widest text-[var(--muted)] mb-12">
+           {['Platform', 'Security', 'Compliance', 'Solutions', 'Documentation'].map(l => (
+             <a key={l} href={`#${l.toLowerCase()}`} className="hover:text-[var(--foreground)] transition-colors">{l}</a>
+           ))}
+        </div>
+        <div className="pt-12 border-t border-[var(--glass-border)] flex flex-col md:flex-row justify-between items-center gap-8 text-[var(--muted)]">
+           <p className="text-[9px] font-bold uppercase tracking-widest">© 2026 Sentra AI Technologies · Secure the future</p>
+           <div className="flex items-center gap-8">
+              <a href="https://linkedin.com/company/sentra-ai" target="_blank" rel="noopener noreferrer" className="hover:text-blue-500 transition-colors">
+                 <Linkedin className="h-6 w-6" />
+              </a>
+              <a href="https://instagram.com/sentra.ai" target="_blank" rel="noopener noreferrer" className="hover:text-pink-500 transition-colors">
+                 <Instagram className="h-6 w-6" />
+              </a>
+              <a href="mailto:hello@sentraai.com" className="hover:text-[var(--foreground)] transition-colors">
+                 <Mail className="h-6 w-6" />
+              </a>
+           </div>
+        </div>
+     </div>
+  </footer>
+);
+
+export default function HomePage() {
+  return (
+    <div className="min-h-screen bg-transparent text-[var(--foreground)] selection:bg-blue-500/30 font-sans relative">
+      <AtmosphericBackground />
+      <Navbar />
+      <Hero />
+      <SocialProof />
+      <ProblemSection />
+      <MetricsSection />
+      <SimplifiedGuide />
+      <MarketOpportunity />
+      <FeaturesSection />
+      <SecuritySection />
+      <ComplianceSection />
+      <ComparisonTable />
+      <UseCases />
+      <BeforeAfter />
+      <Integration />
+      <TrustSection />
+      <CTA />
+      <ContactSection />
+      <Footer />
+    </div>
+  );
+}

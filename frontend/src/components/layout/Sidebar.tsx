@@ -1,3 +1,4 @@
+import { Logo } from './Logo';
 import {
   Home,
   LayoutDashboard,
@@ -40,8 +41,8 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
       )}
     >
       <div className="flex h-20 items-center justify-center border-b border-[var(--card-border)]">
-        <Link to="/" className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 shadow-lg shadow-blue-500/20 hover:scale-110 transition-transform">
-          <ShieldCheck className="h-6 w-6 text-white" />
+        <Link to="/" className="hover:scale-110 transition-transform">
+          <Logo size="sm" iconOnly={true} />
         </Link>
       </div>
 

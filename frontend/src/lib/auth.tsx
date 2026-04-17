@@ -26,6 +26,8 @@ interface AuthContextValue {
   loginPending: boolean;
   loginError: string | null;
   login: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
+  demoLogin: () => void;
   logout: () => Promise<void>;
 }
 
@@ -100,6 +102,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function signUp(email: string, password: string) {
+    // Stub: route to login for now
+    await login(email, password);
+  }
+
+  function demoLogin() {
+    setUser({
+      id: '00000000-0000-0000-0000-000000000000',
+      email: 'demo@sentra.ai',
+      fullName: 'Demo Administrator',
+      role: 'admin',
+      is_active: true,
+      created_at: new Date().toISOString(),
+    } as AppUser);
+  }
+
   async function logout() {
     localStorage.removeItem('sentra_access_token');
     localStorage.removeItem('sentra_refresh_token');
@@ -116,6 +134,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginPending,
         loginError,
         login,
+        signUp,
+        demoLogin,
         logout,
       }}
     >
