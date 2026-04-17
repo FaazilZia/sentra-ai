@@ -21,7 +21,7 @@ function getSeverityIcon(severity: number) {
 }
 
 export default function SecurityFeedPage() {
-  const { user } = useAuth();
+  const { user, accessToken } = useAuth();
   const [incidents, setIncidents] = useState<IncidentResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

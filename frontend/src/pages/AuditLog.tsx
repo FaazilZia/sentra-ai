@@ -48,74 +48,75 @@ export default function AuditLog() {
   }, [accessToken]);
 
   return (
-    <div className="mx-auto max-w-[1440px] space-y-6 pb-8">
+    <div className="mx-auto max-w-[1440px] space-y-6 pb-8 text-[var(--foreground)]">
       {/* Header */}
-      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between px-2">
         <div>
-          <nav className="text-[10px] font-medium text-slate-500">
-            Governance <span className="mx-1 text-slate-300">/</span> Compliance <span className="mx-1 text-slate-300">/</span> Audit Proof
+          <nav className="text-[10px] font-black uppercase tracking-widest text-[var(--muted)]">
+            Governance <span className="mx-1 opacity-20">/</span> Compliance <span className="mx-1 opacity-20">/</span> Audit Proof
           </nav>
-          <h1 className="mt-1.5 text-xl font-bold tracking-tight text-slate-950 flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-indigo-600" />
+          <h1 className="mt-1.5 text-3xl font-black tracking-tight text-[var(--foreground)] flex items-center gap-2 uppercase">
+            <ShieldCheck className="h-6 w-6 text-cyan-500" />
             Audit Proof Log
           </h1>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs font-bold text-[var(--muted)] uppercase tracking-wider">
             Immutable governance trail for all security remediation actions and data access decisions.
           </p>
         </div>
-        <button className="inline-flex h-8 items-center gap-2 rounded-md bg-white border border-slate-200 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-600 shadow-sm hover:bg-slate-50 transition-all">
-          <Download className="h-3.5 w-3.5" /> Export Trail
+        <button className="inline-flex h-10 items-center gap-2 rounded-xl bg-[var(--card)] border border-[var(--card-border)] px-4 text-[10px] font-black uppercase tracking-widest text-[var(--foreground)] shadow-sm hover:bg-[var(--foreground)]/5 transition-all">
+          <Download className="h-4 w-4" /> Export Trail
         </button>
       </div>
 
       <SurfaceCard 
         title="Remediation History" 
         description="Every resolve and block action is tracked with operator ID and legal timestamp."
+        className="bg-[var(--card)] border-[var(--card-border)] rounded-[2.5rem] overflow-hidden backdrop-blur-xl"
         contentClassName="p-0 overflow-hidden"
       >
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-             <thead className="border-b border-slate-200 bg-slate-50/80 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500">
+             <thead className="border-b border-[var(--card-border)] bg-[var(--muted-background)] text-[10px] font-black uppercase tracking-[0.2em] text-[var(--muted)]">
                <tr>
-                 <th className="px-4 py-3">Event Action</th>
-                 <th className="px-4 py-3">Incident Target</th>
-                 <th className="px-4 py-3">Remediation Details</th>
-                 <th className="px-4 py-3">Performed By</th>
-                 <th className="px-4 py-3">Legal Timestamp</th>
+                 <th className="px-6 py-4">Event Action</th>
+                 <th className="px-6 py-4">Incident Target</th>
+                 <th className="px-6 py-4">Remediation Details</th>
+                 <th className="px-6 py-4">Performed By</th>
+                 <th className="px-6 py-4">Legal Timestamp</th>
                </tr>
              </thead>
-             <tbody className="divide-y divide-slate-100">
+             <tbody className="divide-y divide-[var(--card-border)]">
                {loading ? (
-                  <tr><td colSpan={5} className="p-8 text-center text-slate-400">Loading audit trail...</td></tr>
+                  <tr><td colSpan={5} className="p-8 text-center text-[var(--muted)] font-black uppercase tracking-widest">Loading audit trail...</td></tr>
                ) : history.length === 0 ? (
-                  <tr><td colSpan={5} className="p-12 text-center text-slate-400">
+                  <tr><td colSpan={5} className="p-12 text-center text-[var(--muted)]">
                     <History className="h-8 w-8 mx-auto mb-2 opacity-20" />
                     No remediation actions recorded yet.
                   </td></tr>
                ) : history.map(record => (
-                 <tr key={record.id} className="hover:bg-slate-50/50 transition-colors">
-                   <td className="px-4 py-4">
+                 <tr key={record.id} className="hover:bg-[var(--foreground)]/5 transition-colors group">
+                   <td className="px-6 py-5">
                      <StatusBadge 
                         label={record.status.toUpperCase()} 
                         tone={record.status === 'blocked' ? 'danger' : 'success'} 
                      />
                    </td>
-                   <td className="px-4 py-4">
-                     <div className="font-bold text-slate-900">{record.agent_id}</div>
-                     <div className="text-[9px] text-slate-400 font-mono mt-0.5">UUID: {record.id.slice(0, 8)}...</div>
+                   <td className="px-6 py-5">
+                     <div className="font-black text-[var(--foreground)] uppercase tracking-tight">{record.agent_id}</div>
+                     <div className="text-[9px] text-[var(--muted)] font-mono mt-1">UUID: {record.id.slice(0, 8)}...</div>
                    </td>
-                   <td className="px-4 py-4 text-slate-600 max-w-sm font-medium">
+                   <td className="px-6 py-5 text-[var(--foreground)] max-w-sm font-bold opacity-80 leading-relaxed uppercase text-[10px] tracking-wider">
                      {record.details}
                    </td>
-                   <td className="px-4 py-4">
-                     <div className="flex items-center gap-2">
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-slate-500 border border-slate-200">
-                          <User className="h-3 w-3" />
+                   <td className="px-6 py-5">
+                     <div className="flex items-center gap-3">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--card)] text-[var(--muted)] border border-[var(--card-border)]">
+                          <User className="h-3.5 w-3.5" />
                         </div>
-                        <span className="font-semibold text-slate-700">{record.operator}</span>
+                        <span className="font-black text-[var(--foreground)] uppercase text-[10px] tracking-widest">{record.operator}</span>
                      </div>
                    </td>
-                   <td className="px-4 py-4 text-[10px] font-mono text-slate-500 bg-slate-50/30">
+                   <td className="px-6 py-5 text-[10px] font-mono text-[var(--muted)] bg-[var(--muted-background)]/50">
                      {new Date(record.resolved_at).toLocaleString()}
                    </td>
                  </tr>
@@ -123,8 +124,8 @@ export default function AuditLog() {
              </tbody>
           </table>
         </div>
-        <div className="border-t border-slate-100 bg-slate-50/50 px-4 py-2.5 text-[9px] text-slate-400 font-medium italic">
-          Disclaimer: This log is immutable and protected for legal and compliance auditing purposes under DPDP / GDPR frameworks.
+        <div className="border-t border-[var(--card-border)] bg-[var(--muted-background)] px-6 py-4 text-[9px] text-[var(--muted)] font-black uppercase tracking-[0.2em] italic">
+          Disclaimer: This log is immutable and protected for legal and compliance auditing purposes.
         </div>
       </SurfaceCard>
     </div>

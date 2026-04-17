@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { ChevronDown, LogOut, RefreshCw, Search, ShieldCheck, ShieldX, Moon, Sun } from 'lucide-react';
+import { ChevronDown, LogOut, RefreshCw, Search, ShieldCheck, ShieldX, Moon, Sun, Home } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import { apiBaseUrl } from '../../lib/api';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { useTheme } from '../../lib/useTheme';
 
 export function Topbar() {
@@ -40,15 +40,22 @@ export function Topbar() {
 
           {/* User Info */}
           <div className="flex items-center gap-6">
+             <Link 
+               to="/"
+               className="text-[var(--muted)] hover:text-[var(--foreground)] transition-colors p-1.5"
+               title="Back to Landing Page"
+             >
+                <Home className="h-5 w-5" />
+             </Link>
              <button 
                onClick={toggleTheme}
-               className="text-[var(--muted)] hover:text-[var(--foreground)] transition-colors p-1"
+               className="text-[var(--muted)] hover:text-[var(--foreground)] transition-colors p-1.5"
                title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
              >
-                {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+                {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
              </button>
-             <button className="text-[var(--muted)] hover:text-[var(--foreground)] transition-colors p-1">
-                <Search className="h-4 w-4" />
+             <button className="text-[var(--muted)] hover:text-[var(--foreground)] transition-colors p-1.5">
+                <Search className="h-5 w-5" />
              </button>
              <div className="flex items-center gap-3">
                 <div className="text-right">

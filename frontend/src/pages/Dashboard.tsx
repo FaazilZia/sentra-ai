@@ -11,7 +11,8 @@ import {
   CheckCircle2,
   Zap,
   Filter,
-  Check
+  Check,
+  Search
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -25,6 +26,7 @@ import {
 } from 'recharts';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { triggerScan } from '../lib/api';
 
 // Expanded dataset to support model-specific analysis
 const chartData = [
@@ -68,9 +70,10 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="flex h-full gap-6 p-2 text-[var(--foreground)] transition-colors duration-300">
+    <div className="flex h-full gap-6 p-4 text-[var(--foreground)] transition-colors duration-300">
+      <div className="liquid-mesh" />
       {/* Internal Sidebar Tabs */}
-      <aside className="flex w-48 flex-col gap-2 py-4 relative z-10">
+      <aside className="flex w-52 flex-col gap-2 p-4 rounded-3xl glass-sidebar relative z-10 shadow-2xl">
         {tabs.map((tab) => (
           <button
             key={tab.name}
@@ -79,8 +82,8 @@ export default function DashboardPage() {
             className={cn(
               "flex items-center gap-3 rounded-xl px-4 py-3 transition-all duration-300 outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 backdrop-blur-md",
               activeTab === tab.name 
-                ? "bg-[var(--card)] text-[var(--foreground)] shadow-lg border border-[var(--card-border)]" 
-                : "text-[var(--muted)] hover:bg-[var(--card)] hover:text-[var(--foreground)]"
+                ? "bg-white/10 text-[var(--foreground)] shadow-lg border border-white/20" 
+                : "text-[var(--muted)] hover:bg-white/5 hover:text-[var(--foreground)]"
             )}
           >
             <tab.icon className={cn("h-4 w-4", activeTab === tab.name ? "text-cyan-400" : "")} />
@@ -102,6 +105,35 @@ export default function DashboardPage() {
           >
             {activeTab === 'Overview' ? (
               <>
+                {/* Search / Command Bar */}
+                <div className="flex items-center gap-4 bg-[var(--card)] rounded-2xl border border-[var(--card-border)] p-4 px-6 backdrop-blur-md shadow-inner group transition-all hover:border-[var(--primary)]/50">
+                   <Search className="h-5 w-5 text-[var(--muted)] group-hover:text-cyan-400 transition-colors" />
+                   <input 
+                     type="text" 
+                     placeholder="Ask Sentra AI or scan a new model endpoint (e.g. https://api.openai.com/v1)..."
+                     className="bg-transparent border-none outline-none text-sm font-bold placeholder:text-[var(--muted)]/50 tracking-wide flex-1 text-[var(--foreground)]"
+                   />
+                   <div className="flex items-center gap-3">
+                      <div className="px-2 py-1.5 rounded-md bg-[var(--foreground)]/5 text-[9px] font-black text-[var(--muted)] border border-[var(--card-border)]">⌘ K</div>
+                      <button 
+                        onClick={async () => {
+                          setIsSyncing(true);
+                          try {
+                            await triggerScan();
+                          } catch (e) {
+                            console.error('Scan failed', e);
+                          } finally {
+                            setTimeout(() => setIsSyncing(false), 2000);
+                          }
+                        }}
+                        disabled={isSyncing}
+                        className="h-10 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all disabled:opacity-50"
+                      >
+                        {isSyncing ? 'Analyzing...' : 'Run Analysis'}
+                      </button>
+                   </div>
+                </div>
+
                 {/* Top Stats Grid */}
                 <div className="grid grid-cols-3 gap-4">
                   {[
@@ -109,7 +141,7 @@ export default function DashboardPage() {
                     { label: 'Avg Response', value: '38ms', sub: 'Stable', color: 'text-blue-400' },
                     { label: 'Risk Score', value: '2.4 / 10', sub: 'Low Risk', color: 'text-[var(--foreground)]' },
                   ].map((stat) => (
-                    <div key={stat.label} className="rounded-3xl border border-[var(--card-border)] bg-[var(--card)] p-6 backdrop-blur-md">
+                    <div key={stat.label} className="glass-card p-6">
                       <p className="text-[10px] font-black uppercase tracking-widest text-[var(--muted)]">{stat.label}</p>
                       <div className="mt-3 flex items-baseline gap-2">
                         <span className={cn("text-3xl font-black tracking-tighter", stat.color)}>{stat.value}</span>
@@ -121,7 +153,7 @@ export default function DashboardPage() {
 
                 {/* Middle Section: Chart and Right Panels */}
                 <div className="grid grid-cols-[1fr_300px] gap-6">
-                  <section className="flex flex-col rounded-[2.5rem] border border-[var(--card-border)] bg-[var(--card)] p-8 backdrop-blur-xl relative z-0">
+                  <section className="flex flex-col glass-card p-8 rounded-[2.5rem] relative z-0">
                     <div className="mb-8 flex items-center justify-between">
                       <div>
                         <h3 className="text-sm font-black uppercase tracking-widest text-[var(--foreground)]">Threat activity - last 30 days</h3>
@@ -253,7 +285,7 @@ export default function DashboardPage() {
 
                   <aside className="flex flex-col gap-6">
                     {/* Compliance Status */}
-                    <div className="rounded-3xl border border-[var(--card-border)] bg-[var(--card)] p-6 backdrop-blur-md">
+                    <div className="glass-card p-6 rounded-3xl">
                       <div className="mb-6 flex items-center justify-between">
                          <p className="text-[10px] font-black uppercase tracking-widest text-[var(--muted)]">Compliance status</p>
                          <div className="h-6 w-6 rounded-lg bg-blue-600/20 flex items-center justify-center">
@@ -274,7 +306,7 @@ export default function DashboardPage() {
                     </div>
 
                     {/* Active Models - Integrated Interaction */}
-                    <div className="rounded-3xl border border-[var(--card-border)] bg-[var(--card)] p-6 backdrop-blur-md flex-1 overflow-hidden">
+                    <div className="glass-card p-6 flex-1 overflow-hidden">
                       <div className="mb-6 flex items-center justify-between">
                          <p className="text-[10px] font-black uppercase tracking-widest text-[var(--muted)]">Model Selectors</p>
                          <div className="flex gap-2">

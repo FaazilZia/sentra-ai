@@ -1,4 +1,5 @@
 import {
+  Home,
   LayoutDashboard,
   ShieldAlert,
   Database,
@@ -15,6 +16,7 @@ import { cn } from '../../lib/utils';
 import { Link, useLocation } from 'react-router-dom';
 
 const navigation = [
+  { name: 'Home', href: '/', icon: Home },
   { name: 'Dashboard', href: '/app', icon: LayoutDashboard },
   { name: 'Risk', href: '/app/risk', icon: ShieldAlert },
   { name: 'Models', href: '/app/inventory', icon: Database },
@@ -38,9 +40,9 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
       )}
     >
       <div className="flex h-20 items-center justify-center border-b border-[var(--card-border)]">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 shadow-lg shadow-blue-500/20">
+        <Link to="/" className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 shadow-lg shadow-blue-500/20 hover:scale-110 transition-transform">
           <ShieldCheck className="h-6 w-6 text-white" />
-        </div>
+        </Link>
       </div>
 
       <nav className="flex flex-1 flex-col items-center gap-8 py-10">

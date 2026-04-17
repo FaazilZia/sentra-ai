@@ -1,5 +1,6 @@
 import { FormEvent, useState } from 'react';
-import { Activity, Database, LoaderCircle, LockKeyhole, Server, ShieldCheck, AlertCircle, Moon, Sun } from 'lucide-react';
+import { Activity, Database, LoaderCircle, LockKeyhole, Server, ShieldCheck, AlertCircle, Moon, Sun, Home } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { useTheme } from '../lib/useTheme';
 import { apiBaseUrl } from '../lib/api';
@@ -85,6 +86,13 @@ export default function LoginPage() {
         
         {/* Top Controls: Status + Theme */}
         <div className="absolute right-6 top-6 z-10 flex items-center gap-3">
+          <Link 
+            to="/"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--card-border)] bg-[var(--card)] text-[var(--muted)] hover:text-[var(--foreground)] shadow-sm backdrop-blur-md transition-all"
+            aria-label="Back to Home"
+          >
+            <Home className="h-4 w-4" />
+          </Link>
           <button 
             onClick={toggleTheme}
             className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--card-border)] bg-[var(--card)] text-[var(--muted)] hover:text-[var(--foreground)] shadow-sm backdrop-blur-md transition-all"

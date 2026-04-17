@@ -68,27 +68,27 @@ export default function GovernancePage() {
   const publishedPolicies = policies.filter((policy) => policy.status === 'published').length;
 
   return (
-    <div className="mx-auto max-w-[1400px] space-y-6 pb-8">
-      <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(7,18,33,0.96),rgba(24,40,66,0.92))] p-6 md:p-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(45,212,191,0.14),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(96,165,250,0.18),transparent_24%)]" />
-        <div className="relative grid gap-5 lg:grid-cols-[1.35fr_0.8fr]">
+    <div className="mx-auto max-w-[1400px] space-y-6 pb-8 text-[var(--foreground)]">
+      <section className="relative overflow-hidden rounded-[2.5rem] border border-[var(--card-border)] bg-[var(--card)] p-8 md:p-10 backdrop-blur-xl">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.1),transparent_40%)]" />
+        <div className="relative grid gap-8 lg:grid-cols-[1fr_350px]">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-100/80">
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-500/80 mb-4">
               Governance Workspace
             </p>
-            <h1 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-white md:text-4xl">
-              Your policy layer is now searchable and browsable instead of static.
+            <h1 className="text-3xl font-black tracking-tighter text-[var(--foreground)] md:text-5xl mb-6 uppercase leading-[0.9]">
+              Policy Layer <br/>Telemetry.
             </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
-              This page turns the governance placeholder into a real policy workspace where you can
-              inspect names, effects, versions, rollout state, and scope from live backend records.
+            <p className="max-w-2xl text-xs font-bold leading-relaxed text-[var(--muted)] uppercase tracking-widest">
+              Inspect names, effects, versions, and rollout state from live backend records. 
+              The governance engine enforces these rules in real-time.
             </p>
           </div>
 
-          <div className="rounded-[1.75rem] border border-white/10 bg-slate-950/35 p-5">
-            <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Visible results</p>
-            <p className="mt-2 text-4xl font-semibold text-white">{filteredPolicies.length}</p>
-            <div className="mt-4 flex flex-wrap gap-2">
+          <div className="rounded-[2.5rem] border border-[var(--card-border)] bg-[var(--muted-background)]/50 p-8 backdrop-blur-md">
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--muted)]">Visible results</p>
+            <p className="mt-4 text-5xl font-black text-[var(--foreground)] tracking-tighter">{filteredPolicies.length}</p>
+            <div className="mt-6 flex flex-wrap gap-2">
               <StatusBadge label={`${publishedPolicies} published`} tone="success" />
               <StatusBadge label={`${enabledPolicies} enabled`} tone="info" />
             </div>
@@ -102,24 +102,28 @@ export default function GovernancePage() {
           value={loading ? '---' : policies.length}
           icon={FileSignature}
           trend="Total governance documents in scope"
+          className="bg-[var(--card)] border-[var(--card-border)] rounded-3xl"
         />
         <StatCard
           title="Published"
           value={loading ? '---' : publishedPolicies}
           icon={ShieldCheck}
           trend="Policies available for active decisioning"
+          className="bg-[var(--card)] border-[var(--card-border)] rounded-3xl"
         />
         <StatCard
           title="Enabled"
           value={loading ? '---' : enabledPolicies}
           icon={SlidersHorizontal}
           trend="Controls currently switched on"
+          className="bg-[var(--card)] border-[var(--card-border)] rounded-3xl"
         />
         <StatCard
           title="Filtered View"
           value={loading ? '---' : filteredPolicies.length}
           icon={Filter}
-          trend="Policies matching current search and status filters"
+          trend="Policies matching current search"
+          className="bg-[var(--card)] border-[var(--card-border)] rounded-3xl"
         />
       </div>
 
@@ -132,21 +136,22 @@ export default function GovernancePage() {
       ) : (
         <SurfaceCard
           title="Policy Workspace"
-          description="Search and filter live policies returned by `/api/v1/policies`."
+          description="Search and filter live policies returned by backend."
+          className="bg-[var(--card)] border-[var(--card-border)] rounded-[2.5rem] backdrop-blur-xl"
           action={
-            <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search policies"
-                className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-cyan-200/25"
+                placeholder="Search policies..."
+                className="rounded-xl border border-[var(--card-border)] bg-[var(--background)]/50 px-4 py-3 text-xs font-black uppercase tracking-widest text-[var(--foreground)] placeholder:text-[var(--muted)]/50 outline-none transition focus:border-cyan-500/50"
               />
               <select
                 value={statusFilter}
                 onChange={(event) =>
                   setStatusFilter(event.target.value as 'all' | 'published' | 'draft')
                 }
-                className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-cyan-200/25"
+                className="rounded-xl border border-[var(--card-border)] bg-[var(--background)]/50 px-4 py-3 text-xs font-black uppercase tracking-widest text-[var(--foreground)] outline-none transition focus:border-cyan-500/50"
               >
                 <option value="all">All statuses</option>
                 <option value="published">Published</option>
@@ -157,40 +162,40 @@ export default function GovernancePage() {
           contentClassName="p-0"
         >
           {filteredPolicies.length === 0 ? (
-            <div className="p-5">
-              <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/25 p-6 text-sm text-slate-400">
-                No policies match the current filters yet.
+            <div className="p-8">
+              <div className="rounded-3xl border border-dashed border-[var(--card-border)] bg-[var(--muted-background)]/50 p-12 text-center text-[10px] font-black uppercase tracking-[0.2em] text-[var(--muted)]">
+                No policies match the current filters.
               </div>
             </div>
           ) : (
-            <div className="divide-y divide-white/10">
+            <div className="divide-y divide-[var(--card-border)]">
               {filteredPolicies.map((policy) => (
-                <article key={policy.id} className="grid gap-4 p-5 lg:grid-cols-[1.2fr_0.8fr]">
+                <article key={policy.id} className="grid gap-8 p-8 lg:grid-cols-[1.2fr_0.8fr] hover:bg-[var(--foreground)]/5 transition-colors group">
                   <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-base font-medium text-white">{policy.name}</p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <p className="text-lg font-black text-[var(--foreground)] uppercase tracking-tight">{policy.name}</p>
                       <StatusBadge
                         label={policy.status}
                         tone={policy.status === 'published' ? 'success' : 'warning'}
                       />
                       <StatusBadge label={policy.effect.replace('_', ' ')} tone="info" />
                     </div>
-                    <p className="mt-3 text-sm leading-6 text-slate-300">
+                    <p className="mt-4 text-xs font-bold leading-relaxed text-[var(--muted)] uppercase tracking-widest opacity-80">
                       {policy.description || 'No description provided for this policy yet.'}
                     </p>
                   </div>
 
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
-                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Version</p>
-                      <p className="mt-2 text-lg font-medium text-white">{policy.current_version}</p>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--muted-background)] p-5">
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--muted)]">Version</p>
+                      <p className="mt-2 text-xl font-black text-[var(--foreground)]">{policy.current_version}</p>
                     </div>
-                    <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
-                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Priority</p>
-                      <p className="mt-2 text-lg font-medium text-white">{policy.priority}</p>
+                    <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--muted-background)] p-5">
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--muted)]">Priority</p>
+                      <p className="mt-2 text-xl font-black text-[var(--foreground)]">{policy.priority}</p>
                     </div>
-                    <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
-                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Enabled</p>
+                    <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--muted-background)] p-5">
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--muted)]">Enabled</p>
                       <div className="mt-2">
                         <StatusBadge
                           label={policy.enabled ? 'On' : 'Off'}
@@ -198,9 +203,9 @@ export default function GovernancePage() {
                         />
                       </div>
                     </div>
-                    <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
-                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Actions</p>
-                      <p className="mt-2 text-sm font-medium text-white">
+                    <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--muted-background)] p-5">
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--muted)]">Actions</p>
+                      <p className="mt-2 text-[10px] font-black uppercase tracking-widest text-[var(--foreground)]">
                         {Array.isArray(policy.scope.actions) ? policy.scope.actions.join(', ') : 'None'}
                       </p>
                     </div>
