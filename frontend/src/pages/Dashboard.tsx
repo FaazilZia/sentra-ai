@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Loader2, ShieldAlert, Globe, Zap, Plus, ShieldCheck } from 'lucide-react';
+import { Loader2, ShieldAlert, Globe, Zap, Plus } from 'lucide-react';
 import { io, Socket } from 'socket.io-client';
 import {
   fetchPolicies,
@@ -13,7 +13,6 @@ import {
 import { useAuth } from '../lib/auth';
 import { DashboardHeader } from '../components/dashboard/DashboardHeader';
 import { ActivityFeed, ActivityEvent } from '../components/dashboard/ActivityFeed';
-import { BlockedActionsPanel } from '../components/dashboard/BlockedActionsPanel';
 import { PolicyPanel } from '../components/dashboard/PolicyPanel';
 import { BeforeAfterPanel } from '../components/dashboard/BeforeAfterPanel';
 import { UseCaseSelector } from '../components/dashboard/UseCaseSelector';
@@ -166,12 +165,6 @@ export default function DashboardPage() {
     });
     return Object.values(agentsMap).slice(0, 4) as any[];
   }, [aiLogs]);
-
-  const blockedActions = useMemo(() => {
-    return activityEvents
-      .filter(e => e.status === 'blocked')
-      .slice(0, 5);
-  }, [activityEvents]);
 
   const policyRules = useMemo(() => {
     if (policies.length > 0) {
