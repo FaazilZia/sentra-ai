@@ -4,23 +4,26 @@ import prisma from '../config/db';
 import { resolveTenantId } from '../utils/tenant';
 import { checkPermission, logActivity, CheckPermissionResult, calculateSecurityScore } from '../services/policy.service';
 import { io } from '../server';
+import { checkActionSchema } from '../validations/ai.validation';
 
 export const postCheckAction = async (req: any, res: Response, next: NextFunction) => {
+  const { requestId, startTime } = req.context;
   try {
-    const { agent, action, metadata } = req.body;
+    // 1. Validate Input
+    const validated = checkActionSchema.parse(req.body);
+    const { agent, action, metadata } = validated;
+
     const tenantId = await resolveTenantId(req);
 
     if (!tenantId) {
-      return res.status(401).json({ success: false, message: 'Unauthorized: Tenant not identified' });
+      return res.status(401).json({ success: false, message: 'Unauthorized: Tenant not identified', requestId });
     }
 
-    if (!agent || !action) {
-      return res.status(400).json({ success: false, message: 'agent and action are required' });
-    }
-
+    // 2. Execute Governance Decision
     const decision: CheckPermissionResult = await checkPermission(agent, action, tenantId, metadata);
+    const latencyMs = Date.now() - startTime;
 
-    // Logging the activity
+    // 3. Log Activity (with correlation ID and latency)
     const log = await logActivity({
       tenantId,
       agentId: agent,
@@ -30,14 +33,18 @@ export const postCheckAction = async (req: any, res: Response, next: NextFunctio
       reason: decision.reason,
       impact: decision.impact,
       compliance: decision.compliance,
-      metadata
+      metadata,
+      requestId,
+      latencyMs
     });
 
-    // Push real-time update to the dashboard
+    // 4. Push Real-time Update
     io.emit('activity_log', log);
 
     res.status(200).json({
       success: true,
+      requestId,
+      latencyMs,
       data: {
         status: decision.status,
         risk_score: decision.risk_score,

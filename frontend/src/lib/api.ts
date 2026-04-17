@@ -3,9 +3,9 @@
 function normalizeApiBaseUrl(value?: string): string {
   const trimmed = value?.trim().replace(/\/$/, '');
   if (!trimmed) {
-    return 'http://localhost:3000/api';
+    return 'http://localhost:10000/api/v1';
   }
-  return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
+  return trimmed.endsWith('/api/v1') ? trimmed : `${trimmed}/api/v1`;
 }
 
 export const apiBaseUrl = normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL);

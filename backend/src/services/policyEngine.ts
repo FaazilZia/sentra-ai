@@ -1,4 +1,5 @@
 import prisma from '../config/db';
+import { cacheService } from './cache.service';
 
 export interface PolicyEvaluation {
   allowed: boolean;
@@ -9,13 +10,17 @@ export interface PolicyEvaluation {
 export const evaluatePolicy = async (agent: string, action: string, tenantId: string): Promise<PolicyEvaluation> => {
   const lowercaseAction = action.toLowerCase();
   
-  const policy = await prisma.policies.findFirst({
-    where: {
-      tenant_id: tenantId,
-      name: { contains: agent },
-      enabled: true
-    }
-  });
+  const cacheKey = `policy:${tenantId}:${agent}`;
+  
+  const policy = await cacheService.getOrSet(cacheKey, () => 
+    prisma.policies.findFirst({
+      where: {
+        tenant_id: tenantId,
+        name: { contains: agent },
+        enabled: true
+      }
+    })
+  );
 
   if (!policy) {
     return { allowed: true }; // Default allow if no policy exists (Risk Engine will catch high risk)

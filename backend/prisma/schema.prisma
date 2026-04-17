@@ -89,6 +89,7 @@ model policies {
   policy_versions   policy_versions[]
 
   @@unique([tenant_id, name])
+  @@index([tenant_id])
 }
 
 model policy_versions {
@@ -212,6 +213,10 @@ model ai_activity_logs {
   timeline    Json?
   compliance Json?
   metadata   Json?
+  request_id String?
+  latency_ms Int?
   created_at DateTime @default(now())
   tenants    tenants  @relation(fields: [tenant_id], references: [id])
+
+  @@index([tenant_id, created_at])
 }

@@ -33,7 +33,7 @@ export class Sentra {
 
   constructor(config: SentraConfig) {
     this.apiKey = config.apiKey;
-    this.baseUrl = (config.baseUrl || 'https://sentra-backend-node.onrender.com/api').replace(/\/$/, '');
+    this.baseUrl = (config.baseUrl || 'https://api.sentra.ai/api/v1').replace(/\/$/, '');
     this.maxRetries = config.maxRetries ?? 3;
   }
 

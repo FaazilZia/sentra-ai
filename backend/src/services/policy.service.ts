@@ -20,6 +20,8 @@ export interface LogActivityData {
   timeline?: any;
   compliance?: string[];
   metadata?: any;
+  requestId?: string;
+  latencyMs?: number;
 }
 
 export const logActivity = async (data: LogActivityData) => {
@@ -36,7 +38,9 @@ export const logActivity = async (data: LogActivityData) => {
       confidence: data.confidence || null,
       timeline: data.timeline || null,
       compliance: data.compliance || [],
-      metadata: data.metadata || {}
+      metadata: data.metadata || {},
+      request_id: data.requestId || null,
+      latency_ms: data.latencyMs || null
     }
   });
 };
