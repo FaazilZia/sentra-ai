@@ -1,8 +1,4 @@
 import { PrismaClient } from '@prisma/client';
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
-import { PrismaPg } from '@prisma/adapter-pg';
-import Database from 'better-sqlite3';
-import { Pool } from 'pg';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
 
@@ -11,15 +7,18 @@ dotenv.config();
 const databaseUrl = process.env.DATABASE_URL || 'file:./dev.db';
 const isSqlite = databaseUrl.startsWith('file:');
 
-let prisma: PrismaClient;
-
-if (isSqlite) {
-  const adapter = new PrismaBetterSqlite3({ url: 'dev.db' });
-  prisma = new PrismaClient({ adapter });
-} else {
-  const pool = new Pool({ connectionString: databaseUrl });
-  const adapter = new PrismaPg(pool);
-  prisma = new PrismaClient({ adapter });
+async function getPrisma() {
+  if (isSqlite) {
+    const { PrismaBetterSqlite3 } = await import('@prisma/adapter-better-sqlite3');
+    const adapter = new PrismaBetterSqlite3({ url: 'dev.db' });
+    return new PrismaClient({ adapter });
+  } else {
+    const { PrismaPg } = await import('@prisma/adapter-pg');
+    const { Pool } = await import('pg');
+    const pool = new Pool({ connectionString: databaseUrl });
+    const adapter = new PrismaPg(pool);
+    return new PrismaClient({ adapter });
+  }
 }
 
 const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001';
@@ -27,6 +26,7 @@ const ADMIN_USER_ID = '00000000-0000-0000-0000-000000000002';
 
 async function main() {
   console.log(`🌱 Seeding database (${isSqlite ? 'SQLite' : 'PostgreSQL'})...`);
+  const prisma = await getPrisma();
 
   // 1. Ensure default tenant
   const tenant = await prisma.tenants.upsert({
@@ -130,13 +130,11 @@ async function main() {
   console.log('✅ Demo API Key: sentra_demo_secretkey123 (Prefix: demo)');
 
   console.log('\n🎉 Seed completed!');
+  await prisma.$disconnect();
 }
 
 main()
   .catch((e) => {
     console.error('❌ Seed failed:', e);
     process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
   });
