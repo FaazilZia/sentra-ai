@@ -12,7 +12,7 @@ interface Message {
 export function CopilotDrawer() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: 'Hello! I am Sentra Copilot. How can I help you manage your university compliance today?' }
+    { role: 'assistant', content: 'Hello! I am Sentra Copilot. How can I help you manage your AI governance, compliance, and security operations today?' }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);

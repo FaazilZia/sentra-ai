@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, CheckCircle2, XCircle } from 'lucide-react';
+import { Settings } from 'lucide-react';
 
 interface Rule {
   id: string;

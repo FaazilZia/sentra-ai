@@ -2,7 +2,8 @@ import { Response, NextFunction } from 'express';
 import logger from '../utils/logger';
 import prisma from '../config/db';
 import { resolveTenantId } from '../utils/tenant';
-import { checkPermission, logActivity } from '../services/policy.service';
+import { checkPermission, logActivity, CheckPermissionResult, calculateSecurityScore } from '../services/policy.service';
+import { io } from '../server';
 
 export const postCheckAction = async (req: any, res: Response, next: NextFunction) => {
   try {
@@ -17,27 +18,77 @@ export const postCheckAction = async (req: any, res: Response, next: NextFunctio
       return res.status(400).json({ success: false, message: 'agent and action are required' });
     }
 
-    const decision = await checkPermission(agent, action, tenantId, metadata);
+    const decision: CheckPermissionResult = await checkPermission(agent, action, tenantId, metadata);
 
     // Logging the activity
-    await logActivity({
+    const log = await logActivity({
       tenantId,
       agentId: agent,
       action,
       status: decision.status,
       riskScore: decision.risk_score,
       reason: decision.reason,
+      impact: decision.impact,
+      compliance: decision.compliance,
       metadata
     });
+
+    // Push real-time update to the dashboard
+    io.emit('activity_log', log);
 
     res.status(200).json({
       success: true,
       data: {
         status: decision.status,
         risk_score: decision.risk_score,
-        reason: decision.reason
+        reason: decision.reason,
+        impact: decision.impact,
+        compliance: decision.compliance,
+        explanation: decision.explanation,
+        confidence: decision.confidence,
+        timeline: decision.timeline
       }
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const postReplayAction = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const { logId } = req.body;
+    const tenantId = await resolveTenantId(req);
+
+    if (!tenantId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+    const originalLog = await prisma.ai_activity_logs.findUnique({
+      where: { id: logId }
+    });
+
+    if (!originalLog || originalLog.tenant_id !== tenantId) {
+      return res.status(404).json({ success: false, message: 'Log not found' });
+    }
+
+    const decision = await checkPermission(originalLog.agent_id, originalLog.action, tenantId, originalLog.metadata);
+
+    // We don't necessarily need to create a NEW log for a replay, 
+    // but we return the decision as if it just happened.
+    res.status(200).json({
+      success: true,
+      data: decision
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getSecurityScore = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = await resolveTenantId(req);
+    if (!tenantId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+    const score = await calculateSecurityScore(tenantId);
+    res.status(200).json({ success: true, data: { score } });
   } catch (error) {
     next(error);
   }

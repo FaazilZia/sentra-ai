@@ -1,18 +1,35 @@
-import dotenv from 'dotenv';
-dotenv.config();
-
+import express from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import app from './app';
 import logger from './utils/logger';
-import prisma from './config/db';
+import prisma, { initializePrisma } from './config/db';
 
 const PORT = process.env.PORT || 3000;
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+});
+
+io.on('connection', (socket) => {
+  logger.info(`Client connected to real-time feed: ${socket.id}`);
+  
+  socket.on('disconnect', () => {
+    logger.info(`Client disconnected: ${socket.id}`);
+  });
+});
+
+export { io };
 
 const startServer = async () => {
   try {
-    await prisma.$connect();
-    logger.info('Connected to database successfully');
+    await initializePrisma();
+    logger.info('Database layer initialized');
     
-    app.listen(PORT, () => {
+    httpServer.listen(PORT, () => {
       logger.info(`Server is running on port ${PORT}`);
     });
   } catch (error) {

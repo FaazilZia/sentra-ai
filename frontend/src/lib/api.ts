@@ -271,6 +271,11 @@ export interface AIActivityLog {
   status: 'allowed' | 'blocked';
   risk_score: 'low' | 'medium' | 'high';
   reason?: string;
+  impact?: string;
+  explanation?: string;
+  confidence?: number;
+  timeline?: any;
+  compliance?: string[];
   metadata?: any;
   created_at: string;
 }
@@ -280,6 +285,17 @@ export interface AIActivityLog {
  */
 export async function fetchAIActivityLogs(): Promise<AIActivityLog[]> {
   return apiRequest<AIActivityLog[]>('/ai/logs');
+}
+
+export async function replayAction(logId: string): Promise<any> {
+  return apiRequest<any>('/ai/replay', {
+    method: 'POST',
+    body: JSON.stringify({ logId })
+  });
+}
+
+export async function fetchSecurityScore(): Promise<{ score: number }> {
+  return apiRequest<{ score: number }>('/ai/security-score');
 }
 
 export async function askAI(prompt: string): Promise<string> {

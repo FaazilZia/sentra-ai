@@ -206,6 +206,11 @@ model ai_activity_logs {
   status     String
   risk_score String
   reason     String?
+  impact     String?
+  explanation String?
+  confidence  Float?
+  timeline    Json?
+  compliance Json?
   metadata   Json?
   created_at DateTime @default(now())
   tenants    tenants  @relation(fields: [tenant_id], references: [id])
