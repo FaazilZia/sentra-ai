@@ -1,0 +1,26 @@
+{
+  "name": "@sentra/sdk",
+  "version": "1.0.0",
+  "description": "Production-ready SDK for real-time AI governance and runtime security.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "ai",
+    "security",
+    "governance",
+    "interceptor",
+    "runtime"
+  ],
+  "author": "Sentra AI Team",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

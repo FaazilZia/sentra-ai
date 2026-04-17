@@ -7,45 +7,67 @@ import logger from '../utils/logger';
 export const authenticate = async (req: any, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
-    const apiKey = req.headers['x-api-key'];
+    const xApiKey = req.headers['x-api-key'];
 
-    // 1. Try JWT Authentication
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.split(' ')[1];
-      const payload: any = verifyAccessToken(token);
-      
-      // Security Check: Verify user and tenant are still active in DB
-      const user = await prisma.users.findUnique({
-        where: { id: payload.id },
-        include: { tenants: true }
-      });
-
-      if (!user || !user.is_active || !user.tenants.is_active) {
-        return res.status(401).json({ success: false, message: 'Account or tenant is inactive or not found' });
-      }
-
-      req.user = {
-        id: user.id,
-        role: user.role,
-        tenant_id: user.tenant_id,
-        email: user.email
-      };
-      return next();
+    if (!authHeader && !xApiKey) {
+      return res.status(401).json({ success: false, message: 'Authentication required' });
     }
 
-    // 2. Try API Key Authentication (for SDK/Partner access)
-    // Format: sentra_<prefix>_<secret>
-    if (apiKey) {
-      const keyString = String(apiKey).trim();
+    // 1. Handle Bearer Token (Could be JWT or API Key)
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+
+      // Case A: It's an API Key (starts with sentra_)
+      if (token.startsWith('sentra_')) {
+        const parts = token.split('_');
+        const lookupPrefix = parts[1];
+
+        const keyRecord = await prisma.api_keys.findFirst({
+          where: { key_prefix: lookupPrefix, is_active: true },
+          include: { tenants: true },
+        });
+
+        if (keyRecord && (await bcrypt.compare(token, keyRecord.key_hash))) {
+          req.user = {
+            id: keyRecord.id,
+            tenant_id: keyRecord.tenant_id,
+            role: 'SERVICE_AGENT',
+            email: `sdk@${keyRecord.tenants.slug}.com`,
+          };
+          return next();
+        }
+      } 
+      
+      // Case B: It's a JWT
+      try {
+        const payload: any = verifyAccessToken(token);
+        const user = await prisma.users.findUnique({
+          where: { id: payload.id },
+          include: { tenants: true }
+        });
+
+        if (user && user.is_active && user.tenants.is_active) {
+          req.user = {
+            id: user.id,
+            role: user.role,
+            tenant_id: user.tenant_id,
+            email: user.email
+          };
+          return next();
+        }
+      } catch (jwtError) {
+        // Fall through to other auth methods or fail
+      }
+    }
+
+    // 2. Handle x-api-key header (legacy/fallback)
+    if (xApiKey) {
+      const keyString = String(xApiKey).trim();
       const parts = keyString.split('_');
-      const lookupPrefix =
-        parts.length >= 3 && parts[0] === 'sentra' ? parts[1] : parts[0];
+      const lookupPrefix = parts[1] || parts[0];
 
       const keyRecord = await prisma.api_keys.findFirst({
-        where: {
-          key_prefix: lookupPrefix,
-          is_active: true,
-        },
+        where: { key_prefix: lookupPrefix, is_active: true },
         include: { tenants: true },
       });
 
@@ -60,7 +82,7 @@ export const authenticate = async (req: any, res: Response, next: NextFunction) 
       }
     }
 
-    return res.status(401).json({ success: false, message: 'Authentication required (valid JWT or API Key)' });
+    return res.status(401).json({ success: false, message: 'Invalid or expired credentials' });
   } catch (error) {
     logger.error('Authentication Error:', error);
     res.status(401).json({ success: false, message: 'Invalid or expired credentials' });

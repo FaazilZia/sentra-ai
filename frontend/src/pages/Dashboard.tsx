@@ -115,10 +115,14 @@ export default function DashboardPage() {
 
       console.log(`[Demo] [${mode.toUpperCase()}] AI Agent ${agent} attempting ${action}...`);
       
-      await sentra.safeAction(agent, action, { 
-        data: data.content, 
-        context: { mode, industry: mode, compliance_check: true } 
-      }, () => {
+      await sentra.safeAction({
+        agent,
+        action,
+        metadata: { 
+          data: data.content, 
+          context: { mode, industry: mode, compliance_check: true } 
+        }
+      }, async () => {
         // This only runs if NOT blocked
         console.log(`[Demo] Action ${action} authorized for ${agent}`);
       });

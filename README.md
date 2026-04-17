@@ -1,123 +1,107 @@
-# Sentra AI — Enterprise AI Governance & Command Center
+# Sentra AI — The Real-Time Governance Layer for AI Agents
 
-🚀 **Transform technical AI logs into clear business value and regulatory compliance.**
+🚀 **Sentra AI is a real-time AI runtime security layer that controls and blocks unsafe AI actions.**
 
-Sentra AI is a high-performance governance layer that sits between your AI Agents and their execution environment. Unlike traditional security tools, Sentra AI acts as an **Active Interceptor**, mapping technical actions to **Business Impact** and **Legal Compliance** in real-time.
-
----
-
-### 🌐 Live Production
-*   **Production Dashboard**: [https://sentra-ai-tau.vercel.app](https://sentra-ai-tau.vercel.app)
-*   **Production API**: `https://sentra-backend-node.onrender.com/api`
-*   **Status**: Operational ✅ | **Real-time Engine**: Active ⚡️
+Traditional security tools scan after the fact. Sentra AI acts as an **Active Interceptor**, mapping technical AI intents to **Business Impact** and **Regulatory Compliance** (GDPR, HIPAA, SOC2) before they execute.
 
 ---
 
-### 🎯 Core Business Value
+## 🏗️ Visual Architecture
 
-👉 **Sentra AI = Your AI Trust Layer**
-- **Business Impact Mapping**: Every blocked action explains *what* was prevented (e.g., "Prevents Data Exfiltration").
-- **AI Explanation Engine**: Real-time human-readable logic for every governance decision.
-- **Visual Action Timeline**: Step-by-step visibility from Agent Request to Decision Enforcement.
-- **Simulation & Replay**: Re-run historical actions to verify policy updates and risk scores.
-- **Security Score Dashboard**: Proactive 0-100 monitoring of your AI security health.
-- **Policy Builder UI**: Rapidly create and deploy governance rules across any AI agent.
-- **Compliance Guardrails**: Automatic mapping to **GDPR**, **HIPAA**, **SOC2**, and **DPDP**.
-- **Industry Contexts**: Tailored profiles for **Finance**, **Healthcare**, and **Enterprise Startups**.
-- **Active ROI Monitoring**: Real-time calculation of potential fines and risks avoided.
-- **Audit-Ready Export**: One-click CSV/JSON export of the entire activity trail.
+```mermaid
+graph LR
+    A[AI Agent] -->|Intent| B(Sentra SDK)
+    B -->|Check| C{Sentra Engine}
+    C -->|Allow| D[Execution]
+    C -->|Block| E[Audit & Alert]
+    C -.->|Impact Map| F[Business Dashboard]
+```
 
 ---
 
-### 🏗️ Strategic Architecture
-
-Sentra AI provides a "Control Plane" for the modern AI stack:
-
-1.  **AI Agent** requests an execution (e.g., `send_email`, `read_database`).
-2.  **Sentra SDK** intercepts the call and validates it against the **Governance Engine**.
-3.  **Real-time Decision**: The engine returns an `ALLOW` or `BLOCK` status based on active policies.
-4.  **Value Push**: The dashboard updates instantly via **WebSockets**, showing the Reason, Impact, and Compliance mapping.
+## 🎯 Final Objective
+- **Integrate in <5 Minutes**: Developers can protect any AI action with 10 lines of code.
+- **Instant Business Value**: Convert obscure AI logs into clear narratives like *"Prevented Data Exfiltration"*.
+- **Multi-Tenant Ready**: Securely supports multiple companies and teams out of the box.
 
 ---
 
-### 📂 Project Structure
+## 🚀 Quick Start
+
+Protecting an AI action takes less than 10 lines of code.
+
+### 1. Install the SDK
+```bash
+npm install @sentra/sdk
+```
+
+### 2. Guard your AI Actions
+```typescript
+import { Sentra } from '@sentra/sdk';
+
+const sentra = new Sentra({ apiKey: "YOUR_API_KEY" });
+
+// Intercept before execution
+await sentra.safeAction({
+  agent: "finance-bot",
+  action: "send_payment",
+  metadata: { amount: 5000, recipient: "external@hacker.com" }
+}, () => {
+  // This code ONLY runs if Sentra allows it
+  executePayment();
+});
+```
+
+---
+
+## 🏢 Industry Use Cases
+
+### 🏦 Fintech
+Block AI agents from executing unauthorized transactions or leaking PII in customer support chats.
+- **Impact**: Prevented Financial Fraud
+- **Compliance**: SOC2, GDPR
+
+### 🏥 Healthcare
+Ensure AI medical assistants never share Patient Health Information (PHI) outside of authorized portals.
+- **Impact**: Protected Patient Privacy
+- **Compliance**: HIPAA
+
+### 🛠️ Enterprise SaaS
+Control how AI agents access internal APIs and database schemas.
+- **Impact**: Prevented Privilege Escalation
+- **Compliance**: ISO 27001
+
+---
+
+## 📁 Project Structure
 
 ```text
 Sentra AI/
-├── frontend/                 # "Wow" Dashboard (React + Vite + Socket.io)
-├── backend-node/             # Governance Engine (Node.js + Prisma + PostgreSQL)
-├── sdk/                      # Universal JS/TS SDK for Agent Interception
-└── README.md                 # Product Strategy & Documentation
+├── packages/sdk/       # Production-ready TypeScript SDK
+├── examples/           # Runnable integration examples (OpenAI, Email, API)
+├── backend-node/       # Multi-tenant Governance Engine (Node.js + Prisma)
+├── frontend/           # Business-Aware Dashboard (React + WebSockets)
+└── README.md           # Product Strategy & Documentation
 ```
 
 ---
 
-### 🚀 Launch Instructions
+## 🛠️ API Reference (Core)
 
-#### 1. Prerequisites
-- Node.js 20+
-- PostgreSQL (Supabase recommended)
-- OpenAI API Key (Optional, for Sentra Copilot)
-
-#### 2. Backend Engine
-```bash
-cd backend-node
-npm install
-npx prisma generate
-npx prisma db push
-npm run seed     # Seeds business governance data
-npm run dev      # Server runs at http://localhost:3000
-```
-
-#### 3. Frontend Command Center
-```bash
-cd frontend
-npm install
-npm run dev      # Dashboard runs at http://localhost:5173
-```
+| Endpoint | Method | Description |
+| :--- | :--- | :--- |
+| `/ai/check-action` | `POST` | Validates an action against active policies. |
+| `/ai/logs` | `GET` | Fetches tenant-scoped audit logs with impact mapping. |
+| `/ai/security-score` | `GET` | Returns the real-time governance integrity score. |
 
 ---
 
-### 🛠️ SDK Integration (The "Zero-Latency" Way)
-
-Protecting your AI agents takes less than 10 lines of code:
-
-```typescript
-import { SentraClient } from '@sentra/sdk';
-
-const sentra = new SentraClient({
-  apiKey: process.env.SENTRA_API_KEY,
-  baseUrl: 'https://sentra-backend-node.onrender.com/api'
-});
-
-// Intercept before execution
-const decision = await sentra.checkAction({
-  agent: 'finance-bot',
-  action: 'external_api_call',
-  metadata: { target: 'competitor.com', payload_size: '50MB' }
-});
-
-if (decision.status === 'blocked') {
-  // Clear business narrative provided by the engine
-  console.error(`Blocked! Reason: ${decision.reason} | Impact: ${decision.impact}`);
-  return;
-}
-
-// Proceed safely...
-```
-
----
-
-### ✅ Demo Simulation Flow
-
-1.  **Select Industry**: Toggle the **Use Case Selector** to "Healthcare".
-2.  **Simulate Risk**: The background engine will simulate a `patient-bot` attempting to `read_pii`.
-3.  **Real-time Visibility**: Watch the **Activity Feed** update instantly via WebSockets.
-4.  **Verify Impact**: See the specific **GDPR Article** protected and the **ROI counter** increase.
-5.  **Audit**: Navigate to **AI Activity Logs** for a cryptographically verified compliance trail.
+## ✅ Demo Mode
+The dashboard includes a **Use Case Selector** to instantly demonstrate Sentra's power in different contexts:
+1. **Finance Scenario**: Watch Sentra block a rogue payment intent.
+2. **Healthcare Scenario**: See real-time HIPAA compliance mapping in action.
 
 ---
 
 ### 📝 License & Attribution
-Sentra AI is a state-of-the-art AI governance platform. All rights reserved.
-Built for the future of secure AI innovation.
+Sentra AI is a state-of-the-art AI governance platform. Built for the future of secure AI innovation.

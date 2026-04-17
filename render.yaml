@@ -3,7 +3,7 @@ services:
     name: sentra-backend-node
     env: node
     plan: free
-    rootDir: backend-node
+    rootDir: backend
     buildCommand: npm install && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
