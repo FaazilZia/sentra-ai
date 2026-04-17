@@ -17,7 +17,7 @@ export const postCheckAction = async (req: any, res: Response, next: NextFunctio
       return res.status(400).json({ success: false, message: 'agent and action are required' });
     }
 
-    const decision = await checkPermission(agent, action, tenantId);
+    const decision = await checkPermission(agent, action, tenantId, metadata);
 
     // Logging the activity
     await logActivity({

@@ -7,25 +7,37 @@ export interface CheckPermissionResult {
 }
 
 const SENSITIVE_KEYWORDS = [
-  'external', 'delete', 'export', 'admin', 'password', 'key', 
-  'credential', 'secret', 'confidential', 'pii'
+  'password', 'account', 'personal', 'credential', 'secret', 'confidential', 'pii', 'ssn', 'credit_card'
 ];
 
-export const checkPermission = async (agent: string, action: string, tenantId: string): Promise<CheckPermissionResult> => {
-  // 1. Basic Risk Detection
+const HIGH_RISK_ACTIONS = [
+  'send_email', 'external_api', 'export_csv', 'delete_record', 'update_config', 'external_share'
+];
+
+const MEDIUM_RISK_ACTIONS = [
+  'read_database', 'read_pii', 'access_logs'
+];
+
+export const checkPermission = async (agent: string, action: string, tenantId: string, metadata: any = {}): Promise<CheckPermissionResult> => {
+  // 1. Risk Engine Evaluation
   let riskScore: 'low' | 'medium' | 'high' = 'low';
   const lowercaseAction = action.toLowerCase();
+  const dataString = JSON.stringify(metadata).toLowerCase();
   
-  if (SENSITIVE_KEYWORDS.some(kw => lowercaseAction.includes(kw))) {
+  // Action-based risk
+  if (MEDIUM_RISK_ACTIONS.includes(lowercaseAction)) {
     riskScore = 'medium';
   }
-  
-  if (lowercaseAction.includes('delete') || lowercaseAction.includes('export') || lowercaseAction.includes('external')) {
+  if (HIGH_RISK_ACTIONS.includes(lowercaseAction)) {
     riskScore = 'high';
   }
 
-  // 2. Policy Check
-  // We'll look for a policy that applies to this agent
+  // Keyword-based risk (checking metadata/data)
+  if (SENSITIVE_KEYWORDS.some(kw => dataString.includes(kw))) {
+    riskScore = 'high'; // Data containing secrets is always high risk
+  }
+
+  // 2. Policy Engine Evaluation
   const policy = await prisma.policies.findFirst({
     where: {
       tenant_id: tenantId,
@@ -35,7 +47,10 @@ export const checkPermission = async (agent: string, action: string, tenantId: s
   });
 
   if (!policy) {
-    // Default to allow for MVP if no specific policy found
+    // Default: If it's high risk and no policy exists, block for safety. Otherwise allow.
+    if (riskScore === 'high') {
+      return { status: 'blocked', reason: 'High risk action detected with no governing policy', risk_score: riskScore };
+    }
     return { status: 'allowed', risk_score: riskScore };
   }
 
@@ -43,16 +58,17 @@ export const checkPermission = async (agent: string, action: string, tenantId: s
   const allowedActions = Array.isArray(conditions.allowed_actions) ? conditions.allowed_actions : [];
   const blockedActions = Array.isArray(conditions.blocked_actions) ? conditions.blocked_actions : [];
 
-  // If explicitly blocked
-  if (blockedActions.map((a: string) => a.toLowerCase()).includes(action.toLowerCase())) {
-    return { status: 'blocked', reason: 'Action is explicitly blocked by policy', risk_score: riskScore };
+  // Explicit Block
+  if (blockedActions.map((a: string) => a.toLowerCase()).includes(lowercaseAction)) {
+    return { status: 'blocked', reason: `Action is explicitly blocked by policy: ${policy.name}`, risk_score: riskScore };
   }
 
-  // If we have an allowed list and action is not in it
-  if (allowedActions.length > 0 && !allowedActions.map((a: string) => a.toLowerCase()).includes(action.toLowerCase())) {
-     return { status: 'blocked', reason: 'Action is not in the allowed list', risk_score: riskScore };
+  // Allowed List Enforcement
+  if (allowedActions.length > 0 && !allowedActions.map((a: string) => a.toLowerCase()).includes(lowercaseAction)) {
+     return { status: 'blocked', reason: `Action not in allowed list for policy: ${policy.name}`, risk_score: riskScore };
   }
 
+  // Final Decision
   return { status: 'allowed', risk_score: riskScore };
 };
 

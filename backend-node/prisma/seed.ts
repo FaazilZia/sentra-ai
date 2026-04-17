@@ -1,21 +1,32 @@
-/**
- * Sentra AI — Database Seed Script (SQLite compatible)
- * Creates the default tenant and admin user if they don't exist.
- * Run: npx ts-node prisma/seed.ts
- */
 import { PrismaClient } from '@prisma/client';
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import { PrismaPg } from '@prisma/adapter-pg';
 import Database from 'better-sqlite3';
+import { Pool } from 'pg';
 import bcrypt from 'bcrypt';
+import dotenv from 'dotenv';
 
-const adapter = new PrismaBetterSqlite3({ url: 'file:./dev.db' });
-const prisma = new PrismaClient({ adapter: adapter as any });
+dotenv.config();
+
+const databaseUrl = process.env.DATABASE_URL || 'file:./dev.db';
+const isSqlite = databaseUrl.startsWith('file:');
+
+let prisma: PrismaClient;
+
+if (isSqlite) {
+  const adapter = new PrismaBetterSqlite3({ url: 'dev.db' });
+  prisma = new PrismaClient({ adapter });
+} else {
+  const pool = new Pool({ connectionString: databaseUrl });
+  const adapter = new PrismaPg(pool);
+  prisma = new PrismaClient({ adapter });
+}
 
 const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001';
 const ADMIN_USER_ID = '00000000-0000-0000-0000-000000000002';
 
 async function main() {
-  console.log('🌱 Seeding database (SQLite with Better-Sqlite3 Adapter)...');
+  console.log(`🌱 Seeding database (${isSqlite ? 'SQLite' : 'PostgreSQL'})...`);
 
   // 1. Ensure default tenant
   const tenant = await prisma.tenants.upsert({
