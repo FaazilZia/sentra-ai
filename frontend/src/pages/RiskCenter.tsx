@@ -16,7 +16,7 @@ export default function RiskCenterPage() {
     async function load() {
       try {
         const response = await fetchPolicies();
-        setPolicies(response);
+        setPolicies(response.items);
       } catch (e) {
         console.error(e);
       } finally {

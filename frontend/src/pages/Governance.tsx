@@ -26,7 +26,7 @@ export default function GovernancePage() {
 
     async function loadPoliciesForGovernance() {
       try {
-        const response = await fetchPolicies(token);
+        const response = await fetchPolicies();
         if (!active) {
           return;
         }

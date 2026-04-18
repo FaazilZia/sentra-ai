@@ -49,7 +49,7 @@ export const Reveal = ({ children, width = "fit-content", delay = 0.25, yOffset 
           bottom: 4,
           left: 0,
           right: 0,
-          background: "var(--reveal-overlay, #2563eb)",
+          background: "var(--reveal-overlay, #0ea5e9)",
           zIndex: 20,
         }}
       />

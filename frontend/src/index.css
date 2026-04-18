@@ -16,29 +16,29 @@
     --glass-reflection: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, 0) 100%);
     --glass-blur: blur(20px);
     
-    --primary: #2563eb;
-    --primary-glow: rgba(37, 99, 235, 0.15);
+    --primary: #0EA5E9;
+    --primary-glow: rgba(14, 165, 233, 0.15);
     --muted: #475569;
     --card-border: var(--glass-border);
     --card: var(--glass-bg);
   }
 
-  [data-theme="dark"] {
-    /* Premium Glassmorphism Design System - Dark Theme */
-    --background: #020617;
-    --background-gradient: radial-gradient(circle at 100% 100%, #020617 0%, #0f172a 50%, #1e293b 100%);
-    --foreground: #f8fafc;
+  [data-theme="light"] {
+    /* Oceanic Professional Design System - Light */
+    --background: #f8fafc;
+    --background-gradient: radial-gradient(circle at 100% 100%, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
+    --foreground: #020617;
     
-    --glass-bg: rgba(8, 15, 37, 0.45);
-    --glass-border: rgba(99, 179, 237, 0.12);
-    --glass-inner-glow: inset 0 0 20px rgba(37, 99, 235, 0.05), inset 0 1px 0 rgba(255,255,255,0.07);
-    --glass-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(99,179,237,0.04);
-    --glass-reflection: linear-gradient(135deg, rgba(147, 197, 253, 0.1) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0) 100%);
-    --glass-blur: blur(32px);
+    --glass-bg: rgba(255, 255, 255, 0.75);
+    --glass-border: rgba(15, 23, 42, 0.12);
+    --glass-inner-glow: inset 0 0 20px rgba(255, 255, 255, 0.5);
+    --glass-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+    --glass-reflection: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, 0) 100%);
+    --glass-blur: blur(20px);
     
-    --primary: #3b82f6;
-    --primary-glow: rgba(59, 130, 246, 0.3);
-    --muted: #94a3b8;
+    --primary: #0EA5E9;
+    --primary-glow: rgba(14, 165, 233, 0.15);
+    --muted: #475569;
     --card-border: var(--glass-border);
     --card: var(--glass-bg);
   }
@@ -155,11 +155,11 @@
     inset: -20%;
     background-color: var(--background);
     background-image: 
-      radial-gradient(at 0% 0%, rgba(30, 58, 138, 0.25) 0, transparent 50%), 
-      radial-gradient(at 50% 0%, rgba(15, 23, 42, 0.3) 0, transparent 50%),
-      radial-gradient(at 100% 0%, rgba(29, 78, 216, 0.2) 0, transparent 50%),
-      radial-gradient(at 0% 100%, rgba(30, 58, 138, 0.25) 0, transparent 50%),
-      radial-gradient(at 100% 100%, rgba(37, 99, 235, 0.15) 0, transparent 50%);
+      radial-gradient(at 0% 0%, rgba(255, 255, 255, 0.8) 0, transparent 50%), 
+      radial-gradient(at 50% 0%, rgba(226, 232, 240, 0.6) 0, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(59, 130, 246, 0.1) 0, transparent 50%),
+      radial-gradient(at 0% 100%, rgba(241, 245, 249, 0.8) 0, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.05) 0, transparent 50%);
     background-size: 100% 100%;
     transform: translate(calc(var(--mouse-x, 0) * -15px), calc(var(--mouse-y, 0) * -15px));
     transition: transform 0.6s cubic-bezier(0.2, 0, 0.2, 1);
@@ -184,7 +184,7 @@
     left: 50%;
     width: 900px;
     height: 900px;
-    background: radial-gradient(circle, rgba(37, 99, 235, 0.25) 0%, rgba(99, 102, 241, 0.1) 40%, transparent 70%);
+    background: radial-gradient(circle, rgba(239, 68, 68, 0.2) 0%, rgba(18, 18, 27, 0.1) 40%, transparent 70%);
     transform: translate(-50%, -50%);
     filter: blur(60px);
     animation: glow-breathe 8s infinite ease-in-out;
@@ -198,7 +198,7 @@
     left: 50%;
     width: 200px;
     height: 200px;
-    background: radial-gradient(circle, rgba(96, 165, 250, 0.4) 0%, rgba(59,130,246,0.1) 50%, transparent 70%);
+    background: radial-gradient(circle, rgba(239, 68, 68, 0.35) 0%, rgba(239, 68, 68, 0.1) 50%, transparent 70%);
     transform: translate(-50%, -50%);
     animation: chip-pulse 4s infinite ease-in-out;
     pointer-events: none;
@@ -211,9 +211,9 @@
     background: linear-gradient(
       105deg,
       transparent 30%,
-      rgba(147, 197, 253, 0.02) 43%,
-      rgba(147, 197, 253, 0.12) 50%,
-      rgba(147, 197, 253, 0.02) 57%,
+      rgba(239, 68, 68, 0.02) 43%,
+      rgba(239, 68, 68, 0.12) 50%,
+      rgba(239, 68, 68, 0.02) 57%,
       transparent 70%
     );
     background-size: 300% 100%;
@@ -228,7 +228,7 @@
     right: -5%;
     width: 500px;
     height: 500px;
-    background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(239, 68, 68, 0.15) 0%, transparent 70%);
     filter: blur(80px);
     animation: glow-breathe 12s infinite ease-in-out reverse;
     pointer-events: none;
@@ -277,22 +277,37 @@
 
   [data-theme="dark"] .circuit-container {
     opacity: 1;
-    background: #020617;
+    background: #0f172a;
   }
 
   [data-theme="dark"] .circuit-bg {
-    background-color: #020617;
+    background-color: #0f172a;
     background-image: 
-      radial-gradient(at 0% 0%, rgba(30, 58, 138, 0.25) 0, transparent 50%), 
-      radial-gradient(at 50% 0%, rgba(15, 23, 42, 0.3) 0, transparent 50%),
-      radial-gradient(at 100% 0%, rgba(29, 78, 216, 0.2) 0, transparent 50%),
-      radial-gradient(at 0% 100%, rgba(30, 58, 138, 0.25) 0, transparent 50%),
-      radial-gradient(at 100% 100%, rgba(37, 99, 235, 0.15) 0, transparent 50%);
+      radial-gradient(at 0% 0%, rgba(15, 23, 42, 0.45) 0, transparent 50%), 
+      radial-gradient(at 50% 0%, rgba(30, 41, 59, 0.3) 0, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(14, 165, 233, 0.2) 0, transparent 50%),
+      radial-gradient(at 0% 100%, rgba(15, 23, 42, 0.45) 0, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(14, 165, 233, 0.15) 0, transparent 50%);
   }
 
   [data-theme="dark"] {
+    /* Oceanic Professional Design System - Dark */
+    --background: #0f172a;
+    --background-gradient: radial-gradient(circle at 100% 100%, #0f172a 0%, #1e293b 50%, #334155 100%);
     --foreground: #f8fafc;
     --muted: #94a3b8;
+    --primary: #0ea5e9;
+    --primary-glow: rgba(14, 165, 233, 0.3);
+
+    --glass-bg: rgba(15, 23, 42, 0.65);
+    --glass-border: rgba(14, 165, 233, 0.15);
+    --glass-inner-glow: inset 0 0 20px rgba(14, 165, 233, 0.05), inset 0 1px 0 rgba(255,255,255,0.07);
+    --glass-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(14,165,233,0.04);
+    --glass-reflection: linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0) 100%);
+    --glass-blur: blur(32px);
+    
+    --card-border: var(--glass-border);
+    --card: var(--glass-bg);
   }
 
   [data-theme="light"] {

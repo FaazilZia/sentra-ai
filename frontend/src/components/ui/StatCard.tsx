@@ -6,6 +6,7 @@ interface StatCardProps {
   value?: string | number;
   icon: LucideIcon;
   iconClassName?: string;
+  className?: string;
   trend?: string;
   industryRate?: string;
   sparkline?: number[];
@@ -16,6 +17,7 @@ export function StatCard({
   value = '---',
   icon: Icon,
   iconClassName,
+  className,
   trend = 'Waiting for data',
   industryRate = 'Industry Rate: 90%',
   sparkline = [24, 42, 34, 56, 48, 68, 61, 78],
@@ -30,7 +32,7 @@ export function StatCard({
     .join(' ');
 
   return (
-    <div className="group relative flex h-full min-h-[148px] flex-col justify-between overflow-hidden rounded-lg border border-slate-200 bg-white p-3 shadow-[0_4px_16px_rgba(15,23,42,0.05)] transition-all hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(15,23,42,0.08)]">
+    <div className={cn("group relative flex h-full min-h-[148px] flex-col justify-between overflow-hidden rounded-lg border border-slate-200 bg-white p-3 shadow-[0_4px_16px_rgba(15,23,42,0.05)] transition-all hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(15,23,42,0.08)]", className)}>
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="text-xs font-medium leading-4 text-slate-500">{title}</p>

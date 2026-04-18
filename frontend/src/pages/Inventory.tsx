@@ -4,6 +4,7 @@ import { SurfaceCard } from '../components/ui/SurfaceCard';
 import { fetchPolicies, fetchTenant, PolicyResponse, TenantResponse } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { motion } from 'framer-motion';
+import { cn } from '../lib/utils';
 
 export default function Inventory() {
   const { user } = useAuth();
@@ -16,7 +17,7 @@ export default function Inventory() {
       try {
         const [t, p] = await Promise.all([fetchTenant(user?.tenant_id || ''), fetchPolicies()]);
         setTenant(t);
-        setPolicies(p);
+        setPolicies(p.items);
       } catch (e) {
         console.error(e);
       } finally {
@@ -118,6 +119,3 @@ export default function Inventory() {
   );
 }
 
-function cn(...classes: string[]) {
-    return classes.filter(Boolean).join(' ');
-}

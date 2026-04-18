@@ -68,7 +68,7 @@ const THREAT_LIST = [
 
 const DATA_INVENTORY = [
   { name: 'SSN', value: 400, color: '#f43f5e' },
-  { name: 'Email', value: 300, color: '#3b82f6' },
+  { name: 'Email', value: 300, color: '#0ea5e9' },
   { name: 'Credit Cards', value: 300, color: '#a855f7' },
   { name: 'Names', value: 200, color: '#10b981' },
 ];

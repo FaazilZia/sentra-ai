@@ -45,9 +45,24 @@ export interface PolicyResponse {
   id: string;
   name: string;
   description: string;
-  severity: string;
+  enabled: boolean;
+  priority: number;
+  effect: string;
+  status: 'published' | 'draft' | 'archived';
+  current_version: number;
+  published_version?: number | null;
+  scope: {
+    actions?: string[];
+    resources?: string[];
+    [key: string]: any;
+  };
   is_active: boolean;
   version: string;
+}
+
+export interface PolicyListResponse {
+  items: PolicyResponse[];
+  total: number;
 }
 
 export interface PolicyHealthResponse {
@@ -209,8 +224,8 @@ export function fetchTenant(tenantId: string): Promise<any> {
 /**
  * POLICY ENDPOINTS (Future Node implementation)
  */
-export function fetchPolicies(): Promise<any> {
-  return apiRequest<any>('/policies');
+export function fetchPolicies(): Promise<PolicyListResponse> {
+  return apiRequest<PolicyListResponse>('/policies');
 }
 
 export function fetchPolicyVersions(policyId: string): Promise<any[]> {
