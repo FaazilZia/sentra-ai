@@ -7,6 +7,12 @@ Traditional tools monitor and report issues *after* they happen.
 
 ---
 
+## 🔗 Live Links
+- **Governance Dashboard**: [https://sentra-ai.vercel.app](https://sentra-ai.vercel.app)
+- **API Documentation**: [https://sentra-backend-node.onrender.com/api/v1](https://sentra-backend-node.onrender.com/api/v1)
+
+---
+
 # ⚠️ Why This Matters
 
 AI agents today can:
@@ -55,7 +61,7 @@ graph LR
 * 🔐 **Prevent** data leaks and compliance violations
 * 📊 **Visibility** into AI behavior and intent
 * ⚡ **Simple** developer integration (< 5 mins)
-* 🏢 **Enterprise-ready** multi-tenant architecture
+* 🏢 **Enterprise-ready** multi-tenant (Company-based) architecture
 
 ---
 
@@ -91,7 +97,7 @@ await sentra.safeAction({
 # 🔗 API Example
 
 ```http
-POST /ai/check-action
+POST /api/v1/ai/check-action
 Authorization: Bearer YOUR_API_KEY
 ```
 
@@ -139,36 +145,13 @@ Control AI access to production APIs and internal systems.
 
 ---
 
-# 🔗 Integration Examples
-
-Located in `/examples`:
-* **OpenAI Agent**: Intercepting LLM tool calls.
-* **API Protection**: Validating external data uploads.
-* **Email Security**: Blocking unauthorized data exfiltration.
-
----
-
-# 📊 Dashboard Features
-* Real-time AI action monitoring
-* Blocked action alerts
-* Dynamic risk scoring
-* Business impact insights
-* Regulatory compliance mapping
-
----
-
-# 🧠 One-Line
-> “We don’t just monitor AI — we control what it’s allowed to do.”
-
----
-
 # 📁 Project Structure
 ```text
 Sentra AI/
 ├── packages/sdk/       # TypeScript Production SDK
 ├── examples/           # Real-world integration scripts
-├── backend/            # Governance & Decision Engine
-├── frontend/           # Real-time Security Dashboard
+├── backend/            # Governance & Decision Engine (Node.js)
+├── frontend/           # Real-time Security Dashboard (React + Vite)
 └── README.md
 ```
 
