@@ -55,13 +55,24 @@ graph LR
 
 ---
 
+---
+
+# 🎨 Latest Update: Premium Governance Redesign (v1.2.0)
+**The Sentra AI Dashboard has been fully modernized into a high-end, real-time AI Security Control Panel.**
+
+*   **⚡ Real-time Control Center**: Live interception feed with 5s polling and WebSocket support.
+*   **⚖️ Business ROI Monitoring**: Active mapping of blocked violations to estimated compliance savings.
+*   **🔍 Decision Timelines**: Visual stepper UI showing exactly how every AI action was evaluated.
+*   **🔐 Compliance Guardrails**: Native tagging for GDPR, HIPAA, and SOC2 on all intercepted actions.
+
+---
+
 # 💡 What You Get
 
-* 🛑 **Block** unsafe AI actions in real-time
-* 🔐 **Prevent** data leaks and compliance violations
-* 📊 **Visibility** into AI behavior and intent
-* ⚡ **Simple** developer integration (< 5 mins)
-* 🏢 **Enterprise-ready** multi-tenant (Company-based) architecture
+* 🛑 **Real-Time Blocking**: Intercept and neutralize unsafe AI actions *before* they execute.
+* 📊 **Security Score (0-100)**: Instant infrastructure health visualization.
+* 🛡️ **Before vs After Logic**: Compare Sentra's value against standard unprotected AI runtimes.
+* 🏢 **Enterprise Ready**: Multi-tenant architecture with robust RBAC and company-centric scoping.
 
 ---
 
