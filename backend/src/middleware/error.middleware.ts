@@ -1,29 +1,28 @@
 import { Request, Response, NextFunction } from 'express';
 import logger from '../utils/logger';
-
 import { ZodError } from 'zod';
 
 export const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
-  const requestId = req.context?.requestId;
-  
+  const requestId = (req as any).context?.requestId;
+
   if (err instanceof ZodError) {
     return res.status(400).json({
       success: false,
       message: 'Validation Error',
-      requestId,
-      errors: err.issues.map((e: any) => ({ path: e.path.join('.'), message: e.message }))
+      errors: err.issues,
+      requestId
     });
   }
 
-  logger.error(err.message, { stack: err.stack, requestId });
+  logger.error(`[${requestId}] Unhandled Error:`, err);
 
-  const statusCode = err.statusCode || 500;
+  const status = err.status || 500;
   const message = err.message || 'Internal Server Error';
 
-  res.status(statusCode).json({
+  res.status(status).json({
     success: false,
     message,
     requestId,
-    data: process.env.NODE_ENV === 'development' ? { stack: err.stack } : {},
+    // stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
   });
 };

@@ -7,15 +7,15 @@ export interface PolicyEvaluation {
   matchedPolicy?: string;
 }
 
-export const evaluatePolicy = async (agent: string, action: string, tenantId: string): Promise<PolicyEvaluation> => {
+export const evaluatePolicy = async (agent: string, action: string, companyId: string): Promise<PolicyEvaluation> => {
   const lowercaseAction = action.toLowerCase();
   
-  const cacheKey = `policy:${tenantId}:${agent}`;
+  const cacheKey = `policy:${companyId}:${agent}`;
   
   const policy = await cacheService.getOrSet(cacheKey, () => 
     prisma.policies.findFirst({
       where: {
-        tenant_id: tenantId,
+        companyId: companyId,
         name: { contains: agent },
         enabled: true
       }
@@ -26,6 +26,23 @@ export const evaluatePolicy = async (agent: string, action: string, tenantId: st
     return { allowed: true }; // Default allow if no policy exists (Risk Engine will catch high risk)
   }
 
+  // 1. Check for modern rule-based conditions if present
+  const rule = (policy.rule as any) || {};
+  if (rule.conditions) {
+    // Basic implementation of rule evaluation
+    // rule.conditions might look like { must_not_include: ['delete_record'] }
+    if (rule.conditions.blocked_actions && Array.isArray(rule.conditions.blocked_actions)) {
+      if (rule.conditions.blocked_actions.includes(lowercaseAction)) {
+        return {
+          allowed: false,
+          reason: `Policy Blocked: ${policy.name} (Rule)`,
+          matchedPolicy: policy.name
+        };
+      }
+    }
+  }
+
+  // 2. Legacy conditions support
   const conditions = (policy.conditions as any) || {};
   const allowedActions = Array.isArray(conditions.allowed_actions) ? conditions.allowed_actions : [];
   const blockedActions = Array.isArray(conditions.blocked_actions) ? conditions.blocked_actions : [];
@@ -50,3 +67,4 @@ export const evaluatePolicy = async (agent: string, action: string, tenantId: st
 
   return { allowed: true, matchedPolicy: policy.name };
 };
+

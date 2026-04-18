@@ -3,13 +3,15 @@ import { evaluatePolicy } from './policyEngine';
 
 export interface Decision {
   status: 'allowed' | 'blocked';
-  risk_score: 'low' | 'medium' | 'high';
-  reason?: string;
+  risk: 'low' | 'medium' | 'high';
+  reason: string;
   impact: string;
   compliance: string[];
-  explanation: string;
-  confidence: number;
-  timeline: any[];
+  
+  // Internal/extended fields
+  explanation?: string;
+  confidence?: number;
+  timeline?: any[];
 }
 
 const COMPLIANCE_MAP: Record<string, string[]> = {
@@ -34,21 +36,21 @@ const IMPACT_MAP: Record<string, string> = {
   'update_config': 'Prevents privilege escalation and infrastructure drift'
 };
 
-export const makeDecision = async (agent: string, action: string, tenantId: string, metadata: any = {}): Promise<Decision> => {
+export const makeDecision = async (agent: string, action: string, companyId: string, metadata: any = {}): Promise<Decision> => {
   const lowercaseAction = action.toLowerCase();
   
   // 1. Evaluate Risk
-  const risk = evaluateRisk(action, metadata);
+  const riskResult = evaluateRisk(action, metadata);
   
   // 2. Evaluate Policy
-  const policyResult = await evaluatePolicy(agent, action, tenantId);
+  const policyResult = await evaluatePolicy(agent, action, companyId);
 
   // 3. Synthesize Decision
   let status: 'allowed' | 'blocked' = policyResult.allowed ? 'allowed' : 'blocked';
-  let reason = policyResult.reason || '';
+  let reason = policyResult.reason || (status === 'allowed' ? 'Authorized by policy.' : 'Violates governance policy.');
 
   // Fail-closed for high risk if no policy matched
-  if (status === 'allowed' && risk.score === 'high' && !policyResult.matchedPolicy) {
+  if (status === 'allowed' && riskResult.score === 'high' && !policyResult.matchedPolicy) {
     status = 'blocked';
     reason = 'High risk action detected without an explicit authorizing policy.';
   }
@@ -58,20 +60,20 @@ export const makeDecision = async (agent: string, action: string, tenantId: stri
   const confidence = Number((Math.random() * (0.98 - 0.88) + 0.88).toFixed(2));
   
   const explanation = status === 'blocked' 
-    ? `Sentra blocked "${lowercaseAction}" because it triggered a ${risk.score}-risk pattern (${risk.triggers.join('; ')}) and violated active governance rules.`
-    : `Action "${lowercaseAction}" allowed. Risk is ${risk.score} and it aligns with "${policyResult.matchedPolicy || 'Default'}" policy boundaries.`;
+    ? `Sentra blocked "${lowercaseAction}" because it triggered a ${riskResult.score}-risk pattern (${riskResult.triggers.join('; ')}) and violated active governance rules.`
+    : `Action "${lowercaseAction}" allowed. Risk is ${riskResult.score} and it aligns with "${policyResult.matchedPolicy || 'Default'}" policy boundaries.`;
 
   const timeline = [
     { step: 'Agent Intent', status: 'complete', icon: 'zap', description: `AI Agent ${agent} initiated ${action}` },
-    { step: 'Risk Engine', status: 'complete', icon: 'alert', description: `Risk evaluation: ${risk.score} (${risk.triggers.length} triggers)` },
+    { step: 'Risk Engine', status: 'complete', icon: 'alert', description: `Risk evaluation: ${riskResult.score} (${riskResult.triggers.length} triggers)` },
     { step: 'Policy Engine', status: 'complete', icon: 'shield', description: policyResult.matchedPolicy ? `Matched: ${policyResult.matchedPolicy}` : 'Using default safeguards' },
     { step: 'Final Decision', status: 'complete', icon: status === 'blocked' ? 'x' : 'check', description: `Decision: ${status.toUpperCase()}` }
   ];
 
   return {
     status,
-    risk_score: risk.score,
-    reason: reason || undefined,
+    risk: riskResult.score,
+    reason,
     impact,
     compliance,
     explanation,
@@ -79,3 +81,4 @@ export const makeDecision = async (agent: string, action: string, tenantId: stri
     timeline
   };
 };
+

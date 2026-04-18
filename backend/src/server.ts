@@ -17,10 +17,16 @@ const io = new Server(httpServer, {
 io.on('connection', (socket) => {
   logger.info(`Client connected to real-time feed: ${socket.id}`);
   
+  socket.on('join_company', (companyId) => {
+    socket.join(`company_${companyId}`);
+    logger.info(`Client ${socket.id} joined room: company_${companyId}`);
+  });
+
   socket.on('disconnect', () => {
     logger.info(`Client disconnected: ${socket.id}`);
   });
 });
+
 
 export { io };
 

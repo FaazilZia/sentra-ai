@@ -13,7 +13,7 @@ export interface AppUser {
   fullName: string;
   full_name?: string; // Legacy alias for compatibility
   role: string;
-  tenant_id?: string;
+  companyId?: string;
   is_active?: boolean;
   created_at?: string;
   updated_at?: string;

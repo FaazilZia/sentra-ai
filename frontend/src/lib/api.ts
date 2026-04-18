@@ -26,7 +26,7 @@ export interface AuthUser {
   email: string;
   fullName: string;
   role: string;
-  tenant_id?: string;
+  companyId?: string;
   is_active?: boolean;
   created_at?: string;
   updated_at?: string;
@@ -70,7 +70,7 @@ export interface PolicyHealthResponse {
   checks: Array<Record<string, unknown>>;
 }
 
-export interface TenantResponse {
+export interface CompanyResponse {
   id: string;
   name: string;
   slug: string;
@@ -227,8 +227,8 @@ export function fetchCurrentUser(): Promise<AuthUser> {
   return apiRequest<AuthUser>('/user/me');
 }
 
-export function fetchTenant(tenantId: string): Promise<any> {
-  return apiRequest<any>(`/tenants/${tenantId}`);
+export function fetchCompany(companyId: string): Promise<any> {
+  return apiRequest<any>(`/companies/${companyId}`);
 }
 
 /**

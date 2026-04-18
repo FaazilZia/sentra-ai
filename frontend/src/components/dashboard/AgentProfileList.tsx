@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bot, ShieldAlert, BarChart3, MoreVertical } from 'lucide-react';
+import { Bot, ShieldAlert, BarChart3 } from 'lucide-react';
 
 interface AgentStats {
   id: string;

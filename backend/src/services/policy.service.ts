@@ -3,61 +3,62 @@ import { makeDecision, Decision } from './decisionEngine';
 
 export type CheckPermissionResult = Decision;
 
-export const checkPermission = async (agent: string, action: string, tenantId: string, metadata: any = {}): Promise<CheckPermissionResult> => {
-  return await makeDecision(agent, action, tenantId, metadata);
+export const checkPermission = async (agent: string, action: string, companyId: string, metadata: any = {}): Promise<CheckPermissionResult> => {
+  return await makeDecision(agent, action, companyId, metadata);
 };
 
 export interface LogActivityData {
-  tenantId: string;
-  agentId: string;
+  companyId: string;
+  agent: string;
   action: string;
   status: string;
-  riskScore: string;
+  risk: string;
   reason?: string;
   impact?: string;
   explanation?: string;
   confidence?: number;
   timeline?: any;
-  compliance?: string[];
+  compliance?: any;
   metadata?: any;
   requestId?: string;
-  latencyMs?: number;
+  latency?: number;
 }
 
 export const logActivity = async (data: LogActivityData) => {
-  return await (prisma as any).ai_activity_logs.create({
+  return await prisma.logs.create({
     data: {
-      tenant_id: data.tenantId,
-      agent_id: data.agentId,
+      companyId: data.companyId,
+      agent: data.agent,
       action: data.action,
       status: data.status,
-      risk_score: data.riskScore,
+      risk: data.risk,
       reason: data.reason || null,
       impact: data.impact || null,
       explanation: data.explanation || null,
       confidence: data.confidence || null,
       timeline: data.timeline || null,
-      compliance: data.compliance || [],
+      compliance: data.compliance || {},
       metadata: data.metadata || {},
-      request_id: data.requestId || null,
-      latency_ms: data.latencyMs || null
+      requestId: data.requestId || null,
+      latency: data.latency || null
     }
   });
 };
 
-export const calculateSecurityScore = async (tenantId: string) => {
-  const logs = await prisma.ai_activity_logs.findMany({
-    where: { tenant_id: tenantId },
+export const calculateSecurityScore = async (companyId: string) => {
+  const activityLogs = await prisma.logs.findMany({
+    where: { companyId: companyId },
     take: 100,
-    orderBy: { created_at: 'desc' }
+    orderBy: { timestamp: 'desc' }
   });
 
-  if (logs.length === 0) return 100;
+  if (activityLogs.length === 0) return 100;
 
-  const highRiskBlocked = logs.filter(l => l.risk_score === 'high' && l.status === 'blocked').length;
-  const highRiskAllowed = logs.filter(l => l.risk_score === 'high' && l.status === 'allowed').length;
+  const highRiskBlocked = activityLogs.filter(l => l.risk === 'high' && l.status === 'blocked').length;
+  const highRiskAllowed = activityLogs.filter(l => l.risk === 'high' && l.status === 'allowed').length;
 
   let score = 100 - (highRiskAllowed * 5) + (highRiskBlocked * 2);
   
   return Math.min(Math.max(score, 0), 100);
 };
+

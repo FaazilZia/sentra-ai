@@ -2,6 +2,7 @@ export interface SentraConfig {
   apiKey: string;
   baseUrl?: string;
   maxRetries?: number;
+  timeout?: number;
 }
 
 export interface ActionRequest {
@@ -12,15 +13,16 @@ export interface ActionRequest {
 
 export interface ActionResponse {
   status: 'allowed' | 'blocked';
-  risk_score: 'low' | 'medium' | 'high';
-  reason?: string;
-  impact?: string;
-  compliance?: Record<string, any>;
+  risk: 'low' | 'medium' | 'high';
+  reason: string;
+  impact: string;
+  compliance: string[];
   explanation?: string;
+  confidence?: number;
 }
 
 export class SentraError extends Error {
-  constructor(message: string, public readonly originalError?: any) {
+  constructor(message: string, public readonly status?: number, public readonly data?: any) {
     super(message);
     this.name = 'SentraError';
   }
@@ -30,11 +32,13 @@ export class Sentra {
   private readonly apiKey: string;
   private readonly baseUrl: string;
   private readonly maxRetries: number;
+  private readonly timeout: number;
 
   constructor(config: SentraConfig) {
     this.apiKey = config.apiKey;
     this.baseUrl = (config.baseUrl || 'https://api.sentra.ai/api/v1').replace(/\/$/, '');
     this.maxRetries = config.maxRetries ?? 3;
+    this.timeout = config.timeout ?? 5000;
   }
 
   /**
@@ -44,6 +48,9 @@ export class Sentra {
     let lastError: any;
 
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+
       try {
         const response = await fetch(`${this.baseUrl}/ai/check-action`, {
           method: 'POST',
@@ -51,32 +58,43 @@ export class Sentra {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${this.apiKey}`
           },
-          body: JSON.stringify(request)
+          body: JSON.stringify(request),
+          signal: controller.signal
         });
 
+        clearTimeout(timeoutId);
+
         if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`API Error (${response.status}): ${errorText}`);
+          const errorData = await response.json().catch(() => ({}));
+          throw new SentraError(`API Error (${response.status})`, response.status, errorData);
         }
 
-        return await response.json();
+        const json = await response.json();
+        return json.data;
       } catch (error: any) {
+        clearTimeout(timeoutId);
         lastError = error;
+
+        if (error.name === 'AbortError') {
+          console.warn(`[Sentra] Request timed out (attempt ${attempt + 1})`);
+        }
+
         if (attempt < this.maxRetries) {
-          // Exponential backoff
-          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 100));
+          const delay = Math.pow(2, attempt) * 200;
+          await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }
       }
     }
 
     // Fail closed (block) if the security system is unreachable after retries
-    console.warn(`[Sentra] Security check failed after ${this.maxRetries} retries. Failing closed.`, lastError);
+    console.error(`[Sentra] Security check failed after ${this.maxRetries} retries. Failing closed.`, lastError);
     return {
       status: 'blocked',
-      risk_score: 'high',
-      reason: 'Governance system unreachable',
-      impact: 'Execution prevented due to security timeout'
+      risk: 'high',
+      reason: 'Governance system unreachable or timed out',
+      impact: 'Execution prevented to ensure safety',
+      compliance: ['Safety Fallback']
     };
   }
 
@@ -94,7 +112,7 @@ export class Sentra {
         const result = await onAllowed();
         return { success: true, result, governance };
       } catch (error: any) {
-        throw new SentraError('Action execution failed despite being allowed', error);
+        throw new SentraError('Action execution failed despite being allowed', 500, error);
       }
     } else {
       console.warn(`[Sentra Blocked] Action: ${request.action}, Reason: ${governance.reason}`);
@@ -102,3 +120,4 @@ export class Sentra {
     }
   }
 }
+

@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    /* Triggering TS Server Refresh */
     "target": "ES2020",
     "module": "Node16",
     "moduleResolution": "Node16",

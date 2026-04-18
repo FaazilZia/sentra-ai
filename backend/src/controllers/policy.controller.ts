@@ -1,20 +1,20 @@
 import { Response, NextFunction } from 'express';
 import prisma from '../config/db';
-import { resolveTenantId } from '../utils/tenant';
+import { resolveCompanyId } from '../utils/company';
 
 export const getPolicies = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const tenantId = req.user.tenant_id || req.user.tenantId; // Handle both cases
+    const companyId = req.user.companyId; 
     
-    // If tenant_id is missing from token (e.g. fresh register), find it from user
-    let actualTenantId = tenantId;
-    if (!actualTenantId) {
+    // If companyId is missing from token (e.g. fresh register), find it from user
+    let actualCompanyId = companyId;
+    if (!actualCompanyId) {
       const user = await prisma.users.findUnique({ where: { id: req.user.id } });
-      actualTenantId = user?.tenant_id;
+      actualCompanyId = user?.companyId;
     }
 
     const policies = await prisma.policies.findMany({
-      where: { tenant_id: actualTenantId },
+      where: { companyId: actualCompanyId },
       orderBy: { priority: 'asc' },
     });
 
@@ -50,20 +50,20 @@ export const getPolicyHealth = async (req: any, res: Response, next: NextFunctio
 export const getPolicyVersions = async (req: any, res: Response, next: NextFunction) => {
   try {
     const policyId = String(req.params['policyId'] ?? '');
-    const tenantId = await resolveTenantId(req);
-    if (!tenantId) {
+    const companyId = await resolveCompanyId(req);
+    if (!companyId) {
       return res.status(200).json({ success: true, data: [] });
     }
 
     const policy = await prisma.policies.findFirst({
-      where: { id: policyId, tenant_id: tenantId },
+      where: { id: policyId, companyId: companyId },
     });
     if (!policy) {
       return res.status(404).json({ success: false, message: 'Policy not found' });
     }
 
     const versions = await prisma.policy_versions.findMany({
-      where: { policy_id: policyId, tenant_id: tenantId },
+      where: { policy_id: policyId, companyId: companyId },
       orderBy: { version: 'desc' },
     });
 

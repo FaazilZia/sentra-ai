@@ -1,7 +1,7 @@
 import { Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import prisma from '../config/db';
-import { resolveTenantId } from '../utils/tenant';
+import { resolveCompanyId } from '../utils/company';
 import { serializeIncident } from '../utils/incidentSerialize';
 import logger from '../utils/logger';
 
@@ -10,7 +10,7 @@ const SCAN_TICK_MS = 500;
 const SOURCES_SCANNED_DEFAULT = 15;
 const PII_LABELS = ['EMAIL', 'CREDIT_CARD', 'PHONE', 'ADDRESS'] as const;
 
-async function finalizeScanJob(tenantId: string, jobId: string, incidentsDetected: number) {
+async function finalizeScanJob(companyId: string, jobId: string, incidentsDetected: number) {
   try {
     const SourcesScanned = 15;
     
@@ -19,7 +19,7 @@ async function finalizeScanJob(tenantId: string, jobId: string, incidentsDetecte
       await prisma.incidents.create({
         data: {
           id: crypto.randomUUID(),
-          tenant_id: tenantId,
+          companyId: companyId,
           user_id: null,
           agent_id: 'deep-scan-engine',
           action: 'automated_policy_scan',
@@ -66,14 +66,14 @@ export const getIncidents = async (req: any, res: Response, next: NextFunction) 
     const statusParam = req.query['status'];
     const status = statusParam ? String(statusParam) : undefined;
 
-    const tenantId = await resolveTenantId(req);
-    if (!tenantId) {
+    const companyId = await resolveCompanyId(req);
+    if (!companyId) {
       return res.status(200).json([]);
     }
 
     const incidents = await prisma.incidents.findMany({
       where: {
-        tenant_id: tenantId,
+        companyId: companyId,
         ...(status ? { status } : {}),
       },
       orderBy: { created_at: 'desc' },
@@ -89,14 +89,14 @@ export const getIncidents = async (req: any, res: Response, next: NextFunction) 
 export const getIncidentById = async (req: any, res: Response, next: NextFunction) => {
   try {
     const id = String(req.params['id'] ?? '');
-    const tenantId = await resolveTenantId(req);
-    if (!tenantId) {
+    const companyId = await resolveCompanyId(req);
+    if (!companyId) {
       return res.status(404).json({ message: 'Incident not found' });
     }
 
     const incident = await prisma.incidents.findUnique({ where: { id } });
 
-    if (!incident || incident.tenant_id !== tenantId) {
+    if (!incident || incident.companyId !== companyId) {
       return res.status(404).json({ message: 'Incident not found' });
     }
 
@@ -109,14 +109,14 @@ export const getIncidentById = async (req: any, res: Response, next: NextFunctio
 export const updateIncidentStatus = async (req: any, res: Response, next: NextFunction) => {
   try {
     const id = String(req.params['id'] ?? '');
-    const tenantId = await resolveTenantId(req);
-    if (!tenantId) {
+    const companyId = await resolveCompanyId(req);
+    if (!companyId) {
       return res.status(404).json({ message: 'Incident not found' });
     }
     const { status } = req.body as { status: string };
 
     const existing = await prisma.incidents.findUnique({ where: { id } });
-    if (!existing || existing.tenant_id !== tenantId) {
+    if (!existing || existing.companyId !== companyId) {
       return res.status(404).json({ message: 'Incident not found' });
     }
 
@@ -142,18 +142,18 @@ export const updateIncidentStatus = async (req: any, res: Response, next: NextFu
   }
 };
 
-/** Audit / remediation trail: resolved or non-unresolved incidents for the tenant */
+/** Audit / remediation trail: resolved or non-unresolved incidents for the company */
 export const getIncidentHistory = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const tenantId = await resolveTenantId(req);
-    if (!tenantId) {
+    const companyId = await resolveCompanyId(req);
+    if (!companyId) {
       return res.status(200).json({ success: true, data: { items: [] } });
     }
 
     // Explicitly typing the rows to help IDE with relation inference
     const rows = await prisma.incidents.findMany({
       where: {
-        tenant_id: tenantId,
+        companyId: companyId,
         OR: [{ status: { not: 'unresolved' } }, { resolved_at: { not: null } }],
       },
       orderBy: [{ resolved_at: 'desc' }, { updated_at: 'desc' }],
@@ -163,8 +163,7 @@ export const getIncidentHistory = async (req: any, res: Response, next: NextFunc
           select: { full_name: true, email: true },
         },
       },
-    }) as Array<any>; // Use any as a temporary bridge to avoid IDE inference lock-up if necessary, 
-    // but better to use PrismaTypes if possible. For now, let's keep it standard but ensure the IDE sees it.
+    }) as Array<any>; 
 
     const items = rows.map((row) => ({
       id: row.id,
@@ -192,13 +191,13 @@ export const logIncident = async (req: any, res: Response, next: NextFunction) =
       details, prompt_excerpt, response_excerpt, metadata 
     } = req.body;
 
-    let tenant_id = await resolveTenantId(req);
+    let companyId = await resolveCompanyId(req);
     
-    // If tenant resolution fails (e.g. invalid API key or session), 
+    // If company resolution fails (e.g. invalid API key or session), 
     // we should not proceed in production.
-    if (!tenant_id) {
-       logger.warn('logIncident: Failed to resolve tenantId. Falling back to default for safety (check auth middleware).');
-       tenant_id = '00000000-0000-0000-0000-000000000001'; 
+    if (!companyId) {
+       logger.warn('logIncident: Failed to resolve companyId. Falling back to default for safety (check auth middleware).');
+       companyId = '00000000-0000-0000-0000-000000000001'; 
     }
 
     const isServiceAgent = req.user?.role === 'SERVICE_AGENT';
@@ -213,7 +212,7 @@ export const logIncident = async (req: any, res: Response, next: NextFunction) =
     const newIncident = await prisma.incidents.create({
       data: {
         id: crypto.randomUUID(),
-        tenant_id,
+        companyId,
         user_id: userId,
         agent_id: String(agent_id || 'unknown-agent'),
         action: String(action || 'detected'),
@@ -241,14 +240,14 @@ export const logIncident = async (req: any, res: Response, next: NextFunction) =
 
 export const triggerScan = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const tenantId = await resolveTenantId(req);
-    if (!tenantId) {
-      return res.status(400).json({ success: false, message: 'Tenant context required to run scan' });
+    const companyId = await resolveCompanyId(req);
+    if (!companyId) {
+      return res.status(400).json({ success: false, message: 'Company context required to run scan' });
     }
 
     // Check for existing processing job in DB
     const existingJob = await (prisma as any).scan_jobs.findFirst({
-      where: { tenant_id: tenantId, phase: 'PROCESSING' }
+      where: { companyId: companyId, phase: 'PROCESSING' }
     });
 
     if (existingJob) {
@@ -264,7 +263,7 @@ export const triggerScan = async (req: any, res: Response, next: NextFunction) =
     await (prisma as any).scan_jobs.create({
       data: {
         id: jobId,
-        tenant_id: tenantId,
+        companyId: companyId,
         phase: 'PROCESSING',
         progress: 0
       }
@@ -284,7 +283,7 @@ export const triggerScan = async (req: any, res: Response, next: NextFunction) =
 
       clearInterval(intervalId);
       const incidentsDetected = Math.floor(Math.random() * 6) + 1;
-      await finalizeScanJob(tenantId, jobId, incidentsDetected);
+      await finalizeScanJob(companyId, jobId, incidentsDetected);
     }, SCAN_TICK_MS);
 
     res.status(202).json({
@@ -298,8 +297,8 @@ export const triggerScan = async (req: any, res: Response, next: NextFunction) =
 
 export const getScanStatus = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const tenantId = await resolveTenantId(req);
-    if (!tenantId) {
+    const companyId = await resolveCompanyId(req);
+    if (!companyId) {
       return res.status(200).json({
         success: true,
         data: { status: 'IDLE', progress: 0, result: null },
@@ -307,7 +306,7 @@ export const getScanStatus = async (req: any, res: Response, next: NextFunction)
     }
 
     const job = await (prisma as any).scan_jobs.findFirst({
-      where: { tenant_id: tenantId },
+      where: { companyId: companyId },
       orderBy: { created_at: 'desc' }
     });
 

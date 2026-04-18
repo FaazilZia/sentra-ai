@@ -6,25 +6,25 @@ import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '.
 import logger from '../utils/logger';
 
 // Default tenant UUID — used when no tenant is specified
-const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001';
+const DEFAULT_COMPANY_ID = '00000000-0000-0000-0000-000000000001';
 
-// Ensure default tenant exists
-async function ensureDefaultTenant() {
+// Ensure default company exists
+async function ensureDefaultCompany() {
   try {
-    const existing = await prisma.tenants.findUnique({ where: { id: DEFAULT_TENANT_ID } });
+    const existing = await prisma.companies.findUnique({ where: { id: DEFAULT_COMPANY_ID } });
     if (!existing) {
-      await prisma.tenants.create({
+      await prisma.companies.create({
         data: {
-          id: DEFAULT_TENANT_ID,
+          id: DEFAULT_COMPANY_ID,
           name: 'Sentra AI',
           slug: 'sentra-ai',
           is_active: true,
         },
       });
-      logger.info('Default tenant created');
+      logger.info('Default company created');
     }
   } catch (err) {
-    logger.warn('Could not ensure default tenant:', err);
+    logger.warn('Could not ensure default company:', err);
   }
 }
 
@@ -37,7 +37,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
       return res.status(400).json({ success: false, message: 'User already exists' });
     }
 
-    await ensureDefaultTenant();
+    await ensureDefaultCompany();
 
     const passwordHash = await bcrypt.hash(password, 10);
 
@@ -49,7 +49,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
         full_name: fullName,
         role: role || 'USER',
         is_active: true,
-        tenant_id: DEFAULT_TENANT_ID,
+        companyId: DEFAULT_COMPANY_ID,
       },
     });
 
@@ -103,7 +103,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
           email: user.email,
           fullName: user.full_name,
           role,
-          tenant_id: user.tenant_id,
+          companyId: user.companyId,
           is_active: user.is_active,
         },
       },
@@ -151,7 +151,7 @@ export const getMe = async (req: any, res: Response, next: NextFunction) => {
         email: user.email,
         fullName: user.full_name,
         role: user.role || 'USER',
-        tenant_id: user.tenant_id,
+        companyId: user.companyId,
         is_active: user.is_active,
       },
     });

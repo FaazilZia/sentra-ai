@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.middleware';
-import { getTenantById } from '../controllers/tenant.controller';
+import { getTenantById } from '../controllers/company.controller';
 
 const router = Router();
 

@@ -10,7 +10,7 @@ import userRoutes from './routes/user.routes';
 import incidentRoutes from './routes/incident.routes';
 import consentRoutes from './routes/consent.routes';
 import policyRoutes from './routes/policy.routes';
-import tenantRoutes from './routes/tenant.routes';
+import companyRoutes from './routes/company.routes';
 import aiRoutes from './routes/ai.routes';
 import connectorRoutes from './routes/connector.routes';
 import { apiRateLimiter } from './config/rateLimit';
@@ -60,7 +60,7 @@ v1Router.use('/user', userRoutes);
 v1Router.use('/incidents', incidentRoutes);
 v1Router.use('/consent', consentRoutes);
 v1Router.use('/policies', policyRoutes);
-v1Router.use('/tenants', tenantRoutes);
+v1Router.use('/companies', companyRoutes);
 v1Router.use('/ai', aiRoutes);
 v1Router.use('/connectors', connectorRoutes);
 

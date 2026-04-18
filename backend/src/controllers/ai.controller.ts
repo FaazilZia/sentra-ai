@@ -1,10 +1,11 @@
 import { Response, NextFunction } from 'express';
 import logger from '../utils/logger';
 import prisma from '../config/db';
-import { resolveTenantId } from '../utils/tenant';
-import { checkPermission, logActivity, CheckPermissionResult, calculateSecurityScore } from '../services/policy.service';
+import { resolveCompanyId } from '../utils/company';
+import { logActivity, calculateSecurityScore } from '../services/policy.service';
 import { io } from '../server';
 import { checkActionSchema } from '../validations/ai.validation';
+import { interceptAction } from '../middleware/interceptor';
 
 export const postCheckAction = async (req: any, res: Response, next: NextFunction) => {
   const { requestId, startTime } = req.context;
@@ -13,48 +14,32 @@ export const postCheckAction = async (req: any, res: Response, next: NextFunctio
     const validated = checkActionSchema.parse(req.body);
     const { agent, action, metadata } = validated;
 
-    const tenantId = await resolveTenantId(req);
+    const companyId = await resolveCompanyId(req);
 
-    if (!tenantId) {
-      return res.status(401).json({ success: false, message: 'Unauthorized: Tenant not identified', requestId });
+    if (!companyId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized: Company not identified', requestId });
     }
 
-    // 2. Execute Governance Decision
-    const decision: CheckPermissionResult = await checkPermission(agent, action, tenantId, metadata);
-    const latencyMs = Date.now() - startTime;
+    // 2. Intercept and Execute
+    const decision = await interceptAction(
+      { agent, action, companyId, metadata, requestId },
+      async () => {
+        // This is where the actual tool/action would be executed.
+        // For the governance check, we often just want the decision.
+        return { message: "Action authorized and simulated" };
+      }
+    );
 
-    // 3. Log Activity (with correlation ID and latency)
-    const log = await logActivity({
-      tenantId,
-      agentId: agent,
-      action,
-      status: decision.status,
-      riskScore: decision.risk_score,
-      reason: decision.reason,
-      impact: decision.impact,
-      compliance: decision.compliance,
-      metadata,
-      requestId,
-      latencyMs
-    });
+    const latency = Date.now() - startTime;
 
-    // 4. Push Real-time Update
-    io.emit('activity_log', log);
+    // 3. Push Real-time Update (dashboard)
+    io.to(`company_${companyId}`).emit('activity_log', { ...decision, companyId, timestamp: new Date() });
 
     res.status(200).json({
       success: true,
       requestId,
-      latencyMs,
-      data: {
-        status: decision.status,
-        risk_score: decision.risk_score,
-        reason: decision.reason,
-        impact: decision.impact,
-        compliance: decision.compliance,
-        explanation: decision.explanation,
-        confidence: decision.confidence,
-        timeline: decision.timeline
-      }
+      latency,
+      data: decision
     });
   } catch (error) {
     next(error);
@@ -64,22 +49,28 @@ export const postCheckAction = async (req: any, res: Response, next: NextFunctio
 export const postReplayAction = async (req: any, res: Response, next: NextFunction) => {
   try {
     const { logId } = req.body;
-    const tenantId = await resolveTenantId(req);
+    const companyId = await resolveCompanyId(req);
 
-    if (!tenantId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    if (!companyId) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
-    const originalLog = await prisma.ai_activity_logs.findUnique({
+    const originalLog = await prisma.logs.findUnique({
       where: { id: logId }
     });
 
-    if (!originalLog || originalLog.tenant_id !== tenantId) {
+    if (!originalLog || originalLog.companyId !== companyId) {
       return res.status(404).json({ success: false, message: 'Log not found' });
     }
 
-    const decision = await checkPermission(originalLog.agent_id, originalLog.action, tenantId, originalLog.metadata);
+    const decision = await interceptAction(
+      { 
+        agent: originalLog.agent, 
+        action: originalLog.action, 
+        companyId, 
+        metadata: originalLog.metadata 
+      },
+      async () => ({ message: "Replayed action" })
+    );
 
-    // We don't necessarily need to create a NEW log for a replay, 
-    // but we return the decision as if it just happened.
     res.status(200).json({
       success: true,
       data: decision
@@ -91,10 +82,10 @@ export const postReplayAction = async (req: any, res: Response, next: NextFuncti
 
 export const getSecurityScore = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const tenantId = await resolveTenantId(req);
-    if (!tenantId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    const companyId = await resolveCompanyId(req);
+    if (!companyId) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
-    const score = await calculateSecurityScore(tenantId);
+    const score = await calculateSecurityScore(companyId);
     res.status(200).json({ success: true, data: { score } });
   } catch (error) {
     next(error);
@@ -103,25 +94,31 @@ export const getSecurityScore = async (req: any, res: Response, next: NextFuncti
 
 export const getLogs = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const tenantId = await resolveTenantId(req);
-    if (!tenantId) {
+    const companyId = await resolveCompanyId(req);
+    if (!companyId) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
-    const logs = await prisma.ai_activity_logs.findMany({
-      where: { tenant_id: tenantId },
-      orderBy: { created_at: 'desc' },
+    const activityLogs = await prisma.logs.findMany({
+      where: { companyId: companyId },
+      orderBy: { timestamp: 'desc' },
       take: 100
     });
 
     res.status(200).json({
       success: true,
-      data: logs
+      data: activityLogs.map(log => ({
+        ...log,
+        agent_id: log.agent,
+        risk_score: log.risk,
+        created_at: log.timestamp
+      }))
     });
   } catch (error) {
     next(error);
   }
 };
+
 
 export const postChat = async (req: any, res: Response, next: NextFunction) => {
   try {

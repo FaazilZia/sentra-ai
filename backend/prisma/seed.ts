@@ -21,25 +21,25 @@ async function getPrisma() {
   }
 }
 
-const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001';
+const DEFAULT_COMPANY_ID = '00000000-0000-0000-0000-000000000001';
 const ADMIN_USER_ID = '00000000-0000-0000-0000-000000000002';
 
 async function main() {
   console.log(`🌱 Seeding database (${isSqlite ? 'SQLite' : 'PostgreSQL'})...`);
   const prisma = await getPrisma();
 
-  // 1. Ensure default tenant
-  const tenant = await prisma.tenants.upsert({
-    where: { id: DEFAULT_TENANT_ID },
+  // 1. Ensure default company
+  const company = await prisma.companies.upsert({
+    where: { id: DEFAULT_COMPANY_ID },
     update: {},
     create: {
-      id: DEFAULT_TENANT_ID,
+      id: DEFAULT_COMPANY_ID,
       name: 'Sentra AI',
       slug: 'sentra-ai',
       is_active: true,
     },
   });
-  console.log(`✅ Tenant: ${tenant.name} (${tenant.id})`);
+  console.log(`✅ Company: ${company.name} (${company.id})`);
 
   // 2. Ensure admin user
   const passwordHash = await bcrypt.hash('Sentra@Admin123', 10);
@@ -55,7 +55,7 @@ async function main() {
       password_hash: passwordHash,
       role: 'ADMIN',
       is_active: true,
-      tenant_id: DEFAULT_TENANT_ID,
+      companyId: DEFAULT_COMPANY_ID,
     },
   });
   console.log(`✅ Admin user: ${user.email}`);
@@ -78,7 +78,7 @@ async function main() {
         blocked_actions: ['send_email', 'external_api', 'delete_record']
       },
       obligations: {},
-      tenant_id: DEFAULT_TENANT_ID
+      companyId: DEFAULT_COMPANY_ID
     },
     {
       id: '00000000-0000-0000-0000-000000000004',
@@ -95,7 +95,7 @@ async function main() {
         blocked_actions: ['external_api', 'read_pii']
       },
       obligations: {},
-      tenant_id: DEFAULT_TENANT_ID
+      companyId: DEFAULT_COMPANY_ID
     }
   ];
 
@@ -119,7 +119,7 @@ async function main() {
     },
     create: {
       id: '00000000-0000-0000-0000-000000000005',
-      tenant_id: DEFAULT_TENANT_ID,
+      companyId: DEFAULT_COMPANY_ID,
       name: 'SDK Testing Key',
       key_prefix: 'demo',
       key_hash: hashedApiKey,

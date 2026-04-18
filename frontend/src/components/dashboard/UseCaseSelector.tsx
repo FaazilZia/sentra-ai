@@ -1,4 +1,4 @@
-import { Briefcase, HeartPulse, Rocket, ChevronDown } from 'lucide-react';
+import { Briefcase, HeartPulse, Rocket } from 'lucide-react';
 
 interface UseCaseSelectorProps {
   currentMode: string;

@@ -1,5 +1,6 @@
 generator client {
   provider        = "prisma-client-js"
+  output          = "../node_modules/.prisma/client"
   previewFeatures = ["driverAdapters"]
 }
 
@@ -8,46 +9,95 @@ datasource db {
 }
 
 model api_keys {
-  id         String   @id @default(uuid())
-  tenant_id  String
-  name       String
-  key_prefix String
-  key_hash   String
-  key_type   String   // 'service', 'machine'
-  is_active  Boolean
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now())
-  tenants    tenants  @relation(fields: [tenant_id], references: [id])
+  id          String    @id @default(uuid())
+  companyId   String    @map("company_id")
+  name        String
+  key_prefix  String
+  key_hash    String
+  key_type    String    // 'service', 'machine'
+  is_active   Boolean
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @default(now())
+  companies   companies @relation(fields: [companyId], references: [id])
+
+  @@map("api_keys")
 }
 
-model connectors {
-  id           String   @id @default(uuid())
-  tenant_id    String
-  name         String
-  type         String   // 'sql', 'gdrive', 's3', 'local'
-  config       Json     
-  status       String
-  last_scan_at String?
-  created_at   DateTime @default(now())
-  updated_at   DateTime @default(now())
-  tenants      tenants  @relation(fields: [tenant_id], references: [id])
+model companies {
+  id               String       @id @default(uuid())
+  name             String
+  apiKey           String?      @unique @map("api_key") // Simplified API key if needed
+  slug             String       @unique
+  is_active        Boolean
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @default(now())
+  api_keys         api_keys[]
+  connectors       connectors[]
+  incidents        incidents[]
+  policies         policies[]
+  policy_versions  policy_versions[]
+  users            users[]
+  scan_jobs        scan_jobs[]
+  logs             logs[]
+
+  @@map("companies")
 }
 
-model consent_records {
-  id             String   @id @default(uuid())
-  user_id        String
-  action         String
-  notice_version String
-  hashing_chain  String
-  metadata_json  Json
-  created_at     DateTime @default(now())
-  updated_at     DateTime @default(now())
-  users          users    @relation(fields: [user_id], references: [id])
+model policies {
+  id                String            @id @default(uuid())
+  companyId         String            @map("company_id")
+  name              String
+  description       String
+  enabled           Boolean
+  priority          Int
+  effect            String            // 'allow', 'deny', etc.
+  status            String            // 'draft', 'published'
+  rule              Json?             @map("rule") // Specific JSON rule requested
+  current_version   Int
+  published_version Int?
+  scope             Json
+  conditions        Json
+  obligations       Json
+  created_at        DateTime          @default(now())
+  updated_at        DateTime          @default(now())
+  incidents         incidents[]
+  companies         companies         @relation(fields: [companyId], references: [id])
+  policy_versions   policy_versions[]
+
+  @@unique([companyId, name])
+  @@index([companyId])
+  @@map("policies")
+}
+
+model logs {
+  id          String    @id @default(uuid())
+  requestId   String?   @map("request_id")
+  companyId   String    @map("company_id")
+  agent       String    @map("agent")
+  action      String
+  status      String
+  risk        String    @map("risk") // 'low', 'medium', 'high'
+  reason      String?
+  impact      String?
+  latency     Int?      @map("latency")
+  timestamp   DateTime  @default(now()) @map("timestamp")
+  
+  // Extended fields from original ai_activity_logs for compatibility
+  explanation String?
+  confidence  Float?
+  timeline    Json?
+  compliance  Json?
+  metadata    Json?
+  
+  companies   companies @relation(fields: [companyId], references: [id])
+
+  @@index([companyId, timestamp])
+  @@map("logs")
 }
 
 model incidents {
   id               String    @id @default(uuid())
-  tenant_id        String
+  companyId        String    @map("company_id")
   agent_id         String
   policy_id        String?
   severity         Int
@@ -63,39 +113,17 @@ model incidents {
   resolved_by_id   String?
   resolved_at      DateTime?
   policies         policies? @relation(fields: [policy_id], references: [id])
-  tenants          tenants   @relation(fields: [tenant_id], references: [id])
+  companies        companies @relation(fields: [companyId], references: [id])
   user             users?    @relation("IncidentAuthor", fields: [user_id], references: [id])
   resolved_by      users?    @relation("IncidentResolver", fields: [resolved_by_id], references: [id])
-}
 
-model policies {
-  id                String            @id @default(uuid())
-  tenant_id         String
-  name              String
-  description       String
-  enabled           Boolean
-  priority          Int
-  effect            String            // 'allow', 'deny', etc.
-  status            String            // 'draft', 'published'
-  current_version   Int
-  published_version Int?
-  scope             Json
-  conditions        Json
-  obligations       Json
-  created_at        DateTime          @default(now())
-  updated_at        DateTime          @default(now())
-  incidents         incidents[]
-  tenants           tenants           @relation(fields: [tenant_id], references: [id])
-  policy_versions   policy_versions[]
-
-  @@unique([tenant_id, name])
-  @@index([tenant_id])
+  @@map("incidents")
 }
 
 model policy_versions {
   id                    String   @id @default(uuid())
   policy_id             String
-  tenant_id             String
+  companyId             String   @map("company_id")
   version               Int
   name                  String
   description           String
@@ -110,9 +138,71 @@ model policy_versions {
   created_at            DateTime @default(now())
   updated_at            DateTime @default(now())
   policies              policies @relation(fields: [policy_id], references: [id])
-  tenants               tenants  @relation(fields: [tenant_id], references: [id])
+  companies             companies @relation(fields: [companyId], references: [id])
 
   @@unique([policy_id, version])
+  @@map("policy_versions")
+}
+
+model connectors {
+  id           String   @id @default(uuid())
+  companyId    String   @map("company_id")
+  name         String
+  type         String   // 'sql', 'gdrive', 's3', 'local'
+  config       Json     
+  status       String
+  last_scan_at String?
+  created_at   DateTime @default(now())
+  updated_at   DateTime @default(now())
+  companies    companies @relation(fields: [companyId], references: [id])
+
+  @@map("connectors")
+}
+
+model scan_jobs {
+  id                 String   @id @default(uuid())
+  companyId          String   @map("company_id")
+  phase              String
+  progress           Int      @default(0)
+  incidents_detected Int      @default(0)
+  sources_scanned    Int      @default(0)
+  created_at         DateTime @default(now())
+  updated_at         DateTime @default(now())
+  companies          companies @relation(fields: [companyId], references: [id])
+
+  @@map("scan_jobs")
+}
+
+model users {
+  id              String            @id @default(uuid())
+  companyId       String            @map("company_id")
+  email           String            @unique
+  full_name       String
+  password_hash   String
+  role            String            @default("USER")
+  is_active       Boolean
+  created_at      DateTime          @default(now())
+  updated_at      DateTime          @default(now())
+  incidents_created incidents[] @relation("IncidentAuthor")
+  incidents_resolved incidents[] @relation("IncidentResolver")
+  consent_records consent_records[]
+  requests        requests[]
+  refresh_tokens  RefreshToken[]
+  companies       companies           @relation(fields: [companyId], references: [id])
+
+  @@map("users")
+}
+
+model consent_records {
+  id             String   @id @default(uuid())
+  user_id        String
+  action         String
+  notice_version String
+  hashing_chain  String
+  metadata_json  Json
+  created_at     DateTime @default(now())
+  updated_at     DateTime @default(now())
+  users          users    @relation(fields: [user_id], references: [id])
 }
 
 model requests {
@@ -132,47 +222,12 @@ model roles {
   updated_at  DateTime @default(now())
 }
 
-model tenants {
-  id               String             @id @default(uuid())
-  name             String
-  slug             String             @unique
-  is_active        Boolean
-  created_at       DateTime           @default(now())
-  updated_at       DateTime           @default(now())
-  api_keys         api_keys[]
-  connectors       connectors[]
-  incidents        incidents[]
-  policies         policies[]
-  policy_versions  policy_versions[]
-  users            users[]
-  scan_jobs        scan_jobs[]
-  ai_activity_logs ai_activity_logs[]
-}
-
 model user_roles {
   id         String   @id @default(uuid())
   user_id    String
   role_id    String
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
-}
-
-model users {
-  id              String            @id @default(uuid())
-  tenant_id       String
-  email           String            @unique
-  full_name       String
-  password_hash   String
-  role            String            @default("USER")
-  is_active       Boolean
-  created_at      DateTime          @default(now())
-  updated_at      DateTime          @default(now())
-  incidents_created incidents[] @relation("IncidentAuthor")
-  incidents_resolved incidents[] @relation("IncidentResolver")
-  consent_records consent_records[]
-  requests        requests[]
-  refresh_tokens  RefreshToken[]
-  tenants         tenants           @relation(fields: [tenant_id], references: [id])
 }
 
 model RefreshToken {
@@ -187,36 +242,4 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
-model scan_jobs {
-  id                 String   @id @default(uuid())
-  tenant_id          String
-  phase              String
-  progress           Int      @default(0)
-  incidents_detected Int      @default(0)
-  sources_scanned    Int      @default(0)
-  created_at         DateTime @default(now())
-  updated_at         DateTime @default(now())
-  tenants            tenants  @relation(fields: [tenant_id], references: [id])
-}
 
-model ai_activity_logs {
-  id         String   @id @default(uuid())
-  tenant_id  String
-  agent_id   String
-  action     String
-  status     String
-  risk_score String
-  reason     String?
-  impact     String?
-  explanation String?
-  confidence  Float?
-  timeline    Json?
-  compliance Json?
-  metadata   Json?
-  request_id String?
-  latency_ms Int?
-  created_at DateTime @default(now())
-  tenants    tenants  @relation(fields: [tenant_id], references: [id])
-
-  @@index([tenant_id, created_at])
-}

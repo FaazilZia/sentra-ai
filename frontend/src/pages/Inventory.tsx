@@ -4,7 +4,7 @@ import { EmptyStateList } from '../components/ui/EmptyStateList';
 import { StatCard } from '../components/ui/StatCard';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { SurfaceCard } from '../components/ui/SurfaceCard';
-import { fetchPolicies, fetchTenant, PolicyResponse, TenantResponse } from '../lib/api';
+import { fetchPolicies, fetchCompany, PolicyResponse, CompanyResponse } from '../lib/api';
 import { useAuth } from '../lib/auth';
 
 const effectToneMap: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
@@ -19,29 +19,29 @@ const effectToneMap: Record<string, 'default' | 'success' | 'warning' | 'danger'
 export default function Inventory() {
   const { user } = useAuth();
   const [policies, setPolicies] = useState<PolicyResponse[]>([]);
-  const [tenant, setTenant] = useState<TenantResponse | null>(null);
+  const [company, setCompany] = useState<CompanyResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user || !user.tenant_id) {
+    if (!user || !user.companyId) {
       setLoading(false);
       return;
     }
 
-    const tenantId = user.tenant_id;
+    const companyId = user.companyId;
     let active = true;
 
     async function loadInventory() {
       try {
-        const [tenantResponse, policyResponse] = await Promise.all([
-          fetchTenant(tenantId),
+        const [companyResponse, policyResponse] = await Promise.all([
+          fetchCompany(companyId),
           fetchPolicies(),
         ]);
 
         if (!active) return;
 
-        setTenant(tenantResponse);
+        setCompany(companyResponse);
         setPolicies(policyResponse);
         setError(null);
       } catch (loadError) {
@@ -77,21 +77,21 @@ export default function Inventory() {
               Inventory Control
             </p>
             <h1 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-white md:text-4xl">
-              Real tenant, operator, and policy inventory from the deployed backend.
+              Real company, operator, and policy inventory from the deployed backend.
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
               This page turns the old placeholder into an operational snapshot of who is signed in,
-              which tenant is active, and how your current policy estate is distributed.
+              which company is active, and how your current policy estate is distributed.
             </p>
           </div>
 
           <div className="rounded-[1.75rem] border border-white/10 bg-slate-950/35 p-5 backdrop-blur-xl">
-            <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Active tenant</p>
-            <p className="mt-2 text-2xl font-semibold text-white">{tenant?.name ?? 'Loading tenant'}</p>
+            <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Active company</p>
+            <p className="mt-2 text-2xl font-semibold text-white">{company?.name ?? 'Loading company'}</p>
             <div className="mt-4 flex flex-wrap gap-2">
               <StatusBadge
-                label={tenant?.is_active ? 'Tenant Active' : 'Tenant Pending'}
-                tone={tenant?.is_active ? 'success' : 'warning'}
+                label={company?.is_active ? 'Company Active' : 'Company Pending'}
+                tone={company?.is_active ? 'success' : 'warning'}
               />
               <StatusBadge label={`${policies.length} policies`} tone="info" />
             </div>
@@ -101,10 +101,10 @@ export default function Inventory() {
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          title="Tenant Policies"
+          title="Company Policies"
           value={loading ? '---' : policies.length}
           icon={ShieldCheck}
-          trend="Policies attached to the current tenant"
+          trend="Policies attached to the current company"
         />
         <StatCard
           title="Asset Types"
@@ -129,36 +129,36 @@ export default function Inventory() {
       {error ? (
         <EmptyStateList
           title="Inventory Unavailable"
-          description="The inventory view could not load the tenant and policy records."
+          description="The inventory view could not load the company and policy records."
           emptyMessage={error}
         />
       ) : (
         <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
           <SurfaceCard
-            title="Tenant Profile"
+            title="Company Profile"
             description="Identity and activation details for the active workspace."
           >
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Tenant name</p>
-                <p className="mt-2 text-lg font-medium text-white">{tenant?.name ?? 'Not loaded'}</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Company name</p>
+                <p className="mt-2 text-lg font-medium text-white">{company?.name ?? 'Not loaded'}</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Slug</p>
-                <p className="mt-2 text-lg font-medium text-white">{tenant?.slug ?? 'Not loaded'}</p>
+                <p className="mt-2 text-lg font-medium text-white">{company?.slug ?? 'Not loaded'}</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Created</p>
                 <p className="mt-2 text-lg font-medium text-white">
-                  {tenant?.created_at ? new Date(tenant.created_at).toLocaleDateString() : 'Not loaded'}
+                  {company?.created_at ? new Date(company.created_at).toLocaleDateString() : 'Not loaded'}
                 </p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Status</p>
                 <div className="mt-2">
                   <StatusBadge
-                    label={tenant?.is_active ? 'Active' : 'Inactive'}
-                    tone={tenant?.is_active ? 'success' : 'warning'}
+                    label={company?.is_active ? 'Active' : 'Inactive'}
+                    tone={company?.is_active ? 'success' : 'warning'}
                   />
                 </div>
               </div>
@@ -179,8 +179,8 @@ export default function Inventory() {
                 <p className="mt-2 text-lg font-medium text-white">{user?.email ?? 'Unknown email'}</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Tenant ID</p>
-                <p className="mt-2 break-all text-sm font-medium text-white">{user?.tenant_id ?? 'Unknown tenant'}</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Company ID</p>
+                <p className="mt-2 break-all text-sm font-medium text-white">{user?.companyId ?? 'Unknown company'}</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-500">User status</p>

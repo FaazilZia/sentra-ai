@@ -1,16 +1,17 @@
 import { Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import prisma from '../config/db';
-import { resolveTenantId } from '../utils/tenant';
+import { resolveCompanyId } from '../utils/company';
+
 export const listConnectors = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const tenantId = await resolveTenantId(req);
-    if (!tenantId) {
+    const companyId = await resolveCompanyId(req);
+    if (!companyId) {
       return res.status(200).json({ success: true, data: { items: [] } });
     }
 
     const rows = await prisma.connectors.findMany({
-      where: { tenant_id: tenantId },
+      where: { companyId: companyId },
       orderBy: { created_at: 'desc' },
     });
 
@@ -22,9 +23,9 @@ export const listConnectors = async (req: any, res: Response, next: NextFunction
 
 export const createConnector = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const tenantId = await resolveTenantId(req);
-    if (!tenantId) {
-      return res.status(400).json({ success: false, message: 'Tenant context required' });
+    const companyId = await resolveCompanyId(req);
+    if (!companyId) {
+      return res.status(400).json({ success: false, message: 'Company context required' });
     }
 
     const { name, type, config } = req.body as {
@@ -36,7 +37,7 @@ export const createConnector = async (req: any, res: Response, next: NextFunctio
     const row = await prisma.connectors.create({
       data: {
         id: crypto.randomUUID(),
-        tenant_id: tenantId,
+        companyId: companyId,
         name,
         type,
         config: (config || {}) as object,

@@ -24,15 +24,15 @@ export const authenticate = async (req: any, res: Response, next: NextFunction) 
 
         const keyRecord = await prisma.api_keys.findFirst({
           where: { key_prefix: lookupPrefix, is_active: true },
-          include: { tenants: true },
+          include: { companies: true },
         });
 
         if (keyRecord && (await bcrypt.compare(token, keyRecord.key_hash))) {
           req.user = {
             id: keyRecord.id,
-            tenant_id: keyRecord.tenant_id,
+            companyId: keyRecord.companyId,
             role: 'SERVICE_AGENT',
-            email: `sdk@${keyRecord.tenants.slug}.com`,
+            email: `sdk@${keyRecord.companies.slug}.com`,
           };
           return next();
         }
@@ -43,14 +43,14 @@ export const authenticate = async (req: any, res: Response, next: NextFunction) 
         const payload: any = verifyAccessToken(token);
         const user = await prisma.users.findUnique({
           where: { id: payload.id },
-          include: { tenants: true }
+          include: { companies: true }
         });
 
-        if (user && user.is_active && user.tenants.is_active) {
+        if (user && user.is_active && user.companies.is_active) {
           req.user = {
             id: user.id,
             role: user.role,
-            tenant_id: user.tenant_id,
+            companyId: user.companyId,
             email: user.email
           };
           return next();
@@ -68,19 +68,20 @@ export const authenticate = async (req: any, res: Response, next: NextFunction) 
 
       const keyRecord = await prisma.api_keys.findFirst({
         where: { key_prefix: lookupPrefix, is_active: true },
-        include: { tenants: true },
+        include: { companies: true },
       });
 
       if (keyRecord && (await bcrypt.compare(keyString, keyRecord.key_hash))) {
         req.user = {
           id: keyRecord.id,
-          tenant_id: keyRecord.tenant_id,
+          companyId: keyRecord.companyId,
           role: 'SERVICE_AGENT',
-          email: `sdk@${keyRecord.tenants.slug}.com`,
+          email: `sdk@${keyRecord.companies.slug}.com`,
         };
         return next();
       }
     }
+
 
     return res.status(401).json({ success: false, message: 'Invalid or expired credentials' });
   } catch (error) {
