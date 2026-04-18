@@ -1,66 +1,81 @@
-import { CheckCircle2, XCircle, ArrowRight } from 'lucide-react';
+import React from 'react';
+import { Shield, XCircle, CheckCircle2, AlertTriangle } from 'lucide-react';
 
-export const BeforeAfterPanel = () => {
+export const BeforeAfterPanel: React.FC = () => {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-      <div className="bg-slate-50 px-5 py-3 border-b border-slate-200 flex items-center justify-between">
-        <h3 className="text-sm font-bold text-slate-700 uppercase tracking-tight">The Sentra Advantage</h3>
-        <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full uppercase">Value Comparison</span>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100">
-        {/* Before */}
-        <div className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="p-1.5 bg-red-50 text-red-600 rounded-lg">
-              <XCircle className="w-4 h-4" />
-            </div>
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Before Sentra</span>
+    <div className="glass-card rounded-[2rem] overflow-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-2">
+        {/* Before / Vulnerable */}
+        <div className="p-8 border-b md:border-b-0 md:border-r border-white/5 relative">
+          <div className="absolute top-0 right-0 p-4">
+             <span className="px-2 py-1 rounded-md bg-rose-500/10 text-rose-500 text-[10px] font-bold uppercase tracking-widest border border-rose-500/20">
+               Unprotected
+             </span>
           </div>
-          <div className="space-y-3">
-            <div className="p-3 bg-red-50/50 border border-red-100 rounded-xl">
-              <p className="text-xs text-red-900 font-medium leading-relaxed">
-                AI Agent attempts to export customer PII to an external API.
-              </p>
+          
+          <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-rose-500" />
+            Standard AI Runtime
+          </h3>
+
+          <div className="space-y-6">
+            <div className="flex gap-4 items-start opacity-60">
+              <div className="p-2 rounded-lg bg-slate-800">
+                <Shield className="w-4 h-4 text-slate-400" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-slate-300">Data Sharing Intent</p>
+                <p className="text-xs text-slate-500">Agent attempts to share sensitive medical data</p>
+              </div>
             </div>
-            <div className="flex items-center justify-center py-2 text-red-400">
-              <ArrowRight className="w-4 h-4 rotate-90 md:rotate-0" />
-            </div>
-            <div className="p-3 bg-red-600 rounded-xl text-center">
-              <p className="text-xs text-white font-bold uppercase tracking-tight">Data Leak & GDPR Fine</p>
+
+            <div className="flex gap-4 items-start p-4 rounded-2xl bg-rose-500/5 border border-rose-500/20">
+              <div className="p-2 rounded-lg bg-rose-500/20">
+                <XCircle className="w-4 h-4 text-rose-500" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-bold text-rose-400">Leak Occurred</p>
+                <p className="text-xs text-rose-500/80">Action executed without verification. HIPAA violation logged after 24h.</p>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* After */}
-        <div className="p-6 bg-slate-50/30">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="p-1.5 bg-green-50 text-green-600 rounded-lg">
-              <CheckCircle2 className="w-4 h-4" />
-            </div>
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">With Sentra AI</span>
+        {/* After / Sentra Protected */}
+        <div className="p-8 bg-indigo-500/[0.02] relative">
+          <div className="absolute top-0 right-0 p-4">
+             <span className="px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-500 text-[10px] font-bold uppercase tracking-widest border border-emerald-500/20">
+               Sentra Active
+             </span>
           </div>
-          <div className="space-y-3">
-            <div className="p-3 bg-indigo-50/50 border border-indigo-100 rounded-xl">
-              <p className="text-xs text-indigo-900 font-medium leading-relaxed">
-                AI Agent attempts same action. Sentra Interceptor triggers.
-              </p>
+
+          <h3 className="text-sm font-black text-indigo-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+            <Shield className="w-4 h-4" />
+            Sentra AI Governance
+          </h3>
+
+          <div className="space-y-6">
+             <div className="flex gap-4 items-start">
+              <div className="p-2 rounded-lg bg-indigo-500/10">
+                <Shield className="w-4 h-4 text-indigo-400" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-slate-300">Real-time Interception</p>
+                <p className="text-xs text-slate-500">Sentra SDK intercepts intent before execution</p>
+              </div>
             </div>
-            <div className="flex items-center justify-center py-2 text-green-400">
-              <ArrowRight className="w-4 h-4 rotate-90 md:rotate-0" />
-            </div>
-            <div className="p-3 bg-green-600 rounded-xl text-center shadow-lg shadow-green-100">
-              <p className="text-xs text-white font-bold uppercase tracking-tight">Action Blocked & Logged</p>
+
+            <div className="flex gap-4 items-start p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 glow-green">
+              <div className="p-2 rounded-lg bg-emerald-500/20">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-bold text-emerald-400">Threat Neutralized</p>
+                <p className="text-xs text-emerald-500/80">Action blocked automatically based on HIPAA Policy. Business risk avoided.</p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      
-      <div className="p-4 bg-indigo-900 text-white text-center">
-        <p className="text-[11px] font-medium leading-relaxed opacity-90">
-          Sentra AI converts technical security into business continuity. 
-          <span className="font-bold ml-1 text-indigo-300 underline underline-offset-4 decoration-indigo-500/50 cursor-pointer">Learn more about ROI →</span>
-        </p>
       </div>
     </div>
   );

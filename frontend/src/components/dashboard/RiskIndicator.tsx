@@ -1,32 +1,26 @@
 import React from 'react';
+import { cn } from '../../lib/utils';
 
 interface RiskIndicatorProps {
   level: 'low' | 'medium' | 'high';
+  className?: string;
 }
 
-export const RiskIndicator: React.FC<RiskIndicatorProps> = ({ level }) => {
-  const styles = {
-    low: 'bg-green-100 text-green-700 border-green-200',
-    medium: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    high: 'bg-red-100 text-red-700 border-red-200',
+export const RiskIndicator: React.FC<RiskIndicatorProps> = ({ level, className }) => {
+  const configs = {
+    low: { color: 'bg-emerald-500', text: 'Low Risk', glow: 'shadow-emerald-500/20' },
+    medium: { color: 'bg-amber-500', text: 'Medium Risk', glow: 'shadow-amber-500/20' },
+    high: { color: 'bg-rose-500', text: 'High Risk', glow: 'shadow-rose-500/20' },
   };
 
-  const labels = {
-    low: 'Low Risk',
-    medium: 'Medium Risk',
-    high: 'High Risk',
-  };
-
-  const dots = {
-    low: 'bg-green-500',
-    medium: 'bg-yellow-500',
-    high: 'bg-red-500',
-  };
+  const { color, text, glow } = configs[level];
 
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${styles[level]}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${dots[level]}`} />
-      {labels[level]}
-    </span>
+    <div className={cn("flex items-center gap-2 px-2 py-1 rounded-full bg-slate-800/50 border border-white/5", className)}>
+      <span className={cn("h-1.5 w-1.5 rounded-full animate-pulse shadow-[0_0_8px]", color, glow)} />
+      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300">
+        {text}
+      </span>
+    </div>
   );
 };

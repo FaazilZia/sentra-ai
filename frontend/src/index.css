@@ -2,6 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --glass-bg: rgba(15, 23, 42, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glow-red: 0 0 20px rgba(239, 68, 68, 0.2);
+  --glow-green: 0 0 20px rgba(34, 197, 94, 0.2);
+  --glow-indigo: 0 0 20px rgba(99, 102, 241, 0.2);
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-slate-900/70 backdrop-blur-xl border border-white/10 shadow-2xl;
+  }
+  
+  .glow-red { box-shadow: var(--glow-red); }
+  .glow-green { box-shadow: var(--glow-green); }
+  .glow-indigo { box-shadow: var(--glow-indigo); }
+  
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-slate-800 rounded-full hover:bg-slate-700;
+  }
+}
+
 @layer base {
   :root {
     --background: 210 40% 98%;

@@ -1,63 +1,42 @@
-import { Bot, ShieldCheck, Zap, Server } from 'lucide-react';
+import React from 'react';
+import { Network, ArrowRight, Server, ShieldCheck } from 'lucide-react';
 
-export const IntegrationFlowCard = () => {
+export const IntegrationFlowCard: React.FC = () => {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm overflow-hidden relative">
-      <div className="relative z-10">
-        <h3 className="text-sm font-bold text-slate-700 uppercase tracking-tight mb-6">Seamless Governance Integration</h3>
+    <div className="glass-card rounded-[2rem] p-6 relative overflow-hidden group">
+      <h3 className="text-sm font-black uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
+        <Network className="w-4 h-4 text-indigo-400" />
+        Infrastructure Flow
+      </h3>
+
+      <div className="flex items-center justify-between gap-2 py-4">
+        <div className="flex flex-col items-center gap-2">
+          <div className="p-3 rounded-2xl bg-slate-800 text-slate-400 border border-white/5">
+            <Server className="w-5 h-5" />
+          </div>
+          <span className="text-[9px] font-black uppercase text-slate-500">LLM Node</span>
+        </div>
         
-        <div className="flex items-center justify-between gap-4">
-          {/* Step 1 */}
-          <div className="flex flex-col items-center gap-2 group cursor-pointer">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 group-hover:scale-110 transition-transform shadow-sm">
-              <Bot className="w-6 h-6" />
-            </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">AI Agent</span>
-          </div>
-
-          <div className="h-px flex-1 bg-slate-100 relative">
-            <div className="absolute top-1/2 left-0 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-slate-200" />
-            <div className="absolute top-1/2 right-0 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-slate-200" />
-            <div className="absolute inset-0 bg-indigo-500/10 animate-pulse" />
-          </div>
-
-          {/* Step 2 */}
-          <div className="flex flex-col items-center gap-2 group cursor-pointer">
-            <div className="w-14 h-14 rounded-2xl bg-indigo-900 flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
-              <ShieldCheck className="w-7 h-7" />
-            </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-900">Sentra AI</span>
-          </div>
-
-          <div className="h-px flex-1 bg-slate-100 relative">
-            <div className="absolute top-1/2 left-0 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-slate-200" />
-            <div className="absolute top-1/2 right-0 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-slate-200" />
-          </div>
-
-          {/* Step 3 */}
-          <div className="flex flex-col items-center gap-2 group cursor-pointer">
-            <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-600 group-hover:scale-110 transition-transform">
-              <Server className="w-6 h-6" />
-            </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Decision</span>
-          </div>
+        <div className="flex-1 flex flex-col items-center gap-1">
+           <div className="h-[2px] w-full bg-gradient-to-r from-slate-800 via-indigo-500/40 to-slate-800 relative">
+              <div className="absolute top-1/2 left-0 w-2 h-2 bg-indigo-400 rounded-full -translate-y-1/2 animate-[ping_2s_infinite]" />
+           </div>
+           <span className="text-[8px] font-bold text-indigo-400/60 uppercase tracking-tighter">SDK Intercept</span>
         </div>
 
-        <div className="mt-8 pt-6 border-t border-slate-100">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-50 rounded-lg">
-              <Zap className="w-4 h-4 text-green-600" />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold text-slate-700">Zero Latency Interception</p>
-              <p className="text-[10px] text-slate-500 leading-relaxed">Sentra AI sits directly in the execution flow, ensuring every action is governed before it hits your external APIs or databases.</p>
-            </div>
+        <div className="flex flex-col items-center gap-2">
+          <div className="p-3 rounded-2xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 glow-indigo">
+            <ShieldCheck className="w-5 h-5" />
           </div>
+          <span className="text-[9px] font-black uppercase text-indigo-400">Sentra Core</span>
         </div>
       </div>
-      
-      {/* Background decoration */}
-      <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-50/50 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="mt-6 p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+        <p className="text-[11px] font-medium text-slate-400 leading-relaxed">
+          Runtime protection active. Every agent intent is verified against the global compliance baseline before reaching your data layer.
+        </p>
+      </div>
     </div>
   );
 };
