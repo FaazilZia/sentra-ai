@@ -1,11 +1,24 @@
 // Supabase Edge Functions removed — all AI calls now route through Node.js backend
 
 function normalizeApiBaseUrl(value?: string): string {
-  const trimmed = value?.trim().replace(/\/$/, '');
+  let trimmed = value?.trim().replace(/\/$/, '') || '';
+  
   if (!trimmed) {
     return 'http://localhost:10000/api/v1';
   }
-  return trimmed.endsWith('/api/v1') ? trimmed : `${trimmed}/api/v1`;
+
+  // If it already ends with /api/v1, use it as is
+  if (trimmed.endsWith('/api/v1')) {
+    return trimmed;
+  }
+
+  // If it ends with /api, append /v1
+  if (trimmed.endsWith('/api')) {
+    return `${trimmed}/v1`;
+  }
+
+  // Otherwise, append /api/v1
+  return `${trimmed}/api/v1`;
 }
 
 export const apiBaseUrl = normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL);
