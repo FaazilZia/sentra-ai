@@ -84,6 +84,11 @@ app.use('/api/v1', v1Router);
 app.use('/api/ai', aiRoutes);
 app.use('/api/policies', policyRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/incidents', incidentRoutes);
+app.use('/api/companies', companyRoutes);
+app.use('/api/connectors', connectorRoutes);
+app.use('/api/consent', consentRoutes);
+app.use('/api/user', userRoutes);
 app.use('/api/health', (req, res) => res.redirect('/api/v1/health'));
 
 // Root route to check version
