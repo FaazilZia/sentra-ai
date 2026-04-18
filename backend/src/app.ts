@@ -69,6 +69,15 @@ v1Router.get('/health', (req, res) => {
   res.status(200).json({ status: 'healthy', version: 'v1' });
 });
 
+// Root of v1
+v1Router.get('/', (req, res) => {
+  res.status(200).json({ 
+    message: 'Sentra AI API v1 Operational',
+    status: 'ONLINE',
+    company_centric: true 
+  });
+});
+
 app.use('/api/v1', v1Router);
 
 // Legacy support (redirect /api to /api/v1 for major routes)
