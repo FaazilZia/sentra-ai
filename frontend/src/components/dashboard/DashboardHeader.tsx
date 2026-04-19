@@ -10,42 +10,42 @@ interface DashboardHeaderProps {
   riskScore: number;
 }
 
-export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ 
-  total, 
-  blocked, 
-  complianceScore, 
-  riskScore 
+export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
+  total,
+  blocked,
+  complianceScore,
+  riskScore
 }) => {
   const cards = [
-    { 
-      label: 'Compliance Score', 
-      value: `${complianceScore}%`, 
-      icon: ShieldCheck, 
-      color: 'text-indigo-400', 
+    {
+      label: 'Compliance Score',
+      value: `${complianceScore}%`,
+      icon: ShieldCheck,
+      color: 'text-indigo-400',
       bg: 'bg-indigo-500/10',
       border: 'border-indigo-500/20'
     },
-    { 
-      label: 'Risk Score', 
-      value: `${riskScore}%`, 
-      icon: BarChart3, 
-      color: 'text-cyan-400', 
+    {
+      label: 'Risk Score',
+      value: `${riskScore}%`,
+      icon: BarChart3,
+      color: 'text-cyan-400',
       bg: 'bg-cyan-500/10',
       border: 'border-cyan-500/20'
     },
-    { 
-      label: 'Total Violations', 
-      value: total, 
-      icon: Zap, 
-      color: 'text-amber-400', 
+    {
+      label: 'Total Violations',
+      value: total,
+      icon: Zap,
+      color: 'text-amber-400',
       bg: 'bg-amber-500/10',
       border: 'border-amber-500/20'
     },
-    { 
-      label: 'Total Blocked Actions', 
-      value: blocked, 
-      icon: ShieldAlert, 
-      color: 'text-rose-400', 
+    {
+      label: 'Total Blocked Actions',
+      value: blocked,
+      icon: ShieldAlert,
+      color: 'text-rose-400',
       bg: 'bg-rose-500/10',
       border: 'border-rose-500/20'
     },

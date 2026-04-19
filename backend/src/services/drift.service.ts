@@ -5,7 +5,7 @@ export class DriftService {
     // This is a mock implementation of drift detection logic
     // In a real system, you would compare current action counts/types vs a rolling baseline
     
-    const alerts = [];
+    const alerts: any[] = [];
     
     // Simulate finding a "New API Access" drift
     alerts.push({

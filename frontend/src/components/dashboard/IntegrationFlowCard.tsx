@@ -16,12 +16,12 @@ export const IntegrationFlowCard: React.FC = () => {
           </div>
           <span className="text-[9px] font-black uppercase text-slate-500">LLM Node</span>
         </div>
-        
+
         <div className="flex-1 flex flex-col items-center gap-1">
-           <div className="h-[2px] w-full bg-gradient-to-r from-slate-800 via-indigo-500/40 to-slate-800 relative">
-              <div className="absolute top-1/2 left-0 w-2 h-2 bg-indigo-400 rounded-full -translate-y-1/2 animate-[ping_2s_infinite]" />
-           </div>
-           <span className="text-[8px] font-bold text-indigo-400/60 uppercase tracking-tighter">SDK Intercept</span>
+          <div className="h-[2px] w-full bg-gradient-to-r from-slate-800 via-indigo-500/40 to-slate-800 relative">
+            <div className="absolute top-1/2 left-0 w-2 h-2 bg-indigo-400 rounded-full -translate-y-1/2 animate-[ping_2s_infinite]" />
+          </div>
+          <span className="text-[8px] font-bold text-indigo-400/60 uppercase tracking-tighter">SDK Intercept</span>
         </div>
 
         <div className="flex flex-col items-center gap-2">
