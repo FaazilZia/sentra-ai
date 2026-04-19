@@ -1,14 +1,14 @@
 # 🚀 Sentra AI — The Real-Time Governance Layer for AI Agents
 
-**Sentra AI is a real-time AI runtime security layer that controls and blocks unsafe AI actions before they execute.**
+**Sentra AI is a real-time AI Governance & Compliance Operating System that controls and blocks unsafe AI actions before they execute.**
 
 Traditional tools monitor and report issues *after* they happen.
-**Sentra AI acts before execution** — enforcing policies, preventing risks, and mapping every decision to **business impact and compliance** (GDPR, HIPAA, SOC2).
+**Sentra AI acts before execution** — enforcing policies, preventing risks, and mapping every decision to **human-readable governance insights and compliance impact** (GDPR, HIPAA, DPDP).
 
 ---
 
 ## 🔗 Live Links
-- **Governance Dashboard**: [https://sentra-ai-tau.vercel.app](https://sentra-ai-tau.vercel.app)
+- **Governance Dashboard**: [https://sentra-ai.vercel.app](https://sentra-ai.vercel.app)
 - **API Documentation**: [https://sentra-backend-node.onrender.com/api/v1](https://sentra-backend-node.onrender.com/api/v1)
 
 ---
@@ -37,7 +37,7 @@ graph LR
     B -->|Check| C{Sentra Engine}
     C -->|Allow| D[Execution]
     C -->|Block| E[Audit & Alert]
-    C -.->|Impact Map| F[Business Dashboard]
+    C -.->|Impact Map| F[Governance Dashboard]
 ```
 
 ---
@@ -55,23 +55,22 @@ graph LR
 
 ---
 
----
+# 🏛️ Latest Update: Enterprise Governance OS (v1.5.0)
+**The Sentra AI platform has been fully transformed into an enterprise-grade Governance Control system.**
 
-# 🎨 Latest Update: Premium Governance Redesign (v1.2.0)
-**The Sentra AI Dashboard has been fully modernized into a high-end, real-time AI Security Control Panel.**
-
-*   **⚡ Real-time Control Center**: Live interception feed with 5s polling and WebSocket support.
-*   **⚖️ Business ROI Monitoring**: Active mapping of blocked violations to estimated compliance savings.
-*   **🔍 Decision Timelines**: Visual stepper UI showing exactly how every AI action was evaluated.
-*   **🔐 Compliance Guardrails**: Native tagging for GDPR, HIPAA, and SOC2 on all intercepted actions.
+*   **🎭 Live Demo Simulation**: Interactive demo mode with real-time scenarios for **Finance**, **Healthcare**, and **SaaS Hubs**.
+*   **⚖️ Deterministic Policy Engine**: Every AI action is mapped to specific **AI Guardrails** (e.g., *Restrict External Data Sharing*).
+*   **🔐 Audit-Ready Overrides**: Hardened manual intervention workflow with mandatory **Employee ID** and **Justification** audit trails.
+*   **📊 Compliance Impact System**: Active mapping of violations to regulatory impact (e.g., *"Reduced GDPR score by 2%"*).
+*   **⚡ Operational Transparency**: Real-time "Last Updated" counters and pulsing "Active" policy status.
 
 ---
 
 # 💡 What You Get
 
 * 🛑 **Real-Time Blocking**: Intercept and neutralize unsafe AI actions *before* they execute.
-* 📊 **Security Score (0-100)**: Instant infrastructure health visualization.
-* 🛡️ **Before vs After Logic**: Compare Sentra's value against standard unprotected AI runtimes.
+* 🛡️ **AI Guardrails**: Centralized policy management with pulse-status monitoring.
+* 📊 **Compliance OS Dashboard**: Minimal, high-density visualization of enterprise risk.
 * 🏢 **Enterprise Ready**: Multi-tenant architecture with robust RBAC and company-centric scoping.
 
 ---
@@ -126,32 +125,32 @@ Authorization: Bearer YOUR_API_KEY
   "status": "blocked",
   "risk": "high",
   "reason": "External transaction not allowed",
-  "impact": "Prevented potential financial fraud",
-  "compliance": ["SOC2", "GDPR"]
+  "impact": "Reduced GDPR score by 2%",
+  "compliance": ["GDPR", "SOC2"]
 }
 ```
 
 ---
 
-# 🏢 Industry Use Cases
+# 🏢 Industry Scenarios (Demo Ready)
 
-## 🏦 Fintech
+## 🏦 Finance Center
 Prevent unauthorized transactions and sensitive data leaks.
-* **Impact**: Prevented Financial Fraud
+* **Focus**: Anti-Fraud & Ledger Integrity
 * **Compliance**: SOC2, GDPR
 
 ---
 
-## 🏥 Healthcare
+## 🏥 Healthcare Hub
 Ensure AI never exposes patient data (PHI) externally.
-* **Impact**: Protected Patient Privacy
+* **Focus**: PHI Protection & Privacy
 * **Compliance**: HIPAA, HITECH
 
 ---
 
-## 🤖 SaaS AI Agents
+## 🤖 General SaaS
 Control AI access to production APIs and internal systems.
-* **Impact**: Prevented Privilege Escalation
+* **Focus**: Privilege Escalation & Data Drift
 * **Compliance**: ISO 27001
 
 ---
