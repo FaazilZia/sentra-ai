@@ -92,6 +92,61 @@ export const getSecurityScore = async (req: any, res: Response, next: NextFuncti
   }
 };
 
+export const postOverrideAction = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const { comment, employeeId } = req.body;
+    const companyId = await resolveCompanyId(req);
+
+    if (!companyId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+    const log = await prisma.logs.findUnique({ where: { id } });
+    if (!log || log.companyId !== companyId) {
+      return res.status(404).json({ success: false, message: 'Activity log not found' });
+    }
+
+    // Role check: Only REVIEWER or ADMIN can approve critical actions
+    const userRole = req.user?.role || 'USER';
+    const isHighRisk = log.risk === 'high';
+    
+    let updateData: any = {
+      overrideComment: comment,
+      overriddenBy: employeeId || req.user?.full_name || 'Authorized User',
+      overrideTimestamp: new Date(),
+    };
+
+    if (isHighRisk) {
+      if (userRole !== 'REVIEWER' && userRole !== 'ADMIN') {
+        return res.status(403).json({ 
+          success: false, 
+          message: '2-Step Verification Required: High risk actions must be approved by a Reviewer or Admin.' 
+        });
+      }
+      updateData.isPendingApproval = false;
+      updateData.approvedBy = req.user?.full_name || 'Authorized Reviewer';
+      updateData.status = 'allowed'; // Change status to allowed once approved
+    } else {
+      updateData.status = 'allowed';
+    }
+
+    const updatedLog = await prisma.logs.update({
+      where: { id },
+      data: updateData
+    });
+
+    // Notify dashboard
+    io.to(`company_${companyId}`).emit('activity_log_updated', updatedLog);
+
+    res.status(200).json({
+      success: true,
+      message: isHighRisk ? 'Override approved by reviewer' : 'Action manually allowed',
+      data: updatedLog
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getLogs = async (req: any, res: Response, next: NextFunction) => {
   try {
     const companyId = await resolveCompanyId(req);

@@ -25,7 +25,9 @@ export async function interceptAction(input: any, callback: () => Promise<any>) 
       compliance: decision.compliance,
       metadata,
       requestId,
-      latency: Date.now() - startTime
+      latency: Date.now() - startTime,
+      isPendingApproval: decision.isPendingApproval || false,
+      explanation: decision.explanation
     });
     return decision;
   }
@@ -50,7 +52,8 @@ export async function interceptAction(input: any, callback: () => Promise<any>) 
     compliance: decision.compliance,
     metadata: { ...metadata, result },
     requestId,
-    latency: Date.now() - startTime
+    latency: Date.now() - startTime,
+    explanation: decision.explanation
   });
 
   return {

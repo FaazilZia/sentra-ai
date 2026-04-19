@@ -22,6 +22,11 @@ export interface LogActivityData {
   metadata?: any;
   requestId?: string;
   latency?: number;
+  isPendingApproval?: boolean;
+  overrideComment?: string;
+  overriddenBy?: string;
+  overrideTimestamp?: Date;
+  approvedBy?: string;
 }
 
 export const logActivity = async (data: LogActivityData) => {
@@ -40,7 +45,12 @@ export const logActivity = async (data: LogActivityData) => {
       compliance: data.compliance || {},
       metadata: data.metadata || {},
       requestId: data.requestId || null,
-      latency: data.latency || null
+      latency: data.latency || null,
+      isPendingApproval: data.isPendingApproval || false,
+      overrideComment: data.overrideComment || null,
+      overriddenBy: data.overriddenBy || null,
+      overrideTimestamp: data.overrideTimestamp || null,
+      approvedBy: data.approvedBy || null
     }
   });
 };

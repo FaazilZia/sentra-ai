@@ -9,7 +9,7 @@ export function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="relative flex h-screen w-full overflow-hidden bg-[#F8FAFC] text-slate-900 selection:bg-slate-900/10">
+    <div className="relative flex h-screen w-full overflow-hidden bg-slate-950 text-slate-100 selection:bg-cyan-500/20">
       <AtomBackground />
       <Sidebar collapsed={collapsed} onCollapsedChange={setCollapsed} />
       <div className="relative z-10 flex min-w-0 flex-1 flex-col">

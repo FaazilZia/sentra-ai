@@ -1,238 +1,192 @@
 import { useEffect, useState } from 'react';
-import { Building2, ShieldCheck, UserRound, Waypoints } from 'lucide-react';
-import { EmptyStateList } from '../components/ui/EmptyStateList';
-import { StatCard } from '../components/ui/StatCard';
-import { StatusBadge } from '../components/ui/StatusBadge';
+import { Bot, ShieldCheck, Zap, Activity, Filter, Plus, Search, MoreHorizontal, Database, Globe, Mail } from 'lucide-react';
 import { SurfaceCard } from '../components/ui/SurfaceCard';
-import { fetchPolicies, fetchCompany, PolicyResponse, CompanyResponse } from '../lib/api';
+import { StatusBadge } from '../components/ui/StatusBadge';
+import { fetchAIAgents, AIAgent } from '../lib/api';
 import { useAuth } from '../lib/auth';
 
-const effectToneMap: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
-  allow: 'success',
-  deny: 'danger',
-  require_approval: 'warning',
-  mask: 'info',
-  redact: 'info',
-  rate_limit: 'warning',
+const permissionIcons: Record<string, any> = {
+  email: Mail,
+  api: Zap,
+  db: Database,
+  web: Globe,
 };
 
 export default function Inventory() {
-  const { user } = useAuth();
-  const [policies, setPolicies] = useState<PolicyResponse[]>([]);
-  const [company, setCompany] = useState<CompanyResponse | null>(null);
+  const {} = useAuth();
+  const [agents, setAgents] = useState<AIAgent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    if (!user || !user.companyId) {
-      setLoading(false);
-      return;
-    }
-
-    const companyId = user.companyId;
-    let active = true;
-
-    async function loadInventory() {
+    async function loadAgents() {
       try {
-        const [companyResponse, policyResponse] = await Promise.all([
-          fetchCompany(companyId),
-          fetchPolicies(),
-        ]);
-
-        if (!active) return;
-
-        setCompany(companyResponse);
-        setPolicies(policyResponse);
-        setError(null);
-      } catch (loadError) {
-        if (!active) return;
-        setError(loadError instanceof Error ? loadError.message : 'Unable to load inventory');
+        const data = await fetchAIAgents();
+        setAgents(data);
+      } catch (err) {
+        console.error('Failed to load agents:', err);
       } finally {
-        if (active) setLoading(false);
+        setLoading(false);
       }
     }
+    loadAgents();
+  }, []);
 
-    void loadInventory();
-
-    return () => {
-      active = false;
-    };
-  }, [user]);
-
-  const effectSummary = Object.entries(
-    policies.reduce<Record<string, number>>((acc, policy) => {
-      const effect = (policy as any).effect ?? 'unknown';
-      acc[effect] = (acc[effect] ?? 0) + 1;
-      return acc;
-    }, {})
-  ).sort((a, b) => b[1] - a[1]);
+  const filteredAgents = agents.filter(agent => 
+    agent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    agent.model.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className="mx-auto max-w-[1400px] space-y-6 pb-8">
-      <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(12,20,35,0.96),rgba(14,41,58,0.92))] p-6 md:p-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(45,212,191,0.18),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(59,130,246,0.16),transparent_24%)]" />
-        <div className="relative grid gap-5 lg:grid-cols-[1.35fr_0.8fr]">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-100/80">
-              Inventory Control
-            </p>
-            <h1 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-white md:text-4xl">
-              Real company, operator, and policy inventory from the deployed backend.
-            </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
-              This page turns the old placeholder into an operational snapshot of who is signed in,
-              which company is active, and how your current policy estate is distributed.
-            </p>
-          </div>
-
-          <div className="rounded-[1.75rem] border border-white/10 bg-slate-950/35 p-5 backdrop-blur-xl">
-            <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Active company</p>
-            <p className="mt-2 text-2xl font-semibold text-white">{company?.name ?? 'Loading company'}</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <StatusBadge
-                label={company?.is_active ? 'Company Active' : 'Company Pending'}
-                tone={company?.is_active ? 'success' : 'warning'}
-              />
-              <StatusBadge label={`${policies.length} policies`} tone="info" />
-            </div>
-          </div>
+    <div className="mx-auto max-w-[1440px] space-y-8 pb-12 px-6 pt-6">
+      {/* Premium Header */}
+      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+        <div>
+          <nav className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+            <span className="opacity-50">Control Layer</span>
+            <span className="h-1 w-1 rounded-full bg-slate-700" />
+            <span className="text-cyan-400">AI Inventory</span>
+          </nav>
+          <h1 className="mt-3 text-4xl font-black tracking-tight text-white flex items-center gap-3">
+            <Bot className="h-9 w-9 text-cyan-400" />
+            AI Agent Registry
+          </h1>
+          <p className="mt-2 text-slate-400 font-medium max-w-xl">
+            Complete inventory of authorized AI systems, their permissions, and operational status within your workspace.
+          </p>
         </div>
-      </section>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          title="Company Policies"
-          value={loading ? '---' : policies.length}
-          icon={ShieldCheck}
-          trend="Policies attached to the current company"
-        />
-        <StatCard
-          title="Asset Types"
-          value={loading ? '---' : policies.length}
-          icon={Building2}
-          trend="Distinct governed asset classes"
-        />
-        <StatCard
-          title="Agent Types"
-          value={loading ? '---' : policies.length}
-          icon={Waypoints}
-          trend="Unique agent categories in scope"
-        />
-        <StatCard
-          title="Operator State"
-          value={loading ? '---' : user?.is_active ? 'Live' : 'Paused'}
-          icon={UserRound}
-          trend="Current authenticated operator session"
-        />
+        <button className="flex items-center gap-2 rounded-xl bg-cyan-500 px-6 py-3 text-sm font-bold text-slate-950 shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:bg-cyan-400 transition-all">
+          <Plus className="h-4 w-4" />
+          Register New Agent
+        </button>
       </div>
 
-      {error ? (
-        <EmptyStateList
-          title="Inventory Unavailable"
-          description="The inventory view could not load the company and policy records."
-          emptyMessage={error}
-        />
-      ) : (
-        <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-          <SurfaceCard
-            title="Company Profile"
-            description="Identity and activation details for the active workspace."
-          >
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Company name</p>
-                <p className="mt-2 text-lg font-medium text-white">{company?.name ?? 'Not loaded'}</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Slug</p>
-                <p className="mt-2 text-lg font-medium text-white">{company?.slug ?? 'Not loaded'}</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Created</p>
-                <p className="mt-2 text-lg font-medium text-white">
-                  {company?.created_at ? new Date(company.created_at).toLocaleDateString() : 'Not loaded'}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Status</p>
-                <div className="mt-2">
-                  <StatusBadge
-                    label={company?.is_active ? 'Active' : 'Inactive'}
-                    tone={company?.is_active ? 'success' : 'warning'}
-                  />
-                </div>
-              </div>
+      {/* Stats Row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {[
+          { label: 'Total Agents', value: agents.length, icon: Bot, color: 'text-cyan-400', bg: 'bg-cyan-400/10' },
+          { label: 'Active Sessions', value: agents.filter(a => a.status === 'active').length, icon: Activity, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
+          { label: 'Governed Permissions', value: agents.reduce((acc, a) => acc + (a.permissions?.length || 0), 0), icon: ShieldCheck, color: 'text-indigo-400', bg: 'bg-indigo-400/10' },
+        ].map((stat, i) => (
+          <div key={i} className="glass-card rounded-[2rem] p-6 flex items-center gap-5">
+            <div className={`p-4 rounded-2xl ${stat.bg} ${stat.color}`}>
+              <stat.icon className="h-6 w-6" />
             </div>
-          </SurfaceCard>
-
-          <SurfaceCard
-            title="Operator Session"
-            description="Current authenticated user pulled from the active auth session."
-          >
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Full name</p>
-                <p className="mt-2 text-lg font-medium text-white">{user?.fullName ?? 'Unknown user'}</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Email</p>
-                <p className="mt-2 text-lg font-medium text-white">{user?.email ?? 'Unknown email'}</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Company ID</p>
-                <p className="mt-2 break-all text-sm font-medium text-white">{user?.companyId ?? 'Unknown company'}</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">User status</p>
-                <div className="mt-2">
-                  <StatusBadge
-                    label={user?.is_active ? 'Operator Active' : 'Operator Inactive'}
-                    tone={user?.is_active ? 'success' : 'warning'}
-                  />
-                </div>
-              </div>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{stat.label}</p>
+              <p className="text-3xl font-black text-white mt-1">{stat.value}</p>
             </div>
-          </SurfaceCard>
+          </div>
+        ))}
+      </div>
 
-          <SurfaceCard
-            title="Policy Distribution"
-            description="How the current policy estate is split by effect."
-            className="xl:col-span-2"
-          >
-            {effectSummary.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/25 p-6 text-sm text-slate-400">
-                No policies are available yet, so there is no live distribution to show.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {effectSummary.map(([effect, count]) => {
-                  const width = `${Math.max(14, (count / policies.length) * 100)}%`;
-                  return (
-                    <div key={effect} className="rounded-2xl border border-white/10 bg-slate-950/30 p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <StatusBadge
-                            label={effect.replace('_', ' ')}
-                            tone={effectToneMap[effect] ?? 'default'}
-                          />
-                          <span className="text-sm text-slate-400">Policy effect</span>
-                        </div>
-                        <span className="text-sm font-medium text-white">{count}</span>
+      {/* Inventory Table */}
+      <SurfaceCard 
+        title="Agent Registry"
+        className="border-white/5 bg-slate-900/40 backdrop-blur-md"
+        contentClassName="p-0"
+      >
+        <div className="flex items-center justify-between p-6 border-b border-white/5">
+          <div className="relative w-full max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+            <input 
+              type="text" 
+              placeholder="Search agents, models, or permissions..." 
+              className="w-full bg-slate-950/50 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-2">
+            <button className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-white transition-colors">
+              <Filter className="h-4 w-4" />
+            </button>
+            <button className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-white transition-colors">
+              <MoreHorizontal className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-white/5 bg-white/[0.02] text-[10px] font-black uppercase tracking-widest text-slate-500">
+                <th className="px-8 py-4">Agent Identification</th>
+                <th className="px-8 py-4">Model Engine</th>
+                <th className="px-8 py-4">Scope & Permissions</th>
+                <th className="px-8 py-4">Status</th>
+                <th className="px-8 py-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="py-20 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-500 border-t-transparent" />
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Synchronizing Registry...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredAgents.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-20 text-center">
+                    <div className="flex flex-col items-center gap-3 opacity-30">
+                      <Bot className="h-12 w-12 text-slate-400" />
+                      <p className="text-sm font-bold text-slate-400">No agents found</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredAgents.map(agent => (
+                <tr key={agent.id} className="group hover:bg-white/[0.02] transition-colors">
+                  <td className="px-8 py-6">
+                    <div className="flex items-center gap-4">
+                      <div className="h-10 w-10 rounded-xl bg-slate-800 flex items-center justify-center border border-white/5 group-hover:border-cyan-500/30 transition-colors">
+                        <Bot className="h-5 w-5 text-cyan-400" />
                       </div>
-                      <div className="mt-3 h-2 rounded-full bg-white/10">
-                        <div
-                          className="h-full rounded-full bg-[linear-gradient(90deg,rgba(34,211,238,0.85),rgba(59,130,246,0.95))]"
-                          style={{ width }}
-                        />
+                      <div>
+                        <p className="text-sm font-bold text-white uppercase tracking-tight">{agent.name}</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5 font-mono uppercase">{agent.id.split('-')[0]}</p>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </SurfaceCard>
+                  </td>
+                  <td className="px-8 py-6">
+                    <div className="flex items-center gap-2">
+                      <div className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                      <span className="text-xs font-bold text-slate-300 font-mono">{agent.model}</span>
+                    </div>
+                  </td>
+                  <td className="px-8 py-6">
+                    <div className="flex flex-wrap gap-2">
+                      {agent.permissions?.map((perm: string) => {
+                        const Icon = permissionIcons[perm.toLowerCase()] || ShieldCheck;
+                        return (
+                          <div key={perm} className="flex items-center gap-1.5 rounded-lg bg-slate-950/50 border border-white/5 px-2 py-1">
+                            <Icon className="h-3 w-3 text-slate-500" />
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{perm}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </td>
+                  <td className="px-8 py-6">
+                    <StatusBadge 
+                      label={agent.status.toUpperCase()} 
+                      tone={agent.status === 'active' ? 'success' : 'default'} 
+                    />
+                  </td>
+                  <td className="px-8 py-6 text-right">
+                    <button className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-cyan-400 transition-colors">
+                      Manage Scope
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      )}
+      </SurfaceCard>
     </div>
   );
 }

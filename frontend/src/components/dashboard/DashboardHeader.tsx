@@ -1,34 +1,48 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Shield, ShieldCheck, ShieldAlert, Zap } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, Zap, BarChart3 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 interface DashboardHeaderProps {
   total: number;
-  allowed: number;
   blocked: number;
+  complianceScore: number;
+  riskScore: number;
 }
 
-export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ total, allowed, blocked }) => {
+export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ 
+  total, 
+  blocked, 
+  complianceScore, 
+  riskScore 
+}) => {
   const cards = [
     { 
-      label: 'Total Actions', 
-      value: total, 
-      icon: Zap, 
+      label: 'Compliance Score', 
+      value: `${complianceScore}%`, 
+      icon: ShieldCheck, 
       color: 'text-indigo-400', 
       bg: 'bg-indigo-500/10',
       border: 'border-indigo-500/20'
     },
     { 
-      label: 'Authorized', 
-      value: allowed, 
-      icon: ShieldCheck, 
-      color: 'text-emerald-400', 
-      bg: 'bg-emerald-500/10',
-      border: 'border-emerald-500/20'
+      label: 'Risk Score', 
+      value: `${riskScore}%`, 
+      icon: BarChart3, 
+      color: 'text-cyan-400', 
+      bg: 'bg-cyan-500/10',
+      border: 'border-cyan-500/20'
     },
     { 
-      label: 'Intercepted', 
+      label: 'Total Violations', 
+      value: total, 
+      icon: Zap, 
+      color: 'text-amber-400', 
+      bg: 'bg-amber-500/10',
+      border: 'border-amber-500/20'
+    },
+    { 
+      label: 'Total Blocked Actions', 
       value: blocked, 
       icon: ShieldAlert, 
       color: 'text-rose-400', 
@@ -38,7 +52,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ total, allowed
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
       {cards.map((card, index) => (
         <motion.div
           key={card.label}
@@ -46,29 +60,23 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ total, allowed
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.1 }}
           className={cn(
-            "glass-card p-6 rounded-[2rem] relative overflow-hidden group",
+            "glass-card p-6 rounded-[1.5rem] border bg-slate-900/40",
             card.border
           )}
         >
-          <div className="relative z-10 flex items-center gap-4">
-            <div className={cn("p-4 rounded-2xl", card.bg, card.color)}>
-              <card.icon className="w-6 h-6" />
+          <div className="flex items-center gap-4">
+            <div className={cn("p-3 rounded-xl", card.bg, card.color)}>
+              <card.icon className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-0.5">
                 {card.label}
               </p>
-              <p className="text-3xl font-black tracking-tight text-white leading-none">
-                {card.value.toLocaleString()}
+              <p className="text-2xl font-black tracking-tight text-white">
+                {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
               </p>
             </div>
           </div>
-          
-          {/* Subtle decoration */}
-          <div className={cn(
-            "absolute -bottom-6 -right-6 w-24 h-24 rounded-full blur-2xl opacity-10 group-hover:opacity-20 transition-opacity",
-            card.bg
-          )} />
         </motion.div>
       ))}
     </div>

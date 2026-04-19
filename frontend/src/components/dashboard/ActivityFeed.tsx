@@ -1,19 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  CheckCircle2, 
-  XCircle, 
-  Clock, 
-  ShieldAlert, 
-  Info, 
+import {
+  Clock,
   Search,
-  ChevronRight,
   Database,
-  Lock
+  Lock,
+  ShieldCheck,
+  AlertTriangle
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { RiskIndicator } from './RiskIndicator';
-import { ActionTimeline } from './ActionTimeline';
+import { apiRequest } from '../../lib/api';
 
 export interface ActivityEvent {
   id: string;
@@ -26,150 +23,241 @@ export interface ActivityEvent {
   impact?: string;
   compliance?: string[];
   explanation?: string;
-  confidence?: number;
-  timeline?: string[];
+  isPendingApproval?: boolean;
+  overriddenBy?: string;
+  overrideComment?: string;
 }
 
 interface ActivityFeedProps {
   events: ActivityEvent[];
   onReplay?: (id: string) => void;
   onExport?: (format: 'csv' | 'json') => void;
+  minimal?: boolean;
 }
 
-export const ActivityFeed: React.FC<ActivityFeedProps> = ({ events, onReplay, onExport }) => {
-  const [selectedId, setSelectedId] = React.useState<string | null>(null);
+export const ActivityFeed: React.FC<ActivityFeedProps> = ({ events, onReplay, onExport, minimal }) => {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [overrideComment, setOverrideComment] = useState('');
+  const [employeeId, setEmployeeId] = useState('');
+  const [isOverriding, setIsOverriding] = useState(false);
+
+  const handleOverride = async (eventId: string) => {
+    if (!overrideComment || !employeeId) {
+      alert("Please provide both a comment and Employee ID for the audit trail.");
+      return;
+    }
+    setIsOverriding(true);
+    try {
+      if (eventId.startsWith('demo-')) {
+        // Local simulation for demo mode
+        alert(`[Demo Mode] Action ${eventId} overridden by ${employeeId}`);
+        // In a real demo we'd update the state, but window.reload is used in real mode
+        // For simplicity, we'll just mock the alert and success
+      } else {
+        await apiRequest(`/ai/override/${eventId}`, {
+          method: 'POST',
+          body: JSON.stringify({ comment: overrideComment, employeeId })
+        });
+      }
+      alert("Action overridden and logged.");
+      window.location.reload(); 
+    } catch (err: any) {
+      alert(err.message || "Override failed.");
+    } finally {
+      setIsOverriding(false);
+    }
+  };
 
   return (
-    <div className="flex flex-col h-full glass-card rounded-[2rem] overflow-hidden">
-      <div className="p-6 border-b border-white/5 flex items-center justify-between bg-slate-900/40">
-        <div>
-          <h2 className="text-xl font-black tracking-tight text-white flex items-center gap-2">
-            <Search className="w-5 h-5 text-indigo-400" />
-            Live Governance Feed
-          </h2>
-          <p className="text-xs text-slate-500 font-medium mt-1">Real-time AI action interception & decision log</p>
+    <div className="flex flex-col h-full glass-card rounded-[1.5rem] overflow-hidden border-white/5 bg-slate-900/20">
+      {!minimal && (
+        <div className="p-6 border-b border-white/5 flex items-center justify-between bg-slate-900/40">
+          <div>
+            <h2 className="text-xl font-black tracking-tight text-white flex items-center gap-2">
+              <Search className="w-5 h-5 text-slate-400" />
+              Activity Log Center
+            </h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onExport?.('csv')}
+              className="px-4 py-2 rounded-xl bg-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-300 hover:bg-slate-700 transition-all"
+            >
+              Export CSV
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-           <button 
-             onClick={() => onExport?.('json')}
-             className="px-3 py-1.5 rounded-lg bg-slate-800 text-[10px] font-bold uppercase tracking-widest text-slate-300 hover:bg-slate-700 transition-colors"
-           >
-             Export JSON
-           </button>
-        </div>
+      )}
+
+      {/* Simplified Headers */}
+      <div className="grid grid-cols-12 px-6 py-3 border-b border-white/5 bg-slate-950/40 text-[9px] font-black uppercase tracking-widest text-slate-500">
+        <div className="col-span-1">Status</div>
+        <div className="col-span-2">Agent</div>
+        <div className="col-span-2">Action</div>
+        <div className="col-span-1 text-center">Risk</div>
+        <div className="col-span-1 text-center">Compliance</div>
+        <div className="col-span-4 px-4">Result / Justification</div>
+        <div className="col-span-1 text-right">Time</div>
       </div>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3">
+      <div className="flex-1 overflow-y-auto custom-scrollbar">
         <AnimatePresence initial={false}>
-          {events.map((event) => (
+          {events.length === 0 ? (
+             <div className="py-12 text-center text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+                No activity records found
+             </div>
+          ) : events.map((event) => (
             <motion.div
               key={event.id}
               layout
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               className={cn(
-                "group relative rounded-2xl border transition-all duration-300",
-                selectedId === event.id 
-                  ? "bg-slate-800/80 border-indigo-500/30 ring-1 ring-indigo-500/20" 
-                  : "bg-slate-900/40 border-white/5 hover:bg-slate-800/40 hover:border-white/10"
+                "border-b border-white/5 transition-all duration-200",
+                selectedId === event.id ? "bg-slate-800/40" : "hover:bg-white/[0.01]"
               )}
             >
-              <div 
-                className="p-4 cursor-pointer flex items-center gap-4"
+              <div
+                className="grid grid-cols-12 px-6 py-4 items-center cursor-pointer group"
                 onClick={() => setSelectedId(selectedId === event.id ? null : event.id)}
               >
-                <div className={cn(
-                  "p-2.5 rounded-xl shadow-lg",
-                  event.status === 'allowed' ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500"
-                )}>
-                  {event.status === 'allowed' ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+                <div className="col-span-1">
+                  {event.isPendingApproval ? (
+                    <Clock className="w-4 h-4 text-amber-500 animate-pulse" />
+                  ) : event.status === 'allowed' ? (
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                  ) : (
+                    <div className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
+                  )}
                 </div>
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-bold text-slate-100 truncate">{event.agent}</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">
-                      {event.action}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3 text-[10px] font-medium text-slate-500">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {event.timestamp}
-                    </span>
-                    <RiskIndicator level={event.risk} />
-                  </div>
+                <div className="col-span-2 text-xs font-bold text-slate-200 truncate pr-4">
+                  {event.agent}
                 </div>
 
-                <div className="flex items-center gap-2">
-                   <ChevronRight className={cn(
-                     "w-4 h-4 text-slate-600 transition-transform duration-300",
-                     selectedId === event.id && "rotate-90 text-indigo-400"
-                   )} />
+                <div className="col-span-2">
+                  <span className="text-[10px] font-mono text-slate-400 uppercase">
+                    {event.action}
+                  </span>
+                </div>
+
+                <div className="col-span-1 flex justify-center">
+                  <RiskIndicator level={event.risk} />
+                </div>
+
+                <div className="col-span-1 flex justify-center">
+                  <span className="text-[9px] font-black text-indigo-400 uppercase">
+                    {event.compliance?.[0] || '---'}
+                  </span>
+                </div>
+
+                <div className="col-span-4 px-4 text-[11px] font-medium truncate">
+                  {event.status === 'blocked' ? (
+                    <span className="text-rose-400">{event.reason}</span>
+                  ) : (
+                    <span className="text-slate-400">{event.impact}</span>
+                  )}
+                </div>
+
+                <div className="col-span-1 text-[10px] font-bold text-slate-600 text-right tabular-nums">
+                  {event.timestamp}
                 </div>
               </div>
 
+              {/* Expansion Area */}
               <AnimatePresence>
                 {selectedId === event.id && (
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden border-t border-white/5"
+                    className="overflow-hidden bg-slate-950/60 border-t border-white/5"
                   >
-                    <div className="p-5 grid grid-cols-1 md:grid-cols-12 gap-6 bg-slate-900/60">
-                      <div className="md:col-span-7 space-y-4">
-                        {event.status === 'blocked' && (
-                          <div className="space-y-4">
-                            <div className="p-4 rounded-xl bg-rose-500/5 border border-rose-500/10">
-                              <h4 className="text-[10px] font-black uppercase tracking-widest text-rose-400 mb-2 flex items-center gap-2">
-                                <ShieldAlert className="w-3 h-3" />
-                                Rejection Logic
-                              </h4>
-                              <p className="text-sm text-slate-300 font-medium">{event.reason}</p>
-                            </div>
-                            
-                            <div className="p-4 rounded-xl bg-indigo-500/5 border border-indigo-500/10">
-                              <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-2 flex items-center gap-2">
-                                <Info className="w-3 h-3" />
-                                Business Impact
-                              </h4>
-                              <p className="text-sm text-slate-300 font-medium">{event.impact}</p>
-                            </div>
-
-                            <div className="flex flex-wrap gap-2 pt-2">
-                              {event.compliance?.map(tag => (
-                                <span key={tag} className="px-2 py-1 rounded-md bg-slate-800 border border-white/5 text-[10px] font-bold text-slate-400 flex items-center gap-1.5">
-                                  <Lock className="w-3 h-3 text-indigo-400" />
-                                  {tag}
-                                </span>
-                              ))}
-                            </div>
+                    <div className="p-8 grid grid-cols-1 lg:grid-cols-2 gap-12">
+                       <div className="space-y-6">
+                          <div>
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3">Governance Insight</h4>
+                            <p className="text-sm text-slate-300 leading-relaxed font-medium">
+                              {event.explanation || event.reason || "Verified against internal security baseline."}
+                            </p>
                           </div>
-                        )}
-                        
-                        {event.status === 'allowed' && (
-                          <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
-                            <p className="text-sm text-slate-300">{event.explanation || 'Action verified against global security baseline. No violations detected.'}</p>
-                          </div>
-                        )}
-                        
-                        <div className="pt-4 flex items-center gap-3">
-                           <button 
-                             onClick={() => onReplay?.(event.id)}
-                             className="flex-1 py-2 rounded-xl bg-indigo-600 text-white text-[11px] font-bold uppercase tracking-widest hover:bg-indigo-500 transition-colors flex items-center justify-center gap-2"
-                           >
-                             <Database className="w-3.5 h-3.5" />
-                             Re-run Simulation
-                           </button>
-                        </div>
-                      </div>
 
-                      <div className="md:col-span-5 border-l border-white/5 pl-6">
-                        <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">Action Timeline</h4>
-                        <ActionTimeline status={event.status} risk={event.risk} />
-                      </div>
+                          {event.overriddenBy && (
+                            <div className="p-4 rounded-xl bg-indigo-500/5 border border-indigo-500/20">
+                               <div className="flex items-center gap-2 text-indigo-400 mb-2">
+                                  <ShieldCheck className="h-4 w-4" />
+                                  <span className="text-[10px] font-black uppercase tracking-widest">Manual Override Approved</span>
+                               </div>
+                               <p className="text-xs text-slate-200 mb-2 font-medium italic">"{event.overrideComment}"</p>
+                               <div className="flex items-center justify-between text-[9px] text-slate-500 font-bold uppercase">
+                                  <span>Approver: {event.overriddenBy}</span>
+                                  <span>Timestamp: {event.timestamp}</span>
+                               </div>
+                            </div>
+                          )}
+                       </div>
+
+                       <div className="space-y-6">
+                          {(event.status === 'blocked' || event.isPendingApproval) && !event.overriddenBy && (
+                            <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/10 space-y-4">
+                               <div className="flex items-center gap-2 text-white">
+                                  <AlertTriangle className="h-4 w-4 text-amber-500" />
+                                  <h4 className="text-[10px] font-black uppercase tracking-widest">Manual Intervention</h4>
+                               </div>
+                               
+                               <div className="space-y-4">
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                      <label className="text-[9px] font-bold text-slate-500 uppercase">Employee ID</label>
+                                      <input 
+                                          type="text" 
+                                          value={employeeId}
+                                          onChange={(e) => setEmployeeId(e.target.value)}
+                                          placeholder="EMP-XXXX"
+                                          className="w-full bg-slate-950 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                                      />
+                                    </div>
+                                    <div className="flex items-end">
+                                      <button 
+                                        onClick={() => handleOverride(event.id)}
+                                        disabled={isOverriding}
+                                        className="w-full py-2 rounded-lg bg-white text-slate-950 text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all disabled:opacity-50"
+                                      >
+                                        {event.isPendingApproval ? 'Approve' : 'Override'}
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div className="space-y-1.5">
+                                     <label className="text-[9px] font-bold text-slate-500 uppercase">Override Justification</label>
+                                     <textarea 
+                                        rows={2}
+                                        value={overrideComment}
+                                        onChange={(e) => setOverrideComment(e.target.value)}
+                                        placeholder="Mandatory audit trail comment..."
+                                        className="w-full bg-slate-950 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 resize-none"
+                                     />
+                                  </div>
+                               </div>
+                               {event.risk === 'high' && (
+                                  <p className="text-[8px] text-rose-400 font-bold uppercase tracking-tighter text-center pt-2">
+                                    Admin review required for high-risk actions.
+                                  </p>
+                               )}
+                            </div>
+                          )}
+
+                          <div className="flex gap-3">
+                            <button
+                              onClick={() => onReplay?.(event.id)}
+                              className="flex-1 py-3 rounded-xl border border-white/5 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all flex items-center justify-center gap-2"
+                            >
+                              <Database className="w-3 h-3" /> Replay Action
+                            </button>
+                            <button className="flex-1 py-3 rounded-xl border border-white/5 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all flex items-center justify-center gap-2">
+                               <Lock className="h-3 w-3" /> View Trace
+                            </button>
+                          </div>
+                       </div>
                     </div>
                   </motion.div>
                 )}

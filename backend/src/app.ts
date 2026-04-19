@@ -13,6 +13,8 @@ import policyRoutes from './routes/policy.routes';
 import companyRoutes from './routes/company.routes';
 import aiRoutes from './routes/ai.routes';
 import connectorRoutes from './routes/connector.routes';
+import inventoryRoutes from './routes/inventory.routes';
+import driftRoutes from './routes/drift.routes';
 import { apiRateLimiter } from './config/rateLimit';
 
 const app: Application = express();
@@ -63,6 +65,8 @@ v1Router.use('/policies', policyRoutes);
 v1Router.use('/companies', companyRoutes);
 v1Router.use('/ai', aiRoutes);
 v1Router.use('/connectors', connectorRoutes);
+v1Router.use('/inventory', inventoryRoutes);
+v1Router.use('/drift', driftRoutes);
 
 // Health check under v1
 v1Router.get('/health', (req, res) => {

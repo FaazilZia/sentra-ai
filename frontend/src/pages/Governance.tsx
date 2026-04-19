@@ -1,215 +1,184 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FileSignature, Filter, ShieldCheck, SlidersHorizontal } from 'lucide-react';
-import { EmptyStateList } from '../components/ui/EmptyStateList';
-import { StatCard } from '../components/ui/StatCard';
-import { StatusBadge } from '../components/ui/StatusBadge';
-import { SurfaceCard } from '../components/ui/SurfaceCard';
+import { ShieldCheck, Search, Plus } from 'lucide-react';
 import { fetchPolicies, PolicyResponse } from '../lib/api';
 import { useAuth } from '../lib/auth';
+import { cn } from '../lib/utils';
+
+const MOCK_POLICIES: PolicyResponse[] = [
+  {
+    id: 'p1',
+    name: 'Restrict External Data Sharing',
+    description: 'Prevents AI agents from sending sensitive data to unverified external API endpoints.',
+    enabled: true,
+    effect: 'deny',
+    priority: 100,
+    current_version: 3,
+    status: 'active',
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'p2',
+    name: 'Unauthorized Payment Block',
+    description: 'Ensures all financial transactions triggered by AI are routed through the internal approval portal.',
+    enabled: true,
+    effect: 'deny',
+    priority: 90,
+    current_version: 2,
+    status: 'active',
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'p3',
+    name: 'Internal DB Access Only',
+    description: 'Strictly limits database access to authorized internal VPC resources.',
+    enabled: true,
+    effect: 'allow',
+    priority: 80,
+    current_version: 1,
+    status: 'active',
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'p4',
+    name: 'PII Masking & Anonymization',
+    description: 'Automatically redacts personal information before processing via third-party LLMs.',
+    enabled: true,
+    effect: 'allow',
+    priority: 95,
+    current_version: 4,
+    status: 'active',
+    created_at: new Date().toISOString()
+  }
+];
 
 export default function GovernancePage() {
   const { accessToken } = useAuth();
-  const [policies, setPolicies] = useState<PolicyResponse[]>([]);
+  const [policies, setPolicies] = useState<PolicyResponse[]>(MOCK_POLICIES); // Use mock as default for demo
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [query, setQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    if (!accessToken) {
-      setLoading(false);
-      return;
-    }
-
-    let active = true;
-
-    async function loadPoliciesForGovernance() {
+    async function loadPolicies() {
+      // For the demo, we'll keep using mock data but attempt a load
       try {
-        const response = await fetchPolicies();
-        if (!active) {
-          return;
+        const data = await fetchPolicies();
+        if (Array.isArray(data) && data.length > 0) {
+          setPolicies(data);
         }
-        const list = Array.isArray(response) ? response : [];
-        setPolicies(list);
-        setError(null);
-      } catch (loadError) {
-        if (!active) {
-          return;
-        }
-        setError(loadError instanceof Error ? loadError.message : 'Unable to load governance data');
+      } catch (err) {
+        console.error('Failed to load policies:', err);
       } finally {
-        if (active) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     }
-
-    void loadPoliciesForGovernance();
-
-    return () => {
-      active = false;
-    };
+    loadPolicies();
   }, [accessToken]);
 
   const filteredPolicies = useMemo(() => {
-    return policies.filter((policy) => {
-      const matchesQuery =
-        query.trim().length === 0 ||
-        policy.name.toLowerCase().includes(query.toLowerCase()) ||
-        policy.description.toLowerCase().includes(query.toLowerCase());
-
-      const matchesStatus = statusFilter === 'all' || policy.status === statusFilter;
-
-      return matchesQuery && matchesStatus;
-    });
-  }, [policies, query, statusFilter]);
-
-  const enabledPolicies = policies.filter((policy) => policy.enabled).length;
-  const publishedPolicies = policies.filter((policy) => policy.status === 'published').length;
+    return policies.filter(p => 
+      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [policies, searchTerm]);
 
   return (
-    <div className="mx-auto max-w-[1400px] space-y-6 pb-8">
-      <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(7,18,33,0.96),rgba(24,40,66,0.92))] p-6 md:p-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(45,212,191,0.14),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(96,165,250,0.18),transparent_24%)]" />
-        <div className="relative grid gap-5 lg:grid-cols-[1.35fr_0.8fr]">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-100/80">
-              AI Governance Console
-            </p>
-            <h1 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-white md:text-4xl">
-              Control what AI agents can and cannot do.
-            </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
-              This workspace allows you to define permission sets for specific AI agents. Sentra AI interceptors enforce these rules in real-time, blocking unauthorized requests before they execute.
-            </p>
-          </div>
-
-          <div className="rounded-[1.75rem] border border-white/10 bg-slate-950/35 p-5">
-            <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Visible results</p>
-            <p className="mt-2 text-4xl font-semibold text-white">{filteredPolicies.length}</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <StatusBadge label={`${publishedPolicies} published`} tone="success" />
-              <StatusBadge label={`${enabledPolicies} enabled`} tone="info" />
-            </div>
-          </div>
+    <div className="mx-auto max-w-[1440px] space-y-10 pb-12 px-6 pt-10">
+      {/* Premium Header */}
+      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-4xl font-black tracking-tight text-white flex items-center gap-4 uppercase">
+            <ShieldCheck className="h-10 w-10 text-white" />
+            AI Guardrails
+          </h1>
+          <p className="mt-2 text-slate-400 font-medium max-w-xl text-lg">
+            Active governance policies defining allowed and restricted AI behaviors across the enterprise.
+          </p>
         </div>
-      </section>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          title="Policy Records"
-          value={loading ? '---' : policies.length}
-          icon={FileSignature}
-          trend="Total governance documents in scope"
-        />
-        <StatCard
-          title="Published"
-          value={loading ? '---' : publishedPolicies}
-          icon={ShieldCheck}
-          trend="Policies available for active decisioning"
-        />
-        <StatCard
-          title="Enabled"
-          value={loading ? '---' : enabledPolicies}
-          icon={SlidersHorizontal}
-          trend="Controls currently switched on"
-        />
-        <StatCard
-          title="Filtered View"
-          value={loading ? '---' : filteredPolicies.length}
-          icon={Filter}
-          trend="Policies matching current search and status filters"
+        <button className="flex items-center gap-2 rounded-2xl bg-white px-8 py-4 text-xs font-black text-slate-950 hover:bg-slate-200 transition-all uppercase tracking-widest shadow-2xl">
+          <Plus className="h-4 w-4" />
+          Create Guardrail
+        </button>
+      </div>
+
+      {/* Policy Search */}
+      <div className="relative max-w-2xl">
+        <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
+        <input 
+          type="text" 
+          placeholder="Search active guardrails..." 
+          className="w-full bg-slate-900/50 border border-white/5 rounded-[1.5rem] py-4 pl-14 pr-6 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all placeholder:text-slate-600"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 
-      {error ? (
-        <EmptyStateList
-          title="Governance Data Unavailable"
-          description="The governance workspace could not load the policy list."
-          emptyMessage={error}
-        />
-      ) : (
-        <SurfaceCard
-          title="Agent Permission Matrix"
-          description="Manage active control policies and permission sets for your AI agents."
-          action={
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search policies"
-                className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-cyan-200/25"
-              />
-              <select
-                value={statusFilter}
-                onChange={(event) =>
-                  setStatusFilter(event.target.value as 'all' | 'published' | 'draft')
-                }
-                className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-cyan-200/25"
-              >
-                <option value="all">All statuses</option>
-                <option value="published">Published</option>
-                <option value="draft">Draft</option>
-              </select>
-            </div>
-          }
-          contentClassName="p-0"
-        >
-          {filteredPolicies.length === 0 ? (
-            <div className="p-5">
-              <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/25 p-6 text-sm text-slate-400">
-                No policies match the current filters yet.
+      <div className="grid grid-cols-1 gap-6">
+        {loading ? (
+          <div className="p-20 text-center">
+            <div className="h-10 w-10 animate-spin border-2 border-white border-t-transparent rounded-full mx-auto" />
+          </div>
+        ) : filteredPolicies.length === 0 ? (
+          <div className="p-20 text-center glass-card rounded-[2.5rem] border-dashed border-white/5">
+             <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">No active guardrails match your search</p>
+          </div>
+        ) : (
+          filteredPolicies.map(policy => (
+            <div key={policy.id} className="glass-card rounded-[2.5rem] p-8 bg-slate-900/40 border-white/5 hover:border-white/10 transition-all flex flex-col md:flex-row md:items-center justify-between gap-8 group">
+              <div className="flex items-center gap-6">
+                 <div className={cn(
+                   "h-12 w-12 rounded-2xl flex items-center justify-center border transition-all",
+                   policy.enabled ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)]" : "bg-slate-800 border-white/5 text-slate-500"
+                 )}>
+                    <ShieldCheck className="h-6 w-6" />
+                 </div>
+                 <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-black text-white uppercase tracking-tight group-hover:text-indigo-400 transition-colors">{policy.name}</h3>
+                      {policy.enabled && (
+                        <span className="text-[8px] font-black bg-amber-500/20 text-amber-500 px-1.5 py-0.5 rounded border border-amber-500/20 uppercase animate-pulse">
+                          Active
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-slate-400 mt-1 max-w-md line-clamp-1">{policy.description}</p>
+                 </div>
+              </div>
+
+              <div className="flex items-center gap-12">
+                 <div className="text-center">
+                    <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-1">EFFECT</p>
+                    <span className={cn(
+                      "text-[10px] font-black uppercase tracking-tighter px-2 py-0.5 rounded",
+                      policy.effect === 'deny' ? "text-rose-400 bg-rose-400/10" : "text-emerald-400 bg-emerald-400/10"
+                    )}>
+                      {policy.effect}
+                    </span>
+                 </div>
+                 <div className="text-center">
+                    <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-1">PRIORITY</p>
+                    <p className="text-sm font-black text-white">{policy.priority}</p>
+                 </div>
+                 <div className="text-center">
+                    <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-1">VERSION</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">v{policy.current_version}</p>
+                 </div>
+                 <div className="pl-6 border-l border-white/5">
+                    <div className={cn(
+                      "w-12 h-6 rounded-full relative transition-all cursor-pointer",
+                      policy.enabled ? "bg-emerald-500" : "bg-slate-700"
+                    )}>
+                       <div className={cn(
+                         "absolute top-1 w-4 h-4 rounded-full bg-white transition-all",
+                         policy.enabled ? "right-1" : "left-1"
+                       )} />
+                    </div>
+                 </div>
               </div>
             </div>
-          ) : (
-            <div className="divide-y divide-white/10">
-              {filteredPolicies.map((policy) => (
-                <article key={policy.id} className="grid gap-4 p-5 lg:grid-cols-[1.2fr_0.8fr]">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-base font-medium text-white">{policy.name}</p>
-                      <StatusBadge
-                        label={policy.status}
-                        tone={policy.status === 'published' ? 'success' : 'warning'}
-                      />
-                      <StatusBadge label={policy.effect.replace('_', ' ')} tone="info" />
-                    </div>
-                    <p className="mt-3 text-sm leading-6 text-slate-300">
-                      {policy.description || 'No description provided for this policy yet.'}
-                    </p>
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
-                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Version</p>
-                      <p className="mt-2 text-lg font-medium text-white">{policy.current_version}</p>
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
-                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Priority</p>
-                      <p className="mt-2 text-lg font-medium text-white">{policy.priority}</p>
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
-                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Enabled</p>
-                      <div className="mt-2">
-                        <StatusBadge
-                          label={policy.enabled ? 'On' : 'Off'}
-                          tone={policy.enabled ? 'success' : 'warning'}
-                        />
-                      </div>
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
-                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Actions</p>
-                      <p className="mt-2 text-sm font-medium text-white">
-                        {Array.isArray(policy.scope?.actions) ? policy.scope.actions.join(', ') : 'None'}
-                      </p>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </SurfaceCard>
-      )}
+          ))
+        )}
+      </div>
     </div>
   );
 }

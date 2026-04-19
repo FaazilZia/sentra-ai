@@ -1,5 +1,6 @@
 import { evaluateRisk } from './riskEngine';
 import { evaluatePolicy } from './policyEngine';
+import { maskPII } from '../utils/masking';
 
 export interface Decision {
   status: 'allowed' | 'blocked';
@@ -12,28 +13,29 @@ export interface Decision {
   explanation?: string;
   confidence?: number;
   timeline?: any[];
+  isPendingApproval?: boolean;
 }
 
 const COMPLIANCE_MAP: Record<string, string[]> = {
-  'send_email': ['GDPR Article 5', 'DPDP Section 4'],
-  'external_share': ['GDPR Article 44', 'HIPAA Privacy Rule'],
-  'read_pii': ['GDPR Article 32', 'CCPA Section 1798'],
-  'export_csv': ['GDPR Article 30', 'SOC2 Trust Criteria'],
-  'delete_record': ['GDPR Article 17 (Right to Erasure)'],
-  'read_phi': ['HIPAA Security Rule', 'HITECH Act'],
-  'execute_payment': ['PCI DSS v4.0', 'SOC2 Financial Audit'],
-  'update_config': ['ISO 27001 Annex A', 'CIS Benchmarks']
+  'send_email': ['GDPR'],
+  'external_share': ['GDPR', 'HIPAA'],
+  'read_pii': ['GDPR'],
+  'export_csv': ['GDPR'],
+  'delete_record': ['GDPR'],
+  'read_phi': ['HIPAA'],
+  'execute_payment': ['DPDP'],
+  'update_config': ['Internal']
 };
 
 const IMPACT_MAP: Record<string, string> = {
-  'send_email': 'Prevents unauthorized data exfiltration via email',
-  'external_share': 'Avoids exposure of sensitive data to external parties',
-  'read_pii': 'Limits access to Personally Identifiable Information',
-  'export_csv': 'Prevents bulk data harvesting and loss',
-  'delete_record': 'Protects data integrity and audit history',
-  'read_phi': 'Prevents HIPAA violation by guarding Patient Health Information',
-  'execute_payment': 'Blocks unauthorized financial transactions',
-  'update_config': 'Prevents privilege escalation and infrastructure drift'
+  'send_email': 'Prevented sensitive data leak',
+  'external_share': 'Avoided data exposure to outside parties',
+  'read_pii': 'Protected customer identity data',
+  'export_csv': 'Blocked large data download',
+  'delete_record': 'Protected audit history from being erased',
+  'read_phi': 'Prevented unauthorized health data access',
+  'execute_payment': 'Stopped unauthorized money transfer',
+  'update_config': 'Prevented system changes'
 };
 
 export const makeDecision = async (agent: string, action: string, companyId: string, metadata: any = {}): Promise<Decision> => {
@@ -47,27 +49,34 @@ export const makeDecision = async (agent: string, action: string, companyId: str
 
   // 3. Synthesize Decision
   let status: 'allowed' | 'blocked' = policyResult.allowed ? 'allowed' : 'blocked';
-  let reason = policyResult.reason || (status === 'allowed' ? 'Authorized by policy.' : 'Violates governance policy.');
+  let reason = policyResult.reason || (status === 'allowed' ? 'Allowed: Verified by policy' : 'Blocked: Not allowed by policy');
+
+  // Enterprise Control: 2-Step Verification for High Risk
+  let isPendingApproval = false;
+  if (status === 'allowed' && riskResult.score === 'high') {
+    status = 'blocked'; // Block by default if high risk
+    isPendingApproval = true;
+    reason = 'Pending review: 2-step verification required';
+  }
 
   // Fail-closed for high risk if no policy matched
   if (status === 'allowed' && riskResult.score === 'high' && !policyResult.matchedPolicy) {
     status = 'blocked';
-    reason = 'High risk action detected without an explicit authorizing policy.';
+    reason = 'Blocked: Action is high risk and has no policy';
   }
 
-  const impact = IMPACT_MAP[lowercaseAction] || 'Reduces attack surface by enforcing least privilege';
-  const compliance = COMPLIANCE_MAP[lowercaseAction] || ['Internal Governance Policy'];
+  const impact = (policyResult as any).impact || IMPACT_MAP[lowercaseAction] || 'Protects system from unauthorized access';
+  const compliance = (policyResult as any).compliance || COMPLIANCE_MAP[lowercaseAction] || ['Internal Governance Policy'];
   const confidence = Number((Math.random() * (0.98 - 0.88) + 0.88).toFixed(2));
   
-  const explanation = status === 'blocked' 
-    ? `Sentra blocked "${lowercaseAction}" because it triggered a ${riskResult.score}-risk pattern (${riskResult.triggers.join('; ')}) and violated active governance rules.`
-    : `Action "${lowercaseAction}" allowed. Risk is ${riskResult.score} and it aligns with "${policyResult.matchedPolicy || 'Default'}" policy boundaries.`;
+  const explanation = maskPII((policyResult as any).explanation || (status === 'blocked' 
+    ? `Sentra prevented "${lowercaseAction}" because it triggered a ${riskResult.score}-risk pattern and violated active compliance rules.`
+    : `Action "${lowercaseAction}" allowed. Risk is ${riskResult.score} and it aligns with internal policy boundaries.`));
 
   const timeline = [
     { step: 'Agent Intent', status: 'complete', icon: 'zap', description: `AI Agent ${agent} initiated ${action}` },
-    { step: 'Risk Engine', status: 'complete', icon: 'alert', description: `Risk evaluation: ${riskResult.score} (${riskResult.triggers.length} triggers)` },
-    { step: 'Policy Engine', status: 'complete', icon: 'shield', description: policyResult.matchedPolicy ? `Matched: ${policyResult.matchedPolicy}` : 'Using default safeguards' },
-    { step: 'Final Decision', status: 'complete', icon: status === 'blocked' ? 'x' : 'check', description: `Decision: ${status.toUpperCase()}` }
+    { step: 'Compliance Check', status: 'complete', icon: 'shield', description: `Regulatory evaluation for ${compliance.join(', ')}` },
+    { step: 'Governance Engine', status: 'complete', icon: 'layers', description: isPendingApproval ? 'Action held for manual reviewer approval' : `Final Decision: ${status.toUpperCase()}` }
   ];
 
   return {
@@ -78,7 +87,8 @@ export const makeDecision = async (agent: string, action: string, companyId: str
     compliance,
     explanation,
     confidence,
-    timeline
+    timeline,
+    isPendingApproval
   };
 };
 

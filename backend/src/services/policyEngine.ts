@@ -5,6 +5,9 @@ export interface PolicyEvaluation {
   allowed: boolean;
   reason?: string;
   matchedPolicy?: string;
+  explanation?: string;
+  compliance?: any;
+  impact?: string;
 }
 
 export const evaluatePolicy = async (agent: string, action: string, companyId: string): Promise<PolicyEvaluation> => {
@@ -36,7 +39,10 @@ export const evaluatePolicy = async (agent: string, action: string, companyId: s
         return {
           allowed: false,
           reason: `Policy Blocked: ${policy.name} (Rule)`,
-          matchedPolicy: policy.name
+          matchedPolicy: policy.name,
+          explanation: (policy as any).explanation,
+          compliance: (policy as any).compliance,
+          impact: (policy as any).impact
         };
       }
     }
@@ -52,7 +58,10 @@ export const evaluatePolicy = async (agent: string, action: string, companyId: s
     return { 
       allowed: false, 
       reason: `Policy Violation: ${policy.name}`,
-      matchedPolicy: policy.name 
+      matchedPolicy: policy.name,
+      explanation: (policy as any).explanation,
+      compliance: (policy as any).compliance,
+      impact: (policy as any).impact
     };
   }
 
@@ -61,10 +70,19 @@ export const evaluatePolicy = async (agent: string, action: string, companyId: s
     return { 
       allowed: false, 
       reason: `Action not authorized for ${agent} under policy "${policy.name}"`,
-      matchedPolicy: policy.name
+      matchedPolicy: policy.name,
+      explanation: (policy as any).explanation,
+      compliance: (policy as any).compliance,
+      impact: (policy as any).impact
     };
   }
 
-  return { allowed: true, matchedPolicy: policy.name };
+  return { 
+    allowed: true, 
+    matchedPolicy: policy.name,
+    explanation: (policy as any).explanation,
+    compliance: (policy as any).compliance,
+    impact: (policy as any).impact
+  };
 };
 

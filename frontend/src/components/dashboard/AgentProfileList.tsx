@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bot, Shield, AlertTriangle } from 'lucide-react';
+import { Bot, Shield } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 interface AgentStats {

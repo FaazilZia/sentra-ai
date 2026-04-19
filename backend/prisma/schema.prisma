@@ -39,6 +39,8 @@ model companies {
   users            users[]
   scan_jobs        scan_jobs[]
   logs             logs[]
+  ai_agents        ai_agents[]
+  drift_alerts     drift_alerts[]
 
   @@map("companies")
 }
@@ -48,6 +50,9 @@ model policies {
   companyId         String            @map("company_id")
   name              String
   description       String
+  explanation       String?           // Why this policy exists
+  compliance        Json?             // Compliance mapping (e.g. ["GDPR", "HIPAA"])
+  impact            String?           // Business impact
   enabled           Boolean
   priority          Int
   effect            String            // 'allow', 'deny', etc.
@@ -88,6 +93,13 @@ model logs {
   timeline    Json?
   compliance  Json?
   metadata    Json?
+  
+  // Compliance & Override Fields
+  overrideComment   String?   @map("override_comment")
+  overriddenBy      String?   @map("overridden_by")
+  overrideTimestamp DateTime? @map("override_timestamp")
+  isPendingApproval Boolean   @default(false) @map("is_pending_approval")
+  approvedBy        String?   @map("approved_by")
   
   companies   companies @relation(fields: [companyId], references: [id])
 
@@ -144,6 +156,48 @@ model policy_versions {
   @@map("policy_versions")
 }
 
+model ai_agents {
+  id          String    @id @default(uuid())
+  companyId   String    @map("company_id")
+  name        String
+  model       String
+  permissions Json      // List of permissions (email, API, DB)
+  status      String    // 'active', 'inactive'
+  metadata    Json?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @default(now())
+  companies   companies @relation(fields: [companyId], references: [id])
+  dependencies ai_dependencies[]
+
+  @@map("ai_agents")
+}
+
+model ai_dependencies {
+  id          String    @id @default(uuid())
+  agentId     String    @map("agent_id")
+  targetType  String    // 'API', 'Database', 'External Service'
+  targetName  String
+  description String?
+  created_at  DateTime  @default(now())
+  agent       ai_agents @relation(fields: [agentId], references: [id])
+
+  @@map("ai_dependencies")
+}
+
+model drift_alerts {
+  id          String    @id @default(uuid())
+  companyId   String    @map("company_id")
+  agentId     String    @map("agent_id")
+  type        String    // 'new_api', 'frequency', 'unusual_behavior'
+  severity    String    // 'low', 'medium', 'high'
+  description String
+  status      String    @default("open") // 'open', 'resolved'
+  timestamp   DateTime  @default(now())
+  companies   companies @relation(fields: [companyId], references: [id])
+
+  @@map("drift_alerts")
+}
+
 model connectors {
   id           String   @id @default(uuid())
   companyId    String   @map("company_id")
@@ -178,8 +232,9 @@ model users {
   companyId       String            @map("company_id")
   email           String            @unique
   full_name       String
+  employeeId      String?           @unique @map("employee_id")
   password_hash   String
-  role            String            @default("USER")
+  role            String            @default("USER") // 'USER', 'ADMIN', 'REVIEWER'
   is_active       Boolean
   created_at      DateTime          @default(now())
   updated_at      DateTime          @default(now())

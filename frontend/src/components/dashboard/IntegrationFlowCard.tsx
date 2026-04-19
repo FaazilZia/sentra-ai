@@ -1,5 +1,5 @@
 import React from 'react';
-import { Network, ArrowRight, Server, ShieldCheck } from 'lucide-react';
+import { Network, Server, ShieldCheck } from 'lucide-react';
 
 export const IntegrationFlowCard: React.FC = () => {
   return (

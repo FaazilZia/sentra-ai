@@ -1,18 +1,12 @@
 import {
   LayoutDashboard,
-  Box,
   Activity,
-  ShieldAlert,
-  History,
-  FileSignature,
-  Presentation,
   User,
   PanelLeftClose,
   PanelLeftOpen,
   Radio,
-  Zap,
+  Gavel,
   ShieldCheck,
-  Bot,
 } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import { SidebarItem } from '../ui/SidebarItem';
@@ -20,16 +14,10 @@ import { cn } from '../../lib/utils';
 
 const navigation = [
   { name: 'Overview', href: '/app', icon: LayoutDashboard },
-  { name: 'Connect', href: '/app/connect', icon: Zap },
-  { name: 'Security Feed', href: '/app/security', icon: Radio },
-  { name: 'Inventory', href: '/app/inventory', icon: Box },
-  { name: 'Observability', href: '/app/observability', icon: Activity },
-  { name: 'Risk Center', href: '/app/risk', icon: ShieldAlert },
-  { name: 'AI Activity Logs', href: '/app/activity-logs', icon: Bot },
-  { name: 'Audit Proof', href: '/app/audit', icon: History },
-  { name: 'Governance', href: '/app/governance', icon: FileSignature },
-  { name: 'Privacy & Consent', href: '/app/privacy', icon: ShieldCheck },
-  { name: 'Board Review', href: '/app/board-review', icon: Presentation },
+  { name: 'AI Activity Logs', href: '/app/activity-logs', icon: Activity },
+  { name: 'Compliance', href: '/app/compliance', icon: Gavel },
+  { name: 'Policies', href: '/app/governance', icon: ShieldCheck },
+  { name: 'Alerts / Overrides', href: '/app/security', icon: Radio },
 ];
 
 interface SidebarProps {

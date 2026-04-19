@@ -14,6 +14,8 @@ const GovernancePage = lazy(() => import('./pages/Governance'));
 const AIActivityLogsPage = lazy(() => import('./pages/AIActivityLogs'));
 const SecurityFeedPage = lazy(() => import('./pages/SecurityFeed'));
 const ConnectPage = lazy(() => import('./pages/Connect'));
+const CompliancePage = lazy(() => import('./pages/Compliance'));
+const RelationshipGraphPage = lazy(() => import('./pages/RelationshipGraph'));
 const PrivacySettingsPage = lazy(() => import('./pages/PrivacySettings'));
 
 function RouteFallback() {
@@ -68,6 +70,8 @@ function AppRoutes() {
             <Route path="audit" element={<AuditLogPage />} />
             <Route path="activity-logs" element={<AIActivityLogsPage />} />
             <Route path="governance" element={<GovernancePage />} />
+            <Route path="compliance" element={<CompliancePage />} />
+            <Route path="relationships" element={<RelationshipGraphPage />} />
             <Route path="privacy" element={<PrivacySettingsPage />} />
             
             <Route path="board-review" element={<Navigate to="/app" replace />} />

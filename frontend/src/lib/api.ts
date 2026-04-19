@@ -71,6 +71,7 @@ export interface PolicyResponse {
   /** Present on Prisma-backed policy records */
   current_version?: number;
   scope?: { actions?: string[] } | Record<string, unknown>;
+  created_at?: string;
 }
 
 export interface BackendHealthResponse {
@@ -103,6 +104,25 @@ export interface IncidentResponse {
   response_excerpt: string;
   metadata: any;
   created_at: string;
+}
+
+export interface AIAgent {
+  id: string;
+  name: string;
+  model: string;
+  permissions: string[];
+  status: 'active' | 'inactive';
+  created_at: string;
+}
+
+export interface ComplianceStats {
+  totalViolations: number;
+  breakdown: {
+    GDPR: number;
+    HIPAA: number;
+    DPDP: number;
+  };
+  riskTrends: Array<{ date: string; risk: number }>;
 }
 
 export interface IncidentListResponse {
@@ -305,6 +325,28 @@ export async function replayAction(logId: string): Promise<any> {
     method: 'POST',
     body: JSON.stringify({ logId })
   });
+}
+
+/**
+ * INVENTORY
+ */
+export async function fetchAIAgents(): Promise<AIAgent[]> {
+  return apiRequest<AIAgent[]>('/inventory/agents');
+}
+
+export async function createAIAgent(payload: any): Promise<AIAgent> {
+  return apiRequest<AIAgent>('/inventory/agents', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+/**
+ * COMPLIANCE
+ */
+export async function fetchComplianceStats(): Promise<ComplianceStats> {
+  // We'll implement this on the backend soon, for now it might 404
+  return apiRequest<ComplianceStats>('/compliance/stats');
 }
 
 export async function fetchSecurityScore(): Promise<{ score: number }> {
