@@ -8,7 +8,7 @@ Traditional tools monitor and report issues *after* they happen.
 ---
 
 ## 🔗 Live Links
-- **Governance Dashboard**: [https://sentra-ai.vercel.app](https://sentra-ai.vercel.app)
+- **Governance Dashboard**: [https://sentra-ai-88f7.vercel.app](https://sentra-ai-88f7.vercel.app)
 - **API Documentation**: [https://sentra-backend-node.onrender.com/api/v1](https://sentra-backend-node.onrender.com/api/v1)
 
 ---
