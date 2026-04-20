@@ -92,14 +92,18 @@ export const authenticate = async (req: any, res: Response, next: NextFunction) 
 
 export const authorizeRoles = (...roles: string[]) => {
   return (req: any, res: Response, next: NextFunction) => {
-    // Allow service agents to bypass roles for specific endpoints if needed, 
-    // or map SERVICE_AGENT to specific permissions.
-    if (req.user?.role === 'SERVICE_AGENT') return next();
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: 'Authentication required' });
+    }
+
+    // Allow SERVICE_AGENT if it's explicitly in the roles list OR if the endpoint is public-agent-facing
+    const isAllowed = roles.includes(req.user.role);
     
-    if (!req.user || !roles.includes(req.user.role)) {
+    if (!isAllowed) {
+      logger.warn(`Access Denied: User ${req.user.id} (Role: ${req.user.role}) attempted to access resource requiring [${roles.join(', ')}]`);
       return res.status(403).json({ 
         success: false, 
-        message: `Role (${req.user?.role}) is not allowed to access this resource` 
+        message: `Role (${req.user.role}) is not allowed to access this resource` 
       });
     }
     next();

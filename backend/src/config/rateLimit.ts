@@ -2,7 +2,7 @@ import rateLimit from 'express-rate-limit';
 
 export const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Increased for development/demo ease
+  max: 10, // Strict limit for auth endpoints
   message: {
     success: false,
     message: 'Too many login attempts, please try again later'

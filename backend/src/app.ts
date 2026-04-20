@@ -22,6 +22,7 @@ const app: Application = express();
 // Middleware
 app.use(helmet());
 
+const isProduction = process.env.NODE_ENV === 'production';
 const allowedOrigins = process.env.FRONTEND_URL 
   ? process.env.FRONTEND_URL.split(',').map(o => o.trim()) 
   : ['http://localhost:5173'];
@@ -30,21 +31,20 @@ app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
     
+    // In production, be strict. In development, allow localhost and Vercel previews.
     const isAllowed = allowedOrigins.includes(origin) || 
-                      origin.endsWith('.vercel.app') || 
-                      origin.includes('localhost');
+                      (!isProduction && (origin.endsWith('.vercel.app') || origin.includes('localhost')));
                       
     if (isAllowed) {
       callback(null, true);
     } else {
       console.warn(`CORS blocked for origin: ${origin}`);
-      // Return null origin instead of error to avoid breaking preflights
-      callback(null, false);
+      callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-API-Key']
 }));
 app.use(express.json());
 app.use(morgan('dev'));

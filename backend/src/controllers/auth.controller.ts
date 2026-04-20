@@ -47,7 +47,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
         email,
         password_hash: passwordHash,
         full_name: fullName,
-        role: role || 'USER',
+        role: 'USER', // Always default to USER for public registration
         is_active: true,
         companyId: DEFAULT_COMPANY_ID,
       },
