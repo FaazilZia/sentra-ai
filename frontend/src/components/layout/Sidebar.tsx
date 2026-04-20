@@ -7,6 +7,7 @@ import {
   Radio,
   Gavel,
   ShieldCheck,
+  Shield,
   FileText,
 } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
@@ -18,6 +19,7 @@ const navigation = [
   { name: 'AI Activity Logs', href: '/app/activity-logs', icon: Activity },
   { name: 'Compliance', href: '/app/compliance', icon: Gavel },
   { name: 'Policies', href: '/app/governance', icon: ShieldCheck },
+  { name: 'AI Guardrails', href: '/app/guardrails', icon: Shield },
   { name: 'Audit Proof', href: '/app/audit-proof', icon: FileText },
   { name: 'Alerts / Overrides', href: '/app/security', icon: Radio },
 ];
