@@ -234,7 +234,7 @@ model users {
   full_name       String
   employeeId      String?           @unique @map("employee_id")
   password_hash   String
-  role            String            @default("USER") // 'USER', 'ADMIN', 'REVIEWER'
+  role            String            @default("AUDITOR") // 'ADMIN', 'ENGINEER', 'AUDITOR'
   is_active       Boolean
   created_at      DateTime          @default(now())
   updated_at      DateTime          @default(now())
@@ -259,6 +259,105 @@ model consent_records {
   updated_at     DateTime @default(now())
   users          users    @relation(fields: [user_id], references: [id])
 }
+
+model compliance_fix_tasks {
+  id          String   @id @default(uuid())
+  featureId   String   @map("feature_id")
+  title       String
+  description String?
+  priority    Int      // 1, 2, 3
+  status      String   @default("pending") // 'pending', 'completed'
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now())
+  evidence    evidence_records[]
+
+  @@map("compliance_fix_tasks")
+}
+
+model evidence_records {
+  id          String   @id @default(uuid())
+  taskId      String   @map("task_id")
+  type        String   // 'file', 'text', 'link'
+  value       String
+  hash        String?  // SHA-256 integrity hash
+  source_type       String   @default("user") // "system", "user", "external"
+  verified          Boolean  @default(false)
+  validation_status String   @default("pending") // "valid", "invalid", "unreachable"
+  validated_at      DateTime @default(now())
+  uploaded_at       DateTime @default(now())
+  task        compliance_fix_tasks @relation(fields: [taskId], references: [id])
+
+  @@map("evidence_records")
+}
+
+model compliance_snapshots {
+  id          String   @id @default(uuid())
+  featureId   String   @map("feature_id")
+  gdpr_score  Int
+  dpdp_score  Int
+  hipaa_score Int
+  risk_level  String
+  created_at  DateTime @default(now())
+
+  @@map("compliance_snapshots")
+}
+
+model audit_logs {
+  id          String   @id @default(uuid())
+  user_id     String
+  action      String   // "UPLOAD_EVIDENCE", "COMPLETE_TASK", "RE_EVALUATE", "LOGIN"
+  feature_id  String?
+  metadata    Json?
+  timestamp   DateTime @default(now())
+
+  @@map("audit_logs")
+}
+
+model alerts {
+  id          String   @id @default(uuid())
+  feature_id  String?
+  type        String   // "HIGH_RISK", "MISSING_EVIDENCE", "SYSTEM"
+  message     String
+  severity    String   @default("low") // "low", "medium", "high"
+  is_read     Boolean  @default(false)
+  created_at  DateTime @default(now())
+
+  @@map("alerts")
+}
+
+model interception_logs {
+  id               String   @id @default(uuid())
+  user_id          String
+  company_id       String?
+  input_text       String
+  output_text      String?
+  decision         String   // "ALLOW", "MODIFY", "BLOCK"
+  confidence       String   @default("High") // "High", "Medium", "Low"
+  override_status  String   @default("none") // "none", "pending", "approved", "rejected"
+  reason           String?
+  policy_triggered String?
+  metadata         Json?
+  timestamp        DateTime @default(now())
+
+  @@map("interception_logs")
+}
+
+model guardrail_overrides {
+  id           String   @id @default(uuid())
+  log_id       String   @map("log_id")
+  requested_by String
+  approved_by  String?
+  status       String   @default("pending") // "pending", "approved", "rejected"
+  reason       String
+  timestamp    DateTime @default(now())
+
+  @@map("guardrail_overrides")
+}
+
+
+
+
+
 
 model requests {
   id         String   @id @default(uuid())

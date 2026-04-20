@@ -125,6 +125,18 @@ export interface ComplianceStats {
   riskTrends: Array<{ date: string; risk: number }>;
 }
 
+export interface ComplianceFeature {
+  id: string;
+  feature_name: string;
+  description: string;
+  status: 'compliant' | 'warning' | 'non_compliant';
+  evidence: Array<{
+    type: string;
+    content: any;
+  }>;
+}
+
+
 export interface IncidentListResponse {
   data: IncidentResponse[];
 }
@@ -348,6 +360,180 @@ export async function fetchComplianceStats(): Promise<ComplianceStats> {
   // We'll implement this on the backend soon, for now it might 404
   return apiRequest<ComplianceStats>('/compliance/stats');
 }
+
+export async function fetchAuditProof(): Promise<ComplianceFeature[]> {
+  return apiRequest<ComplianceFeature[]>('/compliance/audit-proof');
+}
+
+export interface ComplianceFixTask {
+  id: string;
+  featureId: string;
+  title: string;
+  description: string | null;
+  priority: number;
+  status: 'pending' | 'completed';
+  created_at: string;
+  evidence: Array<{
+    id: string;
+    type: string;
+    value: string;
+    uploaded_at: string;
+  }>;
+}
+
+export async function fetchFixTasks(featureId: string): Promise<ComplianceFixTask[]> {
+  return apiRequest<ComplianceFixTask[]>(`/compliance/fix-tasks/${featureId}`);
+}
+
+export async function createFixTasks(featureId: string, actionPlan: any): Promise<ComplianceFixTask[]> {
+  return apiRequest<ComplianceFixTask[]>('/compliance/fix-tasks', {
+    method: 'POST',
+    body: JSON.stringify({ featureId, actionPlan })
+  });
+}
+
+export async function uploadEvidence(taskId: string, type: string, value: string): Promise<any> {
+  return apiRequest<any>('/compliance/evidence', {
+    method: 'POST',
+    body: JSON.stringify({ taskId, type, value })
+  });
+}
+
+export async function reEvaluateCompliance(featureId: string): Promise<any> {
+  return apiRequest<any>('/compliance/re-evaluate', {
+    method: 'POST',
+    body: JSON.stringify({ featureId })
+  });
+}
+
+export interface ComplianceSnapshot {
+  id: string;
+  gdpr_score: number;
+  dpdp_score: number;
+  hipaa_score: number;
+  risk_level: string;
+  created_at: string;
+}
+
+export async function fetchComplianceHistory(featureId: string): Promise<ComplianceSnapshot[]> {
+  return apiRequest<ComplianceSnapshot[]>(`/compliance/history/${featureId}`);
+}
+
+export interface AuditLog {
+  id: string;
+  user_id: string;
+  action: string;
+  feature_id: string | null;
+  metadata: any;
+  timestamp: string;
+}
+
+export async function fetchAuditLogs(featureId?: string): Promise<AuditLog[]> {
+  const query = featureId ? `?featureId=${featureId}` : '';
+  return apiRequest<AuditLog[]>(`/compliance/audit-logs${query}`);
+}
+
+export interface Alert {
+  id: string;
+  feature_id: string | null;
+  type: string;
+  message: string;
+  severity: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+export async function fetchAlerts(): Promise<Alert[]> {
+  return apiRequest<Alert[]>('/compliance/alerts');
+}
+
+export async function markAlertRead(alertId: string): Promise<void> {
+  return apiRequest<void>('/compliance/alerts/mark-read', {
+    method: 'POST',
+    body: JSON.stringify({ alertId })
+  });
+}
+
+export async function exportComplianceReport(featureId: string): Promise<Blob> {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/compliance/export/${featureId}`, {
+    headers: {
+      'Authorization': `Bearer ${localStorage.getItem('sentra_token')}`
+    }
+  });
+  if (!response.ok) throw new Error('Failed to export report');
+  return response.blob();
+}
+
+export interface InterceptionLog {
+  id: string;
+  user_id: string;
+  input_text: string;
+  output_text: string | null;
+  decision: 'ALLOW' | 'MODIFY' | 'BLOCK';
+  confidence: 'High' | 'Medium' | 'Low';
+  override_status: 'none' | 'pending' | 'approved' | 'rejected';
+  reason: string | null;
+  policy_triggered: string | null;
+  timestamp: string;
+}
+
+export interface GuardrailOverride {
+  id: string;
+  log_id: string;
+  requested_by: string;
+  approved_by: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  reason: string;
+  timestamp: string;
+}
+
+export interface GuardrailMetrics {
+  total: number;
+  allowed: number;
+  blocked: number;
+  modified: number;
+}
+
+
+export async function sendAIRequest(prompt: string): Promise<any> {
+  return apiRequest<any>('/guardrails/proxy', {
+    method: 'POST',
+    body: JSON.stringify({ prompt })
+  });
+}
+
+export async function fetchGuardrailLogs(): Promise<InterceptionLog[]> {
+  return apiRequest<InterceptionLog[]>('/guardrails/logs');
+}
+
+export async function fetchGuardrailMetrics(): Promise<GuardrailMetrics> {
+  return apiRequest<GuardrailMetrics>('/guardrails/metrics');
+}
+
+export async function fetchGuardrailOverrides(): Promise<GuardrailOverride[]> {
+  return apiRequest<GuardrailOverride[]>('/guardrails/overrides');
+}
+
+export async function requestGuardrailOverride(logId: string, reason: string): Promise<any> {
+  return apiRequest<any>('/guardrails/override/request', {
+    method: 'POST',
+    body: JSON.stringify({ logId, reason })
+  });
+}
+
+export async function approveGuardrailOverride(overrideId: string, status: 'approved' | 'rejected'): Promise<any> {
+  return apiRequest<any>('/guardrails/override/approve', {
+    method: 'POST',
+    body: JSON.stringify({ overrideId, status })
+  });
+}
+
+
+
+
+
+
+
 
 export async function fetchSecurityScore(): Promise<{ score: number }> {
   return apiRequest<{ score: number }>('/ai/security-score');
