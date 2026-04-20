@@ -66,6 +66,17 @@ graph LR
 
 ---
 
+# 🛡️ Security Audit & Hardening (v1.6.0)
+**Sentra AI has undergone a full security audit to meet enterprise-grade compliance standards.**
+
+*   **🚫 Zero-Trust Role Management**: Registration logic hardened to prevent privilege escalation. Users can no longer self-assign `ADMIN` roles.
+*   **🔐 Fail-Safe Secret Management**: Removed hardcoded fallback secrets. The system now enforces environment-level encryption for JWTs.
+*   **🛑 Brute-Force Mitigation**: Strict rate limiting implemented on all authentication and sensitive management endpoints (10 attempts / 15 mins).
+*   **🌐 Production-Locked CORS**: Cross-origin policies are strictly locked to production domains, preventing unauthorized cross-site scripting and data theft.
+*   **📜 Structured Audit Logging**: Enhanced production logging with JSON serialization for integration with SIEM tools (Datadog, Splunk).
+
+---
+
 # 💡 What You Get
 
 * 🛑 **Real-Time Blocking**: Intercept and neutralize unsafe AI actions *before* they execute.
