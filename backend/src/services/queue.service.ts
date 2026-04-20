@@ -42,6 +42,7 @@ export const enqueueLog = async (data: any) => {
       removeOnComplete: true,
       removeOnFail: 1000,
     });
+    await logActivity(data);
   } catch (error) {
     logger.warn('Failed to enqueue log, falling back to sync logging:', error);
     await logActivity(data); // Fallback

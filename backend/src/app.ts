@@ -15,6 +15,9 @@ import aiRoutes from './routes/ai.routes';
 import connectorRoutes from './routes/connector.routes';
 import inventoryRoutes from './routes/inventory.routes';
 import driftRoutes from './routes/drift.routes';
+import complianceRoutes from './routes/compliance.routes';
+import guardrailRoutes from './routes/guardrail.routes';
+
 import { apiRateLimiter } from './config/rateLimit';
 
 const app: Application = express();
@@ -67,6 +70,9 @@ v1Router.use('/ai', aiRoutes);
 v1Router.use('/connectors', connectorRoutes);
 v1Router.use('/inventory', inventoryRoutes);
 v1Router.use('/drift', driftRoutes);
+v1Router.use('/compliance', complianceRoutes);
+v1Router.use('/guardrails', guardrailRoutes);
+
 
 // Health check under v1
 v1Router.get('/health', (req, res) => {

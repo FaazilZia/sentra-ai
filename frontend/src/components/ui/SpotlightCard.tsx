@@ -7,12 +7,14 @@ interface SpotlightCardProps {
   children: React.ReactNode;
   className?: string;
   spotlightColor?: string;
+  onClick?: () => void;
 }
 
 export const SpotlightCard: React.FC<SpotlightCardProps> = ({ 
   children, 
   className,
-  spotlightColor = "rgba(242, 38, 125, 0.15)"
+  spotlightColor = "rgba(242, 38, 125, 0.15)",
+  onClick
 }) => {
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -38,6 +40,7 @@ export const SpotlightCard: React.FC<SpotlightCardProps> = ({
   return (
     <div
       onMouseMove={handleMouseMove}
+      onClick={onClick}
       className={cn(
         "group relative overflow-hidden rounded-2xl border border-cyan-500/20 transition-all duration-300 hover:border-cyan-400/40 hover:-translate-y-1",
         className
