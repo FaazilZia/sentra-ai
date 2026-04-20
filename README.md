@@ -66,6 +66,18 @@ graph LR
 
 ---
 
+# 🛡️ Real-Time AI Guardrails & Enforcement (v1.7.0)
+**The Sentra AI platform now features a complete runtime enforcement layer with advanced governance controls.**
+
+*   **⚡ Integrated Compliance Lifecycle**: A seamless flow from **Detection → Enforcement → Fix → Improvement → Control**.
+*   **🧠 Real-Time AI Guardrails**: Intercepts user input (Pre-AI) and model output (Post-AI) to prevent PII/PHI leakage and prompt injection.
+*   **🎯 Confidence Scoring**: Every guardrail decision is backed by an AI-driven confidence score (High/Medium/Low) for granular observability.
+*   **⚖️ Administrative Override Workflow**: Secure, audit-logged process for administrators to review and approve/reject bypass requests with business justification.
+*   **📊 Live Enforcement Metrics**: A dedicated dashboard visualizing real-time performance, including `% Blocked`, `% Modified`, and `% Allowed` rates.
+*   **✨ Guided Integrated Demo**: A high-impact "Detection-to-Compliance" walkthrough showcasing the platform's ability to boost compliance scores (e.g., 82% → 96%) in real-time.
+
+---
+
 # 🛡️ Security Audit & Hardening (v1.6.0)
 **Sentra AI has undergone a full security audit to meet enterprise-grade compliance standards.**
 
