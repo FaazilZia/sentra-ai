@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowUpRight, Shield, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { RecoveryNarrative } from './RecoveryNarrative';
 
 interface OutcomeValidationProps {
   status: 'verified' | 'failed';
@@ -9,10 +10,11 @@ interface OutcomeValidationProps {
   prevRisk: string;
   newRisk: string;
   confidence: string;
+  narrative?: string;
 }
 
 export const OutcomeValidation: React.FC<OutcomeValidationProps> = ({ 
-  status, prevScore, newScore, prevRisk, newRisk, confidence 
+  status, prevScore, newScore, prevRisk, newRisk, confidence, narrative 
 }) => {
   const isVerified = status === 'verified';
 
@@ -54,10 +56,14 @@ export const OutcomeValidation: React.FC<OutcomeValidationProps> = ({
                 <span className={cn(
                    "text-sm font-black uppercase",
                    newRisk === 'Low' ? 'text-emerald-500' : 'text-rose-500'
-                )}>{newRisk}</span>
+                 )}>{newRisk}</span>
              </div>
           </div>
        </div>
+
+       {narrative && (
+         <RecoveryNarrative narrative={narrative} />
+       )}
 
        <div className="flex items-center gap-3 pt-2">
           <div className={cn(
