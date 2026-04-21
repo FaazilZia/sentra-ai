@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, useMotionTemplate, useMotionValue, useSpring } from 'framer-motion';
-import { cn } from '../../lib/utils';
+import { cn } from '@/lib/utils';
 
 interface SpotlightCardProps {
   children: React.ReactNode;

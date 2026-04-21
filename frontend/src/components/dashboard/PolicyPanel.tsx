@@ -1,6 +1,6 @@
 import React from 'react';
 import { FileSignature, ToggleLeft as Toggle, ToggleRight } from 'lucide-react';
-import { cn } from '../../lib/utils';
+import { cn } from '@/lib/utils';
 
 interface PolicyRule {
   id: string;
