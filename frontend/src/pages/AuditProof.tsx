@@ -86,7 +86,6 @@ export default function AuditProofPage() {
       } finally {
         setLoading(false);
       }
-      loadData();
       loadAlerts();
     }
     loadData();

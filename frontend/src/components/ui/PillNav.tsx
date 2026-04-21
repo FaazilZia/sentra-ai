@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect, useState, useLayoutEffect } from 'react';
 import { gsap } from 'gsap';
-import { cn } from '../../lib/utils';
+import { cn } from '@/lib/utils';
 
 interface NavItem {
   label: string;

@@ -396,4 +396,41 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
+model outcome_validations {
+  id                 String   @id @default(uuid())
+  feature_id         String
+  action_id          String?  // Linked to fix task
+  previous_score     Float
+  new_score          Float
+  previous_risk      String   // 'low', 'medium', 'high'
+  new_risk           String
+  validation_status  String   @default("pending") // "verified", "failed"
+  outcome_confidence String   @default("High")    // "High", "Medium", "Low"
+  validated_at       DateTime @default(now())
+
+  @@map("outcome_validations")
+}
+
+model monitoring_status {
+  id                 String   @id @default(uuid())
+  feature_id         String   @unique
+  status             String   @default("active") // "active", "warning", "critical"
+  last_checked_at    DateTime @default(now())
+  violations_last_24h Int     @default(0)
+  stability          String   @default("stable") // "stable", "fluctuating"
+
+  @@map("monitoring_status")
+}
+
+model compliance_drift {
+  id               String   @id @default(uuid())
+  feature_id       String
+  drift_percentage Float
+  time_window      String   @default("6h")
+  detected_at      DateTime @default(now())
+  severity         String   @default("low") // "low", "medium", "high"
+
+  @@map("compliance_drift")
+}
+
 

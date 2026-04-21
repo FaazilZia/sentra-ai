@@ -1,25 +1,31 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Filter, Play, StopCircle, Zap } from 'lucide-react';
 import { io, Socket } from 'socket.io-client';
 import {
   AIActivityLog,
   fetchAIActivityLogs,
   apiBaseUrl
-} from '../lib/api';
-import { useAuth } from '../lib/auth';
-import { DashboardHeader } from '../components/dashboard/DashboardHeader';
-import { ActivityFeed, ActivityEvent } from '../components/dashboard/ActivityFeed';
-import { generateEvent, ScenarioMode, SimulatedEvent } from '../lib/demo/simulation';
-import { INITIAL_MOCK_DATA } from '../lib/demo/mockData';
+} from '@/lib/api';
+import { useAuth } from '@/lib/auth';
+import { ActivityEvent } from '@/components/dashboard/ActivityFeed';
+import { generateEvent, ScenarioMode, SimulatedEvent } from '@/lib/demo/simulation';
+import { INITIAL_MOCK_DATA } from '@/lib/demo/mockData';
+
+import { NeedsAttention } from '@/components/dashboard/NeedsAttention.tsx';
+import { AIInsightEnhanced, EnhancedInsight } from '@/components/dashboard/AIInsightEnhanced.tsx';
+import { AuditReadiness } from '@/components/dashboard/AuditReadiness.tsx';
+import { OutcomeValidation } from '@/components/dashboard/OutcomeValidation.tsx';
+import { MonitoringStatus } from '@/components/dashboard/MonitoringStatus.tsx';
+import { DriftAlert } from '@/components/dashboard/DriftAlert.tsx';
+import { DecisionOwnership } from '@/components/dashboard/DecisionOwnership.tsx';
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const [aiLogs, setAiLogs] = useState<AIActivityLog[]>([]);
-  const [complianceFilter, setComplianceFilter] = useState<'ALL' | 'GDPR' | 'HIPAA' | 'DPDP'>('ALL');
+  const [complianceFilter] = useState<'ALL' | 'GDPR' | 'HIPAA' | 'DPDP'>('ALL');
   
   // Demo Mode State
-  const [demoMode, setDemoMode] = useState(false);
-  const [scenario, setScenario] = useState<ScenarioMode>('GENERAL');
+  const [demoMode] = useState(false);
+  const [scenario] = useState<ScenarioMode>('GENERAL');
   const [simulatedLogs, setSimulatedLogs] = useState<SimulatedEvent[]>(INITIAL_MOCK_DATA);
   const demoInterval = useRef<NodeJS.Timeout | null>(null);
 
@@ -67,7 +73,6 @@ export default function DashboardPage() {
   const activeLogs = useMemo(() => {
     const rawLogs: (AIActivityLog | SimulatedEvent)[] = demoMode ? simulatedLogs : aiLogs;
     
-    // Normalize both types to ActivityEvent for consistent UI handling
     const normalized: ActivityEvent[] = rawLogs.map(log => {
       if ('agent_id' in log) {
         return {
@@ -75,9 +80,6 @@ export default function DashboardPage() {
           agent: log.agent_id,
           risk: log.risk_score,
           timestamp: new Date(log.created_at).toLocaleTimeString(),
-          isPendingApproval: (log as any).is_pending_approval,
-          overriddenBy: (log as any).overriddenBy,
-          overrideComment: (log as any).overrideComment
         } as ActivityEvent;
       }
       return log as ActivityEvent;
@@ -94,139 +96,157 @@ export default function DashboardPage() {
     const calculatedRisk = Math.min(Math.round((violations / (total || 1)) * 100), 100);
     const complianceRate = 100 - calculatedRisk;
 
-    return { total, blocked, violations, complianceRate, riskScore: calculatedRisk };
+    return { 
+      total, 
+      blocked, 
+      violations, 
+      complianceRate, 
+      riskScore: calculatedRisk,
+      auditReadiness: Math.max(complianceRate - 8, 0)
+    };
   }, [activeLogs]);
 
   const activityEvents = useMemo<ActivityEvent[]>(() => {
     return activeLogs.slice(0, 15);
   }, [activeLogs]);
 
-  const [lastUpdated, setLastUpdated] = useState<number>(0);
+  const criticalIssues = useMemo(() => {
+    const issues: { label: string; type: 'critical' | 'warning' }[] = [];
+    const highRisk = activityEvents.filter(e => e.status === 'blocked').length;
+    if (highRisk > 0) issues.push({ label: `${highRisk} High-risk violations detected`, type: 'critical' });
+    if (stats.complianceRate < 95) issues.push({ label: `Compliance score below target (95%)`, type: 'warning' });
+    return issues;
+  }, [activityEvents, stats.complianceRate]);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setLastUpdated(prev => prev + 1);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    setLastUpdated(0);
-  }, [activeLogs]);
+  const enhancedInsight = useMemo<EnhancedInsight>(() => {
+    return {
+      insight: stats.complianceRate < 95 
+        ? "Missing legal BAA documentation and encryption gaps are blocking HIPAA certification."
+        : "System integrity verified for GDPR. Focus on periodic access reviews for sustained readiness.",
+      confidence: stats.total > 20 ? 'High' : 'Medium',
+      sources: ["Audit Logs", "Policy Engine", "Drift Analysis"],
+      impact_if_ignored: [
+        "High risk of HIPAA non-compliance",
+        "Potential $50k/day regulatory penalties",
+        "Data sovereignty breach in EU regions"
+      ],
+      expected_outcome: {
+        score_change: `${stats.complianceRate}% → 98%`,
+        risk_reduction: stats.riskScore > 10 ? "High → Low" : "Stable → Optimal"
+      },
+      priority: stats.riskScore > 10 ? 'High' : 'Medium',
+      recommended_time: stats.riskScore > 10 ? "Within 24 hours" : "Within 7 days",
+      action_label: stats.complianceRate < 95 ? "Fix Encryption & BAA Gap" : "Execute Access Review"
+    };
+  }, [stats]);
 
   return (
-    <div className="mx-auto max-w-[1440px] space-y-8 pb-16 px-6 pt-8">
-      {/* Top Bar: Title & Demo Toggle */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h1 className="text-3xl font-black tracking-tight text-white uppercase">
-            Sentra <span className="text-slate-500">Compliance Control</span>
-          </h1>
-          <div className="flex items-center gap-3 mt-1">
-             <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-              Minimal AI Governance • Operational Transparency
-            </p>
-            <span className="text-[10px] font-bold text-slate-600 uppercase tracking-tighter">
-              Last updated: {lastUpdated}s ago
-            </span>
-            {demoMode && (
-              <span className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-[9px] font-black text-amber-500 uppercase animate-pulse">
-                <Zap className="h-2.5 w-2.5" /> Simulation Active
-              </span>
-            )}
+    <div className="mx-auto max-w-[1000px] space-y-24 pb-32 px-8 pt-16">
+      
+      {/* 1. Needs Attention */}
+      <NeedsAttention 
+        issues={criticalIssues} 
+        onAction={() => window.location.href = '/app/activity-logs'} 
+      />
+
+      {/* 2. Compliance Score + Audit Readiness */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-12">
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-500">Global Compliance Score</p>
+            <div className="flex items-baseline gap-4">
+              <h2 className="text-9xl font-black tracking-tighter text-white leading-none">
+                {stats.complianceRate}%
+              </h2>
+              <span className="text-xl font-black text-emerald-500">+2% ↑</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+             <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Calculated Risk: {stats.riskScore}%</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          {/* Demo Controls */}
-          <div className="flex items-center gap-2 bg-slate-900 border border-white/5 p-1 rounded-xl">
-             <button
-               onClick={() => setDemoMode(!demoMode)}
-               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-                 demoMode ? 'bg-amber-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.3)]' : 'bg-slate-800 text-slate-400 hover:text-white'
-               }`}
-             >
-               {demoMode ? <StopCircle className="h-3 w-3" /> : <Play className="h-3 w-3" />}
-               Demo Mode: {demoMode ? 'ON' : 'OFF'}
-             </button>
-             
-             {demoMode && (
-               <select 
-                 value={scenario}
-                 onChange={(e) => setScenario(e.target.value as ScenarioMode)}
-                 className="bg-transparent text-[10px] font-black text-white uppercase tracking-widest border-none focus:ring-0 cursor-pointer pr-8"
-               >
-                 <option value="GENERAL">General SaaS</option>
-                 <option value="FINANCE">Finance Center</option>
-                 <option value="HEALTHCARE">Healthcare Hub</option>
-               </select>
-             )}
-          </div>
-
-          <div className="flex items-center gap-2 bg-slate-900 border border-white/5 p-1 rounded-xl">
-            <div className="px-3 py-1.5 text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-              <Filter className="h-3 w-3" /> Compliance Filter
-            </div>
-            <div className="flex gap-1">
-              {(['ALL', 'GDPR', 'HIPAA', 'DPDP'] as const).map(f => (
-                <button
-                  key={f}
-                  onClick={() => setComplianceFilter(f)}
-                  className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
-                    complianceFilter === f ? 'bg-white text-slate-950 shadow-lg' : 'text-slate-500 hover:text-slate-300'
-                  }`}
-                >
-                  {f}
-                </button>
-              ))}
-            </div>
-          </div>
+        <div className="w-full md:w-auto">
+          <AuditReadiness 
+            score={stats.auditReadiness} 
+            status={stats.auditReadiness >= 90 ? "Ready for Audit" : "Not Audit Ready"} 
+          />
         </div>
       </div>
 
-      {/* Simplified Stats Section */}
-      <DashboardHeader 
-        total={stats.violations} 
-        blocked={stats.blocked} 
-        complianceScore={stats.complianceRate} 
-        riskScore={stats.riskScore} 
+      {/* 3. AI Insight (Enhanced) */}
+      <AIInsightEnhanced 
+        data={enhancedInsight}
+        onAction={() => window.location.href = '/app/compliance'}
       />
 
-      {/* Main Feature: Activity Logs */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between px-1">
-           <h2 className="text-sm font-black text-white uppercase tracking-tight">
-             {demoMode ? 'Simulated AI Activity' : 'Real-Time AI Activity'}
-           </h2>
-           <span className="text-[10px] font-bold text-slate-500 uppercase">
-             {demoMode ? 'Live Feed Active' : 'Latest 15 Actions'}
-           </span>
-        </div>
-        <ActivityFeed 
-          events={activityEvents} 
-          onReplay={() => {}} 
-          onExport={() => {}} 
-          minimal={true}
+      {/* 4. Outcome Validation & 5. Monitoring Status */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <OutcomeValidation 
+          status={stats.complianceRate > 90 ? 'verified' : 'failed'}
+          prevScore={stats.complianceRate - 4}
+          newScore={stats.complianceRate}
+          prevRisk="High"
+          newRisk={stats.riskScore > 30 ? "High" : "Low"}
+          confidence="High"
+        />
+        <MonitoringStatus 
+          status={stats.riskScore > 30 ? 'critical' : stats.riskScore > 10 ? 'warning' : 'active'}
+          lastChecked="Just Now"
+          violations24h={stats.violations}
+          stability={stats.riskScore > 20 ? "fluctuating" : "stable"}
         />
       </div>
 
-      {/* Readiness Insights */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-         {[
-           { label: 'GDPR Readiness', value: demoMode ? '96%' : '94%', trend: '+2%' },
-           { label: 'HIPAA Alignment', value: demoMode ? '82%' : '88%', trend: '-5%' },
-           { label: 'Audit Integrity', value: '100%', trend: 'Verified' }
-         ].map(insight => (
-           <div key={insight.label} className="p-6 rounded-[1.5rem] bg-slate-900/40 border border-white/5 flex flex-col justify-between">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{insight.label}</p>
-              <div className="flex items-end justify-between mt-2">
-                <p className="text-3xl font-black text-white">{insight.value}</p>
-                <span className={`text-[10px] font-black uppercase ${insight.trend.startsWith('+') ? 'text-emerald-400' : insight.trend === 'Verified' ? 'text-cyan-400' : 'text-rose-400'}`}>
-                  {insight.trend}
-                </span>
+      {/* 6. Drift Detection Alert */}
+      {stats.complianceRate < 96 && (
+        <DriftAlert 
+          driftPercentage={2.4}
+          timeWindow="6h"
+          severity={stats.complianceRate < 90 ? 'high' : 'medium'}
+        />
+      )}
+
+      {/* 7. Decision Ownership */}
+      <div className="space-y-6">
+        <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Latest Governance Action</h3>
+        <DecisionOwnership 
+          approvedBy="Mohammad Faazil"
+          role="ADMIN"
+          timestamp="Today at 10:42 AM"
+        />
+      </div>
+
+      {/* 8. Recent Violations */}
+      <div className="space-y-8 pt-12 border-t border-white/5">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Priority Violations</h3>
+        </div>
+        <div className="space-y-4">
+          {activityEvents.filter(e => e.status === 'blocked').slice(0, 3).map((event, idx) => (
+            <div key={idx} className="group p-8 rounded-[2.5rem] bg-rose-500/[0.02] border border-rose-500/10 hover:border-rose-500/20 transition-all flex items-center justify-between">
+              <div className="flex items-center gap-6">
+                <div className="h-2 w-2 rounded-full bg-rose-500" />
+                <div>
+                  <p className="text-lg font-black text-white tracking-tight uppercase">{event.reason || 'Unauthorized Access Attempt'}</p>
+                  <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest mt-1">{event.agent} • {event.timestamp}</p>
+                </div>
               </div>
-           </div>
-         ))}
+              <button 
+                onClick={() => window.location.href = `/app/activity-logs?id=${event.id}`}
+                className="px-6 py-3 rounded-2xl bg-white/5 text-[10px] font-black text-white uppercase tracking-widest hover:bg-white/10 transition-all"
+              >
+                Resolve
+              </button>
+            </div>
+          ))}
+          {activityEvents.filter(e => e.status === 'blocked').length === 0 && (
+            <div className="py-24 rounded-[3rem] bg-slate-900/10 border border-dashed border-white/5 text-center">
+              <p className="text-[10px] font-black text-slate-700 uppercase tracking-[0.4em]">All Systems Clear</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
