@@ -19,7 +19,7 @@ interface ComplianceBreakdownProps {
 export const ComplianceBreakdown: React.FC<ComplianceBreakdownProps> = ({ frameworks }) => {
   return (
     <div className="space-y-6">
-      <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Framework Analysis</h3>
+      <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Framework Analysis</h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {frameworks.map((fw) => (
           <div key={fw.name} className="p-6 rounded-2xl bg-slate-900/40 border border-white/5 space-y-4">
@@ -38,7 +38,7 @@ export const ComplianceBreakdown: React.FC<ComplianceBreakdownProps> = ({ framew
             </div>
 
             <div className="space-y-1.5">
-              <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase">
+              <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase">
                 <span>Checks Passed</span>
                 <span>{fw.checksPassed}/{fw.totalChecks}</span>
               </div>

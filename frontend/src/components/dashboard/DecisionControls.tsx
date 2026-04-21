@@ -30,7 +30,7 @@ export const DecisionControls: React.FC<DecisionControlsProps> = ({
       </button>
       <button 
         onClick={onDefer}
-        className="px-6 py-4 rounded-xl bg-transparent border border-white/5 text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] hover:border-white/20 hover:text-slate-300 transition-all"
+        className="px-6 py-4 rounded-xl bg-transparent border border-white/5 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] hover:border-white/20 hover:text-slate-100 transition-all"
       >
         Defer
       </button>

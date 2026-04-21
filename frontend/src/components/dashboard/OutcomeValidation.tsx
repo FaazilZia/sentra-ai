@@ -29,7 +29,7 @@ export const OutcomeValidation: React.FC<OutcomeValidationProps> = ({
                 {isVerified ? <ShieldCheck className="h-5 w-5" /> : <Shield className="h-5 w-5 text-rose-500" />}
              </div>
              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Outcome Verification</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Outcome Verification</p>
                 <h4 className="text-xl font-black text-white tracking-tighter uppercase">
                    {isVerified ? "Closed-Loop Success" : "Validation Failed"}
                 </h4>
@@ -51,7 +51,7 @@ export const OutcomeValidation: React.FC<OutcomeValidationProps> = ({
           <div className="space-y-4">
              <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Risk Evolution</p>
              <div className="flex items-center gap-3">
-                <span className="text-xs font-bold text-slate-500 uppercase">{prevRisk}</span>
+                <span className="text-xs font-bold text-slate-400 uppercase">{prevRisk}</span>
                 <ArrowUpRight className="h-3 w-3 text-slate-700" />
                 <span className={cn(
                    "text-sm font-black uppercase",
@@ -70,7 +70,7 @@ export const OutcomeValidation: React.FC<OutcomeValidationProps> = ({
              "h-2 w-2 rounded-full",
              isVerified ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]"
           )} />
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+          <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
              {isVerified ? "Changes verified against policy baseline" : "Residual risk above threshold"}
           </p>
        </div>

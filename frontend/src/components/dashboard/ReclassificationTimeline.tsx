@@ -16,8 +16,8 @@ export const ReclassificationTimeline: React.FC<ReclassificationTimelineProps> =
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <History className="h-3 w-3 text-slate-500" />
-        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Decision Evolution</span>
+        <History className="h-3 w-3 text-slate-400" />
+        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Decision Evolution</span>
       </div>
       <div className="space-y-4 relative before:absolute before:left-[5px] before:top-2 before:bottom-2 before:w-[1px] before:bg-white/5">
         {entries.map((entry, idx) => (

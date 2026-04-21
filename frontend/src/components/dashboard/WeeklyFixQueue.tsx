@@ -19,7 +19,7 @@ export const WeeklyFixQueue: React.FC<WeeklyFixQueueProps> = ({ tasks }) => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Process Queue (Weekly Tasks)</h3>
+        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Process Queue (Weekly Tasks)</h3>
         <span className="text-[9px] font-bold text-slate-700 uppercase">Prioritized by SLA risk</span>
       </div>
       
@@ -36,7 +36,7 @@ export const WeeklyFixQueue: React.FC<WeeklyFixQueueProps> = ({ tasks }) => {
                     )}>
                       {task.priority} Priority
                     </span>
-                    <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">{task.framework}</span>
+                    <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">{task.framework}</span>
                   </div>
                   <div className="flex items-center gap-1 text-rose-500">
                     <Clock className="h-3 w-3" />
@@ -46,14 +46,14 @@ export const WeeklyFixQueue: React.FC<WeeklyFixQueueProps> = ({ tasks }) => {
 
                 <div className="space-y-1">
                   <h4 className="text-xs font-bold text-white leading-snug uppercase tracking-tight">{task.problem}</h4>
-                  <p className="text-[10px] text-slate-500 font-medium uppercase">Action: {task.action}</p>
+                  <p className="text-[10px] text-slate-400 font-medium uppercase">Action: {task.action}</p>
                 </div>
               </div>
 
               <div className="pt-4 border-t border-white/5 space-y-3">
                  <div className="flex flex-col gap-1">
                     <p className="text-[8px] font-black text-rose-500 uppercase tracking-widest">If Ignored:</p>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase">Score projected to drop 2.4% + SLA Risk</p>
+                    <p className="text-[10px] font-bold text-slate-300 uppercase">Score projected to drop 2.4% + SLA Risk</p>
                  </div>
                  <div className="flex items-center justify-between opacity-60 group-hover:opacity-100 transition-opacity">
                     <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Linked to Log #E-142</span>

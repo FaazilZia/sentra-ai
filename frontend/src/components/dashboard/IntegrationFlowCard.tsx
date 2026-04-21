@@ -4,17 +4,17 @@ import { Network, Server, ShieldCheck } from 'lucide-react';
 export const IntegrationFlowCard: React.FC = () => {
   return (
     <div className="glass-card rounded-[2rem] p-6 relative overflow-hidden group">
-      <h3 className="text-sm font-black uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
+      <h3 className="text-sm font-black uppercase tracking-widest text-slate-300 mb-6 flex items-center gap-2">
         <Network className="w-4 h-4 text-indigo-400" />
         Infrastructure Flow
       </h3>
 
       <div className="flex items-center justify-between gap-2 py-4">
         <div className="flex flex-col items-center gap-2">
-          <div className="p-3 rounded-2xl bg-slate-800 text-slate-400 border border-white/5">
+          <div className="p-3 rounded-2xl bg-slate-800 text-slate-300 border border-white/5">
             <Server className="w-5 h-5" />
           </div>
-          <span className="text-[9px] font-black uppercase text-slate-500">LLM Node</span>
+          <span className="text-[9px] font-black uppercase text-slate-400">LLM Node</span>
         </div>
 
         <div className="flex-1 flex flex-col items-center gap-1">
@@ -33,7 +33,7 @@ export const IntegrationFlowCard: React.FC = () => {
       </div>
 
       <div className="mt-6 p-4 rounded-2xl bg-white/[0.02] border border-white/5">
-        <p className="text-[11px] font-medium text-slate-400 leading-relaxed">
+        <p className="text-[11px] font-medium text-slate-300 leading-relaxed">
           Runtime protection active. Every agent intent is verified against the global compliance baseline before reaching your data layer.
         </p>
       </div>

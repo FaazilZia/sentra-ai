@@ -32,7 +32,7 @@ export default function LoginPage() {
             </div>
             <div>
               <p className="text-[15px] font-semibold tracking-tight text-white">Sentra AI</p>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
                 Compliance OS
               </p>
             </div>
@@ -41,7 +41,7 @@ export default function LoginPage() {
           <h1 className="mt-14 max-w-[280px] text-3xl font-semibold leading-tight tracking-tight text-white">
             Access governance for AI systems and sensitive data.
           </h1>
-          <p className="mt-4 max-w-[300px] text-sm leading-6 text-slate-400">
+          <p className="mt-4 max-w-[300px] text-sm leading-6 text-slate-300">
             Review policy coverage, risky agent activity, and approval readiness from one operator workspace.
           </p>
 
@@ -51,27 +51,27 @@ export default function LoginPage() {
                 <ShieldCheck className="h-4 w-4 text-emerald-400" />
                 Policy coverage
               </div>
-              <p className="mt-1 text-xs leading-5 text-slate-500">Track published controls and access exceptions.</p>
+              <p className="mt-1 text-xs leading-5 text-slate-400">Track published controls and access exceptions.</p>
             </div>
             <div className="group rounded-xl border border-slate-800 bg-slate-950/40 p-3 transition-colors hover:bg-slate-900/60">
               <div className="flex items-center gap-2 text-sm font-semibold text-white">
                 <Activity className="h-4 w-4 text-blue-400" />
                 Risk signals
               </div>
-              <p className="mt-1 text-xs leading-5 text-slate-500">Surface agent and app access that needs review.</p>
+              <p className="mt-1 text-xs leading-5 text-slate-400">Surface agent and app access that needs review.</p>
             </div>
           </div>
         </div>
 
         <div className="relative z-10 rounded-xl border border-slate-800 bg-slate-950/40 p-4">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">Environment</p>
-          <div className="mt-3 space-y-2 text-xs text-slate-300">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">Environment</p>
+          <div className="mt-3 space-y-2 text-xs text-slate-100">
             <div className="flex items-center gap-2">
-              <Server className="h-3.5 w-3.5 text-slate-500" />
+              <Server className="h-3.5 w-3.5 text-slate-400" />
               <span className="truncate font-mono">{apiBaseUrl}</span>
             </div>
             <div className="flex items-center gap-2">
-              <Database className="h-3.5 w-3.5 text-slate-500" />
+              <Database className="h-3.5 w-3.5 text-slate-400" />
               <span>Supabase Postgres</span>
             </div>
           </div>
@@ -110,7 +110,7 @@ export default function LoginPage() {
             </div>
             <div>
               <p className="text-[15px] font-semibold tracking-tight text-slate-950">Sentra AI</p>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
                 Compliance OS
               </p>
             </div>
@@ -124,7 +124,7 @@ export default function LoginPage() {
               <h2 className="text-2xl font-bold tracking-tight text-slate-950">
                 {isSignUp ? 'Create an account' : 'Sign in'}
               </h2>
-              <p className="mt-1 text-sm text-slate-500/80">
+              <p className="mt-1 text-sm text-slate-400/80">
                 {isSignUp ? 'Sign up to start your workspace.' : 'Enter your credentials to continue.'}
               </p>
             </div>
@@ -134,7 +134,7 @@ export default function LoginPage() {
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">Email</span>
               <input
-                className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 font-mono text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-blue-500/40 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 font-mono text-sm text-slate-900 outline-none transition-all placeholder:text-slate-300 focus:border-blue-500/40 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 type="email"
@@ -147,7 +147,7 @@ export default function LoginPage() {
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">Password</span>
               <input
-                className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-blue-500/40 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-300 focus:border-blue-500/40 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 type="password"
@@ -171,7 +171,7 @@ export default function LoginPage() {
                 className="group relative flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition-all hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-slate-900/30 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
               >
                 {loginPending ? (
-                  <LoaderCircle className="h-4 w-4 animate-spin text-slate-300" />
+                  <LoaderCircle className="h-4 w-4 animate-spin text-slate-100" />
                 ) : null}
                 <span>
                   {loginPending 
@@ -186,7 +186,7 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-6 text-center text-sm">
-            <span className="text-slate-500">
+            <span className="text-slate-400">
               {isSignUp ? 'Already have an account?' : "Don't have an account?"}
             </span>{' '}
             <button

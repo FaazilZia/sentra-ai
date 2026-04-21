@@ -24,7 +24,7 @@ export const UseCaseSelector: React.FC<UseCaseSelectorProps> = ({ currentMode, o
             "flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all",
             currentMode === opt.id 
               ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" 
-              : "text-slate-500 hover:text-slate-300"
+              : "text-slate-400 hover:text-slate-100"
           )}
         >
           <opt.icon className="w-3.5 h-3.5" />

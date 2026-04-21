@@ -66,11 +66,11 @@ export function GuardrailMonitor() {
       {metrics && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 animate-in fade-in slide-in-from-top-4 duration-700">
            <div className="space-y-1">
-              <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Total Monitored</p>
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Total Monitored</p>
               <h3 className="text-5xl font-black text-white">{metrics.total}</h3>
            </div>
            <div className="space-y-1">
-              <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Allowed Actions</p>
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Allowed Actions</p>
               <h3 className="text-5xl font-black text-white">{metrics.allowed.toFixed(0)}%</h3>
            </div>
            <div className="space-y-1">
@@ -78,7 +78,7 @@ export function GuardrailMonitor() {
               <h3 className="text-5xl font-black text-white">{metrics.blocked.toFixed(0)}%</h3>
            </div>
            <div className="space-y-1">
-              <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Data Redacted</p>
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Data Redacted</p>
               <h3 className="text-5xl font-black text-white">{metrics.modified.toFixed(0)}%</h3>
            </div>
         </div>
@@ -88,7 +88,7 @@ export function GuardrailMonitor() {
          {/* Real-time Sandbox */}
          <div className="space-y-12">
             <div className="space-y-3">
-               <h2 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Enforcement Sandbox</h2>
+               <h2 className="text-xs font-black text-slate-300 uppercase tracking-[0.2em]">Enforcement Sandbox</h2>
                <p className="text-3xl font-black text-white tracking-tighter leading-tight">Test Policy Logic.</p>
             </div>
 
@@ -103,7 +103,7 @@ export function GuardrailMonitor() {
                      />
                      <button 
                        disabled={isLoading}
-                       className="absolute bottom-4 right-0 p-3 text-white hover:text-slate-400 transition-all disabled:opacity-50"
+                       className="absolute bottom-4 right-0 p-3 text-white hover:text-slate-300 transition-all disabled:opacity-50"
                      >
                         {isLoading ? <RefreshCcw className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-5 w-5" />}
                      </button>
@@ -121,7 +121,7 @@ export function GuardrailMonitor() {
                            <span className="text-[10px] font-black uppercase tracking-widest text-white">Decision: {lastResponse.decision}</span>
                         </div>
                         {lastResponse.confidence && (
-                           <span className="text-[9px] font-black text-slate-500 uppercase">{lastResponse.confidence} Confidence</span>
+                           <span className="text-[9px] font-black text-slate-400 uppercase">{lastResponse.confidence} Confidence</span>
                         )}
                      </div>
                      
@@ -158,7 +158,7 @@ export function GuardrailMonitor() {
          {/* Admin Approvals & Logs */}
          <div className="space-y-12">
             <div className="space-y-3">
-               <h2 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Activity Ledger</h2>
+               <h2 className="text-xs font-black text-slate-300 uppercase tracking-[0.2em]">Activity Ledger</h2>
                <p className="text-3xl font-black text-white tracking-tighter leading-tight">Live Interceptions.</p>
             </div>
 
@@ -192,7 +192,7 @@ export function GuardrailMonitor() {
            <div className="max-w-xl w-full space-y-12">
               <div className="text-center space-y-4">
                  <h3 className="text-4xl font-black text-white tracking-tighter uppercase">Request Override</h3>
-                 <p className="text-slate-500 font-medium">Provide justification for bypassing this compliance block.</p>
+                 <p className="text-slate-400 font-medium">Provide justification for bypassing this compliance block.</p>
               </div>
               <textarea 
                 value={overrideReason}
@@ -203,7 +203,7 @@ export function GuardrailMonitor() {
               <div className="flex gap-6">
                  <button 
                    onClick={() => setShowOverrideModal(false)}
-                   className="flex-1 py-5 border border-white/10 rounded-2xl text-[10px] font-black uppercase text-slate-500 tracking-widest hover:bg-white/5 transition-all"
+                   className="flex-1 py-5 border border-white/10 rounded-2xl text-[10px] font-black uppercase text-slate-400 tracking-widest hover:bg-white/5 transition-all"
                  >
                    Cancel
                  </button>

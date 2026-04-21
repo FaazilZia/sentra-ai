@@ -17,7 +17,7 @@ interface AgentProfileListProps {
 export const AgentProfileList: React.FC<AgentProfileListProps> = ({ agents }) => {
   return (
     <div className="glass-card rounded-[2rem] p-6 h-full">
-      <h3 className="text-sm font-black uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
+      <h3 className="text-sm font-black uppercase tracking-widest text-slate-300 mb-6 flex items-center gap-2">
         <Bot className="w-4 h-4 text-indigo-400" />
         Agent Risk Profiles
       </h3>
@@ -49,11 +49,11 @@ export const AgentProfileList: React.FC<AgentProfileListProps> = ({ agents }) =>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Efficiency</p>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Efficiency</p>
                   <p className="text-sm font-black text-white">{Math.round((1 - agent.blockedActions/agent.totalActions) * 100)}%</p>
                 </div>
                 <div>
-                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Blocks</p>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Blocks</p>
                   <p className="text-sm font-black text-rose-400">{agent.blockedActions}</p>
                 </div>
               </div>

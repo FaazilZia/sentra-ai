@@ -11,7 +11,7 @@ interface SystemStatusProps {
 export const SystemStatus: React.FC<SystemStatusProps> = ({ compliance, risk, guardrails }) => {
   return (
     <div className="space-y-6">
-      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Operational Status</p>
+      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Operational Status</p>
       
       <div className="space-y-4">
         {/* Compliance State */}
@@ -24,7 +24,7 @@ export const SystemStatus: React.FC<SystemStatusProps> = ({ compliance, risk, gu
             ) : (
               <ShieldCheck className="h-4 w-4 text-emerald-500" />
             )}
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Compliance</span>
+            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tight">Compliance</span>
           </div>
           <span className={cn(
             "text-[10px] font-black uppercase tracking-widest",
@@ -41,7 +41,7 @@ export const SystemStatus: React.FC<SystemStatusProps> = ({ compliance, risk, gu
               "h-1.5 w-1.5 rounded-full",
               risk === 'high' ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]" : risk === 'medium' ? "bg-amber-500" : "bg-emerald-500"
             )} />
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Risk Level</span>
+            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tight">Risk Level</span>
           </div>
           <span className={cn(
             "text-[10px] font-black uppercase tracking-widest text-white"
@@ -56,7 +56,7 @@ export const SystemStatus: React.FC<SystemStatusProps> = ({ compliance, risk, gu
             <div className={cn(
               "h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse"
             )} />
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Guardrails</span>
+            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tight">Guardrails</span>
           </div>
           <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">
             {guardrails}

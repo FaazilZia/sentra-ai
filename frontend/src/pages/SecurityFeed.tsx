@@ -38,7 +38,7 @@ export default function SecurityFeedPage() {
           <ShieldAlert className="h-8 w-8 text-rose-500" />
           Alerts & Overrides
         </h1>
-        <p className="text-slate-400 font-medium max-w-xl">
+        <p className="text-slate-300 font-medium max-w-xl">
           Manage critical AI actions requiring human-in-the-loop approval or review.
         </p>
       </div>
@@ -52,7 +52,7 @@ export default function SecurityFeedPage() {
              </div>
              <div>
                 <h2 className="text-sm font-black text-white uppercase tracking-tight">Pending 2-Step Verification</h2>
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">High risk actions awaiting Reviewer approval</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">High risk actions awaiting Reviewer approval</p>
              </div>
           </div>
 
@@ -93,7 +93,7 @@ export default function SecurityFeedPage() {
              </div>
              <div>
                 <h2 className="text-sm font-black text-white uppercase tracking-tight">High Risk Blocks</h2>
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Recent blocked actions with potential compliance impact</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Recent blocked actions with potential compliance impact</p>
              </div>
           </div>
 
@@ -131,7 +131,7 @@ export default function SecurityFeedPage() {
             <UserCheck className="h-4 w-4" />
          </div>
          <div>
-            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none">Logged in as</p>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Logged in as</p>
             <p className="text-xs font-black text-white mt-0.5">{user?.role || 'USER'}</p>
          </div>
       </div>

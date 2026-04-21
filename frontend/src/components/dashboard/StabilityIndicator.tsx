@@ -20,7 +20,7 @@ export const StabilityIndicator: React.FC<StabilityIndicatorProps> = ({ status, 
         </span>
       </div>
       <div className="h-3 w-px bg-white/10" />
-      <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tight">
+      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">
         {systemsAffected}
       </span>
     </div>

@@ -53,7 +53,7 @@ export const LiveBento = () => {
           <div className="flex flex-col h-full justify-between">
             <div>
               <h3 className="text-2xl font-bold text-slate-900 mb-2">Real-time Prompt Injection Shield</h3>
-              <p className="text-slate-500 max-w-md">Our neural layer intercepts malicious inputs before they ever reach your LLM billing account.</p>
+              <p className="text-slate-400 max-w-md">Our neural layer intercepts malicious inputs before they ever reach your LLM billing account.</p>
             </div>
             
             {/* Live interaction mockup */}
@@ -95,11 +95,11 @@ export const LiveBento = () => {
         <BentoCard>
            <div className="flex flex-col h-full">
             <h3 className="text-xl font-bold text-slate-900 mb-2">Sub-millisecond Latency</h3>
-            <p className="text-slate-500 text-sm">Engineered across regions to sit invisibly on your pipeline.</p>
+            <p className="text-slate-400 text-sm">Engineered across regions to sit invisibly on your pipeline.</p>
             <div className="mt-auto flex items-end justify-center h-full pb-4">
               <div className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-teal-500 to-cyan-500 tracking-tighter">
                 {"<0.5"}
-                <span className="text-2xl text-slate-400">ms</span>
+                <span className="text-2xl text-slate-300">ms</span>
               </div>
             </div>
           </div>
@@ -109,7 +109,7 @@ export const LiveBento = () => {
         <BentoCard>
           <div className="flex flex-col h-full">
             <h3 className="text-xl font-bold text-slate-900 mb-2">100% Policy Sync</h3>
-            <p className="text-slate-500 text-sm">Automatically ingest your DPDP policies.</p>
+            <p className="text-slate-400 text-sm">Automatically ingest your DPDP policies.</p>
             <div className="mt-auto flex justify-center items-center h-full">
               <motion.div 
                 animate={{ rotate: 360 }}
@@ -125,11 +125,11 @@ export const LiveBento = () => {
           <div className="flex flex-col md:flex-row items-center justify-between h-full gap-8">
             <div className="md:w-1/2">
               <h3 className="text-2xl font-bold text-slate-900 mb-4">Semantic PII Masking Engine</h3>
-              <p className="text-slate-500 max-w-md">
+              <p className="text-slate-400 max-w-md">
                 We locate, extract, and replace sensitive context with synthetic tokens precisely before parsing via LLM. Once returned, your clients see their original context perfectly hydrated.
               </p>
             </div>
-            <div className="md:w-1/2 w-full h-full bg-slate-900 rounded-2xl p-6 font-mono text-sm text-slate-300 shadow-inner overflow-hidden flex flex-col justify-center">
+            <div className="md:w-1/2 w-full h-full bg-slate-900 rounded-2xl p-6 font-mono text-sm text-slate-100 shadow-inner overflow-hidden flex flex-col justify-center">
               <p><span className="text-pink-400">const</span> prompt = <span className="text-green-400">"My email is laksh@company.com"</span>;</p>
               <div className="my-4 h-[1px] w-full border-b border-slate-700 border-dashed" />
               <motion.p
@@ -139,7 +139,7 @@ export const LiveBento = () => {
               >
                 <span className="text-teal-400">Sentra.intercept</span>(prompt)
               </motion.p>
-              <p className="mt-4 text-slate-500">// Output to LLM:</p>
+              <p className="mt-4 text-slate-400">// Output to LLM:</p>
               <p className="text-white">"My email is <span className="bg-teal-500/20 text-teal-300 px-1 rounded">USER_EMAIL_01</span>"</p>
             </div>
           </div>

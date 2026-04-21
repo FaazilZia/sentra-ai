@@ -24,28 +24,28 @@ export const DisagreementIndicator: React.FC<DisagreementIndicatorProps> = ({ en
       </div>
       <div className="grid grid-cols-3 gap-6">
         <div className="space-y-1.5">
-          <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Policy Engine</p>
+          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Policy Engine</p>
           <div className="flex flex-col gap-1">
             <p className={cn("text-[10px] font-bold uppercase", engines.policy.result === 'fail' ? "text-rose-500" : "text-emerald-500")}>{engines.policy.result}</p>
             <span className="text-[8px] font-black text-slate-600 uppercase">Conf: {engines.policy.confidence}</span>
           </div>
         </div>
         <div className="space-y-1.5">
-          <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Behavioral Engine</p>
+          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Behavioral Engine</p>
           <div className="flex flex-col gap-1">
             <p className={cn("text-[10px] font-bold uppercase", engines.behavior.result === 'anomaly' ? "text-amber-500" : "text-emerald-500")}>{engines.behavior.result}</p>
             <span className="text-[8px] font-black text-slate-600 uppercase">Conf: {engines.behavior.confidence}</span>
           </div>
         </div>
         <div className="space-y-1.5">
-          <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Anomaly Engine</p>
+          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Anomaly Engine</p>
           <div className="flex flex-col gap-1">
             <p className={cn("text-[10px] font-bold uppercase", engines.anomaly.result === 'suspicious' ? "text-amber-500" : "text-emerald-500")}>{engines.anomaly.result}</p>
             <span className="text-[8px] font-black text-slate-600 uppercase">Conf: {engines.anomaly.confidence}</span>
           </div>
         </div>
       </div>
-      <p className="text-[9px] font-medium text-slate-400 uppercase italic">
+      <p className="text-[9px] font-medium text-slate-300 uppercase italic">
         "Signal correlation required. Conflicting behavioral patterns observed."
       </p>
     </div>

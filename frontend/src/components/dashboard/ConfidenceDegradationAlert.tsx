@@ -17,7 +17,7 @@ export const ConfidenceDegradationAlert: React.FC<ConfidenceDegradationAlertProp
       <div className="relative z-10 space-y-4">
         <div className="flex items-center gap-3">
           <Activity className="h-4 w-4 text-amber-500 animate-pulse" />
-          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Confidence Degradation Detected</h3>
+          <h3 className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Confidence Degradation Detected</h3>
         </div>
         <div className="flex items-baseline gap-4">
           <span className="text-4xl font-black text-amber-500 tracking-tighter">{currentConfidence}%</span>
@@ -25,11 +25,11 @@ export const ConfidenceDegradationAlert: React.FC<ConfidenceDegradationAlertProp
             <span className="text-[10px] font-black text-amber-500/60 uppercase tracking-widest leading-none">
               -{dropAmount}% variance
             </span>
-            <span className="text-[9px] font-bold text-slate-500 uppercase">Stability: Degrading but contained</span>
+            <span className="text-[9px] font-bold text-slate-400 uppercase">Stability: Degrading but contained</span>
           </div>
         </div>
         <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl">
-          <p className="text-[11px] font-bold text-slate-400 uppercase leading-snug">
+          <p className="text-[11px] font-bold text-slate-300 uppercase leading-snug">
             {reason}
           </p>
         </div>

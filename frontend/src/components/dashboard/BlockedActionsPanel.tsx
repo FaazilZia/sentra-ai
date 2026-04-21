@@ -24,7 +24,7 @@ export const BlockedActionsPanel: React.FC<BlockedActionsPanelProps> = ({ action
             <ShieldAlert className="w-4 h-4" />
             Red Alert Zone
           </h3>
-          <p className="text-[10px] text-slate-500 font-bold mt-1 uppercase tracking-tight">Critical Policy Violations</p>
+          <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-tight">Critical Policy Violations</p>
         </div>
         <div className="h-2 w-2 rounded-full bg-rose-500 animate-ping" />
       </div>

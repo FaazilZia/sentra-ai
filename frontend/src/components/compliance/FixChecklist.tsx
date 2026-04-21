@@ -60,12 +60,12 @@ export function FixChecklist({ tasks, onTaskUpdated }: FixChecklistProps) {
                     tone={task.priority === 1 ? 'danger' : task.priority === 2 ? 'warning' : 'info'} 
                   />
                 </div>
-                {task.description && <p className="text-xs text-slate-500">{task.description}</p>}
+                {task.description && <p className="text-xs text-slate-400">{task.description}</p>}
                 
                 {task.evidence.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-2">
                     {task.evidence.map((ev) => (
-                      <div key={ev.id} className="flex items-center gap-2 px-2 py-1 rounded bg-white/5 border border-white/10 text-[10px] text-slate-400">
+                      <div key={ev.id} className="flex items-center gap-2 px-2 py-1 rounded bg-white/5 border border-white/10 text-[10px] text-slate-300">
                         {ev.type === 'link' ? <LinkIcon className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
                         <span className="truncate max-w-[150px]">{ev.value}</span>
                       </div>
@@ -79,7 +79,7 @@ export function FixChecklist({ tasks, onTaskUpdated }: FixChecklistProps) {
               {task.status !== 'completed' && (
                 <button 
                   onClick={() => setUploadingFor(uploadingFor === task.id ? null : task.id)}
-                  className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all"
+                  className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-all"
                 >
                   <Upload className="h-4 w-4" />
                 </button>
@@ -96,7 +96,7 @@ export function FixChecklist({ tasks, onTaskUpdated }: FixChecklistProps) {
                 <button 
                   onClick={() => setEvidenceType('text')}
                   className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${
-                    evidenceType === 'text' ? 'bg-white text-slate-950' : 'bg-slate-800 text-slate-400'
+                    evidenceType === 'text' ? 'bg-white text-slate-950' : 'bg-slate-800 text-slate-300'
                   }`}
                 >
                   Text Description
@@ -104,7 +104,7 @@ export function FixChecklist({ tasks, onTaskUpdated }: FixChecklistProps) {
                 <button 
                   onClick={() => setEvidenceType('link')}
                   className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${
-                    evidenceType === 'link' ? 'bg-white text-slate-950' : 'bg-slate-800 text-slate-400'
+                    evidenceType === 'link' ? 'bg-white text-slate-950' : 'bg-slate-800 text-slate-300'
                   }`}
                 >
                   Reference Link

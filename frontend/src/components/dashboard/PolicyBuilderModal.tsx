@@ -42,22 +42,22 @@ export const PolicyBuilderModal: React.FC<PolicyBuilderModalProps> = ({ isOpen, 
             </div>
             <div>
               <h3 className="text-lg font-black text-slate-900 leading-tight">Create Governance Policy</h3>
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">Control Layer v2.0</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Control Layer v2.0</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-white rounded-full transition-colors border border-transparent hover:border-slate-200">
-            <X className="w-5 h-5 text-slate-400" />
+            <X className="w-5 h-5 text-slate-300" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
           <div className="space-y-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Policy Identity</label>
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-300 ml-1">Policy Identity</label>
             <input
               type="text"
               required
               placeholder="e.g. Finance Data Protection"
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold placeholder:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -65,7 +65,7 @@ export const PolicyBuilderModal: React.FC<PolicyBuilderModalProps> = ({ isOpen, 
 
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Target AI Agent</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-300 ml-1">Target AI Agent</label>
               <select
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none cursor-pointer"
                 value={agent}
@@ -79,7 +79,7 @@ export const PolicyBuilderModal: React.FC<PolicyBuilderModalProps> = ({ isOpen, 
               </select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Requested Action</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-300 ml-1">Requested Action</label>
               <select
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none cursor-pointer"
                 value={action}
@@ -95,14 +95,14 @@ export const PolicyBuilderModal: React.FC<PolicyBuilderModalProps> = ({ isOpen, 
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Enforcement Decision</label>
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-300 ml-1">Enforcement Decision</label>
             <div className="flex gap-4">
               <button
                 type="button"
                 className={`flex-1 py-4 px-6 rounded-2xl border-2 font-black transition-all flex items-center justify-center gap-2 ${
                   effect === 'allow' 
                     ? 'bg-emerald-50 border-emerald-500 text-emerald-700' 
-                    : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'
+                    : 'bg-white border-slate-100 text-slate-300 hover:border-slate-200'
                 }`}
                 onClick={() => setEffect('allow')}
               >
@@ -114,7 +114,7 @@ export const PolicyBuilderModal: React.FC<PolicyBuilderModalProps> = ({ isOpen, 
                 className={`flex-1 py-4 px-6 rounded-2xl border-2 font-black transition-all flex items-center justify-center gap-2 ${
                   effect === 'deny' 
                     ? 'bg-rose-50 border-rose-500 text-rose-700' 
-                    : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'
+                    : 'bg-white border-slate-100 text-slate-300 hover:border-slate-200'
                 }`}
                 onClick={() => setEffect('deny')}
               >

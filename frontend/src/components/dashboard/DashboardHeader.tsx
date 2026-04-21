@@ -69,7 +69,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               <card.icon className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-0.5">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">
                 {card.label}
               </p>
               <p className="text-2xl font-black tracking-tight text-white">

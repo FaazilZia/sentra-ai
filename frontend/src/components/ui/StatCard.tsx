@@ -33,7 +33,7 @@ export function StatCard({
     <div className="group relative flex h-full min-h-[148px] flex-col justify-between overflow-hidden rounded-lg border border-slate-200 bg-white p-3 shadow-[0_4px_16px_rgba(15,23,42,0.05)] transition-all hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(15,23,42,0.08)]">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-xs font-medium leading-4 text-slate-500">{title}</p>
+          <p className="text-xs font-medium leading-4 text-slate-400">{title}</p>
           {isSkeleton ? (
             <div className="mt-2 space-y-2">
               <div className="h-7 w-20 animate-pulse rounded-md bg-slate-200" />
@@ -42,7 +42,7 @@ export function StatCard({
           ) : (
             <>
               <p className="mt-1.5 font-mono text-2xl font-bold tracking-tight text-slate-950">{value}</p>
-              <p className="mt-1 text-[10px] font-medium leading-3 text-slate-400">
+              <p className="mt-1 text-[10px] font-medium leading-3 text-slate-300">
                 {industryRate}
               </p>
             </>
@@ -54,7 +54,7 @@ export function StatCard({
       </div>
 
       <div className="mt-3 flex items-end justify-between gap-2">
-        <p className="max-w-[58%] text-[10px] leading-4 text-slate-500">{trend}</p>
+        <p className="max-w-[58%] text-[10px] leading-4 text-slate-400">{trend}</p>
         <svg viewBox="0 0 100 44" className="h-10 w-24 shrink-0" role="img" aria-label={`${title} trend`}>
           <polyline
             fill="none"

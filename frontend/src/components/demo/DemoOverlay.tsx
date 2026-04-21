@@ -53,19 +53,19 @@ export function DemoOverlay({ step, onNext, onPrev, onClose, isAutoPlaying, onTo
               <div className="h-8 w-8 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
                  <Zap className="h-3 w-3 text-emerald-400 fill-current" />
               </div>
-              <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Live Demo Sequence</h4>
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Live Demo Sequence</h4>
            </div>
            <div className="flex items-center gap-4">
               <button 
                 onClick={() => onToggleAutoPlay(!isAutoPlaying)}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[9px] font-black uppercase tracking-widest transition-all ${
-                  isAutoPlaying ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-slate-800 border-white/10 text-slate-400'
+                  isAutoPlaying ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-slate-800 border-white/10 text-slate-300'
                 }`}
               >
                 {isAutoPlaying ? <Pause className="h-3 w-3 fill-current" /> : <Play className="h-3 w-3 fill-current" />}
                 {isAutoPlaying ? 'Auto-Playing' : 'Paused'}
               </button>
-              <button onClick={onClose} className="text-slate-500 hover:text-white transition-all">
+              <button onClick={onClose} className="text-slate-400 hover:text-white transition-all">
                  <X className="h-4 w-4" />
               </button>
            </div>
@@ -73,14 +73,14 @@ export function DemoOverlay({ step, onNext, onPrev, onClose, isAutoPlaying, onTo
 
         <div className="space-y-2">
            <h3 className="text-xl font-black text-white uppercase tracking-tight">{currentStep.title}</h3>
-           <p className="text-sm text-slate-400 leading-relaxed font-medium">{currentStep.description}</p>
+           <p className="text-sm text-slate-300 leading-relaxed font-medium">{currentStep.description}</p>
         </div>
 
         <div className="flex items-center justify-between pt-4 border-t border-white/5">
            <button 
              onClick={onPrev}
              disabled={step === 0}
-             className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest disabled:opacity-0 transition-all hover:text-white"
+             className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest disabled:opacity-0 transition-all hover:text-white"
            >
               <ChevronLeft className="h-4 w-4" /> Previous
            </button>

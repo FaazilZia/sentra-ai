@@ -23,7 +23,7 @@ export function SidebarItem({ name, href, icon: Icon, collapsed = false, indicat
         collapsed && "justify-center px-2",
         isActive
           ? "bg-white/10 text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]"
-          : "text-slate-400 hover:bg-white/5 hover:text-white"
+          : "text-slate-300 hover:bg-white/5 hover:text-white"
       )}
       title={collapsed ? name : undefined}
     >

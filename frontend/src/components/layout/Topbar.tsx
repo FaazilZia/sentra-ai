@@ -13,7 +13,7 @@ export function Topbar() {
         {/* Left Side: Title & Subtitle */}
         <div className="flex flex-col min-w-0">
           <h1 className="text-xl font-bold text-white tracking-tight">AI Compliance Overview</h1>
-          <p className="text-xs text-slate-400 font-medium">Monitor and manage AI workflow risks</p>
+          <p className="text-xs text-slate-300 font-medium">Monitor and manage AI workflow risks</p>
         </div>
 
         {/* Right Side: Filters, Search, Profile */}
@@ -21,23 +21,23 @@ export function Topbar() {
           
           {/* Global Search */}
           <div className="relative hidden w-64 md:block">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Search policies..."
-              className="h-9 w-full rounded-lg border border-white/10 bg-white/5 pl-10 pr-4 text-sm text-slate-200 outline-none transition focus:border-cyan-500/50 focus:bg-white/10 focus:ring-1 focus:ring-cyan-500/50 placeholder:text-slate-500"
+              className="h-9 w-full rounded-lg border border-white/10 bg-white/5 pl-10 pr-4 text-sm text-slate-200 outline-none transition focus:border-cyan-500/50 focus:bg-white/10 focus:ring-1 focus:ring-cyan-500/50 placeholder:text-slate-400"
             />
           </div>
 
           {/* Date Filter */}
-          <button className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-slate-300 transition hover:bg-white/10 hover:text-white">
-            <Calendar className="h-4 w-4 text-slate-400" />
+          <button className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-slate-100 transition hover:bg-white/10 hover:text-white">
+            <Calendar className="h-4 w-4 text-slate-300" />
             {dateRange}
-            <ChevronDown className="h-4 w-4 text-slate-500" />
+            <ChevronDown className="h-4 w-4 text-slate-400" />
           </button>
 
           {/* Notifications */}
-          <button className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-400 transition hover:bg-white/10 hover:text-white">
+          <button className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10 hover:text-white">
             <Bell className="h-4 w-4" />
             <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-rose-500 ring-2 ring-slate-950" />
           </button>

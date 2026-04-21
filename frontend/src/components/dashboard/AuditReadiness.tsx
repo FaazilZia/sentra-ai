@@ -43,7 +43,7 @@ export const AuditReadiness: React.FC<AuditReadinessProps> = ({ score, status })
              ) : (
                 <AlertCircle className="h-4 w-4 text-amber-500" />
              )}
-             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Audit Readiness</span>
+             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Audit Readiness</span>
           </div>
           <div className="space-y-1">
              <h4 className="text-2xl font-black text-white tracking-tighter uppercase leading-none">{status}</h4>

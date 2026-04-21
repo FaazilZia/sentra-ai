@@ -21,7 +21,7 @@ export const SystemPulse: React.FC<SystemPulseProps> = ({ status, issueCount, la
             "h-2 w-2 rounded-full",
             status === 'stable' ? "bg-emerald-500" : status === 'at-risk' ? "bg-amber-500" : "bg-rose-500"
           )} />
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">
             System: <span className={cn(
               status === 'stable' ? "text-emerald-500" : status === 'at-risk' ? "text-amber-500" : "text-rose-500"
             )}>{status}</span>
@@ -29,15 +29,15 @@ export const SystemPulse: React.FC<SystemPulseProps> = ({ status, issueCount, la
         </div>
 
         <div className="flex items-center gap-3 border-l border-white/5 pl-8">
-          <AlertCircle className="h-3 w-3 text-slate-500" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+          <AlertCircle className="h-3 w-3 text-slate-400" />
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">
             Active Issues: <span className="text-white">{issueCount}</span>
           </span>
         </div>
 
         <div className="flex items-center gap-3 border-l border-white/5 pl-8">
-          <Clock className="h-3 w-3 text-slate-500" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+          <Clock className="h-3 w-3 text-slate-400" />
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">
             Last Incident: <span className="text-white">{lastIncident}</span>
           </span>
         </div>

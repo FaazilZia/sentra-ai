@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import { Bot, ShieldCheck, Zap, Activity, Filter, Plus, Search, MoreHorizontal, Database, Globe, Mail } from 'lucide-react';
 import { SurfaceCard } from '../components/ui/SurfaceCard';
 import { StatusBadge } from '../components/ui/StatusBadge';
+import { EmptyState } from '../components/ui/EmptyState';
 import { fetchAIAgents, AIAgent } from '../lib/api';
 import { useAuth } from '../lib/auth';
+import { RegisterAgentModal } from '../components/inventory/RegisterAgentModal';
 
 const permissionIcons: Record<string, any> = {
   email: Mail,
@@ -17,6 +19,7 @@ export default function Inventory() {
   const [agents, setAgents] = useState<AIAgent[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     async function loadAgents() {
@@ -42,7 +45,7 @@ export default function Inventory() {
       {/* Premium Header */}
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div>
-          <nav className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+          <nav className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
             <span className="opacity-50">Control Layer</span>
             <span className="h-1 w-1 rounded-full bg-slate-700" />
             <span className="text-cyan-400">AI Inventory</span>
@@ -51,12 +54,15 @@ export default function Inventory() {
             <Bot className="h-9 w-9 text-cyan-400" />
             AI Agent Registry
           </h1>
-          <p className="mt-2 text-slate-400 font-medium max-w-xl">
+          <p className="mt-2 text-slate-300 font-medium max-w-xl">
             Complete inventory of authorized AI systems, their permissions, and operational status within your workspace.
           </p>
         </div>
 
-        <button className="flex items-center gap-2 rounded-xl bg-cyan-500 px-6 py-3 text-sm font-bold text-slate-950 shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:bg-cyan-400 transition-all">
+        <button 
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center gap-2 rounded-xl bg-cyan-500 px-6 py-3 text-sm font-bold text-slate-950 shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:bg-cyan-400 transition-all"
+        >
           <Plus className="h-4 w-4" />
           Register New Agent
         </button>
@@ -74,7 +80,7 @@ export default function Inventory() {
               <stat.icon className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{stat.label}</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{stat.label}</p>
               <p className="text-3xl font-black text-white mt-1">{stat.value}</p>
             </div>
           </div>
@@ -89,7 +95,7 @@ export default function Inventory() {
       >
         <div className="flex items-center justify-between p-6 border-b border-white/5">
           <div className="relative w-full max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input 
               type="text" 
               placeholder="Search agents, models, or permissions..." 
@@ -99,10 +105,10 @@ export default function Inventory() {
             />
           </div>
           <div className="flex gap-2">
-            <button className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-white transition-colors">
+            <button className="p-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white transition-colors">
               <Filter className="h-4 w-4" />
             </button>
-            <button className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-white transition-colors">
+            <button className="p-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white transition-colors">
               <MoreHorizontal className="h-4 w-4" />
             </button>
           </div>
@@ -111,7 +117,7 @@ export default function Inventory() {
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-white/5 bg-white/[0.02] text-[10px] font-black uppercase tracking-widest text-slate-500">
+              <tr className="border-b border-white/5 bg-white/[0.02] text-[10px] font-black uppercase tracking-widest text-slate-400">
                 <th className="px-8 py-4">Agent Identification</th>
                 <th className="px-8 py-4">Model Engine</th>
                 <th className="px-8 py-4">Scope & Permissions</th>
@@ -125,17 +131,21 @@ export default function Inventory() {
                   <td colSpan={5} className="py-20 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-500 border-t-transparent" />
-                      <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Synchronizing Registry...</p>
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Synchronizing Registry...</p>
                     </div>
                   </td>
                 </tr>
               ) : filteredAgents.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-20 text-center">
-                    <div className="flex flex-col items-center gap-3 opacity-30">
-                      <Bot className="h-12 w-12 text-slate-400" />
-                      <p className="text-sm font-bold text-slate-400">No agents found</p>
-                    </div>
+                  <td colSpan={5} className="p-8">
+                    <EmptyState 
+                      icon={Bot} 
+                      title="No AI agents registered yet" 
+                      description="Connect your first AI model to start monitoring usage and enforcing compliance guardrails." 
+                      actionLabel="Register New Agent" 
+                      onAction={() => setIsModalOpen(true)} 
+                      className="border-none bg-transparent shadow-none"
+                    />
                   </td>
                 </tr>
               ) : filteredAgents.map(agent => (
@@ -147,14 +157,14 @@ export default function Inventory() {
                       </div>
                       <div>
                         <p className="text-sm font-bold text-white uppercase tracking-tight">{agent.name}</p>
-                        <p className="text-[10px] text-slate-500 mt-0.5 font-mono uppercase">{agent.id.split('-')[0]}</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5 font-mono uppercase">{agent.id.split('-')[0]}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-2">
                       <div className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
-                      <span className="text-xs font-bold text-slate-300 font-mono">{agent.model}</span>
+                      <span className="text-xs font-bold text-slate-100 font-mono">{agent.model}</span>
                     </div>
                   </td>
                   <td className="px-8 py-6">
@@ -163,8 +173,8 @@ export default function Inventory() {
                         const Icon = permissionIcons[perm.toLowerCase()] || ShieldCheck;
                         return (
                           <div key={perm} className="flex items-center gap-1.5 rounded-lg bg-slate-950/50 border border-white/5 px-2 py-1">
-                            <Icon className="h-3 w-3 text-slate-500" />
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{perm}</span>
+                            <Icon className="h-3 w-3 text-slate-400" />
+                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tight">{perm}</span>
                           </div>
                         );
                       })}
@@ -177,7 +187,7 @@ export default function Inventory() {
                     />
                   </td>
                   <td className="px-8 py-6 text-right">
-                    <button className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-cyan-400 transition-colors">
+                    <button className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-cyan-400 transition-colors">
                       Manage Scope
                     </button>
                   </td>
@@ -187,6 +197,16 @@ export default function Inventory() {
           </table>
         </div>
       </SurfaceCard>
+
+      {isModalOpen && (
+        <RegisterAgentModal 
+          onClose={() => setIsModalOpen(false)}
+          onRegister={(newAgent) => {
+            setAgents(prev => [newAgent, ...prev]);
+            setIsModalOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }

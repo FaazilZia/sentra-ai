@@ -16,7 +16,7 @@ export const ConfidenceRecoveryNode: React.FC<ConfidenceRecoveryNodeProps> = ({ 
         {steps.map((step, idx) => (
           <li key={idx} className="flex items-center gap-3">
             <div className="h-1 w-1 rounded-full bg-emerald-500/40" />
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{step}</span>
+            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tight">{step}</span>
           </li>
         ))}
       </ul>

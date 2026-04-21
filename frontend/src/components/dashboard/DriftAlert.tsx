@@ -25,7 +25,7 @@ export const DriftAlert: React.FC<DriftAlertProps> = ({
           </div>
           <div className="space-y-1">
              <div className="flex items-center gap-3">
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Compliance Drift Detected</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Compliance Drift Detected</span>
                 <span className={cn(
                    "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest",
                    severity === 'high' ? 'bg-rose-500/10 text-rose-500' : 'bg-amber-500/10 text-amber-500'

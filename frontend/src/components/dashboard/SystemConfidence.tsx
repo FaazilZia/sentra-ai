@@ -13,7 +13,7 @@ export const SystemConfidence: React.FC<SystemConfidenceProps> = ({ confidence, 
 
   return (
     <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-2">
-      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none">System Confidence</p>
+      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">System Confidence</p>
       <div className="flex items-center justify-between">
         <div className="flex items-baseline gap-2">
           <span className="text-xl font-black text-white">{confidence}%</span>

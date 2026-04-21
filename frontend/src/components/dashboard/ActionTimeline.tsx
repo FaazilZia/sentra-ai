@@ -45,14 +45,14 @@ export const ActionTimeline: React.FC<ActionTimelineProps> = ({ status, risk }) 
           <div className={cn(
             "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/10 z-10",
             step.label === 'Authorized' ? "bg-emerald-500/20 text-emerald-400" : 
-            step.label === 'Intercepted' ? "bg-rose-500/20 text-rose-400" : "bg-slate-800 text-slate-400"
+            step.label === 'Intercepted' ? "bg-rose-500/20 text-rose-400" : "bg-slate-800 text-slate-300"
           )}>
             <step.icon className="h-3 w-3" />
           </div>
 
           <div className="flex flex-col">
             <span className="text-[11px] font-bold text-slate-100">{step.label}</span>
-            <span className="text-[10px] text-slate-500">{step.detail}</span>
+            <span className="text-[10px] text-slate-400">{step.detail}</span>
           </div>
         </motion.div>
       ))}
