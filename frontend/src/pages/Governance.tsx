@@ -7,7 +7,7 @@ import { cn } from '../lib/utils';
 const MOCK_POLICIES: PolicyResponse[] = [
   {
     id: 'p1',
-    name: 'Restrict External Data Sharing',
+    name: 'Restrict external data sharing',
     description: 'Prevents AI agents from sending sensitive data to unverified external API endpoints.',
     enabled: true,
     effect: 'deny',
@@ -18,7 +18,7 @@ const MOCK_POLICIES: PolicyResponse[] = [
   },
   {
     id: 'p2',
-    name: 'Unauthorized Payment Block',
+    name: 'Unauthorized payment block',
     description: 'Ensures all financial transactions triggered by AI are routed through the internal approval portal.',
     enabled: true,
     effect: 'deny',
@@ -29,7 +29,7 @@ const MOCK_POLICIES: PolicyResponse[] = [
   },
   {
     id: 'p3',
-    name: 'Internal DB Access Only',
+    name: 'Internal DB access only',
     description: 'Strictly limits database access to authorized internal VPC resources.',
     enabled: true,
     effect: 'allow',
@@ -40,7 +40,7 @@ const MOCK_POLICIES: PolicyResponse[] = [
   },
   {
     id: 'p4',
-    name: 'PII Masking & Anonymization',
+    name: 'Prevent PII exposure',
     description: 'Automatically redacts personal information before processing via third-party LLMs.',
     enabled: true,
     effect: 'allow',
@@ -90,7 +90,7 @@ export default function GovernancePage() {
             <ShieldCheck className="h-10 w-10 text-white" />
             AI Guardrails
           </h1>
-          <p className="mt-2 text-slate-400 font-medium max-w-xl text-lg">
+          <p className="mt-2 text-slate-300 font-medium max-w-xl text-lg">
             Active governance policies defining allowed and restricted AI behaviors across the enterprise.
           </p>
         </div>
@@ -103,7 +103,7 @@ export default function GovernancePage() {
 
       {/* Policy Search */}
       <div className="relative max-w-2xl">
-        <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
+        <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
         <input 
           type="text" 
           placeholder="Search active guardrails..." 
@@ -120,7 +120,7 @@ export default function GovernancePage() {
           </div>
         ) : filteredPolicies.length === 0 ? (
           <div className="p-20 text-center glass-card rounded-[2.5rem] border-dashed border-white/5">
-             <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">No active guardrails match your search</p>
+             <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">No active guardrails match your search</p>
           </div>
         ) : (
           filteredPolicies.map(policy => (
@@ -128,20 +128,20 @@ export default function GovernancePage() {
               <div className="flex items-center gap-6">
                  <div className={cn(
                    "h-12 w-12 rounded-2xl flex items-center justify-center border transition-all",
-                   policy.enabled ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)]" : "bg-slate-800 border-white/5 text-slate-500"
+                   policy.enabled ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)]" : "bg-slate-800 border-white/5 text-slate-400"
                  )}>
                     <ShieldCheck className="h-6 w-6" />
                  </div>
                  <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-black text-white uppercase tracking-tight group-hover:text-indigo-400 transition-colors">{policy.name}</h3>
+                      <h3 className="text-lg font-black text-white tracking-tight group-hover:text-indigo-400 transition-colors">{policy.name}</h3>
                       {policy.enabled && (
                         <span className="text-[8px] font-black bg-amber-500/20 text-amber-500 px-1.5 py-0.5 rounded border border-amber-500/20 uppercase animate-pulse">
                           Active
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-slate-400 mt-1 max-w-md line-clamp-1">{policy.description}</p>
+                    <p className="text-sm text-slate-300 mt-1 max-w-md line-clamp-1">{policy.description}</p>
                  </div>
               </div>
 
@@ -161,7 +161,7 @@ export default function GovernancePage() {
                  </div>
                  <div className="text-center">
                     <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-1">VERSION</p>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">v{policy.current_version}</p>
+                    <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">v{policy.current_version}</p>
                  </div>
                  <div className="pl-6 border-l border-white/5">
                     <div className={cn(

@@ -28,7 +28,7 @@ export function SurfaceCard({
       <div className="flex items-start justify-between gap-3 border-b border-slate-200 bg-white p-3">
         <div>
           <h3 className="text-base font-semibold leading-5 text-slate-900">{title}</h3>
-          {description ? <p className="mt-1 text-[10px] leading-4 text-slate-500">{description}</p> : null}
+          {description ? <p className="mt-1 text-[10px] leading-4 text-slate-400">{description}</p> : null}
         </div>
         {action ? <div>{action}</div> : null}
       </div>

@@ -18,7 +18,7 @@ export const RiskIndicator: React.FC<RiskIndicatorProps> = ({ level, className }
   return (
     <div className={cn("flex items-center gap-2 px-2 py-1 rounded-full bg-slate-800/50 border border-white/5", className)}>
       <span className={cn("h-1.5 w-1.5 rounded-full animate-pulse shadow-[0_0_8px]", color, glow)} />
-      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300">
+      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-100">
         {text}
       </span>
     </div>

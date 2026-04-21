@@ -267,7 +267,7 @@ export default function AuditProofPage() {
             <div className="grid grid-cols-2 gap-4 text-xs">
               {Object.entries(evidence.content).map(([key, value]) => (
                 <div key={key} className="flex flex-col gap-1">
-                  <span className="text-slate-500 uppercase font-black tracking-tighter">{key.replace(/_/g, ' ')}</span>
+                  <span className="text-slate-400 uppercase font-black tracking-tighter">{key.replace(/_/g, ' ')}</span>
                   <span className="text-slate-200 font-mono">
                     {Array.isArray(value) ? value.join(', ') : String(value)}
                   </span>
@@ -288,7 +288,7 @@ export default function AuditProofPage() {
                 <span className="text-emerald-400 font-bold">{evidence.content.method}</span>
                 <span>{evidence.content.endpoint}</span>
               </div>
-              <div className="mt-2 pt-2 border-t border-white/5 text-slate-400">
+              <div className="mt-2 pt-2 border-t border-white/5 text-slate-300">
                 {JSON.stringify(evidence.content, null, 2)}
               </div>
             </div>
@@ -301,7 +301,7 @@ export default function AuditProofPage() {
               <Terminal className="h-5 w-5 text-indigo-400" />
               <h4 className="text-sm font-bold text-white uppercase tracking-wider">Implementation Logic</h4>
             </div>
-            <pre className="bg-slate-900/80 rounded-lg p-4 font-mono text-[11px] text-slate-300 border border-white/10 overflow-x-auto">
+            <pre className="bg-slate-900/80 rounded-lg p-4 font-mono text-[11px] text-slate-100 border border-white/10 overflow-x-auto">
               <code>{evidence.content}</code>
             </pre>
           </div>
@@ -316,7 +316,7 @@ export default function AuditProofPage() {
             <div className="space-y-2">
               {Object.entries(evidence.content).map(([key, value]) => (
                 <div key={key} className="flex items-center justify-between py-2 border-b border-white/5">
-                  <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">{key.replace(/_/g, ' ')}</span>
+                  <span className="text-[10px] text-slate-300 uppercase font-bold tracking-widest">{key.replace(/_/g, ' ')}</span>
                   {typeof value === 'boolean' ? (
                     value ? <CheckCircle2 className="h-4 w-4 text-emerald-400" /> : <AlertCircle className="h-4 w-4 text-rose-400" />
                   ) : (
@@ -358,7 +358,7 @@ export default function AuditProofPage() {
                  {evidence.validation_status || 'Pending'}
                </div>
                {evidence.verified && (
-                 <div className="flex items-center gap-1 text-[8px] font-black text-slate-500 uppercase">
+                 <div className="flex items-center gap-1 text-[8px] font-black text-slate-400 uppercase">
                    <Check className="h-3 w-3" /> Validated
                  </div>
                )}
@@ -366,8 +366,8 @@ export default function AuditProofPage() {
             <div className="space-y-3 mt-4">
                {Object.entries(evidence.content).map(([key, value]) => (
                  <div key={key} className="flex justify-between items-center text-[11px]">
-                   <span className="text-slate-500 uppercase font-bold">{key}</span>
-                   <span className="text-slate-300 font-mono">{String(value)}</span>
+                   <span className="text-slate-400 uppercase font-bold">{key}</span>
+                   <span className="text-slate-100 font-mono">{String(value)}</span>
                  </div>
                ))}
             </div>
@@ -382,18 +382,18 @@ export default function AuditProofPage() {
             </div>
             <div className="grid grid-cols-1 gap-3">
                <div className="p-4 rounded-xl bg-rose-500/5 border border-rose-500/10">
-                  <p className="text-[10px] text-slate-500 uppercase font-black mb-1">Response Timeframe</p>
+                  <p className="text-[10px] text-slate-400 uppercase font-black mb-1">Response Timeframe</p>
                   <p className="text-2xl font-black text-white">{evidence.content.notification_time_hours} Hours</p>
                </div>
                <div className="flex items-center gap-2 px-2">
                   <CheckCircle2 className="h-3 w-3 text-emerald-400" />
-                  <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Automatic User Notification Enabled</span>
+                  <span className="text-[10px] text-slate-300 uppercase font-bold tracking-widest">Automatic User Notification Enabled</span>
                </div>
             </div>
           </div>
         );
       default:
-        return <div className="text-slate-500 text-xs italic">Unknown evidence type: {evidence.type}</div>;
+        return <div className="text-slate-400 text-xs italic">Unknown evidence type: {evidence.type}</div>;
     }
   };
 
@@ -403,7 +403,7 @@ export default function AuditProofPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-3 mb-2">
-              <nav className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
+              <nav className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
                 Audit Control <span className="mx-2 text-slate-700">/</span> Compliance Proof
               </nav>
               <StatusBadge label={user?.role || 'AUDITOR'} tone="info" />
@@ -412,7 +412,7 @@ export default function AuditProofPage() {
                   onClick={() => setShowAlerts(!showAlerts)}
                   className="p-2 rounded-lg bg-slate-800 border border-white/5 relative hover:bg-slate-700 transition-all"
                 >
-                  <Bell className="h-4 w-4 text-slate-300" />
+                  <Bell className="h-4 w-4 text-slate-100" />
                   {alerts.length > 0 && (
                     <span className="absolute -top-1 -right-1 h-3 w-3 bg-rose-500 rounded-full border-2 border-slate-900 animate-pulse" />
                   )}
@@ -425,7 +425,7 @@ export default function AuditProofPage() {
                     </div>
                     <div className="max-h-64 overflow-y-auto">
                       {alerts.length === 0 ? (
-                        <div className="p-8 text-center text-slate-500 text-[10px] uppercase font-black">No unread alerts</div>
+                        <div className="p-8 text-center text-slate-400 text-[10px] uppercase font-black">No unread alerts</div>
                       ) : (
                         alerts.map(alert => (
                           <div key={alert.id} className="p-4 border-b border-white/5 hover:bg-white/5 transition-all group">
@@ -434,7 +434,7 @@ export default function AuditProofPage() {
                                 <div className="space-y-1 flex-1">
                                    <p className="text-[11px] text-white font-medium leading-tight">{alert.message}</p>
                                    <div className="flex justify-between items-center">
-                                      <span className="text-[9px] text-slate-500 uppercase font-bold">{alert.type.replace('_', ' ')}</span>
+                                      <span className="text-[9px] text-slate-400 uppercase font-bold">{alert.type.replace('_', ' ')}</span>
                                       <button 
                                         onClick={() => handleMarkRead(alert.id)}
                                         className="text-[9px] text-emerald-400 font-black uppercase opacity-0 group-hover:opacity-100 transition-all"
@@ -456,7 +456,7 @@ export default function AuditProofPage() {
               <ShieldCheck className="h-10 w-10 text-white" />
               Governance Audit Proof
             </h1>
-            <p className="text-slate-400 font-medium max-w-2xl text-lg">
+            <p className="text-slate-300 font-medium max-w-2xl text-lg">
               Automated evidence collection for regulatory frameworks. Every control is mapped to a real-time system verification.
             </p>
           </div>
@@ -500,7 +500,7 @@ export default function AuditProofPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Feature Sidebar */}
           <div className={`lg:col-span-4 space-y-4 transition-all duration-500 ${demoMode && demoStep === 1 ? 'ring-2 ring-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.2)] rounded-3xl p-2' : ''}`}>
-            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2 mb-4">Audit Features</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-4">Audit Features</p>
             {features.map((feature) => (
               <SpotlightCard
                 key={feature.id}
@@ -514,7 +514,7 @@ export default function AuditProofPage() {
                 <div className="flex items-start justify-between p-1">
                   <div className="space-y-1">
                     <h3 className="font-black text-white uppercase tracking-tight text-sm">{feature.feature_name}</h3>
-                    <p className="text-[11px] text-slate-500 line-clamp-1">{feature.description}</p>
+                    <p className="text-[11px] text-slate-400 line-clamp-1">{feature.description}</p>
                   </div>
                   <StatusBadge 
                     label={feature.status.replace(/_/g, ' ')} 
@@ -535,7 +535,7 @@ export default function AuditProofPage() {
                       <div className="flex items-center justify-between">
                          <div className="space-y-1">
                             <h2 className="text-2xl font-black text-white uppercase tracking-tight">Remediation Checklist</h2>
-                            <p className="text-slate-400 text-sm">Upload evidence to resolve compliance gaps.</p>
+                            <p className="text-slate-300 text-sm">Upload evidence to resolve compliance gaps.</p>
                          </div>
                          {user?.role === 'ADMIN' && (
                            <button 
@@ -553,11 +553,11 @@ export default function AuditProofPage() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
                         <div className={`space-y-4 transition-all duration-500 ${demoMode && demoStep === 3 ? 'ring-2 ring-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.2)] rounded-[2.5rem] p-4' : ''}`}>
-                          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Fix Tasks</p>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Fix Tasks</p>
                           <FixChecklist tasks={tasks} onTaskUpdated={loadTasks} />
                         </div>
                         <div className="space-y-8">
-                           <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Live Readiness</p>
+                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Live Readiness</p>
                            <div className={`transition-all duration-500 ${demoMode && (demoStep === 0 || demoStep === 5) ? 'ring-2 ring-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.2)] rounded-[2.5rem]' : ''}`}>
                               <ProgressBar 
                                 progress={parseInt(reEvaluationResult?.progress_percentage || (tasks.length > 0 ? ((tasks.filter(t => t.status === 'completed').length / tasks.length) * 100).toFixed(0) : "0"))} 
@@ -568,7 +568,7 @@ export default function AuditProofPage() {
                            
                             {history.length > 0 && (
                              <div className="space-y-4">
-                                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Compliance History</p>
+                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Compliance History</p>
                                  <div className="h-[200px] w-full bg-slate-900/40 border border-white/5 rounded-3xl p-4">
                                    <ResponsiveContainer width="100%" height="100%">
                                      <LineChart data={history.map(h => ({
@@ -618,7 +618,7 @@ export default function AuditProofPage() {
                            )}
 
                            <div className="space-y-4">
-                              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Recent Activity Log</p>
+                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Recent Activity Log</p>
                               <div className="glass-card rounded-3xl p-6 bg-slate-950/40 border-white/5 space-y-3">
                                  {logs.slice(0, 5).map((log) => (
                                    <div key={log.id} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
@@ -626,7 +626,7 @@ export default function AuditProofPage() {
                                          <div className="h-2 w-2 rounded-full bg-cyan-400" />
                                          <span className="text-[10px] font-bold text-white uppercase tracking-tight">{log.action.replace('_', ' ')}</span>
                                       </div>
-                                      <span className="text-[9px] text-slate-500">{new Date(log.timestamp).toLocaleString()}</span>
+                                      <span className="text-[9px] text-slate-400">{new Date(log.timestamp).toLocaleString()}</span>
                                    </div>
                                  ))}
                               </div>
@@ -641,7 +641,7 @@ export default function AuditProofPage() {
                        <h2 className="text-2xl font-black text-white uppercase tracking-tight">
                          {features.find(f => f.id === expandedFeature)?.feature_name}
                        </h2>
-                       <p className="text-slate-400 text-sm">
+                       <p className="text-slate-300 text-sm">
                          {features.find(f => f.id === expandedFeature)?.description}
                        </p>
                     </div>
@@ -676,7 +676,7 @@ export default function AuditProofPage() {
                 )}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-96 text-slate-500 space-y-4 border-2 border-dashed border-white/5 rounded-[2.5rem]">
+              <div className="flex flex-col items-center justify-center h-96 text-slate-400 space-y-4 border-2 border-dashed border-white/5 rounded-[2.5rem]">
                  <Eye className="h-12 w-12 opacity-20" />
                  <p className="font-bold uppercase tracking-widest text-[10px]">Select a feature to view audit proof</p>
               </div>
@@ -707,15 +707,15 @@ export default function AuditProofPage() {
               </div>
               <div className="space-y-2">
                  <h2 className="text-4xl font-black text-white uppercase tracking-tighter">Demo Complete</h2>
-                 <p className="text-slate-400 font-medium">Compliance improved from <span className="text-rose-400">82%</span> to <span className="text-emerald-400">96%</span> in minutes using AI-driven remediation.</p>
+                 <p className="text-slate-300 font-medium">Compliance improved from <span className="text-rose-400">82%</span> to <span className="text-emerald-400">96%</span> in minutes using AI-driven remediation.</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                  <div className="p-6 rounded-3xl bg-white/5 border border-white/5">
-                    <p className="text-[10px] font-black text-slate-500 uppercase mb-2">Time Saved</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase mb-2">Time Saved</p>
                     <p className="text-2xl font-black text-white">~40 Hours</p>
                  </div>
                  <div className="p-6 rounded-3xl bg-white/5 border border-white/5">
-                    <p className="text-[10px] font-black text-slate-500 uppercase mb-2">Manual Audit Gaps</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase mb-2">Manual Audit Gaps</p>
                     <p className="text-2xl font-black text-white">0 Issues</p>
                  </div>
               </div>

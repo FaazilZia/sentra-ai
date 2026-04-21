@@ -114,7 +114,7 @@ export default function ConnectPage() {
             <h1 className="text-3xl font-bold tracking-tight text-white md:text-4xl mb-3">
               Power your Governance engine.
             </h1>
-            <p className="text-sm text-slate-400 leading-relaxed max-w-xl">
+            <p className="text-sm text-slate-300 leading-relaxed max-w-xl">
               Connect external AI agents via our lightweight SDK or bridge directly into your 
               cloud infrastructure for deep-scan compliance discovery.
             </p>
@@ -122,13 +122,13 @@ export default function ConnectPage() {
           <div className="flex bg-slate-900/50 p-1 rounded-xl border border-white/5 self-start">
              <button 
                 onClick={() => setActiveTab('sdk')}
-                className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'sdk' ? 'bg-white text-slate-950 shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'sdk' ? 'bg-white text-slate-950 shadow-lg' : 'text-slate-300 hover:text-white'}`}
              >
                 Agents & SDKs
              </button>
              <button 
                 onClick={() => setActiveTab('sources')}
-                className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'sources' ? 'bg-white text-slate-950 shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'sources' ? 'bg-white text-slate-950 shadow-lg' : 'text-slate-300 hover:text-white'}`}
              >
                 Data Connectors
              </button>
@@ -141,7 +141,7 @@ export default function ConnectPage() {
           <SurfaceCard title="1. Install the SDK" description="Add telemetry capabilities to your agent logic.">
             <div className="group relative mt-4 rounded-xl bg-slate-900/80 p-4 border border-white/5 font-mono text-sm">
                <span className="text-cyan-400">$</span> <span className="text-white">npm install @sentra-ai/sdk</span>
-               <button onClick={() => copyToClipboard('npm install @sentra-ai/sdk')} className="absolute right-3 top-3 p-2 rounded-lg bg-white/5 text-slate-500 hover:text-white transition-opacity opacity-0 group-hover:opacity-100"><Copy className="h-4 w-4" /></button>
+               <button onClick={() => copyToClipboard('npm install @sentra-ai/sdk')} className="absolute right-3 top-3 p-2 rounded-lg bg-white/5 text-slate-400 hover:text-white transition-opacity opacity-0 group-hover:opacity-100"><Copy className="h-4 w-4" /></button>
             </div>
             <div className="mt-8 grid grid-cols-2 gap-4">
                {[
@@ -153,7 +153,7 @@ export default function ConnectPage() {
                         <feat.icon className="h-3.5 w-3.5 text-cyan-400" />
                         <span className="text-[11px] font-bold uppercase tracking-wider text-white">{feat.label}</span>
                      </div>
-                     <p className="text-[10px] text-slate-500 leading-snug">{feat.desc}</p>
+                     <p className="text-[10px] text-slate-400 leading-snug">{feat.desc}</p>
                   </div>
                ))}
             </div>
@@ -165,11 +165,11 @@ export default function ConnectPage() {
                   <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-500 block mb-3">Copy & Store Secretly</span>
                   <div className="relative rounded-lg bg-slate-950 p-3 border border-white/10 overflow-hidden font-mono text-xs text-white break-all pr-12">
                      {newKey.api_key}
-                     <button onClick={() => copyToClipboard(newKey.api_key)} className="absolute right-2 top-2 p-1.5 rounded-md bg-white/5 text-slate-500 hover:text-white">
+                     <button onClick={() => copyToClipboard(newKey.api_key)} className="absolute right-2 top-2 p-1.5 rounded-md bg-white/5 text-slate-400 hover:text-white">
                         {copied ? <Check className="h-3.5 w-3.5 text-cyan-400" /> : <Copy className="h-3.5 w-3.5" />}
                      </button>
                   </div>
-                  <button onClick={() => setNewKey(null)} className="mt-3 text-[10px] text-slate-500 underline hover:text-white">Dismiss Key</button>
+                  <button onClick={() => setNewKey(null)} className="mt-3 text-[10px] text-slate-400 underline hover:text-white">Dismiss Key</button>
                </div>
              ) : (
                <form onSubmit={handleGenerateKey} className="mt-4 space-y-4">
@@ -184,12 +184,12 @@ export default function ConnectPage() {
                </form>
              )}
              <div className="mt-6 border-t border-slate-100 pt-5">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3 block">Active Service Principals</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300 mb-3 block">Active Service Principals</span>
                 <div className="space-y-2">
                    {keys.map(k => (
                       <div key={k.id} className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100">
                          <span className="text-xs font-semibold text-slate-900">{k.name}</span>
-                         <span className="text-[10px] font-mono text-slate-400">{k.key_prefix}••••</span>
+                         <span className="text-[10px] font-mono text-slate-300">{k.key_prefix}••••</span>
                       </div>
                    ))}
                 </div>
@@ -198,7 +198,7 @@ export default function ConnectPage() {
 
           <div className="lg:col-span-2">
              <SurfaceCard title="3. Implementation" description="Initialize the Sentra client in your agent initialization logic.">
-                <div className="mt-4 rounded-xl bg-slate-950 p-6 border border-white/10 font-mono text-[13px] text-slate-300 overflow-x-auto leading-relaxed">
+                <div className="mt-4 rounded-xl bg-slate-950 p-6 border border-white/10 font-mono text-[13px] text-slate-100 overflow-x-auto leading-relaxed">
                    <pre>{sdkCodeSnippet}</pre>
                 </div>
              </SurfaceCard>
@@ -212,7 +212,7 @@ export default function ConnectPage() {
                  <Database className="h-6 w-6" />
               </div>
               <h3 className="text-lg font-bold text-slate-950 mb-2">Relational Database</h3>
-              <p className="text-xs text-slate-500 leading-relaxed mb-8">
+              <p className="text-xs text-slate-400 leading-relaxed mb-8">
                  Introspect and scan Postgres, MySQL, or SQL Server for PII before it reaches your agents.
               </p>
               <div className="mt-auto pt-6 border-t border-slate-50">
@@ -232,7 +232,7 @@ export default function ConnectPage() {
                  <Cloud className="h-6 w-6" />
               </div>
               <h3 className="text-lg font-bold text-slate-950 mb-2">Google Drive</h3>
-              <p className="text-xs text-slate-500 leading-relaxed mb-8">
+              <p className="text-xs text-slate-400 leading-relaxed mb-8">
                  Discovery-scan Docs, Sheets, and Slides for behavioral governance at the source.
               </p>
               <div className="mt-auto pt-6 border-t border-slate-50">
@@ -248,11 +248,11 @@ export default function ConnectPage() {
                  <Smartphone className="h-6 w-6" />
               </div>
               <h3 className="text-lg font-bold text-slate-950 mb-2">Mobile Interface</h3>
-              <p className="text-xs text-slate-500 leading-relaxed mb-8">
+              <p className="text-xs text-slate-400 leading-relaxed mb-8">
                  Direct integration for mobile agent interfaces with native PII masking.
               </p>
               <div className="mt-auto pt-6 border-t border-slate-50">
-                 <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 py-3 text-[11px] font-black uppercase tracking-widest text-slate-400 cursor-not-allowed">
+                 <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 py-3 text-[11px] font-black uppercase tracking-widest text-slate-300 cursor-not-allowed">
                     Coming Soon
                  </button>
               </div>
@@ -263,7 +263,7 @@ export default function ConnectPage() {
               <SurfaceCard title="Active Remote Integrations" description="Managed connection state for enterprise data sources.">
                  <div className="overflow-hidden rounded-2xl border border-slate-100">
                     <table className="w-full text-left text-xs">
-                       <thead className="bg-slate-50 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                       <thead className="bg-slate-50 text-[10px] font-bold uppercase tracking-widest text-slate-300">
                           <tr>
                              <th className="px-4 py-3">Source Name</th>
                              <th className="px-4 py-3">State</th>
@@ -273,7 +273,7 @@ export default function ConnectPage() {
                        </thead>
                        <tbody className="divide-y divide-slate-50">
                           {connectors.length === 0 ? (
-                            <tr><td colSpan={4} className="p-8 text-center text-slate-400">No active deep-scan sources. Connect your first database above.</td></tr>
+                            <tr><td colSpan={4} className="p-8 text-center text-slate-300">No active deep-scan sources. Connect your first database above.</td></tr>
                           ) : connectors.map(c => (
                             <tr key={c.id}>
                                <td className="px-4 py-4 font-bold text-slate-900 flex items-center gap-2">
@@ -281,8 +281,8 @@ export default function ConnectPage() {
                                   {c.name}
                                </td>
                                <td className="px-4 py-4 uppercase tracking-tighter font-extrabold text-green-600">Verified</td>
-                               <td className="px-4 py-4 font-mono text-slate-400">protocol://{c.type}.internal.sentra.ai</td>
-                               <td className="px-4 py-4 text-right underline text-slate-400 hover:text-rose-500 cursor-pointer">Disconnect</td>
+                               <td className="px-4 py-4 font-mono text-slate-300">protocol://{c.type}.internal.sentra.ai</td>
+                               <td className="px-4 py-4 text-right underline text-slate-300 hover:text-rose-500 cursor-pointer">Disconnect</td>
                             </tr>
                           ))}
                        </tbody>

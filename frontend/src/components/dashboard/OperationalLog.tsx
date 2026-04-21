@@ -29,7 +29,7 @@ export const OperationalLog: React.FC<OperationalLogProps> = ({ entries }) => {
   return (
     <div className="h-full flex flex-col bg-slate-950/50 border-l border-white/5 p-6 space-y-10 overflow-hidden pr-2">
       <div className="flex items-center justify-between">
-        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">System Activity Heartbeat</h3>
+        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">System Activity Heartbeat</h3>
         <div className="flex items-center gap-1.5">
           <div className="h-1 w-1 rounded-full bg-emerald-500" />
           <span className="text-[9px] font-bold text-slate-600 uppercase tracking-tighter">Monitoring Active</span>
@@ -60,7 +60,7 @@ export const OperationalLog: React.FC<OperationalLogProps> = ({ entries }) => {
                 {entry.time}
               </p>
               {entry.linkedTo && (
-                <span className="text-[8px] font-black text-slate-500 hover:text-slate-300 transition-colors cursor-help uppercase tracking-widest bg-white/[0.03] px-2 py-0.5 rounded border border-white/5">
+                <span className="text-[8px] font-black text-slate-400 hover:text-slate-100 transition-colors cursor-help uppercase tracking-widest bg-white/[0.03] px-2 py-0.5 rounded border border-white/5">
                   Linked to {entry.linkedTo}
                 </span>
               )}
@@ -76,7 +76,7 @@ export const OperationalLog: React.FC<OperationalLogProps> = ({ entries }) => {
                 "text-[11px] font-bold leading-tight tracking-tight uppercase",
                 entry.delayedImpact ? "text-rose-500" :
                 entry.override ? "text-amber-500" :
-                entry.type === 'blocked' ? "text-rose-500" : "text-slate-300"
+                entry.type === 'blocked' ? "text-rose-500" : "text-slate-100"
               )}>
                 {entry.override ? `OVERRIDE: ${entry.message}` : entry.message}
               </p>
@@ -101,7 +101,7 @@ export const OperationalLog: React.FC<OperationalLogProps> = ({ entries }) => {
                      "text-[8px] font-black uppercase tracking-[0.1em]",
                      entry.status === 'Overridden' || entry.status === 'Reclassified' ? "text-amber-500" :
                      entry.status === 'Monitoring' ? "text-indigo-400" :
-                     entry.status === 'Pending' ? "text-amber-500" : entry.status === 'Ongoing' ? "text-slate-500" : "text-emerald-500/60"
+                     entry.status === 'Pending' ? "text-amber-500" : entry.status === 'Ongoing' ? "text-slate-400" : "text-emerald-500/60"
                    )}>
                      • {entry.status}
                    </span>
@@ -126,7 +126,7 @@ export const OperationalLog: React.FC<OperationalLogProps> = ({ entries }) => {
         <p className="text-[9px] font-black text-slate-700 uppercase tracking-widest">
           Origin: Local Proxy Node
         </p>
-        <span className="text-[9px] font-bold text-slate-500 uppercase">v1.2.4-stable</span>
+        <span className="text-[9px] font-bold text-slate-400 uppercase">v1.2.4-stable</span>
       </div>
     </div>
   );

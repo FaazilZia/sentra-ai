@@ -63,7 +63,7 @@ export const NeedsAttention: React.FC<NeedsAttentionProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="h-1.5 w-1.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
-          <h2 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Autonomous Decision Layer</h2>
+          <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Autonomous Decision Layer</h2>
         </div>
         <span className="text-[9px] font-bold text-slate-700 uppercase">System-driven governance active</span>
       </div>
@@ -79,7 +79,7 @@ export const NeedsAttention: React.FC<NeedsAttentionProps> = ({
                     "text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded border",
                     issue.severity === 'Breach Risk' ? "text-rose-600 border-rose-600/30 bg-rose-600/5" :
                     issue.severity === 'High Risk' ? "text-amber-500 border-amber-500/30 bg-amber-500/5" :
-                    "text-slate-500 border-slate-500/30 bg-slate-500/5"
+                    "text-slate-400 border-slate-500/30 bg-slate-500/5"
                   )}>
                     {issue.severity || 'System Observation'}
                   </span>
@@ -96,7 +96,7 @@ export const NeedsAttention: React.FC<NeedsAttentionProps> = ({
                   {issue.label}
                 </h4>
 
-                <div className="flex items-center gap-4 text-[10px] font-medium text-slate-500 uppercase">
+                <div className="flex items-center gap-4 text-[10px] font-medium text-slate-400 uppercase">
                   <span>Source: {issue.origin || 'Policy Engine'}</span>
                   <span>•</span>
                   <span>SLA Time Remaining: 4h 12m</span>
@@ -131,7 +131,7 @@ export const NeedsAttention: React.FC<NeedsAttentionProps> = ({
               <div className="space-y-10">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Recommended Action</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Recommended Action</p>
                     <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">
                       {issue.recommendationConfidence} Confidence
                     </span>
@@ -163,7 +163,7 @@ export const NeedsAttention: React.FC<NeedsAttentionProps> = ({
                {issue.delayedFrom && (
                  <div className="space-y-4">
                     <DelayedImpactNotice delay="2h 14m" sourceEvent={issue.delayedFrom} />
-                    <p className="text-[10px] font-bold text-slate-500 uppercase leading-snug px-4 italic">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase leading-snug px-4 italic">
                       "Impact confirmed as secondary propagation from {issue.delayedFrom}. System-driven mitigation active."
                     </p>
                  </div>

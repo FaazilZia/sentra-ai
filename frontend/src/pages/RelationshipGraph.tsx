@@ -60,7 +60,7 @@ const CustomNode = ({ data }: any) => {
       data.type === 'agent' ? 'bg-cyan-500/10 border-cyan-500/50 text-cyan-400' :
       data.type === 'api' ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400' :
       data.type === 'db' ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' :
-      'bg-slate-800/50 border-white/10 text-slate-400'
+      'bg-slate-800/50 border-white/10 text-slate-300'
     }`}>
       <Handle type="target" position={Position.Top} className="!bg-slate-700 !border-white/10" />
       <Icon className="h-6 w-6" />
@@ -91,7 +91,7 @@ export default function RelationshipGraph() {
       {/* Header */}
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div>
-          <nav className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+          <nav className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
             <span className="opacity-50">Control Layer</span>
             <span className="h-1 w-1 rounded-full bg-slate-700" />
             <span className="text-indigo-400">Dependency View</span>
@@ -100,7 +100,7 @@ export default function RelationshipGraph() {
             <Share2 className="h-9 w-9 text-indigo-500" />
             AI Relationship Graph
           </h1>
-          <p className="mt-2 text-slate-400 font-medium max-w-xl">
+          <p className="mt-2 text-slate-300 font-medium max-w-xl">
             Visualize how AI agents interact with your APIs, databases, and external services to identify hidden risks.
           </p>
         </div>
@@ -108,15 +108,15 @@ export default function RelationshipGraph() {
         <div className="flex gap-3">
            <div className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 border border-white/5">
              <div className="h-3 w-3 rounded-full bg-cyan-500" />
-             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Agent</span>
+             <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Agent</span>
            </div>
            <div className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 border border-white/5">
              <div className="h-3 w-3 rounded-full bg-indigo-500" />
-             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">API</span>
+             <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">API</span>
            </div>
            <div className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 border border-white/5">
              <div className="h-3 w-3 rounded-full bg-emerald-500" />
-             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Database</span>
+             <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Database</span>
            </div>
         </div>
       </div>
@@ -129,7 +129,7 @@ export default function RelationshipGraph() {
                  <Shield className="h-4 w-4" />
                  <span className="text-[10px] font-black uppercase tracking-widest">Status: Secure</span>
               </div>
-              <p className="text-[11px] text-slate-400 leading-relaxed font-medium">
+              <p className="text-[11px] text-slate-300 leading-relaxed font-medium">
                 All visualized pathways are governed by active security policies. No unauthorized cross-service interactions detected.
               </p>
            </div>

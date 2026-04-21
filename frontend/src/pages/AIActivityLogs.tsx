@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Activity, Download } from 'lucide-react';
+import { Activity, Download, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { fetchAIActivityLogs, AIActivityLog } from '../lib/api';
 import { ActivityFeed } from '../components/dashboard/ActivityFeed';
+import { EmptyState } from '../components/ui/EmptyState';
 
 export default function AIActivityLogs() {
   const { accessToken } = useAuth();
@@ -45,7 +46,7 @@ export default function AIActivityLogs() {
             <Activity className="h-8 w-8 text-indigo-400" />
             Audit & Compliance Logs
           </h1>
-          <p className="mt-2 text-slate-400 font-medium max-w-xl">
+          <p className="mt-2 text-slate-300 font-medium max-w-xl">
             Complete immutable trail of all AI agent interactions, including manual overrides and compliance mapping.
           </p>
         </div>
@@ -58,7 +59,7 @@ export default function AIActivityLogs() {
       {/* Advanced Filters */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-900/40 p-4 rounded-2xl border border-white/5">
          <div className="space-y-2">
-            <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-1">Regulatory Framework</label>
+            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Regulatory Framework</label>
             <select 
               value={filters.compliance}
               onChange={(e) => setFilters(f => ({ ...f, compliance: e.target.value }))}
@@ -71,7 +72,7 @@ export default function AIActivityLogs() {
             </select>
          </div>
          <div className="space-y-2">
-            <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-1">Risk Severity</label>
+            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Risk Severity</label>
             <select 
               value={filters.risk}
               onChange={(e) => setFilters(f => ({ ...f, risk: e.target.value }))}
@@ -84,7 +85,7 @@ export default function AIActivityLogs() {
             </select>
          </div>
          <div className="space-y-2">
-            <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-1">Action Status</label>
+            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Action Status</label>
             <select 
               value={filters.status}
               onChange={(e) => setFilters(f => ({ ...f, status: e.target.value }))}
@@ -101,7 +102,16 @@ export default function AIActivityLogs() {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
-            <p className="mt-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Synchronizing Audit Records...</p>
+            <p className="mt-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Synchronizing Audit Records...</p>
+          </div>
+        ) : filteredLogs.length === 0 ? (
+          <div className="pt-12">
+            <EmptyState 
+              icon={ShieldCheck} 
+              title="No active alerts" 
+              description="Your system is currently stable. There are no recent logs matching your selected filters." 
+              className="max-w-2xl mx-auto"
+            />
           </div>
         ) : (
           <ActivityFeed 

@@ -21,7 +21,7 @@ export const SecurityScoreCard: React.FC<SecurityScoreCardProps> = ({ score }) =
 
       <div className="relative z-10 flex items-center justify-between mb-8">
         <div>
-          <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 mb-1">Infrastructure Health</h3>
+          <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Infrastructure Health</h3>
           <p className="text-lg font-bold text-white flex items-center gap-2">
             Security Score
             <ShieldCheck className={cn("w-5 h-5", isHigh ? "text-emerald-400" : "text-amber-400")} />
@@ -69,20 +69,20 @@ export const SecurityScoreCard: React.FC<SecurityScoreCardProps> = ({ score }) =
             >
               {score}
             </motion.span>
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Percentile</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Percentile</span>
           </div>
         </div>
       </div>
 
       <div className="relative z-10 mt-8 grid grid-cols-2 gap-4">
         <div className="p-3 rounded-2xl bg-white/5 border border-white/5">
-           <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Status</p>
+           <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Status</p>
            <p className={cn("text-xs font-bold", isHigh ? "text-emerald-400" : "text-amber-400")}>
              {isHigh ? 'Optimized' : 'Review Required'}
            </p>
         </div>
         <div className="p-3 rounded-2xl bg-white/5 border border-white/5">
-           <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Trend</p>
+           <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Trend</p>
            <p className="text-xs font-bold text-indigo-400">+4.2% Growth</p>
         </div>
       </div>

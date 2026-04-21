@@ -27,7 +27,7 @@ export const MonitoringStatus: React.FC<MonitoringStatusProps> = ({
                 )} />
              </div>
              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Continuous Monitoring</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Continuous Monitoring</p>
                 <h4 className="text-xl font-black text-white tracking-tighter uppercase">
                    {status === 'active' ? 'System Healthy' : status === 'warning' ? 'Anomaly Detected' : 'Enforcement Breach'}
                 </h4>
@@ -50,7 +50,7 @@ export const MonitoringStatus: React.FC<MonitoringStatusProps> = ({
              </div>
              <p className={cn(
                 "text-lg font-black tracking-tight",
-                violations24h > 0 ? 'text-rose-500' : 'text-slate-400'
+                violations24h > 0 ? 'text-rose-500' : 'text-slate-300'
              )}>{violations24h} Detected</p>
           </div>
        </div>

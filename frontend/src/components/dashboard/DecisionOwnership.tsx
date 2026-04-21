@@ -20,7 +20,7 @@ export const DecisionOwnership: React.FC<DecisionOwnershipProps> = ({
              </div>
           </div>
           <div className="space-y-1">
-             <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Attested By</p>
+             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Attested By</p>
              <h4 className="text-xl font-black text-white tracking-tighter uppercase leading-none">
                 {approvedBy}
              </h4>
@@ -41,7 +41,7 @@ export const DecisionOwnership: React.FC<DecisionOwnershipProps> = ({
           </div>
        </div>
 
-       <button className="px-6 py-3 rounded-xl bg-white/5 text-[9px] font-black text-slate-400 uppercase tracking-widest border border-white/5 hover:text-white hover:border-white/20 transition-all">
+       <button className="px-6 py-3 rounded-xl bg-white/5 text-[9px] font-black text-slate-300 uppercase tracking-widest border border-white/5 hover:text-white hover:border-white/20 transition-all">
           View Audit Chain
        </button>
     </div>

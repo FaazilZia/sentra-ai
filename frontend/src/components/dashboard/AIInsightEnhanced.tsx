@@ -46,7 +46,7 @@ export const AIInsightEnhanced: React.FC<AIInsightEnhancedProps> = ({ data, onAc
             </p>
             <div className="flex flex-wrap gap-3">
               {data.sources.map(source => (
-                <span key={source} className="text-[9px] font-black uppercase tracking-widest px-3 py-1 bg-white/5 text-slate-400 rounded-lg border border-white/5">
+                <span key={source} className="text-[9px] font-black uppercase tracking-widest px-3 py-1 bg-white/5 text-slate-300 rounded-lg border border-white/5">
                   Origin: {source}
                 </span>
               ))}
@@ -58,7 +58,7 @@ export const AIInsightEnhanced: React.FC<AIInsightEnhancedProps> = ({ data, onAc
               <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest">If Ignored (Predictive):</p>
               <ul className="space-y-3">
                 {data.impact_if_ignored.map((impact, idx) => (
-                  <li key={idx} className="flex items-start gap-3 text-xs font-bold text-slate-400 uppercase leading-snug">
+                  <li key={idx} className="flex items-start gap-3 text-xs font-bold text-slate-300 uppercase leading-snug">
                     <div className="h-1 w-1 rounded-full bg-rose-500 mt-1.5" />
                     {impact}
                   </li>
@@ -96,7 +96,7 @@ export const AIInsightEnhanced: React.FC<AIInsightEnhancedProps> = ({ data, onAc
 
         <div className="md:w-64 flex flex-col justify-between items-end border-l border-white/5 pl-10">
           <div className="text-right space-y-2">
-            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Urgency Level</p>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Urgency Level</p>
             <p className="text-lg font-black text-white uppercase tracking-tighter">{data.priority}</p>
             <div className="flex items-center gap-2 justify-end text-rose-500 font-black text-[10px] uppercase">
               <Clock className="h-3 w-3" />

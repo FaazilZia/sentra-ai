@@ -69,7 +69,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ events, onReplay, on
     <div className="flex flex-col h-full bg-slate-950 border border-white/5 rounded-3xl overflow-hidden">
       {!minimal && (
         <div className="p-8 border-b border-white/5 flex items-center justify-between">
-          <h2 className="text-sm font-black tracking-[0.2em] text-slate-500 uppercase">
+          <h2 className="text-sm font-black tracking-[0.2em] text-slate-400 uppercase">
             Audit Activity Ledger
           </h2>
           <div className="flex items-center gap-4">
@@ -127,7 +127,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ events, onReplay, on
                 </div>
 
                 <div className="col-span-2">
-                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                     {event.action}
                   </span>
                 </div>
@@ -145,7 +145,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ events, onReplay, on
                   {event.status === 'blocked' ? (
                     <span className="text-rose-500 font-bold uppercase text-[10px] tracking-tight">{event.reason}</span>
                   ) : (
-                    <span className="text-slate-400">{event.impact || 'Verified Compliance Baseline'}</span>
+                    <span className="text-slate-300">{event.impact || 'Verified Compliance Baseline'}</span>
                   )}
                 </div>
 
@@ -167,7 +167,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ events, onReplay, on
                        <div className="space-y-8">
                           <div>
                             <h4 className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-600 mb-4">Governance Context</h4>
-                            <p className="text-sm text-slate-400 leading-relaxed font-medium">
+                            <p className="text-sm text-slate-300 leading-relaxed font-medium">
                               {event.explanation || event.reason || "Action verified against internal security baseline and compliance mapping."}
                             </p>
                           </div>
@@ -187,7 +187,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ events, onReplay, on
                        <div className="space-y-8">
                           {(event.status === 'blocked' || event.isPendingApproval) && !event.overriddenBy && (
                             <div className="p-8 rounded-3xl bg-white/[0.01] border border-white/5 space-y-6">
-                               <h4 className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Manual Resolution</h4>
+                               <h4 className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-300">Manual Resolution</h4>
                                
                                <div className="space-y-6">
                                   <div className="grid grid-cols-2 gap-6">
@@ -228,11 +228,11 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ events, onReplay, on
                           <div className="flex gap-4">
                             <button
                               onClick={() => onReplay?.(event.id)}
-                              className="flex-1 py-4 rounded-xl border border-white/10 text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all"
+                              className="flex-1 py-4 rounded-xl border border-white/10 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all"
                             >
                               Replay Trace
                             </button>
-                            <button className="flex-1 py-4 rounded-xl border border-white/10 text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all">
+                            <button className="flex-1 py-4 rounded-xl border border-white/10 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all">
                                Examine Policy
                             </button>
                           </div>

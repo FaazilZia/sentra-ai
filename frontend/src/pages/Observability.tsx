@@ -84,14 +84,14 @@ export default function ObservabilityPage() {
             <h1 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-white md:text-4xl">
               Backend checks and policy-engine telemetry are now visible here.
             </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-100">
               This page uses the deployed `/health`, `/policies/health`, and `/policies` endpoints to
               show whether the control plane is reachable and how much of the policy layer is live.
             </p>
           </div>
 
           <div className="rounded-[1.75rem] border border-white/10 bg-slate-950/35 p-5">
-            <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Engine evaluator</p>
+            <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Engine evaluator</p>
             <p className="mt-2 text-2xl font-semibold text-white">
               {policyHealth?.evaluator ?? 'Awaiting policy-health'}
             </p>
@@ -178,7 +178,7 @@ export default function ObservabilityPage() {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-medium text-white">API reachability</p>
-                    <p className="mt-1 text-sm text-slate-400">Node.js `/health` endpoint</p>
+                    <p className="mt-1 text-sm text-slate-300">Node.js `/health` endpoint</p>
                   </div>
                   <StatusBadge
                     label={backendHealth?.status ?? 'unknown'}
@@ -191,7 +191,7 @@ export default function ObservabilityPage() {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-medium text-white">Policy engine</p>
-                    <p className="mt-1 text-sm text-slate-400">
+                    <p className="mt-1 text-sm text-slate-300">
                       Evaluator reported by `/policies/health`
                     </p>
                   </div>
@@ -200,14 +200,14 @@ export default function ObservabilityPage() {
                     tone={policyHealth?.status === 'healthy' ? 'success' : 'warning'}
                   />
                 </div>
-                <p className="mt-3 text-sm text-slate-300">
+                <p className="mt-3 text-sm text-slate-100">
                   Evaluator: {policyHealth?.evaluator ?? 'not yet returned'}
                 </p>
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
                 <p className="text-sm font-medium text-white">Live note</p>
-                <p className="mt-2 text-sm leading-6 text-slate-400">
+                <p className="mt-2 text-sm leading-6 text-slate-300">
                   Right now observability is lightweight and policy-centric. As you add incident,
                   decision, and enforcement feeds, this page can evolve into a true operations console.
                 </p>

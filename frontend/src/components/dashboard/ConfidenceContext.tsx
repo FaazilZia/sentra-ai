@@ -16,8 +16,8 @@ export const ConfidenceContext: React.FC<ConfidenceContextProps> = ({
   return (
     <div className="mt-4 pt-4 border-t border-white/5 space-y-3">
       <div className="flex items-start gap-2">
-        <Info className="h-3 w-3 text-slate-500 mt-0.5" />
-        <p className="text-[10px] font-medium text-slate-500 leading-relaxed italic">
+        <Info className="h-3 w-3 text-slate-400 mt-0.5" />
+        <p className="text-[10px] font-medium text-slate-400 leading-relaxed italic">
           Decision Doubt: {limitation}
         </p>
       </div>

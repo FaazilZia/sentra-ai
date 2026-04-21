@@ -13,7 +13,7 @@ export const BeforeAfterPanel: React.FC = () => {
              </span>
           </div>
           
-          <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+          <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-rose-500" />
             Standard AI Runtime
           </h3>
@@ -21,11 +21,11 @@ export const BeforeAfterPanel: React.FC = () => {
           <div className="space-y-6">
             <div className="flex gap-4 items-start opacity-60">
               <div className="p-2 rounded-lg bg-slate-800">
-                <Shield className="w-4 h-4 text-slate-400" />
+                <Shield className="w-4 h-4 text-slate-300" />
               </div>
               <div className="space-y-1">
-                <p className="text-sm font-medium text-slate-300">Data Sharing Intent</p>
-                <p className="text-xs text-slate-500">Agent attempts to share sensitive medical data</p>
+                <p className="text-sm font-medium text-slate-100">Data Sharing Intent</p>
+                <p className="text-xs text-slate-400">Agent attempts to share sensitive medical data</p>
               </div>
             </div>
 
@@ -60,8 +60,8 @@ export const BeforeAfterPanel: React.FC = () => {
                 <Shield className="w-4 h-4 text-indigo-400" />
               </div>
               <div className="space-y-1">
-                <p className="text-sm font-medium text-slate-300">Real-time Interception</p>
-                <p className="text-xs text-slate-500">Sentra SDK intercepts intent before execution</p>
+                <p className="text-sm font-medium text-slate-100">Real-time Interception</p>
+                <p className="text-xs text-slate-400">Sentra SDK intercepts intent before execution</p>
               </div>
             </div>
 

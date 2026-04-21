@@ -62,7 +62,7 @@ const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: '-100%', opacity: 0 }}
                 transition={{ duration: 0.4, ease: 'easeOut' }}
-                className="text-xs tracking-[0.2em] md:text-sm font-semibold text-slate-400"
+                className="text-xs tracking-[0.2em] md:text-sm font-semibold text-slate-300"
               >
                 {loadingTexts[textIndex]}
               </motion.div>

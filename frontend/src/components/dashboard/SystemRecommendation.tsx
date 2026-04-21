@@ -18,8 +18,8 @@ export const SystemRecommendation: React.FC<SystemRecommendationProps> = ({ bias
           {bias}
         </p>
         <div className="flex items-start gap-2">
-          <Info className="h-3 w-3 text-slate-500 mt-0.5" />
-          <p className="text-[9px] font-bold text-slate-500 uppercase leading-snug">
+          <Info className="h-3 w-3 text-slate-400 mt-0.5" />
+          <p className="text-[9px] font-bold text-slate-400 uppercase leading-snug">
             {reason}
           </p>
         </div>

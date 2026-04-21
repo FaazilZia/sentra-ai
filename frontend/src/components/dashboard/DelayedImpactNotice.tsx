@@ -12,7 +12,7 @@ export const DelayedImpactNotice: React.FC<DelayedImpactNoticeProps> = ({ delay,
       <Timer className="h-4 w-4 text-rose-500 mt-0.5" />
       <div className="space-y-1">
         <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest">Delayed Consequence Detected</p>
-        <p className="text-[11px] font-bold text-slate-300 uppercase leading-snug">
+        <p className="text-[11px] font-bold text-slate-100 uppercase leading-snug">
           Lagged impact from prior override on {sourceEvent} ({delay} delay observed)
         </p>
       </div>

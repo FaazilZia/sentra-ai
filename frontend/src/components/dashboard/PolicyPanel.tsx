@@ -23,7 +23,7 @@ export const PolicyPanel: React.FC<PolicyPanelProps> = ({ rules, onToggle }) => 
             <FileSignature className="w-4 h-4" />
             Governance Core
           </h3>
-          <p className="text-[10px] text-slate-500 font-bold mt-1 uppercase tracking-tight">Active Access Policies</p>
+          <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-tight">Active Access Policies</p>
         </div>
       </div>
 
@@ -35,7 +35,7 @@ export const PolicyPanel: React.FC<PolicyPanelProps> = ({ rules, onToggle }) => 
           >
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-slate-200 truncate">{rule.agent}</p>
-              <p className="text-[10px] text-slate-500 font-mono mt-0.5">{rule.action}</p>
+              <p className="text-[10px] text-slate-400 font-mono mt-0.5">{rule.action}</p>
             </div>
             
             <button 
@@ -53,7 +53,7 @@ export const PolicyPanel: React.FC<PolicyPanelProps> = ({ rules, onToggle }) => 
 
       <div className="mt-6 pt-6 border-t border-white/5">
         <div className="flex items-center justify-between px-2">
-           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Global Status</span>
+           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Global Status</span>
            <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[9px] font-black uppercase">Enforced</span>
         </div>
       </div>

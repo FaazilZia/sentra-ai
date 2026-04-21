@@ -14,7 +14,7 @@ export const ImpactProjection: React.FC<ImpactProjectionProps> = ({
 }) => {
   return (
     <div className="space-y-4">
-      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none">Expected Decision Impact</p>
+      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Expected Decision Impact</p>
       <div className="grid grid-cols-3 gap-4">
         <div className="p-3 bg-white/[0.03] border border-white/5 rounded-xl space-y-1">
           <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Risk Index</p>

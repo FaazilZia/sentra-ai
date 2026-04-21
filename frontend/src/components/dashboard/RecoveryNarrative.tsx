@@ -12,7 +12,7 @@ export const RecoveryNarrative: React.FC<RecoveryNarrativeProps> = ({ narrative 
         <BookOpen className="h-3 w-3 text-emerald-500/60" />
         <span className="text-[9px] font-black text-emerald-500/60 uppercase tracking-widest">Recovery Narrative</span>
       </div>
-      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight italic">
+      <p className="text-[10px] font-bold text-slate-300 uppercase tracking-tight italic">
         "{narrative}"
       </p>
     </div>
