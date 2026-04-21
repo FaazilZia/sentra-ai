@@ -7,9 +7,11 @@ interface SidebarItemProps {
   href: string;
   icon: LucideIcon;
   collapsed?: boolean;
+  indicator?: "dot" | "badge";
+  indicatorValue?: number;
 }
 
-export function SidebarItem({ name, href, icon: Icon, collapsed = false }: SidebarItemProps) {
+export function SidebarItem({ name, href, icon: Icon, collapsed = false, indicator, indicatorValue }: SidebarItemProps) {
   const location = useLocation();
   const isActive = location.pathname === href;
 
@@ -17,23 +19,45 @@ export function SidebarItem({ name, href, icon: Icon, collapsed = false }: Sideb
     <NavLink
       to={href}
       className={cn(
-        "group flex items-center rounded-xl px-3 py-3 text-[10px] font-black uppercase tracking-widest transition-all duration-200",
+        "group flex items-center justify-between rounded-xl px-3 py-3 text-[10px] font-black uppercase tracking-widest transition-all duration-200",
         collapsed && "justify-center px-2",
         isActive
-          ? "bg-white text-slate-950"
-          : "text-slate-500 hover:bg-slate-900 hover:text-white"
+          ? "bg-white/10 text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]"
+          : "text-slate-400 hover:bg-white/5 hover:text-white"
       )}
       title={collapsed ? name : undefined}
     >
-      <Icon
-        className={cn(
-          "h-4 w-4 flex-shrink-0 transition-all duration-200",
-          !collapsed && "mr-3",
-          isActive ? "text-slate-950" : "group-hover:text-white"
-        )}
-        aria-hidden="true"
-      />
-      {!collapsed ? name : <span className="sr-only">{name}</span>}
+      <div className="flex items-center">
+        <Icon
+          className={cn(
+            "h-4 w-4 flex-shrink-0 transition-all duration-200",
+            !collapsed && "mr-3",
+            isActive ? "text-cyan-400" : "group-hover:text-cyan-300"
+          )}
+          aria-hidden="true"
+        />
+        {!collapsed ? name : <span className="sr-only">{name}</span>}
+      </div>
+
+      {/* Indicators */}
+      {!collapsed && indicator === "dot" && (
+        <span className="relative flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+        </span>
+      )}
+      {!collapsed && indicator === "badge" && indicatorValue !== undefined && (
+        <span className="flex items-center justify-center rounded-full bg-rose-500/10 px-2 py-0.5 text-[9px] font-bold text-rose-400 border border-rose-500/20">
+          {indicatorValue > 99 ? '99+' : indicatorValue}
+        </span>
+      )}
+      
+      {collapsed && indicator && (
+        <span className={cn(
+          "absolute right-1 top-1 h-2 w-2 rounded-full",
+          indicator === "dot" ? "bg-emerald-500" : "bg-rose-500"
+        )} />
+      )}
     </NavLink>
   );
 }

@@ -1,27 +1,30 @@
 import {
   LayoutDashboard,
   Activity,
-  User,
+  ShieldAlert,
+  ShieldCheck,
+  TriangleAlert,
+  Database,
+  FileText,
+  Users,
   PanelLeftClose,
   PanelLeftOpen,
-  Radio,
-  Gavel,
-  ShieldCheck,
-  Shield,
-  FileText,
+  User,
 } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import { SidebarItem } from '../ui/SidebarItem';
 import { cn } from '@/lib/utils';
 
+// Vanta-style Navigation
 const navigation = [
   { name: 'Overview', href: '/app', icon: LayoutDashboard },
-  { name: 'AI Activity Logs', href: '/app/activity-logs', icon: Activity },
-  { name: 'Compliance', href: '/app/compliance', icon: Gavel },
-  { name: 'Policies', href: '/app/governance', icon: ShieldCheck },
-  { name: 'AI Guardrails', href: '/app/guardrails', icon: Shield },
-  { name: 'Audit Proof', href: '/app/audit-proof', icon: FileText },
-  { name: 'Alerts / Overrides', href: '/app/security', icon: Radio },
+  { name: 'Live Monitoring', href: '/app/observability', icon: Activity, indicator: 'dot' as const },
+  { name: 'Violations', href: '/app/activity-logs', icon: ShieldAlert, indicator: 'badge' as const, indicatorValue: 14 },
+  { name: 'Policies & Rules', href: '/app/governance', icon: ShieldCheck },
+  { name: 'Risk Assessments', href: '/app/risk', icon: TriangleAlert },
+  { name: 'Model Inventory', href: '/app/inventory', icon: Database },
+  { name: 'Audit Logs', href: '/app/audit', icon: FileText },
+  { name: 'User Access', href: '/app/privacy', icon: Users },
 ];
 
 interface SidebarProps {
@@ -39,21 +42,20 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
         collapsed ? 'w-20' : 'w-64'
       )}
     >
-      <div className="px-6 py-12">
+      <div className="px-6 py-8">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-slate-900 border border-white/10 text-white">
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg text-white">
             <span className="text-lg font-black italic">S</span>
           </div>
           {!collapsed && (
             <div className="flex flex-col min-w-0">
               <span className="truncate text-sm font-black tracking-tight text-white uppercase">Sentra AI</span>
-              <span className="truncate text-[9px] font-bold uppercase tracking-[0.3em] text-slate-600">Governance OS</span>
             </div>
           )}
         </div>
       </div>
 
-      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-4">
+      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-4 custom-scrollbar mt-4">
         {navigation.map((item) => (
           <SidebarItem
             key={item.name}
@@ -61,21 +63,23 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
             href={item.href}
             icon={item.icon}
             collapsed={collapsed}
+            indicator={item.indicator}
+            indicatorValue={item.indicatorValue}
           />
         ))}
       </nav>
 
-      <div className="p-4 border-t border-white/5">
-        <div className="flex items-center gap-3 px-2 py-2">
-          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded bg-slate-900 border border-white/5 text-slate-500">
+      <div className="p-4 border-t border-white/5 mt-auto">
+        <div className="flex items-center gap-3 px-2 py-2 cursor-pointer hover:bg-white/5 rounded-xl transition-colors">
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-slate-900 border border-white/5 text-slate-500">
             <User className="w-4 h-4" />
           </div>
           {!collapsed ? (
             <div className="min-w-0 flex-1">
               <p className="truncate text-[11px] font-bold text-white uppercase tracking-tighter">
-                {user?.full_name ?? 'User'}
+                {user?.full_name ?? 'Admin User'}
               </p>
-              <p className="truncate text-[9px] text-slate-600 font-medium">{user?.email ?? 'No email'}</p>
+              <p className="truncate text-[9px] text-slate-500 font-medium">{user?.email ?? 'Settings & Profile'}</p>
             </div>
           ) : null}
         </div>

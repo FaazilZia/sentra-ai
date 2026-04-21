@@ -6,7 +6,7 @@ interface MonitoringStatusProps {
   status: 'active' | 'warning' | 'critical';
   lastChecked: string;
   violations24h: number;
-  stability: 'stable' | 'fluctuating';
+  stability: 'stable' | 'fluctuating' | 'degrading';
 }
 
 export const MonitoringStatus: React.FC<MonitoringStatusProps> = ({ 
