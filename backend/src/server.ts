@@ -17,9 +17,9 @@ const io = new Server(httpServer, {
 io.on('connection', (socket) => {
   logger.info(`Client connected to real-time feed: ${socket.id}`);
   
-  socket.on('join_company', (companyId) => {
-    socket.join(`company_${companyId}`);
-    logger.info(`Client ${socket.id} joined room: company_${companyId}`);
+  socket.on('join_company', (organizationId) => {
+    socket.join(`company_${organizationId}`);
+    logger.info(`Client ${socket.id} joined room: company_${organizationId}`);
   });
 
   socket.on('disconnect', () => {
@@ -37,8 +37,8 @@ const startServer = async () => {
 
     // Initialize background jobs (Data Retention, etc.)
     const { setupScheduledJobs } = require('./services/queue.service');
-    await setupScheduledJobs();
-    logger.info('Background job workers initialized');
+    setupScheduledJobs().catch(err => logger.warn('Background jobs failed to initialize', err));
+    logger.info('Background job workers initialized (Async)');
     
     httpServer.listen(PORT, () => {
       logger.info(`Server is running on port ${PORT}`);

@@ -4,9 +4,10 @@ import { useAuth } from '../lib/auth';
 import { fetchAIActivityLogs, AIActivityLog } from '../lib/api';
 import { ActivityFeed } from '../components/dashboard/ActivityFeed';
 import { EmptyState } from '../components/ui/EmptyState';
+import { socket, connectSocket } from '../lib/socket';
 
 export default function AIActivityLogs() {
-  const { accessToken } = useAuth();
+  const { accessToken, user } = useAuth();
   const [logs, setLogs] = useState<AIActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
@@ -14,6 +15,20 @@ export default function AIActivityLogs() {
     risk: 'ALL',
     status: 'ALL'
   });
+
+  useEffect(() => {
+    if (user?.organizationId) {
+      connectSocket(user.organizationId);
+      
+      socket.on('new_activity', (newLog: AIActivityLog) => {
+        setLogs(prev => [newLog, ...prev]);
+      });
+
+      return () => {
+        socket.off('new_activity');
+      };
+    }
+  }, [user]);
 
   useEffect(() => {
     async function loadLogs() {

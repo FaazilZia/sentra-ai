@@ -9,54 +9,56 @@ datasource db {
 }
 
 model api_keys {
-  id          String    @id @default(uuid())
-  companyId   String    @map("company_id")
-  name        String
-  key_prefix  String
-  key_hash    String
-  key_type    String    // 'service', 'machine'
-  is_active   Boolean
-  created_at  DateTime  @default(now())
-  updated_at  DateTime  @default(now())
-  companies   companies @relation(fields: [companyId], references: [id])
+  id             String        @id @default(uuid())
+  organizationId String        @map("organization_id")
+  name           String
+  key_prefix     String
+  key_hash       String
+  key_type       String // 'service', 'machine'
+  is_active      Boolean
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @default(now())
+  organizations  organizations @relation(fields: [organizationId], references: [id])
 
   @@map("api_keys")
 }
 
-model companies {
-  id               String       @id @default(uuid())
-  name             String
-  apiKey           String?      @unique @map("api_key") // Simplified API key if needed
-  slug             String       @unique
-  is_active        Boolean
-  created_at       DateTime     @default(now())
-  updated_at       DateTime     @default(now())
-  api_keys         api_keys[]
-  connectors       connectors[]
-  incidents        incidents[]
-  policies         policies[]
-  policy_versions  policy_versions[]
-  users            users[]
-  scan_jobs        scan_jobs[]
-  logs             logs[]
-  ai_agents        ai_agents[]
-  drift_alerts     drift_alerts[]
+model organizations {
+  id                String              @id @default(uuid())
+  name              String
+  apiKey            String?             @unique @map("api_key") // Simplified API key if needed
+  slug              String              @unique
+  is_active         Boolean
+  created_at        DateTime            @default(now())
+  updated_at        DateTime            @default(now())
+  api_keys          api_keys[]
+  connectors        connectors[]
+  incidents         incidents[]
+  policies          policies[]
+  policy_versions   policy_versions[]
+  users             users[]
+  scan_jobs         scan_jobs[]
+  logs              logs[]
+  ai_agents         ai_agents[]
+  drift_alerts      drift_alerts[]
+  audit_logs        audit_logs[]
+  interception_logs interception_logs[]
 
   @@map("companies")
 }
 
 model policies {
   id                String            @id @default(uuid())
-  companyId         String            @map("company_id")
+  organizationId    String            @map("organization_id")
   name              String
   description       String
-  explanation       String?           // Why this policy exists
-  compliance        Json?             // Compliance mapping (e.g. ["GDPR", "HIPAA"])
-  impact            String?           // Business impact
+  explanation       String? // Why this policy exists
+  compliance        Json? // Compliance mapping (e.g. ["GDPR", "HIPAA"])
+  impact            String? // Business impact
   enabled           Boolean
   priority          Int
-  effect            String            // 'allow', 'deny', etc.
-  status            String            // 'draft', 'published'
+  effect            String // 'allow', 'deny', etc.
+  status            String // 'draft', 'published'
   rule              Json?             @map("rule") // Specific JSON rule requested
   current_version   Int
   published_version Int?
@@ -66,50 +68,50 @@ model policies {
   created_at        DateTime          @default(now())
   updated_at        DateTime          @default(now())
   incidents         incidents[]
-  companies         companies         @relation(fields: [companyId], references: [id])
+  organizations     organizations     @relation(fields: [organizationId], references: [id])
   policy_versions   policy_versions[]
 
-  @@unique([companyId, name])
-  @@index([companyId])
+  @@unique([organizationId, name])
+  @@index([organizationId])
   @@map("policies")
 }
 
 model logs {
-  id          String    @id @default(uuid())
-  requestId   String?   @map("request_id")
-  companyId   String    @map("company_id")
-  agent       String    @map("agent")
-  action      String
-  status      String
-  risk        String    @map("risk") // 'low', 'medium', 'high'
-  reason      String?
-  impact      String?
-  latency     Int?      @map("latency")
-  timestamp   DateTime  @default(now()) @map("timestamp")
-  
+  id             String   @id @default(uuid())
+  requestId      String?  @map("request_id")
+  organizationId String   @map("organization_id")
+  agent          String   @map("agent")
+  action         String
+  status         String
+  risk           String   @map("risk") // 'low', 'medium', 'high'
+  reason         String?
+  impact         String?
+  latency        Int?     @map("latency")
+  timestamp      DateTime @default(now()) @map("timestamp")
+
   // Extended fields from original ai_activity_logs for compatibility
   explanation String?
   confidence  Float?
   timeline    Json?
   compliance  Json?
   metadata    Json?
-  
+
   // Compliance & Override Fields
   overrideComment   String?   @map("override_comment")
   overriddenBy      String?   @map("overridden_by")
   overrideTimestamp DateTime? @map("override_timestamp")
   isPendingApproval Boolean   @default(false) @map("is_pending_approval")
   approvedBy        String?   @map("approved_by")
-  
-  companies   companies @relation(fields: [companyId], references: [id])
 
-  @@index([companyId, timestamp])
+  organizations organizations @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, timestamp])
   @@map("logs")
 }
 
 model incidents {
-  id               String    @id @default(uuid())
-  companyId        String    @map("company_id")
+  id               String        @id @default(uuid())
+  organizationId   String        @map("organization_id")
   agent_id         String
   policy_id        String?
   severity         Int
@@ -118,24 +120,24 @@ model incidents {
   prompt_excerpt   String
   response_excerpt String
   event_metadata   Json
-  created_at       DateTime  @default(now())
-  updated_at       DateTime  @default(now())
-  status           String    @default("unresolved")
+  created_at       DateTime      @default(now())
+  updated_at       DateTime      @default(now())
+  status           String        @default("unresolved")
   user_id          String?
   resolved_by_id   String?
   resolved_at      DateTime?
-  policies         policies? @relation(fields: [policy_id], references: [id])
-  companies        companies @relation(fields: [companyId], references: [id])
-  user             users?    @relation("IncidentAuthor", fields: [user_id], references: [id])
-  resolved_by      users?    @relation("IncidentResolver", fields: [resolved_by_id], references: [id])
+  policies         policies?     @relation(fields: [policy_id], references: [id])
+  organizations    organizations @relation(fields: [organizationId], references: [id])
+  user             users?        @relation("IncidentAuthor", fields: [user_id], references: [id])
+  resolved_by      users?        @relation("IncidentResolver", fields: [resolved_by_id], references: [id])
 
   @@map("incidents")
 }
 
 model policy_versions {
-  id                    String   @id @default(uuid())
+  id                    String        @id @default(uuid())
   policy_id             String
-  companyId             String   @map("company_id")
+  organizationId        String        @map("organization_id")
   version               Int
   name                  String
   description           String
@@ -147,27 +149,27 @@ model policy_versions {
   conditions            Json
   obligations           Json
   is_published_snapshot Boolean
-  created_at            DateTime @default(now())
-  updated_at            DateTime @default(now())
-  policies              policies @relation(fields: [policy_id], references: [id])
-  companies             companies @relation(fields: [companyId], references: [id])
+  created_at            DateTime      @default(now())
+  updated_at            DateTime      @default(now())
+  policies              policies      @relation(fields: [policy_id], references: [id])
+  organizations         organizations @relation(fields: [organizationId], references: [id])
 
   @@unique([policy_id, version])
   @@map("policy_versions")
 }
 
 model ai_agents {
-  id          String    @id @default(uuid())
-  companyId   String    @map("company_id")
-  name        String
-  model       String
-  permissions Json      // List of permissions (email, API, DB)
-  status      String    // 'active', 'inactive'
-  metadata    Json?
-  created_at  DateTime  @default(now())
-  updated_at  DateTime  @default(now())
-  companies   companies @relation(fields: [companyId], references: [id])
-  dependencies ai_dependencies[]
+  id             String            @id @default(uuid())
+  organizationId String            @map("organization_id")
+  name           String
+  model          String
+  permissions    Json // List of permissions (email, API, DB)
+  status         String // 'active', 'inactive'
+  metadata       Json?
+  created_at     DateTime          @default(now())
+  updated_at     DateTime          @default(now())
+  organizations  organizations     @relation(fields: [organizationId], references: [id])
+  dependencies   ai_dependencies[]
 
   @@map("ai_agents")
 }
@@ -175,7 +177,7 @@ model ai_agents {
 model ai_dependencies {
   id          String    @id @default(uuid())
   agentId     String    @map("agent_id")
-  targetType  String    // 'API', 'Database', 'External Service'
+  targetType  String // 'API', 'Database', 'External Service'
   targetName  String
   description String?
   created_at  DateTime  @default(now())
@@ -185,65 +187,65 @@ model ai_dependencies {
 }
 
 model drift_alerts {
-  id          String    @id @default(uuid())
-  companyId   String    @map("company_id")
-  agentId     String    @map("agent_id")
-  type        String    // 'new_api', 'frequency', 'unusual_behavior'
-  severity    String    // 'low', 'medium', 'high'
-  description String
-  status      String    @default("open") // 'open', 'resolved'
-  timestamp   DateTime  @default(now())
-  companies   companies @relation(fields: [companyId], references: [id])
+  id             String        @id @default(uuid())
+  organizationId String        @map("organization_id")
+  agentId        String        @map("agent_id")
+  type           String // 'new_api', 'frequency', 'unusual_behavior'
+  severity       String // 'low', 'medium', 'high'
+  description    String
+  status         String        @default("open") // 'open', 'resolved'
+  timestamp      DateTime      @default(now())
+  organizations  organizations @relation(fields: [organizationId], references: [id])
 
   @@map("drift_alerts")
 }
 
 model connectors {
-  id           String   @id @default(uuid())
-  companyId    String   @map("company_id")
-  name         String
-  type         String   // 'sql', 'gdrive', 's3', 'local'
-  config       Json     
-  status       String
-  last_scan_at String?
-  created_at   DateTime @default(now())
-  updated_at   DateTime @default(now())
-  companies    companies @relation(fields: [companyId], references: [id])
+  id             String        @id @default(uuid())
+  organizationId String        @map("organization_id")
+  name           String
+  type           String // 'sql', 'gdrive', 's3', 'local'
+  config         Json
+  status         String
+  last_scan_at   String?
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @default(now())
+  organizations  organizations @relation(fields: [organizationId], references: [id])
 
   @@map("connectors")
 }
 
 model scan_jobs {
-  id                 String   @id @default(uuid())
-  companyId          String   @map("company_id")
+  id                 String        @id @default(uuid())
+  organizationId     String        @map("organization_id")
   phase              String
-  progress           Int      @default(0)
-  incidents_detected Int      @default(0)
-  sources_scanned    Int      @default(0)
-  created_at         DateTime @default(now())
-  updated_at         DateTime @default(now())
-  companies          companies @relation(fields: [companyId], references: [id])
+  progress           Int           @default(0)
+  incidents_detected Int           @default(0)
+  sources_scanned    Int           @default(0)
+  created_at         DateTime      @default(now())
+  updated_at         DateTime      @default(now())
+  organizations      organizations @relation(fields: [organizationId], references: [id])
 
   @@map("scan_jobs")
 }
 
 model users {
-  id              String            @id @default(uuid())
-  companyId       String            @map("company_id")
-  email           String            @unique
-  full_name       String
-  employeeId      String?           @unique @map("employee_id")
-  password_hash   String
-  role            String            @default("AUDITOR") // 'ADMIN', 'ENGINEER', 'AUDITOR'
-  is_active       Boolean
-  created_at      DateTime          @default(now())
-  updated_at      DateTime          @default(now())
-  incidents_created incidents[] @relation("IncidentAuthor")
-  incidents_resolved incidents[] @relation("IncidentResolver")
-  consent_records consent_records[]
-  requests        requests[]
-  refresh_tokens  RefreshToken[]
-  companies       companies           @relation(fields: [companyId], references: [id])
+  id                 String            @id @default(uuid())
+  organizationId     String            @map("organization_id")
+  email              String            @unique
+  full_name          String
+  employeeId         String?           @unique @map("employee_id")
+  password_hash      String
+  role               String            @default("AUDITOR") // 'ADMIN', 'ENGINEER', 'AUDITOR'
+  is_active          Boolean
+  created_at         DateTime          @default(now())
+  updated_at         DateTime          @default(now())
+  incidents_created  incidents[]       @relation("IncidentAuthor")
+  incidents_resolved incidents[]       @relation("IncidentResolver")
+  consent_records    consent_records[]
+  requests           requests[]
+  refresh_tokens     RefreshToken[]
+  organizations      organizations     @relation(fields: [organizationId], references: [id])
 
   @@map("users")
 }
@@ -261,31 +263,31 @@ model consent_records {
 }
 
 model compliance_fix_tasks {
-  id          String   @id @default(uuid())
-  featureId   String   @map("feature_id")
+  id          String             @id @default(uuid())
+  featureId   String             @map("feature_id")
   title       String
   description String?
-  priority    Int      // 1, 2, 3
-  status      String   @default("pending") // 'pending', 'completed'
-  created_at  DateTime @default(now())
-  updated_at  DateTime @default(now())
+  priority    Int // 1, 2, 3
+  status      String             @default("pending") // 'pending', 'completed'
+  created_at  DateTime           @default(now())
+  updated_at  DateTime           @default(now())
   evidence    evidence_records[]
 
   @@map("compliance_fix_tasks")
 }
 
 model evidence_records {
-  id          String   @id @default(uuid())
-  taskId      String   @map("task_id")
-  type        String   // 'file', 'text', 'link'
-  value       String
-  hash        String?  // SHA-256 integrity hash
-  source_type       String   @default("user") // "system", "user", "external"
-  verified          Boolean  @default(false)
-  validation_status String   @default("pending") // "valid", "invalid", "unreachable"
-  validated_at      DateTime @default(now())
-  uploaded_at       DateTime @default(now())
-  task        compliance_fix_tasks @relation(fields: [taskId], references: [id])
+  id                String               @id @default(uuid())
+  taskId            String               @map("task_id")
+  type              String // 'file', 'text', 'link'
+  value             String
+  hash              String? // SHA-256 integrity hash
+  source_type       String               @default("user") // "system", "user", "external"
+  verified          Boolean              @default(false)
+  validation_status String               @default("pending") // "valid", "invalid", "unreachable"
+  validated_at      DateTime             @default(now())
+  uploaded_at       DateTime             @default(now())
+  task              compliance_fix_tasks @relation(fields: [taskId], references: [id])
 
   @@map("evidence_records")
 }
@@ -303,41 +305,44 @@ model compliance_snapshots {
 }
 
 model audit_logs {
-  id          String   @id @default(uuid())
-  user_id     String
-  action      String   // "UPLOAD_EVIDENCE", "COMPLETE_TASK", "RE_EVALUATE", "LOGIN"
-  feature_id  String?
-  metadata    Json?
-  timestamp   DateTime @default(now())
+  id             String        @id @default(uuid())
+  organizationId String        @map("organization_id")
+  user_id        String
+  action         String // "UPLOAD_EVIDENCE", "COMPLETE_TASK", "RE_EVALUATE", "LOGIN"
+  feature_id     String?
+  metadata       Json?
+  timestamp      DateTime      @default(now())
+  organizations  organizations @relation(fields: [organizationId], references: [id])
 
   @@map("audit_logs")
 }
 
 model alerts {
-  id          String   @id @default(uuid())
-  feature_id  String?
-  type        String   // "HIGH_RISK", "MISSING_EVIDENCE", "SYSTEM"
-  message     String
-  severity    String   @default("low") // "low", "medium", "high"
-  is_read     Boolean  @default(false)
-  created_at  DateTime @default(now())
+  id         String   @id @default(uuid())
+  feature_id String?
+  type       String // "HIGH_RISK", "MISSING_EVIDENCE", "SYSTEM"
+  message    String
+  severity   String   @default("low") // "low", "medium", "high"
+  is_read    Boolean  @default(false)
+  created_at DateTime @default(now())
 
   @@map("alerts")
 }
 
 model interception_logs {
-  id               String   @id @default(uuid())
+  id               String         @id @default(uuid())
   user_id          String
-  company_id       String?
+  organizationId   String?        @map("organization_id")
   input_text       String
   output_text      String?
-  decision         String   // "ALLOW", "MODIFY", "BLOCK"
-  confidence       String   @default("High") // "High", "Medium", "Low"
-  override_status  String   @default("none") // "none", "pending", "approved", "rejected"
+  decision         String // "ALLOW", "MODIFY", "BLOCK"
+  confidence       String         @default("High") // "High", "Medium", "Low"
+  override_status  String         @default("none") // "none", "pending", "approved", "rejected"
   reason           String?
   policy_triggered String?
   metadata         Json?
-  timestamp        DateTime @default(now())
+  timestamp        DateTime       @default(now())
+  organizations    organizations? @relation(fields: [organizationId], references: [id])
 
   @@map("interception_logs")
 }
@@ -353,11 +358,6 @@ model guardrail_overrides {
 
   @@map("guardrail_overrides")
 }
-
-
-
-
-
 
 model requests {
   id         String   @id @default(uuid())
@@ -399,25 +399,25 @@ model RefreshToken {
 model outcome_validations {
   id                 String   @id @default(uuid())
   feature_id         String
-  action_id          String?  // Linked to fix task
+  action_id          String? // Linked to fix task
   previous_score     Float
   new_score          Float
-  previous_risk      String   // 'low', 'medium', 'high'
+  previous_risk      String // 'low', 'medium', 'high'
   new_risk           String
   validation_status  String   @default("pending") // "verified", "failed"
-  outcome_confidence String   @default("High")    // "High", "Medium", "Low"
+  outcome_confidence String   @default("High") // "High", "Medium", "Low"
   validated_at       DateTime @default(now())
 
   @@map("outcome_validations")
 }
 
 model monitoring_status {
-  id                 String   @id @default(uuid())
-  feature_id         String   @unique
-  status             String   @default("active") // "active", "warning", "critical"
-  last_checked_at    DateTime @default(now())
-  violations_last_24h Int     @default(0)
-  stability          String   @default("stable") // "stable", "fluctuating"
+  id                  String   @id @default(uuid())
+  feature_id          String   @unique
+  status              String   @default("active") // "active", "warning", "critical"
+  last_checked_at     DateTime @default(now())
+  violations_last_24h Int      @default(0)
+  stability           String   @default("stable") // "stable", "fluctuating"
 
   @@map("monitoring_status")
 }
@@ -432,5 +432,3 @@ model compliance_drift {
 
   @@map("compliance_drift")
 }
-
-

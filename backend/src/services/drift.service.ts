@@ -1,7 +1,7 @@
 import prisma from '../config/db';
 
 export class DriftService {
-  static async detectDrift(companyId: string) {
+  static async detectDrift(organizationId: string) {
     // This is a mock implementation of drift detection logic
     // In a real system, you would compare current action counts/types vs a rolling baseline
     
@@ -9,7 +9,7 @@ export class DriftService {
     
     // Simulate finding a "New API Access" drift
     alerts.push({
-      companyId,
+      organizationId,
       agentId: 'agent-customer-support',
       type: 'new_api',
       severity: 'high',
@@ -19,7 +19,7 @@ export class DriftService {
 
     // Simulate finding a "Frequency" drift
     alerts.push({
-      companyId,
+      organizationId,
       agentId: 'agent-data-analyst',
       type: 'frequency',
       severity: 'medium',
@@ -31,7 +31,7 @@ export class DriftService {
     for (const alert of alerts) {
       const existing = await (prisma as any).drift_alerts.findFirst({
         where: {
-          companyId,
+          organizationId,
           agentId: alert.agentId,
           type: alert.type,
           status: 'open'
@@ -44,21 +44,21 @@ export class DriftService {
     }
 
     return await (prisma as any).drift_alerts.findMany({
-      where: { companyId, status: 'open' },
+      where: { organizationId, status: 'open' },
       orderBy: { timestamp: 'desc' }
     });
   }
 
-  static async listAlerts(companyId: string) {
+  static async listAlerts(organizationId: string) {
     return await (prisma as any).drift_alerts.findMany({
-      where: { companyId },
+      where: { organizationId },
       orderBy: { timestamp: 'desc' }
     });
   }
 
-  static async resolveAlert(alertId: string, companyId: string) {
+  static async resolveAlert(alertId: string, organizationId: string) {
     return await (prisma as any).drift_alerts.updateMany({
-      where: { id: alertId, companyId },
+      where: { id: alertId, organizationId },
       data: { status: 'resolved' }
     });
   }

@@ -10,15 +10,15 @@ export interface PolicyEvaluation {
   impact?: string;
 }
 
-export const evaluatePolicy = async (agent: string, action: string, companyId: string): Promise<PolicyEvaluation> => {
+export const evaluatePolicy = async (agent: string, action: string, organizationId: string): Promise<PolicyEvaluation> => {
   const lowercaseAction = action.toLowerCase();
   
-  const cacheKey = `policy:${companyId}:${agent}`;
+  const cacheKey = `policy:${organizationId}:${agent}`;
   
   const policy = await cacheService.getOrSet(cacheKey, () => 
     prisma.policies.findFirst({
       where: {
-        companyId: companyId,
+        organizationId: organizationId,
         name: { contains: agent },
         enabled: true
       }

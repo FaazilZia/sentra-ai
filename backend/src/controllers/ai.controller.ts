@@ -1,7 +1,7 @@
 import { Response, NextFunction } from 'express';
 import logger from '../utils/logger';
 import prisma from '../config/db';
-import { resolveCompanyId } from '../utils/company';
+import { resolveOrganizationId } from '../utils/company';
 import { logActivity, calculateSecurityScore } from '../services/policy.service';
 import { io } from '../server';
 import { checkActionSchema } from '../validations/ai.validation';
@@ -14,15 +14,15 @@ export const postCheckAction = async (req: any, res: Response, next: NextFunctio
     const validated = checkActionSchema.parse(req.body);
     const { agent, action, metadata } = validated;
 
-    const companyId = await resolveCompanyId(req);
+    const organizationId = await resolveOrganizationId(req);
 
-    if (!companyId) {
-      return res.status(401).json({ success: false, message: 'Unauthorized: Company not identified', requestId });
+    if (!organizationId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized: Organization not identified', requestId });
     }
 
     // 2. Intercept and Execute
     const decision = await interceptAction(
-      { agent, action, companyId, metadata, requestId },
+      { agent, action, organizationId, metadata, requestId },
       async () => {
         // This is where the actual tool/action would be executed.
         // For the governance check, we often just want the decision.
@@ -33,7 +33,7 @@ export const postCheckAction = async (req: any, res: Response, next: NextFunctio
     const latency = Date.now() - startTime;
 
     // 3. Push Real-time Update (dashboard)
-    io.to(`company_${companyId}`).emit('activity_log', { ...decision, companyId, timestamp: new Date() });
+    io.to(`company_${organizationId}`).emit('activity_log', { ...decision, organizationId, timestamp: new Date() });
 
     res.status(200).json({
       success: true,
@@ -49,15 +49,15 @@ export const postCheckAction = async (req: any, res: Response, next: NextFunctio
 export const postReplayAction = async (req: any, res: Response, next: NextFunction) => {
   try {
     const { logId } = req.body;
-    const companyId = await resolveCompanyId(req);
+    const organizationId = await resolveOrganizationId(req);
 
-    if (!companyId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    if (!organizationId) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
     const originalLog = await prisma.logs.findUnique({
       where: { id: logId }
     });
 
-    if (!originalLog || originalLog.companyId !== companyId) {
+    if (!originalLog || originalLog.organizationId !== organizationId) {
       return res.status(404).json({ success: false, message: 'Log not found' });
     }
 
@@ -65,7 +65,7 @@ export const postReplayAction = async (req: any, res: Response, next: NextFuncti
       { 
         agent: originalLog.agent, 
         action: originalLog.action, 
-        companyId, 
+        organizationId, 
         metadata: originalLog.metadata 
       },
       async () => ({ message: "Replayed action" })
@@ -82,10 +82,10 @@ export const postReplayAction = async (req: any, res: Response, next: NextFuncti
 
 export const getSecurityScore = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const companyId = await resolveCompanyId(req);
-    if (!companyId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    const organizationId = await resolveOrganizationId(req);
+    if (!organizationId) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
-    const score = await calculateSecurityScore(companyId);
+    const score = await calculateSecurityScore(organizationId);
     res.status(200).json({ success: true, data: { score } });
   } catch (error) {
     next(error);
@@ -96,12 +96,12 @@ export const postOverrideAction = async (req: any, res: Response, next: NextFunc
   try {
     const { id } = req.params;
     const { comment, employeeId } = req.body;
-    const companyId = await resolveCompanyId(req);
+    const organizationId = await resolveOrganizationId(req);
 
-    if (!companyId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    if (!organizationId) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
     const log = await prisma.logs.findUnique({ where: { id } });
-    if (!log || log.companyId !== companyId) {
+    if (!log || log.organizationId !== organizationId) {
       return res.status(404).json({ success: false, message: 'Activity log not found' });
     }
 
@@ -135,7 +135,7 @@ export const postOverrideAction = async (req: any, res: Response, next: NextFunc
     });
 
     // Notify dashboard
-    io.to(`company_${companyId}`).emit('activity_log_updated', updatedLog);
+    io.to(`company_${organizationId}`).emit('activity_log_updated', updatedLog);
 
     res.status(200).json({
       success: true,
@@ -149,13 +149,13 @@ export const postOverrideAction = async (req: any, res: Response, next: NextFunc
 
 export const getLogs = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const companyId = await resolveCompanyId(req);
-    if (!companyId) {
+    const organizationId = await resolveOrganizationId(req);
+    if (!organizationId) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
     const activityLogs = await prisma.logs.findMany({
-      where: { companyId: companyId },
+      where: { organizationId: organizationId },
       orderBy: { timestamp: 'desc' },
       take: 100
     });

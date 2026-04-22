@@ -1,3 +1,4 @@
+
 import { Response, NextFunction } from 'express';
 import { GuardrailService } from '../services/guardrail.service';
 import logger from '../utils/logger';
@@ -5,7 +6,7 @@ import logger from '../utils/logger';
 export const processAIRequest = async (req: any, res: Response, next: NextFunction) => {
   const { prompt, model = 'gpt-4o' } = req.body;
   const userId = req.user.id;
-  const companyId = req.user.companyId;
+  const organizationId = req.user.organizationId;
 
   try {
     // 1. Pre-AI Check (Input)
@@ -14,7 +15,7 @@ export const processAIRequest = async (req: any, res: Response, next: NextFuncti
     if (inputResult.decision === 'BLOCK') {
       await GuardrailService.logInterception({
         user_id: userId,
-        company_id: companyId,
+        organizationId: organizationId,
         input_text: prompt,
         decision: 'BLOCK',
         confidence: inputResult.confidence,
@@ -44,7 +45,7 @@ export const processAIRequest = async (req: any, res: Response, next: NextFuncti
     // 4. Log the final decision
     await GuardrailService.logInterception({
       user_id: userId,
-      company_id: companyId,
+      organizationId: organizationId,
       input_text: inputResult.processedText,
       output_text: outputResult.processedText,
       decision: outputResult.decision,

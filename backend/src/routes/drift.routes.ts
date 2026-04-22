@@ -6,7 +6,7 @@ const router = Router();
 
 router.get('/alerts', authenticate, async (req: any, res) => {
   try {
-    const alerts = await DriftService.listAlerts(req.user.companyId);
+    const alerts = await DriftService.listAlerts(req.user.organizationId);
     res.json(alerts);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -15,7 +15,7 @@ router.get('/alerts', authenticate, async (req: any, res) => {
 
 router.post('/detect', authenticate, async (req: any, res) => {
   try {
-    const alerts = await DriftService.detectDrift(req.user.companyId);
+    const alerts = await DriftService.detectDrift(req.user.organizationId);
     res.json(alerts);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -24,7 +24,7 @@ router.post('/detect', authenticate, async (req: any, res) => {
 
 router.post('/resolve/:id', authenticate, async (req: any, res) => {
   try {
-    await DriftService.resolveAlert(req.params.id, req.user.companyId);
+    await DriftService.resolveAlert(req.params.id, req.user.organizationId);
     res.status(204).send();
   } catch (error: any) {
     res.status(500).json({ error: error.message });

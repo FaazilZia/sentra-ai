@@ -85,7 +85,7 @@ export class GuardrailService {
 
   static async logInterception(data: {
     user_id: string;
-    company_id?: string;
+    organizationId?: string;
     input_text: string;
     output_text?: string;
     decision: string;
@@ -98,7 +98,7 @@ export class GuardrailService {
       return await (prisma as any).interception_logs.create({
         data: {
           user_id: data.user_id,
-          company_id: data.company_id,
+          organizationId: data.organizationId,
           input_text: data.input_text,
           output_text: data.output_text,
           decision: data.decision,

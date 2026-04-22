@@ -2,17 +2,17 @@ import { Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import prisma from '../config/db';
-import { resolveCompanyId } from '../utils/company';
+import { resolveOrganizationId } from '../utils/company';
 
 export const listApiKeys = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const companyId = await resolveCompanyId(req);
-    if (!companyId) {
+    const organizationId = await resolveOrganizationId(req);
+    if (!organizationId) {
       return res.status(200).json({ success: true, data: [] });
     }
 
     const keys = await prisma.api_keys.findMany({
-      where: { companyId: companyId, is_active: true },
+      where: { organizationId: organizationId, is_active: true },
       orderBy: { created_at: 'desc' },
       select: {
         id: true,
@@ -30,8 +30,8 @@ export const listApiKeys = async (req: any, res: Response, next: NextFunction) =
 
 export const createApiKey = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const companyId = await resolveCompanyId(req);
-    if (!companyId) {
+    const organizationId = await resolveOrganizationId(req);
+    if (!organizationId) {
       return res.status(400).json({ success: false, message: 'Company context required' });
     }
 
@@ -44,7 +44,7 @@ export const createApiKey = async (req: any, res: Response, next: NextFunction) 
     const row = await prisma.api_keys.create({
       data: {
         id: crypto.randomUUID(),
-        companyId: companyId,
+        organizationId: organizationId,
         name,
         key_prefix: prefix,
         key_hash,
@@ -69,15 +69,15 @@ export const createApiKey = async (req: any, res: Response, next: NextFunction) 
 
 export const deleteApiKey = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const companyId = await resolveCompanyId(req);
-    if (!companyId) {
+    const organizationId = await resolveOrganizationId(req);
+    if (!organizationId) {
       return res.status(400).json({ success: false, message: 'Company context required' });
     }
 
     const keyId = String(req.params['keyId'] ?? '');
 
     const existing = await prisma.api_keys.findFirst({
-      where: { id: keyId, companyId: companyId },
+      where: { id: keyId, organizationId: organizationId },
     });
     if (!existing) {
       return res.status(404).json({ success: false, message: 'API key not found' });
