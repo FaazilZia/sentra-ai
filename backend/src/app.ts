@@ -19,11 +19,59 @@ import complianceRoutes from './routes/compliance.routes';
 import guardrailRoutes from './routes/guardrail.routes';
 
 import { apiRateLimiter } from './config/rateLimit';
+import { securityObservability } from './middleware/security.middleware';
+
+import * as Sentry from '@sentry/node';
+import { nodeProfilingIntegration } from '@sentry/profiling-node';
+
+import crypto from 'crypto';
 
 const app: Application = express();
 
-// Middleware
-app.use(helmet());
+// Nonce Middleware for CSP
+app.use((req, res, next) => {
+  res.locals.nonce = crypto.randomBytes(16).toString('base64');
+  next();
+});
+
+// Initialize Sentry
+Sentry.init({
+  dsn: process.env.SENTRY_DSN || '',
+  integrations: [
+    nodeProfilingIntegration(),
+  ],
+  tracesSampleRate: 1.0,
+  profilesSampleRate: 1.0,
+  environment: process.env.NODE_ENV || 'development'
+});
+
+// Sentry request handler must be the first middleware on the app
+app.use(Sentry.Handlers.requestHandler());
+app.use(Sentry.Handlers.tracingHandler());
+
+// Strict Security Middleware with Nonce
+app.use(helmet({
+  hsts: {
+    maxAge: 31536000, // 1 year
+    includeSubDomains: true,
+    preload: true
+  },
+  frameguard: {
+    action: 'deny'
+  },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", (req, res: any) => `'nonce-${res.locals.nonce}'`],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'https:'],
+      connectSrc: ["'self'", 'https://api.openai.com', 'https://*.supabase.co', 'wss://*.supabase.co'],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: [],
+    }
+  }
+}));
+app.use(securityObservability);
 
 const isProduction = process.env.NODE_ENV === 'production';
 const allowedOrigins = process.env.FRONTEND_URL 
@@ -79,6 +127,41 @@ v1Router.get('/health', (req, res) => {
   res.status(200).json({ status: 'healthy', version: 'v1' });
 });
 
+// Readiness probe (Supports Degraded Mode)
+v1Router.get('/ready', async (req, res) => {
+  let dbStatus = 'disconnected';
+  let redisStatus = 'disconnected';
+  
+  try {
+    const prisma = require('./config/db').default;
+    await prisma.$queryRaw`SELECT 1`;
+    dbStatus = 'connected';
+
+    // Check Redis (Non-critical, allows degraded mode)
+    try {
+      const Redis = require('ioredis');
+      const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+      const pong = await redis.ping();
+      if (pong === 'PONG') redisStatus = 'connected';
+      redis.disconnect();
+    } catch (e) {
+      redisStatus = 'failed (degraded)';
+    }
+
+    if (dbStatus === 'connected') {
+      const isDegraded = redisStatus !== 'connected';
+      return res.status(200).json({ 
+        status: isDegraded ? 'degraded' : 'ready', 
+        db: dbStatus, 
+        redis: redisStatus,
+        message: isDegraded ? 'Operational but distributed rate limiting is offline.' : 'Full system operational'
+      });
+    }
+  } catch (err) {
+    res.status(503).json({ status: 'unhealthy', db: dbStatus, redis: redisStatus, error: 'Critical database failure' });
+  }
+});
+
 // Root of v1
 v1Router.get('/', (req, res) => {
   res.status(200).json({ 
@@ -111,6 +194,7 @@ app.get('/', (req, res) => {
 });
 
 // Global Error Handler
+app.use(Sentry.Handlers.errorHandler());
 app.use(errorHandler);
 
 export default app;

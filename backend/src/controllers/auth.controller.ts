@@ -4,6 +4,7 @@ import { randomUUID } from 'crypto';
 import prisma from '../config/db';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt';
 import logger from '../utils/logger';
+import { auditLogger } from '../utils/auditLogger';
 
 // Default tenant UUID — used when no tenant is specified
 const DEFAULT_COMPANY_ID = '00000000-0000-0000-0000-000000000001';
@@ -78,8 +79,8 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     }
 
     const role = user.role || 'USER';
-    const accessToken = generateAccessToken({ id: user.id, role });
-    const refreshToken = generateRefreshToken({ id: user.id });
+    const accessToken = generateAccessToken({ id: user.id, role, company_id: user.companyId });
+    const refreshToken = generateRefreshToken({ id: user.id, company_id: user.companyId });
 
     // Store refresh token
     const expiresAt = new Date();
@@ -91,6 +92,12 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
         userId: user.id,
         expiresAt,
       },
+    });
+
+    await auditLogger.log({
+      userId: user.id,
+      action: 'LOGIN_SUCCESS',
+      metadata: { ip: req.ip }
     });
 
     res.status(200).json({
@@ -118,21 +125,49 @@ export const refreshToken = async (req: Request, res: Response, next: NextFuncti
     const { token } = req.body;
     if (!token) return res.status(401).json({ success: false, message: 'Refresh token required' });
 
-    const storedToken = await prisma.refreshToken.findUnique({ where: { token } });
-    if (!storedToken || storedToken.revoked || storedToken.expiresAt < new Date()) {
-      return res.status(401).json({ success: false, message: 'Invalid or expired refresh token' });
+    // 1. Verify and lookup token
+    const decoded = verifyRefreshToken(token);
+    if (!decoded) return res.status(403).json({ success: false, message: 'Invalid or expired token' });
+
+    const storedToken = await prisma.refreshToken.findUnique({
+      where: { token },
+    });
+
+    if (!storedToken || storedToken.revoked) {
+      return res.status(403).json({ success: false, message: 'Token revoked or invalid' });
     }
 
-    const payload: any = verifyRefreshToken(token);
-    const user = await prisma.users.findUnique({ where: { id: payload.id } });
+    // 2. Revoke the used token immediately
+    await prisma.refreshToken.update({
+      where: { token },
+      data: { revoked: true }
+    });
 
+    // 3. Generate new tokens
+    const user = await prisma.users.findUnique({ where: { id: storedToken.userId } });
     if (!user) return res.status(401).json({ success: false, message: 'User not found' });
 
-    const newAccessToken = generateAccessToken({ id: user.id, role: user.role || 'USER' });
+    const newAccessToken = generateAccessToken({ id: user.id, role: user.role || 'USER', company_id: user.companyId });
+    const newRefreshToken = generateRefreshToken({ id: user.id, company_id: user.companyId });
+
+    // Store the new refresh token
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
+
+    await prisma.refreshToken.create({
+      data: {
+        token: newRefreshToken,
+        userId: user.id,
+        expiresAt,
+      },
+    });
 
     res.status(200).json({
       success: true,
-      data: { accessToken: newAccessToken },
+      data: {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken
+      },
     });
   } catch (error) {
     next(error);
