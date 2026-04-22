@@ -28,44 +28,69 @@ import crypto from 'crypto';
 
 const app: Application = express();
 
+// Initialize Sentry
+Sentry.init({
+  dsn: process.env.SENTRY_DSN || '',
+  integrations: [
+    nodeProfilingIntegration(),
+  ],
+  tracesSampleRate: 1.0,
+  profilesSampleRate: 1.0,
+  environment: process.env.NODE_ENV || 'production'
+});
+
 // Nonce Middleware for CSP
 app.use((req, res, next) => {
   res.locals.nonce = crypto.randomBytes(16).toString('base64');
   next();
 });
 
-// Initialize Sentry
-Sentry.init({
-  dsn: process.env.SENTRY_DSN || '',
-  integrations: [
-    nodeProfilingIntegration(),
-  ],
-  tracesSampleRate: 1.0,
-  profilesSampleRate: 1.0,
-  environment: process.env.NODE_ENV || 'development'
+// Direct Health Checks (Above Rate Limiting for Render Stability)
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'healthy', version: 'v1.1' });
 });
 
-// Initialize Sentry
-Sentry.init({
-  dsn: process.env.SENTRY_DSN || '',
-  integrations: [
-    nodeProfilingIntegration(),
-  ],
-  tracesSampleRate: 1.0,
-  profilesSampleRate: 1.0,
-  environment: process.env.NODE_ENV || 'development'
+app.get('/api/ready', async (req, res) => {
+  let dbStatus = 'disconnected';
+  let redisStatus = 'disconnected';
+  
+  try {
+    const prisma = require('./config/db').default;
+    await prisma.$queryRaw`SELECT 1`;
+    dbStatus = 'connected';
+
+    try {
+      const Redis = require('ioredis');
+      const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+      const pong = await redis.ping();
+      if (pong === 'PONG') redisStatus = 'connected';
+      redis.disconnect();
+    } catch (e) {
+      redisStatus = 'failed (degraded)';
+    }
+
+    if (dbStatus === 'connected') {
+      const isDegraded = redisStatus !== 'connected';
+      return res.status(200).json({ 
+        status: isDegraded ? 'degraded' : 'ready', 
+        db: dbStatus, 
+        redis: redisStatus,
+        message: isDegraded ? 'Operational but distributed rate limiting is offline.' : 'Full system operational'
+      });
+    }
+  } catch (err) {
+    res.status(503).json({ status: 'unhealthy', db: dbStatus, redis: redisStatus, error: 'Critical database failure' });
+  }
 });
 
 // Strict Security Middleware with Nonce
 app.use(helmet({
   hsts: {
-    maxAge: 31536000, // 1 year
+    maxAge: 31536000,
     includeSubDomains: true,
     preload: true
   },
-  frameguard: {
-    action: 'deny'
-  },
+  frameguard: { action: 'deny' },
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
@@ -88,15 +113,11 @@ const allowedOrigins = process.env.FRONTEND_URL
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    
-    // In production, be strict. In development, allow localhost and Vercel previews.
     const isAllowed = allowedOrigins.includes(origin) || 
                       (!isProduction && (origin.endsWith('.vercel.app') || origin.includes('localhost')));
-                      
     if (isAllowed) {
       callback(null, true);
     } else {
-      console.warn(`CORS blocked for origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -104,6 +125,7 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-API-Key']
 }));
+
 app.use(express.json());
 app.use(morgan('dev'));
 app.use(contextMiddleware);
