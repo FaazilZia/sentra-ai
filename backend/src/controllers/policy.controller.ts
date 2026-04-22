@@ -1,20 +1,20 @@
 import { Response, NextFunction } from 'express';
 import prisma from '../config/db';
-import { resolveCompanyId } from '../utils/company';
+import { resolveOrganizationId } from '../utils/company';
 
 export const getPolicies = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const companyId = req.user.companyId; 
+    const organizationId = req.user.organizationId; 
     
-    // If companyId is missing from token (e.g. fresh register), find it from user
-    let actualCompanyId = companyId;
-    if (!actualCompanyId) {
+    // If organizationId is missing from token (e.g. fresh register), find it from user
+    let actualOrganizationId = organizationId;
+    if (!actualOrganizationId) {
       const user = await prisma.users.findUnique({ where: { id: req.user.id } });
-      actualCompanyId = user?.companyId;
+      actualOrganizationId = user?.organizationId;
     }
 
     const policies = await prisma.policies.findMany({
-      where: { companyId: actualCompanyId },
+      where: { organizationId: actualOrganizationId },
       orderBy: { priority: 'asc' },
     });
 
@@ -50,20 +50,20 @@ export const getPolicyHealth = async (req: any, res: Response, next: NextFunctio
 export const getPolicyVersions = async (req: any, res: Response, next: NextFunction) => {
   try {
     const policyId = String(req.params['policyId'] ?? '');
-    const companyId = await resolveCompanyId(req);
-    if (!companyId) {
+    const organizationId = await resolveOrganizationId(req);
+    if (!organizationId) {
       return res.status(200).json({ success: true, data: [] });
     }
 
     const policy = await prisma.policies.findFirst({
-      where: { id: policyId, companyId: companyId },
+      where: { id: policyId, organizationId: organizationId },
     });
     if (!policy) {
       return res.status(404).json({ success: false, message: 'Policy not found' });
     }
 
     const versions = await prisma.policy_versions.findMany({
-      where: { policy_id: policyId, companyId: companyId },
+      where: { policy_id: policyId, organizationId: organizationId },
       orderBy: { version: 'desc' },
     });
 

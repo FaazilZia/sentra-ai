@@ -1,30 +1,30 @@
 import prisma from '../config/db';
 
 export class InventoryService {
-  static async listAgents(companyId: string) {
+  static async listAgents(organizationId: string) {
     return await prisma.ai_agents.findMany({
-      where: { companyId },
+      where: { organizationId },
       include: {
         dependencies: true,
       },
     });
   }
 
-  static async getAgent(id: string, companyId: string) {
+  static async getAgent(id: string, organizationId: string) {
     return await prisma.ai_agents.findFirst({
-      where: { id, companyId },
+      where: { id, organizationId },
       include: {
         dependencies: true,
       },
     });
   }
 
-  static async createAgent(companyId: string, data: any) {
+  static async createAgent(organizationId: string, data: any) {
     const { name, model, permissions, status, dependencies } = data;
     
     return await prisma.ai_agents.create({
       data: {
-        companyId,
+        organizationId,
         name,
         model,
         permissions,
@@ -36,7 +36,7 @@ export class InventoryService {
     });
   }
 
-  static async updateAgent(id: string, companyId: string, data: any) {
+  static async updateAgent(id: string, organizationId: string, data: any) {
     const { name, model, permissions, status, dependencies } = data;
 
     // Handle dependency updates separately or using nested writes if supported
@@ -52,9 +52,9 @@ export class InventoryService {
     });
   }
 
-  static async deleteAgent(id: string, companyId: string) {
+  static async deleteAgent(id: string, organizationId: string) {
     return await prisma.ai_agents.deleteMany({
-      where: { id, companyId },
+      where: { id, organizationId },
     });
   }
 

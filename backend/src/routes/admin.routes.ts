@@ -16,7 +16,7 @@ router.get('/dashboard', authenticate, authorizeRoles('ADMIN'), (req, res) => {
 
 router.get('/security-metrics', authenticate, authorizeRoles('ADMIN'), async (req: any, res) => {
   try {
-    const companyId = req.user.companyId;
+    const organizationId = req.user.organizationId;
     const prisma = require('../config/db').default;
 
     const now = new Date();
@@ -32,11 +32,11 @@ router.get('/security-metrics', authenticate, authorizeRoles('ADMIN'), async (re
     });
 
     const policyEnforcements = await prisma.interception_logs.count({
-      where: { company_id: companyId, decision: { in: ['BLOCK', 'MODIFY'] } }
+      where: { organizationId: organizationId, decision: { in: ['BLOCK', 'MODIFY'] } }
     });
 
     const lastIncident = await prisma.incidents.findFirst({
-      where: { companyId },
+      where: { organizationId },
       orderBy: { created_at: 'desc' },
       select: { created_at: true }
     });
@@ -77,12 +77,12 @@ router.get('/security-metrics', authenticate, authorizeRoles('ADMIN'), async (re
 // Demo Feature: Simulate Attack
 router.post('/simulate-attack', authenticate, authorizeRoles('ADMIN'), async (req: any, res) => {
   try {
-    const companyId = req.user.companyId;
+    const organizationId = req.user.organizationId;
     const prisma = require('../config/db').default;
 
     // 1. Create a burst of high-risk activity logs
     const mockLogs = Array.from({ length: 15 }).map(() => ({
-      companyId,
+      organizationId,
       agent: 'External Agent (Suspicious)',
       action: 'Unauthorized Data Access Attempt',
       status: 'blocked',

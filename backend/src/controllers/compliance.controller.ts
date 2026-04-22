@@ -23,7 +23,7 @@ export const postFixTasks = async (req: any, res: Response, next: NextFunction) 
     const tasks = await ComplianceService.createFixTasks(featureId, actionPlan);
     
     // Log audit
-    await ComplianceService.logAudit(req.user.id, 'CREATE_FIX_TASKS', featureId, { count: tasks.length });
+    await ComplianceService.logAudit(req.user.id, req.user.organizationId, 'CREATE_FIX_TASKS', featureId, { count: tasks.length });
 
     res.status(201).json({ success: true, data: tasks });
   } catch (error) {
@@ -100,7 +100,8 @@ export const postMarkAlertRead = async (req: any, res: Response, next: NextFunct
 export const getAuditLogs = async (req: any, res: Response, next: NextFunction) => {
   try {
     const { featureId } = req.query;
-    const logs = await ComplianceService.getAuditLogs(featureId as string);
+    const organizationId = req.user.organizationId;
+    const logs = await ComplianceService.getAuditLogs(organizationId, featureId as string);
     res.status(200).json({ success: true, data: logs });
   } catch (error) {
     next(error);

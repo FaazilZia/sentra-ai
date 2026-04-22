@@ -1,14 +1,15 @@
 import prisma from '../config/db';
 import { makeDecision, Decision } from './decisionEngine';
+import { io } from '../server';
 
 export type CheckPermissionResult = Decision;
 
-export const checkPermission = async (agent: string, action: string, companyId: string, metadata: any = {}): Promise<CheckPermissionResult> => {
-  return await makeDecision(agent, action, companyId, metadata);
+export const checkPermission = async (agent: string, action: string, organizationId: string, metadata: any = {}): Promise<CheckPermissionResult> => {
+  return await makeDecision(agent, action, organizationId, metadata);
 };
 
 export interface LogActivityData {
-  companyId: string;
+  organizationId: string;
   agent: string;
   action: string;
   status: string;
@@ -30,9 +31,9 @@ export interface LogActivityData {
 }
 
 export const logActivity = async (data: LogActivityData) => {
-  return await prisma.logs.create({
+  const log = await prisma.logs.create({
     data: {
-      companyId: data.companyId,
+      organizationId: data.organizationId,
       agent: data.agent,
       action: data.action,
       status: data.status,
@@ -53,11 +54,24 @@ export const logActivity = async (data: LogActivityData) => {
       approvedBy: data.approvedBy || null
     }
   });
+
+  // Real-time Update: Emit to the specific organization room
+  if (io) {
+    io.to(`company_${data.organizationId}`).emit('new_activity', {
+      ...log,
+      // Map fields for frontend consistency if needed
+      agent_id: log.agent,
+      risk_score: log.risk,
+      created_at: log.timestamp
+    });
+  }
+
+  return log;
 };
 
-export const calculateSecurityScore = async (companyId: string) => {
+export const calculateSecurityScore = async (organizationId: string) => {
   const activityLogs = await prisma.logs.findMany({
-    where: { companyId: companyId },
+    where: { organizationId: organizationId },
     take: 100,
     orderBy: { timestamp: 'desc' }
   });

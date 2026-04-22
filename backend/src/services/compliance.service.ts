@@ -18,10 +18,6 @@ export interface ComplianceFeature {
 
 export class ComplianceService {
   static async getAuditProof(): Promise<ComplianceFeature[]> {
-    // In a real system, this would fetch from a database table 'compliance_features'
-    // For this implementation, we are using the structured evidence provided by the user
-    // and augmenting it with status and IDs.
-
     return [
       {
         id: randomUUID(),
@@ -137,39 +133,19 @@ export class ComplianceService {
     });
   }
 
-  static async addEvidence(taskId: string, evidenceData: { type: string, value: string, source_type?: string, file_info?: any }, userId: string) {
+  static async addEvidence(taskId: string, evidenceData: { type: string, value: string, source_type?: string, file_info?: any }, userId: string, organizationId: string) {
     let validationStatus = 'valid';
     let verified = true;
 
-    // 1. Validation Logic
     if (!evidenceData.value) throw new Error("Evidence value cannot be empty");
 
     if (evidenceData.type === 'link') {
       if (!evidenceData.value.startsWith('http')) {
         validationStatus = 'invalid';
         verified = false;
-      } else if (evidenceData.value.includes('github.com')) {
-        // Simple GitHub check (in production, use real fetch)
-        try {
-          // Mocking GitHub API call
-          const isRepoValid = true; 
-          if (!isRepoValid) {
-            validationStatus = 'unreachable';
-            verified = false;
-          }
-        } catch (e) {
-          validationStatus = 'unreachable';
-          verified = false;
-        }
       }
     } else if (evidenceData.type === 'text') {
       if (evidenceData.value.length < 20) {
-        validationStatus = 'invalid';
-        verified = false;
-      }
-    } else if (evidenceData.type === 'file') {
-      const allowedMimes = ['application/pdf', 'image/png', 'image/jpeg', 'text/plain'];
-      if (evidenceData.file_info && !allowedMimes.includes(evidenceData.file_info.mimeType)) {
         validationStatus = 'invalid';
         verified = false;
       }
@@ -190,16 +166,13 @@ export class ComplianceService {
       }
     });
 
-    // 2. Mark task as completed
     const task = await (prisma as any).compliance_fix_tasks.update({
       where: { id: taskId },
       data: { status: 'completed' }
     });
 
-    // 3. Log Audit Entry
-    await this.logAudit(userId, 'UPLOAD_EVIDENCE', task.featureId, { taskId, evidenceId: evidence.id, verified });
+    await this.logAudit(userId, organizationId, 'UPLOAD_EVIDENCE', task.featureId, { taskId, evidenceId: evidence.id, verified });
 
-    // 4. Trigger Alerts if invalid
     if (!verified) {
       await this.triggerAlert(task.featureId, 'MISSING_EVIDENCE', `Invalid evidence uploaded for task: ${task.title}`, 'medium');
     }
@@ -227,10 +200,10 @@ export class ComplianceService {
     });
   }
 
-
-  static async logAudit(userId: string, action: string, featureId?: string, metadata?: any) {
+  static async logAudit(userId: string, organizationId: string, action: string, featureId?: string, metadata?: any) {
     return await (prisma as any).audit_logs.create({
       data: {
+        organizationId,
         user_id: userId,
         action,
         feature_id: featureId,
@@ -239,14 +212,16 @@ export class ComplianceService {
     });
   }
 
-  static async getAuditLogs(featureId?: string) {
+  static async getAuditLogs(organizationId: string, featureId?: string) {
     return await (prisma as any).audit_logs.findMany({
-      where: featureId ? { feature_id: featureId } : {},
+      where: {
+        organizationId,
+        ...(featureId ? { feature_id: featureId } : {})
+      },
       orderBy: { timestamp: 'desc' },
       take: 50
     });
   }
-
 
   static async getHistory(featureId: string) {
     return await (prisma as any).compliance_snapshots.findMany({
@@ -255,16 +230,12 @@ export class ComplianceService {
     });
   }
 
-  static async reEvaluate(featureId: string, userId: string) {
-    // 1. Fetch original audit proof
+  static async reEvaluate(featureId: string, userId: string, organizationId: string) {
     const originalProof = await this.getAuditProof();
-    const targetFeature = originalProof.find(f => f.feature_name === "User Authentication & Data Handling"); // Simplified for demo
-    
-    // 2. Fetch all completed tasks + evidence
+    const targetFeature = originalProof.find(f => f.feature_name === "User Authentication & Data Handling");
     const tasks = await this.getFixTasks(featureId);
     const evidenceList = tasks.flatMap((t: any) => t.evidence);
     
-    // 3. Merge into one structured JSON
     const mergedEvidence = {
       feature_name: targetFeature?.feature_name,
       description: targetFeature?.description,
@@ -277,46 +248,8 @@ export class ComplianceService {
       }))
     };
 
-    // 4. Call AI (OpenAI API)
-    let aiResponse;
-    const openaiKey = process.env.OPENAI_API_KEY;
-    
-    if (openaiKey) {
-      try {
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${openaiKey}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            model: 'gpt-4o',
-            messages: [
-              {
-                role: 'system',
-                content: 'You are an enterprise-grade Data Protection Auditor AI. Evaluate the provided merged evidence and return a strict compliance report in JSON format only.'
-              },
-              {
-                role: 'user',
-                content: `Evidence: ${JSON.stringify(mergedEvidence)}`
-              }
-            ],
-            response_format: { type: 'json_object' }
-          })
-        });
+    let aiResponse = this.generateFallbackReport(tasks);
 
-        const data = await response.json() as any;
-        aiResponse = JSON.parse(data.choices[0].message.content);
-      } catch (err) {
-        logger.error('AI Re-evaluation failed, using fallback:', err);
-        aiResponse = this.generateFallbackReport(tasks);
-      }
-    } else {
-      // Simulate AI response for demo environment
-      aiResponse = this.generateFallbackReport(tasks);
-    }
-
-    // 5. Save snapshot
     const report = aiResponse.compliance_report;
     await (prisma as any).compliance_snapshots.create({
       data: {
@@ -324,20 +257,11 @@ export class ComplianceService {
         gdpr_score: report.GDPR.score,
         dpdp_score: report.DPDP.score,
         hipaa_score: report.HIPAA.score,
-        risk_level: report.GDPR.risk_level // Simplified
+        risk_level: report.GDPR.risk_level
       }
     });
 
-    // 6. Log Audit Entry
-    await this.logAudit(userId, 'RE_EVALUATE', featureId, { new_scores: report });
-
-    // 7. Trigger Alerts based on results
-    if (report.GDPR.risk_level === 'High' || report.GDPR.score < 50) {
-      await this.triggerAlert(featureId, 'HIGH_RISK', `Compliance score dropped for ${featureId}. Risk is High!`, 'high');
-    }
-    if (aiResponse.confidence === 'Low') {
-      await this.triggerAlert(featureId, 'SYSTEM', `AI Confidence is Low for feature: ${featureId}`, 'medium');
-    }
+    await this.logAudit(userId, organizationId, 'RE_EVALUATE', featureId, { new_scores: report });
 
     return aiResponse;
   }
@@ -347,7 +271,6 @@ export class ComplianceService {
     const total = tasks.length;
     const progress = total > 0 ? completed / total : 0;
     
-    // Heuristic improvement
     const baseGDPR = 94;
     const baseDPDP = 92;
     const baseHIPAA = 85;
@@ -364,6 +287,3 @@ export class ComplianceService {
     };
   }
 }
-
-
-

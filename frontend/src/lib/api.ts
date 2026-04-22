@@ -39,7 +39,7 @@ export interface AuthUser {
   email: string;
   fullName: string;
   role: string;
-  companyId?: string;
+  organizationId?: string;
   is_active?: boolean;
   created_at?: string;
   updated_at?: string;
@@ -272,8 +272,8 @@ export function fetchCurrentUser(): Promise<AuthUser> {
   return apiRequest<AuthUser>('/user/me');
 }
 
-export function fetchCompany(companyId: string): Promise<any> {
-  return apiRequest<any>(`/companies/${companyId}`);
+export function fetchCompany(organizationId: string): Promise<any> {
+  return apiRequest<any>(`/organizations/${organizationId}`);
 }
 
 /**

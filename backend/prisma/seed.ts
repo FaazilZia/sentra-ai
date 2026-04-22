@@ -21,7 +21,7 @@ async function getPrisma() {
   }
 }
 
-const DEFAULT_COMPANY_ID = '00000000-0000-0000-0000-000000000001';
+const DEFAULT_ORGANIZATION_ID = '00000000-0000-0000-0000-000000000001';
 const ADMIN_USER_ID = '00000000-0000-0000-0000-000000000002';
 
 async function main() {
@@ -29,11 +29,11 @@ async function main() {
   const prisma = await getPrisma();
 
   // 1. Ensure default company
-  const company = await prisma.companies.upsert({
-    where: { id: DEFAULT_COMPANY_ID },
+  const company = await prisma.organizations.upsert({
+    where: { id: DEFAULT_ORGANIZATION_ID },
     update: {},
     create: {
-      id: DEFAULT_COMPANY_ID,
+      id: DEFAULT_ORGANIZATION_ID,
       name: 'Sentra AI',
       slug: 'sentra-ai',
       is_active: true,
@@ -55,7 +55,7 @@ async function main() {
       password_hash: passwordHash,
       role: 'ADMIN',
       is_active: true,
-      companyId: DEFAULT_COMPANY_ID,
+      organizationId: DEFAULT_ORGANIZATION_ID,
     },
   });
   console.log(`✅ Admin user: ${user.email}`);
@@ -78,7 +78,7 @@ async function main() {
         blocked_actions: ['send_email', 'external_api', 'delete_record']
       },
       obligations: {},
-      companyId: DEFAULT_COMPANY_ID
+      organizationId: DEFAULT_ORGANIZATION_ID
     },
     {
       id: '00000000-0000-0000-0000-000000000004',
@@ -95,7 +95,7 @@ async function main() {
         blocked_actions: ['external_api', 'read_pii']
       },
       obligations: {},
-      companyId: DEFAULT_COMPANY_ID
+      organizationId: DEFAULT_ORGANIZATION_ID
     }
   ];
 
@@ -119,7 +119,7 @@ async function main() {
     },
     create: {
       id: '00000000-0000-0000-0000-000000000005',
-      companyId: DEFAULT_COMPANY_ID,
+      organizationId: DEFAULT_ORGANIZATION_ID,
       name: 'SDK Testing Key',
       key_prefix: 'demo',
       key_hash: hashedApiKey,

@@ -6,16 +6,16 @@ import { enqueueLog } from '../services/queue.service';
  * Ensures every action is evaluated against policy and risk before execution.
  */
 export async function interceptAction(input: any, callback: () => Promise<any>) {
-  const { agent, action, companyId, metadata, requestId } = input;
+  const { agent, action, organizationId, metadata, requestId } = input;
   const startTime = Date.now();
 
   // 1. Get Decision from Engine
-  const decision = await makeDecision(agent, action, companyId, metadata);
+  const decision = await makeDecision(agent, action, organizationId, metadata);
 
   // 2. If blocked, log asynchronously and return early
   if (decision.status === 'blocked') {
     await enqueueLog({
-      companyId,
+      organizationId,
       agent,
       action,
       status: decision.status,
@@ -42,7 +42,7 @@ export async function interceptAction(input: any, callback: () => Promise<any>) 
 
   // 4. Log the allowed action result asynchronously
   await enqueueLog({
-    companyId,
+    organizationId,
     agent,
     action,
     status: decision.status,

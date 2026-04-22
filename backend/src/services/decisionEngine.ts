@@ -38,40 +38,68 @@ const IMPACT_MAP: Record<string, string> = {
   'update_config': 'Prevented system changes'
 };
 
-export const makeDecision = async (agent: string, action: string, companyId: string, metadata: any = {}): Promise<Decision> => {
+export const makeDecision = async (agent: string, action: string, organizationId: string, metadata: any = {}): Promise<Decision> => {
   const lowercaseAction = action.toLowerCase();
+  const startTime = performance.now();
   
-  // 1. Evaluate Risk
-  const riskResult = evaluateRisk(action, metadata);
+  // 1. Evaluate Policy First (User Request: Policy -> Risk -> Decision)
+  const policyResult = await evaluatePolicy(agent, action, organizationId);
   
-  // 2. Evaluate Policy
-  const policyResult = await evaluatePolicy(agent, action, companyId);
-
-  // 3. Synthesize Decision
   let status: 'allowed' | 'blocked' = policyResult.allowed ? 'allowed' : 'blocked';
+  let riskScore: 'low' | 'medium' | 'high' = 'low';
   let reason = policyResult.reason || (status === 'allowed' ? 'Allowed: Verified by policy' : 'Blocked: Not allowed by policy');
+
+  // Short-circuit: Skip Risk Engine if Policy Engine finds a hard Block rule
+  if (status === 'blocked') {
+    const endTime = performance.now();
+    const duration = endTime - startTime;
+    console.log(`[LATENCY] Decision (Short-circuit): ${duration.toFixed(2)}ms | Agent: ${agent} | Action: ${action} | Status: BLOCKED`);
+    
+    return {
+      status,
+      risk: 'high', // Assume high risk if blocked by policy for safety
+      reason,
+      impact: (policyResult as any).impact || IMPACT_MAP[lowercaseAction] || 'Protects system from unauthorized access',
+      compliance: (policyResult as any).compliance || COMPLIANCE_MAP[lowercaseAction] || ['Internal Governance Policy'],
+      explanation: maskPII((policyResult as any).explanation || `Sentra prevented "${lowercaseAction}" due to a policy violation.`),
+      confidence: 0.99,
+      timeline: [
+        { step: 'Agent Intent', status: 'complete', icon: 'zap', description: `AI Agent ${agent} initiated ${action}` },
+        { step: 'Compliance Check', status: 'complete', icon: 'shield', description: 'Blocked by hard policy rule' },
+        { step: 'Governance Engine', status: 'complete', icon: 'layers', description: 'Final Decision: BLOCKED' }
+      ]
+    };
+  }
+
+  // 2. Evaluate Risk (Only if allowed by policy)
+  const riskResult = evaluateRisk(action, metadata);
+  riskScore = riskResult.score;
 
   // Enterprise Control: 2-Step Verification for High Risk
   let isPendingApproval = false;
-  if (status === 'allowed' && riskResult.score === 'high') {
+  if (status === 'allowed' && riskScore === 'high') {
     status = 'blocked'; // Block by default if high risk
     isPendingApproval = true;
     reason = 'Pending review: 2-step verification required';
   }
 
   // Fail-closed for high risk if no policy matched
-  if (status === 'allowed' && riskResult.score === 'high' && !policyResult.matchedPolicy) {
+  if (status === 'allowed' && riskScore === 'high' && !policyResult.matchedPolicy) {
     status = 'blocked';
     reason = 'Blocked: Action is high risk and has no policy';
   }
+
+  const endTime = performance.now();
+  const duration = endTime - startTime;
+  console.log(`[LATENCY] Decision (Full): ${duration.toFixed(2)}ms | Agent: ${agent} | Action: ${action} | Status: ${status.toUpperCase()}`);
 
   const impact = (policyResult as any).impact || IMPACT_MAP[lowercaseAction] || 'Protects system from unauthorized access';
   const compliance = (policyResult as any).compliance || COMPLIANCE_MAP[lowercaseAction] || ['Internal Governance Policy'];
   const confidence = Number((Math.random() * (0.98 - 0.88) + 0.88).toFixed(2));
   
   const explanation = maskPII((policyResult as any).explanation || (status === 'blocked' 
-    ? `Sentra prevented "${lowercaseAction}" because it triggered a ${riskResult.score}-risk pattern and violated active compliance rules.`
-    : `Action "${lowercaseAction}" allowed. Risk is ${riskResult.score} and it aligns with internal policy boundaries.`));
+    ? `Sentra prevented "${lowercaseAction}" because it triggered a ${riskScore}-risk pattern and violated active compliance rules.`
+    : `Action "${lowercaseAction}" allowed. Risk is ${riskScore} and it aligns with internal policy boundaries.`));
 
   const timeline = [
     { step: 'Agent Intent', status: 'complete', icon: 'zap', description: `AI Agent ${agent} initiated ${action}` },
@@ -81,7 +109,7 @@ export const makeDecision = async (agent: string, action: string, companyId: str
 
   return {
     status,
-    risk: riskResult.score,
+    risk: riskScore,
     reason,
     impact,
     compliance,

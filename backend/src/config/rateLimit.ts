@@ -14,7 +14,7 @@ if (redisUrl) {
 }
 
 const getStore = (prefix: string) => {
-  if (redisClient) {
+  if (redisClient && redisClient.status === 'ready') {
     return new RedisStore({
       // @ts-ignore
       sendCommand: (...args: string[]) => redisClient!.call(args[0], ...args.slice(1)),
@@ -34,7 +34,12 @@ export const authRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: getStore('rl:auth:'),
-  keyGenerator: (req) => `${req.ip}-${req.body.email || 'anon'}` // IP + User combination
+  keyGenerator: (req) => {
+    return `${req.ip}-${req.body.email || 'anon'}`;
+  },
+  validate: {
+    ipKeyGenerator: false // We explicitly handle our own key generation
+  }
 });
 
 export const apiRateLimiter = rateLimit({

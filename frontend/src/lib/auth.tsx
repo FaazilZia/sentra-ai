@@ -13,7 +13,7 @@ export interface AppUser {
   fullName: string;
   full_name?: string; // Legacy alias for compatibility
   role: string;
-  companyId?: string;
+  organizationId?: string;
   is_active?: boolean;
   created_at?: string;
   updated_at?: string;
@@ -55,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: 'admin@sentra.ai',
         fullName: 'Demo Administrator',
         role: 'admin',
+        organizationId: 'demo-org-id',
         created_at: new Date().toISOString(),
         is_active: true,
       } as any);

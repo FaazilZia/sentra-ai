@@ -7,16 +7,16 @@ import logger from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
 
 // Default tenant UUID — used when no tenant is specified
-const DEFAULT_COMPANY_ID = '00000000-0000-0000-0000-000000000001';
+const DEFAULT_ORGANIZATION_ID = '00000000-0000-0000-0000-000000000001';
 
 // Ensure default company exists
 async function ensureDefaultCompany() {
   try {
-    const existing = await prisma.companies.findUnique({ where: { id: DEFAULT_COMPANY_ID } });
+    const existing = await prisma.organizations.findUnique({ where: { id: DEFAULT_ORGANIZATION_ID } });
     if (!existing) {
-      await prisma.companies.create({
+      await prisma.organizations.create({
         data: {
-          id: DEFAULT_COMPANY_ID,
+          id: DEFAULT_ORGANIZATION_ID,
           name: 'Sentra AI',
           slug: 'sentra-ai',
           is_active: true,
@@ -50,7 +50,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
         full_name: fullName,
         role: 'USER', // Always default to USER for public registration
         is_active: true,
-        companyId: DEFAULT_COMPANY_ID,
+        organizationId: DEFAULT_ORGANIZATION_ID,
       },
     });
 
@@ -79,8 +79,8 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     }
 
     const role = user.role || 'USER';
-    const accessToken = generateAccessToken({ id: user.id, role, company_id: user.companyId });
-    const refreshToken = generateRefreshToken({ id: user.id, company_id: user.companyId });
+    const accessToken = generateAccessToken({ id: user.id, role, organizationId: user.organizationId });
+    const refreshToken = generateRefreshToken({ id: user.id, organizationId: user.organizationId });
 
     // Store refresh token
     const expiresAt = new Date();
@@ -110,7 +110,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
           email: user.email,
           fullName: user.full_name,
           role,
-          companyId: user.companyId,
+          organizationId: user.organizationId,
           is_active: user.is_active,
         },
       },
@@ -147,8 +147,8 @@ export const refreshToken = async (req: Request, res: Response, next: NextFuncti
     const user = await prisma.users.findUnique({ where: { id: storedToken.userId } });
     if (!user) return res.status(401).json({ success: false, message: 'User not found' });
 
-    const newAccessToken = generateAccessToken({ id: user.id, role: user.role || 'USER', company_id: user.companyId });
-    const newRefreshToken = generateRefreshToken({ id: user.id, company_id: user.companyId });
+    const newAccessToken = generateAccessToken({ id: user.id, role: user.role || 'USER', organizationId: user.organizationId });
+    const newRefreshToken = generateRefreshToken({ id: user.id, organizationId: user.organizationId });
 
     // Store the new refresh token
     const expiresAt = new Date();
@@ -186,7 +186,7 @@ export const getMe = async (req: any, res: Response, next: NextFunction) => {
         email: user.email,
         fullName: user.full_name,
         role: user.role || 'USER',
-        companyId: user.companyId,
+        organizationId: user.organizationId,
         is_active: user.is_active,
       },
     });

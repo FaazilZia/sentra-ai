@@ -142,7 +142,7 @@ v1Router.use('/user', userRoutes);
 v1Router.use('/incidents', incidentRoutes);
 v1Router.use('/consent', consentRoutes);
 v1Router.use('/policies', policyRoutes);
-v1Router.use('/companies', companyRoutes);
+v1Router.use('/organizations', companyRoutes);
 v1Router.use('/ai', aiRoutes);
 v1Router.use('/connectors', connectorRoutes);
 v1Router.use('/inventory', inventoryRoutes);
@@ -196,7 +196,7 @@ v1Router.get('/', (req, res) => {
   res.status(200).json({ 
     message: 'Sentra AI API v1 Operational',
     status: 'ONLINE',
-    company_centric: true 
+    organization_centric: true 
   });
 });
 
@@ -207,7 +207,7 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/policies', policyRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/incidents', incidentRoutes);
-app.use('/api/companies', companyRoutes);
+app.use('/api/organizations', companyRoutes);
 app.use('/api/connectors', connectorRoutes);
 app.use('/api/consent', consentRoutes);
 app.use('/api/user', userRoutes);

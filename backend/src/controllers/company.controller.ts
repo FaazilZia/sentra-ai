@@ -1,16 +1,16 @@
 import { Response, NextFunction } from 'express';
 import prisma from '../config/db';
-import { resolveCompanyId } from '../utils/company';
+import { resolveOrganizationId } from '../utils/company';
 
 export const getTenantById = async (req: any, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const requestCompanyId = await resolveCompanyId(req);
-    if (requestCompanyId && id !== requestCompanyId) {
+    const requestOrganizationId = await resolveOrganizationId(req);
+    if (requestOrganizationId && id !== requestOrganizationId) {
       return res.status(403).json({ success: false, message: 'Forbidden' });
     }
 
-    const company = await prisma.companies.findUnique({
+    const company = await prisma.organizations.findUnique({
       where: { id },
     });
 
