@@ -48,3 +48,46 @@ export const enqueueLog = async (data: any) => {
     await logActivity(data); // Fallback
   }
 };
+
+// --- Scheduled Data Retention (Audit Compliance) ---
+export const retentionQueue = new Queue('data-retention', { connection });
+
+const retentionWorker = new Worker(
+  'data-retention',
+  async () => {
+    try {
+      const prisma = require('../config/db').default;
+      const ninetyDaysAgo = new Date();
+      ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+      // Purge old alerts
+      const deletedAlerts = await prisma.alerts.deleteMany({
+        where: { created_at: { lt: ninetyDaysAgo } }
+      });
+
+      // Purge old interception logs
+      const deletedLogs = await prisma.interception_logs.deleteMany({
+        where: { timestamp: { lt: ninetyDaysAgo } }
+      });
+
+      logger.info(`Data Retention Cleanup: Deleted ${deletedAlerts.count} alerts and ${deletedLogs.count} interception logs older than 90 days.`);
+    } catch (error) {
+      logger.error('Retention Worker Error:', error);
+    }
+  },
+  { connection }
+);
+
+// Schedule it to run every day at midnight
+export const setupScheduledJobs = async () => {
+  try {
+    await retentionQueue.add(
+      'daily-cleanup',
+      {},
+      { repeat: { pattern: '0 0 * * *' } }
+    );
+    logger.info('Scheduled Data Retention Job (Daily)');
+  } catch (err) {
+    logger.warn('Could not schedule retention job (Redis might be offline)', err);
+  }
+};

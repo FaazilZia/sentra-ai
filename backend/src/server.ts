@@ -34,6 +34,11 @@ const startServer = async () => {
   try {
     await initializePrisma();
     logger.info('Database layer initialized');
+
+    // Initialize background jobs (Data Retention, etc.)
+    const { setupScheduledJobs } = require('./services/queue.service');
+    await setupScheduledJobs();
+    logger.info('Background job workers initialized');
     
     httpServer.listen(PORT, () => {
       logger.info(`Server is running on port ${PORT}`);
