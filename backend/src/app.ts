@@ -153,7 +153,7 @@ v1Router.use('/guardrails', guardrailRoutes);
 
 // Health check under v1
 v1Router.get('/health', (req, res) => {
-  res.status(200).json({ status: 'healthy', version: 'v1' });
+  res.status(200).json({ status: 'healthy', version: 'v1.1' });
 });
 
 // Readiness probe (Supports Degraded Mode)
@@ -211,7 +211,6 @@ app.use('/api/companies', companyRoutes);
 app.use('/api/connectors', connectorRoutes);
 app.use('/api/consent', consentRoutes);
 app.use('/api/user', userRoutes);
-app.use('/api/health', (req, res) => res.redirect('/api/v1/health'));
 
 // Root route to check version
 app.get('/', (req, res) => {
