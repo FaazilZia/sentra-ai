@@ -206,8 +206,27 @@ model connectors {
   name           String
   type           String // 'sql', 'gdrive', 's3', 'local'
   config         Json
+  scope          Json? // { buckets: [], tables: [], fileTypes: [], folders: [] }
+  priority       String        @default("medium") // 'high', 'medium', 'low'
   status         String
   last_scan_at   String?
+  
+  // Adaptive Telemetry
+  total_api_calls    Int       @default(0)
+  total_data_scanned BigInt    @default(0)
+  estimated_cost     Float     @default(0)
+  last_confidence    Float     @default(0)
+
+  // Governance & Policy
+  scan_policy        Json?     // { maxDailyCost: number, maxScansPerDay: number, minScanIntervalMinutes: number }
+  daily_cost_total   Float     @default(0)
+  daily_scan_count   Int       @default(0)
+  last_scan_reason   Json?     // { trigger: string, reason: string, state_change: string }
+  
+  // Health & Reliability
+  health_score       Int       @default(100)
+  health_metrics     Json?     // { success_rate: number, avg_latency_ms: number, failure_streak: number }
+  
   created_at     DateTime      @default(now())
   updated_at     DateTime      @default(now())
   organizations  organizations @relation(fields: [organizationId], references: [id])

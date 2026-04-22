@@ -2,8 +2,9 @@
   "compilerOptions": {
     /* Triggering TS Server Refresh */
     "target": "ES2020",
-    "module": "Node16",
-    "moduleResolution": "Node16",
+    "module": "node16",
+    "moduleResolution": "node16",
+    "ignoreDeprecations": "6.0",
     "lib": ["ES2020"],
     "rootDir": ".",
     "outDir": "dist",
@@ -15,6 +16,12 @@
     "declaration": true,
     "noImplicitAny": false,
     "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@prisma/client": ["node_modules/@prisma/client"],
+      ".prisma/client": ["node_modules/.prisma/client"]
+    },
     "types": ["node"]
   },
   "include": ["src/**/*.ts", "prisma/**/*.ts", "prisma.config.ts"],

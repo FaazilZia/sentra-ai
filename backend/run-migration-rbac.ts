@@ -91,14 +91,14 @@ async function main() {
         await client.query(`CREATE POLICY "Users can delete own ${table}" ON "${table}" FOR DELETE TO authenticated USING (${policySql});`);
       } 
       else if (companyOwnedTables.includes(table)) {
-        const policySql = `NULLIF(auth.jwt() ->> 'company_id', '') IS NOT NULL AND (company_id::text = (auth.jwt() ->> 'company_id') OR is_admin(auth.uid()))`;
+        const policySql = `NULLIF(auth.jwt() ->> 'organizationId', '') IS NOT NULL AND (organization_id::text = (auth.jwt() ->> 'organizationId') OR is_admin(auth.uid()))`;
         await client.query(`CREATE POLICY "Users can select company ${table}" ON "${table}" FOR SELECT TO authenticated USING (${policySql});`);
         await client.query(`CREATE POLICY "Users can insert company ${table}" ON "${table}" FOR INSERT TO authenticated WITH CHECK (${policySql});`);
         await client.query(`CREATE POLICY "Users can update company ${table}" ON "${table}" FOR UPDATE TO authenticated USING (${policySql}) WITH CHECK (${policySql});`);
         await client.query(`CREATE POLICY "Users can delete company ${table}" ON "${table}" FOR DELETE TO authenticated USING (${policySql});`);
       }
       else if (table === 'companies') {
-        const policySql = `NULLIF(auth.jwt() ->> 'company_id', '') IS NOT NULL AND (id::text = (auth.jwt() ->> 'company_id') OR is_admin(auth.uid()))`;
+        const policySql = `NULLIF(auth.jwt() ->> 'organizationId', '') IS NOT NULL AND (id::text = (auth.jwt() ->> 'organizationId') OR is_admin(auth.uid()))`;
         await client.query(`CREATE POLICY "Users can select own company" ON "companies" FOR SELECT TO authenticated USING (${policySql});`);
       }
       else {

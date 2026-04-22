@@ -4,6 +4,8 @@ import { Server } from 'socket.io';
 import app from './app';
 import logger from './utils/logger';
 import prisma, { initializePrisma } from './config/db';
+import { setupScheduledJobs } from './services/queue.service';
+import { setupConnectorWorkers } from './workers/worker.manager';
 
 const PORT = process.env.PORT || 3000;
 const httpServer = createServer(app);
@@ -35,10 +37,9 @@ const startServer = async () => {
     await initializePrisma();
     logger.info('Database layer initialized');
 
-    // Initialize background jobs (Data Retention, etc.)
-    const { setupScheduledJobs } = require('./services/queue.service');
-    setupScheduledJobs().catch(err => logger.warn('Background jobs failed to initialize', err));
-    logger.info('Background job workers initialized (Async)');
+    // Initialize Background Workers & Schedules
+    setupConnectorWorkers();
+    await setupScheduledJobs();
     
     httpServer.listen(PORT, () => {
       logger.info(`Server is running on port ${PORT}`);
