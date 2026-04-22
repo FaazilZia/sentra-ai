@@ -2,7 +2,7 @@ import { Response, NextFunction } from 'express';
 import prisma from '../config/db';
 import { resolveOrganizationId } from '../utils/company';
 
-export const getTenantById = async (req: any, res: Response, next: NextFunction) => {
+export const getOrganizationById = async (req: any, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const requestOrganizationId = await resolveOrganizationId(req);
@@ -15,7 +15,7 @@ export const getTenantById = async (req: any, res: Response, next: NextFunction)
     });
 
     if (!company) {
-      return res.status(404).json({ success: false, message: 'Company not found' });
+      return res.status(404).json({ success: false, message: 'Organization not found' });
     }
 
     res.status(200).json({

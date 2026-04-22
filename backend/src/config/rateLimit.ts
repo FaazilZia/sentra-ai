@@ -36,9 +36,6 @@ export const authRateLimiter = rateLimit({
   store: getStore('rl:auth:'),
   keyGenerator: (req) => {
     return `${req.ip}-${req.body.email || 'anon'}`;
-  },
-  validate: {
-    ipKeyGenerator: false // We explicitly handle our own key generation
   }
 });
 

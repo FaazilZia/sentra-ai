@@ -4,11 +4,13 @@ import logger from './logger';
 export const auditLogger = {
   log: async ({
     userId,
+    organizationId,
     action,
     featureId,
     metadata
   }: {
     userId: string;
+    organizationId: string;
     action: 'LOGIN_SUCCESS' | 'ROLE_CHANGE' | 'POLICY_CREATED' | 'POLICY_UPDATED' | 'AGENT_REGISTERED' | string;
     featureId?: string;
     metadata?: any;
@@ -17,6 +19,7 @@ export const auditLogger = {
       await prisma.audit_logs.create({
         data: {
           user_id: userId,
+          organizationId: organizationId,
           action,
           feature_id: featureId,
           metadata: metadata || {}

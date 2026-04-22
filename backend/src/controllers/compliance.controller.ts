@@ -44,7 +44,8 @@ export const getFixTasks = async (req: any, res: Response, next: NextFunction) =
 export const postEvidence = async (req: any, res: Response, next: NextFunction) => {
   try {
     const { taskId, type, value, source_type } = req.body;
-    const evidence = await ComplianceService.addEvidence(taskId, { type, value, source_type }, req.user.id);
+    const organizationId = req.user.organizationId;
+    const evidence = await ComplianceService.addEvidence(taskId, { type, value, source_type }, req.user.id, organizationId);
     res.status(201).json({ success: true, data: evidence });
   } catch (error) {
     next(error);
@@ -54,7 +55,8 @@ export const postEvidence = async (req: any, res: Response, next: NextFunction) 
 export const postReEvaluate = async (req: any, res: Response, next: NextFunction) => {
   try {
     const { featureId } = req.body;
-    const result = await ComplianceService.reEvaluate(featureId, req.user.id);
+    const organizationId = req.user.organizationId;
+    const result = await ComplianceService.reEvaluate(featureId, req.user.id, organizationId);
     res.status(200).json({ success: true, data: result });
   } catch (error) {
     next(error);

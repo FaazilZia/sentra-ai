@@ -96,6 +96,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 
     await auditLogger.log({
       userId: user.id,
+      organizationId: user.organizationId,
       action: 'LOGIN_SUCCESS',
       metadata: { ip: req.ip }
     });
