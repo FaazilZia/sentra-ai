@@ -89,6 +89,21 @@ graph LR
 
 ---
 
+# 🚀 Enterprise Audit Readiness & Distributed Protection (v2.0.0)
+**The Sentra AI platform is now fully hardened for multi-region production and SOC2/HIPAA audit compliance.**
+
+*   **🛡️ Cryptographic CSP Enforcement**: Implemented per-request **nonce-based Content-Security-Policy**. This eliminates `unsafe-inline` risks and ensures strict script-src control.
+*   **⚡ Distributed Abuse Protection**: Shifted to **Redis-backed rate limiting**. Abuse protection now scales across multiple backend instances with global and per-user tracking.
+*   **📢 Tiered Security Observability**: Implemented a severity-aware anomaly router:
+    *   **CRITICAL**: Real-time Slack notifications + Automated Email Escalation to Security Ops.
+    *   **HIGH/MEDIUM**: Instant dashboard telemetry with time-based trend analysis (24h/7d).
+*   **🛠️ Infrastructure Resilience**: Added **Degraded Mode** support to health probes. The API remains operational even if cache layers (Redis) are offline, ensuring zero-downtime governance.
+*   **🧹 Automated Data Retention**: Integrated **BullMQ-driven purge jobs**. All security alerts and interception logs are automatically pruned after 90 days to meet data privacy mandates.
+*   **🧪 Demo Attack Simulator**: A new high-impact control to simulate **Threat Level** spikes, risk bursts, and compliance drift events for stakeholder demonstrations.
+*   **📜 Verified Audit Evidence**: Formalized [Backup & Restore Protocols](docs/BACKUP_AND_RESTORE.md) with validated RTO/RPO metrics and cryptographic **Hash-Chain Verification**.
+
+---
+
 # 💡 What You Get
 
 * 🛑 **Real-Time Blocking**: Intercept and neutralize unsafe AI actions *before* they execute.
