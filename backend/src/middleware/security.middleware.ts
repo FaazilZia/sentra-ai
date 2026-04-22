@@ -76,7 +76,7 @@ export const securityObservability = async (req: Request, res: Response, next: N
   next();
 };
 
-export const validateRequest = (schema: z.AnyZodObject) => {
+export const validateRequest = (schema: z.ZodObject<any, any>) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       await schema.parseAsync({
@@ -92,7 +92,7 @@ export const validateRequest = (schema: z.AnyZodObject) => {
         res.status(403).json({
           success: false,
           message: 'Invalid request payload or unauthorized structure.',
-          errors: error.errors
+          errors: error.issues
         });
       } else {
         next(error);

@@ -16,7 +16,8 @@ if (redisUrl) {
 const getStore = (prefix: string) => {
   if (redisClient) {
     return new RedisStore({
-      sendCommand: (...args: string[]) => redisClient!.call(...args),
+      // @ts-ignore
+      sendCommand: (...args: string[]) => redisClient!.call(args[0], ...args.slice(1)),
       prefix
     });
   }

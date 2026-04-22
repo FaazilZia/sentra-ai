@@ -45,9 +45,16 @@ Sentry.init({
   environment: process.env.NODE_ENV || 'development'
 });
 
-// Sentry request handler must be the first middleware on the app
-app.use(Sentry.Handlers.requestHandler());
-app.use(Sentry.Handlers.tracingHandler());
+// Initialize Sentry
+Sentry.init({
+  dsn: process.env.SENTRY_DSN || '',
+  integrations: [
+    nodeProfilingIntegration(),
+  ],
+  tracesSampleRate: 1.0,
+  profilesSampleRate: 1.0,
+  environment: process.env.NODE_ENV || 'development'
+});
 
 // Strict Security Middleware with Nonce
 app.use(helmet({
@@ -194,7 +201,7 @@ app.get('/', (req, res) => {
 });
 
 // Global Error Handler
-app.use(Sentry.Handlers.errorHandler());
+Sentry.setupExpressErrorHandler(app);
 app.use(errorHandler);
 
 export default app;
