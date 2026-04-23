@@ -13,12 +13,12 @@ export function AppLayout() {
     fetchExecutiveOverview().then(setOverview).catch(console.error);
     const interval = setInterval(() => {
       fetchExecutiveOverview().then(setOverview).catch(console.error);
-    }, 60000); // Refresh every minute
+    }, 30000); // Polling every 30 seconds
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="relative flex h-screen w-full overflow-hidden bg-slate-950 text-slate-100 selection:bg-cyan-500/20">
+    <div className="relative flex h-screen w-full overflow-hidden bg-[#0a0f1a] text-slate-100 selection:bg-cyan-500/20">
       <AtomBackground />
       <Sidebar collapsed={false} />
       <div className="relative z-10 flex min-w-0 flex-1 flex-col">
@@ -31,7 +31,7 @@ export function AppLayout() {
             authority={overview.controls.authority}
           />
         )}
-        <main className="flex-1 overflow-auto p-5 md:p-6 custom-scrollbar">
+        <main className="flex-1 overflow-auto p-0 custom-scrollbar bg-[#0a0f1a]">
           <Outlet />
         </main>
       </div>

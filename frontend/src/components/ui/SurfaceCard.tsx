@@ -21,18 +21,18 @@ export function SurfaceCard({
   return (
     <section
       className={cn(
-        'h-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_4px_16px_rgba(15,23,42,0.05)] transition-all hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(15,23,42,0.08)]',
+        'h-full overflow-hidden rounded-xl border border-[#1e293b] bg-[#0d1424] shadow-2xl transition-all',
         className
       )}
     >
-      <div className="flex items-start justify-between gap-3 border-b border-slate-200 bg-white p-3">
+      <div className="flex items-start justify-between gap-3 border-b border-white/5 bg-[#0d1424] p-4">
         <div>
-          <h3 className="text-base font-semibold leading-5 text-slate-900">{title}</h3>
-          {description ? <p className="mt-1 text-[10px] leading-4 text-slate-400">{description}</p> : null}
+          <h3 className="text-sm font-bold text-white uppercase tracking-wider">{title}</h3>
+          {description ? <p className="mt-1 text-[10px] leading-4 text-slate-400 font-medium">{description}</p> : null}
         </div>
         {action ? <div>{action}</div> : null}
       </div>
-      <div className={cn('p-3', contentClassName)}>{children}</div>
+      <div className={cn('p-4', contentClassName)}>{children}</div>
     </section>
   );
 }

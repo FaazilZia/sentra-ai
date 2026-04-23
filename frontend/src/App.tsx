@@ -8,7 +8,6 @@ import LoginPage from './pages/Login';
 
 const DashboardPage = lazy(() => import('./pages/Dashboard'));
 const InventoryPage = lazy(() => import('./pages/Inventory'));
-const ObservabilityPage = lazy(() => import('./pages/Observability'));
 const RiskCenterPage = lazy(() => import('./pages/RiskCenter'));
 const AuditLogPage = lazy(() => import('./pages/AuditLog'));
 const GovernancePage = lazy(() => import('./pages/Governance'));
@@ -69,10 +68,9 @@ function AppRoutes() {
             <Route path="connect" element={<ConnectPage />} />
             <Route path="security" element={<SecurityFeedPage />} />
             <Route path="inventory" element={<InventoryPage />} />
-            <Route path="observability" element={<ObservabilityPage />} />
             <Route path="risk" element={<RiskCenterPage />} />
             <Route path="audit" element={<AuditLogPage />} />
-            <Route path="activity-logs" element={<AIActivityLogsPage />} />
+            <Route path="violations" element={<AIActivityLogsPage />} />
             <Route path="governance" element={<GovernancePage />} />
             <Route path="compliance" element={<CompliancePage />} />
             <Route path="relationships" element={<RelationshipGraphPage />} />

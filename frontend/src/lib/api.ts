@@ -289,8 +289,19 @@ export function fetchCompany(organizationId: string): Promise<any> {
 /**
  * POLICY ENDPOINTS (Future Node implementation)
  */
-export function fetchPolicies(): Promise<any> {
-  return apiRequest<any>('/policies');
+export function fetchPolicies(): Promise<PolicyResponse[]> {
+  return apiRequest<PolicyResponse[]>('/policies');
+}
+
+export function fetchPolicyById(id: string): Promise<PolicyResponse> {
+  return apiRequest<PolicyResponse>(`/policies/${id}`);
+}
+
+export function patchPolicy(id: string, payload: Partial<PolicyResponse>): Promise<PolicyResponse> {
+  return apiRequest<PolicyResponse>(`/policies/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
 }
 
 export function fetchPolicyVersions(policyId: string): Promise<any[]> {
@@ -304,8 +315,8 @@ export function fetchPolicyHealth(): Promise<any> {
 /**
  * INCIDENT ENDPOINTS
  */
-export function fetchIncidents(limit: number = 50, status?: string): Promise<IncidentResponse[]> {
-  let url = `/incidents?limit=${limit}`;
+export function fetchViolations(limit: number = 50, status?: string): Promise<IncidentResponse[]> {
+  let url = `/violations?limit=${limit}`;
   if (status) {
     url += `&status=${status}`;
   }
@@ -438,9 +449,8 @@ export interface AuditLog {
   timestamp: string;
 }
 
-export async function fetchAuditLogs(featureId?: string): Promise<AuditLog[]> {
-  const query = featureId ? `?featureId=${featureId}` : '';
-  return apiRequest<AuditLog[]>(`/compliance/audit-logs${query}`);
+export async function fetchAuditLogs(): Promise<AuditLog[]> {
+  return apiRequest<AuditLog[]>('/audit');
 }
 
 export interface Alert {
@@ -608,6 +618,14 @@ export async function fetchConnectors(): Promise<any> {
 
 export async function fetchDashboardStats(): Promise<any> {
   return apiRequest<any>('/ai/dashboard-stats');
+}
+
+export async function fetchScans(): Promise<{ count: number }> {
+  return apiRequest<{ count: number }>('/scans');
+}
+
+export async function fetchRiskData(): Promise<any> {
+  return apiRequest<any>('/risk');
 }
 
 export async function createConnector(payload: any): Promise<any> {

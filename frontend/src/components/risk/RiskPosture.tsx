@@ -1,34 +1,53 @@
 import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
+import { AlertTriangle, ShieldAlert, Activity, Lock } from 'lucide-react';
 
-export function RiskPosture() {
+interface RiskPostureProps {
+  riskData: any;
+  violations: any[];
+  scans: number;
+}
+
+export function RiskPosture({ riskData, violations, scans }: RiskPostureProps) {
+  const criticalCount = violations.filter(v => v.severity >= 80).length;
+  const blockedToday = violations.filter(v => v.status === 'BLOCKED').length;
+  const riskScore = riskData?.overall_score || 0;
+  
+  const isCritical = criticalCount > 0 || riskScore > 70;
+  const scoreColor = riskScore === 0 ? "text-slate-500" : (isCritical ? "text-rose-500" : "text-emerald-400");
+  const scoreLevel = riskScore === 0 ? "STABLE" : (riskScore > 70 ? "CRITICAL" : (riskScore > 40 ? "ELEVATED" : "OPTIMAL"));
+
   return (
-    <div className="space-y-4">
-      <h2 className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-        Risk Posture — Right Now
+    <div className="space-y-6">
+      <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+        Risk Posture — Real-time Evaluation
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         
         {/* Overall Risk Score Card */}
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="col-span-1 md:col-span-1 rounded-lg border border-rose-500/20 bg-white/5 p-5 shadow-lg"
+          className="rounded-2xl border border-[#1e293b] bg-[#0d1424] p-6 shadow-2xl relative overflow-hidden"
         >
-          <p className="text-xs font-semibold text-slate-300">Overall risk score</p>
-          <div className="mt-1">
-            <h3 className="text-3xl font-black text-rose-500 tracking-tight">HIGH</h3>
+          <div className="absolute top-0 right-0 p-4 opacity-10">
+             <AlertTriangle className="h-12 w-12" />
+          </div>
+          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Overall Exposure</p>
+          <div className="mt-2 flex items-baseline gap-2">
+            <h3 className={cn("text-4xl font-black tracking-tighter", scoreColor)}>{scoreLevel}</h3>
+            <span className="text-xs font-bold text-slate-600">/ 100</span>
           </div>
           
-          <div className="mt-4 flex items-center gap-3">
-            <div className="h-1.5 flex-1 rounded-full bg-white/10 overflow-hidden flex">
-              <div className="h-full bg-rose-500 w-[72%] rounded-full shadow-[0_0_10px_rgba(244,63,94,0.5)]" />
+          <div className="mt-6 flex items-center gap-3">
+            <div className="h-1.5 flex-1 rounded-full bg-white/5 overflow-hidden">
+              <div 
+                className={cn("h-full transition-all duration-1000 rounded-full", isCritical ? "bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.4)]" : "bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.4)]")} 
+                style={{ width: `${riskScore}%` }} 
+              />
             </div>
-            <span className="text-xs font-bold text-slate-300">72 / 100</span>
+            <span className="text-[10px] font-mono font-black text-slate-400">{riskScore}%</span>
           </div>
-          
-          <p className="mt-4 text-[10px] font-medium text-slate-400">
-            Up from 68 yesterday
-          </p>
         </motion.div>
 
         {/* Critical Violations Card */}
@@ -36,47 +55,61 @@ export function RiskPosture() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="rounded-lg border border-white/5 bg-white/5 p-5 transition hover:bg-white/[0.07]"
+          className="rounded-2xl border border-[#1e293b] bg-[#0d1424] p-6 shadow-2xl"
         >
-          <p className="text-xs font-semibold text-slate-300">Critical violations</p>
-          <div className="mt-2">
-            <h3 className="text-3xl font-black text-rose-400">3</h3>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Critical Events</p>
+            <ShieldAlert className={cn("h-4 w-4", criticalCount > 0 ? "text-rose-500" : "text-slate-600")} />
           </div>
-          <p className="mt-6 text-[10px] font-medium text-slate-300">
-            Need immediate action
+          <div className="mt-2">
+            <h3 className={cn("text-4xl font-black tracking-tighter", criticalCount > 0 ? "text-rose-500" : "text-slate-500")}>
+              {criticalCount}
+            </h3>
+          </div>
+          <p className="mt-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+            {criticalCount > 0 ? "NEEDS IMMEDIATE AUDIT" : "NO ACTIVE THREATS"}
           </p>
         </motion.div>
 
-        {/* AI Models at Risk Card */}
+        {/* Live Scans Card */}
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="rounded-lg border border-white/5 bg-white/5 p-5 transition hover:bg-white/[0.07]"
+          className="rounded-2xl border border-[#1e293b] bg-[#0d1424] p-6 shadow-2xl"
         >
-          <p className="text-xs font-semibold text-slate-300">AI models at risk</p>
-          <div className="mt-2 flex items-baseline gap-1">
-            <h3 className="text-3xl font-black text-amber-400">2</h3>
-            <span className="text-lg font-bold text-slate-400">/ 7</span>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Evaluated Interactions</p>
+            <Activity className="h-4 w-4 text-cyan-500" />
           </div>
-          <p className="mt-6 text-[10px] font-medium text-slate-300">
-            28% of your fleet
+          <div className="mt-2">
+            <h3 className="text-4xl font-black text-white tracking-tighter">
+              {scans.toLocaleString()}
+            </h3>
+          </div>
+          <p className="mt-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+            LAST 24 HOURS
           </p>
         </motion.div>
 
-        {/* Requests Blocked Card */}
+        {/* Prevented Threats Card */}
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="rounded-lg border border-white/5 bg-white/5 p-5 transition hover:bg-white/[0.07]"
+          className="rounded-2xl border border-[#1e293b] bg-[#0d1424] p-6 shadow-2xl"
         >
-          <p className="text-xs font-semibold text-slate-300">Requests blocked today</p>
-          <div className="mt-2">
-            <h3 className="text-3xl font-black text-emerald-400">14</h3>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Threats Prevented</p>
+            <Lock className="h-4 w-4 text-emerald-500" />
           </div>
-          <p className="mt-6 text-[10px] font-medium text-slate-300">
-            Threats stopped before harm
+          <div className="mt-2">
+            <h3 className={cn("text-4xl font-black tracking-tighter", blockedToday > 0 ? "text-emerald-400" : "text-slate-500")}>
+              {blockedToday}
+            </h3>
+          </div>
+          <p className="mt-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+            AUTO-MITIGATED TODAY
           </p>
         </motion.div>
 

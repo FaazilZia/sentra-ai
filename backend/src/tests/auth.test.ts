@@ -2,21 +2,23 @@ import request from 'supertest';
 import app from '../app';
 import prisma from '../config/db';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 
 jest.mock('../config/db', () => ({
-  users: {
-    findUnique: jest.fn(),
-    create: jest.fn(),
-  },
-  refreshToken: {
-    findUnique: jest.fn(),
-    create: jest.fn(),
-    delete: jest.fn(),
-    update: jest.fn(),
-  },
-  organizations: {
-    findUnique: jest.fn(),
+  __esModule: true,
+  default: {
+    users: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
+    },
+    refreshToken: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      delete: jest.fn(),
+      update: jest.fn(),
+    },
+    organizations: {
+      findUnique: jest.fn(),
+    }
   }
 }));
 

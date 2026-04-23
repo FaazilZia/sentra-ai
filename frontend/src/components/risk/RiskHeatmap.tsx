@@ -1,119 +1,75 @@
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
-const models = [
-  {
-    name: 'Recommendation engine',
-    subtext: 'GPT-4o · Payments team',
-    dataPrivacy: 'Medium',
-    consent: 'OK',
-    piiExposure: 'High',
-    accessControl: 'Medium',
-    auditLogging: 'None',
-    overall: 'Critical'
-  },
-  {
-    name: 'Customer support bot',
-    subtext: 'Claude 3.5 · CX team',
-    dataPrivacy: 'OK',
-    consent: 'Medium',
-    piiExposure: 'OK',
-    accessControl: 'OK',
-    auditLogging: 'OK',
-    overall: 'Medium'
-  },
-  {
-    name: 'HR screening model',
-    subtext: 'Internal · HR team',
-    dataPrivacy: 'High',
-    consent: 'High',
-    piiExposure: 'N/A',
-    accessControl: 'Medium',
-    auditLogging: 'Medium',
-    overall: 'Critical'
-  },
-  {
-    name: 'Document summarizer',
-    subtext: 'Gemini 1.5 · Legal team',
-    dataPrivacy: 'OK',
-    consent: 'OK',
-    piiExposure: 'OK',
-    accessControl: 'OK',
-    auditLogging: 'OK',
-    overall: 'Low'
-  },
-  {
-    name: 'Fraud detection model',
-    subtext: 'Internal · Risk team',
-    dataPrivacy: 'Medium',
-    consent: 'OK',
-    piiExposure: 'OK',
-    accessControl: 'OK',
-    auditLogging: 'OK',
-    overall: 'Medium'
-  }
-];
+interface RiskHeatmapProps {
+  riskData: any;
+}
 
 function RiskBadge({ value }: { value: string }) {
+  const v = value.toUpperCase();
   const styles: Record<string, string> = {
-    'Critical': 'border-rose-500/30 bg-rose-500/10 text-rose-400',
-    'High': 'border-rose-500/30 bg-rose-500/10 text-rose-400',
-    'Medium': 'border-amber-500/30 bg-amber-500/10 text-amber-400',
-    'Low': 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
+    'CRITICAL': 'border-rose-500/30 bg-rose-500/10 text-rose-400',
+    'HIGH': 'border-rose-500/30 bg-rose-500/10 text-rose-400',
+    'MEDIUM': 'border-amber-500/30 bg-amber-500/10 text-amber-400',
+    'LOW': 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
     'OK': 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
-    'None': 'border-rose-500/30 bg-rose-500/10 text-rose-400',
-    'N/A': 'border-slate-500/30 bg-slate-500/10 text-slate-300',
+    'FAIL': 'border-rose-500/30 bg-rose-500/10 text-rose-400',
+    'PASS': 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
   };
 
   return (
     <span className={cn(
-      "inline-flex items-center rounded border px-2 py-0.5 text-[10px] font-bold tracking-wide",
-      styles[value] || 'border-slate-500/30 bg-slate-500/10 text-slate-300'
+      "inline-flex items-center rounded-md border px-2 py-0.5 text-[9px] font-black tracking-widest uppercase",
+      styles[v] || 'border-slate-500/30 bg-slate-500/10 text-slate-400'
     )}>
       {value}
     </span>
   );
 }
 
-export function RiskHeatmap() {
+export function RiskHeatmap({ riskData }: RiskHeatmapProps) {
+  // If we have live segments in riskData, use them. Otherwise show placeholder/empty.
+  const segments = riskData?.segments || [
+    { name: 'Recommendation engine', team: 'Payments', privacy: 'MEDIUM', pii: 'HIGH', access: 'LOW', overall: 'HIGH' },
+    { name: 'Customer support bot', team: 'CX Team', privacy: 'PASS', pii: 'PASS', access: 'PASS', overall: 'LOW' },
+    { name: 'HR screening model', team: 'HR Team', privacy: 'FAIL', pii: 'MEDIUM', access: 'FAIL', overall: 'CRITICAL' },
+    { name: 'Document summarizer', team: 'Legal', privacy: 'PASS', pii: 'PASS', access: 'PASS', overall: 'LOW' }
+  ];
+
   return (
-    <div className="space-y-4">
-      <h2 className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-        Risk Heatmap — All AI Models
+    <div className="space-y-6">
+      <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+        Risk Matrix — Critical Systems
       </h2>
-      <div className="overflow-hidden rounded-lg border border-white/5 bg-white/5 shadow-lg backdrop-blur-sm">
+      <div className="overflow-hidden rounded-2xl border border-[#1e293b] bg-[#0d1424] shadow-2xl">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-100">
-            <thead className="border-b border-white/5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <table className="w-full text-left text-sm">
+            <thead className="border-b border-white/5 bg-slate-950/30 text-[9px] font-black uppercase tracking-[0.15em] text-slate-500">
               <tr>
-                <th className="p-4">Model | System</th>
-                <th className="p-4">Data privacy</th>
-                <th className="p-4">Consent</th>
-                <th className="p-4">PII exposure</th>
-                <th className="p-4">Access control</th>
-                <th className="p-4">Audit logging</th>
-                <th className="p-4 text-right">Overall</th>
+                <th className="px-6 py-4">Model | Agent</th>
+                <th className="px-6 py-4 text-center">Data Privacy</th>
+                <th className="px-6 py-4 text-center">PII Exposure</th>
+                <th className="px-6 py-4 text-center">Access Control</th>
+                <th className="px-6 py-4 text-right">Overall Risk</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {models.map((model, idx) => (
+              {segments.map((model: any, idx: number) => (
                 <motion.tr 
                   key={model.name}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.1 * idx }}
-                  className="transition hover:bg-white/[0.02]"
+                  className="transition hover:bg-white/[0.02] group"
                 >
-                  <td className="p-4">
-                    <div className="font-semibold text-slate-200">{model.name}</div>
-                    <div className="mt-0.5 text-[10px] text-slate-400">{model.subtext}</div>
+                  <td className="px-6 py-5">
+                    <div className="font-bold text-white uppercase tracking-tighter group-hover:text-cyan-400 transition-colors">{model.name}</div>
+                    <div className="mt-1 text-[9px] text-slate-500 uppercase tracking-widest">{model.team}</div>
                   </td>
-                  <td className="p-4"><RiskBadge value={model.dataPrivacy} /></td>
-                  <td className="p-4"><RiskBadge value={model.consent} /></td>
-                  <td className="p-4"><RiskBadge value={model.piiExposure} /></td>
-                  <td className="p-4"><RiskBadge value={model.accessControl} /></td>
-                  <td className="p-4"><RiskBadge value={model.auditLogging} /></td>
-                  <td className="p-4 text-right"><RiskBadge value={model.overall} /></td>
+                  <td className="px-6 py-5 text-center"><RiskBadge value={model.privacy} /></td>
+                  <td className="px-6 py-5 text-center"><RiskBadge value={model.pii} /></td>
+                  <td className="px-6 py-5 text-center"><RiskBadge value={model.access} /></td>
+                  <td className="px-6 py-5 text-right"><RiskBadge value={model.overall} /></td>
                 </motion.tr>
               ))}
             </tbody>
