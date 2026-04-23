@@ -56,6 +56,18 @@ graph LR
 
 ---
 
+# 🚀 Intelligent Governance OS (v3.0.0)
+**Sentra AI has been upgraded into an autonomous Governance Operating System, featuring proactive discovery and hard financial guardrails.**
+
+*   **🔍 Intelligent Scanning Engine**: Implemented a hybrid "Push + Pull" architecture. Proactive workers for **AWS S3**, **SQL Databases**, and **Google Drive** now autonomously discover PII/PHI and compliance violations at scale.
+*   **🎮 Executive Command Center**: A new top-level visibility layer including the **Global Control Panel** and **Audit Snapshot**. Executives now have a "Single Pane of Glass" view into scanning modes, system health, and real-time budget safety.
+*   **💰 Hard Budget Protection**: Enterprise-grade cost enforcement. Administrators can now set `maxDailyCost` and `maxScansPerDay` policies per connector. The system features an autonomous **Circuit Breaker** that pauses connectors the moment budgets are exceeded.
+*   **🏥 Connector Health Scoring**: Automated reliability tracking (0-100%). The system monitors success rates, latency, and failure streaks to provide instant alerts on data source degradation.
+*   **🧠 Explainable Governance (XAI)**: Every autonomous action is now audit-logged with a "Trigger" and "Reason" (e.g., *Anomaly Triggered: High Violation Density*), ensuring the system is transparent and defensible for enterprise audits.
+*   **🛠️ Infrastructure Hardening**: Fully migrated to **Prisma 7** with direct-url schema synchronization and **AES-256-GCM encryption** for all external connector credentials.
+
+---
+
 # 🚀 Enterprise Multi-Tenant Hardening (v2.5.0)
 **The Sentra AI platform is now fully hardened for multi-tenant enterprise isolation and real-time governance.**
 

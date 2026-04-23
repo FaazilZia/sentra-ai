@@ -603,6 +603,25 @@ export async function createConnector(payload: any): Promise<any> {
   });
 }
 
+export interface ExecutiveOverview {
+  systemMode: 'autonomous' | 'restricted' | 'high_alert';
+  auditSummary: {
+    scansLast24h: number;
+    violationsDetected: number;
+    budgetUsed: number;
+    budgetLimit: number;
+    activeConnectors: number;
+  };
+  controls: {
+    scanningMode: string;
+    authority: 'full' | 'limited';
+  };
+}
+
+export async function fetchExecutiveOverview(): Promise<ExecutiveOverview> {
+  return apiRequest<ExecutiveOverview>('/connectors/overview');
+}
+
 /**
  * CONSENT ENDPOINTS (stub — pending Node.js migration)
  */
