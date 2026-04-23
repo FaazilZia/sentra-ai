@@ -3,6 +3,7 @@ import { LoaderCircle } from 'lucide-react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
 import { AuthProvider, useAuth } from './lib/auth';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import LoginPage from './pages/Login';
 
 const DashboardPage = lazy(() => import('./pages/Dashboard'));
@@ -91,10 +92,9 @@ function AppRoutes() {
   );
 }
 
-import { GoogleOAuthProvider } from '@react-oauth/google';
-
 function App() {
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+  // Use a dummy ID for build/dev if the real one isn't provided yet
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'dummy-id.apps.googleusercontent.com';
 
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
