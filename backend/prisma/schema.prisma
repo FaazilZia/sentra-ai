@@ -254,7 +254,7 @@ model users {
   email              String            @unique
   full_name          String
   employeeId         String?           @unique @map("employee_id")
-  password_hash      String
+  password_hash      String?
   role               String            @default("AUDITOR") // 'ADMIN', 'ENGINEER', 'AUDITOR'
   is_active          Boolean
   created_at         DateTime          @default(now())
