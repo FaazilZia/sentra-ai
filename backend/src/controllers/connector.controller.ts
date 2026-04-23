@@ -43,6 +43,10 @@ export const getExecutiveOverview = async (req: any, res: Response, next: NextFu
     
     const scansLast24h = connectors.reduce((acc, c) => acc + (c.daily_scan_count || 0), 0);
     const activeConnectors = connectors.filter(c => c.status === 'active' || c.status === 'active_partial').length;
+    
+    const avgHealth = connectors.length > 0 
+      ? Math.round(connectors.reduce((acc, c) => acc + (c.health_score || 0), 0) / connectors.length)
+      : 100;
 
     // Determine System Mode
     let systemMode = 'autonomous';
@@ -58,7 +62,8 @@ export const getExecutiveOverview = async (req: any, res: Response, next: NextFu
           violationsDetected: incidents,
           budgetUsed: totalBudgetUsed,
           budgetLimit: totalDailyLimit,
-          activeConnectors
+          activeConnectors,
+          healthScore: avgHealth
         },
         controls: {
           scanningMode: 'auto',

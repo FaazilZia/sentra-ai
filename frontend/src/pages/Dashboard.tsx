@@ -50,7 +50,11 @@ export default function DashboardPage() {
         animate="visible"
       >
         {/* Executive Visibility Layer */}
-        {overview && (
+        {!overview ? (
+          <div className="w-full h-32 bg-white/[0.02] border border-white/5 rounded-xl animate-pulse flex items-center justify-center">
+            <span className="text-xs text-white/20 font-medium tracking-widest uppercase">Initializing Executive Visibility...</span>
+          </div>
+        ) : (
           <motion.div variants={itemVariants} className="flex flex-col gap-6 pt-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-white tracking-tight">Executive Visibility</h2>
@@ -62,6 +66,7 @@ export default function DashboardPage() {
               budgetUsed={overview.auditSummary.budgetUsed}
               budgetLimit={overview.auditSummary.budgetLimit}
               connectors={overview.auditSummary.activeConnectors}
+              healthScore={overview.auditSummary.healthScore}
             />
           </motion.div>
         )}

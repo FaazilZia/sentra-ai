@@ -1,6 +1,7 @@
 import { S3Client, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3';
 import prisma from '../config/db';
 import logger from '../utils/logger';
+import { decrypt } from '../utils/encryption';
 import { interceptAction } from '../middleware/interceptor';
 
 const MAX_SCAN_ITEMS = 100;
@@ -14,9 +15,13 @@ export async function processS3Scan(connectorId: string) {
   const scope = (connector.scope as any) || {};
   const lastScanAt = connector.last_scan_at ? new Date(connector.last_scan_at) : new Date(0);
 
+  // Decrypt credentials if they are stored in the secure format (iv:tag:encrypted)
+  const accessKeyId = config.accessKeyId?.includes(':') ? decrypt(config.accessKeyId) : config.accessKeyId;
+  const secretAccessKey = config.secretAccessKey?.includes(':') ? decrypt(config.secretAccessKey) : config.secretAccessKey;
+
   const s3 = new S3Client({
     region: config.region || 'us-east-1',
-    credentials: { accessKeyId: config.accessKeyId, secretAccessKey: config.secretAccessKey },
+    credentials: { accessKeyId, secretAccessKey },
   });
 
   const buckets = scope.buckets && scope.buckets.length > 0 ? scope.buckets : [config.bucket];

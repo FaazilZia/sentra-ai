@@ -1,6 +1,7 @@
 import { Client } from 'pg';
 import prisma from '../config/db';
 import logger from '../utils/logger';
+import { decrypt } from '../utils/encryption';
 import { interceptAction } from '../middleware/interceptor';
 
 const MAX_ROWS_PER_TABLE = 50;
@@ -14,8 +15,11 @@ export async function processSqlScan(connectorId: string) {
   const scope = (connector.scope as any) || {};
   const lastScanAt = connector.last_scan_at ? new Date(connector.last_scan_at) : new Date(0);
 
+  // Decrypt connection string if stored in secure format
+  const connectionString = config.connectionString?.includes(':') ? decrypt(config.connectionString) : config.connectionString;
+
   const client = new Client({
-    connectionString: config.connectionString,
+    connectionString,
     ssl: { rejectUnauthorized: false }
   });
 

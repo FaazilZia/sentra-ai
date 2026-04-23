@@ -611,6 +611,7 @@ export interface ExecutiveOverview {
     budgetUsed: number;
     budgetLimit: number;
     activeConnectors: number;
+    healthScore: number;
   };
   controls: {
     scanningMode: string;

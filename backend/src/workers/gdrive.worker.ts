@@ -1,6 +1,7 @@
 import { google } from 'googleapis';
 import prisma from '../config/db';
 import logger from '../utils/logger';
+import { decrypt } from '../utils/encryption';
 import { interceptAction } from '../middleware/interceptor';
 
 const MAX_DRIVE_FILES = 50;
@@ -14,8 +15,14 @@ export async function processGDriveScan(connectorId: string) {
   const scope = (connector.scope as any) || {};
   const lastScanAt = connector.last_scan_at ? new Date(connector.last_scan_at) : new Date(0);
   
-  const auth = new google.auth.OAuth2(config.clientId, config.clientSecret);
-  auth.setCredentials({ refresh_token: config.refreshToken });
+  // Decrypt refresh token if stored in secure format
+  const refreshToken = config.refreshToken?.includes(':') ? decrypt(config.refreshToken) : config.refreshToken;
+
+  const auth = new google.auth.OAuth2(
+    config.clientId || process.env.GOOGLE_CLIENT_ID,
+    config.clientSecret || process.env.GOOGLE_CLIENT_SECRET
+  );
+  auth.setCredentials({ refresh_token: refreshToken });
   const drive = google.drive({ version: 'v3', auth });
 
   let apiCalls = 0;

@@ -7,6 +7,7 @@ interface AuditSnapshotProps {
   budgetUsed: number;
   budgetLimit: number;
   connectors: number;
+  healthScore?: number;
 }
 
 export const AuditSnapshot: React.FC<AuditSnapshotProps> = ({
@@ -14,7 +15,8 @@ export const AuditSnapshot: React.FC<AuditSnapshotProps> = ({
   violations,
   budgetUsed,
   budgetLimit,
-  connectors
+  connectors,
+  healthScore
 }) => {
   return (
     <div className="grid grid-cols-4 gap-4 p-4 bg-white/[0.02] border border-white/5 rounded-xl">
@@ -53,7 +55,9 @@ export const AuditSnapshot: React.FC<AuditSnapshotProps> = ({
           <span className="text-[10px] font-bold uppercase tracking-widest">Connectors</span>
         </div>
         <div className="text-xl font-bold text-white">{connectors}</div>
-        <div className="text-[9px] text-emerald-400/70 font-medium">All Healthy</div>
+        <div className={`text-[9px] font-medium ${(!healthScore || healthScore > 70) ? 'text-emerald-400/70' : 'text-amber-400/70'}`}>
+          {(!healthScore || healthScore > 70) ? 'All Healthy' : 'Degraded Performance'}
+        </div>
       </div>
     </div>
   );

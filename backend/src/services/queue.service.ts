@@ -68,8 +68,18 @@ export const retentionQueue = connection ? new Queue('data-retention', { connect
 if (connection) {
   const retentionWorker = new Worker(
     'data-retention',
-    async () => {
+    async (job) => {
       try {
+        const { name } = job;
+
+        if (name === 'daily-budget-reset') {
+          const resetCount = await prisma.connectors.updateMany({
+            data: { daily_cost_total: 0, daily_scan_count: 0 }
+          });
+          logger.info(`Daily Budget Reset: Successfully cleared counters for ${resetCount.count} connectors.`);
+          return;
+        }
+
         const ninetyDaysAgo = new Date();
         ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
 
@@ -98,8 +108,9 @@ export const setupScheduledJobs = async () => {
   }
   
   try {
+    // Schedule daily budget and scan counter reset (Audit Compliance)
     await retentionQueue.add(
-      'daily-cleanup',
+      'daily-budget-reset',
       {},
       { repeat: { pattern: '0 0 * * *' } }
     );
@@ -111,7 +122,7 @@ export const setupScheduledJobs = async () => {
       { repeat: { pattern: '*/15 * * * *' } }
     );
 
-    logger.info('Scheduled Adaptive Connector Discovery Engine');
+    logger.info('Scheduled Adaptive Connector Discovery & Budget Reset Engine');
   } catch (err) {
     logger.warn('Could not schedule background jobs', err);
   }
