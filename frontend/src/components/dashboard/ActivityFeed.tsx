@@ -1,15 +1,6 @@
-import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Clock,
-  Search,
-  Database,
-  Lock,
-  ShieldCheck,
-  AlertTriangle
-} from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { RiskIndicator } from './RiskIndicator';
+import { useState } from 'react';
 import { apiRequest } from '../../lib/api';
 
 export interface ActivityEvent {

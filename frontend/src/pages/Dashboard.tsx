@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, Variants } from 'framer-motion';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { KPICards } from '@/components/dashboard/vanta/KPICards';
@@ -32,7 +32,7 @@ const itemVariants: Variants = {
 };
 
 export default function DashboardPage() {
-  const { data, loading, error } = useDashboardData();
+  const { data, loading } = useDashboardData();
   const [overview, setOverview] = useState<ExecutiveOverview | null>(null);
 
   useEffect(() => {

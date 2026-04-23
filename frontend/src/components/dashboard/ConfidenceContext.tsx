@@ -1,4 +1,3 @@
-import React from 'react';
 import { Info } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -9,7 +8,6 @@ interface ConfidenceContextProps {
 }
 
 export const ConfidenceContext: React.FC<ConfidenceContextProps> = ({ 
-  confidence, 
   limitation, 
   falsePositiveRisk 
 }) => {

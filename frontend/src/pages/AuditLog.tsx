@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../lib/auth';
-import { apiRequest } from '../lib/api';
 import { SurfaceCard } from '../components/ui/SurfaceCard';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { EmptyState } from '../components/ui/EmptyState';

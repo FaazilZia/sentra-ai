@@ -1,5 +1,3 @@
-import { Gavel, Globe, Lock, FileText, TrendingDown } from 'lucide-react';
-
 export default function CompliancePage() {
   return (
     <div className="mx-auto max-w-[1200px] space-y-24 pb-32 px-8 pt-16">

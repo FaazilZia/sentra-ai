@@ -1,5 +1,4 @@
-import React from 'react';
-import { Activity, AlertCircle, Clock, TrendingUp, TrendingDown } from 'lucide-react';
+import { AlertCircle, Clock, TrendingUp, TrendingDown } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 interface SystemPulseProps {

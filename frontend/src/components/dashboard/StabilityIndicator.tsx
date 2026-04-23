@@ -1,5 +1,3 @@
-import React from 'react';
-import { Activity } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 interface StabilityIndicatorProps {

@@ -4,7 +4,6 @@ import { SurfaceCard } from '../components/ui/SurfaceCard';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { EmptyState } from '../components/ui/EmptyState';
 import { fetchAIAgents, AIAgent } from '../lib/api';
-import { useAuth } from '../lib/auth';
 import { RegisterAgentModal } from '../components/inventory/RegisterAgentModal';
 
 const permissionIcons: Record<string, any> = {
@@ -15,7 +14,6 @@ const permissionIcons: Record<string, any> = {
 };
 
 export default function Inventory() {
-  const {} = useAuth();
   const [agents, setAgents] = useState<AIAgent[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');

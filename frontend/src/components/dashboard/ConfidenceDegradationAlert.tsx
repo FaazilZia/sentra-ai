@@ -1,5 +1,4 @@
-import React from 'react';
-import { Activity, ShieldAlert } from 'lucide-react';
+import { Activity } from 'lucide-react';
 
 interface ConfidenceDegradationAlertProps {
   currentConfidence: number;

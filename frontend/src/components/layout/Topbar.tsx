@@ -1,10 +1,8 @@
-import { useState } from 'react';
 import { ChevronDown, Bell, Search, Calendar } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 
 export function Topbar() {
   const { user, logout } = useAuth();
-  const [dateRange, setDateRange] = useState('Last 7 Days');
 
   return (
     <header className="sticky top-0 z-10 h-20 flex-shrink-0 border-b border-white/5 bg-slate-950/80 backdrop-blur-xl">
@@ -32,7 +30,7 @@ export function Topbar() {
           {/* Date Filter */}
           <button className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-slate-100 transition hover:bg-white/10 hover:text-white">
             <Calendar className="h-4 w-4 text-slate-300" />
-            {dateRange}
+            Last 7 Days
             <ChevronDown className="h-4 w-4 text-slate-400" />
           </button>
 
