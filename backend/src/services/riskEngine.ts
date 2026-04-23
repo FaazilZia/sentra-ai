@@ -1,4 +1,4 @@
-const SENSITIVE_PATTERNS = {
+export const SENSITIVE_PATTERNS = {
   CREDIT_CARD: /\b(?:\d[ -]*?){13,16}\b/,
   EMAIL: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/,
   SSN: /\b\d{3}-\d{2}-\d{4}\b/,

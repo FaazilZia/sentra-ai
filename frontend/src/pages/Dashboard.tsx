@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, Variants } from 'framer-motion';
-import { useDashboardSimulation } from '@/hooks/useDashboardSimulation';
+import { useDashboardData } from '@/hooks/useDashboardData';
 import { KPICards } from '@/components/dashboard/vanta/KPICards';
 import { PromptVolumeChart } from '@/components/dashboard/vanta/PromptVolumeChart';
 import { RiskByDepartment } from '@/components/dashboard/vanta/RiskByDepartment';
@@ -32,12 +32,25 @@ const itemVariants: Variants = {
 };
 
 export default function DashboardPage() {
-  const data = useDashboardSimulation();
+  const { data, loading, error } = useDashboardData();
   const [overview, setOverview] = useState<ExecutiveOverview | null>(null);
 
   useEffect(() => {
     fetchExecutiveOverview().then(setOverview).catch(console.error);
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex h-full items-center justify-center bg-slate-950">
+        <div className="text-center">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent mx-auto"></div>
+          <p className="mt-4 text-slate-400 font-medium tracking-widest uppercase text-xs">Loading Security Intel...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) return null;
   
   return (
     <div className="flex h-full flex-col font-sans selection:bg-cyan-500/30">

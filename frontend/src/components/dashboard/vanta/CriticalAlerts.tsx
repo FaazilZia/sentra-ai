@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertCircle, AlertTriangle, Info, X } from 'lucide-react';
-import type { AlertData } from '@/hooks/useDashboardSimulation';
+import type { AlertData } from '@/hooks/useDashboardData';
 import { cn } from '@/lib/utils';
 
 const alertStyles = {

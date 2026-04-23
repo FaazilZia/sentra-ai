@@ -1,6 +1,6 @@
 import { AlertTriangle, ShieldAlert, ShieldBan, ShieldCheck, TrendingUp, TrendingDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { KPIData } from '@/hooks/useDashboardSimulation';
+import type { KPIData } from '@/hooks/useDashboardData';
 
 interface KPICardProps {
   title: string;

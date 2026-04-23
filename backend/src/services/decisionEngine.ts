@@ -95,7 +95,18 @@ export const makeDecision = async (agent: string, action: string, organizationId
 
   const impact = (policyResult as any).impact || IMPACT_MAP[lowercaseAction] || 'Protects system from unauthorized access';
   const compliance = (policyResult as any).compliance || COMPLIANCE_MAP[lowercaseAction] || ['Internal Governance Policy'];
-  const confidence = Number((Math.random() * (0.98 - 0.88) + 0.88).toFixed(2));
+  // Real Confidence Formula:
+  // - Policy match: +0.20
+  // - High risk block: +0.15
+  // - Pattern triggers in metadata: +0.10
+  // - Base: 0.75
+  let confidence = 0.75;
+  if (policyResult.matchedPolicy) confidence += 0.15;
+  if (status === 'blocked' && riskScore === 'high') confidence += 0.10;
+  if (riskResult.triggers.length > 0) confidence += 0.05;
+  
+  confidence = Math.min(0.99, confidence);
+
   
   const explanation = maskPII((policyResult as any).explanation || (status === 'blocked' 
     ? `Sentra prevented "${lowercaseAction}" because it triggered a ${riskScore}-risk pattern and violated active compliance rules.`

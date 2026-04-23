@@ -1,6 +1,6 @@
 import { ShieldAlert, ArrowRight, ShieldBan, ShieldCheck, FileSearch, Scale } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { ViolationData, ActionType } from '@/hooks/useDashboardSimulation';
+import type { ViolationData, ActionType } from '@/hooks/useDashboardData';
 
 const badgeColors: Record<string, string> = {
   'Jailbreak': 'bg-purple-500/20 text-purple-300 border-purple-500/30',

@@ -596,6 +596,10 @@ export async function fetchConnectors(): Promise<any> {
   return apiRequest<any>('/connectors', { method: 'GET' });
 }
 
+export async function fetchDashboardStats(): Promise<any> {
+  return apiRequest<any>('/ai/dashboard-stats');
+}
+
 export async function createConnector(payload: any): Promise<any> {
   return apiRequest<any>('/connectors', {
     method: 'POST',

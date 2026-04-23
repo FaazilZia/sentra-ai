@@ -17,89 +17,90 @@ export interface ComplianceFeature {
 }
 
 export class ComplianceService {
-  static async getAuditProof(): Promise<ComplianceFeature[]> {
+  static async getAuditProof(organizationId: string): Promise<ComplianceFeature[]> {
+    const [consentRecords, auditLogs, activePolicies, recentLogs] = await Promise.all([
+      (prisma as any).consent_records.findMany({
+        where: { users: { organizationId } },
+        take: 5,
+        orderBy: { created_at: 'desc' },
+        include: { users: { select: { full_name: true, email: true } } }
+      }),
+      (prisma as any).audit_logs.findMany({
+        where: { organizationId },
+        take: 5,
+        orderBy: { timestamp: 'desc' }
+      }),
+      (prisma as any).policies.findMany({
+        where: { organizationId, enabled: true },
+        take: 10
+      }),
+      (prisma as any).logs.findMany({
+        where: { organizationId },
+        take: 5,
+        orderBy: { timestamp: 'desc' }
+      })
+    ]);
+
+    const isAuthCompliant = consentRecords.length > 0 && activePolicies.length > 0;
+    const isDataCompliant = recentLogs.every((l: any) => l.risk !== 'high' || l.status === 'blocked');
+
     return [
       {
         id: randomUUID(),
         feature_name: "User Authentication & Data Handling",
         description: "Handles user login, consent collection, and data processing",
-        status: 'compliant',
+        status: isAuthCompliant ? 'compliant' : 'warning',
         evidence: [
-          {
+          ...consentRecords.map((cr: any) => ({
             type: "consent_log",
             content: {
-              "user_id": "12345",
-              "consent_given": true,
-              "timestamp": "2026-04-20T10:30:00Z",
-              "purpose": ["analytics", "AI training"],
-              "withdraw_option_available": true
+              user: cr.users.full_name,
+              action: cr.action,
+              notice_version: cr.notice_version,
+              timestamp: cr.created_at,
+              metadata: cr.metadata_json
             }
-          },
-          {
-            type: "api_response",
-            content: {
-              "endpoint": "/user/data",
-              "method": "GET",
-              "authentication": "JWT",
-              "data_encrypted": true,
-              "fields_returned": ["name", "email"]
-            }
-          },
-          {
-            type: "auth_code",
-            content: "JWT verification middleware with role-based access control (RBAC) implemented"
-          },
-          {
-            type: "privacy_policy",
-            content: {
-              "has_policy": true,
-              "mentions_user_rights": true,
-              "mentions_data_usage": true,
-              "last_updated": "2026-01-01"
-            }
-          },
-          {
+          })),
+          ...auditLogs.map((al: any) => ({
             type: "audit_log",
             content: {
-              "event": "user_data_access",
-              "user_id": "12345",
-              "accessed_by": "admin_01",
-              "timestamp": "2026-04-20T11:00:00Z"
+              action: al.action,
+              timestamp: al.timestamp,
+              metadata: al.metadata
             }
-          },
-          {
-            type: "breach_policy",
-            content: {
-              "breach_detection": true,
-              "notification_time_hours": 48,
-              "user_notification": true
-            }
-          }
+          }))
         ]
       },
       {
         id: randomUUID(),
-        feature_name: "Sensitive Data Masking",
-        description: "Automatically redacts PII and PHI from AI agent logs and responses",
-        status: 'compliant',
+        feature_name: "AI Governance & Policy Enforcement",
+        description: "Real-time enforcement of data governance policies across AI agents",
+        status: isDataCompliant ? 'compliant' : 'warning',
         evidence: [
-          {
-            type: "auth_code",
-            content: "export const maskPII = (text: string) => {\n  return text.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}/g, '[EMAIL_REDACTED]');\n};"
-          },
-          {
-            type: "audit_log",
+          ...activePolicies.map((p: any) => ({
+            type: "policy_configuration",
             content: {
-              "event": "pii_redaction",
-              "log_id": "L-9921",
-              "pattern_matched": "email_regex",
-              "timestamp": "2026-04-20T12:00:00Z"
+              name: p.name,
+              effect: p.effect,
+              priority: p.priority,
+              compliance: p.compliance
             }
-          }
+          })),
+          ...recentLogs.filter((l: any) => l.risk === 'high').map((l: any) => ({
+            type: "high_risk_enforcement",
+            content: {
+              agent: l.agent,
+              action: l.action,
+              status: l.status,
+              reason: l.reason,
+              timestamp: l.timestamp
+            }
+          }))
         ]
       }
     ];
   }
+
 
   static async createFixTasks(featureId: string, actionPlan: any) {
     const tasks: any[] = [];
@@ -231,7 +232,7 @@ export class ComplianceService {
   }
 
   static async reEvaluate(featureId: string, userId: string, organizationId: string) {
-    const originalProof = await this.getAuditProof();
+    const originalProof = await this.getAuditProof(organizationId);
     const targetFeature = originalProof.find(f => f.feature_name === "User Authentication & Data Handling");
     const tasks = await this.getFixTasks(featureId);
     const evidenceList = tasks.flatMap((t: any) => t.evidence);

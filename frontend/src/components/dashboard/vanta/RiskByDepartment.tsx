@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import type { DepartmentData } from '@/hooks/useDashboardSimulation';
+import type { DepartmentData } from '@/hooks/useDashboardData';
 
 export function RiskByDepartment({ data }: { data: DepartmentData[] }) {
   return (

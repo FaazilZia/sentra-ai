@@ -208,6 +208,7 @@ model connectors {
   scope          Json? // { buckets: [], tables: [], fileTypes: [], folders: [] }
   priority       String        @default("medium") // 'high', 'medium', 'low'
   status         String
+  credentials    String?   // Encrypted credentials (iv:tag:encrypted)
   last_scan_at   String?
   
   // Adaptive Telemetry

@@ -1,11 +1,14 @@
 import { Response, NextFunction } from 'express';
 import { ComplianceService } from '../services/compliance.service';
 import { ReportService } from '../services/report.service';
+import { resolveOrganizationId } from '../utils/company';
 import logger from '../utils/logger';
 
 export const getAuditProof = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const proof = await ComplianceService.getAuditProof();
+    const organizationId = await resolveOrganizationId(req);
+    if (!organizationId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    const proof = await ComplianceService.getAuditProof(organizationId);
     
     res.status(200).json({
       success: true,

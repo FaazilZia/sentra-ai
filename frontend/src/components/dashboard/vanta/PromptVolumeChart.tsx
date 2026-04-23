@@ -4,7 +4,7 @@ import {
   ResponsiveContainer,
   Tooltip
 } from 'recharts';
-import type { PromptChartData } from '@/hooks/useDashboardSimulation';
+import type { PromptChartData } from '@/hooks/useDashboardData';
 
 export function PromptVolumeChart({ data }: { data: PromptChartData[] }) {
   return (
