@@ -7,11 +7,7 @@ interface RiskOwnershipProps {
 
 export function RiskOwnership({ agents }: RiskOwnershipProps) {
   // Map agents to ownership rows. If agents don't have teams, use placeholders.
-  const displayAgents = agents.length > 0 ? agents.slice(0, 4) : [
-    { name: 'Recommendation engine', team: 'Payments Team', status: 'Unacknowledged', risks: '2 Critical' },
-    { name: 'HR screening model', team: 'HR Team', status: 'Unacknowledged', risks: '1 Critical' },
-    { name: 'Customer support bot', team: 'CX Team', status: 'Acknowledged', risks: '1 Medium' }
-  ];
+  const displayAgents = agents.slice(0, 4);
 
   return (
     <div className="space-y-6 h-full flex flex-col">
@@ -22,7 +18,13 @@ export function RiskOwnership({ agents }: RiskOwnershipProps) {
       <div className="flex-1 overflow-hidden rounded-2xl border border-[#1e293b] bg-[#0d1424] shadow-2xl">
         <table className="w-full text-left text-sm">
           <tbody className="divide-y divide-white/5">
-            {displayAgents.map((agent, idx) => (
+            {displayAgents.length === 0 ? (
+              <tr>
+                <td colSpan={3} className="px-6 py-10 text-center text-slate-500 font-bold uppercase tracking-widest text-[10px]">
+                  No accountability records found
+                </td>
+              </tr>
+            ) : displayAgents.map((agent, idx) => (
               <motion.tr 
                 key={agent.id || idx}
                 initial={{ opacity: 0, x: -10 }}
@@ -57,7 +59,7 @@ export function RiskOwnership({ agents }: RiskOwnershipProps) {
       
       <div className="mt-2 p-6 rounded-2xl bg-cyan-500/5 border border-cyan-500/10">
         <p className="text-[11px] leading-relaxed text-slate-400">
-          <strong className="text-white uppercase tracking-wider">Quantified Impact Analysis:</strong> Resolving the top 3 unacknowledged risks across your agent fleet will reduce overall compliance exposure by <strong className="text-cyan-400">approx. 82%</strong>. The Payments Team is the priority focus for remediation of data transit policy breaches.
+          <strong className="text-white uppercase tracking-wider">Accountability Summary:</strong> Remediation ownership is assigned based on agent deployment and data access scope. Ensure all critical risks are acknowledged by the respective teams for full audit coverage.
         </p>
       </div>
     </div>

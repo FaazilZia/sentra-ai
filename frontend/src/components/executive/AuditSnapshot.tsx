@@ -26,7 +26,7 @@ export const AuditSnapshot: React.FC<AuditSnapshotProps> = ({
           <span className="text-[10px] font-bold uppercase tracking-widest">Scans (24h)</span>
         </div>
         <div className="text-xl font-bold text-white">{scans}</div>
-        <div className="text-[9px] text-emerald-400/70 font-medium">+12% from avg</div>
+        <div className="text-[9px] text-white/30 font-medium">Real-time telemetry</div>
       </div>
 
       <div className="flex flex-col border-l border-white/5 pl-4">
@@ -37,7 +37,7 @@ export const AuditSnapshot: React.FC<AuditSnapshotProps> = ({
         <div className={`text-xl font-bold ${violations > 0 ? 'text-rose-400' : 'text-white'}`}>
           {violations}
         </div>
-        <div className="text-[9px] text-white/30 font-medium">Auto-blocked</div>
+        <div className="text-[9px] text-white/30 font-medium">Flagged by policy</div>
       </div>
 
       <div className="flex flex-col border-l border-white/5 pl-4">

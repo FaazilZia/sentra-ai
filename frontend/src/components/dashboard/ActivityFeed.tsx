@@ -39,14 +39,10 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ events, onReplay, on
     }
     setIsOverriding(true);
     try {
-      if (eventId.startsWith('demo-')) {
-        alert(`[Demo Mode] Action ${eventId} overridden by ${employeeId}`);
-      } else {
-        await apiRequest(`/ai/override/${eventId}`, {
-          method: 'POST',
-          body: JSON.stringify({ comment: overrideComment, employeeId })
-        });
-      }
+      await apiRequest(`/ai/override/${eventId}`, {
+        method: 'POST',
+        body: JSON.stringify({ comment: overrideComment, employeeId })
+      });
       alert("Action overridden and logged.");
       window.location.reload(); 
     } catch (err: any) {

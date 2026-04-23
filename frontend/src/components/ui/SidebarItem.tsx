@@ -46,7 +46,7 @@ export function SidebarItem({ name, href, icon: Icon, collapsed = false, indicat
           <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
         </span>
       )}
-      {!collapsed && indicator === "badge" && indicatorValue !== undefined && (
+      {!collapsed && indicator === "badge" && indicatorValue !== undefined && indicatorValue > 0 && (
         <span className="flex items-center justify-center rounded-full bg-rose-500/10 px-2 py-0.5 text-[9px] font-bold text-rose-400 border border-rose-500/20">
           {indicatorValue > 99 ? '99+' : indicatorValue}
         </span>

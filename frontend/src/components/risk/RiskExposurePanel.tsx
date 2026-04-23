@@ -6,11 +6,7 @@ interface RiskExposurePanelProps {
 }
 
 export function RiskExposurePanel({ riskData }: RiskExposurePanelProps) {
-  const frameworks = riskData?.frameworks || [
-    { name: 'HIPAA', exposure: 85, status: 'High · 2 critical / open', color: 'rose', sub: 'PHI logging + BAA gaps are the core issues' },
-    { name: 'DPDP', exposure: 65, status: 'High · 1 critical / open', color: 'rose', sub: 'Consent not captured for sensitive personal data' },
-    { name: 'GDPR', exposure: 35, status: 'Medium · 0 critical', color: 'amber', sub: 'Data retention policy missing on 2 models' }
-  ];
+  const frameworks = riskData?.frameworks || [];
 
   return (
     <div className="flex flex-col gap-8 h-full">
@@ -20,7 +16,11 @@ export function RiskExposurePanel({ riskData }: RiskExposurePanelProps) {
         <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-8">Exposure by Framework</h3>
         
         <div className="space-y-8">
-          {frameworks.map((f: any, idx: number) => (
+          {frameworks.length === 0 ? (
+            <div className="py-12 text-center">
+               <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">No framework exposure data available</p>
+            </div>
+          ) : frameworks.map((f: any, idx: number) => (
             <div key={f.name}>
               <div className="flex justify-between items-end mb-3">
                 <span className="font-black text-white text-sm tracking-tight uppercase">{f.name}</span>

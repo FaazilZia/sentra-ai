@@ -50,7 +50,13 @@ export function RecentHighRiskPrompts({ data }: { data: ViolationData[] }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-white/10">
-            {data.map((violation) => {
+            {data.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-6 py-20 text-center">
+                   <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">No active security violations detected</p>
+                </td>
+              </tr>
+            ) : data.map((violation) => {
               const ActionIcon = actionStyles[violation.action].icon;
               return (
               <tr key={violation.id} className="group transition hover:bg-white/[0.04]">

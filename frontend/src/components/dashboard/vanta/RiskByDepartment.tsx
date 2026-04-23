@@ -20,7 +20,13 @@ export function RiskByDepartment({ data }: { data: DepartmentData[] }) {
             </tr>
           </thead>
           <tbody>
-            {data.map((dept, idx) => (
+            {data.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="px-6 py-10 text-center text-slate-500 font-bold uppercase tracking-widest text-[10px]">
+                  No department risk data available
+                </td>
+              </tr>
+            ) : data.map((dept, idx) => (
               <tr 
                 key={dept.name} 
                 className={cn(

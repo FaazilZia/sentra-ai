@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { AlertTriangle, Lock, Users } from 'lucide-react';
+import { ShieldCheck, Lock, Activity } from 'lucide-react';
 
 export function AIInsightsLayer({ insights }: { insights: string[] }) {
   if (insights.length === 0) return null;
@@ -8,22 +8,22 @@ export function AIInsightsLayer({ insights }: { insights: string[] }) {
   // Map the mock insights to specific styling and icons
   const insightConfigs = [
     {
-      icon: AlertTriangle,
-      colorClass: "border-rose-500 bg-rose-500/10 text-rose-100 shadow-[0_0_20px_rgba(244,63,94,0.15)]",
-      iconColor: "text-rose-500",
-      title: "URGENT THREAT TREND"
+      icon: ShieldCheck,
+      colorClass: "border-emerald-500/20 bg-emerald-500/5 text-emerald-100",
+      iconColor: "text-emerald-400",
+      title: "SECURITY POSTURE"
+    },
+    {
+      icon: Activity,
+      colorClass: "border-cyan-500/20 bg-cyan-500/5 text-cyan-100",
+      iconColor: "text-cyan-400",
+      title: "OPERATIONAL INSIGHT"
     },
     {
       icon: Lock,
-      colorClass: "border-amber-500 bg-amber-500/10 text-amber-100 shadow-[0_0_20px_rgba(245,158,11,0.15)]",
-      iconColor: "text-amber-500",
-      title: "SECURITY EVENT"
-    },
-    {
-      icon: Users,
-      colorClass: "border-cyan-500 bg-cyan-500/10 text-cyan-100 shadow-[0_0_20px_rgba(6,182,212,0.15)]",
-      iconColor: "text-cyan-500",
-      title: "BEHAVIORAL RISK"
+      colorClass: "border-slate-500/20 bg-slate-500/5 text-slate-100",
+      iconColor: "text-slate-400",
+      title: "GOVERNANCE STATUS"
     }
   ];
 

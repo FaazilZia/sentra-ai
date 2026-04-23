@@ -29,12 +29,7 @@ function RiskBadge({ value }: { value: string }) {
 
 export function RiskHeatmap({ riskData }: RiskHeatmapProps) {
   // If we have live segments in riskData, use them. Otherwise show placeholder/empty.
-  const segments = riskData?.segments || [
-    { name: 'Recommendation engine', team: 'Payments', privacy: 'MEDIUM', pii: 'HIGH', access: 'LOW', overall: 'HIGH' },
-    { name: 'Customer support bot', team: 'CX Team', privacy: 'PASS', pii: 'PASS', access: 'PASS', overall: 'LOW' },
-    { name: 'HR screening model', team: 'HR Team', privacy: 'FAIL', pii: 'MEDIUM', access: 'FAIL', overall: 'CRITICAL' },
-    { name: 'Document summarizer', team: 'Legal', privacy: 'PASS', pii: 'PASS', access: 'PASS', overall: 'LOW' }
-  ];
+  const segments = riskData?.segments || [];
 
   return (
     <div className="space-y-6">
@@ -54,7 +49,13 @@ export function RiskHeatmap({ riskData }: RiskHeatmapProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {segments.map((model: any, idx: number) => (
+              {segments.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-10 text-center text-slate-500 font-bold uppercase tracking-widest text-[10px]">
+                    No critical systems mapped yet
+                  </td>
+                </tr>
+              ) : segments.map((model: any, idx: number) => (
                 <motion.tr 
                   key={model.name}
                   initial={{ opacity: 0, x: -10 }}

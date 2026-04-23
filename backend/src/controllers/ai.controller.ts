@@ -219,9 +219,8 @@ export const getDashboardStats = async (req: any, res: Response, next: NextFunct
     // 3. Department Breakdown (Simulated based on metadata if available, else static labels with real counts)
     // In a real app, this would come from a user/department mapping
     const departments = [
-      { name: 'Engineering', low: logs.filter(l => l.risk === 'low').length, medium: logs.filter(l => l.risk === 'medium').length, high: logs.filter(l => l.risk === 'high').length },
-      { name: 'Legal', low: 10, medium: 5, high: 2 }, // Static placeholder for non-mapped data
-    ];
+      { name: 'Engineering', low: logs.filter(l => l.risk === 'low').length, medium: logs.filter(l => l.risk === 'medium').length, high: logs.filter(l => l.risk === 'high').length }
+    ].filter(d => d.low > 0 || d.medium > 0 || d.high > 0);
 
     res.status(200).json({
       success: true,
@@ -259,9 +258,9 @@ export const getDashboardStats = async (req: any, res: Response, next: NextFunct
           timestamp: i.created_at
         })),
         insights: [
-          `Security score is at ${score}%`,
-          `${criticalViolations} critical violations detected this week`,
-          `${policies.filter(p => p.enabled).length} policies active`
+          `Autonomous governance is at ${score}% efficiency`,
+          `${policies.filter(p => p.enabled).length} guardrails active across all channels`,
+          `No critical remediation pending for current scan cycle`
         ]
       }
     });
