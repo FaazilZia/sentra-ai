@@ -94,7 +94,7 @@ function AppRoutes() {
 
 function App() {
   // Use a dummy ID for build/dev if the real one isn't provided yet
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'dummy-id.apps.googleusercontent.com';
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '13783342034-2ecjh8njo0o34k2ip8sejburklht87hc.apps.googleusercontent.com';
 
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
