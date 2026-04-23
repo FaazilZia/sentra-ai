@@ -5,6 +5,9 @@ import prisma from '../config/db';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt';
 import logger from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
+import { OAuth2Client } from 'google-auth-library';
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Default tenant UUID — used when no tenant is specified
 const DEFAULT_ORGANIZATION_ID = '00000000-0000-0000-0000-000000000001';
@@ -118,6 +121,76 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     });
   } catch (error) {
     next(error);
+  }
+};
+
+export const googleLogin = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { idToken } = req.body;
+    if (!idToken) {
+      return res.status(400).json({ success: false, message: 'Google ID Token required' });
+    }
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    if (!payload || !payload.email) {
+      return res.status(400).json({ success: false, message: 'Invalid Google Token' });
+    }
+
+    const { email, name, sub: googleId } = payload;
+
+    let user = await prisma.users.findUnique({ where: { email } });
+
+    if (!user) {
+      await ensureDefaultCompany();
+      user = await prisma.users.create({
+        data: {
+          id: randomUUID(),
+          email,
+          full_name: name || email.split('@')[0],
+          role: 'USER',
+          is_active: true,
+          organizationId: DEFAULT_ORGANIZATION_ID,
+        },
+      });
+    }
+
+    const role = user.role || 'USER';
+    const accessToken = generateAccessToken({ id: user.id, role, organizationId: user.organizationId });
+    const refreshToken = generateRefreshToken({ id: user.id, organizationId: user.organizationId });
+
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
+
+    await prisma.refreshToken.create({
+      data: {
+        token: refreshToken,
+        userId: user.id,
+        expiresAt,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        accessToken,
+        refreshToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          fullName: user.full_name,
+          role,
+          organizationId: user.organizationId,
+        },
+      },
+    });
+  } catch (error) {
+    logger.error('Google Login Error:', error);
+    res.status(401).json({ success: false, message: 'Google authentication failed' });
   }
 };
 

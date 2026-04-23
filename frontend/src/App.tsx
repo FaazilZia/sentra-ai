@@ -91,11 +91,17 @@ function AppRoutes() {
   );
 }
 
+import { GoogleOAuthProvider } from '@react-oauth/google';
+
 function App() {
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+
   return (
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
+    <GoogleOAuthProvider clientId={googleClientId}>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </GoogleOAuthProvider>
   );
 }
 

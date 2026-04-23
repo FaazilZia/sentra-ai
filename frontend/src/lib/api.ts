@@ -264,6 +264,16 @@ export function registerRequest(payload: any): Promise<any> {
   });
 }
 
+export function googleLoginRequest(idToken: string): Promise<TokenResponse> {
+  return apiRequest<any>('/auth/google', {
+    method: 'POST',
+    body: JSON.stringify({ idToken }),
+  }).then(data => {
+    setTokens(data.accessToken, data.refreshToken);
+    return data;
+  });
+}
+
 /**
  * USER ENDPOINTS
  */

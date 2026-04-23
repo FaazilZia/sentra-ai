@@ -5,7 +5,7 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { fetchCurrentUser, loginRequest, registerRequest } from './api';
+import { fetchCurrentUser, loginRequest, registerRequest, googleLoginRequest } from './api';
 
 export interface AppUser {
   id: string;
@@ -27,6 +27,7 @@ interface AuthContextValue {
   loginError: string | null;
   login: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
+  googleLogin: (idToken: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -122,6 +123,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function googleLogin(idToken: string) {
+    setLoginPending(true);
+    setLoginError(null);
+    try {
+      const { user: loggedInUser } = await googleLoginRequest(idToken);
+      setUser(loggedInUser);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Google login failed';
+      setLoginError(message);
+      throw error;
+    } finally {
+      setLoginPending(false);
+    }
+  }
+
   async function logout() {
     localStorage.removeItem('sentra_access_token');
     localStorage.removeItem('sentra_refresh_token');
@@ -139,6 +155,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginError,
         login,
         signUp,
+        googleLogin,
         logout,
       }}
     >
