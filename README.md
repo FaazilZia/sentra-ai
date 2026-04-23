@@ -56,6 +56,18 @@ graph LR
 
 ---
 
+# 🚀 Hardened Production Launch (v4.0.0)
+**Sentra AI has graduated to a fully production-hardened Governance OS, featuring real-world cloud integrations and deep security vaulting.**
+
+*   **🛡️ Multi-Auth Governance**: Implemented a unified authentication layer supporting **Google OAuth**, **Discord**, and **Email/Password**. New users are automatically provisioned with a secure workspace using the **Organization-Centric** model.
+*   **⚡ Real-Time API Telemetry**: Replaced all mock/simulation data with **Live Telemetry**. Every KPI, violation, and risk score on the dashboard now reflects real-world activity captured by the backend.
+*   **🔍 Production-Ready Connectors**: Deep integration with **AWS S3**, **Google Drive**, and **PostgreSQL** via official SDKs. Scanners now perform stream-based content sampling and high-precision PII detection using regex-based sensitivity patterns.
+*   **🔐 Secret Vaulting**: Integrated **AES-256-GCM encryption** for all connector credentials. Secrets are now encrypted at rest in Supabase and only decrypted in-memory by secure background workers during scan cycles.
+*   **🏗️ Background Worker Architecture**: Shifted scanning operations to a distributed **BullMQ + Redis** worker cluster. This ensures that large-scale data audits never block the main API performance and can scale horizontally.
+*   **🧪 Enterprise Test Coverage**: Implemented a comprehensive **Jest + Supertest** suite with 100% mock-based integration coverage, ensuring continuous delivery safety for the entire governance pipeline.
+
+---
+
 # 🚀 Intelligent Governance OS (v3.0.0)
 **Sentra AI has been upgraded into an autonomous Governance Operating System, featuring proactive discovery and hard financial guardrails.**
 
