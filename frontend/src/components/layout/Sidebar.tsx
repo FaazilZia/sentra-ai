@@ -7,6 +7,7 @@ import {
   TriangleAlert,
   FileCheck,
   User,
+  Database,
 } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import { SidebarItem } from '../ui/SidebarItem';
@@ -52,6 +53,12 @@ const navigationGroups: NavigationGroup[] = [
     group: 'PROVE',
     items: [
       { name: 'Compliance Reports', href: '/app/inventory', icon: FileCheck },
+    ]
+  },
+  {
+    group: 'INFRASTRUCTURE',
+    items: [
+      { name: 'Data Connectors', href: '/app/connect', icon: Database },
     ]
   }
 ];
