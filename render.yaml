@@ -22,3 +22,11 @@ services:
         value: https://sentra-ai-88f7.vercel.app,https://sentra-ai-tau.vercel.app,https://sentra-ai.vercel.app,http://localhost:5173
       - key: PORT
         value: 10000
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
