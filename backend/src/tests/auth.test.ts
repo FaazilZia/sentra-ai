@@ -9,10 +9,11 @@ jest.mock('../config/db', () => ({
     findUnique: jest.fn(),
     create: jest.fn(),
   },
-  RefreshToken: {
+  refreshToken: {
     findUnique: jest.fn(),
     create: jest.fn(),
     delete: jest.fn(),
+    update: jest.fn(),
   },
   organizations: {
     findUnique: jest.fn(),
@@ -22,6 +23,12 @@ jest.mock('../config/db', () => ({
 jest.mock('bcrypt', () => ({
   compare: jest.fn(),
   hash: jest.fn(),
+}));
+
+jest.mock('../utils/jwt', () => ({
+  generateAccessToken: jest.fn().mockReturnValue('mock-access-token'),
+  generateRefreshToken: jest.fn().mockReturnValue('mock-refresh-token'),
+  verifyRefreshToken: jest.fn().mockReturnValue({ id: 'user-123' }),
 }));
 
 describe('Auth Endpoints', () => {
@@ -42,7 +49,7 @@ describe('Auth Endpoints', () => {
     it('should return 200 and tokens on valid credentials', async () => {
       (prisma.users.findUnique as jest.Mock).mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
-      (prisma.RefreshToken.create as jest.Mock).mockResolvedValue({ token: 'refresh-token' });
+      (prisma.refreshToken.create as jest.Mock).mockResolvedValue({ token: 'refresh-token' });
 
       const response = await request(app)
         .post('/api/v1/auth/login')
@@ -75,7 +82,7 @@ describe('Auth Endpoints', () => {
         revoked: false,
       };
 
-      (prisma.RefreshToken.findUnique as jest.Mock).mockResolvedValue(mockRefreshToken);
+      (prisma.refreshToken.findUnique as jest.Mock).mockResolvedValue(mockRefreshToken);
       (prisma.users.findUnique as jest.Mock).mockResolvedValue(mockUser);
 
       const response = await request(app)
