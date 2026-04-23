@@ -22,7 +22,6 @@ import { apiRateLimiter } from './config/rateLimit';
 import { securityObservability } from './middleware/security.middleware';
 
 import * as Sentry from '@sentry/node';
-import { nodeProfilingIntegration } from '@sentry/profiling-node';
 
 import crypto from 'crypto';
 
@@ -31,11 +30,7 @@ const app: Application = express();
 // Initialize Sentry
 Sentry.init({
   dsn: process.env.SENTRY_DSN || '',
-  integrations: [
-    nodeProfilingIntegration(),
-  ],
   tracesSampleRate: 1.0,
-  profilesSampleRate: 1.0,
   environment: process.env.NODE_ENV || 'production'
 });
 
