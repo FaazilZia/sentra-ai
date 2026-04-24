@@ -32,19 +32,67 @@ export const postCheckAction = async (req: any, res: Response, next: NextFunctio
 
     const latency = Date.now() - startTime;
 
-    // 3. Push Real-time Update (dashboard)
-    io.to(`company_${organizationId}`).emit('activity_log', { ...decision, organizationId, timestamp: new Date() });
+    // 3. Optional: Generate AI Summary for allowed actions
+    let ai_summary: string | undefined = undefined;
+    if (decision.status === 'allowed') {
+      const openaiKey = process.env.OPENAI_API_KEY;
+      if (openaiKey && openaiKey !== 'sk-placeholder') {
+        try {
+          const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+          const r = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${openaiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model,
+              messages: [
+                {
+                  role: 'system',
+                  content: 'You are a governance assistant. In one sentence, explain why this AI action was allowed or blocked.'
+                },
+                { 
+                  role: 'user', 
+                  content: `Action: ${action}, Agent: ${agent}, Decision: ALLOWED. Context: ${JSON.stringify(metadata)}` 
+                },
+              ],
+              max_tokens: 100,
+            }),
+          });
+
+          if (r.ok) {
+            const data = (await r.json()) as any;
+            ai_summary = data.choices?.[0]?.message?.content?.trim();
+          }
+        } catch (e) {
+          logger.warn('OpenAI summary generation failed', e);
+        }
+      }
+    }
+
+    // 4. Push Real-time Update (dashboard)
+    io.to(`company_${organizationId}`).emit('activity_log', { 
+      ...decision, 
+      organizationId, 
+      timestamp: new Date(),
+      ai_summary 
+    });
 
     res.status(200).json({
       success: true,
       requestId,
       latency,
-      data: decision
+      data: {
+        ...decision,
+        ai_summary
+      }
     });
   } catch (error) {
     next(error);
   }
 };
+
 
 export const postReplayAction = async (req: any, res: Response, next: NextFunction) => {
   try {
