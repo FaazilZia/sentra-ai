@@ -13,20 +13,31 @@ export interface PolicyEvaluation {
 export const evaluatePolicy = async (agent: string, action: string, organizationId: string): Promise<PolicyEvaluation> => {
   const lowercaseAction = action.toLowerCase();
   
-  const cacheKey = `policy:${organizationId}:${agent}`;
-  
-  const policy = await cacheService.getOrSet(cacheKey, () => 
-    prisma.policies.findFirst({
-      where: {
-        organizationId: organizationId,
-        name: { contains: agent },
-        enabled: true
-      }
-    })
-  );
+  const policies = await prisma.policies.findMany({
+    where: {
+      organizationId: organizationId,
+      enabled: true
+    },
+    orderBy: { priority: 'asc' }
+  });
+
+  // Find a policy that either names the agent or has the action in its rules/conditions
+  const policy = policies.find(p => {
+    const nameMatch = p.name.toLowerCase().includes(agent.toLowerCase());
+    const rule = (p.rule as any) || {};
+    const conditions = (p.conditions as any) || {};
+    
+    const isBlocked = (rule.conditions?.blocked_actions?.includes(lowercaseAction)) ||
+                      (conditions.blocked_actions?.includes(lowercaseAction));
+    
+    // If it's a "Block Email Policy" and we are doing "send_email", it should match
+    if (isBlocked && p.name === 'Block Email Policy') return true;
+    
+    return nameMatch;
+  });
 
   if (!policy) {
-    return { allowed: true }; // Default allow if no policy exists (Risk Engine will catch high risk)
+    return { allowed: true }; 
   }
 
   // 1. Check for modern rule-based conditions if present

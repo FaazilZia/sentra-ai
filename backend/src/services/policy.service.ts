@@ -66,6 +66,23 @@ export const logActivity = async (data: LogActivityData) => {
     });
   }
 
+  // Auto-create incident for blocked high-risk actions (Flow 4 requirement)
+  if (data.status === 'blocked' && data.risk === 'high') {
+    await prisma.incidents.create({
+      data: {
+        organizationId: data.organizationId,
+        agent_id: data.agent,
+        severity: 85, // High severity
+        action: data.action,
+        details: data.reason || `High-risk action "${data.action}" was blocked by policy.`,
+        prompt_excerpt: data.action,
+        response_excerpt: 'ACTION_BLOCKED',
+        event_metadata: data.metadata || {},
+        status: 'unresolved'
+      }
+    });
+  }
+
   return log;
 };
 

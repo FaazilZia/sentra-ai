@@ -3,6 +3,7 @@ import { authenticate, authorizeRoles } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validate.middleware';
 import { createApiKeySchema, apiKeyIdParamSchema } from '../validations/admin.validation';
 import { listApiKeys, createApiKey, deleteApiKey } from '../controllers/apiKey.controller';
+import { getLogs as getActivityLogs } from '../controllers/ai.controller';
 
 const router = Router();
 
@@ -121,6 +122,7 @@ router.post('/simulate-attack', authenticate, authorizeRoles('ADMIN'), async (re
   }
 });
 
+router.get('/logs', authenticate, authorizeRoles('ADMIN', 'AUDITOR'), getActivityLogs);
 router.get('/api-keys', authenticate, authorizeRoles('ADMIN'), listApiKeys);
 router.post('/api-keys', authenticate, authorizeRoles('ADMIN'), validate(createApiKeySchema), createApiKey);
 router.delete(

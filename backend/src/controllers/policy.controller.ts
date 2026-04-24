@@ -75,3 +75,55 @@ export const getPolicyVersions = async (req: any, res: Response, next: NextFunct
     next(error);
   }
 };
+export const createPolicy = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const { name, description, effect, enabled, priority, conditions, scope, obligations } = req.body;
+    const organizationId = await resolveOrganizationId(req);
+    
+    if (!organizationId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const policy = await prisma.policies.create({
+      data: {
+        organizationId,
+        name,
+        description: description || '',
+        effect,
+        enabled: enabled ?? true,
+        priority: priority || 1,
+        conditions: conditions || {},
+        scope: scope || {},
+        obligations: obligations || {},
+        status: 'published',
+        current_version: 1,
+      },
+    });
+
+    // Create initial version
+    await prisma.policy_versions.create({
+      data: {
+        policy_id: policy.id,
+        organizationId,
+        version: 1,
+        name: policy.name,
+        description: policy.description,
+        effect: policy.effect,
+        enabled: policy.enabled,
+        priority: policy.priority,
+        conditions: policy.conditions || {},
+        scope: policy.scope || {},
+        obligations: policy.obligations || {},
+        status: 'published',
+        is_published_snapshot: true,
+      },
+    });
+
+    res.status(201).json({
+      success: true,
+      data: policy,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validate.middleware';
-import { getPolicies, getPolicyHealth, getPolicyVersions } from '../controllers/policy.controller';
-import { policyIdVersionsParamSchema } from '../validations/policy.validation';
+import { getPolicies, getPolicyHealth, getPolicyVersions, createPolicy } from '../controllers/policy.controller';
+import { policyIdVersionsParamSchema, createPolicySchema } from '../validations/policy.validation';
 
 const router = Router();
 
@@ -14,5 +14,6 @@ router.get(
   getPolicyVersions
 );
 router.get('/', authenticate, getPolicies);
+router.post('/', authenticate, validate(createPolicySchema), createPolicy);
 
 export default router;
