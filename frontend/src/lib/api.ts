@@ -304,6 +304,13 @@ export function patchPolicy(id: string, payload: Partial<PolicyResponse>): Promi
   });
 }
 
+export function createPolicy(payload: any): Promise<PolicyResponse> {
+  return apiRequest<PolicyResponse>('/policies', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
 export function fetchPolicyVersions(policyId: string): Promise<any[]> {
   return apiRequest<any[]>(`/policies/${policyId}/versions`);
 }

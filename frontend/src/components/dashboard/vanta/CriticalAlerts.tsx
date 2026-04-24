@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertCircle, AlertTriangle, Info, X } from 'lucide-react';
 import type { AlertData } from '@/hooks/useDashboardData';
@@ -16,12 +17,16 @@ const alertIcons = {
 };
 
 export function CriticalAlerts({ alerts }: { alerts: AlertData[] }) {
-  if (alerts.length === 0) return null;
+  const [dismissedIds, setDismissedIds] = useState<string[]>([]);
+
+  const activeAlerts = alerts.filter(a => !dismissedIds.includes(a.id));
+
+  if (activeAlerts.length === 0) return null;
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex max-w-md flex-col gap-3">
       <AnimatePresence>
-        {alerts.map((alert) => {
+        {activeAlerts.map((alert) => {
           const Icon = alertIcons[alert.type];
           return (
             <motion.div
@@ -39,7 +44,10 @@ export function CriticalAlerts({ alerts }: { alerts: AlertData[] }) {
                 <p className="text-sm font-semibold">{alert.message}</p>
                 <p className="mt-1 text-xs opacity-80">{alert.timestamp}</p>
               </div>
-              <button className="flex-shrink-0 opacity-50 hover:opacity-100 transition">
+              <button 
+                onClick={() => setDismissedIds(prev => [...prev, alert.id])}
+                className="flex-shrink-0 opacity-50 hover:opacity-100 transition"
+              >
                 <X className="h-4 w-4" />
               </button>
             </motion.div>

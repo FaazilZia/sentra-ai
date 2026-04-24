@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ShieldCheck, Search, Plus, ShieldAlert, Zap } from 'lucide-react';
-import { fetchPolicies, patchPolicy, PolicyResponse } from '../lib/api';
+import { fetchPolicies, patchPolicy, createPolicy, PolicyResponse } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { cn } from '../lib/utils';
+import { PolicyBuilderModal } from '@/components/dashboard/PolicyBuilderModal';
 
 export default function GovernancePage() {
   const { accessToken } = useAuth();
   const [policies, setPolicies] = useState<PolicyResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const loadPolicies = async () => {
     try {
@@ -37,6 +39,15 @@ export default function GovernancePage() {
     }
   };
 
+  const handleSavePolicy = async (newPolicy: any) => {
+    try {
+      const created = await createPolicy(newPolicy);
+      setPolicies(prev => [created, ...prev]);
+    } catch (err) {
+      console.error('Failed to create policy:', err);
+    }
+  };
+
   const filteredPolicies = useMemo(() => {
     return policies.filter(p => 
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -58,11 +69,21 @@ export default function GovernancePage() {
           </p>
         </div>
 
-        <button className="flex items-center gap-2 rounded-xl bg-cyan-500 px-6 py-3 text-xs font-black text-slate-950 hover:bg-cyan-400 transition-all uppercase tracking-widest shadow-2xl">
+        <button 
+          id="create-policy-btn"
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center gap-2 rounded-xl bg-cyan-500 px-6 py-3 text-xs font-black text-slate-950 hover:bg-cyan-400 transition-all uppercase tracking-widest shadow-2xl"
+        >
           <Plus className="h-4 w-4" />
           Create Guardrail
         </button>
       </div>
+
+      <PolicyBuilderModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSavePolicy}
+      />
 
       {/* Policy Search */}
       <div className="relative max-w-2xl">
