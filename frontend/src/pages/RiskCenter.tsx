@@ -69,7 +69,8 @@ export default function RiskCenterPage() {
   }
 
   // Compute Risk Level
-  const highViolations = violations.filter(v => v.severity >= 80).length;
+  // Compute Risk Level from Live Data
+  const highViolations = violations.filter(v => (v.severity >= 80 || v.risk === 'high')).length;
   const riskLevel = highViolations > 5 ? 'CRITICAL' : (highViolations > 0 ? 'HIGH' : 'LOW');
 
   return (

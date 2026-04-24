@@ -34,8 +34,8 @@ export const getExecutiveOverview = async (req: any, res: Response, next: NextFu
     });
 
     const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const incidents = await prisma.interception_logs.count({
-      where: { organizationId, timestamp: { gte: last24h }, decision: 'BLOCK' }
+    const incidents = await prisma.logs.count({
+      where: { organizationId, timestamp: { gte: last24h }, status: 'blocked' }
     });
 
     const totalBudgetUsed = connectors.reduce((acc, c) => acc + (c.daily_cost_total || 0), 0);

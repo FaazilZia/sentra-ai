@@ -9,9 +9,9 @@ interface RiskPostureProps {
 }
 
 export function RiskPosture({ riskData, violations, scans }: RiskPostureProps) {
-  const criticalCount = violations.filter(v => v.severity >= 80).length;
-  const blockedToday = violations.filter(v => v.status === 'BLOCKED').length;
-  const riskScore = riskData?.overall_score || 0;
+  const criticalCount = violations.filter(v => (v.severity >= 80 || v.risk === 'high')).length;
+  const blockedToday = violations.filter(v => v.status?.toLowerCase() === 'blocked').length;
+  const riskScore = riskData?.posture?.score || 0;
   
   const isCritical = criticalCount > 0 || riskScore > 70;
   const scoreColor = riskScore === 0 ? "text-slate-500" : (isCritical ? "text-rose-500" : "text-emerald-400");

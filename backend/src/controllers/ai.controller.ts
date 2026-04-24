@@ -264,11 +264,19 @@ export const getDashboardStats = async (req: any, res: Response, next: NextFunct
       });
     }
 
-    // 3. Department Breakdown (Simulated based on metadata if available, else static labels with real counts)
-    // In a real app, this would come from a user/department mapping
-    const departments = [
-      { name: 'Engineering', low: logs.filter(l => l.risk === 'low').length, medium: logs.filter(l => l.risk === 'medium').length, high: logs.filter(l => l.risk === 'high').length }
-    ].filter(d => d.low > 0 || d.medium > 0 || d.high > 0);
+    // 3. Department Breakdown (Dynamic based on metadata if available)
+    const departmentsMap: Record<string, any> = {};
+    logs.forEach(l => {
+      const dept = (l.metadata as any)?.department || 'Unassigned';
+      if (!departmentsMap[dept]) {
+        departmentsMap[dept] = { name: dept, low: 0, medium: 0, high: 0 };
+      }
+      if (l.risk === 'low') departmentsMap[dept].low++;
+      if (l.risk === 'medium') departmentsMap[dept].medium++;
+      if (l.risk === 'high') departmentsMap[dept].high++;
+    });
+
+    const departments = Object.values(departmentsMap);
 
     res.status(200).json({
       success: true,

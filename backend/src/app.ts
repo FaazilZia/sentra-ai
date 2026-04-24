@@ -17,6 +17,7 @@ import inventoryRoutes from './routes/inventory.routes';
 import driftRoutes from './routes/drift.routes';
 import complianceRoutes from './routes/compliance.routes';
 import guardrailRoutes from './routes/guardrail.routes';
+import riskRoutes from './routes/risk.routes';
 
 import { apiRateLimiter } from './config/rateLimit';
 import { securityObservability } from './middleware/security.middleware';
@@ -144,6 +145,7 @@ v1Router.use('/inventory', inventoryRoutes);
 v1Router.use('/drift', driftRoutes);
 v1Router.use('/compliance', complianceRoutes);
 v1Router.use('/guardrails', guardrailRoutes);
+v1Router.use('/risk', riskRoutes);
 
 
 // Health check under v1
@@ -206,6 +208,7 @@ app.use('/api/organizations', organizationRoutes);
 app.use('/api/connectors', connectorRoutes);
 app.use('/api/consent', consentRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/risk', riskRoutes);
 
 // Root route to check version
 app.get('/', (req, res) => {
