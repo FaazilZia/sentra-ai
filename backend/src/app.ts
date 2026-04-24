@@ -42,7 +42,7 @@ app.use((req, res, next) => {
 
 // Direct Health Checks (Above Rate Limiting for Render Stability)
 app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'healthy', version: 'v1.1' });
+  res.status(200).json({ status: 'healthy', version: 'v1.2' });
 });
 
 app.get('/api/ready', async (req, res) => {
@@ -148,7 +148,7 @@ v1Router.use('/guardrails', guardrailRoutes);
 
 // Health check under v1
 v1Router.get('/health', (req, res) => {
-  res.status(200).json({ status: 'healthy', version: 'v1.1' });
+  res.status(200).json({ status: 'healthy', version: 'v1.2' });
 });
 
 // Readiness probe (Supports Degraded Mode)
