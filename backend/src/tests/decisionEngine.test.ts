@@ -3,7 +3,7 @@ import prisma from '../config/db';
 
 jest.mock('../config/db', () => ({
   policies: {
-    findFirst: jest.fn(),
+    findMany: jest.fn(),
   },
   logs: {
     findMany: jest.fn(),
@@ -15,7 +15,7 @@ describe('Decision Engine', () => {
   const orgId = 'test-org-id';
 
   it('should block high risk actions without policy', async () => {
-    (prisma.policies.findFirst as jest.Mock).mockResolvedValue(null);
+    (prisma.policies.findMany as jest.Mock).mockResolvedValue([]);
     
     const decision = await makeDecision('test-agent', 'export_csv', orgId, { recordCount: 5000 });
     
@@ -25,7 +25,7 @@ describe('Decision Engine', () => {
   });
 
   it('should allow low risk actions when no policy exists', async () => {
-    (prisma.policies.findFirst as jest.Mock).mockResolvedValue(null);
+    (prisma.policies.findMany as jest.Mock).mockResolvedValue([]);
     
     const decision = await makeDecision('test-agent', 'read_logs', orgId);
     
@@ -34,11 +34,12 @@ describe('Decision Engine', () => {
   });
 
   it('should respect policy block rules', async () => {
-    (prisma.policies.findFirst as jest.Mock).mockResolvedValue({
-      name: 'Test Policy',
+    (prisma.policies.findMany as jest.Mock).mockResolvedValue([{
+      name: 'Test Policy for test-agent',
       rule: { conditions: { blocked_actions: ['send_email'] } },
-      enabled: true
-    });
+      enabled: true,
+      priority: 1
+    }]);
     
     const decision = await makeDecision('test-agent', 'send_email', orgId);
     
@@ -47,10 +48,11 @@ describe('Decision Engine', () => {
   });
 
   it('should calculate real confidence scores', async () => {
-    (prisma.policies.findFirst as jest.Mock).mockResolvedValue({
-      name: 'Named Policy',
-      enabled: true
-    });
+    (prisma.policies.findMany as jest.Mock).mockResolvedValue([{
+      name: 'Named Policy for test-agent',
+      enabled: true,
+      priority: 1
+    }]);
     
     const decision = await makeDecision('test-agent', 'some_action', orgId);
     

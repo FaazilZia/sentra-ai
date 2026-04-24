@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ShieldCheck, Search, Plus, Power, ShieldAlert, Zap } from 'lucide-react';
+import { ShieldCheck, Search, Plus, ShieldAlert, Zap } from 'lucide-react';
 import { fetchPolicies, patchPolicy, PolicyResponse } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { cn } from '../lib/utils';

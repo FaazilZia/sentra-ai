@@ -25,22 +25,17 @@ export const Aurora: React.FC<AuroraProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isMounted, setIsMounted] = useState(false);
 
-  console.log('Aurora Rendering, isMounted:', isMounted);
 
   useEffect(() => {
-    console.log('Aurora Mounting Effect Triggered');
     setIsMounted(true);
   }, []);
 
   useEffect(() => {
     if (!isMounted) return;
-    console.log('Aurora WebGL Effect Triggered');
     const canvas = canvasRef.current;
     if (!canvas) {
-      console.log('Aurora Canvas Ref is NULL');
       return;
     }
-    console.log('Aurora Canvas Ref Found, initializing WebGL');
 
     const gl = canvas.getContext('webgl', { alpha: true, antialias: true });
     if (!gl) return;

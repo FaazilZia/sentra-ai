@@ -449,8 +449,9 @@ export interface AuditLog {
   timestamp: string;
 }
 
-export async function fetchAuditLogs(): Promise<AuditLog[]> {
-  return apiRequest<AuditLog[]>('/audit');
+export async function fetchAuditLogs(featureId?: string): Promise<AuditLog[]> {
+  const query = featureId ? `?featureId=${featureId}` : '';
+  return apiRequest<AuditLog[]>(`/compliance/audit-logs${query}`);
 }
 
 export interface Alert {

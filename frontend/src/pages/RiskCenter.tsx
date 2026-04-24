@@ -6,7 +6,7 @@ import { ActiveRiskEvents } from '@/components/risk/ActiveRiskEvents';
 import { RiskExposurePanel } from '@/components/risk/RiskExposurePanel';
 import { RiskOwnership } from '@/components/risk/RiskOwnership';
 import { fetchRiskData, fetchViolations, fetchAIAgents, fetchScans } from '@/lib/api';
-import { ShieldCheck, Radar, AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
