@@ -1,4 +1,4 @@
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
 import Redis from 'ioredis';
 import logger from '../utils/logger';
@@ -35,7 +35,7 @@ export const authRateLimiter = rateLimit({
   legacyHeaders: false,
   store: getStore('rl:auth:'),
   keyGenerator: (req) => {
-    return `${req.ip}-${req.body.email || 'anon'}`;
+    return `${ipKeyGenerator(req.ip!)}-${req.body.email || 'anon'}`;
   }
 });
 

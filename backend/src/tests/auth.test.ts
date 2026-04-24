@@ -1,7 +1,25 @@
+// Mock queue.service BEFORE importing app to prevent BullMQ Workers from spinning up
+// (app → routes → connector.controller → queue.service → BullMQ Workers at module load time)
+jest.mock('../services/queue.service', () => ({
+  enqueueLog: jest.fn().mockResolvedValue(undefined),
+  enqueueConnectorScan: jest.fn().mockResolvedValue(undefined),
+  processConnectorScan: jest.fn().mockResolvedValue(undefined),
+  setupScheduledJobs: jest.fn().mockResolvedValue(undefined),
+  activityQueue: null,
+  connectorQueue: null,
+  retentionQueue: null,
+}));
+
+// Mock server to prevent Socket.IO from trying to bind
+jest.mock('../server', () => ({
+  io: { to: jest.fn().mockReturnThis(), emit: jest.fn() },
+}));
+
 import request from 'supertest';
 import app from '../app';
 import prisma from '../config/db';
 import bcrypt from 'bcrypt';
+
 
 jest.mock('../config/db', () => ({
   __esModule: true,
