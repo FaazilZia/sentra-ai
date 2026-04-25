@@ -125,7 +125,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
-app.use(morgan('dev'));
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(contextMiddleware);
 
 // Global API Rate Limiter
@@ -207,17 +207,7 @@ v1Router.get('/', (req, res) => {
 
 app.use('/api/v1', v1Router);
 
-// Legacy support (redirect /api to /api/v1 for major routes)
-app.use('/api/ai', aiRoutes);
-app.use('/api/policies', policyRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/incidents', incidentRoutes);
-app.use('/api/organizations', organizationRoutes);
-app.use('/api/connectors', connectorRoutes);
-app.use('/api/consent', consentRoutes);
-app.use('/api/user', userRoutes);
-app.use('/api/risk', riskRoutes);
-app.use('/api/intelligence', intelligenceRoutes);
+
 
 // Root route to check version
 app.get('/', (req, res) => {

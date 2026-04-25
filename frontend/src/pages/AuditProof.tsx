@@ -72,8 +72,9 @@ export default function AuditProofPage() {
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
   const [showFinalImpact, setShowFinalImpact] = useState(false);
 
-  useEffect(() => {
+  const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true';
 
+  useEffect(() => {
     async function loadData() {
       try {
         const data = await fetchAuditProof();
@@ -90,6 +91,16 @@ export default function AuditProofPage() {
     }
     loadData();
   }, []);
+
+  // Use demo data only if enabled and real data is missing
+  useEffect(() => {
+    if (isDemoMode && !loading && features.length === 0) {
+      setFeatures(DEMO_INITIAL_DATA.features as any);
+      if (DEMO_INITIAL_DATA.features.length > 0) {
+        setExpandedFeature(DEMO_INITIAL_DATA.features[0].id);
+      }
+    }
+  }, [isDemoMode, loading, features.length]);
 
   const loadAlerts = async () => {
     try {
@@ -135,6 +146,7 @@ export default function AuditProofPage() {
   };
 
   const startDemo = () => {
+    if (!isDemoMode) return; // Guard start demo action
     setDemoMode(true);
     setDemoStep(0);
     setIsAutoPlaying(true);
@@ -461,7 +473,7 @@ export default function AuditProofPage() {
             </p>
           </div>
           <div className="flex gap-4">
-             {!demoMode && (
+             {isDemoMode && !demoMode && (
                <button 
                  onClick={startDemo}
                  className="px-6 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500/20 transition-all flex items-center gap-2"

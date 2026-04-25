@@ -9,58 +9,69 @@ import { OAuth2Client } from 'google-auth-library';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// Default tenant UUID — used when no tenant is specified
-const DEFAULT_ORGANIZATION_ID = '00000000-0000-0000-0000-000000000001';
 
-// Ensure default company exists
-async function ensureDefaultCompany() {
-  try {
-    const existing = await prisma.organizations.findUnique({ where: { id: DEFAULT_ORGANIZATION_ID } });
-    if (!existing) {
-      await prisma.organizations.create({
-        data: {
-          id: DEFAULT_ORGANIZATION_ID,
-          name: 'Sentra AI',
-          slug: 'sentra-ai',
-          is_active: true,
-        },
-      });
-      logger.info('Default company created');
-    }
-  } catch (err) {
-    logger.warn('Could not ensure default company:', err);
-  }
-}
 
 export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { email, password, fullName, role } = req.body;
+    const { email, password, fullName, organizationName } = req.body;
 
     const existingUser = await prisma.users.findUnique({ where: { email } });
     if (existingUser) {
       return res.status(400).json({ success: false, message: 'User already exists' });
     }
 
-    await ensureDefaultCompany();
+    // Generate a URL-safe slug from the org name
+    const baseSlug = organizationName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    // Ensure slug uniqueness
+    let slug = baseSlug;
+    let slugSuffix = 1;
+    while (await prisma.organizations.findUnique({ where: { slug } })) {
+      slug = `${baseSlug}-${slugSuffix++}`;
+    }
 
-    const user = await prisma.users.create({
-      data: {
-        id: randomUUID(),
-        email,
-        password_hash: passwordHash,
-        full_name: fullName,
-        role: role || 'USER', 
-        is_active: true,
-        organizationId: DEFAULT_ORGANIZATION_ID,
-      },
+    const passwordHash = await bcrypt.hash(password, 12); // 12 rounds for production
+
+    // Create org and user in a single transaction
+    const result = await prisma.$transaction(async (tx) => {
+      const org = await tx.organizations.create({
+        data: {
+          id: randomUUID(),
+          name: organizationName,
+          slug,
+          is_active: true,
+        },
+      });
+
+      const user = await tx.users.create({
+        data: {
+          id: randomUUID(),
+          email,
+          password_hash: passwordHash,
+          full_name: fullName,
+          role: 'ADMIN', // First user of an org is always admin
+          is_active: true,
+          organizationId: org.id,
+        },
+      });
+
+      return { org, user };
     });
 
     res.status(201).json({
       success: true,
-      message: 'User registered successfully',
-      data: { id: user.id, email: user.email, fullName: user.full_name, role: user.role },
+      message: 'Account created successfully',
+      data: {
+        id: result.user.id,
+        email: result.user.email,
+        fullName: result.user.full_name,
+        role: result.user.role,
+        organizationId: result.org.id,
+        organizationName: result.org.name,
+      },
     });
   } catch (error) {
     next(error);
@@ -130,7 +141,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 
 export const googleLogin = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { idToken } = req.body;
+    const { idToken, organizationName } = req.body;
     if (!idToken) {
       return res.status(400).json({ success: false, message: 'Google ID Token required' });
     }
@@ -145,22 +156,47 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
       return res.status(400).json({ success: false, message: 'Invalid Google Token' });
     }
 
-    const { email, name, sub: googleId } = payload;
+    const { email, name } = payload;
 
     let user = await prisma.users.findUnique({ where: { email } });
 
     if (!user) {
-      await ensureDefaultCompany();
-      user = await prisma.users.create({
-        data: {
-          id: randomUUID(),
-          email,
-          full_name: name || email.split('@')[0],
-          role: 'USER',
-          is_active: true,
-          organizationId: DEFAULT_ORGANIZATION_ID,
-        },
+      // New Google user — require org name
+      if (!organizationName || organizationName.trim().length < 2) {
+        return res.status(400).json({
+          success: false,
+          message: 'Organization name is required for new accounts',
+          requiresOrganizationName: true,
+        });
+      }
+
+      const baseSlug = organizationName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+      let slug = baseSlug;
+      let slugSuffix = 1;
+      while (await prisma.organizations.findUnique({ where: { slug } })) {
+        slug = `${baseSlug}-${slugSuffix++}`;
+      }
+
+      const result = await prisma.$transaction(async (tx) => {
+        const org = await tx.organizations.create({
+          data: { id: randomUUID(), name: organizationName, slug, is_active: true },
+        });
+        const newUser = await tx.users.create({
+          data: {
+            id: randomUUID(),
+            email,
+            full_name: name || email.split('@')[0],
+            role: 'ADMIN',
+            is_active: true,
+            organizationId: org.id,
+          },
+        });
+        return newUser;
       });
+      user = result;
     }
 
     const role = user.role || 'USER';
@@ -170,26 +206,14 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
-    await prisma.refreshToken.create({
-      data: {
-        token: refreshToken,
-        userId: user.id,
-        expiresAt,
-      },
-    });
+    await prisma.refreshToken.create({ data: { token: refreshToken, userId: user.id, expiresAt } });
 
     res.status(200).json({
       success: true,
       data: {
         accessToken,
         refreshToken,
-        user: {
-          id: user.id,
-          email: user.email,
-          fullName: user.full_name,
-          role,
-          organizationId: user.organizationId,
-        },
+        user: { id: user.id, email: user.email, fullName: user.full_name, role, organizationId: user.organizationId },
       },
     });
   } catch (error) {

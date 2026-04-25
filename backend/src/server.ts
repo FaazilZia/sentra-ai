@@ -1,4 +1,27 @@
 import 'dotenv/config';
+
+// Production environment guard — must run before anything else
+if (process.env.NODE_ENV === 'production') {
+  const REQUIRED_ENV_VARS = [
+    'DATABASE_URL',
+    'JWT_SECRET',
+    'REFRESH_SECRET',
+    'FRONTEND_URL',
+    'SENTRY_DSN',
+  ];
+
+  const missing = REQUIRED_ENV_VARS.filter((v) => !process.env[v]);
+  if (missing.length > 0) {
+    console.error(`[STARTUP FATAL] Missing required environment variables: ${missing.join(', ')}`);
+    process.exit(1);
+  }
+
+  // Prevent weak secrets
+  if ((process.env.JWT_SECRET?.length ?? 0) < 32) {
+    console.error('[STARTUP FATAL] JWT_SECRET must be at least 32 characters');
+    process.exit(1);
+  }
+}
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';

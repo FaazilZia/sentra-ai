@@ -53,17 +53,26 @@ if (connection) {
 }
 
 export const enqueueLog = async (data: any) => {
-  try {
-    if (activityQueue) {
+  // If Redis queue is available, delegate entirely to the worker.
+  // The worker calls logActivity() — do NOT call it here too.
+  if (activityQueue) {
+    try {
       await activityQueue.add('log', data, {
         removeOnComplete: true,
         removeOnFail: 1000,
       });
+      return; // worker handles the write — exit here
+    } catch (error) {
+      logger.warn('BullMQ enqueue failed, falling back to sync logging:', error);
+      // Fall through to direct write below
     }
+  }
+
+  // Redis unavailable or enqueue failed — write synchronously
+  try {
     await logActivity(data);
   } catch (error) {
-    logger.warn('Failed to enqueue log, falling back to sync logging:', error);
-    await logActivity(data); // Fallback
+    logger.error('Critical: sync log write also failed:', error);
   }
 };
 

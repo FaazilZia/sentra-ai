@@ -483,9 +483,9 @@ export async function markAlertRead(alertId: string): Promise<void> {
 }
 
 export async function exportComplianceReport(featureId: string): Promise<Blob> {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/compliance/export/${featureId}`, {
+  const response = await fetch(`${apiBaseUrl}/compliance/export/${featureId}`, {
     headers: {
-      'Authorization': `Bearer ${localStorage.getItem('sentra_token')}`
+      'Authorization': `Bearer ${localStorage.getItem('sentra_access_token')}`
     }
   });
   if (!response.ok) throw new Error('Failed to export report');
