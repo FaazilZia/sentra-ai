@@ -16,6 +16,15 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
 
   logger.error(`[${requestId}] Unhandled Error:`, err);
 
+  // Catch Database/Prisma specific errors
+  if (err.code?.startsWith('P') || err.message?.includes('Prisma') || err.message?.includes('ECONNREFUSED')) {
+    return res.status(503).json({
+      success: false,
+      message: 'Service temporarily unavailable. Our engineers are restoring connectivity.',
+      requestId
+    });
+  }
+
   const status = err.status || 500;
   const message = err.message || 'Internal Server Error';
 
@@ -23,6 +32,5 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
     success: false,
     message,
     requestId,
-    // stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
   });
 };

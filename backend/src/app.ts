@@ -149,8 +149,13 @@ v1Router.use('/risk', riskRoutes);
 
 
 // Health check under v1
-v1Router.get('/health', (req, res) => {
-  res.status(200).json({ status: 'healthy', version: 'v1.2' });
+v1Router.get('/health', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.status(200).json({ status: 'ok', database: 'connected' });
+  } catch (error) {
+    res.status(200).json({ status: 'degraded', database: 'disconnected' });
+  }
 });
 
 // Readiness probe (Supports Degraded Mode)
