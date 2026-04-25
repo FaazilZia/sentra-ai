@@ -1,6 +1,8 @@
 import { evaluateRisk } from './riskEngine';
 import { evaluatePolicy } from './policyEngine';
+import { evaluateSemanticRisk } from './semanticRiskEngine';
 import { maskPII } from '../utils/masking';
+import logger from '../utils/logger';
 
 export interface Decision {
   status: 'allowed' | 'blocked';
@@ -8,8 +10,6 @@ export interface Decision {
   reason: string;
   impact: string;
   compliance: string[];
-  
-  // Internal/extended fields
   explanation?: string;
   confidence?: number;
   timeline?: any[];
@@ -27,107 +27,84 @@ const COMPLIANCE_MAP: Record<string, string[]> = {
   'update_config': ['Internal']
 };
 
-const IMPACT_MAP: Record<string, string> = {
-  'send_email': 'Prevented sensitive data leak',
-  'external_share': 'Avoided data exposure to outside parties',
-  'read_pii': 'Protected customer identity data',
-  'export_csv': 'Blocked large data download',
-  'delete_record': 'Protected audit history from being erased',
-  'read_phi': 'Prevented unauthorized health data access',
-  'execute_payment': 'Stopped unauthorized money transfer',
-  'update_config': 'Prevented system changes'
-};
-
 export const makeDecision = async (agent: string, action: string, organizationId: string, metadata: any = {}): Promise<Decision> => {
-  const lowercaseAction = action.toLowerCase();
   const startTime = performance.now();
   
-  // 1. Evaluate Policy First (User Request: Policy -> Risk -> Decision)
-  const policyResult = await evaluatePolicy(agent, action, organizationId);
-  
-  let status: 'allowed' | 'blocked' = policyResult.allowed ? 'allowed' : 'blocked';
-  let riskScore: 'low' | 'medium' | 'high' = 'low';
-  let reason = policyResult.reason || (status === 'allowed' ? 'Allowed: Verified by policy' : 'Blocked: Not allowed by policy');
+  try {
+    // 1. Level 1: Policy Engine (Hard Rules)
+    const policyResult = await evaluatePolicy(agent, action, organizationId);
+    if (!policyResult.allowed) {
+      return buildBlockedResponse('Policy Violation', policyResult, startTime, agent, action);
+    }
 
-  // Short-circuit: Skip Risk Engine if Policy Engine finds a hard Block rule
-  if (status === 'blocked') {
-    const endTime = performance.now();
-    const duration = endTime - startTime;
-    console.log(`[LATENCY] Decision (Short-circuit): ${duration.toFixed(2)}ms | Agent: ${agent} | Action: ${action} | Status: BLOCKED`);
+    // 2. Level 2: Local Risk Engine (Keyword/Pattern Pre-filter)
+    const localRisk = evaluateRisk(action, metadata);
     
+    // 3. Level 3: Semantic Risk Engine (Intent Analysis)
+    // We only run this if the prompt isn't already flagged as high-risk by L2, 
+    // or if we want deep analysis (production standard).
+    const semanticRisk = await evaluateSemanticRisk(action);
+
+    // Consolidated Risk Scoring (Highest Risk Wins - Fail Closed)
+    const riskScore = (localRisk.score === 'high' || semanticRisk.score === 'high') ? 'high' : 
+                      (localRisk.score === 'medium' || semanticRisk.score === 'medium') ? 'medium' : 'low';
+
+    let status: 'allowed' | 'blocked' = 'allowed';
+    let reason = 'Allowed: Verified by multi-tier governance';
+    let isPendingApproval = false;
+
+    if (riskScore === 'high') {
+      status = 'blocked';
+      isPendingApproval = true;
+      reason = semanticRisk.score === 'high' ? `Blocked: ${semanticRisk.explanation}` : 'Blocked: High-risk pattern detected';
+    }
+
+    const duration = performance.now() - startTime;
+    console.log(`[GOVERNANCE] Decision: ${status.toUpperCase()} | Risk: ${riskScore} | Latency: ${duration.toFixed(2)}ms`);
+
     return {
       status,
-      risk: 'high', // Assume high risk if blocked by policy for safety
+      risk: riskScore,
       reason,
-      impact: (policyResult as any).impact || IMPACT_MAP[lowercaseAction] || 'Protects system from unauthorized access',
-      compliance: (policyResult as any).compliance || COMPLIANCE_MAP[lowercaseAction] || ['Internal Governance Policy'],
-      explanation: maskPII((policyResult as any).explanation || `Sentra prevented "${lowercaseAction}" due to a policy violation.`),
-      confidence: 0.99,
+      impact: policyResult.impact || 'Protects system integrity',
+      compliance: policyResult.compliance || ['Internal Policy'],
+      explanation: maskPII(semanticRisk.explanation || 'Action aligns with safety boundaries.'),
+      confidence: semanticRisk.confidence,
+      isPendingApproval,
       timeline: [
-        { step: 'Agent Intent', status: 'complete', icon: 'zap', description: `AI Agent ${agent} initiated ${action}` },
-        { step: 'Compliance Check', status: 'complete', icon: 'shield', description: 'Blocked by hard policy rule' },
-        { step: 'Governance Engine', status: 'complete', icon: 'layers', description: 'Final Decision: BLOCKED' }
+        { step: 'L1: Policy', status: 'complete', icon: 'shield' },
+        { step: 'L2: Pattern', status: 'complete', icon: 'zap' },
+        { step: 'L3: Semantic', status: 'complete', icon: 'brain' }
       ]
     };
+
+  } catch (error: any) {
+    logger.error('Decision Engine Critical Failure:', error);
+    // FAIL-CLOSED
+    return {
+      status: 'blocked',
+      risk: 'high',
+      reason: 'Governance Failure: Internal Engine Error',
+      impact: 'Critical System Protection',
+      compliance: ['FAIL_SAFE'],
+      explanation: 'The governance engine encountered a critical error. Blocking by default to prevent unauthorized data flow.'
+    };
   }
+};
 
-  // 2. Evaluate Risk (Only if allowed by policy)
-  const riskResult = evaluateRisk(action, metadata);
-  riskScore = riskResult.score;
-
-  // Enterprise Control: 2-Step Verification for High Risk
-  let isPendingApproval = false;
-  if (status === 'allowed' && riskScore === 'high') {
-    status = 'blocked'; // Block by default if high risk
-    isPendingApproval = true;
-    reason = 'Pending review: 2-step verification required';
-  }
-
-  // Fail-closed for high risk if no policy matched
-  if (status === 'allowed' && riskScore === 'high' && !policyResult.matchedPolicy) {
-    status = 'blocked';
-    reason = 'Blocked: Action is high risk and has no policy';
-  }
-
-  const endTime = performance.now();
-  const duration = endTime - startTime;
-  console.log(`[LATENCY] Decision (Full): ${duration.toFixed(2)}ms | Agent: ${agent} | Action: ${action} | Status: ${status.toUpperCase()}`);
-
-  const impact = (policyResult as any).impact || IMPACT_MAP[lowercaseAction] || 'Protects system from unauthorized access';
-  const compliance = (policyResult as any).compliance || COMPLIANCE_MAP[lowercaseAction] || ['Internal Governance Policy'];
-  // Real Confidence Formula:
-  // - Policy match: +0.20
-  // - High risk block: +0.15
-  // - Pattern triggers in metadata: +0.10
-  // - Base: 0.75
-  let confidence = 0.75;
-  if (policyResult.matchedPolicy) confidence += 0.15;
-  if (status === 'blocked' && riskScore === 'high') confidence += 0.10;
-  if (riskResult.triggers.length > 0) confidence += 0.05;
-  
-  confidence = Math.min(0.99, confidence);
-
-  
-  const explanation = maskPII((policyResult as any).explanation || (status === 'blocked' 
-    ? `Sentra prevented "${lowercaseAction}" because it triggered a ${riskScore}-risk pattern and violated active compliance rules.`
-    : `Action "${lowercaseAction}" allowed. Risk is ${riskScore} and it aligns with internal policy boundaries.`));
-
-  const timeline = [
-    { step: 'Agent Intent', status: 'complete', icon: 'zap', description: `AI Agent ${agent} initiated ${action}` },
-    { step: 'Compliance Check', status: 'complete', icon: 'shield', description: `Regulatory evaluation for ${compliance.join(', ')}` },
-    { step: 'Governance Engine', status: 'complete', icon: 'layers', description: isPendingApproval ? 'Action held for manual reviewer approval' : `Final Decision: ${status.toUpperCase()}` }
-  ];
-
+const buildBlockedResponse = (type: string, policyResult: any, startTime: number, agent: string, action: string): Decision => {
   return {
-    status,
-    risk: riskScore,
-    reason,
-    impact,
-    compliance,
-    explanation,
-    confidence,
-    timeline,
-    isPendingApproval
+    status: 'blocked',
+    risk: 'high',
+    reason: policyResult.reason || `${type}: Violation detected`,
+    impact: policyResult.impact || 'Prevents unauthorized execution',
+    compliance: policyResult.compliance || ['General Policy'],
+    explanation: maskPII(policyResult.explanation || 'Action blocked by policy.'),
+    confidence: 1.0,
+    timeline: [
+      { step: 'L1: Policy', status: 'blocked', icon: 'shield' },
+      { step: 'Governance Engine', status: 'complete', icon: 'layers', description: 'Final Decision: BLOCKED' }
+    ]
   };
 };
 

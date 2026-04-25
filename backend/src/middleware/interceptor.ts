@@ -9,10 +9,23 @@ export async function interceptAction(input: any, callback: () => Promise<any>) 
   const { agent, action, organizationId, metadata, requestId } = input;
   const startTime = Date.now();
 
-  // 1. Get Decision from Engine
-  const decision = await makeDecision(agent, action, organizationId, metadata);
+  // 1. Get Decision from Engine with Global Fail-Closed Boundary
+  let decision;
+  try {
+    decision = await makeDecision(agent, action, organizationId, metadata);
+  } catch (error: any) {
+    // FAIL-CLOSED: Critical engine error defaults to BLOCKED
+    decision = {
+      status: 'blocked',
+      risk: 'high',
+      reason: 'Critical Governance Failure',
+      impact: 'Protected by Fail-Closed Boundary',
+      compliance: ['INTERNAL_SAFETY'],
+      explanation: 'The governance engine encountered a critical error. Action blocked for safety.'
+    };
+  }
 
-  // 2. If blocked, log asynchronously and return early
+  // 2. If blocked, log and return early
   if (decision.status === 'blocked') {
     await enqueueLog({
       organizationId,

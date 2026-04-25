@@ -1,41 +1,66 @@
 import { PrismaClient } from '@prisma/client';
-import dotenv from 'dotenv';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
+import logger from '../utils/logger';
 
-dotenv.config();
-
-const databaseUrl = process.env.DATABASE_URL || 'file:./dev.db';
-const isSqlite = databaseUrl.startsWith('file:');
+/**
+ * Enterprise Prisma Singleton
+ * Optimized for serverless environments with pooled connections and fail-safe initialization.
+ */
 
 let prisma: PrismaClient;
 
-// We use dynamic imports to avoid initializing incompatible adapters
-// specifically for Prisma 7 requirements
-async function initializePrisma() {
-  if (isSqlite) {
-    const { PrismaBetterSqlite3 } = await import('@prisma/adapter-better-sqlite3');
-    const adapter = new PrismaBetterSqlite3({ url: 'dev.db' });
-    prisma = new PrismaClient({ adapter });
-  } else {
-    const { PrismaPg } = await import('@prisma/adapter-pg');
-    const { Pool } = await import('pg');
-    const pool = new Pool({ connectionString: databaseUrl });
-    const adapter = new PrismaPg(pool);
-    prisma = new PrismaClient({ adapter });
+export const initializePrisma = async () => {
+  if (prisma) return prisma;
+
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    throw new Error('DATABASE_URL is not defined in environment variables.');
   }
-}
 
-// Since top-level await is tricky in CommonJS/some TS configs, 
-// we'll export a proxy or a lazy-loader. 
-// For this MVP, we'll just initialize it on first use or use a global.
+  try {
+    const pool = new Pool({ 
+      connectionString: databaseUrl,
+      max: 20, // Limit pool size for serverless efficiency
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 2000,
+    });
 
-const proxy = new Proxy({} as PrismaClient, {
+    const adapter = new PrismaPg(pool);
+    prisma = new PrismaClient({ 
+      adapter,
+      log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
+    });
+
+    // Test connection
+    await prisma.$connect();
+    logger.info('Database connection established successfully.');
+    
+    return prisma;
+  } catch (error) {
+    logger.error('Failed to initialize database connection:', error);
+    throw error;
+  }
+};
+
+/**
+ * Fail-Safe Prisma Getter
+ * Always ensures initialization before access.
+ */
+export const getPrisma = async (): Promise<PrismaClient> => {
+  if (!prisma) {
+    return await initializePrisma();
+  }
+  return prisma;
+};
+
+// Default export for backward compatibility where async isn't immediately possible
+// NOTE: Preferred usage is getPrisma()
+export default new Proxy({} as PrismaClient, {
   get: (target, prop) => {
     if (!prisma) {
-      throw new Error("Prisma not initialized. Call await initializePrisma() or ensure it's ready.");
+      throw new Error("Prisma accessed before initialization. Call initializePrisma() first.");
     }
     return (prisma as any)[prop];
   }
 });
-
-export { initializePrisma, prisma as prismaRaw };
-export default proxy;

@@ -1,18 +1,59 @@
+import crypto from 'crypto';
+
 /**
- * Minimal PII masking utility for enterprise compliance
+ * Enterprise Anonymization & De-identification Service
+ * Supports context-aware masking and deterministic tokenization for security audits.
  */
 
-export const maskPII = (text: string | null): string => {
+interface MaskingOptions {
+  salt?: string;
+  deterministic?: boolean;
+}
+
+export const anonymizeText = (text: string | null, options: MaskingOptions = {}): string => {
   if (!text) return "";
   
-  // Mask Email: john@email.com -> j***@email.com
-  const emailRegex = /([a-zA-Z0-9._%+-])[^@]+(@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/;
-  let masked = text.replace(emailRegex, "$1***$2");
-  
-  // Mask Account Numbers / Sensitive IDs (Generic numeric masking)
-  // Mask sequences of 8+ digits, leaving last 4
-  const accountRegex = /\b\d{4,12}(\d{4})\b/g;
-  masked = masked.replace(accountRegex, "****$1");
-  
-  return masked;
+  let result = text;
+  const salt = options.salt || process.env.MASKING_SALT || 'default-sentra-salt';
+
+  // 1. Precise Email Masking: user@domain.com -> u***@domain.com
+  const emailRegex = /\b([a-zA-Z0-9._%+-])[^@]+(@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\b/g;
+  result = result.replace(emailRegex, (match, p1, p2) => {
+    return options.deterministic 
+      ? `[EMAIL_${hashString(match, salt)}]` 
+      : `${p1}***${p2}`;
+  });
+
+  // 2. Financial / Card Masking: 1234-5678-9012-3456 -> ****-****-****-3456
+  const cardRegex = /\b(?:\d[ -]*?){13,16}\b/g;
+  result = result.replace(cardRegex, (match) => {
+    const clean = match.replace(/[- ]/g, '');
+    const last4 = clean.slice(-4);
+    return `****-****-****-${last4}`;
+  });
+
+  // 3. Identification Masking (SSN/Passports)
+  const idRegex = /\b\d{3}-\d{2}-\d{4}\b/g;
+  result = result.replace(idRegex, "[ID_REDACTED]");
+
+  // 4. Phone Number Masking
+  const phoneRegex = /\b(?:\+?\d{1,3}[- ]?)?\(?\d{3}\)?[- ]?\d{3}[- ]?\d{4}\b/g;
+  result = result.replace(phoneRegex, "[PHONE_REDACTED]");
+
+  return result;
 };
+
+/**
+ * Deterministic hash for consistent tokenization (useful for audit correlation)
+ */
+function hashString(input: string, salt: string): string {
+  return crypto
+    .createHmac('sha256', salt)
+    .update(input)
+    .digest('hex')
+    .substring(0, 8)
+    .toUpperCase();
+}
+
+// Backward compatibility with legacy maskPII call
+export const maskPII = (text: string | null): string => anonymizeText(text);
