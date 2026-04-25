@@ -40,3 +40,7 @@ build/
 __pycache__/
 **/coverage
 **/dist
+backend/dev.db
+backend/results.txt
+backend/scratch/
+*.sh
