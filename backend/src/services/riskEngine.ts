@@ -46,8 +46,26 @@ export const evaluateRisk = (action: string, metadata: any = {}): RiskEvaluation
   const dataString = (action + ' ' + JSON.stringify(metadata)).toLowerCase();
   const prompt = (action + ' ' + String(metadata.prompt || '')).toLowerCase();
 
+  // Level 0: Evasion Detection (Base64)
+  let decodedPrompt = prompt;
+  if (/[a-zA-Z0-9+/]{20,}={0,2}/.test(prompt)) {
+    try {
+      const potentialB64 = prompt.match(/[a-zA-Z0-9+/]{20,}={0,2}/)?.[0];
+      if (potentialB64) {
+        const decoded = Buffer.from(potentialB64, 'base64').toString('utf-8');
+        if (/[a-zA-Z]{3,}/.test(decoded)) {
+          decodedPrompt = (prompt + ' ' + decoded).toLowerCase();
+          triggers.push('Evasion attempt detected: Base64 payload decoded and analyzed');
+        }
+      }
+    } catch (e) {
+      // Not valid B64, continue
+    }
+  }
+
   // 1. Action Risk
-  const matchedHighRisk = HIGH_RISK_ACTIONS.find(a => prompt.includes(a.toLowerCase()));
+  const finalPrompt = decodedPrompt;
+  const matchedHighRisk = HIGH_RISK_ACTIONS.find(a => finalPrompt.includes(a.toLowerCase()));
   if (matchedHighRisk) {
     score = 'high';
     triggers.push(`High-risk signature detected: ${matchedHighRisk}`);

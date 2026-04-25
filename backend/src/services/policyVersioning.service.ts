@@ -9,7 +9,6 @@ import logger from '../utils/logger';
 export class PolicyVersioningService {
   /**
    * Capture a new version of a policy.
-   * Typically called before or after a policy update.
    */
   static async captureVersion(policyId: string, organizationId: string) {
     try {
@@ -64,7 +63,6 @@ export class PolicyVersioningService {
         throw new Error('Version snapshot not found or unauthorized');
       }
 
-      // Update the live policy with snapshot data
       const updatedPolicy = await prisma.policies.update({
         where: { id: policyId },
         data: {
@@ -73,19 +71,18 @@ export class PolicyVersioningService {
           enabled: snapshot.enabled,
           priority: snapshot.priority,
           effect: snapshot.effect,
-          status: 'published', // Rollbacks are typically immediate
+          status: 'published',
           scope: snapshot.scope || {},
           conditions: snapshot.conditions || {},
           obligations: snapshot.obligations || {},
-          current_version: { increment: 1 } // Increment live version after rollback
+          current_version: { increment: 1 }
         }
       });
 
-      // Log the rollback as an audit event
       await prisma.audit_logs.create({
         data: {
           organizationId,
-          user_id: 'SYSTEM', // In a real app, pass the actual user ID
+          user_id: 'SYSTEM',
           action: 'POLICY_ROLLBACK',
           metadata: { policyId, fromVersion: versionNumber, toVersion: updatedPolicy.current_version }
         }
