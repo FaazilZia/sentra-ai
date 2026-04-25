@@ -18,6 +18,7 @@ import driftRoutes from './routes/drift.routes';
 import complianceRoutes from './routes/compliance.routes';
 import guardrailRoutes from './routes/guardrail.routes';
 import riskRoutes from './routes/risk.routes';
+import prisma from './config/db';
 
 import { apiRateLimiter } from './config/rateLimit';
 import { securityObservability } from './middleware/security.middleware';
