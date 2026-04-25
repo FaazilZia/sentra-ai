@@ -63,6 +63,20 @@ export const evaluateRisk = (action: string, metadata: any = {}): RiskEvaluation
   if (foundKeywords.length > 0) {
     if (score !== 'high') score = 'medium';
     triggers.push(`Sensitive keywords detected: ${foundKeywords.join(', ')}`);
+    
+    // Escalation: Multiple sensitive keywords + intent
+    const hasExportIntent = prompt.includes('export') || prompt.includes('download') || prompt.includes('show me') || prompt.includes('give me');
+    const hasSensitiveData = foundKeywords.some(kw => ['email', 'phone', 'ssn', 'medical', 'financial', 'pii', 'secret', 'key'].includes(kw));
+    
+    if (hasExportIntent && hasSensitiveData) {
+      score = 'high';
+      triggers.push('Risk Escalation: Probable data exfiltration attempt detected');
+    }
+
+    if (foundKeywords.length >= 3) {
+      score = 'high';
+      triggers.push('Risk Escalation: High density of sensitive identifiers detected');
+    }
   }
 
   // 3. Pattern Matching (PII Detection)
