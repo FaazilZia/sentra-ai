@@ -5,7 +5,7 @@ import { RiskHeatmap } from '@/components/risk/RiskHeatmap';
 import { ActiveRiskEvents } from '@/components/risk/ActiveRiskEvents';
 import { RiskExposurePanel } from '@/components/risk/RiskExposurePanel';
 import { RiskOwnership } from '@/components/risk/RiskOwnership';
-import { fetchRiskData, fetchViolations, fetchAIAgents, fetchScans } from '@/lib/api';
+import { fetchRiskData, fetchViolations, fetchAIAgents, fetchScans, fetchExecutiveMetrics, fetchTopAttackPatterns, fetchRiskTrend } from '@/lib/api';
 import { AlertTriangle } from 'lucide-react';
 
 const containerVariants: Variants = {
@@ -31,19 +31,28 @@ export default function RiskCenterPage() {
   const [violations, setViolations] = useState<any[]>([]);
   const [agents, setAgents] = useState<any[]>([]);
   const [scans, setScans] = useState<number>(0);
+  const [executiveMetrics, setExecutiveMetrics] = useState<any>(null);
+  const [attackPatterns, setAttackPatterns] = useState<any[]>([]);
+  const [riskTrend, setRiskTrend] = useState<any[]>([]);
 
   const loadAllData = async () => {
     try {
-      const [risk, v, a, s] = await Promise.all([
+      const [risk, v, a, s, metrics, patterns, trend] = await Promise.all([
         fetchRiskData(),
         fetchViolations(),
         fetchAIAgents(),
-        fetchScans()
+        fetchScans(),
+        fetchExecutiveMetrics(),
+        fetchTopAttackPatterns(),
+        fetchRiskTrend(30)
       ]);
       setRiskData(risk);
       setViolations(v);
       setAgents(a);
       setScans(s.count || 0);
+      setExecutiveMetrics(metrics);
+      setAttackPatterns(patterns);
+      setRiskTrend(trend);
     } catch (e) {
       console.error('Failed to load risk data', e);
     } finally {
@@ -116,11 +125,11 @@ export default function RiskCenterPage() {
         animate="visible"
       >
         <motion.div variants={itemVariants}>
-          <RiskPosture riskData={riskData} violations={violations} scans={scans} />
+          <RiskPosture riskData={riskData} violations={violations} scans={scans} executiveMetrics={executiveMetrics} />
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <RiskHeatmap riskData={riskData} />
+          <RiskHeatmap riskData={riskData} attackPatterns={attackPatterns} />
         </motion.div>
 
         <motion.div variants={itemVariants}>
@@ -128,7 +137,7 @@ export default function RiskCenterPage() {
         </motion.div>
 
         <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <RiskExposurePanel riskData={riskData} />
+          <RiskExposurePanel riskData={riskData} riskTrend={riskTrend} />
           <RiskOwnership agents={agents} />
         </motion.div>
       </motion.div>

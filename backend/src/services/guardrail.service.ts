@@ -1,5 +1,7 @@
 import prisma from '../config/db';
 import logger from '../utils/logger';
+import { evaluateRisk } from './riskEngine';
+import { evaluateSemanticRisk } from './semanticRiskEngine';
 
 export interface GuardrailDecision {
   decision: 'ALLOW' | 'MODIFY' | 'BLOCK';
@@ -49,17 +51,17 @@ export class GuardrailService {
     let policy_triggered: string | undefined = undefined;
     let processedText = text;
 
+    // 1. Traditional Regex/Pattern Matching (Fast path)
     for (const policy of POLICIES) {
       for (const pattern of policy.patterns) {
         if (pattern.test(text)) {
-          // Simple confidence logic: certain patterns are high, keywords are medium
           confidence = pattern.toString().includes('\\b') ? 'Medium' : 'High';
 
           if (policy.action === 'BLOCK') {
             return {
               decision: 'BLOCK',
               confidence,
-              reason: `Policy ${policy.id} violation: sensitive patterns detected in input`,
+              reason: `Policy ${policy.id} violation: sensitive patterns detected`,
               policy_triggered: policy.id,
               processedText: '[BLOCKED BY GUARDRAIL]'
             };
@@ -72,6 +74,33 @@ export class GuardrailService {
             });
           }
         }
+      }
+    }
+
+    // 2. Hardened Risk Engine (Normalization, Evasion, Multi-Signal)
+    const engineResult = evaluateRisk('ai_proxy', { prompt: text });
+    if (engineResult.score === 'high') {
+      return {
+        decision: 'BLOCK',
+        confidence: 'High',
+        reason: `Risk Engine: ${engineResult.triggers[0]}`,
+        policy_triggered: 'HARDENED_RISK_ENGINE',
+        processedText: '[BLOCKED BY SECURITY ENGINE]'
+      };
+    }
+
+    // 3. Semantic Analysis (LLM Intent Analysis)
+    // Only run for complex prompts to optimize latency
+    if (text.length > 20 || /export|reveal|system|ignore/i.test(text)) {
+      const semanticResult = await evaluateSemanticRisk(text);
+      if (semanticResult.score === 'high') {
+        return {
+          decision: 'BLOCK',
+          confidence: 'High',
+          reason: `Semantic Guardrail: ${semanticResult.explanation}`,
+          policy_triggered: 'SEMANTIC_ADVERSARIAL_DETECT',
+          processedText: '[BLOCKED BY SEMANTIC GUARDRAIL]'
+        };
       }
     }
 
@@ -105,10 +134,13 @@ export class GuardrailService {
           confidence: data.confidence || 'High',
           reason: data.reason,
           policy_triggered: data.policy_triggered,
-          metadata: data.metadata || {}
+        metadata: { 
+          ...data.metadata,
+          categories: data.policy_triggered ? [data.policy_triggered] : (data.metadata?.categories || [])
         }
-      });
-    } catch (err) {
+      }
+    });
+  } catch (err) {
       logger.error('Failed to log interception:', err);
     }
   }

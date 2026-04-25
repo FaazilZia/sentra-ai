@@ -30,6 +30,7 @@
     "@sentry/node": "^10.49.0",
     "@types/better-sqlite3": "^7.6.13",
     "@types/pdfkit": "^0.17.6",
+    "axios": "^1.15.2",
     "bcrypt": "^6.0.0",
     "better-sqlite3": "^12.9.0",
     "bullmq": "^5.74.1",

@@ -636,6 +636,18 @@ export async function fetchRiskData(): Promise<any> {
   return apiRequest<any>('/risk');
 }
 
+export async function fetchExecutiveMetrics(): Promise<any> {
+  return apiRequest<any>('/intelligence/metrics');
+}
+
+export async function fetchTopAttackPatterns(): Promise<any[]> {
+  return apiRequest<any[]>('/intelligence/patterns');
+}
+
+export async function fetchRiskTrend(days: number = 7): Promise<any[]> {
+  return apiRequest<any[]>(`/intelligence/trend?days=${days}`);
+}
+
 export async function createConnector(payload: any): Promise<any> {
   return apiRequest<any>('/connectors', {
     method: 'POST',
