@@ -11,7 +11,8 @@ const SENSITIVE_KEYWORDS = [
 ];
 
 const HIGH_RISK_ACTIONS = [
-  'send_email', 'external_api', 'export_csv', 'delete_record', 'update_config', 'external_share', 'bypass_auth'
+  'send_email', 'external_api', 'export_csv', 'delete_record', 'update_config', 'external_share', 'bypass_auth',
+  'export_data', 'master_key', 'admin_access', 'pii_export', 'security_bypass', 'jailbreak', 'unfiltered'
 ];
 
 const MEDIUM_RISK_ACTIONS = [
@@ -45,12 +46,16 @@ export const evaluateRisk = (action: string, metadata: any = {}): RiskEvaluation
   const prompt = (action + ' ' + String(metadata.prompt || '')).toLowerCase();
 
   // 1. Action Risk
-  if (HIGH_RISK_ACTIONS.includes(lowercaseAction)) {
+  const matchedHighRisk = HIGH_RISK_ACTIONS.find(a => prompt.includes(a.toLowerCase()));
+  if (matchedHighRisk) {
     score = 'high';
-    triggers.push(`High-risk action: ${action}`);
-  } else if (MEDIUM_RISK_ACTIONS.includes(lowercaseAction)) {
-    score = 'medium';
-    triggers.push(`Medium-risk action: ${action}`);
+    triggers.push(`High-risk signature detected: ${matchedHighRisk}`);
+  } else {
+    const matchedMediumRisk = MEDIUM_RISK_ACTIONS.find(a => prompt.includes(a.toLowerCase()));
+    if (matchedMediumRisk) {
+      score = 'medium';
+      triggers.push(`Medium-risk signature detected: ${matchedMediumRisk}`);
+    }
   }
 
   // 2. Keyword Analysis
