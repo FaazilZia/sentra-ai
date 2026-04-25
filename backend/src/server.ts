@@ -7,7 +7,6 @@ if (process.env.NODE_ENV === 'production') {
     'JWT_SECRET',
     'REFRESH_SECRET',
     'FRONTEND_URL',
-    'SENTRY_DSN',
   ];
 
   const missing = REQUIRED_ENV_VARS.filter((v) => !process.env[v]);
