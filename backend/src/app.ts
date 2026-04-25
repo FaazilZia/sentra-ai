@@ -18,6 +18,7 @@ import driftRoutes from './routes/drift.routes';
 import complianceRoutes from './routes/compliance.routes';
 import guardrailRoutes from './routes/guardrail.routes';
 import riskRoutes from './routes/risk.routes';
+import intelligenceRoutes from './routes/intelligence.routes';
 import prisma from './config/db';
 
 import { apiRateLimiter } from './config/rateLimit';
@@ -147,6 +148,7 @@ v1Router.use('/drift', driftRoutes);
 v1Router.use('/compliance', complianceRoutes);
 v1Router.use('/guardrails', guardrailRoutes);
 v1Router.use('/risk', riskRoutes);
+v1Router.use('/intelligence', intelligenceRoutes);
 
 
 // Health check under v1
@@ -215,6 +217,7 @@ app.use('/api/connectors', connectorRoutes);
 app.use('/api/consent', consentRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/risk', riskRoutes);
+app.use('/api/intelligence', intelligenceRoutes);
 
 // Root route to check version
 app.get('/', (req, res) => {
