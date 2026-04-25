@@ -6,7 +6,8 @@ export const SENSITIVE_PATTERNS = {
 };
 
 const SENSITIVE_KEYWORDS = [
-  'password', 'account', 'personal', 'credential', 'secret', 'confidential', 'pii', 'ssn', 'credit_card', 'api_key', 'token'
+  'password', 'account', 'personal', 'credential', 'secret', 'confidential', 'pii', 'ssn', 'credit_card', 'api_key', 'token',
+  'medical', 'financial', 'audit', 'payment', 'revenue', 'private', 'message', 'email', 'phone', 'address'
 ];
 
 const HIGH_RISK_ACTIONS = [
@@ -27,15 +28,21 @@ const JAILBREAK_PATTERNS = [
   /system prompt/i,
   /dan mode/i,
   /unfiltered/i,
-  /bypass/i
+  /bypass/i,
+  /grandmother/i,
+  /masterkey/i,
+  /debug mode/i,
+  /override/i,
+  /roleplay/i,
+  /pretend you are/i
 ];
 
 export const evaluateRisk = (action: string, metadata: any = {}): RiskEvaluation => {
   let score: 'low' | 'medium' | 'high' = 'low';
   const triggers: string[] = [];
   const lowercaseAction = action.toLowerCase();
-  const dataString = JSON.stringify(metadata).toLowerCase();
-  const prompt = String(metadata.prompt || '').toLowerCase();
+  const dataString = (action + ' ' + JSON.stringify(metadata)).toLowerCase();
+  const prompt = (action + ' ' + String(metadata.prompt || '')).toLowerCase();
 
   // 1. Action Risk
   if (HIGH_RISK_ACTIONS.includes(lowercaseAction)) {
