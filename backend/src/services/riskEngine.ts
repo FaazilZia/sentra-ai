@@ -7,7 +7,8 @@ export const SENSITIVE_PATTERNS = {
 
 const SENSITIVE_KEYWORDS = [
   'password', 'account', 'personal', 'credential', 'secret', 'confidential', 'pii', 'ssn', 'credit_card', 'api_key', 'token',
-  'medical', 'financial', 'audit', 'payment', 'revenue', 'private', 'message', 'email', 'phone', 'address'
+  'medical', 'financial', 'audit', 'payment', 'revenue', 'private', 'message', 'email', 'phone', 'address',
+  'proxy', 'scrape', 'manipulate', 'elderly', 'targeting'
 ];
 
 const HIGH_RISK_ACTIONS = [
