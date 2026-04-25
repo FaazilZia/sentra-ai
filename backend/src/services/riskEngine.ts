@@ -8,7 +8,7 @@ export const SENSITIVE_PATTERNS = {
 const SENSITIVE_KEYWORDS = [
   'password', 'account', 'personal', 'credential', 'secret', 'confidential', 'pii', 'ssn', 'credit_card', 'api_key', 'token',
   'medical', 'financial', 'audit', 'payment', 'revenue', 'private', 'message', 'email', 'phone', 'address',
-  'proxy', 'scrape', 'manipulate', 'elderly', 'targeting'
+  'proxy', 'scrape', 'manipulate', 'elderly', 'targeting', 'aws', 'key', 'master'
 ];
 
 const HIGH_RISK_ACTIONS = [
@@ -31,7 +31,11 @@ const JAILBREAK_PATTERNS = [
   /debug mode/i,
   /override/i,
   /roleplay/i,
-  /pretend you are/i
+  /pretend you are/i,
+  /steal/i,
+  /hack/i,
+  /leak/i,
+  /extract/i
 ];
 
 export interface RiskEvaluation {
@@ -42,19 +46,19 @@ export interface RiskEvaluation {
 export const evaluateRisk = (action: string, metadata: any = {}): RiskEvaluation => {
   let score: 'low' | 'medium' | 'high' = 'low';
   const triggers: string[] = [];
-  const lowercaseAction = action.toLowerCase();
+  const rawPrompt = String(metadata.prompt || metadata.action || action);
   const dataString = (action + ' ' + JSON.stringify(metadata)).toLowerCase();
-  const prompt = (action + ' ' + String(metadata.prompt || '')).toLowerCase();
 
-  // Level 0: Evasion Detection (Base64)
-  let decodedPrompt = prompt;
-  if (/[a-zA-Z0-9+/]{20,}={0,2}/.test(prompt)) {
+  // Level 0: Evasion Detection (Base64) - MUST BE CASE SENSITIVE
+  let decodedPrompt = rawPrompt.toLowerCase();
+  if (/[a-zA-Z0-9+/]{20,}={0,2}/.test(rawPrompt)) {
     try {
-      const potentialB64 = prompt.match(/[a-zA-Z0-9+/]{20,}={0,2}/)?.[0];
+      const potentialB64 = rawPrompt.match(/[a-zA-Z0-9+/]{20,}={0,2}/)?.[0];
       if (potentialB64) {
         const decoded = Buffer.from(potentialB64, 'base64').toString('utf-8');
+        // Validate it's likely English/text
         if (/[a-zA-Z]{3,}/.test(decoded)) {
-          decodedPrompt = (prompt + ' ' + decoded).toLowerCase();
+          decodedPrompt = (rawPrompt + ' ' + decoded).toLowerCase();
           triggers.push('Evasion attempt detected: Base64 payload decoded and analyzed');
         }
       }
@@ -71,40 +75,26 @@ export const evaluateRisk = (action: string, metadata: any = {}): RiskEvaluation
   if (matchedHighRisk) {
     score = 'high';
     triggers.push(`High-risk signature detected: ${matchedHighRisk}`);
-  } else {
-    const matchedMediumRisk = MEDIUM_RISK_ACTIONS.find(a => {
-      const words = a.toLowerCase().split('_');
-      return finalPrompt.includes(a.toLowerCase()) || (words.length > 1 && words.every(w => finalPrompt.includes(w)));
-    });
-    if (matchedMediumRisk) {
-      score = 'medium';
-      triggers.push(`Medium-risk signature detected: ${matchedMediumRisk}`);
-    }
   }
 
   // 2. Keyword Analysis
-  const foundKeywords = SENSITIVE_KEYWORDS.filter(kw => dataString.includes(kw));
+  const foundKeywords = SENSITIVE_KEYWORDS.filter(kw => finalPrompt.includes(kw) || dataString.includes(kw));
   if (foundKeywords.length > 0) {
     if (score !== 'high') score = 'medium';
     triggers.push(`Sensitive keywords detected: ${foundKeywords.join(', ')}`);
     
-    const hasExportIntent = finalPrompt.includes('export') || finalPrompt.includes('download') || finalPrompt.includes('show me') || finalPrompt.includes('give me');
-    const hasSensitiveData = foundKeywords.some(kw => ['email', 'phone', 'ssn', 'medical', 'financial', 'pii', 'secret', 'key'].includes(kw));
+    const hasExportIntent = finalPrompt.includes('export') || finalPrompt.includes('download') || finalPrompt.includes('show me') || finalPrompt.includes('give me') || finalPrompt.includes('reveal');
+    const hasSensitiveData = foundKeywords.some(kw => ['email', 'phone', 'ssn', 'medical', 'financial', 'pii', 'secret', 'key', 'aws', 'master'].includes(kw));
     
     if (hasExportIntent && hasSensitiveData) {
       score = 'high';
       triggers.push('Risk Escalation: Probable data exfiltration attempt detected');
     }
-
-    if (foundKeywords.length >= 3) {
-      score = 'high';
-      triggers.push('Risk Escalation: High density of sensitive identifiers detected');
-    }
   }
 
   // 3. Pattern Matching (PII Detection)
   for (const [name, pattern] of Object.entries(SENSITIVE_PATTERNS)) {
-    if (pattern.test(dataString)) {
+    if (pattern.test(finalPrompt) || pattern.test(dataString)) {
       score = 'high';
       triggers.push(`Sensitive pattern detected: ${name}`);
     }
