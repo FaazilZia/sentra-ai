@@ -20,11 +20,6 @@ const MEDIUM_RISK_ACTIONS = [
   'read_database', 'read_pii', 'access_logs', 'modify_record'
 ];
 
-export interface RiskEvaluation {
-  score: 'low' | 'medium' | 'high';
-  triggers: string[];
-}
-
 const JAILBREAK_PATTERNS = [
   /ignore all previous instructions/i,
   /system prompt/i,
@@ -38,6 +33,11 @@ const JAILBREAK_PATTERNS = [
   /roleplay/i,
   /pretend you are/i
 ];
+
+export interface RiskEvaluation {
+  score: 'low' | 'medium' | 'high';
+  triggers: string[];
+}
 
 export const evaluateRisk = (action: string, metadata: any = {}): RiskEvaluation => {
   let score: 'low' | 'medium' | 'high' = 'low';
@@ -58,19 +58,24 @@ export const evaluateRisk = (action: string, metadata: any = {}): RiskEvaluation
           triggers.push('Evasion attempt detected: Base64 payload decoded and analyzed');
         }
       }
-    } catch (e) {
-      // Not valid B64, continue
-    }
+    } catch (e) {}
   }
 
-  // 1. Action Risk
+  // 1. Action Risk (Fuzzy Matching)
   const finalPrompt = decodedPrompt;
-  const matchedHighRisk = HIGH_RISK_ACTIONS.find(a => finalPrompt.includes(a.toLowerCase()));
+  const matchedHighRisk = HIGH_RISK_ACTIONS.find(a => {
+    const words = a.toLowerCase().split('_');
+    return finalPrompt.includes(a.toLowerCase()) || (words.length > 1 && words.every(w => finalPrompt.includes(w)));
+  });
+  
   if (matchedHighRisk) {
     score = 'high';
     triggers.push(`High-risk signature detected: ${matchedHighRisk}`);
   } else {
-    const matchedMediumRisk = MEDIUM_RISK_ACTIONS.find(a => prompt.includes(a.toLowerCase()));
+    const matchedMediumRisk = MEDIUM_RISK_ACTIONS.find(a => {
+      const words = a.toLowerCase().split('_');
+      return finalPrompt.includes(a.toLowerCase()) || (words.length > 1 && words.every(w => finalPrompt.includes(w)));
+    });
     if (matchedMediumRisk) {
       score = 'medium';
       triggers.push(`Medium-risk signature detected: ${matchedMediumRisk}`);
@@ -83,8 +88,7 @@ export const evaluateRisk = (action: string, metadata: any = {}): RiskEvaluation
     if (score !== 'high') score = 'medium';
     triggers.push(`Sensitive keywords detected: ${foundKeywords.join(', ')}`);
     
-    // Escalation: Multiple sensitive keywords + intent
-    const hasExportIntent = prompt.includes('export') || prompt.includes('download') || prompt.includes('show me') || prompt.includes('give me');
+    const hasExportIntent = finalPrompt.includes('export') || finalPrompt.includes('download') || finalPrompt.includes('show me') || finalPrompt.includes('give me');
     const hasSensitiveData = foundKeywords.some(kw => ['email', 'phone', 'ssn', 'medical', 'financial', 'pii', 'secret', 'key'].includes(kw));
     
     if (hasExportIntent && hasSensitiveData) {
@@ -107,19 +111,11 @@ export const evaluateRisk = (action: string, metadata: any = {}): RiskEvaluation
   }
 
   // 4. Jailbreak Detection
-  const jailbreakMatch = JAILBREAK_PATTERNS.find(pattern => pattern.test(prompt));
+  const jailbreakMatch = JAILBREAK_PATTERNS.find(pattern => pattern.test(finalPrompt));
   if (jailbreakMatch) {
     score = 'high';
     triggers.push(`Potential jailbreak attempt detected: ${jailbreakMatch.source}`);
   }
 
-  // 5. Contextual Risk (e.g. bulk export)
-  if (lowercaseAction === 'export_csv' && metadata.recordCount > 1000) {
-    score = 'high';
-    triggers.push('Bulk data export detected (>1000 records)');
-  }
-
   return { score, triggers };
 };
-
-
