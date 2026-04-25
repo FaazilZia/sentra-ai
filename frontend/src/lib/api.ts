@@ -323,7 +323,7 @@ export function fetchPolicyHealth(): Promise<any> {
  * INCIDENT ENDPOINTS
  */
 export function fetchViolations(limit: number = 50, status?: string): Promise<IncidentResponse[]> {
-  let url = `/violations?limit=${limit}`;
+  let url = `/incidents?limit=${limit}`;
   if (status) {
     url += `&status=${status}`;
   }
@@ -629,7 +629,9 @@ export async function fetchDashboardStats(): Promise<any> {
 }
 
 export async function fetchScans(): Promise<{ count: number }> {
-  return apiRequest<{ count: number }>('/scans');
+  // Map to intelligence metrics for now
+  const metrics = await apiRequest<any>('/intelligence/metrics');
+  return { count: metrics.totalActions || 0 };
 }
 
 export async function fetchRiskData(): Promise<any> {

@@ -1,9 +1,9 @@
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { ShieldAlert, AlertTriangle, Info } from 'lucide-react';
+import { ShieldAlert, AlertTriangle, Info, Clock } from 'lucide-react';
 
 interface ActiveRiskEventsProps {
-  violations: any[];
+  violations?: any[];
 }
 
 function EventBadge({ text, type }: { text: string; type: string }) {
@@ -26,7 +26,7 @@ function EventBadge({ text, type }: { text: string; type: string }) {
   );
 }
 
-export function ActiveRiskEvents({ violations }: ActiveRiskEventsProps) {
+export function ActiveRiskEvents({ violations = [] }: ActiveRiskEventsProps) {
   const criticalCount = violations.filter(v => v.severity >= 80).length;
   const mediumCount = violations.filter(v => v.severity >= 40 && v.severity < 80).length;
   const lowCount = violations.filter(v => v.severity < 40).length;

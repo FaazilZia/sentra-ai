@@ -6,12 +6,13 @@ interface RiskPostureProps {
   riskData: any;
   violations: any[];
   scans: number;
+  executiveMetrics?: any;
 }
 
-export function RiskPosture({ riskData, violations, scans }: RiskPostureProps) {
+export function RiskPosture({ riskData, violations, scans, executiveMetrics }: RiskPostureProps) {
   const criticalCount = violations.filter(v => (v.severity >= 80 || v.risk === 'high')).length;
-  const blockedToday = violations.filter(v => v.status?.toLowerCase() === 'blocked').length;
-  const riskScore = riskData?.posture?.score || 0;
+  const blockedToday = executiveMetrics?.blockedActions || violations.filter(v => v.status?.toLowerCase() === 'blocked').length;
+  const riskScore = executiveMetrics?.safetyScore !== undefined ? executiveMetrics.safetyScore : (riskData?.posture?.score || 0);
   
   const isCritical = criticalCount > 0 || riskScore > 70;
   const scoreColor = riskScore === 0 ? "text-slate-500" : (isCritical ? "text-rose-500" : "text-emerald-400");
@@ -62,7 +63,7 @@ export function RiskPosture({ riskData, violations, scans }: RiskPostureProps) {
             <ShieldAlert className={cn("h-4 w-4", criticalCount > 0 ? "text-rose-500" : "text-slate-600")} />
           </div>
           <div className="mt-2">
-            <h3 className={cn("text-4xl font-black tracking-tighter", criticalCount > 0 ? "text-rose-500" : "text-slate-500")}>
+            <h3 data-testid="critical-events-count" className={cn("text-4xl font-black tracking-tighter", criticalCount > 0 ? "text-rose-500" : "text-slate-500")}>
               {criticalCount}
             </h3>
           </div>
@@ -104,7 +105,7 @@ export function RiskPosture({ riskData, violations, scans }: RiskPostureProps) {
             <Lock className="h-4 w-4 text-emerald-500" />
           </div>
           <div className="mt-2">
-            <h3 className={cn("text-4xl font-black tracking-tighter", blockedToday > 0 ? "text-emerald-400" : "text-slate-500")}>
+            <h3 data-testid="threats-prevented-count" className={cn("text-4xl font-black tracking-tighter", blockedToday > 0 ? "text-emerald-400" : "text-slate-500")}>
               {blockedToday}
             </h3>
           </div>
