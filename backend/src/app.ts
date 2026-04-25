@@ -44,7 +44,7 @@ app.use((req, res, next) => {
 
 // Direct Health Checks (Above Rate Limiting for Render Stability)
 app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'healthy', version: 'v1.2' });
+  res.status(200).json({ status: 'healthy', version: 'v1.3' });
 });
 
 app.get('/api/ready', async (req, res) => {
