@@ -15,19 +15,19 @@ export const GlobalControlPanel: React.FC<GlobalControlPanelProps> = ({
   authority
 }) => {
   return (
-    <div className="flex items-center justify-between px-6 py-2 bg-[#0a0a0b] border-b border-white/5 backdrop-blur-md">
-      <div className="flex items-center space-x-6">
+    <div className="flex flex-wrap items-center justify-between px-4 md:px-6 py-2 bg-[#0a0a0b] border-b border-white/5 backdrop-blur-md gap-y-2">
+      <div className="flex items-center space-x-4 md:space-x-6">
         {/* Scanning Mode */}
         <div className="flex items-center space-x-2">
           <Zap className="w-4 h-4 text-purple-400" />
-          <span className="text-[11px] uppercase tracking-wider text-white/50">Scanning:</span>
+          <span className="hidden sm:inline text-[11px] uppercase tracking-wider text-white/50">Scanning:</span>
           <span className="text-[11px] font-medium text-white">{scanningMode === 'auto' ? 'Autonomous Policy' : 'Manual'}</span>
         </div>
 
         {/* Budget Status */}
         <div className="flex items-center space-x-2">
           <DollarSign className="w-4 h-4 text-emerald-400" />
-          <span className="text-[11px] uppercase tracking-wider text-white/50">Budget:</span>
+          <span className="hidden sm:inline text-[11px] uppercase tracking-wider text-white/50">Budget:</span>
           <span className={`text-[11px] font-medium ${
             budgetStatus === 'paused' ? 'text-rose-400' : 'text-emerald-400'
           }`}>
@@ -40,7 +40,7 @@ export const GlobalControlPanel: React.FC<GlobalControlPanelProps> = ({
         {/* System Control */}
         <div className="flex items-center space-x-2">
           <Shield className={`w-4 h-4 ${systemStatus === 'active' ? 'text-blue-400' : 'text-amber-400'}`} />
-          <span className="text-[11px] uppercase tracking-wider text-white/50">System:</span>
+          <span className="hidden sm:inline text-[11px] uppercase tracking-wider text-white/50">System:</span>
           <span className="text-[11px] font-medium text-white">{systemStatus.toUpperCase()}</span>
         </div>
 

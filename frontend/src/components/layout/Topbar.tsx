@@ -30,8 +30,8 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex flex-col min-w-0">
-            <h1 className="text-xl font-bold text-white tracking-tight">AI Compliance Overview</h1>
-            <p className="text-xs text-slate-400 font-medium">Monitor and manage AI workflow risks</p>
+            <h1 className="text-sm md:text-xl font-bold text-white tracking-tight truncate md:whitespace-normal">AI Compliance Overview</h1>
+            <p className="hidden md:block text-xs text-slate-400 font-medium">Monitor and manage AI workflow risks</p>
           </div>
         </div>
 
