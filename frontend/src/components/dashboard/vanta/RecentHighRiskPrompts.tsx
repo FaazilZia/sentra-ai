@@ -52,8 +52,16 @@ export function RecentHighRiskPrompts({ data }: { data: ViolationData[] }) {
           <tbody className="divide-y divide-white/10">
             {data.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-20 text-center">
-                   <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">No active security violations detected</p>
+                <td colSpan={7} className="px-6 py-24 text-center">
+                   <div className="flex flex-col items-center justify-center gap-4">
+                     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
+                       <ShieldCheck className="h-8 w-8" />
+                     </div>
+                     <div className="flex flex-col gap-1">
+                       <p className="text-sm font-black text-white uppercase tracking-widest">Workspace Fully Secure</p>
+                       <p className="text-xs text-slate-400 font-medium max-w-[280px] mx-auto">Sentra AI is actively monitoring all traffic. No policy violations have been detected in the current audit period.</p>
+                     </div>
+                   </div>
                 </td>
               </tr>
             ) : data.map((violation) => {

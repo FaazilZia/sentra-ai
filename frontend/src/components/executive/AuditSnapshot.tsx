@@ -19,7 +19,7 @@ export const AuditSnapshot: React.FC<AuditSnapshotProps> = ({
   healthScore
 }) => {
   return (
-    <div className="grid grid-cols-4 gap-4 p-4 bg-white/[0.02] border border-white/5 rounded-xl">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-white/[0.02] border border-white/5 rounded-xl">
       <div className="flex flex-col">
         <div className="flex items-center space-x-2 text-white/40 mb-1">
           <Layers className="w-3.5 h-3.5" />

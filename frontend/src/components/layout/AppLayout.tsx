@@ -8,6 +8,7 @@ import { fetchExecutiveOverview, ExecutiveOverview } from '../../lib/api';
 
 export function AppLayout() {
   const [overview, setOverview] = useState<ExecutiveOverview | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     fetchExecutiveOverview().then(setOverview).catch(console.error);
@@ -20,9 +21,9 @@ export function AppLayout() {
   return (
     <div className="relative flex h-screen w-full overflow-hidden bg-[#0a0f1a] text-slate-100 selection:bg-cyan-500/20">
       <AtomBackground />
-      <Sidebar collapsed={false} />
+      <Sidebar collapsed={false} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       <div className="relative z-10 flex min-w-0 flex-1 flex-col">
-        <Topbar />
+        <Topbar onMenuClick={() => setIsSidebarOpen(true)} />
         {overview && (
           <GlobalControlPanel 
             scanningMode={overview.controls.scanningMode}

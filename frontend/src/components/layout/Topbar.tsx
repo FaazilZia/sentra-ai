@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Bell, Search, Calendar, User, Settings, LogOut } from 'lucide-react';
+import { ChevronDown, Bell, Search, Calendar, User, Settings, LogOut, Menu } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 
-export function Topbar() {
+export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const { user, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -22,9 +22,17 @@ export function Topbar() {
       <div className="flex h-full items-center justify-between gap-3 px-6 lg:px-8">
         
         {/* Left Side: Title & Subtitle */}
-        <div className="flex flex-col min-w-0">
-          <h1 className="text-xl font-bold text-white tracking-tight">AI Compliance Overview</h1>
-          <p className="text-xs text-slate-400 font-medium">Monitor and manage AI workflow risks</p>
+        <div className="flex items-center gap-4 min-w-0">
+          <button 
+            onClick={onMenuClick}
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 border border-white/10 text-slate-100 md:hidden"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <div className="flex flex-col min-w-0">
+            <h1 className="text-xl font-bold text-white tracking-tight">AI Compliance Overview</h1>
+            <p className="text-xs text-slate-400 font-medium">Monitor and manage AI workflow risks</p>
+          </div>
         </div>
 
         {/* Right Side: Filters, Search, Profile */}
