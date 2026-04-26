@@ -10,7 +10,7 @@ const DashboardPage = lazy(() => import('./pages/Dashboard'));
 const InventoryPage = lazy(() => import('./pages/Inventory'));
 const RiskCenterPage = lazy(() => import('./pages/RiskCenter'));
 const AuditLogPage = lazy(() => import('./pages/AuditLog'));
-const GovernancePage = lazy(() => import('./pages/Governance'));
+import GovernancePage from './pages/Governance';
 const AIActivityLogsPage = lazy(() => import('./pages/AIActivityLogs'));
 const SecurityFeedPage = lazy(() => import('./pages/SecurityFeed'));
 const ConnectPage = lazy(() => import('./pages/Connect'));

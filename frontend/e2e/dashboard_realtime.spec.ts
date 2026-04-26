@@ -10,16 +10,15 @@ test.describe('Sentra AI Real-time Dashboard', () => {
 
     // 1. Setup Auth (Login)
     console.log('Navigating to login...');
-    await page.goto('/login', { waitUntil: 'networkidle' });
+    await page.goto('/login', { waitUntil: 'domcontentloaded' });
     
     await page.fill('input[type="email"]', 'admin@sentra.ai');
     await page.fill('input[type="password"]', 'Sentra@Admin123');
     
     console.log('Submitting login...');
-    await Promise.all([
-      page.waitForNavigation({ waitUntil: 'networkidle' }),
-      page.click('button[type="submit"]')
-    ]);
+    await page.click('button[type="submit"]');
+    
+    await page.waitForURL(/\/app|\//, { timeout: 30000 });
 
     // 2. Wait for Dashboard to load
     console.log('Ensuring on dashboard...');
@@ -27,7 +26,7 @@ test.describe('Sentra AI Real-time Dashboard', () => {
     
     // 3. Navigate to Risk Center specifically
     console.log('Navigating to Risk Center...');
-    await page.goto('/app/risk', { waitUntil: 'networkidle' });
+    await page.goto('/app/risk', { waitUntil: 'domcontentloaded' });
     
     // 4. Capture current blocked count
     console.log('Waiting for metrics...');

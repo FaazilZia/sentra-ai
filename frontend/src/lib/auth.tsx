@@ -3,6 +3,7 @@ import {
   ReactNode,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from 'react';
 import { fetchCurrentUser, loginRequest, registerRequest, googleLoginRequest } from './api';
@@ -35,6 +36,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(localStorage.getItem('sentra_access_token'));
   const [loading, setLoading] = useState(true);
   const [loginPending, setLoginPending] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -92,7 +94,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       // loginRequest in api.ts automatically stores tokens in localStorage
-      const { user: loggedInUser } = await loginRequest(email, password);
+      const { user: loggedInUser, accessToken: token } = await loginRequest(email, password);
+      setAccessToken(token);
       setUser(loggedInUser);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to sign in';
@@ -127,7 +130,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoginPending(true);
     setLoginError(null);
     try {
-      const { user: loggedInUser } = await googleLoginRequest(idToken);
+      const { user: loggedInUser, accessToken: token } = await googleLoginRequest(idToken);
+      setAccessToken(token);
       setUser(loggedInUser);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Google login failed';
@@ -141,24 +145,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function logout() {
     localStorage.removeItem('sentra_access_token');
     localStorage.removeItem('sentra_refresh_token');
+    setAccessToken(null);
     setUser(null);
     setLoginError(null);
   }
 
+  const value = useMemo(() => ({
+    user,
+    accessToken,
+    loading,
+    loginPending,
+    loginError,
+    login,
+    signUp,
+    googleLogin,
+    logout,
+  }), [user, accessToken, loading, loginPending, loginError]);
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        accessToken: localStorage.getItem('sentra_access_token'),
-        loading,
-        loginPending,
-        loginError,
-        login,
-        signUp,
-        googleLogin,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

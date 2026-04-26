@@ -227,7 +227,7 @@ export async function apiRequest<T>(
   }
 
   const responseData = await response.text();
-  let json;
+  let json: any;
   try {
     json = responseData ? JSON.parse(responseData) : {};
   } catch (e) {
