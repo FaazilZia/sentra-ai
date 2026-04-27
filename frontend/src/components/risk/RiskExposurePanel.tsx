@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 
 interface RiskExposurePanelProps {
   riskData: any;
+  riskTrend?: any[];
 }
 
 export function RiskExposurePanel({ riskData }: RiskExposurePanelProps) {

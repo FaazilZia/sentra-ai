@@ -28,7 +28,7 @@ export class SentraError extends Error {
   }
 }
 
-export class Sentra {
+export class SentraClient {
   private readonly apiKey: string;
   private readonly baseUrl: string;
   private readonly maxRetries: number;

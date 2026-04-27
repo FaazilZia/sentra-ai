@@ -1,3 +1,4 @@
+import { jest, describe, it, expect } from '@jest/globals';
 import { makeDecision } from '../services/decisionEngine';
 import prisma from '../config/db';
 
@@ -12,7 +13,7 @@ jest.mock('../config/db', () => ({
 }));
 
 jest.mock('../services/semanticRiskEngine', () => ({
-  evaluateSemanticRisk: jest.fn().mockResolvedValue({
+  evaluateSemanticRisk: jest.fn<() => Promise<any>>().mockResolvedValue({
     score: 'low',
     categories: [],
     explanation: 'Mocked safe result',
@@ -24,7 +25,7 @@ describe('Decision Engine', () => {
   const orgId = 'test-org-id';
 
   it('should block high risk actions without policy', async () => {
-    (prisma.policies.findMany as jest.Mock).mockResolvedValue([]);
+    (prisma.policies.findMany as any).mockResolvedValue([]);
     
     const decision = await makeDecision('test-agent', 'export_data', orgId, { prompt: 'export customer data' });
     
@@ -34,7 +35,7 @@ describe('Decision Engine', () => {
   });
 
   it('should allow low risk actions when no policy exists', async () => {
-    (prisma.policies.findMany as jest.Mock).mockResolvedValue([]);
+    (prisma.policies.findMany as any).mockResolvedValue([]);
     
     const decision = await makeDecision('test-agent', 'read_logs', orgId);
     
@@ -42,7 +43,7 @@ describe('Decision Engine', () => {
   });
 
   it('should respect policy block rules', async () => {
-    (prisma.policies.findMany as jest.Mock).mockResolvedValue([{
+    (prisma.policies.findMany as any).mockResolvedValue([{
       name: 'Test Policy for test-agent',
       rule: { conditions: { blocked_actions: ['send_email'] } },
       enabled: true,
@@ -56,7 +57,7 @@ describe('Decision Engine', () => {
   });
 
   it('should return confidence scores', async () => {
-    (prisma.policies.findMany as jest.Mock).mockResolvedValue([{
+    (prisma.policies.findMany as any).mockResolvedValue([{
       name: 'Named Policy for test-agent',
       enabled: true,
       priority: 1

@@ -1,50 +1,78 @@
-# @sentra/sdk
+# @sentra-ai/sdk
 
-The official TypeScript SDK for **Sentra AI** — the real-time governance layer for AI Agents.
+Production-ready SDK for real-time AI governance and runtime security.
 
 ## Installation
 
 ```bash
-npm install @sentra/sdk
+npm install @sentra-ai/sdk
+```
+
+## Quickstart
+
+```typescript
+import { SentraClient } from '@sentra-ai/sdk';
+
+const sentra = new SentraClient({ apiKey: 'your_api_key' });
+const response = await sentra.checkAction({ agent: 'support-bot', action: 'send_email' });
+
+if (response.status === 'blocked') {
+  console.log(`Action blocked: ${response.reason}`);
+}
 ```
 
 ## Usage
 
-### Initialize
-```typescript
-import { Sentra } from '@sentra/sdk';
+### checkAction()
 
-const sentra = new Sentra({
-  apiKey: process.env.SENTRA_API_KEY
-});
-```
-
-### Protect Actions (Recommended)
-Use `safeAction` to wrap your agent's execution logic. It ensures the code only runs if the action passes governance checks.
-
-```typescript
-const result = await sentra.safeAction({
-  agent: "financial-assistant",
-  action: "read_customer_data",
-  metadata: { customerId: "123" }
-}, async () => {
-  // Your sensitive logic here
-  return await db.customers.findUnique({ where: { id: "123" } });
-});
-
-if (!result.success) {
-  console.log("Blocked by Sentra:", result.governance.reason);
-}
-```
-
-### Check Only
-Use `checkAction` if you just need the governance decision without wrapping logic.
+Manually check if an action is allowed.
 
 ```typescript
 const decision = await sentra.checkAction({
-  agent: "support-bot",
-  action: "external_api_call"
+  agent: "marketing-genie",
+  action: "generate_discount_code",
+  metadata: {
+    customer_id: "cust_123",
+    discount_value: 50
+  }
 });
 
-console.log(decision.status); // 'allowed' | 'blocked'
+if (decision.status === 'allowed') {
+  // Execute your logic
+} else {
+  console.warn(`Blocked by Sentra: ${decision.reason}`);
+}
 ```
+
+### safeAction()
+
+A wrapper that only executes your logic if the action is allowed by Sentra.
+
+```typescript
+const result = await sentra.safeAction(
+  { agent: "auto-coder", action: "commit_code" },
+  async () => {
+    // This code only runs if Sentra allows it
+    return await git.commit();
+  }
+);
+
+if (result.success) {
+  console.log("Action executed successfully", result.result);
+} else {
+  console.error("Action blocked", result.governance.reason);
+}
+```
+
+## Configuration Options
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `apiKey` | `string` | **Required** | Your Sentra AI API key. |
+| `baseUrl` | `string` | `https://api.sentra.ai/api/v1` | Custom API base URL. |
+| `timeout` | `number` | `5000` | Request timeout in milliseconds. |
+| `maxRetries` | `number` | `3` | Number of retries on network failure. |
+
+## License
+
+MIT

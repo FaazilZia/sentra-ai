@@ -1,17 +1,36 @@
 import { useEffect, useState } from 'react';
-import { Shield, ShieldAlert, ShieldCheck, ArrowLeft, Trash2, Clock, Key } from 'lucide-react';
+import { Shield, ShieldAlert, ShieldCheck, ArrowLeft, Trash2, Clock, Key, BellRing, Mail, Webhook, Save, Send } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
-import { fetchConsentHistory, withdrawConsent, grantConsent, ConsentEvent } from '../lib/api';
+import { fetchConsentHistory, withdrawConsent, grantConsent, ConsentEvent, updateAlertSettings, testAlert, fetchCurrentUser, fetchCompany } from '../lib/api';
 import { SurfaceCard } from '../components/ui/SurfaceCard';
 import { StatusBadge } from '../components/ui/StatusBadge';
 
 export default function PrivacySettingsPage() {
-  const { logout, accessToken } = useAuth();
+  const { logout, accessToken, user } = useAuth();
   const [history, setHistory] = useState<ConsentEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+
+  // Alert Settings State
+  const [alertEmail, setAlertEmail] = useState('');
+  const [slackWebhookUrl, setSlackWebhookUrl] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+
+  const loadSettings = async () => {
+    try {
+      const currentUser = await fetchCurrentUser();
+      if (currentUser.organizationId) {
+        const org = await fetchCompany(currentUser.organizationId);
+        setAlertEmail(org.alertEmail || '');
+        setSlackWebhookUrl(org.slackWebhookUrl || '');
+      }
+    } catch (err) {
+      console.error('Failed to load org settings', err);
+    }
+  };
 
   const loadHistory = async () => {
     try {
@@ -26,7 +45,32 @@ export default function PrivacySettingsPage() {
 
   useEffect(() => {
     loadHistory();
+    loadSettings();
   }, [accessToken]);
+
+  const handleSaveAlerts = async () => {
+    setIsSaving(true);
+    try {
+      await updateAlertSettings({ alertEmail, slackWebhookUrl });
+      alert('Alert settings saved successfully');
+    } catch (err: any) {
+      alert(err.message || 'Failed to save alert settings');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleTestAlert = async () => {
+    setIsTesting(true);
+    try {
+      await testAlert();
+      alert('Test alerts dispatched to configured channels');
+    } catch (err: any) {
+      alert(err.message || 'Failed to send test alert');
+    } finally {
+      setIsTesting(false);
+    }
+  };
 
   const handleWithdraw = async () => {
     setIsWithdrawing(true);
@@ -42,6 +86,7 @@ export default function PrivacySettingsPage() {
   };
 
   const isConsented = history.length > 0 && history[0].action === 'GRANT';
+  const isAdmin = user?.role === 'ADMIN';
 
   return (
     <div className="mx-auto max-w-[1000px] space-y-6 pb-12">
@@ -50,8 +95,8 @@ export default function PrivacySettingsPage() {
           <Link to="/app" className="flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-slate-950 transition-colors">
             <ArrowLeft className="h-3 w-3" /> Back to Dashboard
           </Link>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">Privacy & Consent Ledger</h1>
-          <p className="text-sm text-slate-400">Manage your data permissions and view the immutable audit trail.</p>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">Privacy & Governance</h1>
+          <p className="text-sm text-slate-400">Manage your data permissions and security alerting preferences.</p>
         </div>
         <StatusBadge 
           label={isConsented ? 'Active Consent' : 'Consent Withdrawn'} 
@@ -61,6 +106,60 @@ export default function PrivacySettingsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
+          {isAdmin && (
+            <SurfaceCard 
+              title="Incident Alert Settings" 
+              description="Configure where to receive notifications when a security policy blocks an AI action."
+            >
+              <div className="space-y-4 pt-2">
+                <div className="space-y-1.5">
+                  <label htmlFor="alertEmail" className="text-xs font-bold text-slate-700 flex items-center gap-2">
+                    <Mail className="h-3.5 w-3.5" /> Admin Alert Email
+                  </label>
+                  <input
+                    id="alertEmail"
+                    type="email"
+                    placeholder="security-admin@company.com"
+                    value={alertEmail}
+                    onChange={(e) => setAlertEmail(e.target.value)}
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-950"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label htmlFor="slackWebhook" className="text-xs font-bold text-slate-700 flex items-center gap-2">
+                    <Webhook className="h-3.5 w-3.5" /> Slack Webhook URL
+                  </label>
+                  <input
+                    id="slackWebhook"
+                    type="url"
+                    placeholder="https://hooks.slack.com/services/..."
+                    value={slackWebhookUrl}
+                    onChange={(e) => setSlackWebhookUrl(e.target.value)}
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-950"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={handleSaveAlerts}
+                    disabled={isSaving}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-slate-900 py-2 text-sm font-bold text-white transition-all hover:bg-slate-800 disabled:opacity-50"
+                  >
+                    <Save className="h-4 w-4" /> {isSaving ? 'Saving...' : 'Save Settings'}
+                  </button>
+                  <button
+                    onClick={handleTestAlert}
+                    disabled={isTesting || (!alertEmail && !slackWebhookUrl)}
+                    className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-600 transition-all hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    <Send className="h-4 w-4" /> {isTesting ? 'Sending...' : 'Test Alert'}
+                  </button>
+                </div>
+              </div>
+            </SurfaceCard>
+          )}
+
           <SurfaceCard 
             title="Privacy Ledger (The Diary)" 
             description="Every time you grant or withdraw consent, it is recorded in this tamper-proof audit trail."
@@ -155,6 +254,20 @@ export default function PrivacySettingsPage() {
                 <ShieldCheck className="h-4 w-4" /> Grant Consent
               </button>
             )}
+          </SurfaceCard>
+
+          <SurfaceCard 
+            title="Governance Alerts" 
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-100 text-rose-600">
+                <BellRing className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-900">Real-time Notifications</p>
+                <p className="text-[10px] text-slate-400">Admins get notified via Email/Slack on every block.</p>
+              </div>
+            </div>
           </SurfaceCard>
 
           <SurfaceCard 

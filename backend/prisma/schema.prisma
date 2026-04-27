@@ -30,6 +30,8 @@ model organizations {
   is_active         Boolean
   created_at        DateTime            @default(now())
   updated_at        DateTime            @default(now())
+  alertEmail        String?             @map("alert_email")
+  slackWebhookUrl   String?             @map("slack_webhook_url")
   api_keys          api_keys[]
   connectors        connectors[]
   incidents         incidents[]

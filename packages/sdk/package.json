@@ -1,5 +1,5 @@
 {
-  "name": "@sentra/sdk",
+  "name": "faazilzia-sentra-test-sdk",
   "version": "1.0.0",
   "description": "Production-ready SDK for real-time AI governance and runtime security.",
   "main": "dist/index.js",
@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "prepublishOnly": "npm run build"
+    "prepublish": "npm run build"
   },
   "keywords": [
     "ai",

@@ -1,5 +1,6 @@
 import { makeDecision } from '../services/decisionEngine';
 import { enqueueLog } from '../services/queue.service';
+import { alertService } from '../services/alert.service';
 
 /**
  * Core interception layer for AI actions.
@@ -27,6 +28,9 @@ export async function interceptAction(input: any, callback: () => Promise<any>) 
 
   // 2. If blocked, log and return early
   if (decision.status === 'blocked') {
+    // Async alerting (fire and forget)
+    alertService.notify(organizationId, decision, agent, action);
+
     await enqueueLog({
       organizationId,
       agent,

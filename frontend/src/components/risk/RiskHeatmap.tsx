@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 
 interface RiskHeatmapProps {
   riskData: any;
+  attackPatterns?: any[];
 }
 
 function RiskBadge({ value }: { value: string }) {

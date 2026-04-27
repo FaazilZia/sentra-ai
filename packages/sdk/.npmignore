@@ -1,0 +1,6 @@
+src/
+tests/
+*.spec.ts
+*.test.ts
+tsconfig.json
+.npmignore

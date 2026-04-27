@@ -699,3 +699,17 @@ export async function grantConsent(_token?: string): Promise<void> {
 export async function withdrawConsent(_token?: string): Promise<void> {
   return apiRequest<void>('/consent/withdraw', { method: 'POST' });
 }
+
+/**
+ * ALERT SETTINGS
+ */
+export async function updateAlertSettings(payload: { alertEmail?: string; slackWebhookUrl?: string }): Promise<any> {
+  return apiRequest<any>('/organizations/alert-settings', {
+    method: 'PATCH',
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function testAlert(): Promise<any> {
+  return apiRequest<any>('/organizations/test-alert', { method: 'POST' });
+}
