@@ -1,3 +1,4 @@
+console.log('--- TEST SETUP LOADED ---');
 jest.mock('ioredis', () => {
   return jest.fn().mockImplementation(() => {
     return {
@@ -16,4 +17,21 @@ jest.mock('../utils/logger', () => ({
   error: jest.fn(),
   warn: jest.fn(),
   debug: jest.fn(),
+}));
+
+jest.mock('../services/alert.service', () => ({
+  alertService: {
+    notify: jest.fn().mockReturnValue(undefined),
+    sendEmailAlert: jest.fn().mockResolvedValue(undefined),
+    sendSlackAlert: jest.fn().mockResolvedValue(undefined),
+  },
+}));
+
+jest.mock('../services/semanticRiskEngine', () => ({
+  evaluateSemanticRisk: jest.fn().mockResolvedValue({
+    score: 'low',
+    categories: [],
+    explanation: 'Mocked safe semantic result',
+    confidence: 0.95,
+  }),
 }));

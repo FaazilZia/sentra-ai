@@ -46,10 +46,11 @@ export interface RiskEvaluation {
 export const evaluateRisk = (action: string, metadata: any = {}): RiskEvaluation => {
   let score: 'low' | 'medium' | 'high' = 'low';
   const triggers: string[] = [];
-  const rawPrompt = String(metadata.prompt || metadata.action || action);
+  const rawPrompt = String(metadata.prompt || '');
+  const combinedText = `${action} ${rawPrompt}`.trim();
   
   // 1. Normalization Layer
-  let normalized = rawPrompt.toLowerCase()
+  let normalized = combinedText.toLowerCase()
     .replace(/\s+/g, ' ') // Normalize spaces
     .trim();
 

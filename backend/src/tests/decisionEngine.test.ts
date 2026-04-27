@@ -12,15 +12,6 @@ jest.mock('../config/db', () => ({
   },
 }));
 
-jest.mock('../services/semanticRiskEngine', () => ({
-  evaluateSemanticRisk: jest.fn<() => Promise<any>>().mockResolvedValue({
-    score: 'low',
-    categories: [],
-    explanation: 'Mocked safe result',
-    confidence: 0.95
-  }),
-}));
-
 describe('Decision Engine', () => {
   const orgId = 'test-org-id';
 

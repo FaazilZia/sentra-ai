@@ -12,6 +12,11 @@ jest.mock('../services/queue.service', () => ({
   connectorQueue: null,
   retentionQueue: null,
 }));
+jest.mock('../services/alert.service', () => ({
+  alertService: {
+    notify: jest.fn(),
+  },
+}));
 
 import { interceptAction } from '../middleware/interceptor';
 import { makeDecision } from '../services/decisionEngine';

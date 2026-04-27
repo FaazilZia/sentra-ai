@@ -54,6 +54,7 @@ export class GuardrailService {
     // 1. Traditional Regex/Pattern Matching (Fast path)
     for (const policy of POLICIES) {
       for (const pattern of policy.patterns) {
+        pattern.lastIndex = 0; // Reset global state for reliable testing
         if (pattern.test(text)) {
           confidence = pattern.toString().includes('\\b') ? 'Medium' : 'High';
 

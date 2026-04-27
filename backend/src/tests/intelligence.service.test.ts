@@ -9,6 +9,10 @@ jest.mock('../config/db', () => ({
       count: jest.fn(),
       findMany: jest.fn(),
     },
+    interception_logs: {
+      count: jest.fn().mockResolvedValue(0),
+      findMany: jest.fn().mockResolvedValue([]),
+    },
   },
 }));
 
