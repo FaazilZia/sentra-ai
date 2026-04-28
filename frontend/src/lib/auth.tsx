@@ -111,10 +111,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoginError(null);
 
     try {
+      const orgName = email.split('@')[1]?.split('.')[0]?.toUpperCase() || 'Sentra Org';
       await registerRequest({
         email,
         password,
         fullName: email.split('@')[0] || 'Sentra User',
+        organizationName: `${orgName} Workspace`,
       });
       await login(email, password);
     } catch (error) {
