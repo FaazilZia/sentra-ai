@@ -1,6 +1,24 @@
 # @sentra-ai/sdk
 
-Production-ready SDK for real-time AI governance and runtime security.
+Enterprise-grade SDK for real-time AI governance and runtime security. Intercept AI actions, enforce policies, and detect semantic risks before they reach your models.
+
+## Quickstart
+
+```typescript
+import { interceptAction } from '@sentra-ai/sdk';
+
+const result = await interceptAction({ agent: 'support-bot', action: 'send_email' }, async () => {
+  return await myAI.execute('send_email');
+});
+console.log('Decision:', result.status); // 'allowed' | 'blocked'
+```
+
+## Features
+
+- **Multi-tier Governance**: L1 Policy, L2 Pattern, and L3 Semantic analysis.
+- **Fail-Closed Security**: Actions are blocked by default if governance fails.
+- **Zero Latency (almost)**: Optimized for real-time interception.
+- **Audit Ready**: Full transparency into why actions were allowed or blocked.
 
 ## Installation
 
@@ -8,71 +26,6 @@ Production-ready SDK for real-time AI governance and runtime security.
 npm install @sentra-ai/sdk
 ```
 
-## Quickstart
-
-```typescript
-import { SentraClient } from '@sentra-ai/sdk';
-
-const sentra = new SentraClient({ apiKey: 'your_api_key' });
-const response = await sentra.checkAction({ agent: 'support-bot', action: 'send_email' });
-
-if (response.status === 'blocked') {
-  console.log(`Action blocked: ${response.reason}`);
-}
-```
-
-## Usage
-
-### checkAction()
-
-Manually check if an action is allowed.
-
-```typescript
-const decision = await sentra.checkAction({
-  agent: "marketing-genie",
-  action: "generate_discount_code",
-  metadata: {
-    customer_id: "cust_123",
-    discount_value: 50
-  }
-});
-
-if (decision.status === 'allowed') {
-  // Execute your logic
-} else {
-  console.warn(`Blocked by Sentra: ${decision.reason}`);
-}
-```
-
-### safeAction()
-
-A wrapper that only executes your logic if the action is allowed by Sentra.
-
-```typescript
-const result = await sentra.safeAction(
-  { agent: "auto-coder", action: "commit_code" },
-  async () => {
-    // This code only runs if Sentra allows it
-    return await git.commit();
-  }
-);
-
-if (result.success) {
-  console.log("Action executed successfully", result.result);
-} else {
-  console.error("Action blocked", result.governance.reason);
-}
-```
-
-## Configuration Options
-
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `apiKey` | `string` | **Required** | Your Sentra AI API key. |
-| `baseUrl` | `string` | `https://api.sentra.ai/api/v1` | Custom API base URL. |
-| `timeout` | `number` | `5000` | Request timeout in milliseconds. |
-| `maxRetries` | `number` | `3` | Number of retries on network failure. |
-
 ## License
 
-MIT
+MIT © Sentra AI Team

@@ -1,8 +1,10 @@
+import crypto from 'crypto';
 import { evaluateRisk } from './riskEngine';
 import { evaluatePolicy } from './policyEngine';
 import { evaluateSemanticRisk } from './semanticRiskEngine';
 import { maskPII } from '../utils/masking';
 import logger from '../utils/logger';
+import { cacheService } from './cache.service';
 
 export interface Decision {
   status: 'allowed' | 'blocked';
@@ -14,6 +16,7 @@ export interface Decision {
   confidence?: number;
   timeline?: any[];
   isPendingApproval?: boolean;
+  degraded?: boolean;
 }
 
 const COMPLIANCE_MAP: Record<string, string[]> = {
@@ -40,12 +43,37 @@ export const makeDecision = async (agent: string, action: string, organizationId
     // 2. Level 2: Local Risk Engine (Keyword/Pattern Pre-filter)
     const localRisk = evaluateRisk(action, metadata);
     
-    // 3. Level 3: Semantic Risk Engine (Intent Analysis)
-    // We only run this if the prompt isn't already flagged as high-risk by L2, 
-    // or if we want deep analysis (production standard).
-    const semanticRisk = await evaluateSemanticRisk(action);
+    // 3. Level 3: Semantic Risk Engine (Intent Analysis) with Redis Cache
+    const actionHash = crypto.createHash('sha256').update(action).digest('hex');
+    const cacheKey = `semantic:${actionHash}`;
+    
+    let semanticRisk;
+    let degraded = false;
 
-    // Consolidated Risk Scoring (Highest Risk Wins - Fail Closed)
+    try {
+      semanticRisk = await cacheService.getOrSet(
+        cacheKey,
+        () => evaluateSemanticRisk(action),
+        3600 // 1 hour TTL
+      );
+
+      // If the engine itself returned a failure result (fail-closed by default in evaluateSemanticRisk)
+      // we want to fall back to L2 for actual governance if we want "degraded" mode.
+      if (semanticRisk.categories?.includes('ENGINE_FAILURE')) {
+        throw new Error('Semantic Engine returned failure');
+      }
+    } catch (error: any) {
+      logger.warn('[GOVERNANCE] L3 Semantic Engine unavailable, falling back to L2:', error.message);
+      degraded = true;
+      semanticRisk = { 
+        score: localRisk.score, // Fallback to L2
+        explanation: 'Semantic analysis unavailable (Degraded Mode). Fallback to pattern matching.',
+        confidence: 0.5,
+        categories: ['DEGRADED']
+      };
+    }
+
+    // Consolidated Risk Scoring (Highest Risk Wins)
     const riskScore = (localRisk.score === 'high' || semanticRisk.score === 'high') ? 'high' : 
                       (localRisk.score === 'medium' || semanticRisk.score === 'medium') ? 'medium' : 'low';
 
@@ -71,10 +99,11 @@ export const makeDecision = async (agent: string, action: string, organizationId
       explanation: maskPII(semanticRisk.explanation || 'Action aligns with safety boundaries.'),
       confidence: semanticRisk.confidence,
       isPendingApproval,
+      degraded,
       timeline: [
         { step: 'L1: Policy', status: 'complete', icon: 'shield' },
         { step: 'L2: Pattern', status: 'complete', icon: 'zap' },
-        { step: 'L3: Semantic', status: 'complete', icon: 'brain' }
+        { step: 'L3: Semantic', status: degraded ? 'warning' : 'complete', icon: 'brain', description: degraded ? 'Degraded Fallback' : undefined }
       ]
     };
 

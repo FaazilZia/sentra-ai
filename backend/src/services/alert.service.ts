@@ -29,6 +29,9 @@ class AlertService {
           pass: process.env.SMTP_PASS,
         },
       });
+      console.log(`[AlertService] SMTP initialized with host: ${process.env.SMTP_HOST}`);
+    } else {
+      console.warn('[AlertService] SMTP_HOST not provided. Email alerts will be disabled.');
     }
   }
 
@@ -39,7 +42,15 @@ class AlertService {
         select: { alertEmail: true, name: true }
       });
 
-      if (!org?.alertEmail || !this.transporter) return;
+      if (!org?.alertEmail) {
+        console.warn(`[AlertService] No alertEmail found for organization: ${orgId}`);
+        return;
+      }
+
+      if (!this.transporter) {
+        console.warn('[AlertService] SMTP transporter not initialized. Cannot send alert.');
+        return;
+      }
 
       const dashboardUrl = process.env.FRONTEND_URL || 'https://app.sentra.ai';
       
@@ -88,9 +99,10 @@ class AlertService {
         `
       };
 
-      await this.transporter.sendMail(mailOptions);
-    } catch (error) {
-      console.error('[AlertService] Failed to send email alert:', error);
+      const info = await this.transporter.sendMail(mailOptions);
+      console.log(`[AlertService] Email alert sent to ${org.alertEmail}. MessageId: ${info.messageId}`);
+    } catch (error: any) {
+      console.error('[AlertService] Failed to send email alert:', error.message || error);
     }
   }
 

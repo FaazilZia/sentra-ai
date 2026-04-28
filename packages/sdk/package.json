@@ -1,15 +1,16 @@
 {
-  "name": "faazilzia-sentra-test-sdk",
+  "name": "@sentra-ai/sdk",
   "version": "1.0.0",
-  "description": "Production-ready SDK for real-time AI governance and runtime security.",
+  "description": "Enterprise-grade SDK for real-time AI governance and runtime security.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "scripts": {
-    "build": "tsc",
-    "prepublish": "npm run build"
+    "build": "rm -rf dist && tsc",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "ai",
