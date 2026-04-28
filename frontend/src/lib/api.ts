@@ -4,6 +4,7 @@ function normalizeApiBaseUrl(value?: string): string {
   let trimmed = value?.trim().replace(/\/$/, '') || '';
   
   if (!trimmed) {
+    console.warn('⚠️ No VITE_API_BASE_URL found, falling back to localhost:10000/api/v1');
     return 'http://localhost:10000/api/v1';
   }
 
@@ -14,11 +15,15 @@ function normalizeApiBaseUrl(value?: string): string {
 
   // If it ends with /api, append /v1
   if (trimmed.endsWith('/api')) {
-    return `${trimmed}/v1`;
+    const normalized = `${trimmed}/v1`;
+    console.info(`🌐 Normalized API URL: ${normalized}`);
+    return normalized;
   }
 
   // Otherwise, append /api/v1
-  return `${trimmed}/api/v1`;
+  const normalized = `${trimmed}/api/v1`;
+  console.info(`🌐 Normalized API URL: ${normalized}`);
+  return normalized;
 }
 
 export const apiBaseUrl = normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL);
