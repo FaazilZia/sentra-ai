@@ -8,6 +8,8 @@ import {
   FileCheck,
   User,
   Database,
+  Key,
+  BellRing,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
@@ -77,6 +79,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       group: 'INFRASTRUCTURE',
       items: [
         { name: 'Data Connectors', href: '/app/connect', icon: Database },
+      ]
+    },
+    {
+      group: 'SETTINGS',
+      items: [
+        { name: 'API Keys', href: '/app/settings/api-keys', icon: Key },
+        { name: 'Alert Settings', href: '/app/settings/alerts', icon: BellRing },
       ]
     }
   ];

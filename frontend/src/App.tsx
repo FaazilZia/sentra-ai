@@ -77,6 +77,8 @@ function AppRoutes() {
             <Route path="privacy" element={<PrivacySettingsPage />} />
             <Route path="audit-proof" element={<AuditProofPage />} />
             <Route path="guardrails" element={<GuardrailsPage />} />
+            <Route path="settings/api-keys" element={<ConnectPage />} />
+            <Route path="settings/alerts" element={<PrivacySettingsPage />} />
 
             
             <Route path="board-review" element={<Navigate to="/app" replace />} />
