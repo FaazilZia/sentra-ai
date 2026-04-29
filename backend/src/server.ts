@@ -72,6 +72,11 @@ io.on('connection', (socket) => {
 export { io };
 
 const startServer = async () => {
+  // Start listening FIRST so Render's health check passes immediately
+  httpServer.listen(PORT, () => {
+    logger.info(`Server is running on port ${PORT}`);
+  });
+
   try {
     await initializePrisma();
     logger.info('Database layer initialized');
@@ -79,15 +84,12 @@ const startServer = async () => {
     // Initialize Background Workers & Schedules (Non-blocking)
     setupConnectorWorkers();
     setupScheduledJobs().catch(err => logger.error('Failed to setup scheduled jobs:', err));
-    
-    httpServer.listen(PORT, () => {
-      logger.info(`Server is running on port ${PORT}`);
-    });
   } catch (error) {
-    logger.error('Failed to start server:', error);
-    process.exit(1);
+    logger.error('Failed to initialize database — server will continue in degraded mode:', error);
+    // Do NOT exit — the server is already listening and health/ready endpoints will report degraded
   }
 };
+
 
 if (process.env.NODE_ENV !== 'test') {
   startServer();
