@@ -4,10 +4,12 @@ services:
     env: node
     plan: free
     rootDir: backend
-    buildCommand: npm install && npm run build
-    startCommand: npm start
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npx prisma migrate deploy && npm start
     healthCheckPath: /api/health
     envVars:
+      - key: SENTRY_DSN
+        sync: false
       - key: DATABASE_URL
         sync: false
       - key: DIRECT_URL

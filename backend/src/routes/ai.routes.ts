@@ -1,13 +1,15 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validate.middleware';
-import { aiChatSchema } from '../validations/ai.validation';
+import { aiChatSchema, checkActionSchema } from '../validations/ai.validation';
 import { postChat, postCheckAction, getLogs, postReplayAction, getSecurityScore, postOverrideAction, getDashboardStats } from '../controllers/ai.controller';
+import { aiActionRateLimiter, aiDailyRateLimiter } from '../config/rateLimit';
+import { idempotencyMiddleware } from '../middleware/idempotency.middleware';
 
 const router = Router();
 
 router.post('/chat', authenticate, validate(aiChatSchema), postChat);
-router.post('/check-action', authenticate, postCheckAction);
+router.post('/check-action', authenticate, validate(checkActionSchema), idempotencyMiddleware, aiActionRateLimiter, aiDailyRateLimiter, postCheckAction);
 router.post('/replay', authenticate, postReplayAction);
 router.get('/logs', authenticate, getLogs);
 router.get('/dashboard-stats', authenticate, getDashboardStats);

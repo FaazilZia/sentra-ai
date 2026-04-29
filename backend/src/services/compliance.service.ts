@@ -19,22 +19,22 @@ export interface ComplianceFeature {
 export class ComplianceService {
   static async getAuditProof(organizationId: string): Promise<ComplianceFeature[]> {
     const [consentRecords, auditLogs, activePolicies, recentLogs] = await Promise.all([
-      (prisma as any).consent_records.findMany({
+      prisma.consent_records.findMany({
         where: { users: { organizationId } },
         take: 5,
         orderBy: { created_at: 'desc' },
         include: { users: { select: { full_name: true, email: true } } }
       }),
-      (prisma as any).audit_logs.findMany({
+      prisma.audit_logs.findMany({
         where: { organizationId },
         take: 5,
         orderBy: { timestamp: 'desc' }
       }),
-      (prisma as any).policies.findMany({
+      prisma.policies.findMany({
         where: { organizationId, enabled: true },
         take: 10
       }),
-      (prisma as any).logs.findMany({
+      prisma.logs.findMany({
         where: { organizationId },
         take: 5,
         orderBy: { timestamp: 'desc' }
@@ -121,13 +121,13 @@ export class ComplianceService {
     });
 
     const createdTasks = await Promise.all(tasks.map(task => 
-      (prisma as any).compliance_fix_tasks.create({ data: task })
+      prisma.compliance_fix_tasks.create({ data: task })
     ));
     return createdTasks;
   }
 
   static async getFixTasks(featureId: string) {
-    return await (prisma as any).compliance_fix_tasks.findMany({
+    return await prisma.compliance_fix_tasks.findMany({
       where: { featureId },
       include: { evidence: true },
       orderBy: [{ priority: 'asc' }, { created_at: 'desc' }]
@@ -154,7 +154,7 @@ export class ComplianceService {
 
     const hash = createHash('sha256').update(evidenceData.value).digest('hex');
     
-    const evidence = await (prisma as any).evidence_records.create({
+    const evidence = await prisma.evidence_records.create({
       data: {
         taskId,
         type: evidenceData.type,
@@ -167,7 +167,7 @@ export class ComplianceService {
       }
     });
 
-    const task = await (prisma as any).compliance_fix_tasks.update({
+    const task = await prisma.compliance_fix_tasks.update({
       where: { id: taskId },
       data: { status: 'completed' }
     });
@@ -182,27 +182,27 @@ export class ComplianceService {
   }
 
   static async triggerAlert(featureId: string, type: string, message: string, severity: string) {
-    return await (prisma as any).alerts.create({
+    return await prisma.alerts.create({
       data: { feature_id: featureId, type, message, severity }
     });
   }
 
   static async getAlerts() {
-    return await (prisma as any).alerts.findMany({
+    return await prisma.alerts.findMany({
       where: { is_read: false },
       orderBy: { created_at: 'desc' }
     });
   }
 
   static async markAlertRead(alertId: string) {
-    return await (prisma as any).alerts.update({
+    return await prisma.alerts.update({
       where: { id: alertId },
       data: { is_read: true }
     });
   }
 
   static async logAudit(userId: string, organizationId: string, action: string, featureId?: string, metadata?: any) {
-    return await (prisma as any).audit_logs.create({
+    return await prisma.audit_logs.create({
       data: {
         organizationId,
         user_id: userId,
@@ -214,7 +214,7 @@ export class ComplianceService {
   }
 
   static async getAuditLogs(organizationId: string, featureId?: string) {
-    return await (prisma as any).audit_logs.findMany({
+    return await prisma.audit_logs.findMany({
       where: {
         organizationId,
         ...(featureId ? { feature_id: featureId } : {})
@@ -225,7 +225,7 @@ export class ComplianceService {
   }
 
   static async getHistory(featureId: string) {
-    return await (prisma as any).compliance_snapshots.findMany({
+    return await prisma.compliance_snapshots.findMany({
       where: { featureId },
       orderBy: { created_at: 'asc' }
     });
@@ -252,7 +252,7 @@ export class ComplianceService {
     let aiResponse = this.generateFallbackReport(tasks);
 
     const report = aiResponse.compliance_report;
-    await (prisma as any).compliance_snapshots.create({
+    await prisma.compliance_snapshots.create({
       data: {
         featureId,
         gdpr_score: report.GDPR.score,

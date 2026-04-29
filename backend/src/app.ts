@@ -19,6 +19,7 @@ import complianceRoutes from './routes/compliance.routes';
 import guardrailRoutes from './routes/guardrail.routes';
 import riskRoutes from './routes/risk.routes';
 import intelligenceRoutes from './routes/intelligence.routes';
+import demoRoutes from './routes/demo.routes';
 import prisma from './config/db';
 
 import { apiRateLimiter } from './config/rateLimit';
@@ -30,12 +31,17 @@ import crypto from 'crypto';
 
 const app: Application = express();
 
-// Initialize Sentry
-Sentry.init({
-  dsn: process.env.SENTRY_DSN || '',
-  tracesSampleRate: 1.0,
-  environment: process.env.NODE_ENV || 'production'
-});
+// Initialize Sentry for observability
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    tracesSampleRate: 0.1, // Reduced in production for cost/performance
+    environment: process.env.NODE_ENV || 'production',
+    integrations: [
+      // Express integration is added automatically in newer versions or via integrations
+    ],
+  });
+}
 
 // Nonce Middleware for CSP
 app.use((req, res, next) => {
@@ -124,7 +130,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-API-Key']
 }));
 
-app.use(express.json());
+app.use(express.json({ limit: '100kb' }));
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(contextMiddleware);
 
@@ -149,6 +155,11 @@ v1Router.use('/compliance', complianceRoutes);
 v1Router.use('/guardrails', guardrailRoutes);
 v1Router.use('/risk', riskRoutes);
 v1Router.use('/intelligence', intelligenceRoutes);
+
+// Conditionally load demo routes (Strictly non-production)
+if (process.env.NODE_ENV !== 'production' && process.env.VITE_DEMO_MODE !== 'false') {
+  v1Router.use('/demo', demoRoutes);
+}
 
 
 // Health check under v1

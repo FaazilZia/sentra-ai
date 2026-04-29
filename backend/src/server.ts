@@ -1,23 +1,36 @@
 import 'dotenv/config';
 
-// Production environment guard — must run before anything else
-if (process.env.NODE_ENV === 'production') {
-  const REQUIRED_ENV_VARS = [
-    'DATABASE_URL',
-    'JWT_SECRET',
-    'REFRESH_SECRET',
-    'FRONTEND_URL',
-  ];
+// Fail-fast environment validation
+const REQUIRED_ENV_VARS = [
+  'DATABASE_URL',
+  'JWT_SECRET',
+  'REFRESH_SECRET',
+  'OPENAI_API_KEY',
+  'REDIS_URL'
+];
 
-  const missing = REQUIRED_ENV_VARS.filter((v) => !process.env[v]);
-  if (missing.length > 0) {
-    console.error(`[STARTUP FATAL] Missing required environment variables: ${missing.join(', ')}`);
+const missing = REQUIRED_ENV_VARS.filter((v) => !process.env[v]);
+if (missing.length > 0) {
+  console.error(`[STARTUP FATAL] Missing required environment variables: ${missing.join(', ')}`);
+  process.exit(1);
+}
+
+// Production-specific hardening
+if (process.env.NODE_ENV === 'production') {
+  if (!process.env.FRONTEND_URL) {
+    console.error('[STARTUP FATAL] FRONTEND_URL is required in production');
+    process.exit(1);
+  }
+
+  // Hard guard against demo mode in production
+  if (process.env.VITE_DEMO_MODE === 'true') {
+    console.error('[STARTUP FATAL] Demo mode (VITE_DEMO_MODE=true) is strictly forbidden in production environments.');
     process.exit(1);
   }
 
   // Prevent weak secrets
   if ((process.env.JWT_SECRET?.length ?? 0) < 32) {
-    console.error('[STARTUP FATAL] JWT_SECRET must be at least 32 characters');
+    console.error('[STARTUP FATAL] JWT_SECRET must be at least 32 characters in production');
     process.exit(1);
   }
 }

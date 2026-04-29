@@ -4,6 +4,7 @@ import { verifyAccessToken } from '../utils/jwt';
 import prisma from '../config/db';
 import logger from '../utils/logger';
 import IORedis from 'ioredis';
+import * as Sentry from '@sentry/node';
 
 // Dedicated Redis client for auth cache (separate from rate limiter)
 let redis: IORedis | undefined;
@@ -14,7 +15,9 @@ if (process.env.REDIS_URL) {
 
 const API_KEY_CACHE_TTL = 300; // 5 minutes
 
-async function resolveApiKey(token: string): Promise<{ organizationId: string; slug: string } | null> {
+import { updateApiKeyLastUsed } from '../utils/usage';
+
+async function resolveApiKey(token: string): Promise<{ organizationId: string; slug: string; id: string } | null> {
   const parts = token.split('_');
   const lookupPrefix = parts[1];
   if (!lookupPrefix) return null;
@@ -46,7 +49,11 @@ async function resolveApiKey(token: string): Promise<{ organizationId: string; s
     return null;
   }
 
-  const result = { organizationId: keyRecord.organizationId, slug: keyRecord.organizations.slug };
+  const result = { 
+    organizationId: keyRecord.organizationId, 
+    slug: keyRecord.organizations.slug,
+    id: keyRecord.id 
+  };
 
   // Cache the valid result
   if (redis) await redis.set(`ak:${lookupPrefix}`, JSON.stringify(result), 'EX', API_KEY_CACHE_TTL).catch(() => {});
@@ -77,6 +84,9 @@ export const authenticate = async (req: any, res: Response, next: NextFunction) 
             role: 'SERVICE_AGENT',
             email: `sdk@${resolved.slug}.com`,
           };
+          Sentry.setUser({ id: req.user.id, email: req.user.email, organizationId: req.user.organizationId });
+          Sentry.setTag('organizationId', req.user.organizationId);
+          updateApiKeyLastUsed(resolved.id);
           return next();
         }
       }
@@ -90,6 +100,8 @@ export const authenticate = async (req: any, res: Response, next: NextFunction) 
         });
         if (user && user.is_active && user.organizations.is_active) {
           req.user = { id: user.id, role: user.role, organizationId: user.organizationId, email: user.email };
+          Sentry.setUser({ id: req.user.id, email: req.user.email, organizationId: req.user.organizationId });
+          Sentry.setTag('organizationId', req.user.organizationId);
           return next();
         }
       } catch { /* invalid JWT */ }
@@ -105,6 +117,9 @@ export const authenticate = async (req: any, res: Response, next: NextFunction) 
           role: 'SERVICE_AGENT',
           email: `sdk@${resolved.slug}.com`,
         };
+        Sentry.setUser({ id: req.user.id, email: req.user.email, organizationId: req.user.organizationId });
+        Sentry.setTag('organizationId', req.user.organizationId);
+        updateApiKeyLastUsed(resolved.id);
         return next();
       }
     }

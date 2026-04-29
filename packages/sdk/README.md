@@ -5,20 +5,40 @@ Enterprise-grade SDK for real-time AI governance and runtime security. Intercept
 ## Quickstart
 
 ```typescript
-import { interceptAction } from '@sentra-ai/sdk';
+import { SentraClient, SentraError } from '@sentra-ai/sdk';
 
-const result = await interceptAction({ agent: 'support-bot', action: 'send_email' }, async () => {
-  return await myAI.execute('send_email');
+const client = new SentraClient({ 
+  apiKey: 'your_api_key' 
 });
-console.log('Decision:', result.status); // 'allowed' | 'blocked'
+
+try {
+  const result = await client.checkAction({
+    agent: 'support-bot',
+    action: 'send_email',
+    metadata: { recipient: 'user@example.com' }
+  });
+
+  if (result.status === 'allowed') {
+    // Proceed with action
+    console.log('Action allowed:', result.reason);
+  } else {
+    // Handle block
+    console.warn('Action blocked:', result.reason);
+  }
+} catch (error) {
+  if (error instanceof SentraError) {
+    console.error(`Sentra API Error: ${error.message} (${error.status})`);
+  } else {
+    console.error('Unexpected error:', error);
+  }
+}
 ```
 
-## Features
+## Resilience & Rate Limiting
 
-- **Multi-tier Governance**: L1 Policy, L2 Pattern, and L3 Semantic analysis.
-- **Fail-Closed Security**: Actions are blocked by default if governance fails.
-- **Zero Latency (almost)**: Optimized for real-time interception.
-- **Audit Ready**: Full transparency into why actions were allowed or blocked.
+- **Automatic Retries**: The SDK automatically retries transient network errors with exponential backoff.
+- **Fail-Closed Strategy**: If the Sentra API is unreachable after all retries, the SDK will return a `blocked` status by default to ensure system safety.
+- **Rate Limit Behavior**: When rate limits are exceeded, the API returns a 429 status. The SDK handles this as a transient error and will retry. If exhausted, it follows the fail-closed strategy.
 
 ## Installation
 

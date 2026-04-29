@@ -20,9 +20,9 @@ export class IntelligenceService {
         prisma.logs.count({ where: { organizationId, risk: 'high', timestamp: { gte: thirtyDaysAgo } } })
       ]),
       Promise.all([
-        (prisma as any).interception_logs.count({ where: { organizationId, timestamp: { gte: thirtyDaysAgo } } }),
-        (prisma as any).interception_logs.count({ where: { organizationId, decision: 'BLOCK', timestamp: { gte: thirtyDaysAgo } } }),
-        (prisma as any).interception_logs.count({ where: { organizationId, decision: 'BLOCK', timestamp: { gte: thirtyDaysAgo } } })
+        prisma.interception_logs.count({ where: { organizationId, timestamp: { gte: thirtyDaysAgo } } }),
+        prisma.interception_logs.count({ where: { organizationId, decision: 'BLOCK', timestamp: { gte: thirtyDaysAgo } } }),
+        prisma.interception_logs.count({ where: { organizationId, decision: 'BLOCK', timestamp: { gte: thirtyDaysAgo } } })
       ])
     ]);
 
@@ -49,7 +49,7 @@ export class IntelligenceService {
         where: { organizationId, status: 'blocked', timestamp: { gte: sevenDaysAgo } },
         select: { metadata: true }
       }),
-      (prisma as any).interception_logs.findMany({
+      prisma.interception_logs.findMany({
         where: { organizationId, decision: 'BLOCK', timestamp: { gte: sevenDaysAgo } },
         select: { metadata: true }
       })
@@ -73,7 +73,7 @@ export class IntelligenceService {
         where: { organizationId, timestamp: { gte: startDate } },
         select: { timestamp: true, risk: true }
       }),
-      (prisma as any).interception_logs.findMany({
+      prisma.interception_logs.findMany({
         where: { organizationId, timestamp: { gte: startDate } },
         select: { timestamp: true, decision: true }
       })

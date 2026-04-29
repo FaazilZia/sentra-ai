@@ -29,7 +29,7 @@ export class DriftService {
 
     // Persist alerts to DB
     for (const alert of alerts) {
-      const existing = await (prisma as any).drift_alerts.findFirst({
+      const existing = await prisma.drift_alerts.findFirst({
         where: {
           organizationId,
           agentId: alert.agentId,
@@ -39,25 +39,25 @@ export class DriftService {
       });
 
       if (!existing) {
-        await (prisma as any).drift_alerts.create({ data: alert });
+        await prisma.drift_alerts.create({ data: alert });
       }
     }
 
-    return await (prisma as any).drift_alerts.findMany({
+    return await prisma.drift_alerts.findMany({
       where: { organizationId, status: 'open' },
       orderBy: { timestamp: 'desc' }
     });
   }
 
   static async listAlerts(organizationId: string) {
-    return await (prisma as any).drift_alerts.findMany({
+    return await prisma.drift_alerts.findMany({
       where: { organizationId },
       orderBy: { timestamp: 'desc' }
     });
   }
 
   static async resolveAlert(alertId: string, organizationId: string) {
-    return await (prisma as any).drift_alerts.updateMany({
+    return await prisma.drift_alerts.updateMany({
       where: { id: alertId, organizationId },
       data: { status: 'resolved' }
     });

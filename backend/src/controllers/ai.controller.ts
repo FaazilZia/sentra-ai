@@ -1,77 +1,107 @@
-import { Response, NextFunction } from 'express'; // Refreshing TS Server Context
-import logger from '../utils/logger';
+import { Response, NextFunction } from 'express';
+import logger, { logRequest } from '../utils/logger';
 import prisma from '../config/db';
 import { resolveOrganizationId } from '../utils/company';
 import { logActivity, calculateSecurityScore } from '../services/policy.service';
 import { io } from '../server';
 import { checkActionSchema } from '../validations/ai.validation';
 import { interceptAction } from '../middleware/interceptor';
+import { runFairly } from '../config/queue';
+import { trackUsage } from '../utils/usage';
+import * as Sentry from '@sentry/node';
 
 export const postCheckAction = async (req: any, res: Response, next: NextFunction) => {
   const { requestId, startTime } = req.context;
+  const organizationId = await resolveOrganizationId(req);
+
   try {
-    // 1. Validate Input
-    const validated = checkActionSchema.parse(req.body);
-    const { agent, action, metadata } = validated;
-
-    const organizationId = await resolveOrganizationId(req);
-
     if (!organizationId) {
       return res.status(401).json({ success: false, message: 'Unauthorized: Organization not identified', requestId });
     }
+
+    // 1. Validate Input
+    const validated = checkActionSchema.parse(req.body);
+    const { agent, action, metadata } = validated;
 
     // 2. Intercept and Execute
     const decision = await interceptAction(
       { agent, action, organizationId, metadata, requestId },
       async () => {
-        // This is where the actual tool/action would be executed.
-        // For the governance check, we often just want the decision.
         return { message: "Action authorized and simulated" };
       }
     );
 
-    const latency = Date.now() - startTime;
-
-    // 3. Optional: Generate AI Summary for allowed actions
+    // 3. Optional: Generate AI Summary (Fair Concurrency + Usage Tracking)
     let ai_summary: string | undefined = undefined;
     if (decision.status === 'allowed') {
       const openaiKey = process.env.OPENAI_API_KEY;
       if (openaiKey && openaiKey !== 'sk-placeholder') {
         try {
-          const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-          const r = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${openaiKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              model,
-              messages: [
-                {
-                  role: 'system',
-                  content: 'You are a governance assistant. In one sentence, explain why this AI action was allowed or blocked.'
-                },
-                { 
-                  role: 'user', 
-                  content: `Action: ${action}, Agent: ${agent}, Decision: ALLOWED. Context: ${JSON.stringify(metadata)}` 
-                },
-              ],
-              max_tokens: 100,
-            }),
-          });
+          await runFairly(organizationId, async () => {
+            const maxRetries = 1; // Lower retries in high-load summary path
+            const timeoutMs = 8000;
 
-          if (r.ok) {
-            const data = (await r.json()) as any;
-            ai_summary = data.choices?.[0]?.message?.content?.trim();
-          }
-        } catch (e) {
-          logger.warn('OpenAI summary generation failed', e);
+            for (let attempt = 0; attempt <= maxRetries; attempt++) {
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+              try {
+                const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+                const r = await fetch('https://api.openai.com/v1/chat/completions', {
+                  method: 'POST',
+                  headers: {
+                    Authorization: `Bearer ${openaiKey}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    model,
+                    messages: [
+                      {
+                        role: 'system',
+                        content: 'You are a governance assistant. In one sentence, explain why this AI action was allowed or blocked.'
+                      },
+                      { 
+                        role: 'user', 
+                        content: `Action: ${action}, Agent: ${agent}, Decision: ALLOWED. Context: ${JSON.stringify(metadata)}` 
+                      },
+                    ],
+                    max_tokens: 100,
+                  }),
+                  signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                if (r.ok) {
+                  const data = (await r.json()) as any;
+                  ai_summary = data.choices?.[0]?.message?.content?.trim();
+                  
+                  // Track Usage
+                  const usage = data.usage;
+                  if (usage) {
+                    trackUsage(organizationId, usage.prompt_tokens, usage.completion_tokens);
+                  }
+                  break;
+                } else {
+                  throw new Error(`OpenAI API returned ${r.status}`);
+                }
+              } catch (e: any) {
+                clearTimeout(timeoutId);
+                if (attempt === maxRetries) throw e;
+                await new Promise(resolve => setTimeout(resolve, 500));
+              }
+            }
+          });
+        } catch (e: any) {
+          logger.warn(`AI Summary generation skipped for org ${organizationId}: ${e.message}`);
         }
       }
     }
 
-    // 4. Push Real-time Update (dashboard)
+    const latency = Date.now() - startTime;
+    Sentry.setTag('latency', latency);
+
+    // 4. Push Real-time Update
     io.to(`company_${organizationId}`).emit('activity_log', { 
       ...decision, 
       organizationId, 
@@ -79,7 +109,9 @@ export const postCheckAction = async (req: any, res: Response, next: NextFunctio
       ai_summary 
     });
 
-    res.status(200).json({
+    logRequest({ requestId, orgId: organizationId, endpoint: req.path, status: 200, latency });
+
+    return res.status(200).json({
       success: true,
       requestId,
       latency,
@@ -88,7 +120,9 @@ export const postCheckAction = async (req: any, res: Response, next: NextFunctio
         ai_summary
       }
     });
-  } catch (error) {
+  } catch (error: any) {
+    const latency = Date.now() - startTime;
+    logRequest({ requestId, orgId: organizationId || 'unknown', endpoint: req.path, status: 500, latency, error: error.message });
     next(error);
   }
 };
@@ -327,9 +361,11 @@ export const getDashboardStats = async (req: any, res: Response, next: NextFunct
 
 
 export const postChat = async (req: any, res: Response, next: NextFunction) => {
+  const { requestId, startTime } = req.context;
+  const organizationId = await resolveOrganizationId(req);
+
   try {
     const message = String(req.body?.message || '').trim();
-    const organizationId = await resolveOrganizationId(req);
 
     if (!organizationId) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
@@ -356,44 +392,77 @@ export const postChat = async (req: any, res: Response, next: NextFunction) => {
     `;
 
     const openaiKey = process.env.OPENAI_API_KEY;
-    if (openaiKey) {
+    if (openaiKey && openaiKey !== 'sk-placeholder') {
       try {
-        const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-        const r = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${openaiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model,
-            messages: [
-              {
-                role: 'system',
-                content: `You are Sentra Copilot, an AI governance assistant. 
-                Use this REAL-TIME CONTEXT to answer the user's questions:
-                ${contextSummary}
-                Answer clearly and concisely based on this data.`
-              },
-              { role: 'user', content: message },
-            ],
-            max_tokens: 600,
-          }),
+        const response = await runFairly(organizationId, async () => {
+          const maxRetries = 2;
+          const timeoutMs = 12000;
+
+          for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+            try {
+              const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+              const r = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                  Authorization: `Bearer ${openaiKey}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  model,
+                  messages: [
+                    {
+                      role: 'system',
+                      content: `You are Sentra Copilot, an AI governance assistant. 
+                      Use this REAL-TIME CONTEXT to answer the user's questions:
+                      ${contextSummary}
+                      Answer clearly and concisely based on this data.`
+                    },
+                    { role: 'user', content: message },
+                  ],
+                  max_tokens: 600,
+                }),
+                signal: controller.signal
+              });
+
+              clearTimeout(timeoutId);
+
+              if (r.ok) {
+                const data = (await r.json()) as any;
+                const text = data.choices?.[0]?.message?.content?.trim() || '';
+                
+                // Track Usage
+                const usage = data.usage;
+                if (usage) {
+                  trackUsage(organizationId, usage.prompt_tokens, usage.completion_tokens);
+                }
+
+                return text;
+              } else {
+                throw new Error(`OpenAI API returned ${r.status}`);
+              }
+            } catch (e: any) {
+              clearTimeout(timeoutId);
+              if (attempt === maxRetries) throw e;
+              await new Promise(resolve => setTimeout(resolve, 800));
+            }
+          }
         });
 
-        if (r.ok) {
-          const data = (await r.json()) as {
-            choices?: Array<{ message?: { content?: string } }>;
-          };
-          const text = data.choices?.[0]?.message?.content?.trim() || '';
-          if (text) {
-            return res.status(200).json({ success: true, data: { response: text } });
-          }
+        if (response) {
+          const latency = Date.now() - startTime;
+          logRequest({ requestId, orgId: organizationId, endpoint: req.path, status: 200, latency });
+          return res.status(200).json({ success: true, data: { response } });
         }
-      } catch (e) {
-        logger.warn('OpenAI chat request failed', e);
+      } catch (e: any) {
+        logger.error(`OpenAI chat failed for org ${organizationId}`, e.message);
       }
     }
+
+    const latency = Date.now() - startTime;
+    logRequest({ requestId, orgId: organizationId, endpoint: req.path, status: 200, latency, message: 'Operating in offline mode' });
 
     // Fallback: Return a real summary from DB if OpenAI is unavailable
     res.status(200).json({
@@ -405,7 +474,9 @@ export const postChat = async (req: any, res: Response, next: NextFunction) => {
         Please configure an OpenAI API key for deeper analysis and conversational answers.`
       },
     });
-  } catch (error) {
+  } catch (error: any) {
+    const latency = Date.now() - startTime;
+    logRequest({ requestId, orgId: organizationId || 'unknown', endpoint: req.path, status: 500, latency, error: error.message });
     next(error);
   }
 };

@@ -47,6 +47,7 @@
     "node-fetch": "^2.7.0",
     "nodemailer": "^8.0.6",
     "openai": "^6.34.0",
+    "p-queue": "^6.6.2",
     "pdfkit": "^0.18.0",
     "pg": "^8.20.0",
     "rate-limit-redis": "^4.3.1",

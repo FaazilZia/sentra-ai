@@ -97,11 +97,11 @@ if (connection) {
         const ninetyDaysAgo = new Date();
         ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
 
-        const deletedAlerts = await (prisma as any).alerts.deleteMany({
+        const deletedAlerts = await prisma.alerts.deleteMany({
           where: { created_at: { lt: ninetyDaysAgo } }
         });
 
-        const deletedLogs = await (prisma as any).interception_logs.deleteMany({
+        const deletedLogs = await prisma.interception_logs.deleteMany({
           where: { timestamp: { lt: ninetyDaysAgo } }
         });
 
@@ -319,7 +319,7 @@ async function performPIIScan(content: string, metadata: { connectorId: string, 
   for (const [name, pattern] of Object.entries(SENSITIVE_PATTERNS)) {
     if (pattern.test(content)) {
       violationsFound++;
-      await (prisma as any).interception_logs.create({
+      await prisma.interception_logs.create({
         data: {
           user_id: 'system_scanner',
           organizationId: metadata.organizationId,

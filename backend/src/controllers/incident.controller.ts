@@ -39,7 +39,7 @@ async function finalizeScanJob(organizationId: string, jobId: string, incidentsD
     }
 
     // Update job status in DB
-    await (prisma as any).scan_jobs.update({
+    await prisma.scan_jobs.update({
       where: { id: jobId },
       data: {
         phase: 'SUCCESS',
@@ -52,7 +52,7 @@ async function finalizeScanJob(organizationId: string, jobId: string, incidentsD
 
   } catch (e) {
     logger.error('finalizeScanJob: failed to persist scan incidents', e);
-    await (prisma as any).scan_jobs.update({
+    await prisma.scan_jobs.update({
       where: { id: jobId },
       data: { phase: 'FAILED', progress: 100, updated_at: new Date() }
     }).catch(() => {});
@@ -246,7 +246,7 @@ export const triggerScan = async (req: any, res: Response, next: NextFunction) =
     }
 
     // Check for existing processing job in DB
-    const existingJob = await (prisma as any).scan_jobs.findFirst({
+    const existingJob = await prisma.scan_jobs.findFirst({
       where: { organizationId: organizationId, phase: 'PROCESSING' }
     });
 
@@ -260,7 +260,7 @@ export const triggerScan = async (req: any, res: Response, next: NextFunction) =
 
     // Create new job in DB
     const jobId = crypto.randomUUID();
-    await (prisma as any).scan_jobs.create({
+    await prisma.scan_jobs.create({
       data: {
         id: jobId,
         organizationId: organizationId,
@@ -274,7 +274,7 @@ export const triggerScan = async (req: any, res: Response, next: NextFunction) =
     const intervalId = setInterval(async () => {
       accumulated += SCAN_PROGRESS_STEP;
       if (accumulated < 100) {
-        await (prisma as any).scan_jobs.update({
+        await prisma.scan_jobs.update({
           where: { id: jobId },
           data: { progress: accumulated }
         }).catch(() => {});
@@ -305,7 +305,7 @@ export const getScanStatus = async (req: any, res: Response, next: NextFunction)
       });
     }
 
-    const job = await (prisma as any).scan_jobs.findFirst({
+    const job = await prisma.scan_jobs.findFirst({
       where: { organizationId: organizationId },
       orderBy: { created_at: 'desc' }
     });

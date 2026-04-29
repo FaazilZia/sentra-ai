@@ -56,7 +56,18 @@ graph LR
 
 ---
 
-# 🚀 Core Governance Hardening & Resilient L3 (v7.0.0)
+# 🚀 Production Hardening & Fair Scaling (v8.0.0)
+**Sentra AI has been fully hardened for enterprise-grade production deployments, featuring fair multi-tenant scaling and stateful cost protection.**
+
+*   **🛡️ Production-Grade Hardening**: Implemented fail-fast environment validation, strict 100kb payload limits, and enhanced Sentry contextual observability with sub-second request tracing.
+*   **⚖️ Fair Concurrency Engine**: Integrated per-organization concurrency caps (max 3) within a global priority queue (max 10), ensuring no single tenant can monopolize system resources.
+*   **🔄 Stateful Idempotency**: Added a Redis-backed idempotency layer with `processing` and `completed` states. Duplicate requests are served from cache or safely blocked during active processing to prevent double-billing.
+*   **💰 Accurate Cost Telemetry**: Transitioned to token-based cost tracking using real OpenAI metadata. Usage is now aggregated daily per organization for precise financial reporting.
+*   **⚡ Zero-Latency Key Updates**: Refactored API key management with non-blocking, asynchronous `last_used_at` updates, eliminating DB write latency from the security check path.
+*   **📊 Smart Observability Strategy**: Implemented a performance-optimized logging strategy that captures only errors and slow requests (>1000ms), ensuring high throughput without log overhead.
+
+---
+
 **Sentra AI has been upgraded with a high-performance governance cache and a resilient, fail-safe semantic analysis layer.**
 
 *   **🧠 Resilient L3 Semantic Layer**: Implemented a **graceful fallback** for the OpenAI-driven semantic engine. If OpenAI is unreachable or rate-limited, the system now automatically falls back to L2 patterns and marks the decision as `degraded: true`, ensuring zero-downtime governance.
@@ -199,17 +210,22 @@ npm install @sentra-ai/sdk
 ## 2. Protect AI Actions
 
 ```typescript
-```typescript
-import { interceptAction } from '@sentra-ai/sdk';
+import { SentraClient } from '@sentra/sdk';
 
-await interceptAction({
+const client = new SentraClient({ apiKey: "YOUR_API_KEY" });
+
+const response = await client.checkAction({
   agent: "finance-bot",
   action: "send_payment",
-  organizationId: "ORG_ID"
-}, () => {
-  // Executes only if allowed
-  return executePayment();
+  metadata: { amount: 5000 }
 });
+
+if (response.status === 'allowed') {
+  // Executes only if allowed
+  await executePayment();
+} else {
+  console.error(`Blocked: ${response.reason}`);
+}
 ```
 
 ---
