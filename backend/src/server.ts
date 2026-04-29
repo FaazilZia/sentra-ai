@@ -76,9 +76,9 @@ const startServer = async () => {
     await initializePrisma();
     logger.info('Database layer initialized');
 
-    // Initialize Background Workers & Schedules
+    // Initialize Background Workers & Schedules (Non-blocking)
     setupConnectorWorkers();
-    await setupScheduledJobs();
+    setupScheduledJobs().catch(err => logger.error('Failed to setup scheduled jobs:', err));
     
     httpServer.listen(PORT, () => {
       logger.info(`Server is running on port ${PORT}`);
