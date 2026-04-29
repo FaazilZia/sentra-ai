@@ -1,11 +1,10 @@
 import 'dotenv/config';
 
-// Fail-fast environment validation
+// Hard-required: server cannot function without these
 const REQUIRED_ENV_VARS = [
   'DATABASE_URL',
   'JWT_SECRET',
   'REFRESH_SECRET',
-  'REDIS_URL'
 ];
 
 const missing = REQUIRED_ENV_VARS.filter((v) => !process.env[v]);
@@ -14,9 +13,14 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
-if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'sk-placeholder') {
-  console.warn('[STARTUP WARNING] OPENAI_API_KEY is not set or using placeholder. AI features will be disabled.');
+// Soft warnings: system runs in degraded mode without these
+if (!process.env.REDIS_URL) {
+  console.warn('[STARTUP WARNING] REDIS_URL not set. Rate limiting and caching will use in-memory fallbacks.');
 }
+if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'sk-placeholder') {
+  console.warn('[STARTUP WARNING] OPENAI_API_KEY not set. AI summary features will be disabled.');
+}
+
 
 // Production-specific hardening
 if (process.env.NODE_ENV === 'production') {
