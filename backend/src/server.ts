@@ -5,7 +5,6 @@ const REQUIRED_ENV_VARS = [
   'DATABASE_URL',
   'JWT_SECRET',
   'REFRESH_SECRET',
-  'OPENAI_API_KEY',
   'REDIS_URL'
 ];
 
@@ -13,6 +12,10 @@ const missing = REQUIRED_ENV_VARS.filter((v) => !process.env[v]);
 if (missing.length > 0) {
   console.error(`[STARTUP FATAL] Missing required environment variables: ${missing.join(', ')}`);
   process.exit(1);
+}
+
+if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'sk-placeholder') {
+  console.warn('[STARTUP WARNING] OPENAI_API_KEY is not set or using placeholder. AI features will be disabled.');
 }
 
 // Production-specific hardening
