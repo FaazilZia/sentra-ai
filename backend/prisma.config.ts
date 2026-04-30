@@ -4,7 +4,9 @@ import { defineConfig } from "@prisma/config";
 export default defineConfig({
   schema: "prisma/schema.prisma",
   datasource: {
-    // CLI operations (migrations, etc.) require a direct connection bypass for the pooler.
+    // Standard connection URL. 
+    // Prisma CLI will use this for migrations.
+    // If using Supabase, ensure this is the DIRECT_URL (port 5432) for migrations.
     url: process.env.DIRECT_URL || process.env.DATABASE_URL!,
   },
 });
