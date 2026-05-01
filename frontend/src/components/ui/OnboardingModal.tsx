@@ -65,12 +65,23 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
     }
   };
 
-  const codeSnippet = `import { checkAction } from "@sentra/sdk";
+  const codeSnippet = `import { SentraClient } from '@sentra-ai/sdk';
 
-await checkAction({
-  apiKey: "${apiKey || 'YOUR_API_KEY'}",
-  input: userInput
-});`;
+const sentra = new SentraClient({
+  apiKey: '${apiKey || 'YOUR_API_KEY'}'
+});
+
+// Validate an AI action before execution
+const result = await sentra.checkAction({
+  action_type: 'API_CALL',
+  payload: { url: 'https://api.example.com', method: 'POST' }
+});
+
+if (result.status === 'allowed') {
+  execute();
+} else {
+  console.error('Blocked:', result.reason);
+}`;
 
   return (
     <AnimatePresence>
@@ -141,8 +152,14 @@ await checkAction({
                         {copied ? 'Copied' : 'Copy'}
                       </button>
                     </div>
-                    <p className="text-xs text-amber-500/80 pt-1">Store this securely. You won't be able to see it again.</p>
-                  </div>
+                    <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 flex items-start gap-3">
+                      <span className="text-amber-400 text-lg mt-0.5 shrink-0">⚠️</span>
+                      <div>
+                        <p className="text-sm font-bold text-amber-400">Copy this key now</p>
+                        <p className="text-xs text-amber-400/80 mt-0.5">It will not be shown again after you close this window. Store it in a secure password manager or <code className="font-mono">.env</code> file.</p>
+                      </div>
+                    </div>
+                   </div>
 
                   <div className="mt-auto pt-6 flex">
                     <button
@@ -150,7 +167,7 @@ await checkAction({
                       onClick={() => setStep(2)}
                       className="w-full rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white hover:bg-blue-500 transition-colors disabled:opacity-50"
                     >
-                      Copy Key & Continue
+                      {copied ? '✓ Key Copied — Continue →' : 'Copy Key & Continue'}
                     </button>
                   </div>
                 </motion.div>
@@ -295,7 +312,7 @@ await checkAction({
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-xs font-semibold text-slate-500 uppercase">1. Install Package</span>
                       </div>
-                      <code className="text-sm font-mono text-emerald-400">npm install @sentra/sdk</code>
+                      <code className="text-sm font-mono text-emerald-400">npm install @sentra-ai/sdk</code>
                     </div>
 
                     <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">

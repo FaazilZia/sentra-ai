@@ -12,8 +12,11 @@ const SENSITIVE_KEYWORDS = [
 ];
 
 const HIGH_RISK_ACTIONS = [
-  'send_email', 'external_api', 'export_csv', 'delete_record', 'update_config', 'external_share', 'bypass_auth',
-  'export_data', 'master_key', 'admin_access', 'pii_export', 'security_bypass', 'jailbreak', 'unfiltered'
+  // Removed 'send_email' and 'external_api' — too broad, legitimate actions in most contexts.
+  // The multi-signal check (intent + sensitive data) already blocks dangerous combinations.
+  'export_csv', 'delete_record', 'external_share', 'bypass_auth',
+  'export_data', 'master_key', 'admin_access', 'pii_export', 'security_bypass', 'jailbreak', 'unfiltered',
+  'delete_all', 'drop_table', 'truncate_table'
 ];
 
 const MEDIUM_RISK_ACTIONS = [
@@ -35,7 +38,12 @@ const JAILBREAK_PATTERNS = [
   /steal/i,
   /hack/i,
   /leak/i,
-  /extract/i
+  /extract/i,
+  // Destructive SQL operations
+  /drop\s+table/i,
+  /truncate\s+table/i,
+  /delete\s+from.*where\s+1\s*=\s*1/i,
+  /delete\s+all\s+(users?|records?|data)/i,
 ];
 
 export interface RiskEvaluation {

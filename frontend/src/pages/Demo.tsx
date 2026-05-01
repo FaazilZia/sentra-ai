@@ -71,7 +71,6 @@ if (result.status === 'allowed') {
 
   return (
     <div className="min-h-screen bg-[#0a0f1a] text-slate-100 flex flex-col font-sans selection:bg-blue-500/30">
-      {/* Navbar */}
       <header className="border-b border-white/5 bg-[#0a0f1a]/80 backdrop-blur-md sticky top-0 z-50">
         <div className="mx-auto max-w-5xl px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -80,9 +79,17 @@ if (result.status === 'allowed') {
             </div>
             <span className="font-black tracking-tight text-white uppercase text-sm">Sentra AI</span>
           </div>
-          <Link to="/login" className="text-sm font-bold text-slate-300 hover:text-white transition-colors">
-            Log In
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link to="/login" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">
+              Log In
+            </Link>
+            <Link
+              to="/signup"
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-sm font-black text-white uppercase tracking-wider hover:bg-blue-500 transition-all shadow-lg shadow-blue-500/20"
+            >
+              Get API Key <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -130,7 +137,7 @@ if (result.status === 'allowed') {
                 <textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Enter a prompt to test..."
+                  placeholder="Describe an AI action to check (e.g., 'send email to external user', 'call external API', 'access patient records')"
                   className="w-full h-32 rounded-xl border border-slate-700 bg-slate-900 p-4 text-sm text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none font-mono"
                 />
               </div>
@@ -141,9 +148,9 @@ if (result.status === 'allowed') {
                 className="w-full rounded-xl bg-blue-600 py-4 text-sm font-black text-white uppercase tracking-widest hover:bg-blue-500 transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-blue-500/20"
               >
                 {testing ? (
-                  <><div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> Validating...</>
+                  <><div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> Checking...</>
                 ) : (
-                  <><Play className="h-4 w-4" /> Validate Action</>
+                  <><Play className="h-4 w-4" /> Check if Safe</>
                 )}
               </button>
 

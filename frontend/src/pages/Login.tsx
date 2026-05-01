@@ -10,11 +10,13 @@ export default function LoginPage({ defaultIsSignUp = false }: { defaultIsSignUp
   const [isSignUp, setIsSignUp] = useState(defaultIsSignUp);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [organizationName, setOrganizationName] = useState('');
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (isSignUp) {
-      await signUp(email, password);
+      await signUp(email, password, fullName, organizationName);
     } else {
       await login(email, password);
     }
@@ -210,6 +212,35 @@ export default function LoginPage({ defaultIsSignUp = false }: { defaultIsSignUp
                 required
               />
             </label>
+
+            {isSignUp && (
+              <>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-700">Full Name</span>
+                  <input
+                    className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-300 focus:border-blue-500/40 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+                    value={fullName}
+                    onChange={(event) => setFullName(event.target.value)}
+                    type="text"
+                    autoComplete="name"
+                    placeholder="Jane Smith"
+                    required
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-700">Organization Name</span>
+                  <input
+                    className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-300 focus:border-blue-500/40 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+                    value={organizationName}
+                    onChange={(event) => setOrganizationName(event.target.value)}
+                    type="text"
+                    autoComplete="organization"
+                    placeholder="Acme Corp"
+                    required
+                  />
+                </label>
+              </>
+            )}
 
             <AnimatePresence>
               {loginError && (

@@ -27,7 +27,7 @@ interface AuthContextValue {
   loginPending: boolean;
   loginError: string | null;
   login: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, fullName?: string, organizationName?: string) => Promise<void>;
   googleLogin: (idToken: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -106,17 +106,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function signUp(email: string, password: string) {
+  async function signUp(email: string, password: string, fullName?: string, organizationName?: string) {
     setLoginPending(true);
     setLoginError(null);
 
     try {
-      const orgName = email.split('@')[1]?.split('.')[0]?.toUpperCase() || 'Sentra Org';
+      // Use provided values; fall back to email-derived values only if fields are empty
+      const derivedName = fullName?.trim() || email.split('@')[0] || 'Sentra User';
+      const derivedOrg = organizationName?.trim() || 
+        `${email.split('@')[1]?.split('.')[0]?.toUpperCase() || 'Sentra Org'} Workspace`;
+
       await registerRequest({
         email,
         password,
-        fullName: email.split('@')[0] || 'Sentra User',
-        organizationName: `${orgName} Workspace`,
+        fullName: derivedName,
+        organizationName: derivedOrg,
       });
       localStorage.setItem('sentra_new_signup', 'true');
       await login(email, password);
