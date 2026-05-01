@@ -29,6 +29,12 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
       });
   }, []);
 
+  const handleComplete = () => {
+    localStorage.removeItem('sentra_new_signup');
+    localStorage.setItem('sentra_onboarding_completed', 'true');
+    onClose();
+  };
+
   const handleCopy = () => {
     navigator.clipboard.writeText(apiKey);
     setCopied(true);
@@ -114,7 +120,7 @@ if (result.status === 'allowed') {
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Step {step} of {totalSteps}</span>
             </div>
             <button 
-              onClick={onClose}
+              onClick={handleComplete}
               className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-800 hover:text-white transition-colors"
             >
               <X className="h-4 w-4" />
@@ -328,7 +334,7 @@ if (result.status === 'allowed') {
                   <div className="mt-auto pt-6 flex gap-3">
                     <button onClick={() => setStep(3)} className="px-4 py-3 text-sm font-semibold text-slate-400 hover:text-white transition-colors">Back</button>
                     <button
-                      onClick={onClose}
+                      onClick={handleComplete}
                       className="flex-1 rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white hover:bg-emerald-500 transition-colors"
                     >
                       Go to Dashboard

@@ -6,6 +6,7 @@ import { AtomBackground } from '../ui/AtomBackground';
 import { GlobalControlPanel } from '../executive/GlobalControlPanel';
 import { fetchExecutiveOverview, ExecutiveOverview } from '../../lib/api';
 import { OnboardingModal } from '../ui/OnboardingModal';
+import { AnimatePresence } from 'framer-motion';
 
 export function AppLayout() {
   const [overview, setOverview] = useState<ExecutiveOverview | null>(null);
@@ -13,9 +14,11 @@ export function AppLayout() {
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
-    if (localStorage.getItem('sentra_new_signup') === 'true') {
+    const isNewSignup = localStorage.getItem('sentra_new_signup') === 'true';
+    const isCompleted = localStorage.getItem('sentra_onboarding_completed') === 'true';
+
+    if (isNewSignup && !isCompleted) {
       setShowOnboarding(true);
-      localStorage.removeItem('sentra_new_signup');
     }
 
     fetchExecutiveOverview().then(setOverview).catch(console.error);
@@ -42,7 +45,9 @@ export function AppLayout() {
         <main className="flex-1 overflow-auto p-0 custom-scrollbar bg-[#0a0f1a]">
           <Outlet />
         </main>
-        {showOnboarding && <OnboardingModal onClose={() => setShowOnboarding(false)} />}
+        <AnimatePresence>
+          {showOnboarding && <OnboardingModal onClose={() => setShowOnboarding(false)} />}
+        </AnimatePresence>
       </div>
     </div>
   );
