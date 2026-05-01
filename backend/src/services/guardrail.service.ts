@@ -190,10 +190,43 @@ export class GuardrailService {
   }
 
 
-  static async getInterceptionLogs(limit = 20) {
-    return await prisma.interception_logs.findMany({
-      orderBy: { timestamp: 'desc' },
-      take: limit
-    });
+  static async getInterceptionLogs(
+    page: number = 1,
+    limit: number = 20,
+    filters: {
+      organizationId?: string;
+      startDate?: string;
+      endDate?: string;
+      decision?: string;
+    } = {}
+  ) {
+    const where: any = {};
+    if (filters.organizationId) where.organizationId = filters.organizationId;
+    if (filters.decision) where.decision = filters.decision;
+    if (filters.startDate || filters.endDate) {
+      where.timestamp = {};
+      if (filters.startDate) where.timestamp.gte = new Date(filters.startDate);
+      if (filters.endDate) where.timestamp.lte = new Date(filters.endDate);
+    }
+
+    const [logs, total] = await Promise.all([
+      prisma.interception_logs.findMany({
+        where,
+        orderBy: { timestamp: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.interception_logs.count({ where })
+    ]);
+
+    return {
+      data: logs,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    };
   }
 }

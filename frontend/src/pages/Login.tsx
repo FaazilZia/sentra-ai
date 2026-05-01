@@ -5,9 +5,9 @@ import { apiBaseUrl } from '../lib/api';
 import { GoogleLogin } from '@react-oauth/google';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function LoginPage() {
+export default function LoginPage({ defaultIsSignUp = false }: { defaultIsSignUp?: boolean }) {
   const { login, signUp, googleLogin, loginPending, loginError } = useAuth();
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(defaultIsSignUp);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 

@@ -127,3 +127,88 @@ export const createPolicy = async (req: any, res: Response, next: NextFunction) 
     next(error);
   }
 };
+
+export const getPolicyTemplates = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const templates = [
+      {
+        name: 'Prompt Injection Protection',
+        description: 'Blocks common jailbreak and prompt injection patterns.',
+        category: 'Security',
+        effect: 'BLOCK',
+        conditions: { type: 'regex', value: 'ignore previous instructions' },
+        isTemplate: true
+      },
+      {
+        name: 'PII Data Masking',
+        description: 'Redacts emails, phone numbers, and SSNs from outputs.',
+        category: 'Privacy',
+        effect: 'MODIFY',
+        conditions: { type: 'pii', value: 'all' },
+        isTemplate: true
+      }
+    ];
+
+    res.status(200).json({ success: true, data: templates });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const duplicatePolicy = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const policyId = String(req.params['id'] ?? '');
+    const organizationId = await resolveOrganizationId(req);
+    
+    if (!organizationId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const sourcePolicy = await prisma.policies.findFirst({
+      where: { id: policyId, organizationId }
+    });
+
+    if (!sourcePolicy) {
+      return res.status(404).json({ success: false, message: 'Policy not found' });
+    }
+
+    const newPolicy = await prisma.policies.create({
+      data: {
+        organizationId,
+        name: `${sourcePolicy.name} (Copy)`,
+        description: sourcePolicy.description,
+        effect: sourcePolicy.effect,
+        enabled: false,
+        priority: sourcePolicy.priority,
+        conditions: sourcePolicy.conditions || {},
+        scope: sourcePolicy.scope || {},
+        obligations: sourcePolicy.obligations || {},
+        status: 'draft',
+        current_version: 1,
+      }
+    });
+
+    await prisma.policy_versions.create({
+      data: {
+        policy_id: newPolicy.id,
+        organizationId,
+        version: 1,
+        name: newPolicy.name,
+        description: newPolicy.description,
+        effect: newPolicy.effect,
+        enabled: newPolicy.enabled,
+        priority: newPolicy.priority,
+        conditions: newPolicy.conditions || {},
+        scope: newPolicy.scope || {},
+        obligations: newPolicy.obligations || {},
+        status: 'draft',
+        is_published_snapshot: false,
+      }
+    });
+
+    res.status(201).json({ success: true, data: newPolicy });
+  } catch (error) {
+    next(error);
+  }
+};
+

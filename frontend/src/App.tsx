@@ -20,6 +20,7 @@ const PrivacySettingsPage = lazy(() => import('./pages/PrivacySettings'));
 const AuditProofPage = lazy(() => import('./pages/AuditProof'));
 const GuardrailsPage = lazy(() => import('./pages/Guardrails'));
 const AlertSettingsPage = lazy(() => import('./pages/AlertSettings'));
+const DemoPage = lazy(() => import('./pages/Demo'));
 
 
 function RouteFallback() {
@@ -59,6 +60,15 @@ function AppRoutes() {
             path="/login" 
             element={user ? <Navigate to="/app" replace /> : <LoginPage />} 
           />
+
+          {/* Signup Route */}
+          <Route 
+            path="/signup" 
+            element={user ? <Navigate to="/app" replace /> : <LoginPage defaultIsSignUp={true} />} 
+          />
+
+          {/* Demo Route */}
+          <Route path="/demo" element={<DemoPage />} />
 
           {/* Protected Application Routes */}
           <Route 

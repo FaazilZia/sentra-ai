@@ -159,11 +159,13 @@ export interface ScanStatusPayload {
 
 export class ApiError extends Error {
   status: number;
+  data?: any;
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, data?: any) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
+    this.data = data;
   }
 }
 
@@ -241,7 +243,7 @@ export async function apiRequest<T>(
 
   if (!response.ok) {
     const errorMsg = json?.message || `Request failed with status ${response.status}`;
-    throw new ApiError(errorMsg, response.status);
+    throw new ApiError(errorMsg, response.status, json);
   }
 
   // Node backend wraps response in "data"
@@ -294,6 +296,16 @@ export function fetchCompany(organizationId: string): Promise<any> {
 /**
  * POLICY ENDPOINTS (Future Node implementation)
  */
+export function fetchPolicyTemplates(): Promise<any[]> {
+  return apiRequest<any[]>('/policies/templates');
+}
+
+export function duplicatePolicyTemplate(policyId: string): Promise<PolicyResponse> {
+  return apiRequest<PolicyResponse>(`/policies/${policyId}/duplicate`, {
+    method: 'POST'
+  });
+}
+
 export function fetchPolicies(): Promise<PolicyResponse[]> {
   return apiRequest<PolicyResponse[]>('/policies');
 }
@@ -466,6 +478,26 @@ export async function fetchAuditLogs(featureId?: string): Promise<AuditLog[]> {
   return apiRequest<AuditLog[]>(`/compliance/audit-logs${query}`);
 }
 
+export interface AlertRule {
+  id: string;
+  organizationId: string;
+  threshold_count: number;
+  time_window_minutes: number;
+  webhook_url: string;
+  created_at: string;
+}
+
+export async function createAlertRule(data: { threshold_count: number, time_window_minutes: number, webhook_url: string }): Promise<AlertRule> {
+  return apiRequest<AlertRule>('/alerts/rules', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  });
+}
+
+export async function fetchAlertRules(): Promise<AlertRule[]> {
+  return apiRequest<AlertRule[]>('/alerts/rules');
+}
+
 export interface Alert {
   id: string;
   feature_id: string | null;
@@ -535,8 +567,14 @@ export async function sendAIRequest(prompt: string): Promise<any> {
   });
 }
 
-export async function fetchGuardrailLogs(): Promise<InterceptionLog[]> {
-  return apiRequest<InterceptionLog[]>('/guardrails/logs');
+export async function fetchGuardrailLogs(params?: any): Promise<{ data: InterceptionLog[]; meta: any }> {
+  const query = new URLSearchParams(params || {}).toString();
+  return apiRequest<{ data: InterceptionLog[]; meta: any }>(`/guardrails/logs${query ? `?${query}` : ''}`);
+}
+
+export function exportGuardrailLogs(format: 'csv' | 'json' = 'csv', params?: any) {
+  const query = new URLSearchParams({ ...params, format }).toString();
+  window.open(`${apiBaseUrl}/guardrails/logs/export?${query}`, '_blank');
 }
 
 export async function fetchGuardrailMetrics(): Promise<GuardrailMetrics> {

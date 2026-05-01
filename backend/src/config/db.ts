@@ -56,11 +56,14 @@ export const getPrisma = async (): Promise<PrismaClient> => {
 
 // Default export for backward compatibility
 // Uses a proxy to ensure prisma is initialized before access
-export default new Proxy({} as PrismaClient, {
+const prismaProxy = new Proxy({} as PrismaClient, {
   get: (target, prop) => {
+    if (prop === 'then' || prop === 'catch' || prop === 'finally') return undefined;
     if (!prisma) {
       throw new Error("Prisma accessed before initialization. Call initializePrisma() first.");
     }
-    return prisma[prop as keyof PrismaClient];
+    return (prisma as any)[prop];
   }
 });
+
+export default prismaProxy;

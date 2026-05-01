@@ -1,143 +1,173 @@
-import { useEffect, useState } from 'react';
-import { Mail, Webhook, Save, Send, ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { updateAlertSettings, testAlert, fetchCurrentUser, fetchCompany } from '../lib/api';
+import { useState, useEffect } from 'react';
+import { ShieldAlert, BellRing, Activity, Clock, Link as LinkIcon, Plus } from 'lucide-react';
 import { SurfaceCard } from '../components/ui/SurfaceCard';
+import { createAlertRule, fetchAlertRules, AlertRule } from '../lib/api';
 import { useAuth } from '../lib/auth';
 
-export default function AlertSettingsPage() {
-  const { accessToken, user } = useAuth();
-  const [alertEmail, setAlertEmail] = useState('');
-  const [slackWebhookUrl, setSlackWebhookUrl] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
-  const [isTesting, setIsTesting] = useState(false);
+export default function AlertSettings() {
+  const { accessToken } = useAuth();
+  const [rules, setRules] = useState<AlertRule[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  const [threshold, setThreshold] = useState<number>(5);
+  const [timeWindow, setTimeWindow] = useState<number>(1);
+  const [webhookUrl, setWebhookUrl] = useState<string>('');
+  const [saving, setSaving] = useState(false);
+
+  const loadRules = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchAlertRules();
+      setRules(data);
+    } catch (err) {
+      console.error('Failed to load alert rules', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const currentUser = await fetchCurrentUser();
-        if (currentUser.organizationId) {
-          const org = await fetchCompany(currentUser.organizationId);
-          setAlertEmail(org.alertEmail || '');
-          setSlackWebhookUrl(org.slackWebhookUrl || '');
-        }
-      } catch (err) {
-        console.error('Failed to load org settings', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    if (accessToken) {
-      loadSettings();
-    }
+    if (accessToken) loadRules();
   }, [accessToken]);
 
-  const handleSaveAlerts = async () => {
-    setIsSaving(true);
+  const handleSave = async () => {
+    // Basic validation
+    if (!webhookUrl || threshold <= 0 || timeWindow <= 0) return;
+    
+    // Basic URL pattern check
     try {
-      if (alertEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(alertEmail)) {
-        throw new Error('Invalid email format');
-      }
-      if (slackWebhookUrl && !slackWebhookUrl.startsWith('https://hooks.slack.com/')) {
-        throw new Error('Invalid Slack webhook URL');
-      }
-      await updateAlertSettings({ alertEmail, slackWebhookUrl });
-      alert('Alert settings saved successfully');
-    } catch (err: any) {
-      alert(err.message || 'Failed to save alert settings');
+      new URL(webhookUrl);
+    } catch (e) {
+      alert("Please enter a valid webhook URL (e.g., https://hooks.slack.com/...)");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await createAlertRule({
+        threshold_count: threshold,
+        time_window_minutes: timeWindow,
+        webhook_url: webhookUrl
+      });
+      setWebhookUrl('');
+      setThreshold(5);
+      setTimeWindow(1);
+      await loadRules();
+    } catch (err) {
+      console.error('Failed to save alert rule', err);
     } finally {
-      setIsSaving(false);
+      setSaving(false);
     }
   };
-
-  const handleTestAlert = async () => {
-    setIsTesting(true);
-    try {
-      await testAlert();
-      alert('Test alerts dispatched to configured channels');
-    } catch (err: any) {
-      alert(err.message || 'Failed to send test alert');
-    } finally {
-      setIsTesting(false);
-    }
-  };
-
-  const isAdmin = user?.role === 'ADMIN';
 
   return (
-    <div className="mx-auto max-w-[800px] space-y-6 pb-12 p-6">
-      <header className="flex items-center justify-between">
-        <div>
-          <Link to="/app" className="flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-slate-950 transition-colors">
-            <ArrowLeft className="h-3 w-3" /> Back to Dashboard
-          </Link>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-100">Alert Settings</h1>
-          <p className="text-sm text-slate-400">Configure where to receive notifications for security violations.</p>
-        </div>
-      </header>
+    <div className="mx-auto w-full max-w-5xl space-y-8 pb-12 px-6 lg:px-8 pt-8 bg-[#0a0f1a] min-h-screen">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-black tracking-tighter text-white flex items-center gap-3 uppercase">
+          <BellRing className="h-8 w-8 text-rose-500" />
+          Alert Rules
+        </h1>
+        <p className="mt-2 text-slate-400 font-medium max-w-xl">
+          Get notified instantly when high-risk activity spikes across your AI fleet.
+        </p>
+      </div>
 
-      <div className="space-y-6">
-        {!isAdmin ? (
-          <SurfaceCard title="Access Denied">
-            <p className="text-sm text-slate-400">Only administrators can modify alert settings.</p>
-          </SurfaceCard>
-        ) : loading ? (
-          <div className="h-40 animate-pulse rounded-xl bg-slate-800/50" />
-        ) : (
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Create Rule Form */}
+        <div className="lg:col-span-1 space-y-6">
           <SurfaceCard 
-            title="Incident Alert Channels" 
-            description="Configure where to receive notifications when a security policy blocks an AI action."
+            title="Create Alert Rule" 
+            description="Trigger a webhook when blocked prompts exceed your threshold."
           >
-            <div className="space-y-4 pt-2">
-              <div className="space-y-1.5">
-                <label htmlFor="alertEmail" className="text-xs font-bold text-slate-300 flex items-center gap-2">
-                  <Mail className="h-3.5 w-3.5" /> Admin Alert Email
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-slate-500" /> Threshold (Blocked)
                 </label>
                 <input
-                  id="alertEmail"
-                  type="email"
-                  placeholder="security-admin@company.com"
-                  value={alertEmail}
-                  onChange={(e) => setAlertEmail(e.target.value)}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
+                  type="number"
+                  min="1"
+                  value={threshold}
+                  onChange={(e) => setThreshold(parseInt(e.target.value) || 1)}
+                  className="w-full bg-[#0a0f1a] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-rose-500 transition-colors font-mono"
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label htmlFor="slackWebhook" className="text-xs font-bold text-slate-300 flex items-center gap-2">
-                  <Webhook className="h-3.5 w-3.5" /> Slack Webhook URL
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-slate-500" /> Time Window (Minutes)
                 </label>
                 <input
-                  id="slackWebhook"
+                  type="number"
+                  min="1"
+                  value={timeWindow}
+                  onChange={(e) => setTimeWindow(parseInt(e.target.value) || 1)}
+                  className="w-full bg-[#0a0f1a] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-rose-500 transition-colors font-mono"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  <LinkIcon className="h-4 w-4 text-slate-500" /> Webhook URL
+                </label>
+                <input
                   type="url"
-                  placeholder="https://hooks.slack.com/services/..."
-                  value={slackWebhookUrl}
-                  onChange={(e) => setSlackWebhookUrl(e.target.value)}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
+                  placeholder="https://your-server.com/webhook"
+                  value={webhookUrl}
+                  onChange={(e) => setWebhookUrl(e.target.value)}
+                  className="w-full bg-[#0a0f1a] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-rose-500 transition-colors font-mono"
                 />
               </div>
 
-              <div className="flex gap-3 pt-4 border-t border-slate-800 mt-4">
-                <button
-                  onClick={handleSaveAlerts}
-                  disabled={isSaving}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 py-2 text-sm font-bold text-white transition-all hover:bg-blue-500 disabled:opacity-50"
-                >
-                  <Save className="h-4 w-4" /> {isSaving ? 'Saving...' : 'Save Settings'}
-                </button>
-                <button
-                  onClick={handleTestAlert}
-                  disabled={isTesting || (!alertEmail && !slackWebhookUrl)}
-                  className="flex items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-bold text-slate-300 transition-all hover:bg-slate-700 hover:text-white disabled:opacity-50"
-                >
-                  <Send className="h-4 w-4" /> {isTesting ? 'Sending...' : 'Test Alert'}
-                </button>
-              </div>
+              <button 
+                onClick={handleSave}
+                disabled={saving || !webhookUrl}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-white text-slate-900 px-6 py-4 text-xs font-black uppercase tracking-widest hover:bg-slate-200 transition-all disabled:opacity-50"
+              >
+                {saving ? (
+                  <div className="h-4 w-4 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <><Plus className="h-4 w-4" /> Save Rule</>
+                )}
+              </button>
             </div>
           </SurfaceCard>
-        )}
+        </div>
+
+        {/* Existing Rules List */}
+        <div className="lg:col-span-2 space-y-6">
+          <h2 className="text-xl font-bold text-white mb-4">Active Rules</h2>
+          
+          {loading ? (
+            <div className="flex justify-center p-12">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-rose-500 border-t-transparent" />
+            </div>
+          ) : rules.length === 0 ? (
+            <div className="border border-dashed border-slate-800 rounded-2xl p-12 flex flex-col items-center justify-center text-center">
+              <ShieldAlert className="h-12 w-12 text-slate-700 mb-4" />
+              <h3 className="text-lg font-bold text-slate-300">No Alert Rules</h3>
+              <p className="text-sm text-slate-500 max-w-sm mt-2">Create a rule to receive real-time webhook notifications when security events happen.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {rules.map(rule => (
+                <div key={rule.id} className="bg-slate-900 border border-slate-800 rounded-xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                      <span className="text-rose-500">{rule.threshold_count}</span> Blocked Prompts
+                    </h3>
+                    <p className="text-sm text-slate-400">Within {rule.time_window_minutes} minute(s)</p>
+                  </div>
+                  <div className="bg-[#0a0f1a] border border-slate-800 px-4 py-2 rounded-lg truncate max-w-xs md:max-w-md">
+                    <span className="text-xs font-mono text-slate-500 truncate">{rule.webhook_url}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

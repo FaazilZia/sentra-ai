@@ -14,6 +14,17 @@ Traditional tools monitor and report issues *after* they happen.
 
 ---
 
+# 🚀 AI Governance Platform Evolution (v9.0.0)
+**Sentra AI has evolved from a security engine into a complete AI Governance Platform, featuring real-time policy control, unauthenticated demos, and automated risk alerting.**
+
+*   **🛡️ Dynamic Policy Marketplace**: Launched a "Recommended Templates" gallery for instant deployment of **Prompt Injection**, **PII Protection**, and **Hallucination** guardrails. Admins can now clone, customize, and activate complex security postures in one click.
+*   **🕹️ Unauthenticated "Aha Moment" Demo**: Built a standalone, zero-signup **AI Guardrail Simulator** (`/demo`). Users can instantly test malicious prompts against our real-time engine with high-fidelity visual feedback and native SDK code generation.
+*   **📜 AI Audit Ledger & Export**: Transitioned to a server-side paginated **Audit Ledger**. Security teams can now filter thousands of AI interactions by decision type and export immutable governance trails as **CSV** or **JSON** for compliance reporting.
+*   **🚨 Automated Webhook Alerts**: Implemented a threshold-based **Risk Alerting Engine**. Admins can configure custom rules (e.g., "5 blocks in 1 minute") to trigger real-time webhooks with full context, including the sample prompt and triggering reason.
+*   **⚡ Sub-Second Decision Logic**: Hardened the backend `EventTriggerService` and `GuardrailService` to ensure that alert evaluation and logging run asynchronously, maintaining consistent **sub-30ms** API response times.
+
+---
+
 # ⚠️ Why This Matters
 
 AI agents today can:

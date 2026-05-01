@@ -23,41 +23,44 @@ model api_keys {
 }
 
 model usage_stats {
-  id              String   @id @default(uuid())
-  organizationId  String   @map("organization_id")
-  date            DateTime @db.Date
-  requests_count  Int      @default(0)
-  tokens_used     Int      @default(0)
-  estimated_cost  Float    @default(0)
-  organizations   organizations @relation(fields: [organizationId], references: [id])
+  id             String        @id @default(uuid())
+  organizationId String        @map("organization_id")
+  date           DateTime      @db.Date
+  requests_count Int           @default(0)
+  tokens_used    Int           @default(0)
+  estimated_cost Float         @default(0)
+  organizations  organizations @relation(fields: [organizationId], references: [id])
 
   @@unique([organizationId, date])
   @@map("usage_stats")
 }
 
 model organizations {
-  id                String              @id @default(uuid())
-  name              String
-  apiKey            String?             @unique @map("api_key")
-  slug              String              @unique
-  is_active         Boolean
-  created_at        DateTime            @default(now())
-  updated_at        DateTime            @default(now())
-  alertEmail        String?             @map("alert_email")
-  slackWebhookUrl   String?             @map("slack_webhook_url")
-  ai_agents         ai_agents[]
-  api_keys          api_keys[]
-  audit_logs        audit_logs[]
+  id              String       @id @default(uuid())
+  name            String
+  apiKey          String?      @unique @map("api_key")
+  slug            String       @unique
+  is_active       Boolean
+  created_at      DateTime     @default(now())
+  updated_at      DateTime     @default(now())
+  alertEmail      String?      @map("alert_email")
+  slackWebhookUrl String?      @map("slack_webhook_url")
+  ai_agents       ai_agents[]
+  api_keys        api_keys[]
+  audit_logs      audit_logs[]
+
   connectors        connectors[]
   drift_alerts      drift_alerts[]
   incidents         incidents[]
   interception_logs interception_logs[]
-  usage_stats       usage_stats[]
-  logs              logs[]
-  policies          policies[]
-  policy_versions   policy_versions[]
-  scan_jobs         scan_jobs[]
-  users             users[]
+  alert_rules       alert_rules[]
+
+  logs            logs[]
+  policies        policies[]
+  policy_versions policy_versions[]
+  scan_jobs       scan_jobs[]
+  users           users[]
+  usage_stats     usage_stats[]
 
   @@map("companies")
 }
@@ -80,6 +83,8 @@ model policies {
   scope             Json
   conditions        Json
   obligations       Json
+  isTemplate        Boolean           @default(false)
+  category          String?
   created_at        DateTime          @default(now())
   updated_at        DateTime          @default(now())
   incidents         incidents[]
@@ -142,6 +147,17 @@ model incidents {
   user             users?        @relation("IncidentAuthor", fields: [user_id], references: [id])
 
   @@map("incidents")
+}
+
+model alert_rules {
+  id                  String   @id @default(uuid())
+  organizationId      String
+  threshold_count     Int
+  time_window_minutes Int
+  webhook_url         String
+  created_at          DateTime @default(now())
+
+  organization organizations @relation(fields: [organizationId], references: [id])
 }
 
 model policy_versions {
@@ -353,19 +369,19 @@ model alerts {
 }
 
 model interception_logs {
-  id               String         @id @default(uuid())
+  id               String                @id @default(uuid())
   user_id          String
-  organizationId   String         @map("organization_id")
+  organizationId   String                @map("organization_id")
   input_text       String
   output_text      String?
   decision         String
-  confidence       String         @default("High")
-  override_status  String         @default("none")
+  confidence       String                @default("High")
+  override_status  String                @default("none")
   reason           String?
   policy_triggered String?
   metadata         Json?
-  timestamp        DateTime       @default(now())
-  organizations    organizations  @relation(fields: [organizationId], references: [id])
+  timestamp        DateTime              @default(now())
+  organizations    organizations         @relation(fields: [organizationId], references: [id])
   overrides        guardrail_overrides[]
 
   @@map("interception_logs")
@@ -377,9 +393,9 @@ model guardrail_overrides {
   interception_log interception_logs @relation(fields: [log_id], references: [id])
   requested_by     String
   approved_by      String?
-  status           String   @default("pending")
+  status           String            @default("pending")
   reason           String
-  timestamp        DateTime @default(now())
+  timestamp        DateTime          @default(now())
 
   @@map("guardrail_overrides")
 }

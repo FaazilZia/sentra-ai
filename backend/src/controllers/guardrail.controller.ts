@@ -1,6 +1,6 @@
-
-import { Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { GuardrailService } from '../services/guardrail.service';
+import { EventTriggerService } from '../services/eventTrigger.service';
 import logger from '../utils/logger';
 
 export const processAIRequest = async (req: any, res: Response, next: NextFunction) => {
@@ -11,7 +11,7 @@ export const processAIRequest = async (req: any, res: Response, next: NextFuncti
   try {
     // 1. Pre-AI Check (Input)
     const inputResult = await GuardrailService.evaluateInput(prompt);
-    
+
     if (inputResult.decision === 'BLOCK') {
       await GuardrailService.logInterception({
         user_id: userId,
@@ -21,6 +21,11 @@ export const processAIRequest = async (req: any, res: Response, next: NextFuncti
         confidence: inputResult.confidence,
         reason: inputResult.reason,
         policy_triggered: inputResult.policy_triggered
+      });
+
+      // Trigger the Alerts Engine in background (fire and forget)
+      EventTriggerService.evaluateThresholds(organizationId).catch(err => {
+        logger.error('Failed to trigger alert evaluation', err);
       });
 
       return res.status(403).json({
@@ -34,7 +39,7 @@ export const processAIRequest = async (req: any, res: Response, next: NextFuncti
     // 2. Mock AI Call (In a real system, call OpenAI/Anthropic here)
     // We simulate an AI response that might leak sensitive data to test post-AI check
     let aiResponse = `Hello! I can help you with that. The user's email is john.doe@secret.com and his medical diagnosis is hypertension.`;
-    
+
     if (prompt.toLowerCase().includes('hello')) {
       aiResponse = `Hi there! How can I assist you today?`;
     }
@@ -71,10 +76,88 @@ export const processAIRequest = async (req: any, res: Response, next: NextFuncti
   }
 };
 
+export const processDemoRequest = async (req: any, res: Response, next: NextFunction) => {
+  const { prompt } = req.body;
+  if (!prompt) {
+    return res.status(400).json({ success: false, message: 'Prompt is required' });
+  }
+
+  try {
+    // 1. Pre-AI Check (Input) using existing engine
+    const inputResult = await GuardrailService.evaluateInput(prompt);
+
+    if (inputResult.decision === 'BLOCK') {
+      return res.status(200).json({
+        success: true,
+        status: 'blocked',
+        reason: inputResult.reason || 'Prompt Injection Detected',
+        risk_score: 95
+      });
+    }
+
+    // Since this is just a quick demo, we just simulate an ALLOW
+    return res.status(200).json({
+      success: true,
+      status: 'allowed',
+      reason: 'Safe Prompt',
+      risk_score: 10
+    });
+
+  } catch (error) {
+    logger.error('Demo guardrail processing error:', error);
+    res.status(500).json({ success: false, status: 'error', reason: 'Internal testing error' });
+  }
+};
+
 export const getGuardrailLogs = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const logs = await GuardrailService.getInterceptionLogs();
+    const { page, limit, decision } = req.query;
+    const logs = await GuardrailService.getInterceptionLogs(
+      page ? parseInt(page as string) : 1,
+      limit ? parseInt(limit as string) : 20,
+      { organizationId: req.user.organizationId, decision: decision as string }
+    );
     res.status(200).json({ success: true, data: logs });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const exportGuardrailLogs = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const { format = 'csv', decision } = req.query;
+    
+    // Fetch all logs for export (up to 1000 for safety in MVP)
+    const result = await GuardrailService.getInterceptionLogs(1, 1000, {
+      organizationId: req.user.organizationId,
+      decision: decision as string
+    });
+    
+    const logs = result.data;
+
+    if (format === 'json') {
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', 'attachment; filename=audit-logs.json');
+      return res.send(JSON.stringify(logs, null, 2));
+    }
+
+    // Default to CSV
+    const csvRows = [
+      ['ID', 'Timestamp', 'Decision', 'Policy', 'Reason', 'Input Text', 'Output Text'].join(','),
+      ...logs.map(log => [
+        log.id,
+        new Date(log.timestamp).toISOString(),
+        log.decision,
+        `"${log.policy_triggered || 'None'}"`,
+        `"${(log.reason || '').replace(/"/g, '""')}"`,
+        `"${log.input_text.replace(/"/g, '""').replace(/\n/g, ' ')}"`,
+        `"${(log.output_text || '').replace(/"/g, '""').replace(/\n/g, ' ')}"`
+      ].join(','))
+    ];
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=audit-logs.csv');
+    res.status(200).send(csvRows.join('\n'));
   } catch (error) {
     next(error);
   }

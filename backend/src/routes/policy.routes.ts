@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validate.middleware';
-import { getPolicies, getPolicyHealth, getPolicyVersions, createPolicy } from '../controllers/policy.controller';
+import { getPolicies, getPolicyHealth, getPolicyVersions, createPolicy, getPolicyTemplates, duplicatePolicy } from '../controllers/policy.controller';
 import { policyIdVersionsParamSchema, createPolicySchema } from '../validations/policy.validation';
 
 const router = Router();
@@ -13,7 +13,9 @@ router.get(
   validate(policyIdVersionsParamSchema),
   getPolicyVersions
 );
+router.get('/templates', authenticate, getPolicyTemplates);
 router.get('/', authenticate, getPolicies);
+router.post('/:id/duplicate', authenticate, duplicatePolicy);
 router.post('/', authenticate, validate(createPolicySchema), createPolicy);
 
 export default router;
