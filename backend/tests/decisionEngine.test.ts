@@ -1,8 +1,7 @@
-import { jest, describe, it, expect } from '@jest/globals';
-import { makeDecision } from '../services/decisionEngine';
-import prisma from '../config/db';
+import { makeDecision } from '../src/services/decisionEngine';
+import prisma from '../src/config/db';
 
-jest.mock('../config/db', () => ({
+jest.mock('../src/config/db', () => ({
   policies: {
     findMany: jest.fn(),
   },
@@ -37,6 +36,7 @@ describe('Decision Engine', () => {
     (prisma.policies.findMany as any).mockResolvedValue([{
       name: 'Test Policy for test-agent',
       rule: { conditions: { blocked_actions: ['send_email'] } },
+      scope: { agent_ids: ['test-agent'] },
       enabled: true,
       priority: 1
     }]);

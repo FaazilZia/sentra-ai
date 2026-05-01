@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, Variants, AnimatePresence } from 'framer-motion';
-import { X, ShieldCheck } from 'lucide-react';
+import { X, ShieldCheck, AlertCircle } from 'lucide-react';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { KPICards } from '@/components/dashboard/vanta/KPICards';
 import { PromptVolumeChart } from '@/components/dashboard/vanta/PromptVolumeChart';
@@ -38,19 +38,20 @@ export default function DashboardPage() {
   const { data, loading, error } = useDashboardData();
   const [overview, setOverview] = useState<ExecutiveOverview | null>(null);
   const [showDemoBanner, setShowDemoBanner] = useState(false);
-  const [metrics, setMetrics] = useState<{ total: number } | null>(null);
+
 
   useEffect(() => {
     fetchExecutiveOverview().then(setOverview).catch(console.error);
     // Check for demo mode (total logs < 5)
     fetchGuardrailMetrics().then(m => {
-      setMetrics(m);
       if (m.total < 5) setShowDemoBanner(true);
     }).catch(console.error);
   }, []);
 
-  const Skeleton = ({ className }: { className?: string }) => (
-    <div className={cn("animate-pulse rounded-xl bg-white/[0.03] border border-white/5", className)} />
+  const Skeleton = ({ className, children }: { className?: string, children?: React.ReactNode }) => (
+    <div className={cn("animate-pulse rounded-xl bg-white/[0.03] border border-white/5", className)}>
+      {children}
+    </div>
   );
 
   if (error) {
@@ -59,6 +60,7 @@ export default function DashboardPage() {
         <EmptyState 
           title="Intelligence Feed Interrupted" 
           description={error}
+          icon={AlertCircle}
           actionLabel="Retry Connection"
           onAction={() => window.location.reload()}
         />

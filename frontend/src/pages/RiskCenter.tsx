@@ -6,7 +6,7 @@ import { ActiveRiskEvents } from '@/components/risk/ActiveRiskEvents';
 import { RiskExposurePanel } from '@/components/risk/RiskExposurePanel';
 import { RiskOwnership } from '@/components/risk/RiskOwnership';
 import { fetchRiskData, fetchViolations, fetchAIAgents, fetchScans, fetchExecutiveMetrics, fetchTopAttackPatterns, fetchRiskTrend } from '@/lib/api';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { EmptyState } from '@/components/ui/EmptyState';
 
 const containerVariants: Variants = {
@@ -83,6 +83,7 @@ export default function RiskCenterPage() {
         <EmptyState 
           title="Risk Engine Offline" 
           description={error}
+          icon={ShieldAlert}
           actionLabel="Retry Analysis"
           onAction={() => window.location.reload()}
         />
@@ -156,6 +157,7 @@ export default function RiskCenterPage() {
                <EmptyState 
                   title="No Active Threats" 
                   description="Sentra's risk engine has scanned all active agents and no security incidents were found."
+                  icon={ShieldCheck}
                />
             </div>
           ) : (

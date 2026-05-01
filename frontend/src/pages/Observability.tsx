@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Activity, Radar, ShieldCheck, Zap } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { EmptyStateList } from '../components/ui/EmptyStateList';
+
 import { StatCard } from '../components/ui/StatCard';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { SurfaceCard } from '../components/ui/SurfaceCard';
@@ -73,6 +73,7 @@ export default function ObservabilityPage() {
         <EmptyState 
           title="Observability Feed Disrupted" 
           description={error}
+          icon={ShieldCheck}
           actionLabel="Retry Connection"
           onAction={() => window.location.reload()}
         />
@@ -151,6 +152,7 @@ export default function ObservabilityPage() {
                <EmptyState 
                   title="No Policies Defined" 
                   description="Start by creating a policy in the Policy Lab to see coverage metrics."
+                  icon={Activity}
                />
             </div>
           ) : (

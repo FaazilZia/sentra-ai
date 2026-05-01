@@ -1,14 +1,14 @@
-import { evaluatePolicy } from '../services/policyEngine';
-import prisma from '../config/db';
-import { cacheService } from '../services/cache.service';
+import { evaluatePolicy } from '../src/services/policyEngine';
+import prisma from '../src/config/db';
+import { cacheService } from '../src/services/cache.service';
 
-jest.mock('../config/db', () => ({
+jest.mock('../src/config/db', () => ({
   policies: {
     findMany: jest.fn(),
   },
 }));
 
-jest.mock('../services/cache.service', () => ({
+jest.mock('../src/services/cache.service', () => ({
   cacheService: {
     getOrSet: jest.fn((key, cb) => cb()),
   },
@@ -25,7 +25,8 @@ describe('Policy Engine', () => {
 
   it('should block if action is in blocked_actions', async () => {
     (prisma.policies.findMany as jest.Mock).mockResolvedValue([{
-      name: 'Block Policy for agent-1',
+      name: 'Block Policy',
+      scope: { agent_ids: ['agent-1'] },
       conditions: { blocked_actions: ['delete_record'] },
       enabled: true,
       priority: 1
@@ -37,7 +38,8 @@ describe('Policy Engine', () => {
 
   it('should block if action is NOT in allowed_actions', async () => {
     (prisma.policies.findMany as jest.Mock).mockResolvedValue([{
-      name: 'Allowlist Policy for agent-1',
+      name: 'Allowlist Policy',
+      scope: { agent_ids: ['agent-1'] },
       conditions: { allowed_actions: ['read_only'] },
       enabled: true,
       priority: 1
@@ -49,7 +51,8 @@ describe('Policy Engine', () => {
 
   it('should allow if action is in allowed_actions', async () => {
     (prisma.policies.findMany as jest.Mock).mockResolvedValue([{
-      name: 'Allowlist Policy for agent-1',
+      name: 'Allowlist Policy',
+      scope: { agent_ids: ['agent-1'] },
       conditions: { allowed_actions: ['read_only'] },
       enabled: true,
       priority: 1
