@@ -87,4 +87,7 @@ router.delete(
   deleteApiKey
 );
 
+import { testAlert } from '../controllers/organization.controller';
+router.post('/alerts/test', authenticate, authorizeRoles('ADMIN'), testAlert);
+
 export default router;

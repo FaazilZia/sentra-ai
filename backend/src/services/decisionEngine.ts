@@ -40,6 +40,23 @@ export const makeDecision = async (agent: string, action: string, organizationId
       return buildBlockedResponse('Policy Violation', policyResult, startTime, agent, action);
     }
 
+    // 0. Safe-Action Short-circuit: If allowlist matched in L1, skip L2 and L3
+    if (policyResult.reason === 'Action is on safe allowlist') {
+      return {
+        status: 'allowed',
+        risk: 'low',
+        reason: 'Safe action: bypassed governance evaluation',
+        impact: 'None',
+        compliance: [],
+        explanation: 'Action is on the safe allowlist. No further evaluation needed.',
+        confidence: 1.0,
+        degraded: false,
+        timeline: [
+          { step: 'Allowlist', status: 'complete', icon: 'zap', description: 'Short-circuited' }
+        ]
+      };
+    }
+
     // 2. Level 2: Local Risk Engine (Keyword/Pattern Pre-filter)
     const localRisk = evaluateRisk(action, metadata);
     

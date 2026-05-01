@@ -7,6 +7,7 @@ import { RiskExposurePanel } from '@/components/risk/RiskExposurePanel';
 import { RiskOwnership } from '@/components/risk/RiskOwnership';
 import { fetchRiskData, fetchViolations, fetchAIAgents, fetchScans, fetchExecutiveMetrics, fetchTopAttackPatterns, fetchRiskTrend } from '@/lib/api';
 import { AlertTriangle } from 'lucide-react';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -34,6 +35,7 @@ export default function RiskCenterPage() {
   const [executiveMetrics, setExecutiveMetrics] = useState<any>(null);
   const [attackPatterns, setAttackPatterns] = useState<any[]>([]);
   const [riskTrend, setRiskTrend] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   const loadAllData = async () => {
     try {
@@ -53,8 +55,10 @@ export default function RiskCenterPage() {
       setExecutiveMetrics(metrics);
       setAttackPatterns(patterns);
       setRiskTrend(trend);
+      setError(null);
     } catch (e) {
       console.error('Failed to load risk data', e);
+      setError('Unable to assemble risk posture telemetry. Check backend status.');
     } finally {
       setLoading(false);
     }
@@ -66,21 +70,25 @@ export default function RiskCenterPage() {
     return () => clearInterval(interval);
   }, []);
 
-  if (loading) {
+  const Skeleton = ({ className }: { className?: string }) => (
+    <div className={cn("animate-pulse rounded-2xl bg-white/[0.03] border border-white/5", className)} />
+  );
+
+  const highViolations = (violations || []).filter(v => (v.severity >= 80 || v.risk === 'high')).length;
+  const riskLevel = highViolations > 5 ? 'CRITICAL' : (highViolations > 0 ? 'HIGH' : 'LOW');
+
+  if (error) {
     return (
-      <div className="flex h-full items-center justify-center bg-[#0a0f1a]">
-        <div className="text-center">
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-rose-500 border-t-transparent mx-auto" />
-          <p className="mt-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Calculating Exposure...</p>
-        </div>
+      <div className="flex h-full items-center justify-center bg-[#0a0f1a] p-8">
+        <EmptyState 
+          title="Risk Engine Offline" 
+          description={error}
+          actionLabel="Retry Analysis"
+          onAction={() => window.location.reload()}
+        />
       </div>
     );
   }
-
-  // Compute Risk Level
-  // Compute Risk Level from Live Data
-  const highViolations = violations.filter(v => (v.severity >= 80 || v.risk === 'high')).length;
-  const riskLevel = highViolations > 5 ? 'CRITICAL' : (highViolations > 0 ? 'HIGH' : 'LOW');
 
   return (
     <div className="flex h-full flex-col font-sans selection:bg-rose-500/30 bg-[#0a0f1a] p-8">
@@ -104,7 +112,7 @@ export default function RiskCenterPage() {
            </div>
            <div className="text-center pl-2">
               <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Live Scans (24h)</p>
-              <p className="text-xs font-mono font-black text-white">{scans}</p>
+              <p className="text-xs font-mono font-black text-white">{loading ? '...' : scans}</p>
            </div>
         </div>
       </div>
@@ -125,20 +133,39 @@ export default function RiskCenterPage() {
         animate="visible"
       >
         <motion.div variants={itemVariants}>
-          <RiskPosture riskData={riskData} violations={violations} scans={scans} executiveMetrics={executiveMetrics} />
+          {loading ? (
+            <Skeleton className="h-64 w-full" />
+          ) : (
+            <RiskPosture riskData={riskData} violations={violations} scans={scans} executiveMetrics={executiveMetrics} />
+          )}
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <RiskHeatmap riskData={riskData} attackPatterns={attackPatterns} />
+          {loading ? (
+            <Skeleton className="h-80 w-full" />
+          ) : (
+            <RiskHeatmap riskData={riskData} attackPatterns={attackPatterns} />
+          )}
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <ActiveRiskEvents violations={violations} />
+          {loading ? (
+            <Skeleton className="h-96 w-full" />
+          ) : violations.length === 0 ? (
+            <div className="rounded-2xl border border-white/5 bg-white/[0.01] p-16">
+               <EmptyState 
+                  title="No Active Threats" 
+                  description="Sentra's risk engine has scanned all active agents and no security incidents were found."
+               />
+            </div>
+          ) : (
+            <ActiveRiskEvents violations={violations} />
+          )}
         </motion.div>
 
         <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <RiskExposurePanel riskData={riskData} riskTrend={riskTrend} />
-          <RiskOwnership agents={agents} />
+          {loading ? <Skeleton key="l1" className="h-80 w-full" /> : <RiskExposurePanel riskData={riskData} riskTrend={riskTrend} />}
+          {loading ? <Skeleton key="l2" className="h-80 w-full" /> : <RiskOwnership agents={agents} />}
         </motion.div>
       </motion.div>
     </div>

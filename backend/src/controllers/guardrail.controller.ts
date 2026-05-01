@@ -237,7 +237,7 @@ export const postApproveOverride = async (req: any, res: Response, next: NextFun
 
 export const getOverrides = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const overrides = await GuardrailService.getOverrides();
+    const overrides = await GuardrailService.getOverrides(req.user.organizationId);
     res.status(200).json({ success: true, data: overrides });
   } catch (error) {
     next(error);
@@ -246,20 +246,24 @@ export const getOverrides = async (req: any, res: Response, next: NextFunction) 
 
 export const getMetrics = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const metrics = await GuardrailService.getMetrics();
+    const metrics = await GuardrailService.getMetrics(req.user.organizationId);
     res.status(200).json({ success: true, data: metrics });
   } catch (error) {
     next(error);
   }
 };
 export const checkAction = async (req: any, res: Response, next: NextFunction) => {
-  const { action_type, payload } = req.body;
+  const { agent, action, metadata = {} } = req.body;
   const userId = req.user.id;
   const organizationId = req.user.organizationId;
 
   try {
+    if (!agent || !action) {
+      return res.status(400).json({ success: false, message: 'Missing agent or action in request' });
+    }
+
     // Basic context string for evaluation
-    const context = `Action: ${action_type} | Payload: ${JSON.stringify(payload)}`;
+    const context = `Agent: ${agent} | Action: ${action} | Metadata: ${JSON.stringify(metadata)}`;
     const result = await GuardrailService.evaluateInput(context);
 
     await GuardrailService.logInterception({
@@ -270,7 +274,7 @@ export const checkAction = async (req: any, res: Response, next: NextFunction) =
       confidence: result.confidence,
       reason: result.reason,
       policy_triggered: result.policy_triggered,
-      metadata: { action_type, payload }
+      metadata: { agent, action, ...metadata }
     });
 
     res.status(200).json({

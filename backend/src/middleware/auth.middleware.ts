@@ -78,6 +78,15 @@ export const authenticate = async (req: any, res: Response, next: NextFunction) 
       if (token.startsWith('sentra_')) {
         const resolved = await resolveApiKey(token);
         if (resolved) {
+          // Block default organization in production
+          const DEFAULT_DEMO_ORG = process.env.DEFAULT_ORGANIZATION_ID || '00000000-0000-0000-0000-000000000001';
+          if (process.env.NODE_ENV === 'production' && resolved.organizationId === DEFAULT_DEMO_ORG) {
+            return res.status(403).json({
+              success: false,
+              message: 'Organization setup incomplete. Please contact support.'
+            });
+          }
+
           req.user = {
             id: token,
             organizationId: resolved.organizationId,
@@ -99,6 +108,11 @@ export const authenticate = async (req: any, res: Response, next: NextFunction) 
           include: { organizations: true },
         });
         if (user && user.is_active && user.organizations.is_active) {
+          // Block default organization in production
+          if (user.organizationId === '00000000-0000-0000-0000-000000000001' && process.env.NODE_ENV === 'production') {
+            return res.status(403).json({ success: false, message: 'Organization setup incomplete.' });
+          }
+
           req.user = { id: user.id, role: user.role, organizationId: user.organizationId, email: user.email };
           Sentry.setUser({ id: req.user.id, email: req.user.email, organizationId: req.user.organizationId });
           Sentry.setTag('organizationId', req.user.organizationId);

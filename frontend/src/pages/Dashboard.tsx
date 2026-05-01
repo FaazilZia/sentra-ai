@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { motion, Variants } from 'framer-motion';
+import { motion, Variants, AnimatePresence } from 'framer-motion';
+import { X, ShieldCheck } from 'lucide-react';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { KPICards } from '@/components/dashboard/vanta/KPICards';
 import { PromptVolumeChart } from '@/components/dashboard/vanta/PromptVolumeChart';
@@ -10,7 +11,9 @@ import { AIInsightsLayer } from '@/components/dashboard/vanta/AIInsightsLayer';
 import { SystemObservability } from '@/components/dashboard/SystemObservability';
 import { AuditSnapshot } from '@/components/executive/AuditSnapshot';
 import { SystemModeIndicator } from '@/components/executive/SystemModeIndicator';
-import { fetchExecutiveOverview, ExecutiveOverview } from '@/lib/api';
+import { fetchExecutiveOverview, ExecutiveOverview, fetchGuardrailMetrics } from '@/lib/api';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { cn } from '@/lib/utils';
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -32,29 +35,64 @@ const itemVariants: Variants = {
 };
 
 export default function DashboardPage() {
-  const { data, loading } = useDashboardData();
+  const { data, loading, error } = useDashboardData();
   const [overview, setOverview] = useState<ExecutiveOverview | null>(null);
+  const [showDemoBanner, setShowDemoBanner] = useState(false);
+  const [metrics, setMetrics] = useState<{ total: number } | null>(null);
 
   useEffect(() => {
     fetchExecutiveOverview().then(setOverview).catch(console.error);
+    // Check for demo mode (total logs < 5)
+    fetchGuardrailMetrics().then(m => {
+      setMetrics(m);
+      if (m.total < 5) setShowDemoBanner(true);
+    }).catch(console.error);
   }, []);
 
-  if (loading) {
+  const Skeleton = ({ className }: { className?: string }) => (
+    <div className={cn("animate-pulse rounded-xl bg-white/[0.03] border border-white/5", className)} />
+  );
+
+  if (error) {
     return (
-      <div className="flex h-full items-center justify-center bg-[#0a0f1a]">
-        <div className="text-center">
-          <div className="h-12 w-12 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent mx-auto"></div>
-          <p className="mt-4 text-slate-400 font-medium tracking-widest uppercase text-[10px]">Initializing Security Intel...</p>
-        </div>
+      <div className="flex h-full items-center justify-center bg-[#0a0f1a] p-8">
+        <EmptyState 
+          title="Intelligence Feed Interrupted" 
+          description={error}
+          actionLabel="Retry Connection"
+          onAction={() => window.location.reload()}
+        />
       </div>
     );
   }
 
-  if (!data) return null;
-  
   return (
     <div className="flex h-full flex-col font-sans selection:bg-cyan-500/30 bg-[#0a0f1a]">
-      <CriticalAlerts alerts={data.alerts} />
+      <AnimatePresence>
+        {showDemoBanner && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="bg-amber-500/10 border-b border-amber-500/20 px-6 py-2 flex items-center justify-between"
+          >
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+              <p className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em]">
+                Demo Mode: <span className="opacity-70 font-bold">Showing simulated insights until 5+ real actions are intercepted.</span>
+              </p>
+            </div>
+            <button 
+              onClick={() => setShowDemoBanner(false)}
+              className="text-amber-500/50 hover:text-amber-500 transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <CriticalAlerts alerts={data?.alerts || []} />
       
       <motion.div 
         className="mx-auto w-full max-w-[1600px] space-y-8 pb-12 px-6 lg:px-8"
@@ -63,10 +101,10 @@ export default function DashboardPage() {
         animate="visible"
       >
         {/* Executive Visibility Layer */}
-        {!overview ? (
-          <div className="w-full h-32 bg-white/[0.02] border border-white/5 rounded-xl animate-pulse flex items-center justify-center">
-            <span className="text-[10px] text-white/20 font-bold tracking-[0.2em] uppercase">Initializing Executive Visibility...</span>
-          </div>
+        {loading || !overview ? (
+          <Skeleton className="h-40 w-full flex items-center justify-center">
+             <span className="text-[10px] text-white/20 font-bold tracking-[0.2em] uppercase">Recalibrating Executive Intel...</span>
+          </Skeleton>
         ) : (
           <motion.div variants={itemVariants} className="flex flex-col gap-6 pt-4">
             <div className="flex items-center justify-between">
@@ -86,33 +124,54 @@ export default function DashboardPage() {
         
         {/* Top Priority: AI Insights Banners */}
         <motion.div variants={itemVariants}>
-          <AIInsightsLayer insights={data.insights} />
+          {loading ? (
+            <Skeleton className="h-24 w-full" />
+          ) : (
+            <AIInsightsLayer insights={data?.insights || []} />
+          )}
         </motion.div>
 
         {/* CISO KPI Cards */}
         <motion.div variants={itemVariants}>
-          <KPICards data={data.kpis} />
+          {loading ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32" />)}
+            </div>
+          ) : (
+            <KPICards data={data.kpis} />
+          )}
         </motion.div>
 
         {/* PRIMARY FOCUS: Active Security Violations Table */}
         <motion.div variants={itemVariants}>
-          <RecentHighRiskPrompts data={data.violations} />
+          {loading ? (
+            <Skeleton className="h-[400px] w-full" />
+          ) : data.violations.length === 0 ? (
+            <div className="rounded-xl border border-white/5 bg-white/[0.01] p-12">
+               <EmptyState 
+                  title="No Security Violations" 
+                  description="Your AI guardrails are active and no critical policy violations have been detected in the current window."
+                  icon={ShieldCheck}
+               />
+            </div>
+          ) : (
+            <RecentHighRiskPrompts data={data.violations} />
+          )}
         </motion.div>
 
         {/* MERGED: System Observability */}
         <motion.div variants={itemVariants}>
-          <SystemObservability />
+          {loading ? <Skeleton className="h-64 w-full" /> : <SystemObservability />}
         </motion.div>
 
         {/* Secondary Analytics Grid */}
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          {/* Prompt Trend & Department Risk */}
           <motion.div variants={itemVariants} className="lg:col-span-2">
-            <PromptVolumeChart data={data.chartData} />
+            {loading ? <Skeleton className="h-[300px] w-full" /> : <PromptVolumeChart data={data.chartData} />}
           </motion.div>
 
           <motion.div variants={itemVariants} className="lg:col-span-1">
-            <RiskByDepartment data={data.departments} />
+            {loading ? <Skeleton className="h-[300px] w-full" /> : <RiskByDepartment data={data.departments} />}
           </motion.div>
         </div>
 

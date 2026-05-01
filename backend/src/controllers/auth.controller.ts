@@ -86,8 +86,13 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
       return res.status(400).json({ success: false, message: 'User already exists' });
     }
 
+    // Fallback: derive org name from email domain if not provided
+    const emailDomain = email.split('@')[1]?.split('.')[0] || 'sentra';
+    const derivedOrgName = organizationName?.trim() || 
+      (emailDomain.charAt(0).toUpperCase() + emailDomain.slice(1) + ' Org');
+
     // Generate a URL-safe slug from the org name
-    const baseSlug = organizationName
+    const baseSlug = derivedOrgName
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '');
@@ -106,7 +111,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
       const org = await tx.organizations.create({
         data: {
           id: randomUUID(),
-          name: organizationName,
+          name: derivedOrgName,
           slug,
           is_active: true,
         },
@@ -117,7 +122,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
           id: randomUUID(),
           email,
           password_hash: passwordHash,
-          full_name: fullName,
+          full_name: fullName || email.split('@')[0],
           role: 'ADMIN', // First user of an org is always admin
           is_active: true,
           organizationId: org.id,
@@ -229,16 +234,12 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
     let user = await prisma.users.findUnique({ where: { email } });
 
     if (!user) {
-      // New Google user — require org name
-      if (!organizationName || organizationName.trim().length < 2) {
-        return res.status(400).json({
-          success: false,
-          message: 'Organization name is required for new accounts',
-          requiresOrganizationName: true,
-        });
-      }
+      // New Google user — use provided org name or derive from email domain
+      const emailDomain = email.split('@')[1]?.split('.')[0] || 'sentra';
+      const derivedOrgName = organizationName?.trim() || 
+        (emailDomain.charAt(0).toUpperCase() + emailDomain.slice(1) + ' Org');
 
-      const baseSlug = organizationName
+      const baseSlug = derivedOrgName
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '');
@@ -250,7 +251,7 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
 
       const result = await prisma.$transaction(async (tx) => {
         const org = await tx.organizations.create({
-          data: { id: randomUUID(), name: organizationName, slug, is_active: true },
+          data: { id: randomUUID(), name: derivedOrgName, slug, is_active: true },
         });
         const newUser = await tx.users.create({
           data: {

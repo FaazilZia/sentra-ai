@@ -18,6 +18,18 @@ class AlertService {
     this.initEmail();
   }
 
+  async verifyConnection(): Promise<boolean> {
+    if (!this.transporter) return false;
+    try {
+      await this.transporter.verify();
+      console.log('✅ [AlertService] SMTP connection verified.');
+      return true;
+    } catch (error: any) {
+      console.error('❌ [AlertService] SMTP verification failed:', error.message);
+      return false;
+    }
+  }
+
   private initEmail() {
     if (process.env.SMTP_HOST) {
       this.transporter = nodemailer.createTransport({
@@ -195,6 +207,28 @@ class AlertService {
     // Fire and forget
     this.sendEmailAlert(orgId, violation).catch(err => console.error(err));
     this.sendSlackAlert(orgId, violation).catch(err => console.error(err));
+  }
+
+  async sendTestEmail(email: string, orgName: string) {
+    if (!this.transporter) throw new Error('SMTP transporter not initialized');
+
+    const mailOptions = {
+      from: process.env.SMTP_FROM || '"Sentra AI Alerts" <alerts@sentra.ai>',
+      to: email,
+      subject: `🧪 Sentra AI: Test Alert for ${orgName}`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px;">
+          <h2 style="color: #0f172a; margin-top: 0;">SMTP Configuration Success</h2>
+          <p>This is a test alert from <strong>Sentra AI</strong> for organization: <strong>${orgName}</strong></p>
+          <p>Your alerting system is now correctly configured to receive security violations and policy enforcement notifications.</p>
+          <p style="font-size: 12px; color: #94a3b8; margin-top: 32px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+            Sentra AI Governance Platform | Test Environment
+          </p>
+        </div>
+      `
+    };
+
+    return await this.transporter.sendMail(mailOptions);
   }
 }
 

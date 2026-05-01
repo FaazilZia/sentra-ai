@@ -222,14 +222,17 @@ export class GuardrailService {
     return override;
   }
 
-  static async getOverrides() {
+  static async getOverrides(organizationId: string) {
     return await prisma.guardrail_overrides.findMany({
+      where: { interception_log: { organizationId } },
       orderBy: { timestamp: 'desc' }
     });
   }
 
-  static async getMetrics() {
-    const logs = await prisma.interception_logs.findMany();
+  static async getMetrics(organizationId: string) {
+    const logs = await prisma.interception_logs.findMany({
+      where: { organizationId }
+    });
     const total = logs.length;
     if (total === 0) return { total: 0, allowed: 100, blocked: 0, modified: 0 };
 
@@ -245,14 +248,13 @@ export class GuardrailService {
     page: number = 1,
     limit: number = 20,
     filters: {
-      organizationId?: string;
+      organizationId: string;
       startDate?: string;
       endDate?: string;
       decision?: string;
-    } = {}
+    }
   ) {
-    const where: any = {};
-    if (filters.organizationId) where.organizationId = filters.organizationId;
+    const where: any = { organizationId: filters.organizationId };
     if (filters.decision) where.decision = filters.decision;
     if (filters.startDate || filters.endDate) {
       where.timestamp = {};

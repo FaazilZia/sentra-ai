@@ -49,6 +49,7 @@ import logger from './utils/logger';
 import prisma, { initializePrisma } from './config/db';
 import { setupScheduledJobs } from './services/queue.service';
 import { setupConnectorWorkers } from './workers/worker.manager';
+import { alertService } from './services/alert.service';
 
 const PORT = process.env.PORT || 3000;
 const httpServer = createServer(app);
@@ -88,6 +89,9 @@ const startServer = async () => {
     // Initialize Background Workers & Schedules (Non-blocking)
     setupConnectorWorkers();
     setupScheduledJobs().catch(err => logger.error('Failed to setup scheduled jobs:', err));
+
+    // SMTP Validation
+    alertService.verifyConnection().catch(err => logger.error('SMTP Verification failed:', err));
   } catch (error) {
     logger.error('Failed to initialize database — server will continue in degraded mode:', error);
     // Do NOT exit — the server is already listening and health/ready endpoints will report degraded

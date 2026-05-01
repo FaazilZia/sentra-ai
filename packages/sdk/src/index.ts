@@ -44,7 +44,7 @@ export class SentraClient {
   /**
    * Validates if an AI action is safe to execute against active policies.
    */
-  async checkAction(request: { action_type: string; payload: Record<string, any> }): Promise<ActionResponse> {
+  async checkAction(request: ActionRequest): Promise<ActionResponse> {
     let lastError: any;
 
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
@@ -72,7 +72,7 @@ export class SentraClient {
         const json = await response.json();
         // Backend returns { success, decision, reason }
         return {
-          status: json.decision.toLowerCase(),
+          status: json.decision.toLowerCase() as 'allowed' | 'blocked',
           risk: json.decision === 'BLOCK' ? 'high' : 'low',
           reason: json.reason || 'Processed by Sentra AI',
           impact: json.decision === 'BLOCK' ? 'Action prevented' : 'None',
@@ -116,8 +116,9 @@ export class SentraClient {
       const prompt = params.messages?.map((m: any) => m.content).join('\n') || '';
 
       const check = await this.checkAction({
-        action_type: 'OPENAI_CHAT_COMPLETION',
-        payload: { model: params.model, prompt_length: prompt.length, prompt: prompt.substring(0, 500) }
+        agent: 'openai-client',
+        action: 'OPENAI_CHAT_COMPLETION',
+        metadata: { model: params.model, prompt_length: prompt.length, prompt: prompt.substring(0, 500) }
       });
 
       if (check.status === 'blocked') {
@@ -139,8 +140,9 @@ export class SentraClient {
       const method = init?.method || 'GET';
 
       const check = await this.checkAction({
-        action_type: 'API_CALL',
-        payload: { url, method }
+        agent: 'fetch-interceptor',
+        action: 'API_CALL',
+        metadata: { url, method }
       });
 
       if (check.status === 'blocked') {
@@ -155,7 +157,7 @@ export class SentraClient {
    * Helper wrapper to execute an action only if Sentra allows it.
    */
   async safeAction<T>(
-    request: { action_type: string; payload: Record<string, any> },
+    request: ActionRequest,
     onAllowed: () => Promise<T> | T
   ): Promise<{ success: boolean; result?: T; governance: ActionResponse }> {
     const governance = await this.checkAction(request);
@@ -168,7 +170,7 @@ export class SentraClient {
         throw new SentraError('Action execution failed despite being allowed', 500, error);
       }
     } else {
-      console.warn(`[Sentra Blocked] Action: ${request.action_type}, Reason: ${governance.reason}`);
+      console.warn(`[Sentra Blocked] Action: ${request.action}, Reason: ${governance.reason}`);
       return { success: false, governance };
     }
   }

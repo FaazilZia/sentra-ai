@@ -194,10 +194,9 @@ export const logIncident = async (req: any, res: Response, next: NextFunction) =
     let organizationId = await resolveOrganizationId(req);
     
     // If company resolution fails (e.g. invalid API key or session), 
-    // we should not proceed in production.
+    // we should not proceed. The auth middleware should catch this, but we check again.
     if (!organizationId) {
-       logger.warn('logIncident: Failed to resolve organizationId. Falling back to default for safety (check auth middleware).');
-       organizationId = '00000000-0000-0000-0000-000000000001'; 
+       return res.status(401).json({ success: false, message: 'Invalid organization context' });
     }
 
     const isServiceAgent = req.user?.role === 'SERVICE_AGENT';
