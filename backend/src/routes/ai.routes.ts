@@ -1,3 +1,4 @@
+
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validate.middleware';

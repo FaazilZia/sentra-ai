@@ -7,9 +7,9 @@ services:
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
-      - key: DATABASE_URL
+      - key: DATABASE_URL # Supabase Transaction Pooler URL (Port 6543)
         sync: false
-      - key: DIRECT_URL
+      - key: DIRECT_URL   # Supabase Direct Connection URL (Port 5432)
         sync: false
       - key: JWT_SECRET
         generateValue: true
