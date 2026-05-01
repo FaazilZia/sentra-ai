@@ -3,7 +3,7 @@ import logger from '../utils/logger';
 import { EventTriggerService } from './eventTrigger.service';
 import axios from 'axios';
 
-export class DriftDetectionService {
+export class DriftService {
   /**
    * Detects unusual spikes in agent activity.
    * Logic: if (actions_last_60_min > (avg_hourly_actions_last_7_days * 2)) { trigger alert }
@@ -18,7 +18,7 @@ export class DriftDetectionService {
       const actionsLast60Min = await prisma.interception_logs.count({
         where: {
           organizationId,
-          user_id: agentId, // SDK uses user_id to represent the agent instance
+          user_id: agentId,
           timestamp: { gte: lastHour }
         }
       });
@@ -33,12 +33,11 @@ export class DriftDetectionService {
       });
 
       const avgHourlyActions = actionsLast7Days / (7 * 24);
-      const threshold = Math.max(10, avgHourlyActions * 2); // Minimum threshold of 10 to avoid noise
+      const threshold = Math.max(10, avgHourlyActions * 2); 
 
       if (actionsLast60Min > threshold) {
         logger.warn(`Anomalous activity detected for agent ${agentId} in org ${organizationId}`);
         
-        // 3. Trigger Drift Alert in Database
         await prisma.drift_alerts.create({
           data: {
             organizationId,
@@ -50,7 +49,6 @@ export class DriftDetectionService {
           }
         });
 
-        // 4. Integrate with Webhook Alerts
         const rules = await prisma.alert_rules.findMany({
           where: { organizationId }
         });
@@ -72,5 +70,33 @@ export class DriftDetectionService {
     } catch (err) {
       logger.error('Drift detection error:', err);
     }
+  }
+
+  static async listAlerts(organizationId: string) {
+    return await prisma.drift_alerts.findMany({
+      where: { organizationId },
+      orderBy: { timestamp: 'desc' }
+    });
+  }
+
+  static async resolveAlert(id: string, organizationId: string) {
+    return await prisma.drift_alerts.updateMany({
+      where: { id, organizationId },
+      data: { status: 'resolved' }
+    });
+  }
+
+  static async detectDrift(organizationId: string) {
+    // Manually trigger checks for all agents in the org
+    const agents = await prisma.interception_logs.groupBy({
+      by: ['user_id'],
+      where: { organizationId },
+    });
+
+    for (const agent of agents) {
+      await this.checkAgentDrift(organizationId, agent.user_id);
+    }
+
+    return await this.listAlerts(organizationId);
   }
 }

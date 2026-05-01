@@ -2,7 +2,7 @@ import prisma from '../config/db';
 import logger from '../utils/logger';
 import { evaluateRisk } from './riskEngine';
 import { evaluateSemanticRisk } from './semanticRiskEngine';
-import { DriftDetectionService } from './drift.service';
+import { DriftService } from './drift.service';
 
 export interface GuardrailDecision {
   decision: 'ALLOW' | 'MODIFY' | 'BLOCK';
@@ -144,7 +144,7 @@ export class GuardrailService {
       });
 
       // Background Drift Check (Fire and forget)
-      DriftDetectionService.checkAgentDrift(data.organizationId, data.user_id).catch(err => {
+      DriftService.checkAgentDrift(data.organizationId, data.user_id).catch(err => {
         logger.error('Background drift check failed:', err);
       });
 
