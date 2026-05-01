@@ -21,10 +21,13 @@ export default function DemoPage() {
     setResult(null);
 
     try {
-      // In a real app we'd use an API client, but fetch is fine for a no-auth demo
+      const token = localStorage.getItem('sentra_access_token');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       const res = await fetch(`${apiBaseUrl}/guardrails/demo`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ prompt })
       });
       const data = await res.json();

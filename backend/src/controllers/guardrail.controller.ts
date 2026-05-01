@@ -83,23 +83,62 @@ export const processDemoRequest = async (req: any, res: Response, next: NextFunc
   }
 
   try {
+    // Optional Authentication for Demo (Syncs to User Ledger if logged in)
+    let organizationId = 'DEMO_ORG';
+    let userId = 'DEMO_USER';
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.split(' ')[1];
+        const { verifyAccessToken } = require('../utils/jwt');
+        const decoded = verifyAccessToken(token);
+        if (decoded) {
+          organizationId = decoded.organizationId;
+          userId = decoded.id;
+        }
+      } catch (e) {
+        // Silently fail auth for demo, fall back to anonymous
+      }
+    }
+
     // 1. Pre-AI Check (Input) using existing engine
     const inputResult = await GuardrailService.evaluateInput(prompt);
+
+    // 2. Log if it's a real user or if it's a block
+    if (organizationId !== 'DEMO_ORG' || inputResult.decision === 'BLOCK') {
+      await GuardrailService.logInterception({
+        user_id: userId,
+        organizationId: organizationId,
+        input_text: prompt,
+        decision: inputResult.decision,
+        confidence: inputResult.confidence,
+        reason: inputResult.reason,
+        policy_triggered: inputResult.policy_triggered,
+        metadata: { source: 'demo_page' }
+      });
+
+      if (inputResult.decision === 'BLOCK' && organizationId !== 'DEMO_ORG') {
+        EventTriggerService.evaluateThresholds(organizationId).catch(err => 
+          logger.error('Failed demo alert evaluation', err)
+        );
+      }
+    }
 
     if (inputResult.decision === 'BLOCK') {
       return res.status(200).json({
         success: true,
         status: 'blocked',
         reason: inputResult.reason || 'Prompt Injection Detected',
+        explanation: 'This input tried to override system instructions and manipulate the AI.',
         risk_score: 95
       });
     }
 
-    // Since this is just a quick demo, we just simulate an ALLOW
     return res.status(200).json({
       success: true,
       status: 'allowed',
       reason: 'Safe Prompt',
+      explanation: 'This input does not contain harmful or manipulative patterns.',
       risk_score: 10
     });
 

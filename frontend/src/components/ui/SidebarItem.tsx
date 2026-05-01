@@ -9,15 +9,17 @@ interface SidebarItemProps {
   collapsed?: boolean;
   indicator?: "dot" | "badge";
   indicatorValue?: number;
+  onClick?: () => void;
 }
 
-export function SidebarItem({ name, href, icon: Icon, collapsed = false, indicator, indicatorValue }: SidebarItemProps) {
+export function SidebarItem({ name, href, icon: Icon, collapsed = false, indicator, indicatorValue, onClick }: SidebarItemProps) {
   const location = useLocation();
   const isActive = location.pathname === href;
 
   return (
     <NavLink
       to={href}
+      onClick={onClick}
       className={cn(
         "group flex items-center justify-between rounded-xl px-3 py-3 text-[10px] font-black uppercase tracking-widest transition-all duration-200",
         collapsed && "justify-center px-2",

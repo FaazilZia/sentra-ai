@@ -572,9 +572,32 @@ export async function fetchGuardrailLogs(params?: any): Promise<{ data: Intercep
   return apiRequest<{ data: InterceptionLog[]; meta: any }>(`/guardrails/logs${query ? `?${query}` : ''}`);
 }
 
-export function exportGuardrailLogs(format: 'csv' | 'json' = 'csv', params?: any) {
+export async function exportGuardrailLogs(format: 'csv' | 'json' = 'csv', params?: any) {
   const query = new URLSearchParams({ ...params, format }).toString();
-  window.open(`${apiBaseUrl}/guardrails/logs/export?${query}`, '_blank');
+  const { accessToken } = getTokens();
+  
+  try {
+    const response = await fetch(`${apiBaseUrl}/guardrails/logs/export?${query}`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+
+    if (!response.ok) throw new Error('Export failed');
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `audit-logs-${new Date().getTime()}.${format}`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  } catch (err) {
+    console.error('Audit Log Export Error:', err);
+    alert('Failed to export logs. Please try again.');
+  }
 }
 
 export async function fetchGuardrailMetrics(): Promise<GuardrailMetrics> {

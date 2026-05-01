@@ -86,7 +86,7 @@ export const aiActionRateLimiter = rateLimit({
   legacyHeaders: false,
   store: getStore('rl:ai:min:', true), // AI endpoints are fail-closed
   keyGenerator: (req: any) => {
-    return (req.headers['x-api-key'] as string) || (req.user?.organizationId) || req.ip || 'global';
+    return (req.headers['x-api-key'] as string) || (req.user?.organizationId) || ipKeyGenerator(req, undefined) || 'global';
   },
   handler: onLimitReached
 });
@@ -99,7 +99,7 @@ export const aiDailyRateLimiter = rateLimit({
   legacyHeaders: false,
   store: getStore('rl:ai:day:', true), // AI endpoints are fail-closed
   keyGenerator: (req: any) => {
-    return (req.headers['x-api-key'] as string) || (req.user?.organizationId) || req.ip || 'global';
+    return (req.headers['x-api-key'] as string) || (req.user?.organizationId) || ipKeyGenerator(req, undefined) || 'global';
   },
   handler: onLimitReached
 });

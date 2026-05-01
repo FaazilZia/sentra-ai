@@ -39,7 +39,9 @@ export const getExecutiveOverview = async (req: any, res: Response, next: NextFu
     });
 
     const totalBudgetUsed = connectors.reduce((acc, c) => acc + (c.daily_cost_total || 0), 0);
-    const totalDailyLimit = connectors.reduce((acc, c) => acc + ((c.scan_policy as any)?.maxDailyCost || 5.0), 0);
+    const totalDailyLimit = connectors.length > 0 
+      ? connectors.reduce((acc, c) => acc + ((c.scan_policy as any)?.maxDailyCost || 5.0), 0)
+      : 100.0; // Default base budget for platform visibility
     
     const scansLast24h = connectors.reduce((acc, c) => acc + (c.daily_scan_count || 0), 0);
     const activeConnectors = connectors.filter(c => c.status === 'active' || c.status === 'active_partial').length;

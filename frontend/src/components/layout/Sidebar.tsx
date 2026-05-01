@@ -124,16 +124,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 {group.group}
               </h4>
               {group.items.map((item) => (
-                <div key={item.name} onClick={onClose}>
-                  <SidebarItem
-                    name={item.name}
-                    href={item.href}
-                    icon={item.icon}
-                    collapsed={false}
-                    indicator={item.indicator}
-                    indicatorValue={item.indicatorValue}
-                  />
-                </div>
+                <SidebarItem
+                  key={item.name}
+                  name={item.name}
+                  href={item.href}
+                  icon={item.icon}
+                  collapsed={false}
+                  indicator={item.indicator}
+                  indicatorValue={item.indicatorValue}
+                  onClick={onClose}
+                />
               ))}
             </div>
           ))}
