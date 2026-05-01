@@ -19,6 +19,7 @@ const RelationshipGraphPage = lazy(() => import('./pages/RelationshipGraph'));
 const PrivacySettingsPage = lazy(() => import('./pages/PrivacySettings'));
 const AuditProofPage = lazy(() => import('./pages/AuditProof'));
 const GuardrailsPage = lazy(() => import('./pages/Guardrails'));
+const AlertSettingsPage = lazy(() => import('./pages/AlertSettings'));
 
 
 function RouteFallback() {
@@ -78,7 +79,7 @@ function AppRoutes() {
             <Route path="audit-proof" element={<AuditProofPage />} />
             <Route path="guardrails" element={<GuardrailsPage />} />
             <Route path="settings/api-keys" element={<ConnectPage />} />
-            <Route path="settings/alerts" element={<PrivacySettingsPage />} />
+            <Route path="settings/alerts" element={<AlertSettingsPage />} />
 
             
             <Route path="board-review" element={<Navigate to="/app" replace />} />

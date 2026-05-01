@@ -118,6 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         fullName: email.split('@')[0] || 'Sentra User',
         organizationName: `${orgName} Workspace`,
       });
+      localStorage.setItem('sentra_new_signup', 'true');
       await login(email, password);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to sign up';

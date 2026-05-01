@@ -5,12 +5,19 @@ import { Topbar } from './Topbar';
 import { AtomBackground } from '../ui/AtomBackground';
 import { GlobalControlPanel } from '../executive/GlobalControlPanel';
 import { fetchExecutiveOverview, ExecutiveOverview } from '../../lib/api';
+import { OnboardingModal } from '../ui/OnboardingModal';
 
 export function AppLayout() {
   const [overview, setOverview] = useState<ExecutiveOverview | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
+    if (localStorage.getItem('sentra_new_signup') === 'true') {
+      setShowOnboarding(true);
+      localStorage.removeItem('sentra_new_signup');
+    }
+
     fetchExecutiveOverview().then(setOverview).catch(console.error);
     const interval = setInterval(() => {
       fetchExecutiveOverview().then(setOverview).catch(console.error);
@@ -35,6 +42,7 @@ export function AppLayout() {
         <main className="flex-1 overflow-auto p-0 custom-scrollbar bg-[#0a0f1a]">
           <Outlet />
         </main>
+        {showOnboarding && <OnboardingModal onClose={() => setShowOnboarding(false)} />}
       </div>
     </div>
   );

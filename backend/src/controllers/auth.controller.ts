@@ -9,7 +9,73 @@ import { OAuth2Client } from 'google-auth-library';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+const seedDefaultPolicy = async (tx: any, organizationId: string) => {
+  const policyId = randomUUID();
+  await tx.policies.create({
+    data: {
+      id: policyId,
+      organizationId,
+      name: 'Default Protection Policy',
+      description: 'Blocks prompt injections and suspicious keywords',
+      enabled: true,
+      priority: 1,
+      effect: 'BLOCK',
+      status: 'published',
+      current_version: 1,
+      scope: { agents: ['All Agents'] },
+      conditions: {
+        input: {
+          contains: [
+            "ignore previous instructions",
+            "act as system",
+            "bypass",
+            "override",
+            "leak data"
+          ]
+        }
+      },
+      obligations: { log_violations: true },
+      rule: {
+        type: "keyword_match",
+        keywords: [
+          "ignore previous instructions",
+          "act as system",
+          "bypass",
+          "override",
+          "leak data"
+        ]
+      }
+    }
+  });
 
+  await tx.policy_versions.create({
+    data: {
+      policy_id: policyId,
+      organizationId,
+      version: 1,
+      name: 'Default Protection Policy',
+      description: 'Blocks prompt injections and suspicious keywords',
+      effect: 'BLOCK',
+      enabled: true,
+      priority: 1,
+      status: 'published',
+      is_published_snapshot: true,
+      scope: { agents: ['All Agents'] },
+      conditions: {
+        input: {
+          contains: [
+            "ignore previous instructions",
+            "act as system",
+            "bypass",
+            "override",
+            "leak data"
+          ]
+        }
+      },
+      obligations: { log_violations: true },
+    }
+  });
+};
 
 export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -57,6 +123,8 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
           organizationId: org.id,
         },
       });
+
+      await seedDefaultPolicy(tx, org.id);
 
       return { org, user };
     });
@@ -194,6 +262,7 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
             organizationId: org.id,
           },
         });
+        await seedDefaultPolicy(tx, org.id);
         return newUser;
       });
       user = result;
