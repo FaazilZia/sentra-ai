@@ -40,11 +40,11 @@ export function RecentHighRiskPrompts({ data }: { data: ViolationData[] }) {
         <table className="w-full text-left text-sm text-slate-100">
           <thead className="text-[11px] font-black uppercase tracking-wider text-slate-300 bg-slate-900/50">
             <tr>
-              <th className="px-4 py-4 rounded-tl-lg">User</th>
-              <th className="px-4 py-4">Prompt Trigger</th>
-              <th className="px-4 py-4">Why Blocked</th>
-              <th className="px-4 py-4">AI Decision</th>
-              <th className="px-4 py-4">Model</th>
+              <th className="px-4 py-4 rounded-tl-lg">User/Agent</th>
+              <th className="px-4 py-4">Action Context</th>
+              <th className="px-4 py-4">Security Reason</th>
+              <th className="px-4 py-4">Governance Decision</th>
+              <th className="px-4 py-4">Infrastructure</th>
               <th className="px-4 py-4">Timestamp</th>
               <th className="px-4 py-4 text-right rounded-tr-lg">Action</th>
             </tr>

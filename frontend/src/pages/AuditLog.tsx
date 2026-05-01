@@ -54,7 +54,7 @@ export default function AuditLog() {
             AI Audit Ledger
           </h1>
           <p className="mt-2 text-slate-400 font-medium max-w-xl">
-            Immutable governance trail for all AI prompt evaluations, blocks, and system actions.
+            Immutable governance trail for all agent actions, API calls, and pre-execution validations.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -96,13 +96,13 @@ export default function AuditLog() {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
              <thead className="border-b border-slate-800 bg-slate-900/50 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-               <tr>
-                 <th className="px-6 py-4">Status</th>
-                 <th className="px-6 py-4">Trigger Policy</th>
-                 <th className="px-6 py-4">Input Prompt</th>
-                 <th className="px-6 py-4">User ID</th>
-                 <th className="px-6 py-4 text-right">Timestamp</th>
-               </tr>
+                <tr>
+                  <th className="px-6 py-4">Decision</th>
+                  <th className="px-6 py-4">Triggered Policy</th>
+                  <th className="px-6 py-4">Action Context</th>
+                  <th className="px-6 py-4">Agent/User ID</th>
+                  <th className="px-6 py-4 text-right">Timestamp</th>
+                </tr>
              </thead>
              <tbody className="divide-y divide-slate-800/50">
                {loading ? (

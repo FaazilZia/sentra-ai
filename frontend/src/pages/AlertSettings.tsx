@@ -79,7 +79,7 @@ export default function AlertSettings() {
         <div className="lg:col-span-1 space-y-6">
           <SurfaceCard 
             title="Create Alert Rule" 
-            description="Trigger a webhook when blocked prompts exceed your threshold."
+            description="Trigger a webhook when blocked actions exceed your threshold."
           >
             <div className="space-y-6">
               <div className="space-y-2">
@@ -156,7 +156,7 @@ export default function AlertSettings() {
                 <div key={rule.id} className="bg-slate-900 border border-slate-800 rounded-xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
                     <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                      <span className="text-rose-500">{rule.threshold_count}</span> Blocked Prompts
+                      <span className="text-rose-500">{rule.threshold_count}</span> Blocked Actions
                     </h3>
                     <p className="text-sm text-slate-400">Within {rule.time_window_minutes} minute(s)</p>
                   </div>

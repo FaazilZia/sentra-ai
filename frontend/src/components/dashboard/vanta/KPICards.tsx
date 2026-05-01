@@ -85,7 +85,7 @@ export function KPICards({ data }: { data: KPIData }) {
         iconColorClass={violationsIconColor}
       />
       <KPICard
-        title="Models Blocked Today"
+        title="Actions Prevented Today"
         value={blocked.toLocaleString()}
         trend={data.modelsBlockedToday.trend}
         trendLabel={data.modelsBlockedToday.trendLabel}

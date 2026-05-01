@@ -63,14 +63,14 @@ export class GuardrailService {
             return {
               decision: 'BLOCK',
               confidence,
-              reason: `Policy ${policy.id} violation: sensitive patterns detected`,
+              reason: `Action blocked: potentially sensitive data or restricted pattern detected`,
               policy_triggered: policy.id,
-              processedText: '[BLOCKED BY GUARDRAIL]'
+              processedText: '[BLOCKED BY GOVERNANCE ENGINE]'
             };
           } else if (policy.action === 'MODIFY') {
             decision = 'MODIFY';
             policy_triggered = policy.id;
-            reason = `Sensitive data masked by policy ${policy.id}`;
+            reason = `Action modified: sensitive data masked for safety`;
             processedText = processedText.replace(pattern, (match) => {
               return match[0] + '***' + (match.includes('@') ? match.split('@')[1] : '');
             });
@@ -79,27 +79,26 @@ export class GuardrailService {
       }
     }
 
-    // 2. Hardened Risk Engine (Normalization, Evasion, Multi-Signal)
+    // 2. Hardened Risk Engine
     const engineResult = evaluateRisk('ai_proxy', { prompt: text });
     if (engineResult.score === 'high') {
       return {
         decision: 'BLOCK',
         confidence: 'High',
-        reason: `Risk Engine: ${engineResult.triggers[0]}`,
-        policy_triggered: 'HARDENED_RISK_ENGINE',
+        reason: `Action blocked: high-risk behavior pattern identified`,
+        policy_triggered: 'RISK_ADAPTIVE_CONTROL',
         processedText: '[BLOCKED BY SECURITY ENGINE]'
       };
     }
 
-    // 3. Semantic Analysis (LLM Intent Analysis)
-    // Only run for complex prompts to optimize latency
+    // 3. Semantic Analysis
     if (text.length > 20 || /export|reveal|system|ignore/i.test(text)) {
       const semanticResult = await evaluateSemanticRisk(text);
       if (semanticResult.score === 'high') {
         return {
           decision: 'BLOCK',
           confidence: 'High',
-          reason: `Semantic Guardrail: ${semanticResult.explanation}`,
+          reason: `Action blocked: potentially harmful intent detected`,
           policy_triggered: 'SEMANTIC_ADVERSARIAL_DETECT',
           processedText: '[BLOCKED BY SEMANTIC GUARDRAIL]'
         };

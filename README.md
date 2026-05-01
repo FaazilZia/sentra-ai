@@ -1,9 +1,9 @@
 # 🚀 Sentra AI — The Real-Time Governance Layer for AI Agents
 
-**Sentra AI is a real-time AI Governance & Compliance Operating System that controls and blocks unsafe AI actions before they execute.**
+**Sentra AI is a real-time AI Governance & Compliance Operating System that validates and blocks unsafe AI agent actions before they execute.**
 
 Traditional tools monitor and report issues *after* they happen.
-**Sentra AI acts before execution** — enforcing policies, preventing risks, and mapping every decision to **human-readable governance insights and compliance impact** (GDPR, HIPAA, DPDP).
+**Sentra AI acts before execution** — enforcing pre-execution control, preventing risks, and mapping every decision to **human-readable governance insights and compliance impact** (GDPR, HIPAA, DPDP).
 
 ---
 
@@ -14,14 +14,14 @@ Traditional tools monitor and report issues *after* they happen.
 
 ---
 
-# 🚀 AI Governance Platform Evolution (v9.0.0)
-**Sentra AI has evolved from a security engine into a complete AI Governance Platform, featuring real-time policy control, unauthenticated demos, and automated risk alerting.**
+# 🚀 AI Governance Platform Evolution (v10.0.0)
+**Sentra AI has evolved into a complete Agent Action Governance Platform, featuring real-time pre-execution control, unauthenticated demos, and automated risk alerting.**
 
-*   **🛡️ Dynamic Policy Marketplace**: Launched a "Recommended Templates" gallery for instant deployment of **Prompt Injection**, **PII Protection**, and **Hallucination** guardrails. Admins can now clone, customize, and activate complex security postures in one click.
-*   **🕹️ Unauthenticated "Aha Moment" Demo**: Built a standalone, zero-signup **AI Guardrail Simulator** (`/demo`). Users can instantly test malicious prompts against our real-time engine with high-fidelity visual feedback and native SDK code generation.
-*   **📜 AI Audit Ledger & Export**: Transitioned to a server-side paginated **Audit Ledger**. Security teams can now filter thousands of AI interactions by decision type and export immutable governance trails as **CSV** or **JSON** for compliance reporting.
-*   **🚨 Automated Webhook Alerts**: Implemented a threshold-based **Risk Alerting Engine**. Admins can configure custom rules (e.g., "5 blocks in 1 minute") to trigger real-time webhooks with full context, including the sample prompt and triggering reason.
-*   **⚡ Sub-Second Decision Logic**: Hardened the backend `EventTriggerService` and `GuardrailService` to ensure that alert evaluation and logging run asynchronously, maintaining consistent **sub-30ms** API response times.
+*   **🛡️ Action Validation Engine**: Shifted focus from simple "prompts" to complex "agent actions". Sentra now intercepts API calls, email dispatches, and database queries before the agent can commit them.
+*   **🕹️ Agent Action Simulator**: Upgraded the standalone demo (`/demo`) to simulate real-world agent scenarios: "Agent tries to send email", "Agent calls external API", and "Agent accesses sensitive data".
+*   **📜 AI Audit Ledger & Export**: Transitioned to a server-side paginated **Audit Ledger**. Security teams can now filter thousands of AI interactions by action type and export immutable governance trails as **CSV** or **JSON**.
+*   **🚨 Automated Webhook Alerts**: Implemented a threshold-based **Risk Alerting Engine**. Admins can configure rules for `HIGH_RISK_ACTIVITY` and `ANOMALOUS_ACTIVITY` to trigger real-time webhooks with full context.
+*   **⚡ SDK Integration**: Published the `@sentra-ai/sdk` which includes native wrappers for **OpenAI** and **Fetch**, allowing developers to protect their entire agent stack with one line of code.
 
 ---
 
@@ -218,25 +218,28 @@ npm install @sentra-ai/sdk
 
 ---
 
-## 2. Protect AI Actions
+## 2. Protect Agent Actions
 
 ```typescript
-import { SentraClient } from '@sentra/sdk';
+import { SentraClient } from '@sentra-ai/sdk';
 
 const client = new SentraClient({ apiKey: "YOUR_API_KEY" });
 
-const response = await client.checkAction({
-  agent: "finance-bot",
-  action: "send_payment",
-  metadata: { amount: 5000 }
+// Example: Intercept an API call
+const result = await client.checkAction({
+  action_type: "API_CALL",
+  payload: { url: "https://api.external.com/data", method: "POST" }
 });
 
-if (response.status === 'allowed') {
-  // Executes only if allowed
-  await executePayment();
+if (result.status === 'allowed') {
+  await executeAction();
 } else {
-  console.error(`Blocked: ${response.reason}`);
+  console.error(`Blocked: ${result.reason}`);
 }
+
+// Or use the OpenAI wrapper
+const protectedOpenAI = client.wrapOpenAI(openaiClient);
+await protectedOpenAI.chat.completions.create({ ... });
 ```
 
 ---
@@ -244,26 +247,26 @@ if (response.status === 'allowed') {
 # 🔗 API Example
 
 ```http
-POST /api/v1/ai/check-action
+POST /api/v1/guardrails/action
 Authorization: Bearer YOUR_API_KEY
 ```
 
 ```json
 {
-  "agent": "finance-bot",
-  "action": "send_payment",
-  "metadata": { "amount": 5000 }
+  "action_type": "API_CALL",
+  "payload": { 
+    "url": "https://api.external.com/data",
+    "method": "POST"
+  }
 }
 ```
 
 ### Response:
 ```json
 {
-  "status": "blocked",
-  "risk": "high",
-  "reason": "External transaction not allowed",
-  "impact": "Reduced GDPR score by 2%",
-  "compliance": ["GDPR", "SOC2"]
+  "success": true,
+  "decision": "BLOCK",
+  "reason": "Action blocked: high-risk behavior pattern identified"
 }
 ```
 

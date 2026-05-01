@@ -69,13 +69,14 @@ export class EventTriggerService {
     this.lastTriggered.set(ruleId, new Date());
   }
 
-  private static async triggerWebhook(rule: any, blockedCount: number, samplePrompt: string, reason: string) {
+  private static async triggerWebhook(rule: any, blockedCount: number, sampleContext: string, reason: string) {
     try {
       await axios.post(rule.webhook_url, {
         event: "HIGH_RISK_ACTIVITY",
         blocked_count: blockedCount,
         time_window_minutes: rule.time_window_minutes,
-        sample_prompt: samplePrompt,
+        action_type: "AGENT_ACTION",
+        sample_context: sampleContext,
         reason: reason,
         timestamp: new Date().toISOString()
       }, { timeout: 5000 });

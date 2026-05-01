@@ -58,21 +58,21 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     {
       group: 'INVESTIGATE',
       items: [
-        { name: 'Violations', href: '/app/violations', icon: ShieldAlert, indicator: 'badge' as const, indicatorValue: violationCount },
-        { name: 'Audit Logs', href: '/app/audit', icon: FileText },
+        { name: 'Active Violations', href: '/app/violations', icon: ShieldAlert, indicator: 'badge' as const, indicatorValue: violationCount },
+        { name: 'Audit Ledger', href: '/app/audit', icon: FileText },
       ]
     },
     {
-      group: 'FIX',
+      group: 'CONTROL',
       items: [
-        { name: 'Policies & Rules', href: '/app/governance', icon: ShieldCheck },
-        { name: 'Risk Assessments', href: '/app/risk', icon: TriangleAlert },
+        { name: 'Governance Engine', href: '/app/governance', icon: ShieldCheck },
+        { name: 'Impact Analysis', href: '/app/risk', icon: TriangleAlert },
       ]
     },
     {
-      group: 'PROVE',
+      group: 'COMPLIANCE',
       items: [
-        { name: 'Compliance Reports', href: '/app/inventory', icon: FileCheck },
+        { name: 'Compliance Evidence', href: '/app/inventory', icon: FileCheck },
       ]
     },
     {

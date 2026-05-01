@@ -23,10 +23,10 @@ export const AuditSnapshot: React.FC<AuditSnapshotProps> = ({
       <div className="flex flex-col">
         <div className="flex items-center space-x-2 text-white/40 mb-1">
           <Layers className="w-3.5 h-3.5" />
-          <span className="text-[10px] font-bold uppercase tracking-widest">Scans (24h)</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest">Validations (24h)</span>
         </div>
         <div className="text-xl font-bold text-white">{scans}</div>
-        <div className="text-[9px] text-white/30 font-medium">Real-time telemetry</div>
+        <div className="text-[9px] text-white/30 font-medium">Pre-execution control</div>
       </div>
 
       <div className="flex flex-col border-l border-white/5 pl-4">

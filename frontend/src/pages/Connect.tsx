@@ -96,7 +96,7 @@ export default function ConnectPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const sdkCodeSnippet = `import { SentraClient } from '@sentra-ai/sdk';\n\nconst sentra = new SentraClient({\n  apiKey: '${newKey?.api_key || 'YOUR_API_KEY_HERE'}',\n  baseUrl: 'https://sentra-ai-tau.vercel.app/api/v1'\n});\n\n// Log a security event\nawait sentra.logEvent({ agent: 'Support-Bot', details: 'PII access detected' });`;
+  const sdkCodeSnippet = `import { SentraClient } from '@sentra-ai/sdk';\n\nconst sentra = new SentraClient({\n  apiKey: '${newKey?.api_key || 'YOUR_API_KEY_HERE'}',\n  baseUrl: 'https://sentra-backend-node.onrender.com/api/v1'\n});\n\n// Validate an agent action before execution\nconst result = await sentra.checkAction({\n  action_type: 'API_CALL',\n  payload: { url: 'https://api.external.com', method: 'POST' }\n});\n\nif (result.status === 'allowed') {\n  execute();\n}`;
 
   return (
     <div className="mx-auto max-w-[1440px] space-y-6 pb-12">
@@ -115,8 +115,8 @@ export default function ConnectPage() {
               Power your Governance engine.
             </h1>
             <p className="text-sm text-slate-300 leading-relaxed max-w-xl">
-              Connect external AI agents via our lightweight SDK or bridge directly into your 
-              cloud infrastructure for deep-scan compliance discovery.
+              Validate agent actions via our lightweight SDK or bridge directly into your 
+              infrastructure for pre-execution control and compliance discovery.
             </p>
           </div>
           <div className="flex bg-slate-900/50 p-1 rounded-xl border border-white/5 self-start">
@@ -226,37 +226,6 @@ export default function ConnectPage() {
               </div>
            </div>
 
-           {/* Google Drive Mock */}
-           <div className="group rounded-3xl border border-slate-100 bg-white p-6 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 mb-6 group-hover:bg-blue-600 group-hover:text-white">
-                 <Cloud className="h-6 w-6" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-950 mb-2">Google Drive</h3>
-              <p className="text-xs text-slate-400 leading-relaxed mb-8">
-                 Discovery-scan Docs, Sheets, and Slides for behavioral governance at the source.
-              </p>
-              <div className="mt-auto pt-6 border-t border-slate-50">
-                 <button className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-slate-100 py-3 text-[11px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 transition-all">
-                    Initiate OAuth
-                 </button>
-              </div>
-           </div>
-
-           {/* Mobile / App Connector */}
-           <div className="group rounded-3xl border border-slate-100 bg-white p-6 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 mb-6 group-hover:bg-rose-600 group-hover:text-white">
-                 <Smartphone className="h-6 w-6" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-950 mb-2">Mobile Interface</h3>
-              <p className="text-xs text-slate-400 leading-relaxed mb-8">
-                 Direct integration for mobile agent interfaces with native PII masking.
-              </p>
-              <div className="mt-auto pt-6 border-t border-slate-50">
-                 <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 py-3 text-[11px] font-black uppercase tracking-widest text-slate-300 cursor-not-allowed">
-                    Coming Soon
-                 </button>
-              </div>
-           </div>
 
            {/* Active Remote Sources List */}
            <div className="md:col-span-2 lg:col-span-3 mt-4">

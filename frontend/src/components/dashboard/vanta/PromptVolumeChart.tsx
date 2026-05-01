@@ -11,7 +11,7 @@ export function PromptVolumeChart({ data }: { data: PromptChartData[] }) {
     <div className="flex w-full flex-col rounded-xl border border-white/10 bg-slate-900/50 p-4 shadow-xl backdrop-blur-md">
       <div className="mb-2 flex items-center justify-between">
         <div>
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">7D Prompt Volume Trend</h3>
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">7D Agent Action Volume Trend</h3>
         </div>
         <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-wider text-slate-100">
           <div className="flex items-center gap-1.5">
