@@ -8,13 +8,15 @@ import {
   postRequestOverride, 
   postApproveOverride, 
   getOverrides, 
-  getMetrics 
+  getMetrics,
+  checkAction
 } from '../controllers/guardrail.controller';
 
 const router = Router();
 
 // End-user AI Proxy
 router.post('/proxy', authenticate, processAIRequest);
+router.post('/action', authenticate, checkAction);
 
 // Unauthenticated Demo Mode
 import rateLimit from 'express-rate-limit';

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { GuardrailService } from '../services/guardrail.service';
 import { EventTriggerService } from '../services/eventTrigger.service';
+import prisma from '../config/db';
 import logger from '../utils/logger';
 
 export const processAIRequest = async (req: any, res: Response, next: NextFunction) => {
@@ -9,6 +10,18 @@ export const processAIRequest = async (req: any, res: Response, next: NextFuncti
   const organizationId = req.user.organizationId;
 
   try {
+    // 0. Data Residency Check
+    const org = await prisma.organizations.findUnique({
+      where: { id: organizationId },
+      select: { data_region: true }
+    });
+
+    const requestRegion = req.headers['x-sentra-region'] || 'US';
+    if (org && org.data_region !== requestRegion) {
+      logger.warn(`Data Residency Violation: Org ${organizationId} (Region: ${org.data_region}) accessed from ${requestRegion}`);
+      // For MVP, we log a warning but allow (configurable in real logic)
+    }
+
     // 1. Pre-AI Check (Input)
     const inputResult = await GuardrailService.evaluateInput(prompt);
 
@@ -236,6 +249,37 @@ export const getMetrics = async (req: any, res: Response, next: NextFunction) =>
     const metrics = await GuardrailService.getMetrics();
     res.status(200).json({ success: true, data: metrics });
   } catch (error) {
+    next(error);
+  }
+};
+export const checkAction = async (req: any, res: Response, next: NextFunction) => {
+  const { action_type, payload } = req.body;
+  const userId = req.user.id;
+  const organizationId = req.user.organizationId;
+
+  try {
+    // Basic context string for evaluation
+    const context = `Action: ${action_type} | Payload: ${JSON.stringify(payload)}`;
+    const result = await GuardrailService.evaluateInput(context);
+
+    await GuardrailService.logInterception({
+      user_id: userId,
+      organizationId: organizationId,
+      input_text: context,
+      decision: result.decision,
+      confidence: result.confidence,
+      reason: result.reason,
+      policy_triggered: result.policy_triggered,
+      metadata: { action_type, payload }
+    });
+
+    res.status(200).json({
+      success: true,
+      decision: result.decision,
+      reason: result.reason
+    });
+  } catch (error) {
+    logger.error('Check action error:', error);
     next(error);
   }
 };

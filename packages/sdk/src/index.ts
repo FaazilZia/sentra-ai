@@ -44,7 +44,7 @@ export class SentraClient {
   /**
    * Validates if an AI action is safe to execute against active policies.
    */
-  async checkAction(request: ActionRequest): Promise<ActionResponse> {
+  async checkAction(request: { action_type: string; payload: Record<string, any> }): Promise<ActionResponse> {
     let lastError: any;
 
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
@@ -52,7 +52,7 @@ export class SentraClient {
       const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
       try {
-        const response = await fetch(`${this.baseUrl}/ai/check-action`, {
+        const response = await fetch(`${this.baseUrl}/guardrails/action`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -70,7 +70,14 @@ export class SentraClient {
         }
 
         const json = await response.json();
-        return json.data;
+        // Backend returns { success, decision, reason }
+        return {
+          status: json.decision.toLowerCase(),
+          risk: json.decision === 'BLOCK' ? 'high' : 'low',
+          reason: json.reason || 'Processed by Sentra AI',
+          impact: json.decision === 'BLOCK' ? 'Action prevented' : 'None',
+          compliance: []
+        };
       } catch (error: any) {
         clearTimeout(timeoutId);
         lastError = error;
@@ -99,10 +106,56 @@ export class SentraClient {
   }
 
   /**
+   * Intercepts OpenAI requests to ensure safety.
+   */
+  wrapOpenAI(openaiClient: any) {
+    const originalCreate = openaiClient.chat.completions.create.bind(openaiClient.chat.completions);
+
+    openaiClient.chat.completions.create = async (...args: any[]) => {
+      const params = args[0];
+      const prompt = params.messages?.map((m: any) => m.content).join('\n') || '';
+
+      const check = await this.checkAction({
+        action_type: 'OPENAI_CHAT_COMPLETION',
+        payload: { model: params.model, prompt_length: prompt.length, prompt: prompt.substring(0, 500) }
+      });
+
+      if (check.status === 'blocked') {
+        throw new SentraError(`[Sentra Blocked] ${check.reason}`, 403, check);
+      }
+
+      return originalCreate(...args);
+    };
+
+    return openaiClient;
+  }
+
+  /**
+   * Intercepts fetch calls to monitor and control external API access.
+   */
+  wrapFetch(originalFetch: typeof fetch) {
+    return async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = input.toString();
+      const method = init?.method || 'GET';
+
+      const check = await this.checkAction({
+        action_type: 'API_CALL',
+        payload: { url, method }
+      });
+
+      if (check.status === 'blocked') {
+        throw new SentraError(`[Sentra Blocked] ${check.reason}`, 403, check);
+      }
+
+      return originalFetch(input, init);
+    };
+  }
+
+  /**
    * Helper wrapper to execute an action only if Sentra allows it.
    */
   async safeAction<T>(
-    request: ActionRequest,
+    request: { action_type: string; payload: Record<string, any> },
     onAllowed: () => Promise<T> | T
   ): Promise<{ success: boolean; result?: T; governance: ActionResponse }> {
     const governance = await this.checkAction(request);
@@ -115,7 +168,7 @@ export class SentraClient {
         throw new SentraError('Action execution failed despite being allowed', 500, error);
       }
     } else {
-      console.warn(`[Sentra Blocked] Action: ${request.action}, Reason: ${governance.reason}`);
+      console.warn(`[Sentra Blocked] Action: ${request.action_type}, Reason: ${governance.reason}`);
       return { success: false, governance };
     }
   }

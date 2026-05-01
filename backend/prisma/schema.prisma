@@ -45,6 +45,7 @@ model organizations {
   updated_at      DateTime     @default(now())
   alertEmail      String?      @map("alert_email")
   slackWebhookUrl String?      @map("slack_webhook_url")
+  data_region     String       @default("US") @map("data_region")
   ai_agents       ai_agents[]
   api_keys        api_keys[]
   audit_logs      audit_logs[]
