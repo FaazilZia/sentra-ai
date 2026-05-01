@@ -11,6 +11,12 @@ module.exports = {
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.test.json' }],
   },
+  collectCoverageFrom: [
+    'src/services/decisionEngine.ts',
+    'src/services/policyEngine.ts',
+    'src/services/riskEngine.ts',
+    'src/utils/masking.ts',
+  ],
   coverageThreshold: {
     global: {
       branches: 80,
