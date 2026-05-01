@@ -14,14 +14,15 @@ Traditional tools monitor and report issues *after* they happen.
 
 ---
 
-# 🚀 AI Governance Platform Evolution (v10.0.0)
-**Sentra AI has evolved into a complete Agent Action Governance Platform, featuring real-time pre-execution control, unauthenticated demos, and automated risk alerting.**
+# 🚀 Agent Action Governance Platform (v12.0.0)
+**Sentra AI has transitioned into a specialized Agent Action Governance Platform, focusing on pre-execution control and human-readable audit trails.**
 
-*   **🛡️ Action Validation Engine**: Shifted focus from simple "prompts" to complex "agent actions". Sentra now intercepts API calls, email dispatches, and database queries before the agent can commit them.
-*   **🕹️ Agent Action Simulator**: Upgraded the standalone demo (`/demo`) to simulate real-world agent scenarios: "Agent tries to send email", "Agent calls external API", and "Agent accesses sensitive data".
-*   **📜 AI Audit Ledger & Export**: Transitioned to a server-side paginated **Audit Ledger**. Security teams can now filter thousands of AI interactions by action type and export immutable governance trails as **CSV** or **JSON**.
-*   **🚨 Automated Webhook Alerts**: Implemented a threshold-based **Risk Alerting Engine**. Admins can configure rules for `HIGH_RISK_ACTIVITY` and `ANOMALOUS_ACTIVITY` to trigger real-time webhooks with full context.
-*   **⚡ SDK Integration**: Published the `@sentra-ai/sdk` which includes native wrappers for **OpenAI** and **Fetch**, allowing developers to protect their entire agent stack with one line of code.
+*   **🛡️ Pre-execution Control Engine**: Every AI agent action is validated against corporate policy *before* execution. We've shifted from simple "text filtering" to deep "action governance".
+*   **🗣️ Human-Readable Governance**: Decisions are no longer cryptic codes. Every block or modification comes with a clear, human-readable reason (e.g., *"Action blocked: potentially sensitive data or restricted pattern detected"*) mapped to compliance standards.
+*   **🕹️ Agent Governance Sandbox**: The upgraded `/demo` environment allows developers to simulate and test governance policies against real agent actions like "Exporting Data" or "Calling External APIs".
+*   **📜 Unified Audit Ledger**: A centralized, paginated repository for all governance decisions. Export immutable trails as **CSV** or **JSON** for regulatory reviews.
+*   **🚨 Threshold-Based Risk Alerts**: Real-time notifications when risky activity spikes, allowing security teams to respond to anomalous agent behavior instantly.
+*   **⚡ Developer-First SDK**: The `@sentra-ai/sdk` provides a seamless way to integrate governance into any AI stack with minimal latency.
 
 ---
 
@@ -265,8 +266,12 @@ Authorization: Bearer YOUR_API_KEY
 ```json
 {
   "success": true,
-  "decision": "BLOCK",
-  "reason": "Action blocked: high-risk behavior pattern identified"
+  "data": {
+    "decision": "BLOCK",
+    "confidence": "High",
+    "reason": "Action blocked: potentially sensitive data or restricted pattern detected",
+    "policy_triggered": "PROMPT_INJECTION_DETECT"
+  }
 }
 ```
 
