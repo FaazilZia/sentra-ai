@@ -12,6 +12,9 @@
     "build": "rm -rf dist && tsc",
     "prepublishOnly": "npm run build && test -d dist || (echo 'Error: dist/ directory not found' && exit 1)"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "keywords": [
     "ai",
     "security",

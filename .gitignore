@@ -44,3 +44,7 @@ backend/dev.db
 backend/results.txt
 backend/scratch/
 *.sh
+
+# Playwright test artifacts
+frontend/test-results/
+frontend/playwright-report/
