@@ -92,10 +92,33 @@ const startServer = async () => {
 
     // SMTP Validation
     alertService.verifyConnection().catch(err => logger.error('SMTP Verification failed:', err));
+
+    // Supabase Keep-Alive (Prevents auto-pausing on Free Tier)
+    startDatabaseKeepAlive();
   } catch (error) {
     logger.error('Failed to initialize database — server will continue in degraded mode:', error);
     // Do NOT exit — the server is already listening and health/ready endpoints will report degraded
   }
+};
+
+/**
+ * Periodically pings the database to prevent Supabase from pausing the project 
+ * due to inactivity (7-day limit on Free Tier).
+ */
+const startDatabaseKeepAlive = () => {
+  const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+  
+  logger.info('Database Keep-Alive service started (Interval: 24h)');
+  
+  setInterval(async () => {
+    try {
+      const db = await prisma;
+      await db.$queryRaw`SELECT 1`;
+      logger.info('Database Keep-Alive: Ping successful');
+    } catch (error) {
+      logger.error('Database Keep-Alive: Ping failed', error);
+    }
+  }, TWENTY_FOUR_HOURS);
 };
 
 
