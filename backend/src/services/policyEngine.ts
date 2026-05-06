@@ -65,6 +65,10 @@ export const evaluatePolicy = async (agent: string, action: string, organization
       if (scope.agent_ids.includes(agent)) return true;
     }
 
+    // 1b. Check singular agent/agent_id (for backward compatibility)
+    if (scope.agent === agent || scope.agent_id === agent) return true;
+    if (scope.agent === '*' || scope.agent === 'all') return true;
+
     // 2. Check if scope is "all" or matches specific model
     if (scope.agents === '*' || scope.agents === 'all') return true;
     if (scope.model && lowercaseAgent.includes(scope.model.toLowerCase())) return true;
