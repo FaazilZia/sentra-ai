@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -42,7 +43,8 @@ async function main() {
   console.log(`✅ Company: ${company.name} (${company.id})`);
 
   // 2. Ensure admin user
-  const passwordHash = await bcrypt.hash('Sentra@Admin123', 10);
+  const seedPassword = process.env.SEED_ADMIN_PASSWORD || `SentraAuto_${randomUUID().slice(0, 12)}`;
+  const passwordHash = await bcrypt.hash(seedPassword, 12);
   const user = await prisma.users.upsert({
     where: { email: 'admin@sentra.ai' },
     update: {
@@ -58,7 +60,10 @@ async function main() {
       organizationId: DEFAULT_ORGANIZATION_ID,
     },
   });
-  console.log(`✅ Admin user: ${user.email}`);
+  console.log(`✅ Admin user: ${user.email} (password ${process.env.SEED_ADMIN_PASSWORD ? 'from env' : 'auto-generated — set SEED_ADMIN_PASSWORD to control'})`);
+  if (!process.env.SEED_ADMIN_PASSWORD) {
+    console.log(`   Generated password: ${seedPassword}`);
+  }
 
   // 3. AI Governance Policies
   console.log('🤖 Seeding AI Governance Policies...');
@@ -110,8 +115,8 @@ async function main() {
 
   // 4. API Key for SDK Demo
   console.log('🔑 Seeding Demo API Key...');
-  const demoApiKey = 'sentra_demo_secretkey123';
-  const hashedApiKey = await bcrypt.hash(demoApiKey, 10);
+  const demoApiKey = process.env.SEED_DEMO_API_KEY || `sentra_demo_${randomUUID().replace(/-/g, '').slice(0, 16)}`;
+  const hashedApiKey = await bcrypt.hash(demoApiKey, 12);
   await prisma.api_keys.upsert({
     where: { id: '00000000-0000-0000-0000-000000000005' },
     update: {
@@ -127,7 +132,10 @@ async function main() {
       is_active: true,
     },
   });
-  console.log('✅ Demo API Key: sentra_demo_secretkey123 (Prefix: demo)');
+  console.log(`✅ Demo API Key seeded (Prefix: demo, source: ${process.env.SEED_DEMO_API_KEY ? 'env' : 'auto-generated'})`);
+  if (!process.env.SEED_DEMO_API_KEY) {
+    console.log(`   Generated API Key: ${demoApiKey}`);
+  }
 
   console.log('\n🎉 Seed completed!');
   await prisma.$disconnect();

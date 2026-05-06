@@ -4,8 +4,8 @@ import { resolveOrganizationId } from '../utils/company';
 
 export const getPolicies = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const organizationId = req.user.organizationId; 
-    
+    const organizationId = req.user.organizationId;
+
     // If organizationId is missing from token (e.g. fresh register), find it from user
     let actualOrganizationId = organizationId;
     if (!actualOrganizationId) {
@@ -60,14 +60,14 @@ export const getPolicyVersions = async (req: any, res: Response, next: NextFunct
     }
 
     const policy = await prisma.policies.findFirst({
-      where: { id: policyId, organizationId: organizationId as string },
+      where: { id: policyId, organizationId: organizationId },
     });
     if (!policy) {
       return res.status(404).json({ success: false, message: 'Policy not found' });
     }
 
     const versions = await prisma.policy_versions.findMany({
-      where: { policy_id: policyId, organizationId: organizationId as string },
+      where: { policy_id: policyId, organizationId: organizationId },
       orderBy: { version: 'desc' },
     });
 
@@ -83,14 +83,14 @@ export const createPolicy = async (req: any, res: Response, next: NextFunction) 
   try {
     const { name, description, effect, enabled, priority, conditions, scope, obligations } = req.body;
     const organizationId = await resolveOrganizationId(req);
-    
+
     if (!organizationId) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
     const policy = await prisma.policies.create({
       data: {
-        organizationId: organizationId as string,
+        organizationId,
         name,
         description: description || '',
         effect,
@@ -108,7 +108,7 @@ export const createPolicy = async (req: any, res: Response, next: NextFunction) 
     await prisma.policy_versions.create({
       data: {
         policy_id: policy.id,
-        organizationId: organizationId as string,
+        organizationId,
         version: 1,
         name: policy.name,
         description: policy.description,
@@ -163,13 +163,15 @@ export const duplicatePolicy = async (req: any, res: Response, next: NextFunctio
   try {
     const policyId = String(req.params['id'] ?? '');
     const organizationId = await resolveOrganizationId(req);
-    
+
     if (!organizationId) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
+    const orgId: string = organizationId;
+
     const sourcePolicy = await prisma.policies.findFirst({
-      where: { id: policyId, organizationId: organizationId as string }
+      where: { id: policyId, organizationId: orgId }
     });
 
     if (!sourcePolicy) {
@@ -178,7 +180,7 @@ export const duplicatePolicy = async (req: any, res: Response, next: NextFunctio
 
     const newPolicy = await prisma.policies.create({
       data: {
-        organizationId: organizationId as string,
+        organizationId: orgId,
         name: `${sourcePolicy.name} (Copy)`,
         description: sourcePolicy.description,
         effect: sourcePolicy.effect,
@@ -195,7 +197,7 @@ export const duplicatePolicy = async (req: any, res: Response, next: NextFunctio
     await prisma.policy_versions.create({
       data: {
         policy_id: newPolicy.id,
-        organizationId: organizationId as string,
+        organizationId: orgId,
         version: 1,
         name: newPolicy.name,
         description: newPolicy.description,
@@ -223,9 +225,11 @@ export const updatePolicy = async (req: any, res: Response, next: NextFunction) 
     if (!organizationId) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
+
+    const orgId: string = organizationId;
     const { name, description, effect, enabled, priority, conditions, scope, obligations } = req.body;
 
-    const existing = await prisma.policies.findFirst({ where: { id, organizationId: organizationId as string } });
+    const existing = await prisma.policies.findFirst({ where: { id, organizationId: orgId } });
     if (!existing) return res.status(404).json({ success: false, message: 'Policy not found' });
 
     const updated = await prisma.policies.update({
@@ -257,7 +261,9 @@ export const deletePolicy = async (req: any, res: Response, next: NextFunction) 
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
-    const existing = await prisma.policies.findFirst({ where: { id, organizationId: organizationId as string } });
+    const orgId: string = organizationId;
+
+    const existing = await prisma.policies.findFirst({ where: { id, organizationId: orgId } });
     if (!existing) return res.status(404).json({ success: false, message: 'Policy not found' });
 
     await prisma.policy_versions.deleteMany({ where: { policy_id: id } });

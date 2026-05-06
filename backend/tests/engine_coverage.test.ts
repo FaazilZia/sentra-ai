@@ -11,6 +11,12 @@ jest.mock('../src/config/db', () => ({
   },
 }));
 
+jest.mock('../src/services/cache.service', () => ({
+  cacheService: {
+    getOrSet: jest.fn((key, cb) => cb()),
+  },
+}));
+
 jest.mock('../src/services/semanticRiskEngine', () => ({
   evaluateSemanticRisk: jest.fn().mockResolvedValue({
     score: 'low',

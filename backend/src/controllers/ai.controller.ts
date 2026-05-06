@@ -19,9 +19,8 @@ export const postCheckAction = async (req: any, res: Response, next: NextFunctio
       return res.status(401).json({ success: false, message: 'Unauthorized: Organization not identified', requestId });
     }
 
-    // 1. Validate Input
-    const validated = checkActionSchema.parse(req.body);
-    const { agent, action, metadata } = validated;
+    // 1. Extract validated input (already validated by route middleware)
+    const { agent, action, metadata } = req.body;
 
     // 2. Intercept and Execute
     const decision = await interceptAction(
@@ -35,7 +34,7 @@ export const postCheckAction = async (req: any, res: Response, next: NextFunctio
     let ai_summary: string | undefined = undefined;
     if (decision.status === 'allowed') {
       const openaiKey = process.env.OPENAI_API_KEY;
-      if (openaiKey && openaiKey !== 'sk-placeholder') {
+      if (openaiKey && openaiKey.length >= 10) {
         try {
           await runFairly(organizationId, async () => {
             const maxRetries = 1; // Lower retries in high-load summary path
@@ -392,7 +391,7 @@ export const postChat = async (req: any, res: Response, next: NextFunction) => {
     `;
 
     const openaiKey = process.env.OPENAI_API_KEY;
-    if (openaiKey && openaiKey !== 'sk-placeholder') {
+    if (openaiKey && openaiKey.length >= 10) {
       try {
         const response = await runFairly(organizationId, async () => {
           const maxRetries = 2;

@@ -1,10 +1,9 @@
 {
   "compilerOptions": {
-    /* Triggering TS Server Refresh */
-    "target": "ES2020",
+    "target": "ES2022",
     "module": "nodenext",
     "moduleResolution": "nodenext",
-    "lib": ["ES2020"],
+    "lib": ["ES2022"],
     "rootDir": ".",
     "outDir": "dist",
     "strict": true,
@@ -15,6 +14,7 @@
     "declaration": true,
     "noImplicitAny": false,
     "forceConsistentCasingInFileNames": true,
+    "incremental": true,
     "types": ["node", "jest"]
   },
   "include": ["src/**/*.ts", "prisma/**/*.ts", "prisma.config.ts", "tests/**/*.ts"],

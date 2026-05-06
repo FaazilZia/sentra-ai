@@ -1,9 +1,9 @@
 import { OpenAI } from 'openai';
 import logger from '../utils/logger';
 
-// Initialize OpenAI client - prioritizing security and low latency
+// Initialize OpenAI client only when a real API key is configured
 const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY || 'sk-placeholder'
+  apiKey: process.env.OPENAI_API_KEY || ''
 });
 
 export interface SemanticRiskResult {
@@ -27,7 +27,7 @@ export const evaluateSemanticRisk = async (prompt: string): Promise<SemanticRisk
   // Level 0.5: Skip OpenAI entirely when API key is not configured.
   // Pattern-based L1/L2 engines will handle governance instead.
   const apiKey = process.env.OPENAI_API_KEY || '';
-  if (!apiKey || apiKey.startsWith('sk-placeholder') || apiKey === 'sk-placeholder') {
+  if (!apiKey || apiKey.length < 10) {
     logger.warn('[GOVERNANCE] OpenAI key not configured — semantic analysis skipped. Relying on pattern-based engines.');
     return {
       score: 'low',
@@ -83,14 +83,16 @@ export const evaluateSemanticRisk = async (prompt: string): Promise<SemanticRisk
   } catch (error: any) {
     logger.error('Semantic Engine Critical Failure:', { error: error.message, prompt: prompt.substring(0, 50) });
     
-    // FAIL-OPEN: When the semantic engine is unavailable, fall back to pattern-based L1/L2 governance.
-    // The risk engine and regex policies (guardrail.service.ts) will continue to catch actual threats.
+    // FAIL-CLOSED: When the semantic engine is unavailable, block by default.
+    // The decision engine will detect ENGINE_FAILURE and enter degraded mode,
+    // falling back to L2 pattern-based scoring while marking the decision as degraded.
     return { 
-      score: 'low', 
-      categories: ['ENGINE_UNAVAILABLE'], 
-      explanation: 'Semantic analysis service unavailable. Falling back to pattern-based governance.', 
-      confidence: 0.5,
+      score: 'high', 
+      categories: ['ENGINE_FAILURE'], 
+      explanation: 'Semantic analysis service unavailable. Blocking by default for safety.', 
+      confidence: 0.3,
       piiDetected: false
     };
   }
 };
+

@@ -2,13 +2,31 @@ import { makeDecision } from '../src/services/decisionEngine';
 import prisma from '../src/config/db';
 
 jest.mock('../src/config/db', () => ({
-  policies: {
-    findMany: jest.fn(),
+  __esModule: true,
+  default: {
+    policies: {
+      findMany: jest.fn(),
+    },
+    logs: {
+      findMany: jest.fn(),
+      create: jest.fn(),
+    },
   },
-  logs: {
-    findMany: jest.fn(),
-    create: jest.fn(),
+}));
+
+jest.mock('../src/services/cache.service', () => ({
+  cacheService: {
+    getOrSet: jest.fn((key, cb) => cb()),
   },
+}));
+
+jest.mock('../src/services/semanticRiskEngine', () => ({
+  evaluateSemanticRisk: jest.fn().mockResolvedValue({
+    score: 'low',
+    explanation: 'No semantic risk detected',
+    confidence: 0.9,
+    categories: []
+  }),
 }));
 
 describe('Decision Engine', () => {

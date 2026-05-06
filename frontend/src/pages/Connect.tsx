@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { 
   Zap, Copy, Check, 
-  Database, Cloud, Link2, 
-  Lock, RefreshCw, Smartphone
+  Database, Link2, 
+  Lock, RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { 
@@ -11,7 +11,7 @@ import {
   fetchConnectors, createConnector,
   updateAlertSettings, testAlert
 } from '../lib/api';
-import { Bell, Mail, Slack, Send } from 'lucide-react';
+import { Mail, Slack, Send } from 'lucide-react';
 import { SurfaceCard } from '../components/ui/SurfaceCard';
 
 type Tab = 'sdk' | 'sources' | 'alerts';

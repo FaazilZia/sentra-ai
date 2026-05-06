@@ -10,7 +10,10 @@ export interface PolicyEvaluation {
   impact?: string;
 }
 
-const SAFE_ACTION_ALLOWLIST = [
+/**
+ * Shared safe-action allowlist. Use a Set for O(1) lookup instead of Array.includes O(n).
+ */
+export const SAFE_ACTION_ALLOWLIST = new Set([
   'fetch_weather', 'get_weather', 'weather',
   'fetch_time', 'get_time', 'timezone',
   'health_check', 'ping', 'status',
@@ -20,24 +23,38 @@ const SAFE_ACTION_ALLOWLIST = [
   'translate', 'summarize', 'format',
   'calculate', 'compute',
   'log_event', 'track_event',
-];
+]);
+
+/**
+ * Fetches enabled policies for an org with a 30-second Redis cache.
+ * Policies change rarely — caching here eliminates a DB round-trip
+ * on every governance decision (the hottest path in the system).
+ */
+const getCachedPolicies = async (organizationId: string) => {
+  const cacheKey = `policies:org:${organizationId}`;
+  return cacheService.getOrSet(
+    cacheKey,
+    async () => {
+      return prisma.policies.findMany({
+        where: { organizationId, enabled: true },
+        orderBy: { priority: 'asc' },
+      });
+    },
+    30 // 30 second TTL — fast invalidation while saving thousands of queries/min
+  );
+};
 
 export const evaluatePolicy = async (agent: string, action: string, organizationId: string): Promise<PolicyEvaluation> => {
   const lowercaseAction = action.toLowerCase();
   const lowercaseAgent = agent.toLowerCase();
 
-  // 0. Short-circuit for Safe Actions
-  if (SAFE_ACTION_ALLOWLIST.includes(lowercaseAction)) {
+  // 0. Short-circuit for Safe Actions (O(1) Set lookup)
+  if (SAFE_ACTION_ALLOWLIST.has(lowercaseAction)) {
     return { allowed: true, reason: 'Action is on safe allowlist' };
   }
   
-  const policies = await prisma.policies.findMany({
-    where: {
-      organizationId: organizationId,
-      enabled: true
-    },
-    orderBy: { priority: 'asc' }
-  });
+  // Fetch from cache instead of DB on every call
+  const policies = await getCachedPolicies(organizationId);
 
   // Find a policy that matches this agent
   const policy = policies.find(p => {
@@ -47,6 +64,10 @@ export const evaluatePolicy = async (agent: string, action: string, organization
     if (scope.agent_ids && Array.isArray(scope.agent_ids)) {
       if (scope.agent_ids.includes(agent)) return true;
     }
+
+    // 1b. Check singular agent/agent_id (for backward compatibility)
+    if (scope.agent === agent || scope.agent_id === agent) return true;
+    if (scope.agent === '*' || scope.agent === 'all') return true;
 
     // 2. Check if scope is "all" or matches specific model
     if (scope.agents === '*' || scope.agents === 'all') return true;
@@ -106,4 +127,3 @@ export const evaluatePolicy = async (agent: string, action: string, organization
     impact: (policy as any).impact
   };
 };
-

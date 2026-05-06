@@ -10,6 +10,7 @@ jest.mock('../config/db', () => ({
     interception_logs: {
       findMany: jest.fn(),
       count: jest.fn(),
+      groupBy: jest.fn(),
     },
     guardrail_overrides: {
       findMany: jest.fn(),
@@ -17,6 +18,12 @@ jest.mock('../config/db', () => ({
     policies: {
       findMany: jest.fn().mockResolvedValue([]),
     },
+  },
+}));
+
+jest.mock('../services/cache.service', () => ({
+  cacheService: {
+    getOrSet: jest.fn((key, cb) => cb()),
   },
 }));
 
@@ -38,36 +45,25 @@ describe('Guardrail Hardening Verification', () => {
 
   describe('FIX 1: Multi-tenant Data Isolation', () => {
     it('Test A: getMetrics() should only count logs for the specified organization', async () => {
-      (prisma.interception_logs.findMany as jest.Mock).mockResolvedValue([
-        { id: '1', organizationId: ORG_A, decision: 'ALLOW' },
-        { id: '2', organizationId: ORG_A, decision: 'BLOCK' },
-        { id: '3', organizationId: ORG_B, decision: 'ALLOW' },
+      (prisma.interception_logs.count as jest.Mock).mockResolvedValue(2);
+      (prisma.interception_logs.groupBy as jest.Mock).mockResolvedValue([
+        { decision: 'ALLOW', _count: 1 },
+        { decision: 'BLOCK', _count: 1 },
       ]);
 
       const metrics = await GuardrailService.getMetrics(ORG_A);
 
-      // Verify prisma call was scoped
-      expect(prisma.interception_logs.findMany).toHaveBeenCalledWith({
+      // Verify prisma calls were scoped
+      expect(prisma.interception_logs.count).toHaveBeenCalledWith({
         where: { organizationId: ORG_A }
       });
+      expect(prisma.interception_logs.groupBy).toHaveBeenCalledWith(expect.objectContaining({
+        where: { organizationId: ORG_A }
+      }));
 
-      // Assert total only counts Org A's logs (Mocking findMany to return Org A only in reality, 
-      // but here we check that the function respects what the DB returns)
-      // Since the service logic filters the returned array if we didn't mock the DB filter, 
-      // but we DID update the service to filter in the DB query itself.
-      
-      // Let's re-mock correctly: DB returns only what is asked
-      (prisma.interception_logs.findMany as jest.Mock).mockImplementation(({ where }) => {
-        const logs = [
-          { id: '1', organizationId: ORG_A, decision: 'ALLOW' },
-          { id: '2', organizationId: ORG_A, decision: 'BLOCK' },
-          { id: '3', organizationId: ORG_B, decision: 'ALLOW' },
-        ];
-        return Promise.resolve(logs.filter(l => l.organizationId === where.organizationId));
-      });
-
-      const result = await GuardrailService.getMetrics(ORG_A);
-      expect(result.total).toBe(2);
+      expect(metrics.total).toBe(2);
+      expect(metrics.allowed).toBe(50);
+      expect(metrics.blocked).toBe(50);
     });
 
     it('Test B: getOverrides() should not return overrides from other organizations', async () => {

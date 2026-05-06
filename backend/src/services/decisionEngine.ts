@@ -19,17 +19,6 @@ export interface Decision {
   degraded?: boolean;
 }
 
-const COMPLIANCE_MAP: Record<string, string[]> = {
-  'send_email': ['GDPR'],
-  'external_share': ['GDPR', 'HIPAA'],
-  'read_pii': ['GDPR'],
-  'export_csv': ['GDPR'],
-  'delete_record': ['GDPR'],
-  'read_phi': ['HIPAA'],
-  'execute_payment': ['DPDP'],
-  'update_config': ['Internal']
-};
-
 export const makeDecision = async (agent: string, action: string, organizationId: string, metadata: any = {}): Promise<Decision> => {
   const startTime = performance.now();
   

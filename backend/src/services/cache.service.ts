@@ -46,7 +46,34 @@ class CacheService {
       logger.warn(`Cache invalidation error for key ${key}:`, error);
     }
   }
+
+  /**
+   * Invalidate all keys matching a pattern (e.g., 'policies:org:*').
+   * Useful for bulk invalidation when policies are updated.
+   */
+  async invalidatePattern(pattern: string) {
+    try {
+      const keys = await this.redis.keys(pattern);
+      if (keys.length > 0) {
+        await this.redis.del(...keys);
+        logger.info(`Cache: invalidated ${keys.length} keys matching ${pattern}`);
+      }
+    } catch (error) {
+      logger.warn(`Cache pattern invalidation error for ${pattern}:`, error);
+    }
+  }
+
+  /**
+   * Health check — reuses the existing connection (no leak).
+   */
+  async ping(): Promise<boolean> {
+    try {
+      const result = await this.redis.ping();
+      return result === 'PONG';
+    } catch {
+      return false;
+    }
+  }
 }
 
 export const cacheService = new CacheService();
-

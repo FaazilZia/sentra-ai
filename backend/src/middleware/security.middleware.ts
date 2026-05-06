@@ -3,7 +3,34 @@ import prisma from '../config/db';
 import logger from '../utils/logger';
 import { z } from 'zod';
 
+const ALERT_CACHE_MAX_SIZE = 10_000;
+const ALERT_DEBOUNCE_MS = 60_000;
 const alertCache = new Map<string, number>();
+
+/**
+ * Evicts expired entries and enforces max size to prevent memory leaks
+ * under sustained attack traffic. Runs at most once per minute.
+ */
+let lastEviction = 0;
+function evictStaleAlerts() {
+  const now = Date.now();
+  if (now - lastEviction < ALERT_DEBOUNCE_MS) return;
+  lastEviction = now;
+
+  for (const [key, timestamp] of alertCache) {
+    if (now - timestamp > ALERT_DEBOUNCE_MS) {
+      alertCache.delete(key);
+    }
+  }
+  // Hard cap: if still too large, drop oldest entries
+  if (alertCache.size > ALERT_CACHE_MAX_SIZE) {
+    const excess = alertCache.size - ALERT_CACHE_MAX_SIZE;
+    const keys = alertCache.keys();
+    for (let i = 0; i < excess; i++) {
+      alertCache.delete(keys.next().value!);
+    }
+  }
+}
 
 export const securityObservability = async (req: Request, res: Response, next: NextFunction) => {
   const originalSend = res.send;
@@ -23,7 +50,8 @@ export const securityObservability = async (req: Request, res: Response, next: N
       const now = Date.now();
       
       // Debounce identical alerts within 60 seconds to prevent DB flooding
-      if (alertCache.has(cacheKey) && now - alertCache.get(cacheKey)! < 60000) {
+      evictStaleAlerts();
+      if (alertCache.has(cacheKey) && now - alertCache.get(cacheKey)! < ALERT_DEBOUNCE_MS) {
         return;
       }
       alertCache.set(cacheKey, now);
