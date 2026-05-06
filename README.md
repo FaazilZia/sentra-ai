@@ -1,235 +1,78 @@
-# 🚀 Sentra AI — The Real-Time Governance Layer for AI Agents
+# 🛡️ Sentra AI — Enterprise AI Governance & Security Platform
 
-**Sentra AI is a real-time AI Governance & Compliance Operating System that validates and blocks unsafe AI agent actions before they execute.**
+**Sentra AI is a real-time AI Governance & Compliance Operating System that validates, controls, and audits AI agent actions before they execute.**
 
-Traditional tools monitor and report issues *after* they happen.
-**Sentra AI acts before execution** — enforcing pre-execution control, preventing risks, and mapping every decision to **human-readable governance insights and compliance impact** (GDPR, HIPAA, DPDP).
-
----
-
-## 🔗 Live Links
-- **Governance Dashboard**: [https://sentra-ai-88f7.vercel.app](https://sentra-ai-88f7.vercel.app)
-- **Production API**: [https://sentra-backend-node.onrender.com/api/v1](https://sentra-backend-node.onrender.com/api/v1)
-- **Health Check**: [https://sentra-backend-node.onrender.com/api/v1/health](https://sentra-backend-node.onrender.com/api/v1/health)
+Traditional security tools monitor and report issues *after* they happen. **Sentra AI acts before execution** — enforcing pre-execution control, preventing risks, and mapping every decision to human-readable governance insights with compliance impact tracking (GDPR, HIPAA, DPDP).
 
 ---
 
-# 🚀 Agent Action Governance Platform (v12.0.0)
-**Sentra AI has transitioned into a specialized Agent Action Governance Platform, focusing on pre-execution control and human-readable audit trails.**
+## ⚡ Quick Start
 
-*   **🛡️ Pre-execution Control Engine**: Every AI agent action is validated against corporate policy *before* execution. We've shifted from simple "text filtering" to deep "action governance".
-*   **🗣️ Human-Readable Governance**: Decisions are no longer cryptic codes. Every block or modification comes with a clear, human-readable reason (e.g., *"Action blocked: potentially sensitive data or restricted pattern detected"*) mapped to compliance standards.
-*   **🕹️ Agent Governance Sandbox**: The upgraded `/demo` environment allows developers to simulate and test governance policies against real agent actions like "Exporting Data" or "Calling External APIs".
-*   **📜 Unified Audit Ledger**: A centralized, paginated repository for all governance decisions. Export immutable trails as **CSV** or **JSON** for regulatory reviews.
-*   **🚨 Threshold-Based Risk Alerts**: Real-time notifications when risky activity spikes, allowing security teams to respond to anomalous agent behavior instantly.
-*   **⚡ Developer-First SDK**: The `@sentra-ai/sdk` provides a seamless way to integrate governance into any AI stack with minimal latency.
+### Prerequisites
+- **Node.js** 18+
+- **PostgreSQL** 14+
+- **Redis** 7+ (or Valkey)
 
----
+### 1. Clone & Install
 
-# ⚠️ Why This Matters
+```bash
+git clone https://github.com/your-org/sentra-ai.git
+cd sentra-ai
 
-AI agents today can:
-* Send emails
-* Call APIs
-* Access sensitive data
+# Backend
+cd backend && npm install
 
-Without control, this leads to:
-* ❌ Data leaks
-* ❌ Compliance violations
-* ❌ Financial and reputational damage
-
-👉 **Sentra AI solves this by enforcing control BEFORE execution.**
-
----
-
-# 🏗️ Architecture
-
-```mermaid
-graph LR
-    A[AI Agent] -->|Intent| B(Sentra SDK)
-    B -->|Check| C{Sentra Engine}
-    C -->|Allow| D[Execution]
-    C -->|Block| E[Audit & Alert]
-    C -.->|Impact Map| F[Governance Dashboard]
+# Frontend
+cd ../frontend && npm install
 ```
 
----
+### 2. Configure Environment
 
-# 🆚 How Sentra AI is Different
+```bash
+# Backend (.env)
+DATABASE_URL=postgresql://user:pass@localhost:5432/sentra_dev
+REDIS_URL=redis://localhost:6379
+JWT_SECRET=<min-32-char-secret>
+REFRESH_SECRET=<min-32-char-secret>
+ENCRYPTION_KEY=<min-32-char-secret>
+FRONTEND_URL=http://localhost:5173
 
-| Feature                 | Traditional Tools | Sentra AI |
-| ----------------------- | ----------------- | --------- |
-| Monitoring              | ✅                 | ✅         |
-| Threat Detection        | ✅                 | ✅         |
-| Real-time Blocking      | ❌                 | ✅         |
-| Fail-Closed Protection  | ❌                 | ✅         |
-| AI-specific Control     | ❌                 | ✅         |
-| Business Impact Mapping | ❌                 | ✅         |
+# Frontend (.env)
+VITE_API_BASE_URL=http://localhost:3000/api
+```
 
----
+### 3. Database Setup
 
-# 🚀 Production Hardening & Fair Scaling (v8.0.0)
-**Sentra AI has been fully hardened for enterprise-grade production deployments, featuring fair multi-tenant scaling and stateful cost protection.**
+```bash
+cd backend
+npx prisma migrate deploy
+npx prisma db seed
+```
 
-*   **🛡️ Production-Grade Hardening**: Implemented fail-fast environment validation, strict 100kb payload limits, and enhanced Sentry contextual observability with sub-second request tracing.
-*   **⚖️ Fair Concurrency Engine**: Integrated per-organization concurrency caps (max 3) within a global priority queue (max 10), ensuring no single tenant can monopolize system resources.
-*   **🔄 Stateful Idempotency**: Added a Redis-backed idempotency layer with `processing` and `completed` states. Duplicate requests are served from cache or safely blocked during active processing to prevent double-billing.
-*   **💰 Accurate Cost Telemetry**: Transitioned to token-based cost tracking using real OpenAI metadata. Usage is now aggregated daily per organization for precise financial reporting.
-*   **⚡ Zero-Latency Key Updates**: Refactored API key management with non-blocking, asynchronous `last_used_at` updates, eliminating DB write latency from the security check path.
-*   **📊 Smart Observability Strategy**: Implemented a performance-optimized logging strategy that captures only errors and slow requests (>1000ms), ensuring high throughput without log overhead.
+### 4. Run
 
----
+```bash
+# Terminal 1: Backend
+cd backend && npm run dev     # → http://localhost:3000
 
-**Sentra AI has been upgraded with a high-performance governance cache and a resilient, fail-safe semantic analysis layer.**
+# Terminal 2: Frontend
+cd frontend && npm run dev    # → http://localhost:5173
+```
 
-*   **🧠 Resilient L3 Semantic Layer**: Implemented a **graceful fallback** for the OpenAI-driven semantic engine. If OpenAI is unreachable or rate-limited, the system now automatically falls back to L2 patterns and marks the decision as `degraded: true`, ensuring zero-downtime governance.
-*   **⚡ High-Performance SHA-256 Caching**: Integrated a **Redis-backed semantic cache**. Every unique AI action is now hashed (SHA-256) and cached for 1 hour, reducing governance latency by **~95%** for repeated actions and significantly lowering LLM costs.
-*   **📦 Official @sentra-ai/sdk Release**: Successfully published the official SDK to the NPM registry. The SDK features a production-ready interceptor pattern and full TypeScript support for seamless enterprise integration.
-*   **🚨 Hardened Alerting Gateway**: Migrated the alert system to a production-ready `nodemailer` configuration. Alerts are now reliably routed to organization-specific security emails (`org.alertEmail`) with comprehensive logging for auditability.
-*   **🛡️ Operational Transparency**: Enhanced the decision response payload to include `degraded` and `confidence` metadata, providing security administrators with full visibility into the engine's health during analysis.
-
----
-
-# 🚀 Reliability & E2E Verification (v6.0.0)
-**Sentra AI has achieved 100% automated lifecycle validation, ensuring high availability and reliable governance telemetry under heavy production load.**
-
-*   **🧪 Automated E2E Audit Suite**: Implemented a comprehensive **Playwright-driven Audit Suite** that validates the full 5-flow lifecycle: Secure Multi-tenant Auth → Policy Retrieval → Real-time Guardrail Blocking → Violation Persistence → Compliance Mapping.
-*   **⚡ Reactive Auth Synchronization**: Refactored the frontend `AuthProvider` to use **Reactive State & useMemo**. This eliminates "Stale Token" race conditions, ensuring the dashboard correctly fetches organizational data immediately after a session change.
-*   **🏢 Enterprise Database Resilience**: Hardened the PostgreSQL connection pool with an increased **10s Connection Timeout**. This ensures the governance engine remains responsive even during high-concurrency automated audits against remote cloud instances.
-*   **⏱️ High-Availability Telemetry**: Standardized browser wait strategies and eliminated lazy-loading bottlenecks in the core navigation routes. This provides a sub-second "Time to Telemetry" for security administrators monitoring live AI actions.
-*   **🛡️ Dev-Sec-Ops Hardening**: Optimized the authentication rate-limiter for CI/CD environments, allowing thousands of automated audit requests while maintaining strict anti-brute-force protection in production.
-
----
-
-# 🚀 Production Readiness & Multi-Tenancy Hardening (v5.0.0)
-**Sentra AI has been fully hardened for enterprise-grade production deployments, featuring strict data isolation and high-performance security caching.**
-
-*   **🛡️ Multi-Tenant Org Isolation**: Rebuilt the registration engine to ensure every customer workspace is isolated. Every new user (via Email or Google) is now automatically provisioned with their own unique Organization and Admin privileges, preventing cross-tenant data leakage.
-*   **⚡ High-Performance Auth Caching**: Implemented a **Redis-backed API Key Cache** in the authentication middleware. This eliminates the latency of bcrypt operations on every SDK call, reducing authentication overhead by **~80ms per request**.
-*   **🔐 Deep Security Vaulting**: Successfully completed a comprehensive security audit, purging all legacy development databases, internal scripts, and signed JWT tokens from the repository and git history.
-*   **🚦 Operational Startup Guard**: Added a "Fail-Fast" environment validator to the backend. The system now refuses to start in production if critical secrets (DATABASE_URL, JWT_SECRET, etc.) are missing or insecure, ensuring operational safety.
-*   **🧪 Frontend Integrity**: Hardened the dashboard to gate all demo/mock data behind a strict `VITE_DEMO_MODE` flag. Production users now see only live, authenticated governance data.
-*   **🧹 API Hygiene & Observability**: Streamlined the API surface by removing redundant legacy routes and switching to the `combined` Apache log format for seamless integration with production log aggregators.
-
----
-
-# 🚀 Hardened Production Launch (v4.0.0)
-
-**Sentra AI has graduated to a fully production-hardened Governance OS, featuring real-world cloud integrations and deep security vaulting.**
-
-*   **🛡️ Multi-Auth Governance**: Implemented a unified authentication layer supporting **Google OAuth**, **Discord**, and **Email/Password**. New users are automatically provisioned with a secure workspace using the **Organization-Centric** model.
-*   **⚡ Real-Time API Telemetry**: Replaced all mock/simulation data with **Live Telemetry**. Every KPI, violation, and risk score on the dashboard now reflects real-world activity captured by the backend.
-*   **🔍 Production-Ready Connectors**: Deep integration with **AWS S3**, **Google Drive**, and **PostgreSQL** via official SDKs. Scanners now perform stream-based content sampling and high-precision PII detection using regex-based sensitivity patterns.
-*   **🔐 Secret Vaulting**: Integrated **AES-256-GCM encryption** for all connector credentials. Secrets are now encrypted at rest in Supabase and only decrypted in-memory by secure background workers during scan cycles.
-*   **🏗️ Background Worker Architecture**: Shifted scanning operations to a distributed **BullMQ + Redis** worker cluster. This ensures that large-scale data audits never block the main API performance and can scale horizontally.
-*   **🧪 Enterprise Test Coverage**: Implemented a comprehensive **Jest + Supertest** suite with 100% mock-based integration coverage, ensuring continuous delivery safety for the entire governance pipeline.
-
----
-
-# 🚀 Intelligent Governance OS (v3.0.0)
-**Sentra AI has been upgraded into an autonomous Governance Operating System, featuring proactive discovery and hard financial guardrails.**
-
-*   **🔍 Intelligent Scanning Engine**: Implemented a hybrid "Push + Pull" architecture. Proactive workers for **AWS S3**, **SQL Databases**, and **Google Drive** now autonomously discover PII/PHI and compliance violations at scale.
-*   **🎮 Executive Command Center**: A new top-level visibility layer including the **Global Control Panel** and **Audit Snapshot**. Executives now have a "Single Pane of Glass" view into scanning modes, system health, and real-time budget safety.
-*   **💰 Hard Budget Protection**: Enterprise-grade cost enforcement. Administrators can now set `maxDailyCost` and `maxScansPerDay` policies per connector. The system features an autonomous **Circuit Breaker** that pauses connectors the moment budgets are exceeded.
-*   **🏥 Connector Health Scoring**: Automated reliability tracking (0-100%). The system monitors success rates, latency, and failure streaks to provide instant alerts on data source degradation.
-*   **🧠 Explainable Governance (XAI)**: Every autonomous action is now audit-logged with a "Trigger" and "Reason" (e.g., *Anomaly Triggered: High Violation Density*), ensuring the system is transparent and defensible for enterprise audits.
-*   **🛠️ Infrastructure Hardening**: Fully migrated to **Prisma 7** with direct-url schema synchronization and **AES-256-GCM encryption** for all external connector credentials.
-
----
-
-# 🚀 Enterprise Multi-Tenant Hardening (v2.5.0)
-**The Sentra AI platform is now fully hardened for multi-tenant enterprise isolation and real-time governance.**
-
-*   **🏢 Scalable Multi-Tenancy**: Complete migration to an **Organization-Centric** model. Every policy, user, and audit log is strictly scoped to an `organizationId`, ensuring zero cross-tenant data leakage.
-*   **⚡ Real-Time Governance Stream**: Integrated **Socket.io** for live telemetry. Security administrators now see violations and policy enforcements instantly as they happen, with no page refreshes required.
-*   **⏱️ High-Performance Engine**: Refactored the decision pipeline to prioritize **Deterministic Guardrails**. Implemented **Short-Circuit Logic** that bypasses the risk engine for hard blocks, achieving consistent **sub-50ms** decision latency.
-*   **📜 Unified Audit Provenance**: Every governance decision is backed by a cryptographic trace and mapped to the specific organization's compliance posture.
-*   **🛠️ Production Integrity**: Fully synchronized Supabase production schema with verified Prisma migrations and automated seed protocols.
-
----
-
----
-
-# 🏛️ Latest Update: Enterprise Governance OS (v1.5.0)
-**The Sentra AI platform has been fully transformed into an enterprise-grade Governance Control system.**
-
-*   **🎭 Live Demo Simulation**: Interactive demo mode with real-time scenarios for **Finance**, **Healthcare**, and **SaaS Hubs**.
-*   **⚖️ Deterministic Policy Engine**: Every AI action is mapped to specific **AI Guardrails** (e.g., *Restrict External Data Sharing*).
-*   **🔐 Audit-Ready Overrides**: Hardened manual intervention workflow with mandatory **Employee ID** and **Justification** audit trails.
-*   **📊 Compliance Impact System**: Active mapping of violations to regulatory impact (e.g., *"Reduced GDPR score by 2%"*).
-*   **⚡ Operational Transparency**: Real-time "Last Updated" counters and pulsing "Active" policy status.
-
----
-
-# 🛡️ Real-Time AI Guardrails & Enforcement (v1.7.0)
-**The Sentra AI platform now features a complete runtime enforcement layer with advanced governance controls.**
-
-*   **⚡ Integrated Compliance Lifecycle**: A seamless flow from **Detection → Enforcement → Fix → Improvement → Control**.
-*   **🧠 Real-Time AI Guardrails**: Intercepts user input (Pre-AI) and model output (Post-AI) to prevent PII/PHI leakage and prompt injection.
-*   **🎯 Confidence Scoring**: Every guardrail decision is backed by an AI-driven confidence score (High/Medium/Low) for granular observability.
-*   **⚖️ Administrative Override Workflow**: Secure, audit-logged process for administrators to review and approve/reject bypass requests with business justification.
-*   **📊 Live Enforcement Metrics**: A dedicated dashboard visualizing real-time performance, including `% Blocked`, `% Modified`, and `% Allowed` rates.
-*   **✨ Guided Integrated Demo**: A high-impact "Detection-to-Compliance" walkthrough showcasing the platform's ability to boost compliance scores (e.g., 82% → 96%) in real-time.
-
----
-
-# 🛡️ Security Audit & Hardening (v1.6.0)
-**Sentra AI has undergone a full security audit to meet enterprise-grade compliance standards.**
-
-*   **🚫 Zero-Trust Role Management**: Registration logic hardened to prevent privilege escalation. Users can no longer self-assign `ADMIN` roles.
-*   **🔐 Fail-Safe Secret Management**: Removed hardcoded fallback secrets. The system now enforces environment-level encryption for JWTs.
-*   **🛑 Brute-Force Mitigation**: Strict rate limiting implemented on all authentication and sensitive management endpoints (10 attempts / 15 mins).
-*   **🌐 Production-Locked CORS**: Cross-origin policies are strictly locked to production domains, preventing unauthorized cross-site scripting and data theft.
-*   **📜 Structured Audit Logging**: Enhanced production logging with JSON serialization for integration with SIEM tools (Datadog, Splunk).
-
----
-
-# 🚀 Enterprise Audit Readiness & Distributed Protection (v2.0.0)
-**The Sentra AI platform is now fully hardened for multi-region production and SOC2/HIPAA audit compliance.**
-
-*   **🛡️ Cryptographic CSP Enforcement**: Implemented per-request **nonce-based Content-Security-Policy**. This eliminates `unsafe-inline` risks and ensures strict script-src control.
-*   **⚡ Distributed Abuse Protection**: Shifted to **Redis-backed rate limiting**. Abuse protection now scales across multiple backend instances with global and per-user tracking.
-*   **📢 Tiered Security Observability**: Implemented a severity-aware anomaly router:
-    *   **CRITICAL**: Real-time Slack notifications + Automated Email Escalation to Security Ops.
-    *   **HIGH/MEDIUM**: Instant dashboard telemetry with time-based trend analysis (24h/7d).
-*   **🛠️ Infrastructure Resilience**: Added **Degraded Mode** support to health probes. The API remains operational even if cache layers (Redis) are offline, ensuring zero-downtime governance.
-*   **🧹 Automated Data Retention**: Integrated **BullMQ-driven purge jobs**. All security alerts and interception logs are automatically pruned after 90 days to meet data privacy mandates.
-*   **🧪 Demo Attack Simulator**: A new high-impact control to simulate **Threat Level** spikes, risk bursts, and compliance drift events for stakeholder demonstrations.
-*   **📜 Verified Audit Evidence**: Formalized [Backup & Restore Protocols](docs/BACKUP_AND_RESTORE.md) with validated RTO/RPO metrics and cryptographic **Hash-Chain Verification**.
-
----
-
-# 💡 What You Get
-
-* 🛑 **Real-Time Blocking**: Intercept and neutralize unsafe AI actions *before* they execute.
-* 🛡️ **AI Guardrails**: Centralized policy management with pulse-status monitoring.
-* 📊 **Compliance OS Dashboard**: Minimal, high-density visualization of enterprise risk.
-* 🏢 **Enterprise Ready**: Multi-tenant architecture with robust RBAC and company-centric scoping.
-
----
-
-# 🚀 Quick Start
-
-## 1. Install SDK
+### 5. Integrate with SDK
 
 ```bash
 npm install @sentra-ai/sdk
 ```
 
----
-
-## 2. Protect Agent Actions
-
 ```typescript
 import { SentraClient } from '@sentra-ai/sdk';
 
-const client = new SentraClient({ apiKey: "YOUR_API_KEY" });
+const client = new SentraClient({ apiKey: 'YOUR_API_KEY' });
 
-// Example: Intercept an API call
 const result = await client.checkAction({
-  action_type: "API_CALL",
-  payload: { url: "https://api.external.com/data", method: "POST" }
+  action_type: 'API_CALL',
+  payload: { url: 'https://api.external.com/data', method: 'POST' }
 });
 
 if (result.status === 'allowed') {
@@ -237,81 +80,304 @@ if (result.status === 'allowed') {
 } else {
   console.error(`Blocked: ${result.reason}`);
 }
-
-// Or use the OpenAI wrapper
-const protectedOpenAI = client.wrapOpenAI(openaiClient);
-await protectedOpenAI.chat.completions.create({ ... });
 ```
 
 ---
 
-# 🔗 API Example
+## 🏗️ Architecture
 
-```http
-POST /api/v1/guardrails/action
-Authorization: Bearer YOUR_API_KEY
+```
+┌──────────────┐     ┌─────────────────────────────────────────┐     ┌──────────────┐
+│   AI Agent   │────▶│            Sentra Engine                │────▶│  Execution   │
+│  (SDK/API)   │     │                                         │     │  (if allowed) │
+└──────────────┘     │  ┌─────────┐ ┌─────────┐ ┌──────────┐  │     └──────────────┘
+                     │  │Allowlist │→│ Policy  │→│ Semantic │  │
+                     │  │  (L0)   │ │Engine L1│ │Risk (L2) │  │     ┌──────────────┐
+                     │  └─────────┘ └─────────┘ └──────────┘  │────▶│ Audit + Alert │
+                     │                                         │     └──────────────┘
+                     │  Redis Cache │ PostgreSQL │ BullMQ      │
+                     └─────────────────────────────────────────┘
+                                        │
+                                        ▼
+                     ┌─────────────────────────────────────────┐
+                     │         Governance Dashboard            │
+                     │  React + Vite │ Real-time via Socket.io │
+                     └─────────────────────────────────────────┘
 ```
 
-```json
-{
-  "action_type": "API_CALL",
-  "payload": { 
-    "url": "https://api.external.com/data",
-    "method": "POST"
-  }
-}
-```
+**Decision Pipeline:** Every AI agent action flows through a multi-tier governance engine:
+1. **L0 — Allowlist:** Known-safe actions are short-circuited in <2ms
+2. **L1 — Policy Engine:** Organization-specific rules with Redis-cached policy lookup
+3. **L2 — Pattern Engine:** Regex-based detection for PII, prompt injection, and high-risk patterns
+4. **L3 — Semantic Engine:** OpenAI-powered risk analysis with fail-closed fallback
 
-### Response:
-```json
-{
-  "success": true,
-  "data": {
-    "decision": "BLOCK",
-    "confidence": "High",
-    "reason": "Action blocked: potentially sensitive data or restricted pattern detected",
-    "policy_triggered": "PROMPT_INJECTION_DETECT"
-  }
-}
+---
+
+## 🔑 Core Features
+
+### 🛡️ AI Governance Engine
+- **Pre-execution control** — Every AI agent action is validated *before* it runs
+- **Multi-tier decision pipeline** — Allowlist → Policy → Pattern → Semantic analysis
+- **Fail-closed architecture** — When the AI risk engine is down, actions are blocked by default
+- **Idempotent requests** — Redis-backed deduplication prevents double-processing
+
+### ⚡ Guardrail Pipeline
+- **PII detection & redaction** — SSNs, emails, phone numbers auto-masked in real-time
+- **Prompt injection blocking** — Pattern-based detection of adversarial prompts
+- **Input + Output scanning** — Both pre-AI (user input) and post-AI (model output) are evaluated
+- **Override workflow** — Admin-approved bypass with audit trail and justification
+
+### 📊 Compliance Center
+- **GDPR / HIPAA / DPDP mapping** — Every governance decision maps to regulatory frameworks
+- **Audit-proof evidence** — Cryptographic evidence chain for compliance audits
+- **Automated re-evaluation** — AI-driven compliance score recalculation after remediation
+- **Export-ready reports** — CSV and JSON audit log exports for regulatory review
+
+### 🔍 Threat Intelligence
+- **Real-time risk scoring** — Computed security posture across all AI activity
+- **Pattern detection** — Identifies recurring attack vectors and behavioral anomalies
+- **30-day trend analysis** — Historical trend data for security posture monitoring
+- **Drift detection** — Monitors for policy configuration drift and alerting
+
+### 🏢 Enterprise Multi-Tenancy
+- **Organization-scoped isolation** — All data strictly isolated per tenant
+- **Role-based access control** — ADMIN, AUDITOR, ENGINEER, USER roles
+- **Per-org policy management** — Independent policy sets per organization
+- **Data residency enforcement** — Region-tagged requests for compliance
+
+### 🔗 Data Connectors
+- **AWS S3, Google Drive, PostgreSQL** — Native scanning connectors with stream-based analysis
+- **AES-256-GCM credential encryption** — All connector secrets encrypted at rest
+- **Budget protection** — Hard daily cost limits with automatic circuit breaker
+- **Health scoring** — Automated reliability tracking (0-100%) per connector
+
+### 🚨 Alerting & Observability
+- **Threshold-based alert rules** — Custom rules with time-window analysis
+- **Multi-channel dispatch** — Email (SMTP) + Slack webhook support
+- **Real-time WebSocket telemetry** — Live governance events via Socket.io
+- **Security anomaly detection** — Automatic CRITICAL/HIGH/MEDIUM severity routing
+
+### 🧠 AI Features
+- **Governance chat assistant** — Natural language queries about compliance status
+- **Semantic risk analysis** — OpenAI-powered deep action analysis (optional)
+- **Agent inventory** — Register and track all AI agents in the organization
+- **Demo sandbox** — Unauthenticated testing environment for governance policies
+
+---
+
+## 📁 Project Structure
+
+```
+sentra-ai/
+├── backend/                    # Governance & Decision Engine
+│   ├── prisma/                 #   Database schema & migrations
+│   ├── src/
+│   │   ├── controllers/        #   17 route controllers
+│   │   ├── services/           #   Core business logic
+│   │   │   ├── policyEngine.ts         # L1 policy evaluation + Redis cache
+│   │   │   ├── semanticRiskEngine.ts   # L3 AI-powered risk analysis
+│   │   │   ├── guardrail.service.ts    # PII/injection detection
+│   │   │   ├── compliance.service.ts   # GDPR/HIPAA/DPDP engine
+│   │   │   ├── cache.service.ts        # Redis cache abstraction
+│   │   │   └── queue.service.ts        # BullMQ job processing
+│   │   ├── middleware/         #   Auth, validation, security, rate limiting
+│   │   ├── routes/             #   17 API route modules
+│   │   ├── validations/        #   Zod schema definitions
+│   │   ├── workers/            #   Background scan workers (S3, SQL, GDrive)
+│   │   └── utils/              #   JWT, encryption, logging
+│   └── .env                    #   Environment configuration
+│
+├── frontend/                   # Governance Dashboard (React + Vite)
+│   └── src/
+│       ├── pages/              #   17 page components
+│       │   ├── Dashboard.tsx           # Main security overview
+│       │   ├── Governance.tsx          # Policy management
+│       │   ├── Guardrails.tsx          # Guardrail pipeline monitor
+│       │   ├── Compliance.tsx          # GDPR/HIPAA/DPDP center
+│       │   ├── RiskCenter.tsx          # Risk assessment
+│       │   ├── Connect.tsx             # Data connector management
+│       │   ├── Inventory.tsx           # AI agent registry
+│       │   └── Demo.tsx                # Interactive governance sandbox
+│       ├── components/         #   Reusable UI components
+│       └── lib/                #   API client & utilities
+│
+├── packages/
+│   └── sdk/                    # @sentra-ai/sdk (NPM package)
+│       ├── src/
+│       │   ├── client.ts               # SentraClient class
+│       │   └── interceptors/           # OpenAI wrapper
+│       └── package.json
+│
+├── examples/                   # Integration examples
+│   └── openai-agent.js         # OpenAI agent with Sentra governance
+│
+├── docs/                       # Documentation
+│   └── BACKUP_AND_RESTORE.md   # DR procedures
+│
+├── .github/                    # CI/CD workflows
+├── render.yaml                 # Render deployment config
+└── sentra_all_fixes.md         # Complete hardening changelog
 ```
 
 ---
 
-# 🏢 Industry Scenarios (Demo Ready)
+## 🔌 API Reference
 
-## 🏦 Finance Center
+### Health & Readiness
+
+| Endpoint | Method | Auth | Description |
+|---|---|---|---|
+| `/api/health` | GET | No | Health check |
+| `/api/ready` | GET | No | Readiness (DB + Redis) |
+
+### Authentication
+
+| Endpoint | Method | Auth | Description |
+|---|---|---|---|
+| `/api/v1/auth/login` | POST | No | Email/password login → JWT |
+| `/api/v1/auth/register` | POST | No | Create account |
+| `/api/v1/auth/refresh` | POST | No | Refresh access token |
+| `/api/v1/auth/me` | GET | ✅ | Current user profile |
+| `/api/v1/auth/google` | POST | No | Google OAuth login |
+
+### AI Governance
+
+| Endpoint | Method | Auth | Description |
+|---|---|---|---|
+| `/api/v1/ai/check-action` | POST | ✅ | Evaluate an AI agent action |
+| `/api/v1/ai/chat` | POST | ✅ | Governance AI assistant |
+| `/api/v1/ai/logs` | GET | ✅ | Action audit trail |
+| `/api/v1/ai/dashboard-stats` | GET | ✅ | Dashboard metrics |
+| `/api/v1/ai/security-score` | GET | ✅ | Computed risk score |
+
+### Guardrails
+
+| Endpoint | Method | Auth | Description |
+|---|---|---|---|
+| `/api/v1/guardrails/proxy` | POST | ✅ | Full input→AI→output pipeline |
+| `/api/v1/guardrails/action` | POST | ✅ | Action-level guardrail check |
+| `/api/v1/guardrails/demo` | POST | No | Demo mode (no auth required) |
+| `/api/v1/guardrails/logs` | GET | ✅ | Interception audit trail |
+| `/api/v1/guardrails/logs/export` | GET | ✅ | CSV/JSON log export |
+| `/api/v1/guardrails/metrics` | GET | ✅ | Enforcement metrics |
+| `/api/v1/guardrails/overrides` | GET | ✅ | Override request queue |
+
+### Policies
+
+| Endpoint | Method | Auth | Description |
+|---|---|---|---|
+| `/api/v1/policies` | GET | ✅ | List organization policies |
+| `/api/v1/policies` | POST | ✅ | Create new policy |
+| `/api/v1/policies/health` | GET | ✅ | Policy health status |
+| `/api/v1/policies/templates` | GET | ✅ | Pre-built policy templates |
+
+### Incidents & Compliance
+
+| Endpoint | Method | Auth | Description |
+|---|---|---|---|
+| `/api/v1/incidents` | GET | ✅ | List incidents |
+| `/api/v1/incidents/log` | POST | ✅ | Log new incident |
+| `/api/v1/compliance/stats` | GET | ✅ | GDPR/HIPAA/DPDP scores |
+| `/api/v1/compliance/audit-proof` | GET | ✅ | Evidence chain |
+| `/api/v1/compliance/re-evaluate` | POST | ✅ | Re-run compliance evaluation |
+
+### Connectors, Intelligence, Admin
+
+| Endpoint | Method | Auth | Description |
+|---|---|---|---|
+| `/api/v1/connectors` | GET/POST | ✅ | Connector CRUD |
+| `/api/v1/connectors/overview` | GET | ✅ | Executive overview |
+| `/api/v1/intelligence/metrics` | GET | ✅ | Threat intelligence |
+| `/api/v1/intelligence/patterns` | GET | ✅ | Attack patterns |
+| `/api/v1/intelligence/trend` | GET | ✅ | 30-day trends |
+| `/api/v1/admin/api-keys` | GET/POST | ✅ | API key management |
+| `/api/v1/inventory/agents` | GET/POST | ✅ | AI agent registry |
+
+---
+
+## 🆚 How Sentra AI is Different
+
+| Feature | Traditional Tools | Sentra AI |
+|---|---|---|
+| Post-incident monitoring | ✅ | ✅ |
+| Threat detection | ✅ | ✅ |
+| **Pre-execution blocking** | ❌ | ✅ |
+| **Fail-closed protection** | ❌ | ✅ |
+| **AI-specific governance** | ❌ | ✅ |
+| **Business impact mapping** | ❌ | ✅ |
+| **Multi-tier decision pipeline** | ❌ | ✅ |
+| **PII auto-redaction** | ❌ | ✅ |
+| **Prompt injection defense** | ❌ | ✅ |
+
+---
+
+## 🏦 Industry Scenarios
+
+### Finance
 Prevent unauthorized transactions and sensitive data leaks.
-* **Focus**: Anti-Fraud & Ledger Integrity
-* **Compliance**: SOC2, GDPR
+- **Focus:** Anti-Fraud & Ledger Integrity
+- **Compliance:** SOC2, GDPR
 
----
-
-## 🏥 Healthcare Hub
+### Healthcare
 Ensure AI never exposes patient data (PHI) externally.
-* **Focus**: PHI Protection & Privacy
-* **Compliance**: HIPAA, HITECH
+- **Focus:** PHI Protection & Privacy
+- **Compliance:** HIPAA, HITECH
 
----
-
-## 🤖 General SaaS
+### SaaS
 Control AI access to production APIs and internal systems.
-* **Focus**: Privilege Escalation & Data Drift
-* **Compliance**: ISO 27001
+- **Focus:** Privilege Escalation & Data Drift
+- **Compliance:** ISO 27001
 
 ---
 
-# 📁 Project Structure
-```text
-Sentra AI/
-├── packages/sdk/       # TypeScript Production SDK
-├── examples/           # Real-world integration scripts
-├── backend/            # Governance & Decision Engine (Node.js)
-├── frontend/           # Real-time Security Dashboard (React + Vite)
-└── README.md
-```
+## 🔐 Security Posture
+
+- ✅ **Fail-closed governance** — Actions blocked when risk engine is unavailable
+- ✅ **AES-256-GCM encryption** — All secrets encrypted at rest
+- ✅ **No hardcoded credentials** — All secrets via environment variables
+- ✅ **CORS-locked** — Strict origin allowlisting (HTTP + WebSocket)
+- ✅ **Rate limiting** — Redis-backed distributed rate limiting
+- ✅ **CSP nonce enforcement** — Per-request Content-Security-Policy
+- ✅ **Brute-force protection** — 10 attempts / 15 min on auth endpoints
+- ✅ **Role-based access** — ADMIN, AUDITOR, ENGINEER, USER scoping
+- ✅ **Audit logging** — Every governance decision is cryptographically traced
 
 ---
 
-# 📝 License
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Backend** | Node.js, Express, TypeScript |
+| **Database** | PostgreSQL + Prisma ORM |
+| **Cache / Queue** | Redis + BullMQ |
+| **Frontend** | React, Vite, TypeScript |
+| **Real-time** | Socket.io |
+| **AI** | OpenAI API (optional) |
+| **Auth** | JWT + Google OAuth + Discord |
+| **Encryption** | AES-256-GCM |
+| **SDK** | `@sentra-ai/sdk` (NPM) |
+| **Deployment** | Render / Vercel |
+
+---
+
+## 📋 Environment Variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `DATABASE_URL` | ✅ | PostgreSQL connection string |
+| `REDIS_URL` | ✅ | Redis connection string |
+| `JWT_SECRET` | ✅ | Access token signing key (32+ chars) |
+| `REFRESH_SECRET` | ✅ | Refresh token signing key (32+ chars) |
+| `ENCRYPTION_KEY` | ✅ | AES-256 encryption key (32+ chars) |
+| `FRONTEND_URL` | ✅ | CORS allowed origin |
+| `PORT` | No | Backend port (default: 3000) |
+| `OPENAI_API_KEY` | No | Enables L3 semantic risk analysis |
+| `SMTP_HOST` | No | Email alert dispatch |
+| `VITE_GOOGLE_CLIENT_ID` | No | Google OAuth for frontend |
+
+---
+
+## 📝 License
+
 MIT License
-// Project Cleaned Thu Apr 23 17:38:06 IST 2026

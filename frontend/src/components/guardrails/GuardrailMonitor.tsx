@@ -25,7 +25,7 @@ export function GuardrailMonitor() {
         fetchGuardrailMetrics()
       ]);
       setLogs(logData.data || []);
-      setMetrics(metricData.data || metricData);
+      setMetrics(metricData);
     } catch (err) {
       console.error('Failed to load guardrail data:', err);
     }

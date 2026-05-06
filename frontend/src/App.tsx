@@ -104,8 +104,11 @@ function AppRoutes() {
 }
 
 function App() {
-  // Use a dummy ID for build/dev if the real one isn't provided yet
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '13783342034-2ecjh8njo0o34k2ip8sejburklht87hc.apps.googleusercontent.com';
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+
+  if (!googleClientId) {
+    console.warn('⚠️ VITE_GOOGLE_CLIENT_ID not set. Google OAuth will be disabled.');
+  }
 
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
@@ -117,4 +120,4 @@ function App() {
 }
 
 export default App;
-// Force Sync Thu Apr 23 17:32:47 IST 2026
+

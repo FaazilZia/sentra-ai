@@ -1,8 +1,20 @@
 import crypto from 'crypto';
 
 const ALGORITHM = 'aes-256-gcm';
-const SECRET_KEY = process.env.ENCRYPTION_KEY || 'default_secret_key_change_in_prod_32chars_!!!';
 const IV_LENGTH = 16;
+
+function getEncryptionKey(): string {
+  const key = process.env.ENCRYPTION_KEY;
+  if (!key || key.length < 32) {
+    throw new Error(
+      '[SECURITY FATAL] ENCRYPTION_KEY environment variable is missing or too short (min 32 chars). ' +
+      'Connector credential encryption requires a strong key. Server cannot operate without it.'
+    );
+  }
+  return key;
+}
+
+const SECRET_KEY = getEncryptionKey();
 
 export function encrypt(text: string): string {
   const iv = crypto.randomBytes(IV_LENGTH);

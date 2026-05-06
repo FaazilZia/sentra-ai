@@ -1,3 +1,6 @@
+// Polyfill: BigInt → JSON serialization (required for Prisma BigInt columns)
+(BigInt.prototype as any).toJSON = function () { return Number(this); };
+
 import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -65,11 +68,11 @@ app.get('/api/ready', async (req, res) => {
     dbStatus = 'connected';
 
     try {
-      const Redis = require('ioredis');
-      const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
-      const pong = await redis.ping();
-      if (pong === 'PONG') redisStatus = 'connected';
-      redis.disconnect();
+      // Reuse the shared cache service Redis connection instead of
+      // creating a new one on every health check (prevents connection leaks)
+      const { cacheService } = require('./services/cache.service');
+      const pong = await cacheService.ping();
+      if (pong) redisStatus = 'connected';
     } catch (e) {
       redisStatus = 'failed (degraded)';
     }

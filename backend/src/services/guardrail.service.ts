@@ -3,6 +3,7 @@ import logger from '../utils/logger';
 import { evaluateRisk } from './riskEngine';
 import { evaluateSemanticRisk } from './semanticRiskEngine';
 import { DriftService } from './drift.service';
+import { SAFE_ACTION_ALLOWLIST } from './policyEngine';
 
 export interface GuardrailDecision {
   decision: 'ALLOW' | 'MODIFY' | 'BLOCK';
@@ -11,20 +12,6 @@ export interface GuardrailDecision {
   policy_triggered?: string;
   processedText: string;
 }
-
-// Actions that are always considered safe regardless of other signals.
-// These will short-circuit the evaluation and return ALLOW immediately.
-const SAFE_ACTION_ALLOWLIST = [
-  'fetch_weather', 'get_weather', 'weather',
-  'fetch_time', 'get_time', 'timezone',
-  'health_check', 'ping', 'status',
-  'read_config', 'get_config',
-  'list_items', 'fetch_list', 'get_list',
-  'search', 'lookup', 'find',
-  'translate', 'summarize', 'format',
-  'calculate', 'compute',
-  'log_event', 'track_event',
-];
 
 // Regex patterns that unambiguously signal adversarial intent.
 // The semantic engine is only triggered when one of these is present.
@@ -83,7 +70,7 @@ export class GuardrailService {
     // 0. Safe-Action Allowlist: Short-circuit for known-benign actions.
     // These are legitimate actions that should never be blocked by default.
     const normalizedText = text.toLowerCase();
-    const isSafeAction = SAFE_ACTION_ALLOWLIST.some(safe => normalizedText.includes(safe));
+    const isSafeAction = [...SAFE_ACTION_ALLOWLIST].some(safe => normalizedText.includes(safe));
     if (isSafeAction) {
       return {
         decision: 'ALLOW',
@@ -229,18 +216,35 @@ export class GuardrailService {
     });
   }
 
+  /**
+   * Returns guardrail metrics using DB-level aggregation instead of
+   * loading all logs into memory. Critical for scalability as the
+   * interception_logs table grows to millions of rows.
+   */
   static async getMetrics(organizationId: string) {
-    const logs = await prisma.interception_logs.findMany({
-      where: { organizationId }
-    });
-    const total = logs.length;
+    const [totalResult, breakdownResult] = await Promise.all([
+      prisma.interception_logs.count({ where: { organizationId } }),
+      prisma.interception_logs.groupBy({
+        by: ['decision'],
+        where: { organizationId },
+        _count: true,
+      }),
+    ]);
+
+    const total = totalResult;
     if (total === 0) return { total: 0, allowed: 100, blocked: 0, modified: 0 };
 
-    const allowed = (logs.filter((l: any) => l.decision === 'ALLOW').length / total) * 100;
-    const blocked = (logs.filter((l: any) => l.decision === 'BLOCK').length / total) * 100;
-    const modified = (logs.filter((l: any) => l.decision === 'MODIFY').length / total) * 100;
+    const counts: Record<string, number> = {};
+    for (const row of breakdownResult) {
+      counts[row.decision] = row._count;
+    }
 
-    return { total, allowed, blocked, modified };
+    return {
+      total,
+      allowed: ((counts['ALLOW'] || 0) / total) * 100,
+      blocked: ((counts['BLOCK'] || 0) / total) * 100,
+      modified: ((counts['MODIFY'] || 0) / total) * 100,
+    };
   }
 
 

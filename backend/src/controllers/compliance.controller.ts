@@ -65,6 +65,9 @@ export const postEvidence = async (req: any, res: Response, next: NextFunction) 
 export const postReEvaluate = async (req: any, res: Response, next: NextFunction) => {
   try {
     const { featureId } = req.body;
+    if (!featureId) {
+      return res.status(400).json({ success: false, message: 'featureId is required in request body' });
+    }
     const organizationId = await resolveOrganizationId(req);
     if (!organizationId) return res.status(401).json({ success: false, message: 'Unauthorized' });
 

@@ -48,3 +48,7 @@ backend/scratch/
 # Playwright test artifacts
 frontend/test-results/
 frontend/playwright-report/
+
+# Local development artifacts
+.local-dev/
+backend/src/scratch/

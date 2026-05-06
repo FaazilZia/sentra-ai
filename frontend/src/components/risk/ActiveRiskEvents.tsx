@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { ShieldAlert, AlertTriangle, Info, Clock } from 'lucide-react';
+import { Clock } from 'lucide-react';
 
 interface ActiveRiskEventsProps {
   violations?: any[];

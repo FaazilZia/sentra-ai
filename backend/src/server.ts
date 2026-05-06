@@ -17,8 +17,8 @@ if (missing.length > 0) {
 if (!process.env.REDIS_URL) {
   console.warn('[STARTUP WARNING] REDIS_URL not set. Rate limiting and caching will use in-memory fallbacks.');
 }
-if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'sk-placeholder') {
-  console.warn('[STARTUP WARNING] OPENAI_API_KEY not set. AI summary features will be disabled.');
+if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.length < 10) {
+  console.warn('[STARTUP WARNING] OPENAI_API_KEY not set. Semantic risk analysis will be disabled — pattern-based engines will enforce governance.');
 }
 
 
@@ -53,9 +53,15 @@ import { alertService } from './services/alert.service';
 
 const PORT = process.env.PORT || 3000;
 const httpServer = createServer(app);
+
+// Use the same CORS origins as Express — never wildcard in production
+const socketOrigins = process.env.FRONTEND_URL
+  ? [process.env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:3000']
+  : ['http://localhost:5173', 'http://localhost:3000'];
+
 const io = new Server(httpServer, {
   cors: {
-    origin: '*',
+    origin: socketOrigins,
     methods: ['GET', 'POST']
   }
 });
