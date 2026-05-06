@@ -10,13 +10,15 @@ import {
   getAuditLogs,
   getExportReport,
   getAlerts,
-  postMarkAlertRead
+  postMarkAlertRead,
+  getComplianceStats
 } from '../controllers/compliance.controller';
 
 
 
 const router = Router();
 
+router.get('/stats', authenticate, getComplianceStats);
 router.get('/audit-proof', authenticate, getAuditProof);
 
 router.post('/fix-tasks', authenticate, authorizeRoles('ADMIN'), postFixTasks);

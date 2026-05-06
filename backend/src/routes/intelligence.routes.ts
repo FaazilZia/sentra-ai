@@ -4,11 +4,8 @@ import { authenticate } from '../middleware/auth.middleware';
 
 const router = Router();
 
-// Secure intelligence routes
-router.use(authenticate);
-
-router.get('/metrics', IntelligenceController.getExecutiveMetrics);
-router.get('/patterns', IntelligenceController.getTopAttackPatterns);
-router.get('/trend', IntelligenceController.getRiskTrend);
+router.get('/metrics', authenticate, IntelligenceController.getExecutiveMetrics);
+router.get('/patterns', authenticate, IntelligenceController.getTopAttackPatterns);
+router.get('/trend', authenticate, IntelligenceController.getRiskTrend);
 
 export default router;

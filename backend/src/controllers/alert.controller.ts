@@ -1,17 +1,20 @@
 import { Response, NextFunction } from 'express';
 import prisma from '../config/db';
+import { resolveOrganizationId } from '../utils/company';
 
 export const createAlertRule = async (req: any, res: Response, next: NextFunction) => {
   try {
     const { threshold_count, time_window_minutes, webhook_url } = req.body;
-    
+    const organizationId = await resolveOrganizationId(req);
+    if (!organizationId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
     if (!threshold_count || !time_window_minutes || !webhook_url) {
       return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
 
     const rule = await prisma.alert_rules.create({
       data: {
-        organizationId: req.user.organizationId,
+        organizationId: organizationId,
         threshold_count: parseInt(threshold_count),
         time_window_minutes: parseInt(time_window_minutes),
         webhook_url
@@ -26,8 +29,11 @@ export const createAlertRule = async (req: any, res: Response, next: NextFunctio
 
 export const getAlertRules = async (req: any, res: Response, next: NextFunction) => {
   try {
+    const organizationId = await resolveOrganizationId(req);
+    if (!organizationId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
     const rules = await prisma.alert_rules.findMany({
-      where: { organizationId: req.user.organizationId },
+      where: { organizationId: organizationId },
       orderBy: { created_at: 'desc' }
     });
 

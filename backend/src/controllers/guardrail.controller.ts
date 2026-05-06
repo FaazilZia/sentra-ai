@@ -51,7 +51,7 @@ export const processAIRequest = async (req: any, res: Response, next: NextFuncti
 
     // 2. Mock AI Call (In a real system, call OpenAI/Anthropic here)
     // We simulate an AI response that might leak sensitive data to test post-AI check
-    let aiResponse = `Hello! I can help you with that. The user's email is john.doe@secret.com and his medical diagnosis is hypertension.`;
+    let aiResponse = `This is a simulated AI response for guardrail pipeline testing.`;
 
     if (prompt.toLowerCase().includes('hello')) {
       aiResponse = `Hi there! How can I assist you today?`;

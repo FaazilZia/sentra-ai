@@ -119,7 +119,8 @@ app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
     const isAllowed = allowedOrigins.includes(origin) || 
-                      (!isProduction && (origin.endsWith('.vercel.app') || origin.includes('localhost')));
+                      origin.endsWith('.vercel.app') || 
+                      (!isProduction && origin.includes('localhost'));
     if (isAllowed) {
       callback(null, true);
     } else {

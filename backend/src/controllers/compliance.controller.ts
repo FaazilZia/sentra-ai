@@ -4,6 +4,8 @@ import { ReportService } from '../services/report.service';
 import { resolveOrganizationId } from '../utils/company';
 import logger from '../utils/logger';
 
+import prisma from '../config/db';
+
 export const getAuditProof = async (req: any, res: Response, next: NextFunction) => {
   try {
     const organizationId = await resolveOrganizationId(req);
@@ -22,11 +24,14 @@ export const getAuditProof = async (req: any, res: Response, next: NextFunction)
 
 export const postFixTasks = async (req: any, res: Response, next: NextFunction) => {
   try {
+    const organizationId = await resolveOrganizationId(req);
+    if (!organizationId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
     const { featureId, actionPlan } = req.body;
     const tasks = await ComplianceService.createFixTasks(featureId, actionPlan);
     
     // Log audit
-    await ComplianceService.logAudit(req.user.id, req.user.organizationId, 'CREATE_FIX_TASKS', featureId, { count: tasks.length });
+    await ComplianceService.logAudit(req.user.id, organizationId, 'CREATE_FIX_TASKS', featureId, { count: tasks.length });
 
     res.status(201).json({ success: true, data: tasks });
   } catch (error) {
@@ -47,7 +52,9 @@ export const getFixTasks = async (req: any, res: Response, next: NextFunction) =
 export const postEvidence = async (req: any, res: Response, next: NextFunction) => {
   try {
     const { taskId, type, value, source_type } = req.body;
-    const organizationId = req.user.organizationId;
+    const organizationId = await resolveOrganizationId(req);
+    if (!organizationId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
     const evidence = await ComplianceService.addEvidence(taskId, { type, value, source_type }, req.user.id, organizationId);
     res.status(201).json({ success: true, data: evidence });
   } catch (error) {
@@ -58,7 +65,9 @@ export const postEvidence = async (req: any, res: Response, next: NextFunction) 
 export const postReEvaluate = async (req: any, res: Response, next: NextFunction) => {
   try {
     const { featureId } = req.body;
-    const organizationId = req.user.organizationId;
+    const organizationId = await resolveOrganizationId(req);
+    if (!organizationId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
     const result = await ComplianceService.reEvaluate(featureId, req.user.id, organizationId);
     res.status(200).json({ success: true, data: result });
   } catch (error) {
@@ -105,9 +114,56 @@ export const postMarkAlertRead = async (req: any, res: Response, next: NextFunct
 export const getAuditLogs = async (req: any, res: Response, next: NextFunction) => {
   try {
     const { featureId } = req.query;
-    const organizationId = req.user.organizationId;
+    const organizationId = await resolveOrganizationId(req);
+    if (!organizationId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
     const logs = await ComplianceService.getAuditLogs(organizationId, featureId as string);
     res.status(200).json({ success: true, data: logs });
+  } catch (error) {
+    next(error);
+  }
+};
+export const getComplianceStats = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const organizationId = await resolveOrganizationId(req);
+    if (!organizationId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+    const violations = await prisma.incidents.findMany({
+      where: { organizationId },
+      select: { created_at: true, details: true }
+    });
+
+    const breakdown = { GDPR: 0, HIPAA: 0, DPDP: 0 };
+    violations.forEach((v: any) => {
+      const d = String(v.details || '').toUpperCase();
+      if (d.includes('GDPR')) breakdown.GDPR++;
+      if (d.includes('HIPAA')) breakdown.HIPAA++;
+      if (d.includes('DPDP')) breakdown.DPDP++;
+    });
+
+    const last7 = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const recentViolations = await prisma.incidents.findMany({
+      where: { organizationId, created_at: { gte: last7 } },
+      select: { created_at: true },
+      orderBy: { created_at: 'asc' }
+    });
+
+    const trendMap: Record<string, number> = {};
+    recentViolations.forEach((v: any) => {
+      const date = v.created_at.toISOString().split('T')[0];
+      trendMap[date] = (trendMap[date] || 0) + 1;
+    });
+
+    const riskTrends = Object.entries(trendMap).map(([date, risk]) => ({ date, risk }));
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalViolations: violations.length,
+        breakdown,
+        riskTrends
+      }
+    });
   } catch (error) {
     next(error);
   }
