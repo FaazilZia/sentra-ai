@@ -10,6 +10,9 @@ import {
   Database,
   Key,
   BellRing,
+  Activity,
+  Shield,
+  ClipboardCheck,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
@@ -53,6 +56,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       group: 'MONITOR',
       items: [
         { name: 'Overview', href: '/app', icon: LayoutDashboard },
+        { name: 'Security Feed', href: '/app/security', icon: Activity },
       ]
     },
     {
@@ -66,6 +70,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       group: 'CONTROL',
       items: [
         { name: 'Governance Engine', href: '/app/governance', icon: ShieldCheck },
+        { name: 'Guardrail Pipeline', href: '/app/guardrails', icon: Shield },
         { name: 'Impact Analysis', href: '/app/risk', icon: TriangleAlert },
       ]
     },
@@ -73,6 +78,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       group: 'COMPLIANCE',
       items: [
         { name: 'Compliance Evidence', href: '/app/inventory', icon: FileCheck },
+        { name: 'Compliance Center', href: '/app/compliance', icon: ClipboardCheck },
       ]
     },
     {

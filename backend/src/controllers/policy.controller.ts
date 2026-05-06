@@ -248,3 +248,23 @@ export const updatePolicy = async (req: any, res: Response, next: NextFunction) 
     next(error);
   }
 };
+
+export const deletePolicy = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const organizationId = await resolveOrganizationId(req);
+    if (!organizationId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const existing = await prisma.policies.findFirst({ where: { id, organizationId: organizationId as string } });
+    if (!existing) return res.status(404).json({ success: false, message: 'Policy not found' });
+
+    await prisma.policy_versions.deleteMany({ where: { policy_id: id } });
+    await prisma.policies.delete({ where: { id } });
+
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+};

@@ -12,6 +12,16 @@ export default function LoginPage({ defaultIsSignUp = false }: { defaultIsSignUp
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [organizationName, setOrganizationName] = useState('');
+  const [passwordStrength, setPasswordStrength] = useState(0);
+
+  const calculateStrength = (pass: string) => {
+    let score = 0;
+    if (pass.length > 8) score += 25;
+    if (/[A-Z]/.test(pass)) score += 25;
+    if (/[0-9]/.test(pass)) score += 25;
+    if (/[^A-Za-z0-9]/.test(pass)) score += 25;
+    setPasswordStrength(score);
+  };
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -205,12 +215,29 @@ export default function LoginPage({ defaultIsSignUp = false }: { defaultIsSignUp
               <input
                 className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-300 focus:border-blue-500/40 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
                 value={password}
-                onChange={(event) => setPassword(event.target.value)}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  if (isSignUp) calculateStrength(event.target.value);
+                }}
                 type="password"
                 autoComplete={isSignUp ? "new-password" : "current-password"}
                 placeholder="••••••••"
                 required
               />
+              {isSignUp && password && (
+                <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-slate-200">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${passwordStrength}%` }}
+                    className={cn(
+                      "h-full transition-all",
+                      passwordStrength <= 25 ? "bg-rose-500" :
+                      passwordStrength <= 50 ? "bg-amber-500" :
+                      passwordStrength <= 75 ? "bg-blue-500" : "bg-emerald-500"
+                    )}
+                  />
+                </div>
+              )}
             </label>
 
             {isSignUp && (

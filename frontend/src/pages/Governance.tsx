@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ShieldCheck, Search, Plus, ShieldAlert, Zap, Copy } from 'lucide-react';
-import { fetchPolicies, patchPolicy, createPolicy, fetchPolicyTemplates, PolicyResponse } from '../lib/api';
+import { ShieldCheck, Search, Plus, ShieldAlert, Zap, Copy, Trash2 } from 'lucide-react';
+import { fetchPolicies, patchPolicy, createPolicy, fetchPolicyTemplates, PolicyResponse, deletePolicy } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { cn } from '../lib/utils';
 import { SimplePolicyEditor } from '../components/dashboard/SimplePolicyEditor';
@@ -41,6 +41,16 @@ export default function GovernancePage() {
       setPolicies(prev => prev.map(p => p.id === policy.id ? updated : p));
     } catch (err) {
       console.error('Failed to toggle policy:', err);
+    }
+  };
+
+  const handleDeletePolicy = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this policy?')) return;
+    try {
+      await deletePolicy(id);
+      setPolicies(prev => prev.filter(p => p.id !== id));
+    } catch (err) {
+      console.error('Failed to delete policy:', err);
     }
   };
 
@@ -204,6 +214,14 @@ export default function GovernancePage() {
                       )} />
                     </button>
                   </div>
+
+                  <button 
+                    onClick={() => handleDeletePolicy(policy.id)}
+                    className="p-2 text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all"
+                    title="Delete Policy"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </div>
               </div>
             ))

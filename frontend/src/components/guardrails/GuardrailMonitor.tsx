@@ -24,8 +24,8 @@ export function GuardrailMonitor() {
         fetchGuardrailLogs(),
         fetchGuardrailMetrics()
       ]);
-      setLogs(logData);
-      setMetrics(metricData);
+      setLogs(logData.data || []);
+      setMetrics(metricData.data || metricData);
     } catch (err) {
       console.error('Failed to load guardrail data:', err);
     }
@@ -71,15 +71,15 @@ export function GuardrailMonitor() {
            </div>
            <div className="space-y-1">
               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Allowed Actions</p>
-              <h3 className="text-5xl font-black text-white">{metrics.allowed.toFixed(0)}%</h3>
+              <h3 className="text-5xl font-black text-white">{metrics.allowed.toFixed(0)}</h3>
            </div>
            <div className="space-y-1">
               <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest">Blocked Threats</p>
-              <h3 className="text-5xl font-black text-white">{metrics.blocked.toFixed(0)}%</h3>
+              <h3 className="text-5xl font-black text-white">{metrics.blocked.toFixed(0)}</h3>
            </div>
            <div className="space-y-1">
               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Data Redacted</p>
-              <h3 className="text-5xl font-black text-white">{metrics.modified.toFixed(0)}%</h3>
+              <h3 className="text-5xl font-black text-white">{metrics.modified.toFixed(0)}</h3>
            </div>
         </div>
       )}

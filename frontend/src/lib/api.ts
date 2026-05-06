@@ -332,6 +332,12 @@ export function fetchPolicyVersions(policyId: string): Promise<any[]> {
   return apiRequest<any[]>(`/policies/${policyId}/versions`);
 }
 
+export function deletePolicy(id: string): Promise<void> {
+  return apiRequest<void>(`/policies/${id}`, {
+    method: 'DELETE',
+  });
+}
+
 export function fetchPolicyHealth(): Promise<any> {
   return apiRequest<any>('/policies/health');
 }
@@ -395,6 +401,12 @@ export async function createAIAgent(payload: any): Promise<AIAgent> {
   return apiRequest<AIAgent>('/inventory/agents', {
     method: 'POST',
     body: JSON.stringify(payload)
+  });
+}
+
+export async function deleteAIAgent(id: string): Promise<void> {
+  return apiRequest<void>(`/inventory/agents/${id}`, {
+    method: 'DELETE',
   });
 }
 

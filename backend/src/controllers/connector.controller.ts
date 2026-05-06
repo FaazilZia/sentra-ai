@@ -34,21 +34,29 @@ export const getExecutiveOverview = async (req: any, res: Response, next: NextFu
     });
 
     const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const incidents = await prisma.logs.count({
-      where: { organizationId, timestamp: { gte: last24h }, status: 'blocked' }
-    });
+    
+    // Aggregate real scans (interceptions) from logs table
+    const [totalLogsCount, blockedLogsCount, activePoliciesCount, totalPoliciesCount] = await Promise.all([
+      prisma.logs.count({ where: { organizationId, timestamp: { gte: last24h } } }),
+      prisma.logs.count({ where: { organizationId, timestamp: { gte: last24h }, status: 'blocked' } }),
+      prisma.policies.count({ where: { organizationId, enabled: true } }),
+      prisma.policies.count({ where: { organizationId } })
+    ]);
 
     const totalBudgetUsed = connectors.reduce((acc, c) => acc + (c.daily_cost_total || 0), 0);
     const totalDailyLimit = connectors.length > 0 
       ? connectors.reduce((acc, c) => acc + ((c.scan_policy as any)?.maxDailyCost || 5.0), 0)
-      : 100.0; // Default base budget for platform visibility
+      : 100.0;
     
-    const scansLast24h = connectors.reduce((acc, c) => acc + (c.daily_scan_count || 0), 0);
+    const scansLast24h = totalLogsCount; // Use actual intercepted actions
     const activeConnectors = connectors.filter(c => c.status === 'active' || c.status === 'active_partial').length;
     
-    const avgHealth = connectors.length > 0 
-      ? Math.round(connectors.reduce((acc, c) => acc + (c.health_score || 0), 0) / connectors.length)
+    // Policy Coverage / Health Score
+    const policyCoverage = totalPoliciesCount > 0 
+      ? Math.round((activePoliciesCount / totalPoliciesCount) * 100) 
       : 100;
+
+    const avgHealth = policyCoverage; // Use policy coverage as health indicator for now
 
     // Determine System Mode
     let systemMode = 'autonomous';
@@ -61,7 +69,7 @@ export const getExecutiveOverview = async (req: any, res: Response, next: NextFu
         systemMode,
         auditSummary: {
           scansLast24h,
-          violationsDetected: incidents,
+          violationsDetected: blockedLogsCount,
           budgetUsed: totalBudgetUsed,
           budgetLimit: totalDailyLimit,
           activeConnectors,

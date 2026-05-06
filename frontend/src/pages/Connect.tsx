@@ -8,11 +8,13 @@ import { useAuth } from '../lib/auth';
 import { 
   createApiKey, fetchApiKeys, 
   APIKeyResponse, APIKeyBundle,
-  fetchConnectors, createConnector
+  fetchConnectors, createConnector,
+  updateAlertSettings, testAlert
 } from '../lib/api';
+import { Bell, Mail, Slack, Send } from 'lucide-react';
 import { SurfaceCard } from '../components/ui/SurfaceCard';
 
-type Tab = 'sdk' | 'sources';
+type Tab = 'sdk' | 'sources' | 'alerts';
 
 export default function ConnectPage() {
   useAuth();
@@ -29,6 +31,12 @@ export default function ConnectPage() {
   
   const [isCreating, setIsCreating] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // Alert settings state
+  const [alertEmail, setAlertEmail] = useState('');
+  const [slackWebhookUrl, setSlackWebhookUrl] = useState('');
+  const [isSavingAlerts, setIsSavingAlerts] = useState(false);
+  const [isTestingAlert, setIsTestingAlert] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -90,6 +98,31 @@ export default function ConnectPage() {
     }
   };
 
+  const handleSaveAlertSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingAlerts(true);
+    try {
+      await updateAlertSettings({ alertEmail, slackWebhookUrl });
+      alert('Alert settings updated successfully');
+    } catch (err) {
+      alert('Failed to update alert settings');
+    } finally {
+      setIsSavingAlerts(false);
+    }
+  };
+
+  const handleTestAlert = async () => {
+    setIsTestingAlert(true);
+    try {
+      await testAlert();
+      alert('Test alert sent successfully! Check your configured channels.');
+    } catch (err) {
+      alert('Failed to send test alert. Ensure your settings are valid.');
+    } finally {
+      setIsTestingAlert(false);
+    }
+  };
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -131,6 +164,12 @@ export default function ConnectPage() {
                 className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'sources' ? 'bg-white text-slate-950 shadow-lg' : 'text-slate-300 hover:text-white'}`}
              >
                 Data Connectors
+             </button>
+             <button 
+                onClick={() => setActiveTab('alerts')}
+                className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'alerts' ? 'bg-white text-slate-950 shadow-lg' : 'text-slate-300 hover:text-white'}`}
+             >
+                Alert Settings
              </button>
           </div>
         </div>
@@ -204,7 +243,7 @@ export default function ConnectPage() {
              </SurfaceCard>
           </div>
         </div>
-      ) : (
+      ) : activeTab === 'sources' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
            {/* SQL Database */}
            <div className="group relative flex flex-col rounded-3xl border border-slate-100 bg-white p-6 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1">
@@ -260,6 +299,65 @@ export default function ConnectPage() {
               </SurfaceCard>
            </div>
         </div>
+
+      ) : (
+         <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
+            <SurfaceCard 
+              title="Global Notification Settings" 
+              description="Configure how your team receives security and compliance alerts."
+            >
+               <form onSubmit={handleSaveAlertSettings} className="space-y-6 mt-4">
+                  <div className="space-y-4">
+                     <div className="space-y-2">
+                        <label className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
+                           <Mail className="h-3.5 w-3.5" />
+                           Security Alert Email
+                        </label>
+                        <input 
+                           type="email" 
+                           value={alertEmail} 
+                           onChange={(e) => setAlertEmail(e.target.value)}
+                           placeholder="security-ops@company.com"
+                           className="w-full rounded-xl border border-white/10 bg-slate-900/50 px-4 py-3 text-sm text-white focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/30"
+                        />
+                     </div>
+
+                     <div className="space-y-2">
+                        <label className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
+                           <Slack className="h-3.5 w-3.5" />
+                           Slack Webhook URL
+                        </label>
+                        <input 
+                           type="url" 
+                           value={slackWebhookUrl} 
+                           onChange={(e) => setSlackWebhookUrl(e.target.value)}
+                           placeholder="https://hooks.slack.com/services/..."
+                           className="w-full rounded-xl border border-white/10 bg-slate-900/50 px-4 py-3 text-sm text-white focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/30"
+                        />
+                     </div>
+                  </div>
+
+                  <div className="flex gap-4 pt-4 border-t border-white/5">
+                     <button 
+                        type="submit" 
+                        disabled={isSavingAlerts}
+                        className="flex-1 h-11 rounded-xl bg-white text-slate-950 text-xs font-black uppercase tracking-widest hover:bg-slate-200 transition-all disabled:opacity-50"
+                     >
+                        {isSavingAlerts ? 'Saving...' : 'Update Settings'}
+                     </button>
+                     <button 
+                        type="button" 
+                        onClick={handleTestAlert}
+                        disabled={isTestingAlert}
+                        className="flex items-center justify-center gap-2 px-6 h-11 rounded-xl border border-white/10 text-white text-xs font-black uppercase tracking-widest hover:bg-white/5 transition-all disabled:opacity-50"
+                     >
+                        {isTestingAlert ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                        Test Alert
+                     </button>
+                  </div>
+               </form>
+            </SurfaceCard>
+         </div>
       )}
     </div>
   );

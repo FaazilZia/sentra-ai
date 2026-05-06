@@ -19,6 +19,9 @@ export function AppLayout() {
 
     if (isNewSignup && !isCompleted) {
       setShowOnboarding(true);
+    } else if (isNewSignup && isCompleted) {
+      // Clean up legacy flag if already completed
+      localStorage.removeItem('sentra_new_signup');
     }
 
     fetchExecutiveOverview().then(setOverview).catch(console.error);

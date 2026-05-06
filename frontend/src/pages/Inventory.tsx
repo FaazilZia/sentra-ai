@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Bot, ShieldCheck, Zap, Activity, Filter, Plus, Search, MoreHorizontal, Database, Globe, Mail } from 'lucide-react';
+import { Bot, ShieldCheck, Zap, Activity, Filter, Plus, Search, MoreHorizontal, Database, Globe, Mail, Trash2 } from 'lucide-react';
 import { SurfaceCard } from '../components/ui/SurfaceCard';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { EmptyState } from '../components/ui/EmptyState';
-import { fetchAIAgents, AIAgent } from '../lib/api';
+import { fetchAIAgents, AIAgent, deleteAIAgent } from '../lib/api';
 import { RegisterAgentModal } from '../components/inventory/RegisterAgentModal';
 
 const permissionIcons: Record<string, any> = {
@@ -32,6 +32,16 @@ export default function Inventory() {
     }
     loadAgents();
   }, []);
+
+  const handleDeleteAgent = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this AI agent?')) return;
+    try {
+      await deleteAIAgent(id);
+      setAgents(prev => prev.filter(a => a.id !== id));
+    } catch (err) {
+      console.error('Failed to delete agent:', err);
+    }
+  };
 
   const filteredAgents = agents.filter(agent => 
     agent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -185,9 +195,18 @@ export default function Inventory() {
                     />
                   </td>
                   <td className="px-8 py-6 text-right">
-                    <button className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-cyan-400 transition-colors">
-                      Manage Scope
-                    </button>
+                    <div className="flex items-center justify-end gap-3">
+                      <button className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-cyan-400 transition-colors">
+                        Manage Scope
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteAgent(agent.id)}
+                        className="p-2 text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all"
+                        title="Delete Agent"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
