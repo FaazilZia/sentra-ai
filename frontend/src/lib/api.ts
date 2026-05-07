@@ -247,7 +247,13 @@ export async function apiRequest<T>(
   }
 
   // Node backend wraps response in "data"
-  return (json.data !== undefined ? json.data : json) as T;
+  const result = (json.data !== undefined ? json.data : json) as T;
+  
+  if (import.meta.env.DEV) {
+    console.debug(`[API] SUCCESS: ${path}`, result);
+  }
+
+  return result;
 }
 
 /**

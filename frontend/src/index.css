@@ -1,177 +1,95 @@
+@import "./styles/tokens.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --glass-bg: rgba(15, 23, 42, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glow-red: 0 0 20px rgba(239, 68, 68, 0.2);
-  --glow-green: 0 0 20px rgba(34, 197, 94, 0.2);
-  --glow-indigo: 0 0 20px rgba(99, 102, 241, 0.2);
-}
-
-@layer components {
-  .glass-card {
-    @apply bg-slate-900/70 backdrop-blur-xl border border-white/10 shadow-2xl;
-  }
-  
-  .glow-red { box-shadow: var(--glow-red); }
-  .glow-green { box-shadow: var(--glow-green); }
-  .glow-indigo { box-shadow: var(--glow-indigo); }
-  
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-track {
-    @apply bg-transparent;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-slate-800 rounded-full hover:bg-slate-700;
-  }
-}
-
 @layer base {
-  :root {
-    --background: 210 40% 98%;
-    --foreground: 222 47% 11%;
+  body {
+    @apply bg-[var(--bg-page)] text-[var(--text-secondary)] font-sans antialiased;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
 
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-
-    --primary: 222 47% 11%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
-
-    --destructive: 346 77% 50%;
-    --destructive-foreground: 355 100% 97%;
-
-    --warning: 38 92% 50%;
-
-    --warning-foreground: 48 96% 89%;
-
-    --success: 160 84% 39%;
-    --success-foreground: 152 81% 96%;
-
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 222 47% 11%;
-
-    --radius: 0.5rem;
-
-    --sidebar-background: 222 30% 10%;
-    --sidebar-foreground: 213 27% 84%;
-    --sidebar-primary: 196 92% 72%;
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 217 24% 18%;
-    --sidebar-accent-foreground: 210 40% 96%;
-    --sidebar-border: 217 20% 20%;
-    --sidebar-ring: 196 92% 72%;
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight text-[var(--text-primary)];
   }
 
   * {
-    @apply border-border;
-  }
-  body {
-    @apply text-foreground antialiased;
-    background: #f8fafc;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    font-size: 0.875rem;
-    min-height: 100vh;
+    @apply border-[var(--border-default)];
+    transition: background-color var(--transition-speed) var(--transition-ease), 
+                border-color var(--transition-speed) var(--transition-ease),
+                color var(--transition-speed) var(--transition-ease),
+                box-shadow var(--transition-speed) var(--transition-ease);
   }
 
-  body::before {
-    content: none;
+  a, button {
+    @apply transition-all duration-200;
   }
 
-  #root {
-    min-height: 100vh;
+  input:focus {
+    @apply outline-none ring-2 ring-[var(--violet-blue)] ring-offset-2;
   }
 }
 
-@layer utilities {
-  @keyframes float {
-    0%,
-    100% {
-      transform: translateY(0px);
-    }
-    50% {
-      transform: translateY(-10px);
-    }
+@layer components {
+  .card-base {
+    @apply bg-[var(--bg-card)] border-[0.5px] border-[var(--border-default)] rounded-[var(--radius)] shadow-sm;
+  }
+
+  .btn-primary {
+    @apply bg-[var(--royal-indigo)] text-white font-semibold py-2 px-4 rounded-[var(--radius)] 
+           hover:bg-[var(--mid-indigo)] active:bg-[var(--royal-indigo)] 
+           transition-all shadow-sm;
+  }
+
+  .btn-secondary {
+    @apply bg-white border border-[var(--royal-indigo)] text-[var(--royal-indigo)] font-semibold py-2 px-4 rounded-[var(--radius)]
+           hover:bg-[var(--ghost-violet)] transition-all;
+  }
+
+  .btn-danger {
+    @apply bg-[var(--risk-critical)] text-white font-semibold py-2 px-4 rounded-[var(--radius)]
+           hover:opacity-90 transition-all shadow-sm;
+  }
+
+  .badge-pill {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border-none;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-[var(--border-strong)] rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-[var(--lavender)];
   }
 }
 
-/* ── Atom particle background ── */
-
-.atom-bg-container {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden;
+@keyframes progress-fill {
+  from { width: 0; }
+  to { width: var(--target-width); }
 }
 
-.atom-body {
-  position: absolute;
+.animate-progress {
+  animation: progress-fill 600ms ease-in-out forwards;
 }
 
-.atom-nucleus {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: #000000;
-  border-radius: 50%;
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.atom-ring-wrapper {
-  position: absolute;
-  inset: 0;
-}
-
-.atom-ring {
-  width: 100%;
-  height: 100%;
-  border: 1px solid rgba(0, 0, 0, 0.15);
-  border-radius: 50%;
-  position: relative;
-}
-
-.atom-electron {
-  position: absolute;
-  width: 5px;
-  height: 5px;
-  background: #000000;
-  border-radius: 50%;
-  top: -2.5px;
-  left: 50%;
-  margin-left: -2.5px;
-  transform: scaleY(2.86);
-}
-
-@keyframes atom-orbit {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-
-.atom-ring-speed-1 {
-  animation: atom-orbit 8s linear infinite;
-}
-.atom-ring-speed-2 {
-  animation: atom-orbit 12s linear infinite reverse;
-}
-.atom-ring-speed-3 {
-  animation: atom-orbit 16s linear infinite;
+.animate-fade-in {
+  animation: fade-in 400ms ease-out forwards;
 }

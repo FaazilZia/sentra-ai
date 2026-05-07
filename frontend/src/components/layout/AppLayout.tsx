@@ -1,56 +1,30 @@
-import { useEffect, useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import React, { Suspense } from 'react';
 import { Sidebar } from './Sidebar';
-import { Topbar } from './Topbar';
-import { AtomBackground } from '../ui/AtomBackground';
-import { GlobalControlPanel } from '../executive/GlobalControlPanel';
-import { fetchExecutiveOverview, ExecutiveOverview } from '../../lib/api';
-import { OnboardingModal } from '../ui/OnboardingModal';
-import { AnimatePresence } from 'framer-motion';
+import { Header } from './Header';
 
-export function AppLayout() {
-  const [overview, setOverview] = useState<ExecutiveOverview | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
+interface AppLayoutProps {
+  children: React.ReactNode;
+}
 
-  useEffect(() => {
-    const isNewSignup = localStorage.getItem('sentra_new_signup') === 'true';
-    const isCompleted = localStorage.getItem('sentra_onboarding_completed') === 'true';
-
-    if (isNewSignup && !isCompleted) {
-      setShowOnboarding(true);
-    } else if (isNewSignup && isCompleted) {
-      // Clean up legacy flag if already completed
-      localStorage.removeItem('sentra_new_signup');
-    }
-
-    fetchExecutiveOverview().then(setOverview).catch(console.error);
-    const interval = setInterval(() => {
-      fetchExecutiveOverview().then(setOverview).catch(console.error);
-    }, 30000); // Polling every 30 seconds
-    return () => clearInterval(interval);
-  }, []);
-
+export function AppLayout({ children }: AppLayoutProps) {
   return (
-    <div className="relative flex h-screen w-full overflow-hidden bg-[#0a0f1a] text-slate-100 selection:bg-cyan-500/20">
-      <AtomBackground />
-      <Sidebar collapsed={false} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-      <div className="relative z-10 flex min-w-0 flex-1 flex-col">
-        <Topbar onMenuClick={() => setIsSidebarOpen(true)} />
-        {overview && (
-          <GlobalControlPanel 
-            scanningMode={overview.controls.scanningMode}
-            budgetStatus={overview.auditSummary.budgetUsed >= overview.auditSummary.budgetLimit ? 'paused' : 'within_limits'}
-            systemStatus={overview.systemMode === 'autonomous' ? 'active' : (overview.systemMode === 'restricted' ? 'throttled' : 'active')}
-            authority={overview.controls.authority}
-          />
-        )}
-        <main className="flex-1 overflow-auto p-0 custom-scrollbar bg-[#0a0f1a]">
-          <Outlet />
+    <div className="flex min-h-screen bg-[var(--bg-page)] text-[var(--text-primary)]">
+      {/* Sidebar - Fixed Width */}
+      <Sidebar />
+
+      {/* Main Content Area */}
+      <div className="flex flex-1 flex-col lg:pl-[var(--sidebar-width)] transition-all duration-300">
+        <Header />
+        
+        <main className="flex-1 pt-[var(--topbar-height)]">
+          <Suspense fallback={
+            <div className="flex h-full items-center justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--royal-indigo)] border-t-transparent" />
+            </div>
+          }>
+            {children}
+          </Suspense>
         </main>
-        <AnimatePresence>
-          {showOnboarding && <OnboardingModal onClose={() => setShowOnboarding(false)} />}
-        </AnimatePresence>
       </div>
     </div>
   );

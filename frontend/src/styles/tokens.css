@@ -1,0 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+
+:root {
+  /* ROYAL INDIGO PALETTE */
+  --royal-indigo: #2D3AC0;     /* Primary Brand / Sidebar / Link */
+  --mid-indigo:   #3B4DD4;     /* Active Nav / Primary Hover */
+  --soft-indigo:  #5B6BEA;     /* Nav Hover */
+  --lavender:     #A5A8F5;     /* Sidebar Icons / Secondary Data */
+  --violet-blue:  #6C63FF;     /* STAT ACCENT / Primary CTA */
+  --ghost-violet: #D8D9FC;     /* Card Tints / Secondary Backgrounds */
+  
+  /* SURFACE & LAYOUT */
+  --bg-page: #F4F5FA;          /* Off-white blue-tint */
+  --bg-card: #FFFFFF;
+  --bg-sidebar: var(--royal-indigo);
+  --bg-topbar: #FFFFFF;
+  --bg-hover: #F0F1FB;         /* Light indigo row hover */
+
+  /* SEMANTIC COMPATIBILITY */
+  --primary-900: #1E1E2D;      /* Near Black for text */
+  --primary-800: var(--royal-indigo);
+  --primary-700: var(--mid-indigo);
+  --primary-500: var(--royal-indigo);
+  --primary-400: var(--soft-indigo);
+  --primary-100: var(--ghost-violet);
+  --primary-50:  #F9F9FF;
+
+  /* TEXT */
+  --text-primary: #1E1E2D;     /* Near Black */
+  --text-secondary: #6B7280;   /* Muted Grey */
+  --text-muted: #9CA3AF;       /* Light Grey */
+  --text-inverse: #FFFFFF;     /* White on dark */
+  --text-accent: var(--royal-indigo);
+  --text-stats: var(--violet-blue);
+
+  /* BORDERS */
+  --border-default: #E5E7EB;
+  --border-strong: #D1D5DB;
+  --border-focus: var(--violet-blue);
+
+  /* STATUS / RISK COLOURS */
+  --risk-critical: #EF4444;    /* Red */
+  --risk-critical-text: #7F1D1D;
+  --risk-high: #EF4444;        /* Same red as critical per prompt */
+  --risk-high-text: #7F1D1D;
+  --risk-medium: #F59E0B;      /* Amber */
+  --risk-medium-text: #78350F;
+  --risk-low: #22C55E;         /* Green */
+  --risk-low-text: #14532D;
+  --risk-compliant: #3B82F6;   /* Blue */
+  --risk-compliant-text: #1E3A5F;
+
+  /* STATUS ALIAS */
+  --status-danger: var(--risk-critical);
+  --status-warning: var(--risk-medium);
+  --status-success: var(--risk-low);
+  --status-info: var(--risk-compliant);
+
+  /* TYPOGRAPHY */
+  --font-sans: 'Inter', 'DM Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* SPACING & SIZES */
+  --radius: 8px;
+  --sidebar-width: 220px;
+  --topbar-height: 52px;
+  
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 32px;
+
+  /* TRANSITIONS */
+  --transition-speed: 200ms;
+  --transition-ease: ease-in-out;
+}
