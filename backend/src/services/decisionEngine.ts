@@ -1,3 +1,4 @@
+import { performance } from 'perf_hooks';
 import crypto from 'crypto';
 import { evaluateRisk } from './riskEngine';
 import { evaluatePolicy } from './policyEngine';
