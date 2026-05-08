@@ -8,7 +8,6 @@ Traditional security tools monitor and report issues *after* they happen. **Sent
 
 ## 🌐 Live Deployments
 
-- **Production Dashboard:** [https://sentra-ai.vercel.app](https://sentra-ai.vercel.app)
 - **Staging Dashboard:** [https://sentra-ai-tau.vercel.app](https://sentra-ai-tau.vercel.app)
 - **API Backend:** [https://sentra-backend-node.onrender.com](https://sentra-backend-node.onrender.com)
 - **System Health:** [https://sentra-backend-node.onrender.com/api/health](https://sentra-backend-node.onrender.com/api/health)
