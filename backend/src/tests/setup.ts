@@ -1,3 +1,4 @@
+process.env.ENCRYPTION_KEY = 'test_encryption_key_must_be_32_chars_long';
 console.log('--- TEST SETUP LOADED ---');
 
 // Mock performance globally for Node environments that don't have it

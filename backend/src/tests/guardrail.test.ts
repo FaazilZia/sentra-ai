@@ -52,7 +52,9 @@ describe('Guardrail Hardening Verification', () => {
         where: { organizationId: ORG_A }
       });
       expect(prisma.interception_logs.groupBy).toHaveBeenCalledWith(expect.objectContaining({
-        where: { organizationId: ORG_A }
+        by: ['decision'],
+        where: { organizationId: ORG_A },
+        _count: true,
       }));
 
       expect(result.total).toBe(2);
