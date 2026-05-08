@@ -1,5 +1,7 @@
-import { performance } from 'perf_hooks';
 import crypto from 'crypto';
+
+// Safe performance.now() fallback for older environments
+const getNow = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 import { evaluateRisk } from './riskEngine';
 import { evaluatePolicy } from './policyEngine';
 import { evaluateSemanticRisk } from './semanticRiskEngine';
@@ -21,7 +23,7 @@ export interface Decision {
 }
 
 export const makeDecision = async (agent: string, action: string, organizationId: string, metadata: any = {}): Promise<Decision> => {
-  const startTime = performance.now();
+  const startTime = getNow();
   
   try {
     // 1. Level 1: Policy Engine (Hard Rules)
@@ -94,7 +96,7 @@ export const makeDecision = async (agent: string, action: string, organizationId
       reason = semanticRisk.score === 'high' ? `Blocked: ${semanticRisk.explanation}` : 'Blocked: High-risk pattern detected';
     }
 
-    const duration = performance.now() - startTime;
+    const duration = getNow() - startTime;
     console.log(`[GOVERNANCE] Decision: ${status.toUpperCase()} | Risk: ${riskScore} | Latency: ${duration.toFixed(2)}ms`);
 
     return {
