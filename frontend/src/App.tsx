@@ -6,6 +6,8 @@ import { AuthProvider, useAuth } from './lib/auth';
 import { SidebarProvider } from './context/SidebarContext';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
+import LoginPage from './pages/Login';
+
 const DashboardPage = lazy(() => import('./pages/Dashboard'));
 
 import { ModalProvider } from './components/shared/ModalProvider';
@@ -41,12 +43,24 @@ function AppRoutes() {
       <SidebarProvider>
         <Suspense fallback={<RouteFallback />}>
           <Routes>
-            {/* Redirect all to dashboard for now since other pages are being rebuilt */}
+            {/* Redirect all to dashboard */}
             <Route path="/" element={<Navigate to="/app" replace />} />
             
+            {/* Login Route */}
+            <Route 
+              path="/login" 
+              element={user ? <Navigate to="/app" replace /> : <LoginPage />} 
+            />
+
+            {/* Signup Route */}
+            <Route 
+              path="/signup" 
+              element={user ? <Navigate to="/app" replace /> : <LoginPage defaultIsSignUp={true} />} 
+            />
+
             <Route 
               path="/app" 
-              element={user ? <AppLayout><DashboardPage /></AppLayout> : <Navigate to="/app" replace />}
+              element={user ? <AppLayout><DashboardPage /></AppLayout> : <Navigate to="/login" replace />}
             />
 
             <Route path="*" element={<Navigate to="/app" replace />} />

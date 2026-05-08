@@ -224,6 +224,9 @@ v1Router.get('/', (req, res) => {
 
 app.use('/api/v1', v1Router);
 
+// Compatibility Layer: Support /api/auth without /v1 prefix for older clients
+app.use('/api/auth', authRoutes);
+
 
 
 // Root route to check version
