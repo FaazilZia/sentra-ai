@@ -6,7 +6,7 @@ if (typeof performance === 'undefined') {
 }
 
 jest.mock('ioredis', () => {
-  return jest.fn().mockImplementation(() => {
+  const MockRedis = jest.fn().mockImplementation(() => {
     return {
       get: jest.fn().mockResolvedValue(null),
       set: jest.fn().mockResolvedValue('OK'),
@@ -15,8 +15,14 @@ jest.mock('ioredis', () => {
       ping: jest.fn().mockResolvedValue('PONG'),
       disconnect: jest.fn(),
       keys: jest.fn().mockResolvedValue([]),
+      call: jest.fn(),
     };
   });
+  return {
+    __esModule: true,
+    default: MockRedis,
+    Redis: MockRedis,
+  };
 });
 
 jest.mock('../utils/logger', () => ({

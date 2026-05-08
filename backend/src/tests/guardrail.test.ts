@@ -10,6 +10,7 @@ jest.mock('../config/db', () => ({
     interception_logs: {
       findMany: jest.fn(),
       count: jest.fn(),
+      groupBy: jest.fn().mockResolvedValue([]),
     },
     guardrail_overrides: {
       findMany: jest.fn(),
