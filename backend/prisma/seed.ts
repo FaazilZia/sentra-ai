@@ -10,8 +10,8 @@ const isSqlite = databaseUrl.startsWith('file:');
 
 async function getPrisma() {
   if (isSqlite) {
-    const { PrismaBetterSqlite3 } = await import('@prisma/adapter-better-sqlite3');
-    const adapter = new PrismaBetterSqlite3({ url: 'dev.db' });
+    const { PrismaBetterSqlite } = await import('@prisma/adapter-better-sqlite3');
+    const adapter = new PrismaBetterSqlite({ url: 'dev.db' });
     return new PrismaClient({ adapter });
   } else {
     const { PrismaPg } = await import('@prisma/adapter-pg');

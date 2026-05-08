@@ -1,4 +1,4 @@
-import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
+import rateLimit from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
 import Redis from 'ioredis';
 import logger from '../utils/logger';
@@ -64,7 +64,7 @@ export const authRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: getStore('rl:auth:'),
-  keyGenerator: (req) => `${ipKeyGenerator(req.ip!)}-${req.body.email || 'anon'}`,
+  keyGenerator: (req) => `${req.ip}-${req.body.email || 'anon'}`,
   handler: onLimitReached
 });
 
@@ -86,7 +86,7 @@ export const aiActionRateLimiter = rateLimit({
   legacyHeaders: false,
   store: getStore('rl:ai:min:', true), // AI endpoints are fail-closed
   keyGenerator: (req: any) => {
-    return (req.headers['x-api-key'] as string) || (req.user?.organizationId) || ipKeyGenerator(req, undefined) || 'global';
+    return (req.headers['x-api-key'] as string) || (req.user?.organizationId) || req.ip || 'global';
   },
   handler: onLimitReached
 });
@@ -99,7 +99,7 @@ export const aiDailyRateLimiter = rateLimit({
   legacyHeaders: false,
   store: getStore('rl:ai:day:', true), // AI endpoints are fail-closed
   keyGenerator: (req: any) => {
-    return (req.headers['x-api-key'] as string) || (req.user?.organizationId) || ipKeyGenerator(req, undefined) || 'global';
+    return (req.headers['x-api-key'] as string) || (req.user?.organizationId) || req.ip || 'global';
   },
   handler: onLimitReached
 });
