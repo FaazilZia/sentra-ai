@@ -11,12 +11,6 @@ jest.mock('../src/config/db', () => ({
   },
 }));
 
-jest.mock('../src/services/cache.service', () => ({
-  cacheService: {
-    getOrSet: jest.fn((key, cb) => cb()),
-  },
-}));
-
 describe('Policy Engine', () => {
   const orgId = 'org-123';
 

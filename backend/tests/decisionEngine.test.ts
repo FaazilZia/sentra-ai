@@ -14,23 +14,6 @@ jest.mock('../src/config/db', () => ({
   }
 }));
 
-jest.mock('../src/services/cache.service', () => ({
-  cacheService: {
-    getOrSet: jest.fn((key, cb) => cb()),
-    invalidate: jest.fn(),
-    invalidatePattern: jest.fn(),
-  },
-}));
-
-jest.mock('../src/services/semanticRiskEngine', () => ({
-  evaluateSemanticRisk: jest.fn().mockResolvedValue({
-    score: 'low',
-    explanation: 'Safe action',
-    confidence: 0.9,
-    categories: []
-  }),
-}));
-
 describe('Decision Engine', () => {
   const orgId = 'test-org-id';
 

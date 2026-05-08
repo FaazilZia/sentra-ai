@@ -1,4 +1,10 @@
 console.log('--- TEST SETUP LOADED ---');
+
+// Mock performance globally for Node environments that don't have it
+if (typeof performance === 'undefined') {
+  (global as any).performance = { now: jest.fn(() => Date.now()) };
+}
+
 jest.mock('ioredis', () => {
   return jest.fn().mockImplementation(() => {
     return {
@@ -8,6 +14,7 @@ jest.mock('ioredis', () => {
       on: jest.fn(),
       ping: jest.fn().mockResolvedValue('PONG'),
       disconnect: jest.fn(),
+      keys: jest.fn().mockResolvedValue([]),
     };
   });
 });
@@ -17,6 +24,22 @@ jest.mock('../utils/logger', () => ({
   error: jest.fn(),
   warn: jest.fn(),
   debug: jest.fn(),
+  default: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+    log: jest.fn(),
+  }
+}));
+
+jest.mock('../services/cache.service', () => ({
+  cacheService: {
+    getOrSet: jest.fn((key, cb) => cb()),
+    invalidate: jest.fn().mockResolvedValue(undefined),
+    invalidatePattern: jest.fn().mockResolvedValue(undefined),
+    ping: jest.fn().mockResolvedValue(true),
+  },
 }));
 
 jest.mock('../services/alert.service', () => ({
