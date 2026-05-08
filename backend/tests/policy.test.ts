@@ -3,8 +3,11 @@ import prisma from '../src/config/db';
 import { cacheService } from '../src/services/cache.service';
 
 jest.mock('../src/config/db', () => ({
-  policies: {
-    findMany: jest.fn(),
+  __esModule: true,
+  default: {
+    policies: {
+      findMany: jest.fn(),
+    },
   },
 }));
 

@@ -2,17 +2,41 @@ import { makeDecision } from '../src/services/decisionEngine';
 import prisma from '../src/config/db';
 
 jest.mock('../src/config/db', () => ({
-  policies: {
-    findMany: jest.fn(),
+  __esModule: true,
+  default: {
+    policies: {
+      findMany: jest.fn(),
+    },
+    logs: {
+      findMany: jest.fn(),
+      create: jest.fn(),
+    },
+  }
+}));
+
+jest.mock('../src/services/cache.service', () => ({
+  cacheService: {
+    getOrSet: jest.fn((key, cb) => cb()),
+    invalidate: jest.fn(),
+    invalidatePattern: jest.fn(),
   },
-  logs: {
-    findMany: jest.fn(),
-    create: jest.fn(),
-  },
+}));
+
+jest.mock('../src/services/semanticRiskEngine', () => ({
+  evaluateSemanticRisk: jest.fn().mockResolvedValue({
+    score: 'low',
+    explanation: 'Safe action',
+    confidence: 0.9,
+    categories: []
+  }),
 }));
 
 describe('Decision Engine', () => {
   const orgId = 'test-org-id';
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
   it('should block high risk actions without policy', async () => {
     (prisma.policies.findMany as any).mockResolvedValue([]);
@@ -21,7 +45,7 @@ describe('Decision Engine', () => {
     
     expect(decision.status).toBe('blocked');
     expect(decision.risk).toBe('high');
-    expect(decision.reason).toMatch(/Blocked: (High-risk|Security analysis)/);
+    expect(decision.reason).toMatch(/Blocked: (High-risk|Safe action)/);
   });
 
   it('should allow low risk actions when no policy exists', async () => {

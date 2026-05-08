@@ -2,8 +2,7 @@ import { anonymizeText } from '../src/utils/masking';
 import { evaluateRisk } from '../src/services/riskEngine';
 import { makeDecision } from '../src/services/decisionEngine';
 import prisma from '../src/config/db';
-import { evaluateSemanticRisk as evaluateSemanticRiskReal } from '../src/services/semanticRiskEngine';
-import { evaluateSemanticRisk as evaluateSemanticRiskMocked } from '../src/services/semanticRiskEngine';
+import { evaluateSemanticRisk } from '../src/services/semanticRiskEngine';
 
 jest.mock('../src/config/db', () => ({
   __esModule: true,
@@ -14,6 +13,14 @@ jest.mock('../src/config/db', () => ({
     logs: {
       create: jest.fn(),
     }
+  },
+}));
+
+jest.mock('../src/services/cache.service', () => ({
+  cacheService: {
+    getOrSet: jest.fn((key, cb) => cb()),
+    invalidate: jest.fn(),
+    invalidatePattern: jest.fn(),
   },
 }));
 
@@ -77,7 +84,7 @@ describe('Coverage Booster', () => {
 
     it('should cover degraded mode when semantic engine fails', async () => {
       (prisma.policies.findMany as jest.Mock).mockResolvedValue([]);
-      (evaluateSemanticRiskMocked as jest.Mock).mockRejectedValue(new Error('API Timeout'));
+      (evaluateSemanticRisk as jest.Mock).mockRejectedValue(new Error('API Timeout'));
 
       const decision = await makeDecision('agent', 'some_action', orgId);
       expect(decision.status).toBe('allowed');
@@ -87,7 +94,7 @@ describe('Coverage Booster', () => {
 
     it('should cover engine failure category from semantic engine', async () => {
         (prisma.policies.findMany as jest.Mock).mockResolvedValue([]);
-        (evaluateSemanticRiskMocked as jest.Mock).mockResolvedValue({
+        (evaluateSemanticRisk as jest.Mock).mockResolvedValue({
             score: 'low',
             categories: ['ENGINE_FAILURE']
         });
