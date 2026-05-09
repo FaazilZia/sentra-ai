@@ -7,7 +7,7 @@ export function Header() {
   const pathnames = location.pathname.split('/').filter(x => x);
 
   return (
-    <header className="fixed top-0 right-0 z-40 h-[var(--topbar-height)] w-full lg:w-[calc(100%-var(--sidebar-width))] bg-[var(--bg-topbar)] border-b border-[var(--border-default)] px-6 flex items-center justify-between shadow-sm">
+    <header className="fixed top-0 right-0 z-40 h-[var(--topbar-height)] w-full lg:w-[calc(100%-var(--sidebar-width))] bg-white/70 backdrop-blur-xl border-b border-[var(--border-default)] px-6 flex items-center justify-between shadow-sm">
       <div className="flex items-center gap-4">
         {/* Breadcrumbs */}
         <nav className="flex items-center gap-2 text-[var(--text-xs)] font-medium text-[var(--text-secondary)]">
@@ -49,6 +49,7 @@ export function Header() {
           </button>
           
           <button 
+            onClick={() => useStore.getState().addToast({ message: 'Initializing workspace export...', type: 'info' })}
             className="btn-secondary h-8 flex items-center gap-2 !px-3 !py-0 !text-[10px] uppercase tracking-widest"
           >
             <Download className="h-3 w-3" />

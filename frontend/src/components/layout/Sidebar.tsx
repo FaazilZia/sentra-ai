@@ -6,20 +6,42 @@ import {
   EyeOff, 
   LogOut,
   ChevronRight,
-  ShieldCheck
+  ShieldCheck,
+  Lock,
+  FileText,
+  Database
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/lib/auth';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Overview', path: '/app' },
   { icon: ShieldAlert, label: 'Risk Center', path: '/app/risk' },
   { icon: ClipboardCheck, label: 'Compliance', path: '/app/compliance' },
   { icon: EyeOff, label: 'Shadow AI', path: '/app/shadow' },
+  { icon: Lock, label: 'Guardrails', path: '/app/guardrails' },
+  { icon: FileText, label: 'Policies', path: '/app/policies' },
+  { icon: Database, label: 'Inventory', path: '/app/inventory' },
 ];
 
 export function Sidebar() {
+  const { logout, user } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
+  const userInitials = user?.fullName 
+    ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase()
+    : 'AD';
+
   return (
-    <aside className="fixed left-0 top-0 z-50 h-screen w-[var(--sidebar-width)] bg-[var(--bg-sidebar)] border-r border-[var(--border-default)] flex flex-col transition-all duration-300 hidden lg:flex shadow-2xl shadow-black/5">
+    <aside className="fixed left-0 top-0 z-50 h-screen w-[var(--sidebar-width)] bg-[#2D3AC0]/95 backdrop-blur-xl border-r border-white/5 flex flex-col transition-all duration-300 hidden lg:flex shadow-2xl shadow-black/5">
       {/* Brand Logo */}
       <div className="flex h-[var(--topbar-height)] items-center px-6 border-b border-white/5">
         <div className="flex items-center gap-3">
@@ -62,13 +84,16 @@ export function Sidebar() {
 
       {/* Footer Profile */}
       <div className="p-4 border-t border-white/5 bg-black/5">
-        <div className="flex items-center gap-3 p-2 rounded hover:bg-white/5 transition-colors cursor-pointer group">
+        <div 
+          onClick={handleLogout}
+          className="flex items-center gap-3 p-2 rounded hover:bg-white/5 transition-colors cursor-pointer group"
+        >
           <div className="h-8 w-8 rounded bg-[var(--mid-indigo)] border border-white/10 flex items-center justify-center text-[10px] font-black text-white">
-            AD
+            {userInitials}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-black text-white uppercase tracking-tight truncate">Admin User</p>
-            <p className="text-[9px] font-bold text-[var(--lavender)] uppercase opacity-50 truncate">Governance Admin</p>
+            <p className="text-[10px] font-black text-white uppercase tracking-tight truncate">{user?.fullName || 'Admin User'}</p>
+            <p className="text-[9px] font-bold text-[var(--lavender)] uppercase opacity-50 truncate">{user?.role || 'Governance Admin'}</p>
           </div>
           <LogOut className="h-3.5 w-3.5 text-[var(--lavender)] opacity-40 group-hover:opacity-100 group-hover:text-rose-400 transition-all" />
         </div>

@@ -56,9 +56,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser({
         id: '00000000-0000-0000-0000-000000000000',
         email: 'admin@sentra.ai',
-        fullName: 'Demo Administrator',
+        fullName: 'Governance Admin',
         role: 'admin',
-        organizationId: 'demo-org-id',
+        organizationId: 'default-org-id',
         created_at: new Date().toISOString(),
         is_active: true,
       } as any);

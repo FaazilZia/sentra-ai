@@ -9,6 +9,12 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import LoginPage from './pages/Login';
 
 const DashboardPage = lazy(() => import('./pages/Dashboard'));
+const RiskCenterPage = lazy(() => import('./pages/RiskCenter'));
+const CompliancePage = lazy(() => import('./pages/Compliance'));
+const ShadowAIPage = lazy(() => import('./pages/ShadowAI'));
+const GuardrailsPage = lazy(() => import('./pages/Guardrails'));
+const PoliciesPage = lazy(() => import('./pages/Policies'));
+const InventoryPage = lazy(() => import('./pages/Inventory'));
 
 import { ModalProvider } from './components/shared/ModalProvider';
 import { ToastProvider } from './components/shared/ToastProvider';
@@ -61,6 +67,30 @@ function AppRoutes() {
             <Route 
               path="/app" 
               element={user ? <AppLayout><DashboardPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+            <Route 
+              path="/app/risk" 
+              element={user ? <AppLayout><RiskCenterPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+            <Route 
+              path="/app/compliance" 
+              element={user ? <AppLayout><CompliancePage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+            <Route 
+              path="/app/shadow" 
+              element={user ? <AppLayout><ShadowAIPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+            <Route 
+              path="/app/guardrails" 
+              element={user ? <AppLayout><GuardrailsPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+            <Route 
+              path="/app/policies" 
+              element={user ? <AppLayout><PoliciesPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+            <Route 
+              path="/app/inventory" 
+              element={user ? <AppLayout><InventoryPage /></AppLayout> : <Navigate to="/login" replace />}
             />
 
             <Route path="*" element={<Navigate to="/app" replace />} />

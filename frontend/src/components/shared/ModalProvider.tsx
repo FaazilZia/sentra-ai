@@ -33,10 +33,10 @@ export function ModalProvider() {
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="relative w-full max-w-lg bg-white rounded-lg shadow-2xl overflow-hidden border-[0.5px] border-[var(--border-default)]"
+          className="relative w-full max-w-lg bg-white/80 backdrop-blur-2xl rounded-xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)] overflow-hidden border border-white/20"
         >
           {/* Header */}
-          <div className="px-8 py-6 border-b border-[var(--border-default)] flex items-center justify-between bg-[var(--bg-page)]">
+          <div className="px-8 py-6 border-b border-black/5 flex items-center justify-between bg-white/20">
             <h3 className="text-[var(--text-sm)] font-bold uppercase tracking-[0.1em] text-[var(--text-primary)]">
               {type?.replace(/_/g, ' ')}
             </h3>
