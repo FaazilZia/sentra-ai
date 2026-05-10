@@ -62,8 +62,10 @@ export const securityObservability = async (req: Request, res: Response, next: N
           ? `Blocked access attempt to ${req.originalUrl}` 
           : `Rate limit exceeded on ${req.originalUrl}`;
           
+        const organizationId = user?.organizationId || '00000000-0000-0000-0000-000000000001';
         await prisma.alerts.create({
           data: {
+            organizationId,
             type,
             message,
             severity,
@@ -117,9 +119,9 @@ export const validateRequest = (schema: z.ZodObject<any, any>) => {
       if (error instanceof z.ZodError) {
         // Trigger a 403 or 400 for bad validation. 
         // Returning 403 will trigger our security anomaly hook.
-        res.status(403).json({
+        res.status(400).json({
           success: false,
-          message: 'Invalid request payload or unauthorized structure.',
+          message: 'Invalid request payload.',
           errors: error.issues
         });
       } else {

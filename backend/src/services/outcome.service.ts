@@ -1,12 +1,10 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '../config/db';
 
 export class OutcomeService {
   /**
    * Validates the outcome of a compliance fix
    */
-  static async validateOutcome(featureId: string, actionId?: string) {
+  static async validateOutcome(featureId: string, organizationId: string, actionId?: string) {
     // 1. Get latest two snapshots to compare
     const snapshots = await prisma.compliance_snapshots.findMany({
       where: { featureId },
@@ -36,6 +34,7 @@ export class OutcomeService {
     return await prisma.outcome_validations.create({
       data: {
         feature_id: featureId,
+        organizationId,
         action_id: actionId,
         previous_score: previousScore,
         new_score: currentScore,

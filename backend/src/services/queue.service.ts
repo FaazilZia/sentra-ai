@@ -1,5 +1,4 @@
 import { Queue, Worker } from 'bullmq';
-import IORedis from 'ioredis';
 import { S3Client, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3';
 import { google } from 'googleapis';
 import { Client as PgClient } from 'pg';
@@ -8,19 +7,9 @@ import prisma from '../config/db';
 import { logActivity } from './policy.service';
 import { decrypt } from '../utils/encryption';
 import { SENSITIVE_PATTERNS } from './riskEngine';
+import { getBullMqConnection } from '../config/redis';
 
-const REDIS_URL = process.env.REDIS_URL;
-
-let connection: IORedis | undefined;
-if (REDIS_URL) {
-  connection = new IORedis(REDIS_URL, {
-    maxRetriesPerRequest: null,
-    enableOfflineQueue: false,
-  });
-  connection.on('error', (err) => {
-    logger.error('Redis Connection Error:', err);
-  });
-}
+const connection = getBullMqConnection();
 
 export const activityQueue = connection ? new Queue('activity-logs', { connection }) : null;
 export const connectorQueue = connection ? new Queue('connector-scans', { connection }) : null;

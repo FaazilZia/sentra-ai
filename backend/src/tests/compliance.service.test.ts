@@ -223,13 +223,13 @@ describe('ComplianceService.createFixTasks()', () => {
   });
 
   it('creates one task per action plan item', async () => {
-    await ComplianceService.createFixTasks(FEATURE_ID, ACTION_PLAN);
+    await ComplianceService.createFixTasks(FEATURE_ID, ACTION_PLAN, ORG_ID);
     // 2 priority_1 + 1 priority_2 + 0 priority_3 = 3 calls
     expect(db.compliance_fix_tasks.create).toHaveBeenCalledTimes(3);
   });
 
   it('assigns correct priority levels to tasks', async () => {
-    await ComplianceService.createFixTasks(FEATURE_ID, ACTION_PLAN);
+    await ComplianceService.createFixTasks(FEATURE_ID, ACTION_PLAN, ORG_ID);
 
     const calls = db.compliance_fix_tasks.create.mock.calls;
     const priorities = calls.map((c: any) => c[0].data.priority);
@@ -239,7 +239,7 @@ describe('ComplianceService.createFixTasks()', () => {
   });
 
   it('sets status to "pending" for all created tasks', async () => {
-    await ComplianceService.createFixTasks(FEATURE_ID, ACTION_PLAN);
+    await ComplianceService.createFixTasks(FEATURE_ID, ACTION_PLAN, ORG_ID);
 
     const calls = db.compliance_fix_tasks.create.mock.calls;
     calls.forEach((c: any) => {

@@ -5,31 +5,13 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const databaseUrl = process.env.DATABASE_URL || 'file:./dev.db';
-const isSqlite = databaseUrl.startsWith('file:');
-
-async function getPrisma() {
-  if (isSqlite) {
-    const { PrismaBetterSqlite } = await import('@prisma/adapter-better-sqlite3') as any;
-    const Database = (await import('better-sqlite3')).default as any;
-    const db = new Database('dev.db');
-    const adapter = new PrismaBetterSqlite(db);
-    return new PrismaClient({ adapter });
-  } else {
-    const { PrismaPg } = await import('@prisma/adapter-pg');
-    const { Pool } = await import('pg');
-    const pool = new Pool({ connectionString: databaseUrl });
-    const adapter = new PrismaPg(pool);
-    return new PrismaClient({ adapter });
-  }
-}
+const prisma = new PrismaClient();
 
 const DEFAULT_ORGANIZATION_ID = '00000000-0000-0000-0000-000000000001';
 const ADMIN_USER_ID = '00000000-0000-0000-0000-000000000002';
 
 async function main() {
-  console.log(`🌱 Seeding database (${isSqlite ? 'SQLite' : 'PostgreSQL'})...`);
-  const prisma = await getPrisma();
+  console.log(`🌱 Seeding database (PostgreSQL)...`);
 
   // 1. Ensure default company
   const company = await prisma.organizations.upsert({

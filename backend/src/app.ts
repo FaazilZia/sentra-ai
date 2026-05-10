@@ -105,7 +105,7 @@ app.use(helmet({
       scriptSrc: ["'self'", (req, res: any) => `'nonce-${res.locals.nonce}'`],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", 'data:', 'https:'],
-      connectSrc: ["'self'", 'https://api.openai.com', 'https://*.supabase.co', 'wss://*.supabase.co'],
+      connectSrc: ["'self'", 'https://api.openai.com'],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: [],
     }
@@ -122,7 +122,7 @@ app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
     const isAllowed = allowedOrigins.includes(origin) || 
-                      origin.endsWith('.vercel.app') || 
+                      /^https:\/\/sentra-ai(-[a-z0-9]+)?\.vercel\.app$/.test(origin) || 
                       (!isProduction && origin.includes('localhost'));
     if (isAllowed) {
       callback(null, true);
@@ -190,11 +190,9 @@ v1Router.get('/ready', async (req, res) => {
 
     // Check Redis (Non-critical, allows degraded mode)
     try {
-      const Redis = require('ioredis');
-      const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
-      const pong = await redis.ping();
-      if (pong === 'PONG') redisStatus = 'connected';
-      redis.disconnect();
+      const { redisHealthCheck } = require('./config/redis');
+      const pong = await redisHealthCheck();
+      if (pong) redisStatus = 'connected';
     } catch (e) {
       redisStatus = 'failed (degraded)';
     }

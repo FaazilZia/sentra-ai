@@ -102,22 +102,22 @@ export class ComplianceService {
   }
 
 
-  static async createFixTasks(featureId: string, actionPlan: any) {
+  static async createFixTasks(featureId: string, actionPlan: any, organizationId: string) {
     const tasks: any[] = [];
     
     // Priority 1
     actionPlan.priority_1.forEach((item: string) => {
-      tasks.push({ featureId, title: item, priority: 1, status: 'pending' });
+      tasks.push({ featureId, organizationId, title: item, priority: 1, status: 'pending' });
     });
     
     // Priority 2
     actionPlan.priority_2.forEach((item: string) => {
-      tasks.push({ featureId, title: item, priority: 2, status: 'pending' });
+      tasks.push({ featureId, organizationId, title: item, priority: 2, status: 'pending' });
     });
     
     // Priority 3
     actionPlan.priority_3.forEach((item: string) => {
-      tasks.push({ featureId, title: item, priority: 3, status: 'pending' });
+      tasks.push({ featureId, organizationId, title: item, priority: 3, status: 'pending' });
     });
 
     const createdTasks = await Promise.all(tasks.map(task => 
@@ -175,15 +175,15 @@ export class ComplianceService {
     await this.logAudit(userId, organizationId, 'UPLOAD_EVIDENCE', task.featureId, { taskId, evidenceId: evidence.id, verified });
 
     if (!verified) {
-      await this.triggerAlert(task.featureId, 'MISSING_EVIDENCE', `Invalid evidence uploaded for task: ${task.title}`, 'medium');
+      await this.triggerAlert(task.featureId, 'MISSING_EVIDENCE', `Invalid evidence uploaded for task: ${task.title}`, 'medium', organizationId);
     }
 
     return evidence;
   }
 
-  static async triggerAlert(featureId: string, type: string, message: string, severity: string) {
+  static async triggerAlert(featureId: string, type: string, message: string, severity: string, organizationId: string) {
     return await prisma.alerts.create({
-      data: { feature_id: featureId, type, message, severity }
+      data: { feature_id: featureId, type, message, severity, organizationId }
     });
   }
 

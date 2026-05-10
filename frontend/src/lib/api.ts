@@ -4,8 +4,8 @@ function normalizeApiBaseUrl(value?: string): string {
   let trimmed = value?.trim().replace(/\/$/, '') || '';
   
   if (!trimmed) {
-    console.warn('⚠️ No VITE_API_BASE_URL found, falling back to localhost:10000/api/v1');
-    return 'http://localhost:10000/api/v1';
+    console.warn('⚠️ No VITE_API_BASE_URL found, falling back to localhost:3000/api/v1');
+    return 'http://localhost:3000/api/v1';
   }
 
   // If it already ends with /api/v1, use it as is

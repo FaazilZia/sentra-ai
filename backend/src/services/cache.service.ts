@@ -1,61 +1,56 @@
-import IORedis from 'ioredis';
 import logger from '../utils/logger';
-
-const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
+import { getRedisClient } from '../config/redis';
 
 class CacheService {
-  private redis: IORedis;
-  private readonly DEFAULT_TTL = 60; // 60 seconds
+  private readonly DEFAULT_TTL = 60;
 
-  constructor() {
-    this.redis = new IORedis(REDIS_URL, {
-      maxRetriesPerRequest: 3,
-      retryStrategy: (times) => Math.min(times * 50, 2000),
-    });
-
-    this.redis.on('error', (err) => {
-      logger.warn('Redis Cache Error:', err);
-    });
+  private get redis() {
+    return getRedisClient();
   }
 
   async getOrSet<T>(key: string, fetchFn: () => Promise<T>, ttl = this.DEFAULT_TTL): Promise<T> {
-    try {
-      const cached = await this.redis.get(key);
-      if (cached) {
-        return JSON.parse(cached);
+    const client = this.redis;
+    if (client) {
+      try {
+        const cached = await client.get(key);
+        if (cached) {
+          return JSON.parse(cached);
+        }
+      } catch (error) {
+        logger.warn(`Cache read error for key ${key}:`, error);
       }
-    } catch (error) {
-      logger.warn(`Cache read error for key ${key}:`, error);
     }
 
     const freshData = await fetchFn();
-    
-    try {
-      await this.redis.set(key, JSON.stringify(freshData), 'EX', ttl);
-    } catch (error) {
-      logger.warn(`Cache write error for key ${key}:`, error);
+
+    if (client) {
+      try {
+        await client.set(key, JSON.stringify(freshData), 'EX', ttl);
+      } catch (error) {
+        logger.warn(`Cache write error for key ${key}:`, error);
+      }
     }
 
     return freshData;
   }
 
   async invalidate(key: string) {
+    const client = this.redis;
+    if (!client) return;
     try {
-      await this.redis.del(key);
+      await client.del(key);
     } catch (error) {
       logger.warn(`Cache invalidation error for key ${key}:`, error);
     }
   }
 
-  /**
-   * Invalidate all keys matching a pattern (e.g., 'policies:org:*').
-   * Useful for bulk invalidation when policies are updated.
-   */
   async invalidatePattern(pattern: string) {
+    const client = this.redis;
+    if (!client) return;
     try {
-      const keys = await this.redis.keys(pattern);
+      const keys = await client.keys(pattern);
       if (keys.length > 0) {
-        await this.redis.del(...keys);
+        await client.del(...keys);
         logger.info(`Cache: invalidated ${keys.length} keys matching ${pattern}`);
       }
     } catch (error) {
@@ -63,12 +58,11 @@ class CacheService {
     }
   }
 
-  /**
-   * Health check — reuses the existing connection (no leak).
-   */
   async ping(): Promise<boolean> {
+    const client = this.redis;
+    if (!client) return false;
     try {
-      const result = await this.redis.ping();
+      const result = await client.ping();
       return result === 'PONG';
     } catch {
       return false;

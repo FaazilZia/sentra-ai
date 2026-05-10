@@ -1,23 +1,17 @@
 import { Worker, Job, Queue } from 'bullmq';
-import IORedis from 'ioredis';
 import logger from '../utils/logger';
 import prisma from '../config/db';
 import { processS3Scan } from './s3.worker';
 import { processSqlScan } from './sql.worker';
 import { processGDriveScan } from './gdrive.worker';
-
-const REDIS_URL = process.env.REDIS_URL;
+import { getBullMqConnection } from '../config/redis';
 
 export function setupConnectorWorkers() {
-  if (!REDIS_URL) {
+  const connection = getBullMqConnection();
+  if (!connection) {
     logger.warn('Skipping Connector Workers (Redis offline)');
     return;
   }
-
-  const connection = new IORedis(REDIS_URL, {
-    maxRetriesPerRequest: null,
-    enableOfflineQueue: false,
-  });
 
   const worker = new Worker(
     'connector-scans',
@@ -132,7 +126,7 @@ async function updateConnectorHealth(connectorId: string, success: boolean, late
 /**
  * Adaptive Scheduling Logic
  */
-async function handleAdaptiveScheduling(connection: IORedis) {
+async function handleAdaptiveScheduling(connection: import('ioredis').default) {
   const connectors = await prisma.connectors.findMany({ where: { status: { notIn: ['failed', 'paused_budget'] } } });
   const connectorQueue = new Queue('connector-scans', { connection });
 

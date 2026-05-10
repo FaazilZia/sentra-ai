@@ -28,7 +28,7 @@ export const postFixTasks = async (req: any, res: Response, next: NextFunction) 
     if (!organizationId) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
     const { featureId, actionPlan } = req.body;
-    const tasks = await ComplianceService.createFixTasks(featureId, actionPlan);
+    const tasks = await ComplianceService.createFixTasks(featureId, actionPlan, organizationId);
     
     // Log audit
     await ComplianceService.logAudit(req.user.id, organizationId, 'CREATE_FIX_TASKS', featureId, { count: tasks.length });
