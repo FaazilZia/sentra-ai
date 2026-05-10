@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // url      = env("DATABASE_URL")
 }
 
 model api_keys {
@@ -359,8 +359,9 @@ model audit_logs {
 }
 
 model alerts {
-  id         String   @id @default(uuid())
-  feature_id String?
+  id             String   @id @default(uuid())
+  organizationId String
+  feature_id     String?
   type       String
   message    String
   severity   String   @default("low")
@@ -441,6 +442,7 @@ model RefreshToken {
 
 model outcome_validations {
   id                 String   @id @default(uuid())
+  organizationId     String
   feature_id         String
   action_id          String?
   previous_score     Float
@@ -456,6 +458,7 @@ model outcome_validations {
 
 model monitoring_status {
   id                  String   @id @default(uuid())
+  organizationId      String
   feature_id          String   @unique
   status              String   @default("active")
   last_checked_at     DateTime @default(now())
