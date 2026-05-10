@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentra AI - Intelligent LLM Security</title>
+    
+    <!-- Three.js & Matter.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg: #050510;
+            --blob-1: #6C3AFF;
+            --blob-2: #00C8FF;
+            --blob-3: #FF3CAC;
+            --blob-4: #3AFFD4;
+            --text-primary: #FFFFFF;
+            --text-muted: rgba(255, 255, 255, 0.5);
+            --glass: rgba(255, 255, 255, 0.04);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: none !important; /* Custom cursor */
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Typography */
+        h1 { font-size: 80px; font-weight: 800; line-height: 1.05; letter-spacing: -0.03em; }
+        h2 { font-size: 52px; font-weight: 700; letter-spacing: -0.02em; }
+        p { font-size: 18px; font-weight: 400; line-height: 1.7; color: var(--text-muted); }
+        .label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; }
+
+        /* Custom Cursor */
+        .cursor-dot {
+            position: fixed;
+            top: 0; left: 0;
+            width: 12px; height: 12px;
+            background: white;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10000;
+            transform: translate(-50%, -50%);
+            mix-blend-mode: difference;
+            transition: width 0.3s ease, height 0.3s ease;
+            will-change: transform;
+        }
+        .cursor-ring {
+            position: fixed;
+            top: 0; left: 0;
+            width: 40px; height: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s ease, height 0.3s ease, background 0.3s ease, border-color 0.3s ease;
+            will-change: transform;
+        }
+        .cursor-hover .cursor-dot { width: 0; height: 0; }
+        .cursor-hover .cursor-ring {
+            width: 60px; height: 60px;
+            background: rgba(255, 255, 255, 0.1);
+            border-color: transparent;
+            backdrop-filter: blur(4px);
+        }
+
+        /* Navbar */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 48px;
+            z-index: 9999;
+            background: rgba(5, 5, 16, 0);
+            border-bottom: 1px solid transparent;
+            transition: all 0.4s ease;
+        }
+        nav.scrolled {
+            padding: 16px 48px;
+            background: rgba(5, 5, 16, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .logo { font-size: 24px; font-weight: 800; letter-spacing: -0.05em; }
+        .nav-links { display: flex; gap: 40px; }
+        .nav-link {
+            position: relative;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -6px; left: 0; right: 0;
+            height: 2px;
+            background: var(--text-primary);
+            transform: scaleX(0);
+            transform-origin: center;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .nav-link:hover::after { transform: scaleX(1); }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 36px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 15px;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: transform;
+            position: relative;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--blob-1), var(--blob-2));
+            color: white;
+            border: none;
+        }
+        .btn-primary:hover {
+            transform: scale(1.04);
+            box-shadow: 0 0 40px rgba(108, 58, 255, 0.5);
+        }
+        .btn-primary:active { transform: scale(0.97); }
+        .btn-ghost {
+            background: transparent;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .btn-ghost:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: scale(1.04);
+        }
+        .btn-ghost:active { transform: scale(0.97); }
+
+        /* Main Scroll Wrapper */
+        #scroll-wrapper {
+            position: fixed;
+            top: 0; left: 0; width: 100%;
+            will-change: transform;
+        }
+        
+        /* Background Layers */
+        #canvas-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+        .blobs-container {
+            position: fixed;
+            inset: 0; z-index: -2;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.35;
+            will-change: transform, width, height;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Sections */
+        section { position: relative; width: 100%; }
+        
+        /* Section 1: Hero */
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 0 24px;
+        }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            padding: 8px 16px;
+            border-radius: 100px;
+            margin-bottom: 40px;
+            opacity: 0; transform: translateY(20px);
+        }
+        .badge-dot {
+            width: 8px; height: 8px;
+            background: var(--blob-4);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        .hero-headline { margin-bottom: 24px; perspective: 1000px; }
+        .hero-headline .line { display: block; overflow: hidden; }
+        .hero-headline .word {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .text-gradient {
+            background: linear-gradient(90deg, var(--blob-1), var(--blob-2), var(--blob-3));
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 4s ease infinite;
+        }
+        .hero-subhead {
+            max-width: 520px;
+            margin-bottom: 48px;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+        .hero-buttons {
+            display: flex; gap: 16px;
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .scroll-indicator {
+            position: absolute;
+            bottom: 40px;
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
+            opacity: 1; transition: opacity 0.5s ease;
+        }
+        .scroll-indicator .mouse {
+            width: 24px; height: 36px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            position: relative;
+        }
+        .scroll-indicator .wheel {
+            width: 4px; height: 4px; background: white; border-radius: 50%;
+            position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
+            animation: wheelBounce 1.5s infinite;
+        }
+
+        /* Section 2: Physics Cards */
+        .physics-section {
+            height: 120vh;
+            display: flex; flex-direction: column; align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+        .physics-header { margin-top: 100px; text-align: center; z-index: 10; pointer-events: none; }
+        #physics-container {
+            position: absolute; inset: 0; pointer-events: none;
+        }
+        .physics-card-dom {
+            position: absolute;
+            width: 240px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 20px;
+            padding: 28px;
+            top: 0; left: 0;
+            pointer-events: auto; /* clickable */
+            user-select: none;
+            display: flex; flex-direction: column; gap: 12px;
+            transform-origin: center center;
+            will-change: transform;
+        }
+        .card-icon { font-size: 32px; }
+        .card-stat { font-size: 28px; font-weight: 800; color: white; }
+        .card-label { font-size: 14px; color: var(--text-muted); }
+
+        /* Section 3: How it Works */
+        .horizontal-section {
+            height: 400vh; /* 4 panels * 100vh */
+        }
+        .horizontal-sticky {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            display: flex; align-items: center;
+        }
+        .horizontal-container {
+            display: flex;
+            width: 400vw;
+            will-change: transform;
+        }
+        .step-panel {
+            width: 100vw; height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            padding: 0 10vw;
+        }
+        .step-content { flex: 1; padding-right: 80px; }
+        .step-num {
+            font-size: 120px; font-weight: 800; line-height: 1;
+            background: linear-gradient(180deg, white, rgba(255,255,255,0));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 24px;
+        }
+        .step-visual {
+            flex: 1;
+            height: 400px;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            position: relative;
+            display: flex; align-items: center; justify-content: center; overflow: hidden;
+        }
+        /* Step Animations */
+        .scan-line {
+            position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+            background: var(--blob-2); box-shadow: 0 0 20px var(--blob-2);
+            animation: scan 2s ease-in-out infinite alternate;
+        }
+        
+        /* Section 4: Metrics */
+        .metrics-section {
+            padding: 160px 48px;
+            border-top: 2px solid transparent;
+            border-image: linear-gradient(90deg, transparent, var(--blob-1), var(--blob-2), transparent) 1;
+        }
+        .metrics-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            max-width: 1200px; margin: 0 auto;
+        }
+        .metric-item {
+            text-align: center;
+            border-right: 1px solid rgba(255,255,255,0.08);
+        }
+        .metric-item:last-child { border-right: none; }
+        .metric-val { 
+            font-size: 80px; font-weight: 800; 
+            background: linear-gradient(135deg, #fff, #888);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+
+
+        /* Section 6: Final CTA */
+        .cta-section {
+            height: 100vh;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; position: relative;
+        }
+        .cta-blob {
+            position: absolute;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, var(--blob-1) 0%, transparent 70%);
+            opacity: 0.2; filter: blur(60px);
+            transition: transform 0.5s ease;
+            z-index: -1;
+        }
+        
+        /* Footer */
+        footer {
+            padding: 40px; text-align: center; color: var(--text-muted);
+            border-top: 1px solid var(--glass-border);
+            position: relative; z-index: 10;
+        }
+
+        /* Animations */
+        @keyframes pulse { 0%, 100% { opacity: 0.4; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 10px var(--blob-4); } }
+        @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        @keyframes wheelBounce { 0%, 100% { transform: translate(-50%, 0); opacity: 0.3; } 50% { transform: translate(-50%, 10px); opacity: 1; } }
+        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+        @media (prefers-reduced-motion: reduce) {
+            * { animation: none !important; transition: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Custom Cursor -->
+    <div class="cursor-dot" id="cursor-dot"></div>
+    <div class="cursor-ring" id="cursor-ring"></div>
+
+    <!-- Background Blobs -->
+    <div class="blobs-container">
+        <div class="blob" id="blob1" style="background: var(--blob-1); width: 600px; height: 600px;"></div>
+        <div class="blob" id="blob2" style="background: var(--blob-2); width: 500px; height: 500px;"></div>
+        <div class="blob" id="blob3" style="background: var(--blob-3); width: 700px; height: 400px;"></div>
+        <div class="blob" id="blob4" style="background: var(--blob-4); width: 450px; height: 600px;"></div>
+        <div class="blob" id="blob5" style="background: var(--blob-1); width: 550px; height: 550px;"></div>
+    </div>
+
+    <!-- Particles Canvas -->
+    <canvas id="canvas-bg"></canvas>
+
+    <!-- Confetti Canvas -->
+    <canvas id="confetti-canvas" style="position:fixed; inset:0; pointer-events:none; z-index:9999;"></canvas>
+
+    <!-- Navbar -->
+    <nav id="navbar">
+        <div class="logo">Sentra AI</div>
+        <div class="nav-links">
+            <a href="#platform" class="nav-link hover-target">Platform</a>
+            <a href="#how" class="nav-link hover-target">How it Works</a>
+            <a href="#metrics" class="nav-link hover-target">Metrics</a>
+        </div>
+        <a href="#cta" class="btn btn-ghost hover-target" style="padding: 10px 24px; font-size: 13px;">Login</a>
+    </nav>
+
+    <!-- Native Scroll Spacer -->
+    <div id="scroll-spacer"></div>
+
+    <!-- Scroll Jacked Wrapper -->
+    <div id="scroll-wrapper">
+        
+        <!-- Section 1: Hero -->
+        <section class="hero">
+            <div class="hero-badge" id="hero-badge">
+                <div class="badge-dot"></div>
+                <span class="label">Now in Public Beta</span>
+            </div>
+            
+            <h1 class="hero-headline" id="hero-headline">
+                <span class="line">The intelligent</span>
+                <span class="line text-gradient">safety layer for</span>
+                <span class="line">production LLMs.</span>
+            </h1>
+
+            <p class="hero-subhead" id="hero-subhead">
+                Unified observability, real-time threat blocking, and automatic compliance validation running seamlessly alongside your models.
+            </p>
+
+            <div class="hero-buttons" id="hero-buttons">
+                <a href="#cta" class="btn btn-primary interactive-btn hover-target">Deploy Sentra AI</a>
+                <a href="#how" class="btn btn-ghost interactive-btn hover-target">Read Documentation</a>
+            </div>
+
+            <div class="scroll-indicator" id="scroll-indicator">
+                <span class="label" style="opacity: 0.5;">Scroll</span>
+                <div class="mouse"><div class="wheel"></div></div>
+            </div>
+        </section>
+
+        <!-- Section 2: Matter.js Cards -->
+        <section class="physics-section" id="platform">
+            <div class="physics-header">
+                <h2>Gravity-Defying Architecture</h2>
+                <p>Weightless integration, powerful protection.</p>
+            </div>
+            <!-- Matter.js DOM synced cards -->
+            <div id="physics-container">
+                <div class="physics-card-dom hover-target">
+                    <div class="card-icon">⚡</div>
+                    <div class="card-stat"><0.5ms</div>
+                    <div class="card-label">Detection Latency overhead on inferences</div>
+                </div>
+                <div class="physics-card-dom hover-target">
+                    <div class="card-icon">🛡️</div>
+                    <div class="card-stat">99.9%</div>
+                    <div class="card-label">Threat Catch Rate against injections</div>
+                </div>
+                <div class="physics-card-dom hover-target">
+                    <div class="card-icon">⏱️</div>
+                    <div class="card-stat">5 mins</div>
+                    <div class="card-label">Average Time to Deploy globally</div>
+                </div>
+                <div class="physics-card-dom hover-target">
+                    <div class="card-icon">📜</div>
+                    <div class="card-stat">100%</div>
+                    <div class="card-label">Compliance Policy Sync automated</div>
+                </div>
+                <div class="physics-card-dom hover-target">
+                    <div class="card-icon">🌐</div>
+                    <div class="card-stat">50+</div>
+                    <div class="card-label">Supported LLMs out of the box</div>
+                </div>
+                <div class="physics-card-dom hover-target">
+                    <div class="card-icon">🔒</div>
+                    <div class="card-stat">Zero</div>
+                    <div class="card-label">Data Leaks through PII Masking</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Horizontal Scroll -->
+        <section class="horizontal-section" id="how">
+            <div class="horizontal-sticky">
+                <div class="horizontal-container" id="horizontal-container">
+                    
+                    <div class="step-panel">
+                        <div class="step-content">
+                            <div class="step-num">01</div>
+                            <h2 style="margin-bottom: 20px;">Intercept & Inspect</h2>
+                            <p>Sentra sits intelligently between your application logic and the LLM, intercepting prompts in real-time with sub-millisecond overhead.</p>
+                        </div>
+                        <div class="step-visual">
+                            <div style="width: 200px; height: 280px; background: rgba(255,255,255,0.05); border-radius: 12px; position:relative; overflow:hidden;">
+                                <div style="padding: 20px; font-family: monospace; font-size: 10px; color:rgba(255,255,255,0.3);">
+                                    {<br>&nbsp;&nbsp;"prompt": "Ignore all...",<br>&nbsp;&nbsp;"user_id": "usr_99X"<br>}
+                                </div>
+                                <div class="scan-line"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-panel">
+                        <div class="step-content">
+                            <div class="step-num">02</div>
+                            <h2 style="margin-bottom: 20px;">Threat Analysis</h2>
+                            <p>Proprietary ML models instantly scan for prompt injections, jailbreaks, PII leakage, and toxicity before the request hits your billing account.</p>
+                        </div>
+                        <div class="step-visual">
+                            <!-- CSS Animation SVG -->
+                            <svg width="200" height="200" viewBox="0 0 100 100" overflow="visible">
+                                <circle cx="50" cy="50" r="40" fill="none" stroke="var(--blob-1)" stroke-width="2" stroke-dasharray="251" stroke-dashoffset="251">
+                                    <animate attributeName="stroke-dashoffset" values="251;0;251" dur="4s" repeatCount="indefinite"/>
+                                </circle>
+                                <circle cx="50" cy="50" r="20" fill="var(--blob-3)">
+                                    <animate attributeName="r" values="18;22;18" dur="2s" repeatCount="indefinite"/>
+                                </circle>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="step-panel">
+                        <div class="step-content">
+                            <div class="step-num">03</div>
+                            <h2 style="margin-bottom: 20px;">Dynamic Masking</h2>
+                            <p>Sensitive data is automatically replaced with synthetic tokens. When the LLM responds, Sentra seamlessly re-hydrates the original data.</p>
+                        </div>
+                        <div class="step-visual" style="flex-direction: column; gap: 20px;">
+                            <div style="padding: 12px 24px; background: rgba(255,255,255,0.1); border-radius: 8px; font-family: monospace;">My SSN is <span style="background:var(--blob-4); color:black; padding:2px 6px;">[MASKED]</span></div>
+                            <div style="padding: 12px 24px; background: rgba(255,255,255,0.1); border-radius: 8px; font-family: monospace;">Email: <span style="background:var(--blob-4); color:black; padding:2px 6px;">[MASKED]</span></div>
+                        </div>
+                    </div>
+
+                    <div class="step-panel">
+                        <div class="step-content">
+                            <div class="step-num">04</div>
+                            <h2 style="margin-bottom: 20px;">Full Observability</h2>
+                            <p>Every interaction is logged, clustered, and mapped to compliance frameworks, providing complete visibility into your LLM operations.</p>
+                        </div>
+                        <div class="step-visual">
+                             <svg width="100" height="100" viewBox="0 0 100 100">
+                                <path d="M20,50 L40,70 L80,30" fill="none" stroke="var(--blob-4)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="100" stroke-dashoffset="100">
+                                    <animate attributeName="stroke-dashoffset" values="100;0" dur="2s" fill="freeze" repeatCount="indefinite"/>
+                                </path>
+                            </svg>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Metrics -->
+        <section class="metrics-section" id="metrics">
+            <div class="metrics-grid">
+                <div class="metric-item">
+                    <div class="metric-val" data-target="50">0</div>
+                    <div class="label">Million+ Prompts Analyzed</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-val" data-target="99.9" data-suffix="%">0</div>
+                    <div class="label">SLA Uptime Guarantee</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-val" data-target="2" data-prefix="<" data-suffix="ms">0</div>
+                    <div class="label">Latency Overhead</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-val" data-target="0">0</div>
+                    <div class="label">Data Leaks</div>
+                </div>
+            </div>
+        </section>
+
+
+
+        <!-- Section 6: Final CTA -->
+        <section class="cta-section" id="cta">
+            <div class="cta-blob" id="cta-blob"></div>
+            <h2 style="font-size: 72px; margin-bottom: 24px; z-index: 1;">Ready to secure your AI?</h2>
+            <p style="max-width: 500px; margin-bottom: 48px; z-index: 1;">Join top enterprises protecting their generative AI pipelines with zero performance compromises.</p>
+            <div style="display: flex; gap: 16px; z-index: 1;">
+                <button class="btn btn-primary interactive-btn hover-target" id="deploy-btn">Deploy Now</button>
+                <button class="btn btn-ghost interactive-btn hover-target">Talk to Sales</button>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <div style="font-size: 24px; font-weight: 800; margin-bottom: 20px;">Sentra AI</div>
+            <p>The intelligent safety layer for production LLMs.</p>
+            <p style="font-size: 14px; margin-top: 40px; opacity: 0.5;">© 2026 Sentra AI Inc. All rights reserved.</p>
+        </footer>
+
+    </div> <!-- End Scroll Wrapper -->
+
+    <script>
+        // ----------------------------------------------------
+        // 1. Custom Cursor & Magnetic Buttons
+        // ----------------------------------------------------
+        const cursorDot = document.getElementById('cursor-dot');
+        const cursorRing = document.getElementById('cursor-ring');
+        
+        // Hide native cursor immediately over interactive elements
+        const hoverTargets = document.querySelectorAll('.hover-target, a, button');
+        hoverTargets.forEach((el) => {
+            el.addEventListener('mouseenter', () => {
+                document.body.classList.add('cursor-hover');
+            });
+            el.addEventListener('mouseleave', () => {
+                document.body.classList.remove('cursor-hover');
+            });
+        });
+
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
+        let dotX = mouseX, dotY = mouseY;
+        let ringX = mouseX, ringY = mouseY;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        // Magnetic Buttons
+        const magneticBtns = document.querySelectorAll('.interactive-btn');
+        magneticBtns.forEach(btn => {
+            btn.addEventListener('mousemove', (e) => {
+                const rect = btn.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+                btn.style.transform = `translate(${x * 0.2}px, ${y * 0.2}px) scale(1.04)`;
+            });
+            btn.addEventListener('mouseleave', () => {
+                btn.style.transform = `translate(0px, 0px) scale(1)`;
+            });
+        });
+
+        // ----------------------------------------------------
+        // 2. Scroll Jacking (Smooth Scroll)
+        // ----------------------------------------------------
+        const scrollWrapper = document.getElementById('scroll-wrapper');
+        const scrollSpacer = document.getElementById('scroll-spacer');
+        
+        let targetScrollY = 0;
+        let currentScrollY = 0;
+
+        function updateSpacerHeight() {
+            scrollSpacer.style.height = `${scrollWrapper.clientHeight}px`;
+        }
+        window.addEventListener('resize', updateSpacerHeight);
+        
+        // Use native wheel interception as requested
+        window.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const maxScroll = scrollWrapper.clientHeight - window.innerHeight;
+            targetScrollY += e.deltaY * 0.8;
+            targetScrollY = Math.max(0, Math.min(maxScroll, targetScrollY));
+        }, { passive: false });
+
+        // Backup sync for trackpad/scrollbar dragging
+        window.addEventListener('scroll', () => {
+            if (Math.abs(window.scrollY - targetScrollY) > 50) {
+                targetScrollY = window.scrollY;
+            }
+        });
+
+        // ----------------------------------------------------
+        // 3. Background Blobs Animation (Sine/Cosine Math)
+        // ----------------------------------------------------
+        const blobs = document.querySelectorAll('.blob');
+        const blobData = Array.from(blobs).map(() => ({
+            offsetX: Math.random() * Math.PI * 2,
+            offsetY: Math.random() * Math.PI * 2,
+            speedX: 0.0005 + Math.random() * 0.0005,
+            speedY: 0.0005 + Math.random() * 0.0005,
+            radiusX: 100 + Math.random() * 150,
+            radiusY: 100 + Math.random() * 150,
+            x: window.innerWidth / 2,
+            y: window.innerHeight / 2,
+            targetScale: 1,
+            currentScale: 1
+        }));
+
+        let lastMouseX = mouseX;
+        let lastMouseY = mouseY;
+
+        // ----------------------------------------------------
+        // 4. Background Particle Ring System (Canvas)
+        // ----------------------------------------------------
+        const canvas = document.getElementById('canvas-bg');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        const numParticles = 150;
+
+        function initParticles() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            particles = [];
+            for (let i=0; i<numParticles; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 0.3,
+                    vy: (Math.random() - 0.5) * 0.3,
+                    size: 1 + Math.random() * 1.5,
+                    opacity: 0.15 + Math.random() * 0.25
+                });
+            }
+        }
+        window.addEventListener('resize', initParticles);
+        initParticles();
+
+        function drawParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+
+                if (p.x < 0) p.x = canvas.width;
+                if (p.x > canvas.width) p.x = 0;
+                if (p.y < 0) p.y = canvas.height;
+                if (p.y > canvas.height) p.y = 0;
+
+                // Repulsion from cursor
+                const dx = p.x - mouseX;
+                const dy = p.y - mouseY;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < 120) {
+                    const force = (120 - dist) / 120;
+                    p.x += (dx / dist) * force * 2;
+                    p.y += (dy / dist) * force * 2;
+                }
+
+                ctx.fillStyle = `rgba(255, 255, 255, ${p.opacity})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        // ----------------------------------------------------
+        // 5. Matter.js Physics Cards
+        // ----------------------------------------------------
+        const Engine = Matter.Engine,
+              Runner = Matter.Runner,
+              Bodies = Matter.Bodies,
+              Composite = Matter.Composite,
+              Body = Matter.Body;
+
+        const engine = Engine.create();
+        engine.world.gravity.y = 0; // Space-like
+
+        const domCards = document.querySelectorAll('.physics-card-dom');
+        const physicsBodies = [];
+        
+        let physicsInitialized = false;
+
+        function initPhysics() {
+            if (physicsInitialized) return;
+            physicsInitialized = true;
+            
+            const ww = window.innerWidth;
+            const wh = window.innerHeight;
+
+            domCards.forEach((card, i) => {
+                const w = 240;
+                const h = 180;
+                // Spawn randomly around center
+                const x = ww/2 + (Math.random() - 0.5) * 400;
+                const y = Math.max(100, Math.min(wh-100, wh/2 + (Math.random() - 0.5) * 400)); // Clamp Y a bit
+
+                const body = Bodies.rectangle(x, y, w, h, {
+                    frictionAir: 0.02,
+                    restitution: 0.6,
+                    angle: (Math.random() - 0.5) * 0.5
+                });
+
+                // Initial random velocity
+                Body.setVelocity(body, { 
+                    x: (Math.random() - 0.5) * 10, 
+                    y: (Math.random() - 0.5) * 10 
+                });
+
+                physicsBodies.push({ dom: card, body: body, w, h });
+                Composite.add(engine.world, body);
+
+                // Click burst
+                card.addEventListener('mousedown', () => {
+                    Body.setVelocity(body, {
+                        x: (Math.random() - 0.5) * 30,
+                        y: (Math.random() - 0.5) * 30
+                    });
+                });
+            });
+
+            // Walls 
+            const wallOpts = { isStatic: true, restitution: 0.8 };
+            Composite.add(engine.world, [
+                Bodies.rectangle(ww/2, -50, ww*2, 100, wallOpts), // Top
+                Bodies.rectangle(ww/2, wh + 50, ww*2, 100, wallOpts), // Bottom
+                Bodies.rectangle(-50, wh/2, 100, wh*2, wallOpts), // Left
+                Bodies.rectangle(ww + 50, wh/2, 100, wh*2, wallOpts) // Right
+            ]);
+
+            Runner.run(Runner.create(), engine);
+        }
+
+        // Sync DOM with Matter bodies
+        Matter.Events.on(engine, 'afterUpdate', () => {
+            physicsBodies.forEach(({ dom, body, w, h }) => {
+                dom.style.transform = `translate(${body.position.x - w/2}px, ${body.position.y - h/2}px) rotate(${body.angle}rad)`;
+                
+                // Repel on cursor proximity (if section is active)
+                const secTop = document.getElementById('platform').offsetTop;
+                if (currentScrollY > secTop - window.innerHeight && currentScrollY < secTop + window.innerHeight) {
+                    const localMouseY = mouseY + currentScrollY - secTop;
+                    const dx = body.position.x - mouseX;
+                    const dy = body.position.y - localMouseY;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist < 200) {
+                        const force = (200 - dist) / 20000;
+                        Body.applyForce(body, body.position, { x: (dx/dist)*force, y: (dy/dist)*force });
+                    }
+                }
+            });
+        });
+
+        // ----------------------------------------------------
+        // 6. Entrance Animations & Intersection Observers
+        // ----------------------------------------------------
+        // Hide headline spans for sequential reveal
+        const hl = document.getElementById('hero-headline');
+        hl.innerHTML = hl.innerHTML.replace(/(<\/?span[^>]*>)/g, '|$1|');
+        const parts = hl.innerHTML.split('|');
+        hl.innerHTML = '';
+        let wordCount = 0;
+        parts.forEach(part => {
+            if (part.startsWith('<span')) { hl.innerHTML += part; }
+            else if (part.startsWith('</span')) { hl.innerHTML += part; }
+            else {
+                part.split(' ').forEach(word => {
+                    if(word.trim() === '') { hl.innerHTML += ' '; return; }
+                    hl.innerHTML += `<span class="word" style="transition-delay: ${0.4 + wordCount*0.05}s">${word}</span> `;
+                    wordCount++;
+                });
+            }
+        });
+
+        setTimeout(() => {
+            document.getElementById('hero-badge').style.opacity = '1';
+            document.getElementById('hero-badge').style.transform = 'translateY(0)';
+            
+            document.querySelectorAll('.word').forEach(w => {
+                w.style.opacity = '1';
+                w.style.transform = 'translateY(0)';
+            });
+
+            setTimeout(() => {
+                document.getElementById('hero-subhead').style.opacity = '1';
+                document.getElementById('hero-buttons').style.opacity = '1';
+                document.getElementById('hero-buttons').style.transform = 'translateY(0)';
+                updateSpacerHeight();
+            }, wordCount * 50 + 400);
+
+        }, 100);
+
+        // Metrics Count Up
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const valEl = entry.target;
+                    const target = parseFloat(valEl.getAttribute('data-target'));
+                    const prefix = valEl.getAttribute('data-prefix') || '';
+                    const suffix = valEl.getAttribute('data-suffix') || '';
+                    let start = 0;
+                    const dur = 2000;
+                    const startT = performance.now();
+                    
+                    const update = (t) => {
+                        const prog = Math.min(1, (t - startT) / dur);
+                        const ease = prog === 1 ? 1 : 1 - Math.pow(2, -10 * prog);
+                        const current = start + (target - start) * ease;
+                        valEl.innerText = prefix + (Number.isInteger(target) ? Math.floor(current) : current.toFixed(1)) + suffix;
+                        if (prog < 1) requestAnimationFrame(update);
+                        else valEl.innerText = prefix + target + suffix;
+                    };
+                    requestAnimationFrame(update);
+                    observer.unobserve(valEl);
+                }
+            });
+        }, { threshold: 0.5 });
+        document.querySelectorAll('.metric-val').forEach(el => observer.observe(el));
+
+        // Start physics when approaching section
+        const physObserver = new IntersectionObserver((entries) => {
+            if(entries[0].isIntersecting) initPhysics();
+        });
+        physObserver.observe(document.getElementById('platform'));
+
+
+        // ----------------------------------------------------
+        // 7. Confetti Effect (CTA)
+        // ----------------------------------------------------
+        const confCanvas = document.getElementById('confetti-canvas');
+        const confCtx = confCanvas.getContext('2d');
+        let confettis = [];
+        
+        function resizeConfetti() {
+            confCanvas.width = window.innerWidth;
+            confCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeConfetti);
+        resizeConfetti();
+
+        document.getElementById('deploy-btn').addEventListener('click', (e) => {
+            const rect = e.target.getBoundingClientRect();
+            const x = rect.left + rect.width/2;
+            const y = rect.top + rect.height/2;
+            const colors = ['#6C3AFF', '#00C8FF', '#FF3CAC', '#3AFFD4', '#FFF'];
+            
+            for(let i=0; i<80; i++) {
+                confettis.push({
+                    x: x, y: y,
+                    vx: (Math.random()-0.5) * 20,
+                    vy: (Math.random()-1) * 20 - 5,
+                    size: Math.random() * 8 + 4,
+                    color: colors[Math.floor(Math.random()*colors.length)],
+                    rot: Math.random() * 360,
+                    vrot: (Math.random()-0.5) * 10
+                });
+            }
+        });
+
+        function drawConfetti() {
+            confCtx.clearRect(0,0,confCanvas.width, confCanvas.height);
+            for(let i=confettis.length-1; i>=0; i--) {
+                const c = confettis[i];
+                c.x += c.vx;
+                c.y += c.vy;
+                c.vy += 0.5; // gravity
+                c.rot += c.vrot;
+
+                confCtx.save();
+                confCtx.translate(c.x, c.y);
+                confCtx.rotate(c.rot * Math.PI/180);
+                confCtx.fillStyle = c.color;
+                confCtx.fillRect(-c.size/2, -c.size/2, c.size, c.size);
+                confCtx.restore();
+
+                if(c.y > confCanvas.height) confettis.splice(i, 1);
+            }
+        }
+
+
+        // ----------------------------------------------------
+        // 8. Main Animation Loop
+        // ----------------------------------------------------
+        const navbar = document.getElementById('navbar');
+        const scrollIndicator = document.getElementById('scroll-indicator');
+        const horizContainer = document.getElementById('horizontal-container');
+        const howSec = document.getElementById('how');
+        const ctaBlob = document.getElementById('cta-blob');
+
+        function render(time) {
+            // Smooth Scroll Update
+            currentScrollY += (targetScrollY - currentScrollY) * 0.08;
+            scrollWrapper.style.transform = `translateY(-${currentScrollY}px)`;
+
+            // Navbar & Indicator
+            if (currentScrollY > 50) navbar.classList.add('scrolled');
+            else navbar.classList.remove('scrolled');
+
+            if (currentScrollY > 100) scrollIndicator.style.opacity = '0';
+            else scrollIndicator.style.opacity = '1';
+
+            // Custom Cursor Lerp
+            dotX += (mouseX - dotX) * 0.4;
+            dotY += (mouseY - dotY) * 0.4;
+            ringX += (mouseX - ringX) * 0.15;
+            ringY += (mouseY - ringY) * 0.15;
+            cursorDot.style.transform = `translate(calc(${dotX}px - 50%), calc(${dotY}px - 50%))`;
+            cursorRing.style.transform = `translate(calc(${ringX}px - 50%), calc(${ringY}px - 50%))`;
+
+            // Mouse velocity for blob stretching
+            const mouseSpeed = Math.sqrt(Math.pow(mouseX - lastMouseX, 2) + Math.pow(mouseY - lastMouseY, 2));
+            lastMouseX = mouseX;
+            lastMouseY = mouseY;
+
+            // Blobs animation
+            blobs.forEach((blob, i) => {
+                const data = blobData[i];
+                // Math wave orbit
+                const cx = window.innerWidth / 2;
+                const cy = window.innerHeight / 2;
+                const mathX = cx + Math.sin(time * data.speedX + data.offsetX) * data.radiusX;
+                const mathY = cy + Math.cos(time * data.speedY + data.offsetY) * data.radiusY;
+                
+                // Cursor gravity
+                data.x += (mathX - data.x) * 0.05;
+                data.y += (mathY - data.y) * 0.05;
+                data.x += (mouseX - data.x) * 0.008;
+                data.y += (mouseY - data.y) * 0.008;
+
+                // Stretch logic based on fast mouse move
+                data.targetScale = 1 + Math.min(mouseSpeed * 0.005, 0.15);
+                data.currentScale += (data.targetScale - data.currentScale) * 0.1;
+
+                blob.style.transform = `translate(-50%, -50%) translate(${data.x}px, ${data.y}px) scale(${data.currentScale}, ${2 - data.currentScale})`;
+            });
+
+            // Particles
+            drawParticles();
+
+            // Horizontal Scroll Logic (Manual Sticky due to transform on Wrapper)
+            const hRect = howSec.getBoundingClientRect();
+            const virtualTop = howSec.offsetTop - currentScrollY;
+            const stickyEl = document.querySelector('.horizontal-sticky');
+            
+            if (virtualTop <= 0 && virtualTop > -(howSec.offsetHeight - window.innerHeight)) {
+                const progress = Math.abs(virtualTop) / (howSec.offsetHeight - window.innerHeight);
+                horizContainer.style.transform = `translateX(-${progress * 75}%)`;
+                stickyEl.style.transform = `translateY(${Math.abs(virtualTop)}px)`; // offset wrapper's translation
+            } else if (virtualTop > 0) {
+                 horizContainer.style.transform = `translateX(0%)`;
+                 stickyEl.style.transform = `translateY(0px)`;
+            } else if (virtualTop <= -(howSec.offsetHeight - window.innerHeight)) {
+                 horizContainer.style.transform = `translateX(-75%)`;
+                 stickyEl.style.transform = `translateY(${howSec.offsetHeight - window.innerHeight}px)`;
+            }
+
+            // CTA Blob Zoom
+            const ctaTop = document.getElementById('cta').offsetTop - currentScrollY;
+            if (ctaTop < window.innerHeight) {
+                const prog = 1 - Math.max(0, ctaTop / window.innerHeight);
+                ctaBlob.style.transform = `scale(${0.8 + prog * 0.4})`;
+            }
+
+            // Confetti
+            if (confettis.length > 0) drawConfetti();
+
+            requestAnimationFrame(render);
+        }
+
+        requestAnimationFrame(render);
+
+    </script>
+</body>
+</html>

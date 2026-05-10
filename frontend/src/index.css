@@ -1,0 +1,105 @@
+@import "./styles/tokens.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[var(--bg-page)] text-[var(--text-secondary)] font-sans antialiased;
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(45, 58, 192, 0.03) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(108, 99, 255, 0.03) 0px, transparent 50%);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight text-[var(--text-primary)];
+  }
+
+  * {
+    @apply border-[var(--border-default)];
+    transition: background-color var(--transition-speed) var(--transition-ease), 
+                border-color var(--transition-speed) var(--transition-ease),
+                color var(--transition-speed) var(--transition-ease),
+                box-shadow var(--transition-speed) var(--transition-ease),
+                backdrop-filter var(--transition-speed) var(--transition-ease);
+  }
+
+  a, button {
+    @apply transition-all duration-200;
+  }
+
+  input:focus {
+    @apply outline-none ring-2 ring-[var(--violet-blue)] ring-offset-2;
+  }
+}
+
+@layer components {
+  .card-base {
+    @apply bg-[var(--glass-bg)] border-[0.5px] border-[var(--glass-border)] rounded-[var(--radius)] shadow-[var(--glass-shadow)];
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+  }
+
+  .glass-panel {
+    @apply bg-[rgba(255,255,255,0.7)] backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm;
+  }
+
+  .btn-primary {
+    @apply bg-[var(--royal-indigo)] text-white font-semibold py-2 px-4 rounded-[var(--radius)] 
+           hover:bg-[var(--mid-indigo)] active:bg-[var(--royal-indigo)] 
+           transition-all shadow-sm;
+  }
+
+  .btn-secondary {
+    @apply bg-white border border-[var(--royal-indigo)] text-[var(--royal-indigo)] font-semibold py-2 px-4 rounded-[var(--radius)]
+           hover:bg-[var(--ghost-violet)] transition-all;
+  }
+
+  .btn-danger {
+    @apply bg-[var(--risk-critical)] text-white font-semibold py-2 px-4 rounded-[var(--radius)]
+           hover:opacity-90 transition-all shadow-sm;
+  }
+
+  .badge-pill {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border-none;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-[var(--border-strong)] rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-[var(--lavender)];
+  }
+}
+
+@keyframes progress-fill {
+  from { width: 0; }
+  to { width: var(--target-width); }
+}
+
+.animate-progress {
+  animation: progress-fill 600ms ease-in-out forwards;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 400ms ease-out forwards;
+}

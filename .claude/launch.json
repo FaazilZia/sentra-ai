@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Frontend (Vite)",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "frontend", "run", "dev"],
+      "port": 5173
+    },
+    {
+      "name": "Backend (Node.js)",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "backend-node", "run", "dev"],
+      "port": 5001
+    }
+  ]
+}

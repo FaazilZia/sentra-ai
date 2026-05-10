@@ -1,0 +1,54 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment & Security
+.env
+*.env
+.venv/
+venv/
+ENV/
+
+# Build Artifacts
+dist/
+build/
+*.egg-info/
+__pycache__/
+**/coverage
+**/dist
+backend/dev.db
+backend/results.txt
+backend/scratch/
+*.sh
+
+# Playwright test artifacts
+frontend/test-results/
+frontend/playwright-report/
+
+# Local development artifacts
+.local-dev/
+backend/src/scratch/

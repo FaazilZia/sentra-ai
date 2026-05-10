@@ -1,0 +1,501 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model api_keys {
+  id             String        @id @default(uuid())
+  organizationId String        @map("organization_id")
+  name           String
+  key_prefix     String
+  key_hash       String
+  key_type       String
+  is_active      Boolean
+  last_used_at   DateTime?     @map("last_used_at")
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt @map("updated_at")
+  organizations  organizations @relation(fields: [organizationId], references: [id])
+
+  @@map("api_keys")
+}
+
+model usage_stats {
+  id             String        @id @default(uuid())
+  organizationId String        @map("organization_id")
+  date           DateTime      @db.Date
+  requests_count Int           @default(0)
+  tokens_used    Int           @default(0)
+  estimated_cost Float         @default(0)
+  organizations  organizations @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, date])
+  @@map("usage_stats")
+}
+
+model organizations {
+  id              String       @id @default(uuid())
+  name            String
+  apiKey          String?      @unique @map("api_key")
+  slug            String       @unique
+  is_active       Boolean
+  created_at      DateTime     @default(now())
+  updated_at      DateTime     @updatedAt
+  alertEmail      String?      @map("alert_email")
+  slackWebhookUrl String?      @map("slack_webhook_url")
+  data_region     String       @default("US") @map("data_region")
+  ai_agents       ai_agents[]
+  api_keys        api_keys[]
+  audit_logs      audit_logs[]
+
+  connectors        connectors[]
+  drift_alerts      drift_alerts[]
+  incidents         incidents[]
+  interception_logs interception_logs[]
+  alert_rules       alert_rules[]
+
+  logs            logs[]
+  policies        policies[]
+  policy_versions policy_versions[]
+  scan_jobs       scan_jobs[]
+  users           users[]
+  usage_stats     usage_stats[]
+  alerts               alerts[]
+  compliance_snapshots compliance_snapshots[]
+  compliance_fix_tasks compliance_fix_tasks[]
+  outcome_validations  outcome_validations[]
+  monitoring_status    monitoring_status[]
+  compliance_drift     compliance_drift[]
+
+  @@map("companies")
+}
+
+model policies {
+  id                String            @id @default(uuid())
+  organizationId    String            @map("organization_id")
+  name              String
+  description       String
+  explanation       String?
+  compliance        Json?
+  impact            String?
+  enabled           Boolean
+  priority          Int
+  effect            String
+  status            String
+  rule              Json?             @map("rule")
+  current_version   Int
+  published_version Int?
+  scope             Json
+  conditions        Json
+  obligations       Json
+  isTemplate        Boolean           @default(false)
+  category          String?
+  created_at        DateTime          @default(now())
+  updated_at        DateTime          @updatedAt
+  incidents         incidents[]
+  organizations     organizations     @relation(fields: [organizationId], references: [id])
+  policy_versions   policy_versions[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@map("policies")
+}
+
+model logs {
+  id                String        @id @default(uuid())
+  requestId         String?       @map("request_id")
+  organizationId    String        @map("organization_id")
+  agent             String        @map("agent")
+  action            String
+  status            String
+  risk              String        @map("risk")
+  reason            String?
+  impact            String?
+  latency           Int?          @map("latency")
+  timestamp         DateTime      @default(now()) @map("timestamp")
+  explanation       String?
+  confidence        Float?
+  timeline          Json?
+  compliance        Json?
+  metadata          Json?
+  overrideComment   String?       @map("override_comment")
+  overriddenBy      String?       @map("overridden_by")
+  overrideTimestamp DateTime?     @map("override_timestamp")
+  isPendingApproval Boolean       @default(false) @map("is_pending_approval")
+  approvedBy        String?       @map("approved_by")
+  organizations     organizations @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, timestamp])
+  @@map("logs")
+}
+
+model incidents {
+  id               String        @id @default(uuid())
+  organizationId   String        @map("organization_id")
+  agent_id         String
+  policy_id        String?
+  severity         Int
+  action           String
+  details          String
+  prompt_excerpt   String
+  response_excerpt String
+  event_metadata   Json
+  created_at       DateTime      @default(now())
+  updated_at       DateTime      @default(now())
+  status           String        @default("unresolved")
+  user_id          String?
+  resolved_by_id   String?
+  resolved_at      DateTime?
+  organizations    organizations @relation(fields: [organizationId], references: [id])
+  policies         policies?     @relation(fields: [policy_id], references: [id])
+  resolved_by      users?        @relation("IncidentResolver", fields: [resolved_by_id], references: [id])
+  user             users?        @relation("IncidentAuthor", fields: [user_id], references: [id])
+
+  @@map("incidents")
+}
+
+model alert_rules {
+  id                  String   @id @default(uuid())
+  organizationId      String
+  threshold_count     Int
+  time_window_minutes Int
+  webhook_url         String
+  created_at          DateTime @default(now())
+
+  organization organizations @relation(fields: [organizationId], references: [id])
+}
+
+model policy_versions {
+  id                    String        @id @default(uuid())
+  policy_id             String
+  organizationId        String        @map("organization_id")
+  version               Int
+  name                  String
+  description           String
+  enabled               Boolean
+  priority              Int
+  effect                String
+  status                String
+  scope                 Json
+  conditions            Json
+  obligations           Json
+  is_published_snapshot Boolean
+  created_at            DateTime      @default(now())
+  updated_at            DateTime      @default(now())
+  organizations         organizations @relation(fields: [organizationId], references: [id])
+  policies              policies      @relation(fields: [policy_id], references: [id])
+
+  @@unique([policy_id, version])
+  @@map("policy_versions")
+}
+
+model ai_agents {
+  id             String            @id @default(uuid())
+  organizationId String            @map("organization_id")
+  name           String
+  model          String
+  permissions    Json
+  status         String
+  metadata       Json?
+  created_at     DateTime          @default(now())
+  updated_at     DateTime          @default(now())
+  organizations  organizations     @relation(fields: [organizationId], references: [id])
+  dependencies   ai_dependencies[]
+
+  @@map("ai_agents")
+}
+
+model ai_dependencies {
+  id          String    @id @default(uuid())
+  agentId     String    @map("agent_id")
+  targetType  String
+  targetName  String
+  description String?
+  created_at  DateTime  @default(now())
+  agent       ai_agents @relation(fields: [agentId], references: [id])
+
+  @@map("ai_dependencies")
+}
+
+model drift_alerts {
+  id             String        @id @default(uuid())
+  organizationId String        @map("organization_id")
+  agentId        String        @map("agent_id")
+  type           String
+  severity       String
+  description    String
+  status         String        @default("open")
+  timestamp      DateTime      @default(now())
+  organizations  organizations @relation(fields: [organizationId], references: [id])
+
+  @@map("drift_alerts")
+}
+
+model connectors {
+  id                 String        @id @default(uuid())
+  organizationId     String        @map("organization_id")
+  name               String
+  type               String
+  config             Json
+  status             String
+  last_scan_at       String?
+  created_at         DateTime      @default(now())
+  updated_at         DateTime      @default(now())
+  daily_cost_total   Float         @default(0)
+  daily_scan_count   Int           @default(0)
+  estimated_cost     Float         @default(0)
+  health_metrics     Json?
+  health_score       Int           @default(100)
+  last_confidence    Float         @default(0)
+  last_scan_reason   Json?
+  priority           String        @default("medium")
+  scan_policy        Json?
+  scope              Json?
+  total_api_calls    Int           @default(0)
+  total_data_scanned BigInt        @default(0)
+  credentials        String?
+  organizations      organizations @relation(fields: [organizationId], references: [id])
+
+  @@map("connectors")
+}
+
+model scan_jobs {
+  id                 String        @id @default(uuid())
+  organizationId     String        @map("organization_id")
+  phase              String
+  progress           Int           @default(0)
+  incidents_detected Int           @default(0)
+  sources_scanned    Int           @default(0)
+  created_at         DateTime      @default(now())
+  updated_at         DateTime      @default(now())
+  organizations      organizations @relation(fields: [organizationId], references: [id])
+
+  @@map("scan_jobs")
+}
+
+model users {
+  id                 String            @id @default(uuid())
+  organizationId     String            @map("organization_id")
+  email              String            @unique
+  full_name          String
+  employeeId         String?           @unique @map("employee_id")
+  password_hash      String?
+  role               String            @default("AUDITOR")
+  is_active          Boolean
+  created_at         DateTime          @default(now())
+  updated_at         DateTime          @default(now())
+  consent_records    consent_records[]
+  incidents_resolved incidents[]       @relation("IncidentResolver")
+  incidents_created  incidents[]       @relation("IncidentAuthor")
+  refresh_tokens     RefreshToken[]
+  requests           requests[]
+  organizations      organizations     @relation(fields: [organizationId], references: [id])
+
+  @@map("users")
+}
+
+model consent_records {
+  id             String   @id @default(uuid())
+  user_id        String
+  action         String
+  notice_version String
+  hashing_chain  String
+  metadata_json  Json
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+  users          users    @relation(fields: [user_id], references: [id])
+}
+
+model compliance_fix_tasks {
+  id             String             @id @default(uuid())
+  organizationId String             @map("organization_id")
+  featureId      String             @map("feature_id")
+  title          String
+  description    String?
+  priority       Int
+  status         String             @default("pending")
+  created_at     DateTime           @default(now())
+  updated_at     DateTime           @updatedAt
+  evidence       evidence_records[]
+  organizations  organizations      @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@map("compliance_fix_tasks")
+}
+
+model evidence_records {
+  id                String               @id @default(uuid())
+  taskId            String               @map("task_id")
+  type              String
+  value             String
+  hash              String?
+  source_type       String               @default("user")
+  verified          Boolean              @default(false)
+  validation_status String               @default("pending")
+  validated_at      DateTime             @default(now())
+  uploaded_at       DateTime             @default(now())
+  task              compliance_fix_tasks @relation(fields: [taskId], references: [id])
+
+  @@map("evidence_records")
+}
+
+model compliance_snapshots {
+  id             String        @id @default(uuid())
+  organizationId String        @map("organization_id")
+  featureId      String        @map("feature_id")
+  gdpr_score     Int
+  dpdp_score     Int
+  hipaa_score    Int
+  risk_level     String
+  created_at     DateTime      @default(now())
+  organizations  organizations @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@map("compliance_snapshots")
+}
+
+model audit_logs {
+  id             String        @id @default(uuid())
+  organizationId String        @map("organization_id")
+  user_id        String
+  action         String
+  feature_id     String?
+  metadata       Json?
+  timestamp      DateTime      @default(now())
+  organizations  organizations @relation(fields: [organizationId], references: [id])
+
+  @@map("audit_logs")
+}
+
+model alerts {
+  id             String        @id @default(uuid())
+  organizationId String        @map("organization_id")
+  feature_id     String?
+  type           String
+  message        String
+  severity       String        @default("low")
+  is_read        Boolean       @default(false)
+  created_at     DateTime      @default(now())
+  organizations  organizations @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@map("alerts")
+}
+
+model interception_logs {
+  id               String                @id @default(uuid())
+  user_id          String
+  organizationId   String                @map("organization_id")
+  input_text       String
+  output_text      String?
+  decision         String
+  confidence       String                @default("High")
+  override_status  String                @default("none")
+  reason           String?
+  policy_triggered String?
+  metadata         Json?
+  timestamp        DateTime              @default(now())
+  organizations    organizations         @relation(fields: [organizationId], references: [id])
+  overrides        guardrail_overrides[]
+
+  @@map("interception_logs")
+}
+
+model guardrail_overrides {
+  id               String            @id @default(uuid())
+  log_id           String            @map("log_id")
+  interception_log interception_logs @relation(fields: [log_id], references: [id])
+  requested_by     String
+  approved_by      String?
+  status           String            @default("pending")
+  reason           String
+  timestamp        DateTime          @default(now())
+
+  @@map("guardrail_overrides")
+}
+
+model requests {
+  id         String   @id @default(uuid())
+  user_id    String
+  prompt     String
+  response   String
+  created_at DateTime @default(now())
+  users      users    @relation(fields: [user_id], references: [id])
+}
+
+model roles {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+}
+
+model user_roles {
+  id         String   @id @default(uuid())
+  user_id    String
+  role_id    String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      users    @relation(fields: [userId], references: [id])
+
+  @@map("refresh_tokens")
+}
+
+model outcome_validations {
+  id                 String        @id @default(uuid())
+  organizationId     String        @map("organization_id")
+  feature_id         String
+  action_id          String?
+  previous_score     Float
+  new_score          Float
+  previous_risk      String
+  new_risk           String
+  validation_status  String        @default("pending")
+  outcome_confidence String        @default("High")
+  validated_at       DateTime      @default(now())
+  organizations      organizations @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@map("outcome_validations")
+}
+
+model monitoring_status {
+  id                  String        @id @default(uuid())
+  organizationId      String        @map("organization_id")
+  feature_id          String        @unique
+  status              String        @default("active")
+  last_checked_at     DateTime      @default(now())
+  violations_last_24h Int           @default(0)
+  stability           String        @default("stable")
+  organizations       organizations @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@map("monitoring_status")
+}
+
+model compliance_drift {
+  id               String        @id @default(uuid())
+  organizationId   String        @map("organization_id")
+  feature_id       String
+  drift_percentage Float
+  time_window      String        @default("6h")
+  detected_at      DateTime      @default(now())
+  severity         String        @default("low")
+  organizations    organizations @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@map("compliance_drift")
+}

@@ -1,0 +1,132 @@
+import { Request, Response, NextFunction } from 'express';
+import prisma from '../config/db';
+import logger from '../utils/logger';
+import { z } from 'zod';
+
+const ALERT_CACHE_MAX_SIZE = 10_000;
+const ALERT_DEBOUNCE_MS = 60_000;
+const alertCache = new Map<string, number>();
+
+/**
+ * Evicts expired entries and enforces max size to prevent memory leaks
+ * under sustained attack traffic. Runs at most once per minute.
+ */
+let lastEviction = 0;
+function evictStaleAlerts() {
+  const now = Date.now();
+  if (now - lastEviction < ALERT_DEBOUNCE_MS) return;
+  lastEviction = now;
+
+  for (const [key, timestamp] of alertCache) {
+    if (now - timestamp > ALERT_DEBOUNCE_MS) {
+      alertCache.delete(key);
+    }
+  }
+  // Hard cap: if still too large, drop oldest entries
+  if (alertCache.size > ALERT_CACHE_MAX_SIZE) {
+    const excess = alertCache.size - ALERT_CACHE_MAX_SIZE;
+    const keys = alertCache.keys();
+    for (let i = 0; i < excess; i++) {
+      alertCache.delete(keys.next().value!);
+    }
+  }
+}
+
+export const securityObservability = async (req: Request, res: Response, next: NextFunction) => {
+  const originalSend = res.send;
+  let responseBody: any;
+
+  res.send = function (body) {
+    responseBody = body;
+    return originalSend.call(this, body);
+  };
+
+  res.on('finish', async () => {
+    if (res.statusCode === 403 || res.statusCode === 429) {
+      const user = (req as any).user;
+      const type = res.statusCode === 403 ? 'POLICY_VIOLATION' : 'RATE_LIMIT_EXCEEDED';
+      
+      const cacheKey = `${type}-${req.ip}-${user?.id || 'anon'}`;
+      const now = Date.now();
+      
+      // Debounce identical alerts within 60 seconds to prevent DB flooding
+      evictStaleAlerts();
+      if (alertCache.has(cacheKey) && now - alertCache.get(cacheKey)! < ALERT_DEBOUNCE_MS) {
+        return;
+      }
+      alertCache.set(cacheKey, now);
+
+      try {
+        const severity = res.statusCode === 403 ? 'critical' : 'high';
+        const message = res.statusCode === 403 
+          ? `Blocked access attempt to ${req.originalUrl}` 
+          : `Rate limit exceeded on ${req.originalUrl}`;
+          
+        const organizationId = user?.organizationId || '00000000-0000-0000-0000-000000000001';
+        await prisma.alerts.create({
+          data: {
+            organizationId,
+            type,
+            message,
+            severity,
+            is_read: false,
+          }
+        });
+
+        logger.warn(`Security Anomaly Detected [${severity.toUpperCase()}]: ${message}`, {
+          ip: req.ip,
+          userId: user?.id,
+          method: req.method,
+          url: req.originalUrl
+        });
+
+        // Slack Webhook Integration (HIGH and CRITICAL)
+        if (process.env.SLACK_WEBHOOK_URL) {
+          const emoji = severity === 'critical' ? '🔥' : '🚨';
+          fetch(process.env.SLACK_WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              text: `${emoji} *${severity.toUpperCase()} SECURITY ANOMALY* ${emoji}\n*Type:* ${type}\n*Message:* ${message}\n*IP:* ${req.ip}\n*User:* ${user?.id || 'Anonymous'}`
+            })
+          }).catch(err => logger.error('Failed to send Slack alert', err));
+        }
+
+        // Email Simulation (CRITICAL only)
+        if (severity === 'critical') {
+          logger.info(`[AUDIT] CRITICAL Alert routing to email: security-ops@sentra.ai - ${message}`);
+        }
+
+      } catch (err) {
+        logger.error('Failed to log security anomaly to database', err);
+      }
+    }
+  });
+
+  next();
+};
+
+export const validateRequest = (schema: z.ZodObject<any, any>) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await schema.parseAsync({
+        body: req.body,
+        query: req.query,
+        params: req.params,
+      });
+      return next();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        // Return 400 for validation errors — NOT 403 which would trigger
+        // the security anomaly detector and pollute alert signals.
+        res.status(400).json({
+          success: false,
+          message: 'Invalid request payload.',
+          errors: error.issues
+        });
+      } else {
+        next(error);
+      }
+    }
+  };
+};
