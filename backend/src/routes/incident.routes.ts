@@ -9,7 +9,7 @@ import {
   getIncidentHistory,
 } from '../controllers/incident.controller';
 import { authenticate, authorizeRoles } from '../middleware/auth.middleware';
-import { validate } from '../middleware/validate.middleware';
+import { validate, validateParams } from '../middleware/validate.middleware';
 import { 
   getIncidentByIdSchema, 
   updateIncidentStatusSchema, 
@@ -25,8 +25,9 @@ router.post('/log', authenticate, validate(logIncidentSchema), logIncident);
 // Dashboard Incident Management
 router.get('/', authenticate, getIncidents);
 router.get('/history', authenticate, getIncidentHistory);
-router.get('/:id', authenticate, validate(getIncidentByIdSchema), getIncidentById);
-router.patch('/:id', authenticate, authorizeRoles('ADMIN'), validate(updateIncidentStatusSchema), updateIncidentStatus);
+router.get('/:id', authenticate, validateParams(getIncidentByIdSchema), getIncidentById);
+router.patch('/:id', authenticate, authorizeRoles('ADMIN'), validateParams(getIncidentByIdSchema), validate(updateIncidentStatusSchema), updateIncidentStatus);
+
 
 // Deep Scan Engine
 router.post(

@@ -2,6 +2,9 @@ import { Router } from 'express';
 import { DriftService } from '../services/drift.service';
 import { authenticate } from '../middleware/auth.middleware';
 
+import { validate } from '../middleware/validate.middleware';
+import { emptySchema } from '../validations/drift.validation';
+
 const router = Router();
 
 router.get('/alerts', authenticate, async (req: any, res) => {
@@ -13,7 +16,7 @@ router.get('/alerts', authenticate, async (req: any, res) => {
   }
 });
 
-router.post('/detect', authenticate, async (req: any, res) => {
+router.post('/detect', authenticate, validate(emptySchema), async (req: any, res) => {
   try {
     const alerts = await DriftService.detectDrift(req.user.organizationId);
     res.json(alerts);
@@ -22,7 +25,7 @@ router.post('/detect', authenticate, async (req: any, res) => {
   }
 });
 
-router.post('/resolve/:id', authenticate, async (req: any, res) => {
+router.post('/resolve/:id', authenticate, validate(emptySchema), async (req: any, res) => {
   try {
     await DriftService.resolveAlert(req.params.id, req.user.organizationId);
     res.status(204).send();
@@ -30,5 +33,6 @@ router.post('/resolve/:id', authenticate, async (req: any, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
 
 export default router;

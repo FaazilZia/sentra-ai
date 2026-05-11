@@ -88,6 +88,8 @@ router.delete(
 );
 
 import { testAlert } from '../controllers/organization.controller';
-router.post('/alerts/test', authenticate, authorizeRoles('ADMIN'), testAlert);
+import { emptySchema } from '../validations/organization.validation';
+router.post('/alerts/test', authenticate, authorizeRoles('ADMIN'), validate(emptySchema), testAlert);
+
 
 export default router;

@@ -98,7 +98,7 @@ export const calculateSecurityScore = async (organizationId: string) => {
   const highRiskBlocked = activityLogs.filter(l => l.risk === 'high' && l.status === 'blocked').length;
   const highRiskAllowed = activityLogs.filter(l => l.risk === 'high' && l.status === 'allowed').length;
 
-  let score = 100 - (highRiskAllowed * 5) + (highRiskBlocked * 2);
+  const score = 100 - (highRiskAllowed * 5) + (highRiskBlocked * 2);
   
   return Math.min(Math.max(score, 0), 100);
 };

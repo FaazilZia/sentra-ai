@@ -1,20 +1,25 @@
 import { z } from 'zod';
 
 export const checkActionSchema = z.object({
-  body: z.object({
-    agent: z.string().min(1, "Agent ID is required"),
-    action: z.string().min(1, "Action is required"),
-    metadata: z.record(z.string(), z.any()).optional()
-  })
+  agent: z.string().min(1, "Agent ID is required"),
+  action: z.string().min(1, "Action is required"),
+  metadata: z.record(z.string(), z.any()).optional()
 });
 
 export const aiChatSchema = z.object({
-  body: z.object({
-    message: z.string().min(1, "Message is required")
-  })
+  message: z.string().min(1, "Message is required")
 });
 
-export type CheckActionInput = z.infer<typeof checkActionSchema>['body'];
+export const postReplayActionSchema = z.object({
+  logId: z.string(),
+});
 
-export type AiChatInput = z.infer<typeof aiChatSchema>['body'];
+export const postOverrideActionSchema = z.object({
+  comment: z.string().optional(),
+  employeeId: z.string().optional(),
+});
+
+export type CheckActionInput = z.infer<typeof checkActionSchema>;
+
+export type AiChatInput = z.infer<typeof aiChatSchema>;
 

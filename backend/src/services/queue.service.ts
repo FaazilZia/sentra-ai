@@ -305,30 +305,36 @@ export async function processConnectorScan(type: string, connectorId: string) {
 
 async function performPIIScan(content: string, metadata: { connectorId: string, type: string, fileKey: string, organizationId: string }) {
   let violationsFound = 0;
+  const recordsToCreate: any[] = [];
+
   for (const [name, pattern] of Object.entries(SENSITIVE_PATTERNS)) {
     if (pattern.test(content)) {
       violationsFound++;
-      await prisma.interception_logs.create({
-        data: {
-          user_id: 'system_scanner',
-          organizationId: metadata.organizationId,
-          input_text: `Scan of ${metadata.type} source: ${metadata.fileKey}`,
-          decision: 'BLOCK',
-          confidence: 'High',
-          reason: `Data scan detected sensitive pattern: ${name}`,
-          policy_triggered: 'Data Governance Baseline',
-          metadata: { 
-            connector_id: metadata.connectorId, 
-            violationType: name, 
-            fileKey: metadata.fileKey,
-            source_type: metadata.type 
-          },
-          timestamp: new Date()
-        }
+      recordsToCreate.push({
+        user_id: 'system_scanner',
+        organizationId: metadata.organizationId,
+        input_text: `Scan of ${metadata.type} source: ${metadata.fileKey}`,
+        decision: 'BLOCK',
+        confidence: 'High',
+        reason: `Data scan detected sensitive pattern: ${name}`,
+        policy_triggered: 'Data Governance Baseline',
+        metadata: { 
+          connector_id: metadata.connectorId, 
+          violationType: name, 
+          fileKey: metadata.fileKey,
+          source_type: metadata.type 
+        },
+        timestamp: new Date()
       });
     }
   }
+
+  if (recordsToCreate.length > 0) {
+    await prisma.interception_logs.createMany({ data: recordsToCreate });
+  }
+
   return violationsFound;
+
 }
 
 // Schedule it to run every day at midnight

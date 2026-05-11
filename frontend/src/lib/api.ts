@@ -1,7 +1,7 @@
 // Supabase Edge Functions removed — all AI calls now route through Node.js backend
 
 function normalizeApiBaseUrl(value?: string): string {
-  let trimmed = value?.trim().replace(/\/$/, '') || '';
+  const trimmed = value?.trim().replace(/\/$/, '') || '';
   
   if (!trimmed) {
     console.warn('⚠️ No VITE_API_BASE_URL found, falling back to localhost:3000/api/v1');

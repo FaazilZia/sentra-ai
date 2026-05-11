@@ -191,7 +191,7 @@ export const logIncident = async (req: any, res: Response, next: NextFunction) =
       details, prompt_excerpt, response_excerpt, metadata 
     } = req.body;
 
-    let organizationId = await resolveOrganizationId(req);
+    const organizationId = await resolveOrganizationId(req);
     
     // If company resolution fails (e.g. invalid API key or session), 
     // we should not proceed. The auth middleware should catch this, but we check again.
