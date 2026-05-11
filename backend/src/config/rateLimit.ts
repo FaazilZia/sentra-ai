@@ -14,6 +14,10 @@ class FailClosedStore {
 }
 
 const getStore = (prefix: string, failClosed: boolean = false) => {
+  if (process.env.NODE_ENV === 'test') {
+    return undefined; // default memory store
+  }
+
   if (redisClient) {
     return new RedisStore({
       // @ts-ignore
@@ -29,6 +33,7 @@ const getStore = (prefix: string, failClosed: boolean = false) => {
 
   return undefined;
 };
+
 
 const onLimitReached = (req: any, res: any, options: any) => {
   const key = options.keyGenerator(req, res);
