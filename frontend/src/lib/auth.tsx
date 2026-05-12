@@ -150,6 +150,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function logout() {
+    try {
+      await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/v1/auth/logout`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (e) {
+      console.error('Logout error', e);
+    }
     localStorage.removeItem('sentra_access_token');
     localStorage.removeItem('sentra_refresh_token');
     setAccessToken(null);

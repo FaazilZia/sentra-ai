@@ -192,11 +192,24 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
       metadata: { ip: req.ip }
     });
 
+    const isProduction = process.env.NODE_ENV === 'production';
+    res.cookie('sentra_access_token', accessToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      maxAge: 15 * 60 * 1000, // 15 mins
+    });
+
+    res.cookie('sentra_refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
     res.status(200).json({
       success: true,
       data: {
-        accessToken,
-        refreshToken,
         user: {
           id: user.id,
           email: user.email,
@@ -278,11 +291,24 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
 
     await prisma.refreshToken.create({ data: { token: refreshToken, userId: user.id, expiresAt } });
 
+    const isProduction = process.env.NODE_ENV === 'production';
+    res.cookie('sentra_access_token', accessToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      maxAge: 15 * 60 * 1000, // 15 mins
+    });
+
+    res.cookie('sentra_refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
     res.status(200).json({
       success: true,
       data: {
-        accessToken,
-        refreshToken,
         user: { id: user.id, email: user.email, fullName: user.full_name, role, organizationId: user.organizationId },
       },
     });
@@ -294,7 +320,7 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
 
 export const refreshToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { token } = req.body;
+    const token = req.cookies?.sentra_refresh_token || req.body.token;
     if (!token) return res.status(401).json({ success: false, message: 'Refresh token required' });
 
     // 1. Verify and lookup token
@@ -334,12 +360,24 @@ export const refreshToken = async (req: Request, res: Response, next: NextFuncti
       },
     });
 
+    const isProduction = process.env.NODE_ENV === 'production';
+    res.cookie('sentra_access_token', newAccessToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      maxAge: 15 * 60 * 1000, // 15 mins
+    });
+
+    res.cookie('sentra_refresh_token', newRefreshToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
     res.status(200).json({
       success: true,
-      data: {
-        accessToken: newAccessToken,
-        refreshToken: newRefreshToken
-      },
+      message: 'Tokens refreshed'
     });
   } catch (error) {
     next(error);
@@ -362,6 +400,33 @@ export const getMe = async (req: any, res: Response, next: NextFunction) => {
         is_active: user.is_active,
       },
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const logout = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const isProduction = process.env.NODE_ENV === 'production';
+    const cookieOptions: any = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+    };
+    
+    // Attempt to revoke the refresh token if provided
+    const refreshToken = req.cookies?.sentra_refresh_token;
+    if (refreshToken) {
+      await prisma.refreshToken.updateMany({
+        where: { token: refreshToken },
+        data: { revoked: true }
+      });
+    }
+
+    res.clearCookie('sentra_access_token', cookieOptions);
+    res.clearCookie('sentra_refresh_token', cookieOptions);
+    
+    res.status(200).json({ success: true, message: 'Logged out successfully' });
   } catch (error) {
     next(error);
   }

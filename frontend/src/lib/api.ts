@@ -205,6 +205,7 @@ export async function apiRequest<T>(
   const response = await fetch(`${apiBaseUrl}${path}`, {
     ...init,
     headers,
+    credentials: 'include',
   });
 
   // Handle Token Refresh on 401
@@ -215,7 +216,7 @@ export async function apiRequest<T>(
         const refreshResponse = await fetch(`${apiBaseUrl}/auth/refresh-token`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: refreshToken }),
+          credentials: 'include',
         });
 
         if (refreshResponse.ok) {

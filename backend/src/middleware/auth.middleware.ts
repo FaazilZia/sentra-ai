@@ -61,14 +61,21 @@ export const authenticate = async (req: any, res: Response, next: NextFunction) 
   try {
     const authHeader = req.headers.authorization;
     const xApiKey = req.headers['x-api-key'];
+    const cookieToken = req.cookies?.sentra_access_token;
 
-    if (!authHeader && !xApiKey) {
+    if (!authHeader && !xApiKey && !cookieToken) {
       return res.status(401).json({ success: false, message: 'Authentication required' });
     }
 
-    // 1. Bearer token
+    // 1. Bearer token or Cookie
+    let token = '';
     if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.split(' ')[1];
+      token = authHeader.split(' ')[1];
+    } else if (cookieToken) {
+      token = cookieToken;
+    }
+
+    if (token) {
 
       // API key path
       if (token.startsWith('sentra_')) {
