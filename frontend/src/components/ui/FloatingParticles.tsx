@@ -30,7 +30,7 @@ export const FloatingParticles = () => {
 
     let animId: number;
     let particles: Particle[] = [];
-    let mouse = { x: -999, y: -999 };
+    const mouse = { x: -999, y: -999 };
 
     const resize = () => {
       canvas.width = window.innerWidth;

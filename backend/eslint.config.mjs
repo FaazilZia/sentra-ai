@@ -5,6 +5,9 @@ export default [
     js.configs.recommended,
     ...ts.configs.recommended,
     {
+        ignores: ["dist/**", "coverage/**"]
+    },
+    {
         languageOptions: {
             globals: {
                 module: "readonly",

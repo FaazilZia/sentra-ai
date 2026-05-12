@@ -68,7 +68,8 @@ test.describe('Navigation & Layout', () => {
       const link = page.locator('aside').locator(`text=${label}`).first();
       await expect(link).toBeVisible({ timeout: 10_000 });
       await link.click();
-      await expect(page).toHaveURL(new RegExp(path.replace('/', '\/')), { timeout: 15_000 });
+      const escapedPath = path.replace(/\//g, '\\/');
+      await expect(page).toHaveURL(new RegExp(escapedPath), { timeout: 15_000 });
     });
   }
 

@@ -249,7 +249,7 @@ export class ComplianceService {
       }))
     };
 
-    let aiResponse = this.generateFallbackReport(tasks);
+    const aiResponse = this.generateFallbackReport(tasks);
 
     const report = aiResponse.compliance_report;
     await prisma.compliance_snapshots.create({
