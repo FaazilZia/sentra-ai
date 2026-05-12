@@ -1,34 +1,39 @@
 services:
   - type: web
-    name: sentra-backend-node
-    env: node
+    name: sentra-backend
+    runtime: node
     plan: free
     rootDir: backend
     buildCommand: npm install && npx prisma generate && npm run build
     startCommand: npx prisma migrate deploy && npm start
     healthCheckPath: /api/health
+    numInstances: 1
     envVars:
-      - key: SENTRY_DSN
-        sync: false
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
       - key: DATABASE_URL
         sync: false
       - key: DIRECT_URL
+        sync: false
+      - key: REDIS_URL
         sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: REFRESH_SECRET
         generateValue: true
-      - key: NODE_ENV
-        value: production
-      - key: FRONTEND_URL
-        value: https://sentra-ai-88f7.vercel.app,https://sentra-ai-tau.vercel.app,https://sentra-ai.vercel.app,http://localhost:5173
-      - key: PORT
-        value: 10000
       - key: ENCRYPTION_KEY
         sync: false
-      - key: REDIS_URL
+      - key: FRONTEND_URL
+        value: https://sentra-ai.vercel.app,https://sentra-ai-tau.vercel.app,https://sentra-ai-88f7.vercel.app,http://localhost:5173
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: SENTRY_DSN
         sync: false
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: SEED_ADMIN_PASSWORD
         sync: false

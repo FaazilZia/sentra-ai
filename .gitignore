@@ -52,3 +52,5 @@ frontend/playwright-report/
 # Local development artifacts
 .local-dev/
 backend/src/scratch/
+sentra-ai-main/
+frontend/tsc_errors.txt

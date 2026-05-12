@@ -8,11 +8,12 @@
     "build": "rm -rf dist && prisma generate && tsc",
     "start": "node dist/src/server.js",
     "seed": "ts-node prisma/seed.ts",
-    "postinstall": "prisma generate",
+    "migrate": "prisma migrate deploy",
+    "postinstall": "prisma generate || true",
     "test": "jest --coverage"
   },
   "engines": {
-    "node": "20.x"
+    "node": ">=18.0.0"
   },
   "keywords": [],
   "author": "",

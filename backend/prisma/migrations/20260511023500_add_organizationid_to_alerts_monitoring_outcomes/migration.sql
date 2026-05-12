@@ -1,0 +1,3 @@
+ALTER TABLE "alerts" ADD COLUMN IF NOT EXISTS "organizationId" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "monitoring_status" ADD COLUMN IF NOT EXISTS "organizationId" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "outcome_validations" ADD COLUMN IF NOT EXISTS "organizationId" TEXT NOT NULL DEFAULT '';
