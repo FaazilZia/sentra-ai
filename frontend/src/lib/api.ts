@@ -575,6 +575,9 @@ export interface GuardrailMetrics {
   allowed: number;
   blocked: number;
   modified: number;
+  allowedCount: number;
+  blockedCount: number;
+  modifiedCount: number;
 }
 
 
