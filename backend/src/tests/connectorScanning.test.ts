@@ -8,14 +8,12 @@ import { decrypt } from '../utils/encryption';
 jest.mock('../config/db', () => ({
   connectors: {
     findUnique: jest.fn(),
-    update: jest.fn().mockReturnValue(Promise.resolve()),
+    update: jest.fn(),
   },
   interception_logs: {
     create: jest.fn(),
-    createMany: jest.fn().mockReturnValue(Promise.resolve()),
   },
 }));
-
 
 jest.mock('../server', () => ({
   io: {
@@ -82,15 +80,12 @@ describe('Connector Scanning Logic', () => {
 
     await processConnectorScan('s3', connectorId);
 
-    expect(prisma.interception_logs.createMany).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.arrayContaining([
-        expect.objectContaining({
-          reason: expect.stringContaining('detected sensitive pattern: EMAIL'),
-          metadata: expect.objectContaining({ violationType: 'EMAIL', fileKey: 'test-file.txt' })
-        })
-      ])
+    expect(prisma.interception_logs.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        reason: expect.stringContaining('detected sensitive pattern: EMAIL'),
+        metadata: expect.objectContaining({ violationType: 'EMAIL', fileKey: 'test-file.txt' })
+      })
     }));
-
 
     expect(prisma.connectors.update).toHaveBeenCalledWith(expect.objectContaining({
       where: { id: connectorId },
@@ -120,14 +115,11 @@ describe('Connector Scanning Logic', () => {
 
     await processConnectorScan('gdrive', connectorId);
 
-    expect(prisma.interception_logs.createMany).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.arrayContaining([
-        expect.objectContaining({
-          reason: expect.stringContaining('detected sensitive pattern: SSN')
-        })
-      ])
+    expect(prisma.interception_logs.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        reason: expect.stringContaining('detected sensitive pattern: SSN')
+      })
     }));
-
   });
 
   it('should scan SQL and log violations', async () => {
@@ -145,14 +137,11 @@ describe('Connector Scanning Logic', () => {
 
     await processConnectorScan('sql', connectorId);
 
-    expect(prisma.interception_logs.createMany).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.arrayContaining([
-        expect.objectContaining({
-          reason: expect.stringContaining('detected sensitive pattern: EMAIL')
-        })
-      ])
+    expect(prisma.interception_logs.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        reason: expect.stringContaining('detected sensitive pattern: EMAIL')
+      })
     }));
-
   });
 
   it('should stop scan if budget is exceeded', async () => {

@@ -2,9 +2,6 @@ import { Router } from 'express';
 import { InventoryService } from '../services/inventory.service';
 import { authenticate } from '../middleware/auth.middleware';
 
-import { validate } from '../middleware/validate.middleware';
-import { agentSchema } from '../validations/inventory.validation';
-
 const router = Router();
 
 router.get('/agents', authenticate, async (req: any, res) => {
@@ -16,7 +13,7 @@ router.get('/agents', authenticate, async (req: any, res) => {
   }
 });
 
-router.post('/agents', authenticate, validate(agentSchema), async (req: any, res) => {
+router.post('/agents', authenticate, async (req: any, res) => {
   try {
     const agent = await InventoryService.createAgent(req.user.organizationId, req.body);
     res.status(201).json(agent);
@@ -35,7 +32,7 @@ router.get('/agents/:id', authenticate, async (req: any, res) => {
   }
 });
 
-router.put('/agents/:id', authenticate, validate(agentSchema), async (req: any, res) => {
+router.put('/agents/:id', authenticate, async (req: any, res) => {
   try {
     const agent = await InventoryService.updateAgent(req.params.id, req.user.organizationId, req.body);
     res.json(agent);
@@ -43,7 +40,6 @@ router.put('/agents/:id', authenticate, validate(agentSchema), async (req: any, 
     res.status(500).json({ error: error.message });
   }
 });
-
 
 router.delete('/agents/:id', authenticate, async (req: any, res) => {
   try {

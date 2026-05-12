@@ -11,6 +11,10 @@ interface State {
   error: Error | null;
 }
 
+/**
+ * React Error Boundary — catches rendering errors in child components
+ * and displays a recovery UI instead of crashing the entire application.
+ */
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);

@@ -1,18 +1,19 @@
 import { z } from 'zod';
 
 export const policyIdVersionsParamSchema = z.object({
-  policyId: z.string().uuid(),
+  params: z.object({
+    policyId: z.string().uuid(),
+  }),
 });
-
 export const createPolicySchema = z.object({
-  name: z.string().min(3),
-  description: z.string().optional(),
-  effect: z.enum(['allow', 'deny']),
-  enabled: z.boolean().default(true),
-  priority: z.number().int().min(1).default(1),
-  conditions: z.record(z.string(), z.any()).default({}),
-  scope: z.record(z.string(), z.any()).default({}),
-  obligations: z.record(z.string(), z.any()).default({}),
+  body: z.object({
+    name: z.string().min(3),
+    description: z.string().optional(),
+    effect: z.enum(['allow', 'deny']),
+    enabled: z.boolean().default(true),
+    priority: z.number().int().min(1).default(1),
+    conditions: z.record(z.string(), z.any()).default({}),
+    scope: z.record(z.string(), z.any()).default({}),
+    obligations: z.record(z.string(), z.any()).default({}),
+  }),
 });
-
-export const updatePolicySchema = createPolicySchema.partial();

@@ -1,4 +1,5 @@
 import { Queue, Worker } from 'bullmq';
+import IORedis from 'ioredis';
 import { S3Client, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3';
 import { google } from 'googleapis';
 import { Client as PgClient } from 'pg';
@@ -7,9 +8,19 @@ import prisma from '../config/db';
 import { logActivity } from './policy.service';
 import { decrypt } from '../utils/encryption';
 import { SENSITIVE_PATTERNS } from './riskEngine';
-import { getBullMqConnection } from '../config/redis';
 
-const connection = getBullMqConnection();
+const REDIS_URL = process.env.REDIS_URL;
+
+let connection: IORedis | undefined;
+if (REDIS_URL) {
+  connection = new IORedis(REDIS_URL, {
+    maxRetriesPerRequest: null,
+    enableOfflineQueue: false,
+  });
+  connection.on('error', (err) => {
+    logger.error('Redis Connection Error:', err);
+  });
+}
 
 export const activityQueue = connection ? new Queue('activity-logs', { connection }) : null;
 export const connectorQueue = connection ? new Queue('connector-scans', { connection }) : null;
@@ -305,36 +316,30 @@ export async function processConnectorScan(type: string, connectorId: string) {
 
 async function performPIIScan(content: string, metadata: { connectorId: string, type: string, fileKey: string, organizationId: string }) {
   let violationsFound = 0;
-  const recordsToCreate: any[] = [];
-
   for (const [name, pattern] of Object.entries(SENSITIVE_PATTERNS)) {
     if (pattern.test(content)) {
       violationsFound++;
-      recordsToCreate.push({
-        user_id: 'system_scanner',
-        organizationId: metadata.organizationId,
-        input_text: `Scan of ${metadata.type} source: ${metadata.fileKey}`,
-        decision: 'BLOCK',
-        confidence: 'High',
-        reason: `Data scan detected sensitive pattern: ${name}`,
-        policy_triggered: 'Data Governance Baseline',
-        metadata: { 
-          connector_id: metadata.connectorId, 
-          violationType: name, 
-          fileKey: metadata.fileKey,
-          source_type: metadata.type 
-        },
-        timestamp: new Date()
+      await prisma.interception_logs.create({
+        data: {
+          user_id: 'system_scanner',
+          organizationId: metadata.organizationId,
+          input_text: `Scan of ${metadata.type} source: ${metadata.fileKey}`,
+          decision: 'BLOCK',
+          confidence: 'High',
+          reason: `Data scan detected sensitive pattern: ${name}`,
+          policy_triggered: 'Data Governance Baseline',
+          metadata: { 
+            connector_id: metadata.connectorId, 
+            violationType: name, 
+            fileKey: metadata.fileKey,
+            source_type: metadata.type 
+          },
+          timestamp: new Date()
+        }
       });
     }
   }
-
-  if (recordsToCreate.length > 0) {
-    await prisma.interception_logs.createMany({ data: recordsToCreate });
-  }
-
   return violationsFound;
-
 }
 
 // Schedule it to run every day at midnight

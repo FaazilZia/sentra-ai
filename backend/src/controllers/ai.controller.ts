@@ -190,7 +190,7 @@ export const postOverrideAction = async (req: any, res: Response, next: NextFunc
     const userRole = req.user?.role || 'USER';
     const isHighRisk = log.risk === 'high';
     
-    const updateData: any = {
+    let updateData: any = {
       overrideComment: comment,
       overriddenBy: employeeId || req.user?.full_name || 'Authorized User',
       overrideTimestamp: new Date(),

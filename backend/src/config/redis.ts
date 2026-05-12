@@ -5,11 +5,11 @@ const REDIS_URL = process.env.REDIS_URL;
 
 /**
  * Shared Redis Connection Pool
- *
+ * 
  * Centralizes all Redis connections to prevent connection sprawl.
  * Previously, 6 separate files each created their own Redis client,
  * leading to 6+ connections per process. This module provides:
- *
+ * 
  * - `generalClient`: For caching, idempotency, and general key-value ops.
  * - `bullMqConnection`: For BullMQ workers/queues (requires maxRetriesPerRequest: null).
  */
@@ -38,6 +38,10 @@ function createClient(name: string, overrides: Partial<RedisOptions> = {}): IORe
   return client;
 }
 
+/**
+ * General-purpose Redis client for caching, auth, idempotency, rate limiting.
+ * Returns null if REDIS_URL is not configured — callers should degrade gracefully.
+ */
 export function getRedisClient(): IORedis | null {
   if (!_generalClient && REDIS_URL) {
     _generalClient = createClient('general');
@@ -45,6 +49,10 @@ export function getRedisClient(): IORedis | null {
   return _generalClient;
 }
 
+/**
+ * BullMQ-specific Redis connection. BullMQ requires maxRetriesPerRequest: null.
+ * Returns null if REDIS_URL is not configured.
+ */
 export function getBullMqConnection(): IORedis | null {
   if (!_bullMqConnection && REDIS_URL) {
     _bullMqConnection = createClient('bullmq', {
@@ -55,6 +63,9 @@ export function getBullMqConnection(): IORedis | null {
   return _bullMqConnection;
 }
 
+/**
+ * Health check — pings the general Redis client.
+ */
 export async function redisHealthCheck(): Promise<boolean> {
   const client = getRedisClient();
   if (!client) return false;
@@ -66,4 +77,7 @@ export async function redisHealthCheck(): Promise<boolean> {
   }
 }
 
+/**
+ * Whether Redis is configured at all.
+ */
 export const isRedisConfigured = !!REDIS_URL;

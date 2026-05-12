@@ -16,37 +16,39 @@ export class EventTriggerService {
       if (!rules.length) return;
 
       const now = new Date();
-      const maxWindowMinutes = Math.max(...rules.map(r => r.time_window_minutes));
-      const maxWindowStart = new Date(now.getTime() - maxWindowMinutes * 60000);
-
-      const allRelevantLogs = await prisma.interception_logs.findMany({
-        where: {
-          organizationId,
-          decision: 'BLOCK',
-          timestamp: { gte: maxWindowStart }
-        },
-        orderBy: { timestamp: 'desc' },
-        select: { timestamp: true, input_text: true, reason: true }
-      });
 
       for (const rule of rules) {
         const timeWindowStart = new Date(now.getTime() - rule.time_window_minutes * 60000);
 
-        const ruleLogs = allRelevantLogs.filter(log => log.timestamp >= timeWindowStart);
-        const blockedCount = ruleLogs.length;
+        // Count blocked events within the time window
+        const blockedCount = await prisma.interception_logs.count({
+          where: {
+            organizationId,
+            decision: 'BLOCK',
+            timestamp: { gte: timeWindowStart }
+          }
+        });
 
         if (blockedCount >= rule.threshold_count) {
           if (!this.canTriggerRule(rule.id, rule.time_window_minutes)) {
             continue;
           }
 
-          const latestLog = ruleLogs[0];
+          // Fetch the most recent blocked prompt for context
+          const latestLog = await prisma.interception_logs.findFirst({
+            where: {
+              organizationId,
+              decision: 'BLOCK',
+              timestamp: { gte: timeWindowStart }
+            },
+            orderBy: { timestamp: 'desc' },
+            select: { input_text: true, reason: true }
+          });
 
           this.triggerWebhook(rule, blockedCount, latestLog?.input_text || "N/A", latestLog?.reason || "N/A");
           this.markRuleTriggered(rule.id);
         }
       }
-
     } catch (err) {
       logger.error('Failed to evaluate event thresholds', err);
     }

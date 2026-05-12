@@ -102,22 +102,22 @@ export class ComplianceService {
   }
 
 
-  static async createFixTasks(featureId: string, actionPlan: any, organizationId: string) {
+  static async createFixTasks(featureId: string, actionPlan: any) {
     const tasks: any[] = [];
     
     // Priority 1
     actionPlan.priority_1.forEach((item: string) => {
-      tasks.push({ featureId, organizationId, title: item, priority: 1, status: 'pending' });
+      tasks.push({ featureId, title: item, priority: 1, status: 'pending' });
     });
     
     // Priority 2
     actionPlan.priority_2.forEach((item: string) => {
-      tasks.push({ featureId, organizationId, title: item, priority: 2, status: 'pending' });
+      tasks.push({ featureId, title: item, priority: 2, status: 'pending' });
     });
     
     // Priority 3
     actionPlan.priority_3.forEach((item: string) => {
-      tasks.push({ featureId, organizationId, title: item, priority: 3, status: 'pending' });
+      tasks.push({ featureId, title: item, priority: 3, status: 'pending' });
     });
 
     const createdTasks = await Promise.all(tasks.map(task => 
@@ -175,15 +175,15 @@ export class ComplianceService {
     await this.logAudit(userId, organizationId, 'UPLOAD_EVIDENCE', task.featureId, { taskId, evidenceId: evidence.id, verified });
 
     if (!verified) {
-      await this.triggerAlert(task.featureId, 'MISSING_EVIDENCE', `Invalid evidence uploaded for task: ${task.title}`, 'medium', organizationId);
+      await this.triggerAlert(task.featureId, 'MISSING_EVIDENCE', `Invalid evidence uploaded for task: ${task.title}`, 'medium');
     }
 
     return evidence;
   }
 
-  static async triggerAlert(featureId: string, type: string, message: string, severity: string, organizationId: string) {
+  static async triggerAlert(featureId: string, type: string, message: string, severity: string) {
     return await prisma.alerts.create({
-      data: { feature_id: featureId, type, message, severity, organizationId }
+      data: { feature_id: featureId, type, message, severity }
     });
   }
 
@@ -249,7 +249,7 @@ export class ComplianceService {
       }))
     };
 
-    const aiResponse = this.generateFallbackReport(tasks);
+    let aiResponse = this.generateFallbackReport(tasks);
 
     const report = aiResponse.compliance_report;
     await prisma.compliance_snapshots.create({

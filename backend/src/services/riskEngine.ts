@@ -58,7 +58,7 @@ export const evaluateRisk = (action: string, metadata: any = {}): RiskEvaluation
   const combinedText = `${action} ${rawPrompt}`.trim();
   
   // 1. Normalization Layer
-  const normalized = combinedText.toLowerCase()
+  let normalized = combinedText.toLowerCase()
     .replace(/\s+/g, ' ') // Normalize spaces
     .trim();
 

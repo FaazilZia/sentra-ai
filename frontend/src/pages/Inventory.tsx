@@ -8,30 +8,14 @@ import {
   ChevronDown,
   Plus
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { fetchConnectors } from '@/lib/api';
 import { useStore } from '@/store/useStore';
 import { cn } from '@/lib/utils';
 import KPICard from '@/components/dashboard/KPICard';
 
+const inventory: any[] = [];
+
 export default function Inventory() {
   const addToast = useStore((state) => state.addToast);
-  const [connectors, setConnectors] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchConnectors()
-      .then(setConnectors)
-      .catch(() => addToast({ message: 'Failed to fetch inventory', type: 'error' }))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const stats = {
-    total: connectors.length,
-    active: connectors.filter(c => c.status === 'active').length,
-    error: connectors.filter(c => c.status === 'error').length,
-    providers: new Set(connectors.map(c => c.type)).size
-  };
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in p-6">
@@ -64,25 +48,25 @@ export default function Inventory() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <KPICard 
           label="Registered Systems" 
-          value={stats.total.toString()} 
-          icon="systems" 
-          status="primary" 
-        />
-        <KPICard 
-          label="Active Connections" 
-          value={stats.active.toString()} 
+          value="0" 
           icon="systems" 
           status="primary" 
         />
         <KPICard 
           label="External Providers" 
-          value={stats.providers.toString()} 
+          value="0" 
           icon="systems" 
           status="primary" 
         />
         <KPICard 
-          label="System Failures" 
-          value={stats.error.toString()} 
+          label="Risk Evaluation Pending" 
+          value="0" 
+          icon="risks" 
+          status="warning" 
+        />
+        <KPICard 
+          label="Blocked Systems" 
+          value="0" 
           icon="risks" 
           status="danger" 
         />
@@ -127,7 +111,7 @@ export default function Inventory() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border-default)]">
-              {connectors.length > 0 ? connectors.map((item) => (
+              {inventory.length > 0 ? inventory.map((item) => (
                 <tr key={item.id} className="group hover:bg-[var(--bg-hover)] transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -136,18 +120,18 @@ export default function Inventory() {
                       </div>
                       <div>
                         <p className="text-[var(--text-sm)] font-bold text-[var(--text-primary)]">{item.name}</p>
-                        <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{item.type}</p>
+                        <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{item.provider}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-[var(--text-xs)] text-[var(--lavender)] font-bold">{item.type.toUpperCase()} ARCH</span>
+                    <span className="text-[var(--text-xs)] text-[var(--lavender)] font-bold">{item.type}</span>
                   </td>
                   <td className="px-6 py-4">
                     <span className={cn(
                       "inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tight",
-                      item.status === 'active' ? "bg-emerald-500/10 text-emerald-400" :
-                      item.status === 'error' ? "bg-rose-500/10 text-rose-500" :
+                      item.status === 'Active' ? "bg-emerald-500/10 text-emerald-400" :
+                      item.status === 'Blocked' ? "bg-rose-500/10 text-rose-500" :
                       "bg-amber-500/10 text-amber-400"
                     )}>
                       {item.status}
@@ -159,24 +143,22 @@ export default function Inventory() {
                         <div 
                           className={cn(
                             "h-full rounded-full transition-all duration-1000",
-                            item.health_score < 40 ? "bg-rose-500" :
-                            item.health_score < 80 ? "bg-amber-500" : "bg-emerald-500"
+                            item.riskLevel > 75 ? "bg-rose-500" :
+                            item.riskLevel > 40 ? "bg-amber-500" : "bg-emerald-500"
                           )}
-                          style={{ width: `${item.health_score}%` }}
+                          style={{ width: `${item.riskLevel}%` }}
                         />
                       </div>
-                      <span className="text-[10px] font-black text-[var(--text-primary)] tabular-nums">{item.health_score}</span>
+                      <span className="text-[10px] font-black text-[var(--text-primary)] tabular-nums">{item.riskLevel}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <span className="px-2 py-0.5 rounded bg-white/5 text-[var(--text-secondary)] text-[10px] font-bold uppercase">
-                      GOVERNANCE
+                      {item.department}
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase">
-                      {item.last_scan_at ? new Date(item.last_scan_at).toLocaleDateString() : 'NEVER'}
-                    </span>
+                    <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase">{item.lastActive}</span>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

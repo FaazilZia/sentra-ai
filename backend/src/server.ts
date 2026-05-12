@@ -84,8 +84,8 @@ export { io };
 
 const startServer = async () => {
   // Start listening FIRST so Render's health check passes immediately
-  httpServer.listen(Number(PORT), '0.0.0.0', () => {
-    logger.info(`Server is running on port ${PORT} (0.0.0.0)`);
+  httpServer.listen(PORT, () => {
+    logger.info(`Server is running on port ${PORT}`);
   });
 
   try {

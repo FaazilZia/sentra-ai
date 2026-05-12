@@ -105,7 +105,7 @@ app.use(helmet({
       scriptSrc: ["'self'", (req, res: any) => `'nonce-${res.locals.nonce}'`],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", 'data:', 'https:'],
-      connectSrc: ["'self'", 'https://api.openai.com'],
+      connectSrc: ["'self'", 'https://api.openai.com', 'https://*.supabase.co', 'wss://*.supabase.co'],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: [],
     }
@@ -122,7 +122,7 @@ app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
     const isAllowed = allowedOrigins.includes(origin) || 
-                      /^https:\/\/sentra-ai(-[a-z0-9]+)?\.vercel\.app$/.test(origin) || 
+                      origin.endsWith('.vercel.app') || 
                       (!isProduction && origin.includes('localhost'));
     if (isAllowed) {
       callback(null, true);
@@ -190,9 +190,11 @@ v1Router.get('/ready', async (req, res) => {
 
     // Check Redis (Non-critical, allows degraded mode)
     try {
-      const { redisHealthCheck } = require('./config/redis');
-      const pong = await redisHealthCheck();
-      if (pong) redisStatus = 'connected';
+      const Redis = require('ioredis');
+      const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+      const pong = await redis.ping();
+      if (pong === 'PONG') redisStatus = 'connected';
+      redis.disconnect();
     } catch (e) {
       redisStatus = 'failed (degraded)';
     }
@@ -221,9 +223,6 @@ v1Router.get('/', (req, res) => {
 });
 
 app.use('/api/v1', v1Router);
-
-// Compatibility Layer: Support /api/auth without /v1 prefix for older clients
-app.use('/api/auth', authRoutes);
 
 
 

@@ -56,7 +56,7 @@ test.describe('Sentra AI - Full Production Audit Flow', () => {
     const initialText = await blockedCountLocator.innerText();
     const initialCount = parseInt(initialText.replace(/,/g, '')) || 0;
 
-    const token = await page.evaluate(() => localStorage.getItem('sentra_access_token'));
+    let token = await page.evaluate(() => localStorage.getItem('sentra_access_token'));
     if (!token) throw new Error('Auth token missing from localStorage');
     
     // Trigger malicious prompt

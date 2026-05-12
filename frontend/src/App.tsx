@@ -5,17 +5,8 @@ import { AppLayout } from './components/layout/AppLayout';
 import { AuthProvider, useAuth } from './lib/auth';
 import { SidebarProvider } from './context/SidebarContext';
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import { ErrorBoundary } from './components/shared/ErrorBoundary';
-
-import LoginPage from './pages/Login';
 
 const DashboardPage = lazy(() => import('./pages/Dashboard'));
-const RiskCenterPage = lazy(() => import('./pages/RiskCenter'));
-const CompliancePage = lazy(() => import('./pages/Compliance'));
-const ShadowAIPage = lazy(() => import('./pages/ShadowAI'));
-const GuardrailsPage = lazy(() => import('./pages/Guardrails'));
-const PoliciesPage = lazy(() => import('./pages/Policies'));
-const InventoryPage = lazy(() => import('./pages/Inventory'));
 
 import { ModalProvider } from './components/shared/ModalProvider';
 import { ToastProvider } from './components/shared/ToastProvider';
@@ -48,60 +39,22 @@ function AppRoutes() {
   return (
     <BrowserRouter>
       <SidebarProvider>
-        <ErrorBoundary>
-          <Suspense fallback={<RouteFallback />}>
-            <Routes>
-              {/* Redirect all to dashboard */}
-              <Route path="/" element={<Navigate to="/app" replace />} />
-              
-              {/* Login Route */}
-              <Route 
-                path="/login" 
-                element={user ? <Navigate to="/app" replace /> : <LoginPage />} 
-              />
-
-              {/* Signup Route */}
-              <Route 
-                path="/signup" 
-                element={user ? <Navigate to="/app" replace /> : <LoginPage defaultIsSignUp={true} />} 
-              />
-
-              <Route 
-                path="/app" 
-                element={user ? <AppLayout><DashboardPage /></AppLayout> : <Navigate to="/login" replace />}
-              />
-              <Route 
-                path="/app/risk" 
-                element={user ? <AppLayout><RiskCenterPage /></AppLayout> : <Navigate to="/login" replace />}
-              />
-              <Route 
-                path="/app/compliance" 
-                element={user ? <AppLayout><CompliancePage /></AppLayout> : <Navigate to="/login" replace />}
-              />
-              <Route 
-                path="/app/shadow" 
-                element={user ? <AppLayout><ShadowAIPage /></AppLayout> : <Navigate to="/login" replace />}
-              />
-              <Route 
-                path="/app/guardrails" 
-                element={user ? <AppLayout><GuardrailsPage /></AppLayout> : <Navigate to="/login" replace />}
-              />
-              <Route 
-                path="/app/policies" 
-                element={user ? <AppLayout><PoliciesPage /></AppLayout> : <Navigate to="/login" replace />}
-              />
-              <Route 
-                path="/app/inventory" 
-                element={user ? <AppLayout><InventoryPage /></AppLayout> : <Navigate to="/login" replace />}
-              />
-
-              <Route path="*" element={<Navigate to="/app" replace />} />
-            </Routes>
+        <Suspense fallback={<RouteFallback />}>
+          <Routes>
+            {/* Redirect all to dashboard for now since other pages are being rebuilt */}
+            <Route path="/" element={<Navigate to="/app" replace />} />
             
-            <ModalProvider />
-            <ToastProvider />
-          </Suspense>
-        </ErrorBoundary>
+            <Route 
+              path="/app" 
+              element={user ? <AppLayout><DashboardPage /></AppLayout> : <Navigate to="/app" replace />}
+            />
+
+            <Route path="*" element={<Navigate to="/app" replace />} />
+          </Routes>
+          
+          <ModalProvider />
+          <ToastProvider />
+        </Suspense>
       </SidebarProvider>
     </BrowserRouter>
   );

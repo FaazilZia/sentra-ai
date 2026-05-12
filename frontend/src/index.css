@@ -6,9 +6,6 @@
 @layer base {
   body {
     @apply bg-[var(--bg-page)] text-[var(--text-secondary)] font-sans antialiased;
-    background-image: 
-      radial-gradient(at 0% 0%, rgba(45, 58, 192, 0.03) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, rgba(108, 99, 255, 0.03) 0px, transparent 50%);
     margin: 0;
     padding: 0;
     overflow: hidden;
@@ -23,8 +20,7 @@
     transition: background-color var(--transition-speed) var(--transition-ease), 
                 border-color var(--transition-speed) var(--transition-ease),
                 color var(--transition-speed) var(--transition-ease),
-                box-shadow var(--transition-speed) var(--transition-ease),
-                backdrop-filter var(--transition-speed) var(--transition-ease);
+                box-shadow var(--transition-speed) var(--transition-ease);
   }
 
   a, button {
@@ -38,13 +34,7 @@
 
 @layer components {
   .card-base {
-    @apply bg-[var(--glass-bg)] border-[0.5px] border-[var(--glass-border)] rounded-[var(--radius)] shadow-[var(--glass-shadow)];
-    backdrop-filter: blur(var(--glass-blur));
-    -webkit-backdrop-filter: blur(var(--glass-blur));
-  }
-
-  .glass-panel {
-    @apply bg-[rgba(255,255,255,0.7)] backdrop-blur-xl border-b border-[var(--glass-border)] shadow-sm;
+    @apply bg-[var(--bg-card)] border-[0.5px] border-[var(--border-default)] rounded-[var(--radius)] shadow-sm;
   }
 
   .btn-primary {

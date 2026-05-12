@@ -2,24 +2,17 @@ import { makeDecision } from '../src/services/decisionEngine';
 import prisma from '../src/config/db';
 
 jest.mock('../src/config/db', () => ({
-  __esModule: true,
-  default: {
-    policies: {
-      findMany: jest.fn(),
-    },
-    logs: {
-      findMany: jest.fn(),
-      create: jest.fn(),
-    },
-  }
+  policies: {
+    findMany: jest.fn(),
+  },
+  logs: {
+    findMany: jest.fn(),
+    create: jest.fn(),
+  },
 }));
 
 describe('Decision Engine', () => {
   const orgId = 'test-org-id';
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
 
   it('should block high risk actions without policy', async () => {
     (prisma.policies.findMany as any).mockResolvedValue([]);
@@ -28,7 +21,7 @@ describe('Decision Engine', () => {
     
     expect(decision.status).toBe('blocked');
     expect(decision.risk).toBe('high');
-    expect(decision.reason).toMatch(/Blocked: (High-risk|Safe action)/);
+    expect(decision.reason).toMatch(/Blocked: (High-risk|Security analysis)/);
   });
 
   it('should allow low risk actions when no policy exists', async () => {

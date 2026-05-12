@@ -167,7 +167,7 @@ export default function ShadowAI() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <div className="h-7 w-7 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[9px] font-black">
-                        {incident.user.split(' ').map(n => n[0]).join('')}
+                        {incident.user.split(' ').map((n: string) => n[0]).join('')}
                       </div>
                       <span className="text-[var(--text-sm)] font-bold text-[var(--text-primary)]">{incident.user}</span>
                     </div>

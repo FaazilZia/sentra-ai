@@ -1,19 +1,33 @@
- 
 import { PrismaClient } from '@prisma/client';
-
 import bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const prisma = new PrismaClient();
+const databaseUrl = process.env.DATABASE_URL || 'file:./dev.db';
+const isSqlite = databaseUrl.startsWith('file:');
+
+async function getPrisma() {
+  if (isSqlite) {
+    const { PrismaBetterSqlite3 } = await import('@prisma/adapter-better-sqlite3');
+    const adapter = new PrismaBetterSqlite3({ url: 'dev.db' });
+    return new PrismaClient({ adapter });
+  } else {
+    const { PrismaPg } = await import('@prisma/adapter-pg');
+    const { Pool } = await import('pg');
+    const pool = new Pool({ connectionString: databaseUrl });
+    const adapter = new PrismaPg(pool);
+    return new PrismaClient({ adapter });
+  }
+}
 
 const DEFAULT_ORGANIZATION_ID = '00000000-0000-0000-0000-000000000001';
 const ADMIN_USER_ID = '00000000-0000-0000-0000-000000000002';
 
 async function main() {
-  console.log(`🌱 Seeding database (PostgreSQL)...`);
+  console.log(`🌱 Seeding database (${isSqlite ? 'SQLite' : 'PostgreSQL'})...`);
+  const prisma = await getPrisma();
 
   // 1. Ensure default company
   const company = await prisma.organizations.upsert({

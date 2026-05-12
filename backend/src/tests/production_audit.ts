@@ -10,7 +10,7 @@ async function runLoadTest(rps: number, durationSeconds: number) {
   let totalRequests = 0;
   let successfulRequests = 0;
   let blockedRequests = 0;
-  const latencies: number[] = [];
+  let latencies: number[] = [];
 
   const interval = 1000 / rps;
 

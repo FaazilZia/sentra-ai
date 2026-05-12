@@ -244,6 +244,9 @@ export class GuardrailService {
       allowed: ((counts['ALLOW'] || 0) / total) * 100,
       blocked: ((counts['BLOCK'] || 0) / total) * 100,
       modified: ((counts['MODIFY'] || 0) / total) * 100,
+      allowedCount: counts['ALLOW'] || 0,
+      blockedCount: counts['BLOCK'] || 0,
+      modifiedCount: counts['MODIFY'] || 0,
     };
   }
 

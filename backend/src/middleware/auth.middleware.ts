@@ -3,12 +3,17 @@ import bcrypt from 'bcrypt';
 import { verifyAccessToken } from '../utils/jwt';
 import prisma from '../config/db';
 import logger from '../utils/logger';
-import { getRedisClient } from '../config/redis';
+import IORedis from 'ioredis';
 import * as Sentry from '@sentry/node';
 
-const redis = getRedisClient();
+// Dedicated Redis client for auth cache (separate from rate limiter)
+let redis: IORedis | undefined;
+if (process.env.REDIS_URL) {
+  redis = new IORedis(process.env.REDIS_URL, { maxRetriesPerRequest: 1 });
+  redis.on('error', () => {}); // silent — cache is optional
+}
 
-const API_KEY_CACHE_TTL = 300;
+const API_KEY_CACHE_TTL = 300; // 5 minutes
 
 import { updateApiKeyLastUsed } from '../utils/usage';
 
@@ -17,20 +22,23 @@ async function resolveApiKey(token: string): Promise<{ organizationId: string; s
   const lookupPrefix = parts[1];
   if (!lookupPrefix) return null;
 
+  // 1. Check cache first
   if (redis) {
     try {
       const cached = await redis.get(`ak:${lookupPrefix}`);
       if (cached) return JSON.parse(cached);
-      if (cached === 'null') return null;
+      if (cached === 'null') return null; // negative cache
     } catch { /* cache miss — proceed to DB */ }
   }
 
+  // 2. DB lookup + bcrypt (slow path — happens once per key per TTL)
   const keyRecord = await prisma.api_keys.findFirst({
     where: { key_prefix: lookupPrefix, is_active: true },
     include: { organizations: true },
   });
 
   if (!keyRecord) {
+    // Negative cache: don't hammer DB with invalid keys
     if (redis) await redis.set(`ak:${lookupPrefix}`, 'null', 'EX', 60).catch(() => {});
     return null;
   }
@@ -41,12 +49,13 @@ async function resolveApiKey(token: string): Promise<{ organizationId: string; s
     return null;
   }
 
-  const result = {
-    organizationId: keyRecord.organizationId,
+  const result = { 
+    organizationId: keyRecord.organizationId, 
     slug: keyRecord.organizations.slug,
-    id: keyRecord.id
+    id: keyRecord.id 
   };
 
+  // Cache the valid result
   if (redis) await redis.set(`ak:${lookupPrefix}`, JSON.stringify(result), 'EX', API_KEY_CACHE_TTL).catch(() => {});
 
   return result;
@@ -61,12 +70,15 @@ export const authenticate = async (req: any, res: Response, next: NextFunction) 
       return res.status(401).json({ success: false, message: 'Authentication required' });
     }
 
+    // 1. Bearer token
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
 
+      // API key path
       if (token.startsWith('sentra_')) {
         const resolved = await resolveApiKey(token);
         if (resolved) {
+          // Block default organization in production
           const DEFAULT_DEMO_ORG = process.env.DEFAULT_ORGANIZATION_ID || '00000000-0000-0000-0000-000000000001';
           if (process.env.NODE_ENV === 'production' && resolved.organizationId === DEFAULT_DEMO_ORG) {
             return res.status(403).json({
@@ -88,6 +100,7 @@ export const authenticate = async (req: any, res: Response, next: NextFunction) 
         }
       }
 
+      // JWT path
       try {
         const payload: any = verifyAccessToken(token);
         const user = await prisma.users.findUnique({
@@ -95,6 +108,7 @@ export const authenticate = async (req: any, res: Response, next: NextFunction) 
           include: { organizations: true },
         });
         if (user && user.is_active && user.organizations.is_active) {
+          // Block default organization in production
           if (user.organizationId === '00000000-0000-0000-0000-000000000001' && process.env.NODE_ENV === 'production') {
             return res.status(403).json({ success: false, message: 'Organization setup incomplete.' });
           }
@@ -107,6 +121,7 @@ export const authenticate = async (req: any, res: Response, next: NextFunction) 
       } catch { /* invalid JWT */ }
     }
 
+    // 2. x-api-key header
     if (xApiKey) {
       const resolved = await resolveApiKey(String(xApiKey).trim());
       if (resolved) {
