@@ -8,7 +8,7 @@ export const processAIRequestSchema = z.object({
 export const checkActionSchema = z.object({
   agent: z.string(),
   action: z.string(),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 export const processDemoRequestSchema = z.object({
