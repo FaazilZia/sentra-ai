@@ -7,7 +7,11 @@ import logger from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
 import { OAuth2Client } from 'google-auth-library';
 
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const googleClient = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.GOOGLE_CALLBACK_URL
+);
 
 const seedDefaultPolicy = async (tx: any, organizationId: string) => {
   const policyId = randomUUID();
@@ -219,6 +223,11 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
       return res.status(400).json({ success: false, message: 'Google ID Token required' });
     }
 
+    if (!process.env.GOOGLE_CLIENT_ID) {
+      logger.error('GOOGLE_CLIENT_ID is not set in environment variables');
+      return res.status(500).json({ success: false, message: 'Google authentication is not configured' });
+    }
+
     const ticket = await googleClient.verifyIdToken({
       idToken,
       audience: process.env.GOOGLE_CLIENT_ID,
@@ -290,6 +299,14 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
     logger.error('Google Login Error:', error);
     res.status(401).json({ success: false, message: 'Google authentication failed' });
   }
+};
+
+export const googleCallback = async (req: Request, res: Response) => {
+  // This is a stub for the traditional redirect flow callback
+  // Currently, the app uses the frontend-driven One Tap flow.
+  // If a 'code' is present, it would be exchanged here.
+  const frontendUrl = process.env.FRONTEND_URL?.split(',')[0] || 'http://localhost:5173';
+  res.redirect(`${frontendUrl}/login?error=callback_not_implemented`);
 };
 
 export const refreshToken = async (req: Request, res: Response, next: NextFunction) => {
