@@ -6,15 +6,20 @@ import {
   EyeOff, 
   LogOut,
   ChevronRight,
-  ShieldCheck
+  ShieldCheck,
+  FileText,
+  Box
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Overview', path: '/app' },
+  { icon: FileText, label: 'Policies', path: '/app/policies' },
+  { icon: ShieldCheck, label: 'Guardrails', path: '/app/guardrails' },
   { icon: ShieldAlert, label: 'Risk Center', path: '/app/risk' },
   { icon: ClipboardCheck, label: 'Compliance', path: '/app/compliance' },
   { icon: EyeOff, label: 'Shadow AI', path: '/app/shadow' },
+  { icon: Box, label: 'Inventory', path: '/app/inventory' },
 ];
 
 export function Sidebar() {

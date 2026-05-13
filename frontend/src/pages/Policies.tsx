@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { 
   FileText, 
   Plus, 
@@ -8,15 +9,41 @@ import {
   CheckCircle2,
   Clock,
   Archive,
-  ArrowRight
+  ArrowRight,
+  LoaderCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store/useStore';
-
-const policies: any[] = [];
+import { fetchPolicies, PolicyResponse } from '@/lib/api';
 
 export default function Policies() {
   const addToast = useStore((state) => state.addToast);
+  const [policies, setPolicies] = useState<PolicyResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadPolicies() {
+      try {
+        const data = await fetchPolicies();
+        setPolicies(data);
+      } catch (error) {
+        console.error('Failed to fetch policies:', error);
+        addToast({ message: 'Failed to load policies from governance engine', type: 'error' });
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadPolicies();
+  }, [addToast]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <LoaderCircle className="h-8 w-8 animate-spin text-[var(--royal-indigo)]" />
+        <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)]">Querying Ledger...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in p-6">
@@ -40,17 +67,17 @@ export default function Policies() {
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2 border-r border-[var(--border-default)] pr-6">
             <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest">Total</span>
-            <span className="text-[var(--text-md)] font-black text-[var(--text-primary)]">{(policies || []).length}</span>
+            <span className="text-[var(--text-md)] font-black text-[var(--text-primary)]">{policies.length}</span>
           </div>
           <div className="flex items-center gap-2 border-r border-[var(--border-default)] pr-6">
              <div className="h-2 w-2 rounded-full bg-emerald-500" />
-             <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest">Active</span>
-             <span className="text-[var(--text-md)] font-black text-[var(--text-primary)]">{(policies || []).filter(p => p.status === 'Active').length}</span>
+             <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest">Enabled</span>
+             <span className="text-[var(--text-md)] font-black text-[var(--text-primary)]">{policies.filter(p => p.enabled).length}</span>
           </div>
           <div className="flex items-center gap-2">
              <div className="h-2 w-2 rounded-full bg-amber-500" />
              <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest">Draft</span>
-             <span className="text-[var(--text-md)] font-black text-[var(--text-primary)]">{(policies || []).filter(p => p.status === 'Draft').length}</span>
+             <span className="text-[var(--text-md)] font-black text-[var(--text-primary)]">{policies.filter(p => p.status === 'draft').length}</span>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -65,10 +92,10 @@ export default function Policies() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {(policies || []).map((policy) => (
+        {policies.map((policy) => (
           <div 
             key={policy.id} 
-            onClick={() => addToast({ message: `Opening ${policy.title} for review...`, type: 'info' })}
+            onClick={() => addToast({ message: `Opening ${policy.name} for review...`, type: 'info' })}
             className="card-base p-6 group hover:border-[var(--royal-indigo)] transition-all cursor-pointer relative overflow-hidden"
           >
             <div className="flex items-start justify-between mb-6">
@@ -77,36 +104,36 @@ export default function Policies() {
               </div>
               <span className={cn(
                 "text-[9px] font-black uppercase px-2 py-0.5 rounded flex items-center gap-1",
-                policy.status === 'Active' ? "bg-emerald-500/10 text-emerald-400" :
-                policy.status === 'Draft' ? "bg-amber-500/10 text-amber-400" :
-                "bg-slate-500/10 text-slate-500"
+                policy.enabled ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"
               )}>
-                {policy.status === 'Active' && <CheckCircle2 className="h-2.5 w-2.5" />}
-                {policy.status === 'Draft' && <Clock className="h-2.5 w-2.5" />}
-                {policy.status === 'Archived' && <Archive className="h-2.5 w-2.5" />}
-                {policy.status}
+                {policy.enabled ? <CheckCircle2 className="h-2.5 w-2.5" /> : <Clock className="h-2.5 w-2.5" />}
+                {policy.enabled ? 'Enabled' : 'Disabled'}
               </span>
             </div>
             
             <h3 className="text-[var(--text-md)] font-black text-[var(--text-primary)] uppercase tracking-tight mb-2 group-hover:text-[var(--royal-indigo)] transition-colors">
-              {policy.title}
+              {policy.name}
             </h3>
             <div className="flex items-center gap-3 mb-6">
-              <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{policy.version}</span>
+              <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">v{policy.current_version || 1}</span>
               <span className="h-1 w-1 rounded-full bg-[var(--border-default)]" />
-              <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{policy.category}</span>
+              <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{policy.effect}</span>
             </div>
+            
+            <p className="text-[var(--text-xs)] text-[var(--text-secondary)] line-clamp-2 mb-6 min-h-[32px]">
+              {policy.description || 'No description provided.'}
+            </p>
             
             <div className="pt-6 border-t border-[var(--border-default)] flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="h-6 w-6 rounded-full bg-white/5 flex items-center justify-center">
                   <User className="h-3 w-3 text-[var(--text-muted)]" />
                 </div>
-                <span className="text-[10px] font-bold text-[var(--text-secondary)]">{policy.owner}</span>
+                <span className="text-[10px] font-bold text-[var(--text-secondary)]">Governance Admin</span>
               </div>
               <div className="flex items-center gap-2 text-[var(--text-muted)]">
                 <Calendar className="h-3 w-3" />
-                <span className="text-[9px] font-bold">{policy.lastUpdated}</span>
+                <span className="text-[9px] font-bold">{new Date(policy.created_at || '').toLocaleDateString()}</span>
               </div>
             </div>
 
@@ -117,7 +144,10 @@ export default function Policies() {
         ))}
 
         {/* Create Placeholder */}
-        <div className="border-2 border-dashed border-[var(--border-default)] rounded-2xl flex flex-col items-center justify-center p-8 hover:bg-white/5 transition-all cursor-pointer group">
+        <div 
+          onClick={() => addToast({ message: 'Policy creation wizard initializing...', type: 'info' })}
+          className="border-2 border-dashed border-[var(--border-default)] rounded-2xl flex flex-col items-center justify-center p-8 hover:bg-white/5 transition-all cursor-pointer group"
+        >
           <div className="h-12 w-12 rounded-full bg-white/5 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
             <Plus className="h-6 w-6 text-[var(--text-muted)]" />
           </div>
