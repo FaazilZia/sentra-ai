@@ -383,3 +383,22 @@ export const getMe = async (req: any, res: Response, next: NextFunction) => {
     next(error);
   }
 };
+
+export const logout = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { refreshToken } = req.body;
+    if (refreshToken) {
+      await prisma.refreshToken.updateMany({
+        where: { token: refreshToken },
+        data: { revoked: true }
+      });
+    }
+
+    // Also clear cookies if they were used
+    res.clearCookie('sentra_access_token');
+    
+    res.status(200).json({ success: true, message: 'Logged out successfully' });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -16,7 +16,7 @@ model api_keys {
   is_active      Boolean
   last_used_at   DateTime?     @map("last_used_at")
   created_at     DateTime      @default(now())
-  updated_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
   organizations  organizations @relation(fields: [organizationId], references: [id])
 
   @@map("api_keys")
@@ -42,7 +42,7 @@ model organizations {
   slug            String       @unique
   is_active       Boolean
   created_at      DateTime     @default(now())
-  updated_at      DateTime     @default(now())
+  updated_at      DateTime     @updatedAt
   alertEmail      String?      @map("alert_email")
   slackWebhookUrl String?      @map("slack_webhook_url")
   data_region     String       @default("US") @map("data_region")
@@ -62,6 +62,12 @@ model organizations {
   scan_jobs       scan_jobs[]
   users           users[]
   usage_stats     usage_stats[]
+  alerts                alerts[]
+  compliance_snapshots  compliance_snapshots[]
+  compliance_fix_tasks  compliance_fix_tasks[]
+  outcome_validations   outcome_validations[]
+  monitoring_status     monitoring_status[]
+  compliance_drift      compliance_drift[]
 
   @@map("companies")
 }
@@ -87,7 +93,7 @@ model policies {
   isTemplate        Boolean           @default(false)
   category          String?
   created_at        DateTime          @default(now())
-  updated_at        DateTime          @default(now())
+  updated_at        DateTime          @updatedAt
   incidents         incidents[]
   organizations     organizations     @relation(fields: [organizationId], references: [id])
   policy_versions   policy_versions[]
@@ -137,7 +143,7 @@ model incidents {
   response_excerpt String
   event_metadata   Json
   created_at       DateTime      @default(now())
-  updated_at       DateTime      @default(now())
+  updated_at       DateTime      @updatedAt
   status           String        @default("unresolved")
   user_id          String?
   resolved_by_id   String?
@@ -177,7 +183,7 @@ model policy_versions {
   obligations           Json
   is_published_snapshot Boolean
   created_at            DateTime      @default(now())
-  updated_at            DateTime      @default(now())
+  updated_at            DateTime      @updatedAt
   organizations         organizations @relation(fields: [organizationId], references: [id])
   policies              policies      @relation(fields: [policy_id], references: [id])
 
@@ -194,7 +200,7 @@ model ai_agents {
   status         String
   metadata       Json?
   created_at     DateTime          @default(now())
-  updated_at     DateTime          @default(now())
+  updated_at     DateTime          @updatedAt
   organizations  organizations     @relation(fields: [organizationId], references: [id])
   dependencies   ai_dependencies[]
 
@@ -236,7 +242,7 @@ model connectors {
   status             String
   last_scan_at       String?
   created_at         DateTime      @default(now())
-  updated_at         DateTime      @default(now())
+  updated_at         DateTime      @updatedAt
   daily_cost_total   Float         @default(0)
   daily_scan_count   Int           @default(0)
   estimated_cost     Float         @default(0)
@@ -263,7 +269,7 @@ model scan_jobs {
   incidents_detected Int           @default(0)
   sources_scanned    Int           @default(0)
   created_at         DateTime      @default(now())
-  updated_at         DateTime      @default(now())
+  updated_at         DateTime      @updatedAt
   organizations      organizations @relation(fields: [organizationId], references: [id])
 
   @@map("scan_jobs")
@@ -279,7 +285,7 @@ model users {
   role               String            @default("AUDITOR")
   is_active          Boolean
   created_at         DateTime          @default(now())
-  updated_at         DateTime          @default(now())
+  updated_at         DateTime          @updatedAt
   consent_records    consent_records[]
   incidents_resolved incidents[]       @relation("IncidentResolver")
   incidents_created  incidents[]       @relation("IncidentAuthor")
@@ -298,20 +304,22 @@ model consent_records {
   hashing_chain  String
   metadata_json  Json
   created_at     DateTime @default(now())
-  updated_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
   users          users    @relation(fields: [user_id], references: [id])
 }
 
 model compliance_fix_tasks {
-  id          String             @id @default(uuid())
-  featureId   String             @map("feature_id")
-  title       String
-  description String?
-  priority    Int
-  status      String             @default("pending")
-  created_at  DateTime           @default(now())
-  updated_at  DateTime           @default(now())
-  evidence    evidence_records[]
+  id             String               @id @default(uuid())
+  organizationId String               @map("organization_id")
+  featureId      String               @map("feature_id")
+  title          String
+  description    String?
+  priority       Int
+  status         String               @default("pending")
+  created_at     DateTime             @default(now())
+  updated_at     DateTime             @updatedAt
+  evidence       evidence_records[]
+  organizations  organizations        @relation(fields: [organizationId], references: [id])
 
   @@map("compliance_fix_tasks")
 }
@@ -333,13 +341,15 @@ model evidence_records {
 }
 
 model compliance_snapshots {
-  id          String   @id @default(uuid())
-  featureId   String   @map("feature_id")
-  gdpr_score  Int
-  dpdp_score  Int
-  hipaa_score Int
-  risk_level  String
-  created_at  DateTime @default(now())
+  id             String        @id @default(uuid())
+  organizationId String        @map("organization_id")
+  featureId      String        @map("feature_id")
+  gdpr_score     Int
+  dpdp_score     Int
+  hipaa_score    Int
+  risk_level     String
+  created_at     DateTime      @default(now())
+  organizations  organizations @relation(fields: [organizationId], references: [id])
 
   @@map("compliance_snapshots")
 }
@@ -358,13 +368,15 @@ model audit_logs {
 }
 
 model alerts {
-  id         String   @id @default(uuid())
-  feature_id String?
-  type       String
-  message    String
-  severity   String   @default("low")
-  is_read    Boolean  @default(false)
-  created_at DateTime @default(now())
+  id             String        @id @default(uuid())
+  organizationId String        @map("organization_id")
+  feature_id     String?
+  type           String
+  message        String
+  severity       String        @default("low")
+  is_read        Boolean       @default(false)
+  created_at     DateTime      @default(now())
+  organizations  organizations @relation(fields: [organizationId], references: [id])
 
   @@map("alerts")
 }
@@ -415,7 +427,7 @@ model roles {
   name        String   @unique
   description String
   created_at  DateTime @default(now())
-  updated_at  DateTime @default(now())
+  updated_at DateTime @updatedAt
 }
 
 model user_roles {
@@ -423,7 +435,7 @@ model user_roles {
   user_id    String
   role_id    String
   created_at DateTime @default(now())
-  updated_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 }
 
 model RefreshToken {
@@ -439,38 +451,44 @@ model RefreshToken {
 }
 
 model outcome_validations {
-  id                 String   @id @default(uuid())
+  id                 String        @id @default(uuid())
+  organizationId     String        @map("organization_id")
   feature_id         String
   action_id          String?
   previous_score     Float
   new_score          Float
   previous_risk      String
   new_risk           String
-  validation_status  String   @default("pending")
-  outcome_confidence String   @default("High")
-  validated_at       DateTime @default(now())
+  validation_status  String        @default("pending")
+  outcome_confidence String        @default("High")
+  validated_at       DateTime      @default(now())
+  organizations      organizations @relation(fields: [organizationId], references: [id])
 
   @@map("outcome_validations")
 }
 
 model monitoring_status {
-  id                  String   @id @default(uuid())
-  feature_id          String   @unique
-  status              String   @default("active")
-  last_checked_at     DateTime @default(now())
-  violations_last_24h Int      @default(0)
-  stability           String   @default("stable")
+  id                  String        @id @default(uuid())
+  organizationId      String        @map("organization_id")
+  feature_id          String        @unique
+  status              String        @default("active")
+  last_checked_at     DateTime      @default(now())
+  violations_last_24h Int           @default(0)
+  stability           String        @default("stable")
+  organizations       organizations @relation(fields: [organizationId], references: [id])
 
   @@map("monitoring_status")
 }
 
 model compliance_drift {
-  id               String   @id @default(uuid())
+  id               String        @id @default(uuid())
+  organizationId   String        @map("organization_id")
   feature_id       String
   drift_percentage Float
-  time_window      String   @default("6h")
-  detected_at      DateTime @default(now())
-  severity         String   @default("low")
+  time_window      String        @default("6h")
+  detected_at      DateTime      @default(now())
+  severity         String        @default("low")
+  organizations    organizations @relation(fields: [organizationId], references: [id])
 
   @@map("compliance_drift")
 }

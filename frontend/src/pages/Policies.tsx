@@ -8,7 +8,6 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
-  Archive,
   ArrowRight,
   LoaderCircle
 } from 'lucide-react';

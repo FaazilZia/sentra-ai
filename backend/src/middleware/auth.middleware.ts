@@ -3,15 +3,12 @@ import bcrypt from 'bcrypt';
 import { verifyAccessToken } from '../utils/jwt';
 import prisma from '../config/db';
 import logger from '../utils/logger';
-import IORedis from 'ioredis';
+import { Redis } from 'ioredis';
 import * as Sentry from '@sentry/node';
+import { getRedisClient } from '../config/redis';
 
-// Dedicated Redis client for auth cache (separate from rate limiter)
-let redis: IORedis | undefined;
-if (process.env.REDIS_URL) {
-  redis = new IORedis(process.env.REDIS_URL, { maxRetriesPerRequest: 1 });
-  redis.on('error', () => {}); // silent — cache is optional
-}
+// Centralized Redis client for auth cache
+const redis = getRedisClient();
 
 const API_KEY_CACHE_TTL = 300; // 5 minutes
 
@@ -65,16 +62,20 @@ export const authenticate = async (req: any, res: Response, next: NextFunction) 
   try {
     const authHeader = req.headers.authorization;
     const xApiKey = req.headers['x-api-key'];
+    const cookieToken = req.cookies?.sentra_access_token;
 
-    if (!authHeader && !xApiKey) {
+    if (!authHeader && !xApiKey && !cookieToken) {
       return res.status(401).json({ success: false, message: 'Authentication required' });
     }
 
-    // 1. Bearer token
+    let token = cookieToken;
     if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.split(' ')[1];
+      token = authHeader.split(' ')[1];
+    }
 
-      // API key path
+    // 1. Bearer or Cookie token
+    if (token) {
+      // SDK key path
       if (token.startsWith('sentra_')) {
         const resolved = await resolveApiKey(token);
         if (resolved) {

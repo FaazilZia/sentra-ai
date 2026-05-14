@@ -1,4 +1,4 @@
-import IORedis, { RedisOptions } from 'ioredis';
+import { Redis, RedisOptions } from 'ioredis';
 import logger from '../utils/logger';
 
 const REDIS_URL = process.env.REDIS_URL;
@@ -14,13 +14,13 @@ const REDIS_URL = process.env.REDIS_URL;
  * - `bullMqConnection`: For BullMQ workers/queues (requires maxRetriesPerRequest: null).
  */
 
-let _generalClient: IORedis | null = null;
-let _bullMqConnection: IORedis | null = null;
+let _generalClient: Redis | null = null;
+let _bullMqConnection: Redis | null = null;
 
-function createClient(name: string, overrides: Partial<RedisOptions> = {}): IORedis | null {
+function createClient(name: string, overrides: Partial<RedisOptions> = {}): Redis | null {
   if (!REDIS_URL) return null;
 
-  const client = new IORedis(REDIS_URL, {
+  const client = new Redis(REDIS_URL, {
     maxRetriesPerRequest: 3,
     retryStrategy: (times) => Math.min(times * 50, 2000),
     lazyConnect: false,
@@ -42,7 +42,7 @@ function createClient(name: string, overrides: Partial<RedisOptions> = {}): IORe
  * General-purpose Redis client for caching, auth, idempotency, rate limiting.
  * Returns null if REDIS_URL is not configured — callers should degrade gracefully.
  */
-export function getRedisClient(): IORedis | null {
+export function getRedisClient(): Redis | null {
   if (!_generalClient && REDIS_URL) {
     _generalClient = createClient('general');
   }
@@ -53,7 +53,7 @@ export function getRedisClient(): IORedis | null {
  * BullMQ-specific Redis connection. BullMQ requires maxRetriesPerRequest: null.
  * Returns null if REDIS_URL is not configured.
  */
-export function getBullMqConnection(): IORedis | null {
+export function getBullMqConnection(): Redis | null {
   if (!_bullMqConnection && REDIS_URL) {
     _bullMqConnection = createClient('bullmq', {
       maxRetriesPerRequest: null,

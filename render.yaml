@@ -3,6 +3,7 @@ services:
     name: sentra-backend-node
     env: node
     plan: free
+    numInstances: 1
     rootDir: backend
     buildCommand: npm install && npx prisma generate && npm run build
     startCommand: npx prisma migrate deploy && npm start

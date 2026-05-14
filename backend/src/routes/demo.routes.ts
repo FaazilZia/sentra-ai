@@ -29,6 +29,7 @@ router.post('/simulate-attack', authenticate, authorizeRoles('ADMIN'), async (re
     // 2. Trigger critical alerts
     await prisma.alerts.create({
       data: {
+        organizationId,
         type: 'POLICY_VIOLATION',
         message: 'High-frequency brute force attempt detected on sensitive data nodes.',
         severity: 'critical',
@@ -39,6 +40,7 @@ router.post('/simulate-attack', authenticate, authorizeRoles('ADMIN'), async (re
     // 3. Mock a compliance drop event
     await prisma.compliance_drift.create({
       data: {
+        organizationId,
         feature_id: 'data-privacy',
         drift_percentage: 18.5,
         severity: 'high'

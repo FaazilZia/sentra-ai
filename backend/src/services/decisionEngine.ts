@@ -6,6 +6,8 @@ import { maskPII } from '../utils/masking';
 import logger from '../utils/logger';
 import { cacheService } from './cache.service';
 
+const getNow = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
 export interface Decision {
   status: 'allowed' | 'blocked';
   risk: 'low' | 'medium' | 'high';
@@ -20,7 +22,7 @@ export interface Decision {
 }
 
 export const makeDecision = async (agent: string, action: string, organizationId: string, metadata: any = {}): Promise<Decision> => {
-  const startTime = performance.now();
+  const startTime = getNow();
   
   try {
     // 1. Level 1: Policy Engine (Hard Rules)
@@ -93,8 +95,8 @@ export const makeDecision = async (agent: string, action: string, organizationId
       reason = semanticRisk.score === 'high' ? `Blocked: ${semanticRisk.explanation}` : 'Blocked: High-risk pattern detected';
     }
 
-    const duration = performance.now() - startTime;
-    console.log(`[GOVERNANCE] Decision: ${status.toUpperCase()} | Risk: ${riskScore} | Latency: ${duration.toFixed(2)}ms`);
+    const duration = getNow() - startTime;
+    logger.info(`[GOVERNANCE] Decision: ${status.toUpperCase()} | Risk: ${riskScore} | Latency: ${duration.toFixed(2)}ms`);
 
     return {
       status,
