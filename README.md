@@ -4,9 +4,9 @@
 
 Traditional security tools monitor and report issues *after* they happen. **Sentra AI acts before execution** — enforcing pre-execution control, preventing risks, and mapping every decision to human-readable governance insights with compliance impact tracking (GDPR, HIPAA, DPDP).
 
-### 🚀 [Live Demo Dashboard](https://sentra-nm6jejy67-faazilzias-projects.vercel.app)
+### 🚀 [Live Demo Dashboard](https://sentra-ai-tau.vercel.app)
 
-[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen?style=for-the-badge&logo=vercel)](https://sentra-nm6jejy67-faazilzias-projects.vercel.app)
+[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen?style=for-the-badge&logo=vercel)](https://sentra-ai-tau.vercel.app)
 
 ---
 
