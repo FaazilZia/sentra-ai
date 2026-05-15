@@ -55,9 +55,15 @@ const PORT = process.env.PORT || 3000;
 const httpServer = createServer(app);
 
 // Use the same CORS origins as Express — never wildcard in production
-const socketOrigins = process.env.FRONTEND_URL
-  ? [process.env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:3000']
-  : ['http://localhost:5173', 'http://localhost:3000'];
+const allowedOrigins = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(',').map(o => o.trim())
+  : [];
+
+const socketOrigins = [
+  ...allowedOrigins,
+  'http://localhost:5173',
+  'http://localhost:3000'
+];
 
 const io = new Server(httpServer, {
   cors: {
