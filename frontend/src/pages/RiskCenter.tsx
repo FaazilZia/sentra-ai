@@ -22,16 +22,16 @@ import {
 import KPICard from '@/components/dashboard/KPICard';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store/useStore';
+import { useSocketStore } from '@/store/useSocketStore';
 import { fetchGuardrailMetrics, GuardrailMetrics } from '@/lib/api';
 
 const trendData: any[] = [];
 
 const severityData: any[] = [];
 
-const riskEvents: any[] = [];
-
 export default function RiskCenter() {
   const addToast = useStore((state) => state.addToast);
+  const { riskEvents } = useSocketStore();
   const [metrics, setMetrics] = useState<GuardrailMetrics | null>(null);
   const [loading, setLoading] = useState(true);
 

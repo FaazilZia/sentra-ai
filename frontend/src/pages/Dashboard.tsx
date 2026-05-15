@@ -8,9 +8,11 @@ import { useEffect, useState } from 'react';
 import { fetchPolicies } from '@/lib/api';
 import { ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useSocketStore } from '@/store/useSocketStore';
 
 export default function Dashboard() {
   const [policiesCount, setPoliciesCount] = useState<number | null>(null);
+  const { activities, alerts } = useSocketStore();
 
   useEffect(() => {
     fetchPolicies().then(policies => setPoliciesCount(policies.length)).catch(() => setPoliciesCount(0));
@@ -84,7 +86,7 @@ export default function Dashboard() {
            <AIRegistryTable data={[]} isLoading={false} />
         </div>
         <div className="lg:col-span-4">
-           <ActiveAlertsPanel data={[]} isLoading={false} />
+           <ActiveAlertsPanel data={alerts} isLoading={false} />
         </div>
       </div>
 
@@ -94,7 +96,7 @@ export default function Dashboard() {
            <ComplianceTracker data={[]} isLoading={false} />
         </div>
         <div className="lg:col-span-4">
-           <RecentActivityFeed data={[]} isLoading={false} />
+           <RecentActivityFeed data={activities} isLoading={false} />
         </div>
         <div className="lg:col-span-4">
            <RiskDistributionCard data={[]} isLoading={false} />

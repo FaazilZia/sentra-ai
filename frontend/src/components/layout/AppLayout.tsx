@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { SocketProvider } from './SocketProvider';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -17,13 +18,15 @@ export function AppLayout({ children }: AppLayoutProps) {
         <Header />
         
         <main className="flex-1 pt-[var(--topbar-height)]">
-          <Suspense fallback={
-            <div className="flex h-full items-center justify-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--royal-indigo)] border-t-transparent" />
-            </div>
-          }>
-            {children}
-          </Suspense>
+          <SocketProvider>
+            <Suspense fallback={
+              <div className="flex h-full items-center justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--royal-indigo)] border-t-transparent" />
+              </div>
+            }>
+              {children}
+            </Suspense>
+          </SocketProvider>
         </main>
       </div>
     </div>
