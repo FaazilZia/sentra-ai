@@ -261,7 +261,14 @@ export default function RiskCenter() {
                     <span className="text-[var(--text-sm)] font-bold text-[var(--text-primary)]">{event.agent}</span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-[var(--text-xs)] text-[var(--text-secondary)] font-medium">{event.action}</span>
+                    <div className="space-y-1">
+                      <span className="text-[var(--text-xs)] text-[var(--text-secondary)] font-medium">{event.action}</span>
+                      {event.aiSummary && (
+                        <p className="max-w-xl text-[10px] leading-relaxed text-[var(--text-muted)]">
+                          {event.aiSummary}
+                        </p>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <span className={cn(

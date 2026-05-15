@@ -50,6 +50,7 @@ import prisma, { initializePrisma } from './config/db';
 import { setupScheduledJobs } from './services/queue.service';
 import { setupConnectorWorkers } from './workers/worker.manager';
 import { alertService } from './services/alert.service';
+import { verifyAccessToken } from './utils/jwt';
 
 const PORT = process.env.PORT || 3000;
 const httpServer = createServer(app);
@@ -72,12 +73,60 @@ const io = new Server(httpServer, {
   }
 });
 
+io.use(async (socket, next) => {
+  try {
+    const authToken = typeof socket.handshake.auth?.token === 'string'
+      ? socket.handshake.auth.token
+      : undefined;
+    const headerValue = socket.handshake.headers.authorization;
+    const bearerToken = typeof headerValue === 'string' && headerValue.startsWith('Bearer ')
+      ? headerValue.slice(7)
+      : undefined;
+    const token = authToken || bearerToken;
+
+    if (!token) {
+      return next(new Error('Socket authentication required'));
+    }
+
+    const payload = verifyAccessToken(token) as any;
+    if (!payload?.id) {
+      return next(new Error('Invalid socket token'));
+    }
+
+    const user = await prisma.users.findUnique({
+      where: { id: payload.id },
+      include: { organizations: true },
+    });
+
+    if (!user || !user.is_active || !user.organizations?.is_active) {
+      return next(new Error('Unauthorized socket user'));
+    }
+
+    socket.data.userId = user.id;
+    socket.data.organizationId = user.organizationId;
+    next();
+  } catch (error) {
+    next(new Error('Socket authentication failed'));
+  }
+});
+
 io.on('connection', (socket) => {
   logger.info(`Client connected to real-time feed: ${socket.id}`);
-  
-  socket.on('join_company', (organizationId) => {
+
+  const organizationId = socket.data.organizationId as string | undefined;
+  if (organizationId) {
     socket.join(`company_${organizationId}`);
-    logger.info(`Client ${socket.id} joined room: company_${organizationId}`);
+    logger.info(`Client ${socket.id} joined verified room: company_${organizationId}`);
+  }
+
+  socket.on('join_company', (requestedOrganizationId) => {
+    if (!organizationId || requestedOrganizationId !== organizationId) {
+      logger.warn(`Socket ${socket.id} attempted invalid room join for org ${requestedOrganizationId}`);
+      return;
+    }
+
+    socket.join(`company_${organizationId}`);
+    logger.info(`Client ${socket.id} rejoined verified room: company_${organizationId}`);
   });
 
   socket.on('disconnect', () => {

@@ -1,5 +1,4 @@
 import { Response, NextFunction } from 'express';
-import crypto from 'crypto';
 import logger, { logRequest } from '../utils/logger';
 import prisma from '../config/db';
 import { resolveOrganizationId } from '../utils/company';
@@ -103,7 +102,7 @@ export const postCheckAction = async (req: any, res: Response, next: NextFunctio
 
     // 4. Push Real-time Update
     io.to(`company_${organizationId}`).emit('activity_log', {
-      id: crypto.randomUUID(),
+      id: requestId,
       organizationId,
       timestamp: new Date().toISOString(),
       decision: decision.status === 'blocked' ? 'BLOCK' : (decision.isPendingApproval ? 'MODIFY' : 'ALLOW'),

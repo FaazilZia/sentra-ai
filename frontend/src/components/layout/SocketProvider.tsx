@@ -1,19 +1,22 @@
 import { ReactNode, useEffect } from 'react';
-import { socket } from '@/lib/socket';
+import { socket, setSocketAuthToken } from '@/lib/socket';
 import { useSocketStore } from '@/store/useSocketStore';
 import { useAuth } from '@/lib/auth';
 
 export function SocketProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, accessToken } = useAuth();
   const { setConnectionStatus, addEvent } = useSocketStore();
 
   useEffect(() => {
     if (!user || !user.organizationId) {
+      setSocketAuthToken(null);
       if (socket.connected) {
         socket.disconnect();
       }
       return;
     }
+
+    setSocketAuthToken(accessToken);
 
     // Debounce state to prevent rapid UI flickering
     let timeoutId: NodeJS.Timeout;
@@ -70,7 +73,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       // We don't disconnect entirely here to allow fast navigation,
       // but if user changes/logs out, the outer effect will handle disconnect.
     };
-  }, [user, setConnectionStatus, addEvent]);
+  }, [user, accessToken, setConnectionStatus, addEvent]);
 
   return <>{children}</>;
 }

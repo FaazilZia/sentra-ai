@@ -21,3 +21,7 @@ export const socket: Socket = io(getBaseSocketUrl(), {
   reconnectionDelayMax: 5000,
   autoConnect: false, // Connect manually when authenticated
 });
+
+export const setSocketAuthToken = (token: string | null) => {
+  socket.auth = token ? { token } : {};
+};

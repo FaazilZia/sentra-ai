@@ -9,6 +9,8 @@ export interface Activity {
   target: string;
   time: string;
   color: string;
+  aiSummary?: string;
+  decision: 'BLOCK' | 'MODIFY' | 'ALLOW';
 }
 
 export interface Alert {
@@ -26,6 +28,7 @@ export interface RiskEvent {
   severity: 'Critical' | 'High' | 'Medium' | 'Low';
   time: string;
   status: 'Blocked' | 'Flagged' | 'Allowed';
+  aiSummary?: string;
 }
 
 interface SocketState {
@@ -68,6 +71,7 @@ export const useSocketStore = create<SocketState>((set) => ({
     const actionTarget = payload.metadata?.action || 'evaluated action';
     const decision = payload.decision;
     const policy = payload.reason || 'None';
+    const aiSummary = typeof payload.ai_summary === 'string' ? payload.ai_summary : undefined;
     
     // 1. Create Activity Feed Item
     const newActivity: Activity = {
@@ -77,6 +81,8 @@ export const useSocketStore = create<SocketState>((set) => ({
       target: actionTarget.length > 30 ? actionTarget.substring(0, 30) + '...' : actionTarget,
       time,
       color: decision === 'BLOCK' ? 'var(--risk-critical)' : 'var(--royal-indigo)',
+      aiSummary,
+      decision,
     };
 
     // 2. Create Risk Event for RiskCenter Table
@@ -93,6 +99,7 @@ export const useSocketStore = create<SocketState>((set) => ({
       severity: payload.risk ? (payload.risk as any) : severityMap[decision] || 'Low',
       time,
       status: decision === 'BLOCK' ? 'Blocked' : decision === 'MODIFY' ? 'Flagged' : 'Allowed',
+      aiSummary,
     };
 
     // 3. Create Alert if it's a BLOCK

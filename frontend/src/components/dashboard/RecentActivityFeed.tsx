@@ -7,6 +7,8 @@ interface Activity {
   target: string;
   time: string;
   color: string;
+  aiSummary?: string;
+  decision: 'BLOCK' | 'MODIFY' | 'ALLOW';
 }
 
 interface RecentActivityFeedProps {
@@ -50,10 +52,18 @@ export default function RecentActivityFeed({ data = [], isLoading = false }: Rec
                   </p>
                   <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-tighter shrink-0 ml-4">{item.time}</span>
                 </div>
+
+                {item.aiSummary && (
+                  <p className="mt-2 text-[11px] leading-relaxed text-[var(--text-secondary)]">
+                    {item.aiSummary}
+                  </p>
+                )}
                 
                 <div className="flex items-center gap-1.5 mt-2">
                   <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: item.color }} />
-                  <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Audit Event</span>
+                  <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
+                    {item.decision} Audit Event
+                  </span>
                 </div>
               </div>
             </div>
