@@ -800,3 +800,21 @@ export async function updateAlertSettings(payload: { alertEmail?: string; slackW
 export async function testAlert(): Promise<any> {
   return apiRequest<any>('/organizations/test-alert', { method: 'POST' });
 }
+
+export async function rotateApiKey(): Promise<{ api_key: string }> {
+  return apiRequest<{ api_key: string }>('/api-keys/rotate', { method: 'POST' });
+}
+
+export async function updateAlertEmail(email: string): Promise<any> {
+  return apiRequest<any>('/organizations/alert-email', {
+    method: 'PUT',
+    body: JSON.stringify({ email })
+  });
+}
+
+export async function updateWebhookUrl(url: string): Promise<any> {
+  return apiRequest<any>('/organizations/webhook', {
+    method: 'PUT',
+    body: JSON.stringify({ url })
+  });
+}

@@ -154,6 +154,33 @@ export class SentraClient {
   }
 
   /**
+   * Intercepts LangChain calls to monitor and control AI chain execution.
+   */
+  wrapLangChain(chain: any) {
+    const originalCall = chain.call?.bind(chain) || chain.invoke?.bind(chain);
+    const methodName = chain.call ? 'call' : 'invoke';
+
+    chain[methodName] = async (...args: any[]) => {
+      const input = args[0];
+      const prompt = typeof input === 'string' ? input : JSON.stringify(input);
+
+      const check = await this.checkAction({
+        agent: 'langchain-chain',
+        action: 'LANGCHAIN_INVOKE',
+        metadata: { prompt: prompt.substring(0, 500), prompt_length: prompt.length }
+      });
+
+      if (check.status === 'blocked') {
+        throw new SentraError(`[Sentra Blocked] ${check.reason}`, 403, check);
+      }
+
+      return originalCall(...args);
+    };
+
+    return chain;
+  }
+
+  /**
    * Helper wrapper to execute an action only if Sentra allows it.
    */
   async safeAction<T>(

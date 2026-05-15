@@ -8,7 +8,8 @@ import {
   ChevronRight,
   ShieldCheck,
   FileText,
-  Box
+  Box,
+  Settings2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth';
@@ -21,6 +22,7 @@ const navItems = [
   { icon: ClipboardCheck, label: 'Compliance', path: '/app/compliance' },
   { icon: EyeOff, label: 'Shadow AI', path: '/app/shadow' },
   { icon: Box, label: 'Inventory', path: '/app/inventory' },
+  { icon: Settings2, label: 'Settings', path: '/app/settings' },
 ];
 
 export function Sidebar() {

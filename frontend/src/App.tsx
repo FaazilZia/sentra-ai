@@ -14,6 +14,7 @@ const RiskCenterPage = lazy(() => import('./pages/RiskCenter'));
 const CompliancePage = lazy(() => import('./pages/Compliance'));
 const ShadowAIPage = lazy(() => import('./pages/ShadowAI'));
 const InventoryPage = lazy(() => import('./pages/Inventory'));
+const SettingsPage = lazy(() => import('./pages/Settings'));
 
 import { ModalProvider } from './components/shared/ModalProvider';
 import { ToastProvider } from './components/shared/ToastProvider';
@@ -84,6 +85,8 @@ function AppRoutes() {
               path="/app/inventory" 
               element={user ? <AppLayout><InventoryPage /></AppLayout> : <Navigate to="/login" replace />}
             />
+
+            <Route path="/app/settings" element={user ? <AppLayout><SettingsPage /></AppLayout> : <Navigate to="/login" replace />} />
 
             <Route path="*" element={<Navigate to={user ? "/app" : "/login"} replace />} />
           </Routes>

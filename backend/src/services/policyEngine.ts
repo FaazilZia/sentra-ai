@@ -14,15 +14,13 @@ export interface PolicyEvaluation {
  * Shared safe-action allowlist. Use a Set for O(1) lookup instead of Array.includes O(n).
  */
 export const SAFE_ACTION_ALLOWLIST = new Set([
-  'fetch_weather', 'get_weather', 'weather',
-  'fetch_time', 'get_time', 'timezone',
-  'health_check', 'ping', 'status',
-  'read_config', 'get_config',
-  'list_items', 'fetch_list', 'get_list',
-  'search', 'lookup', 'find',
-  'translate', 'summarize', 'format',
-  'calculate', 'compute',
-  'log_event', 'track_event',
+  'health_check',
+  'ping',
+  'status',
+  'get_time',
+  'fetch_time',
+  'get_weather',
+  'fetch_weather',
 ]);
 
 /**

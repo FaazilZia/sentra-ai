@@ -55,6 +55,22 @@ const POLICIES = [
     ],
     action: 'BLOCK',
     description: 'Detects and blocks prompt injection attempts'
+  },
+  {
+    id: 'OS_COMMAND_INJECTION',
+    patterns: [
+      /bash\s+-c/i, /sh\s+-c/i, /rm\s+-rf/i, /curl\s+.*\|/i, /wget\s+.*\|/i
+    ],
+    action: 'BLOCK',
+    description: 'Blocks OS command execution and shell pipelines'
+  },
+  {
+    id: 'PATH_TRAVERSAL_DETECT',
+    patterns: [
+      /\.\.\//, /\.\.\\/, /\/etc\/passwd/i, /\.env\b/, /id_rsa/i
+    ],
+    action: 'BLOCK',
+    description: 'Blocks attempts to access sensitive system files'
   }
 ];
 
@@ -70,7 +86,7 @@ export class GuardrailService {
     // 0. Safe-Action Allowlist: Short-circuit for known-benign actions.
     // These are legitimate actions that should never be blocked by default.
     const normalizedText = text.toLowerCase();
-    const isSafeAction = [...SAFE_ACTION_ALLOWLIST].some(safe => normalizedText.includes(safe));
+    const isSafeAction = SAFE_ACTION_ALLOWLIST.has(normalizedText.trim());
     if (isSafeAction) {
       return {
         decision: 'ALLOW',
