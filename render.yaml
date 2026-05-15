@@ -7,7 +7,7 @@ services:
     rootDir: backend
     buildCommand: npm install && npx prisma generate && npm run build
     startCommand: npm start
-    healthCheckPath: /api/health
+    healthCheckPath: /api/v1/health
     envVars:
       - key: SENTRY_DSN
         sync: false

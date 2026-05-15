@@ -8,15 +8,16 @@ import prisma from '../config/db';
 import { logActivity } from './policy.service';
 import { decrypt } from '../utils/encryption';
 import { SENSITIVE_PATTERNS } from './riskEngine';
+import { buildRedisOptions, getRedisUrl } from '../config/redis';
 
-const REDIS_URL = process.env.REDIS_URL;
+const REDIS_URL = getRedisUrl();
 
 let connection: IORedis | undefined;
 if (REDIS_URL) {
-  connection = new IORedis(REDIS_URL, {
+  connection = new IORedis(REDIS_URL, buildRedisOptions({
     maxRetriesPerRequest: null,
     enableOfflineQueue: false,
-  });
+  }));
   connection.on('error', (err) => {
     logger.error('Redis Connection Error:', err);
   });

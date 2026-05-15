@@ -28,6 +28,7 @@ export interface LogActivityData {
   overriddenBy?: string;
   overrideTimestamp?: Date;
   approvedBy?: string;
+  emitRealtime?: boolean;
 }
 
 export const logActivity = async (data: LogActivityData) => {
@@ -56,7 +57,7 @@ export const logActivity = async (data: LogActivityData) => {
   });
 
   // Real-time Update: Emit to the specific organization room
-  if (io) {
+  if (io && data.emitRealtime !== false) {
     io.to(`company_${data.organizationId}`).emit('activity_log', {
       id: data.requestId || log.id,
       organizationId: data.organizationId,

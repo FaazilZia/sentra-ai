@@ -25,6 +25,7 @@ import riskRoutes from './routes/risk.routes';
 import intelligenceRoutes from './routes/intelligence.routes';
 import demoRoutes from './routes/demo.routes';
 import prisma from './config/db';
+import { redisHealthCheck } from './config/redis';
 
 import { apiRateLimiter } from './config/rateLimit';
 import { securityObservability } from './middleware/security.middleware';
@@ -68,11 +69,7 @@ app.get('/api/ready', async (req, res) => {
     dbStatus = 'connected';
 
     try {
-      // Reuse the shared cache service Redis connection instead of
-      // creating a new one on every health check (prevents connection leaks)
-      const { cacheService } = require('./services/cache.service');
-      const pong = await cacheService.ping();
-      if (pong) redisStatus = 'connected';
+      if (await redisHealthCheck()) redisStatus = 'connected';
     } catch (e) {
       redisStatus = 'failed (degraded)';
     }
@@ -190,11 +187,7 @@ v1Router.get('/ready', async (req, res) => {
 
     // Check Redis (Non-critical, allows degraded mode)
     try {
-      const Redis = require('ioredis');
-      const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
-      const pong = await redis.ping();
-      if (pong === 'PONG') redisStatus = 'connected';
-      redis.disconnect();
+      if (await redisHealthCheck()) redisStatus = 'connected';
     } catch (e) {
       redisStatus = 'failed (degraded)';
     }

@@ -5,7 +5,7 @@ services:
     plan: free
     buildCommand: npm install && npx prisma generate && npx prisma migrate deploy && npm run build
     startCommand: npm start
-    healthCheckPath: /api/health
+    healthCheckPath: /api/v1/health
     envVars:
       - key: DATABASE_URL # Supabase Transaction Pooler URL (Port 6543)
         sync: false
@@ -26,4 +26,4 @@ services:
       - key: HUGGINGFACE_MODEL
         value: mistralai/Mistral-7B-Instruct-v0.2
       - key: REDIS_URL
-        value: redis://red-d7em61i8qa3s73eg53gg:6379
+        sync: false

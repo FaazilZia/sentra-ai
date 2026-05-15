@@ -51,6 +51,7 @@ import { setupScheduledJobs } from './services/queue.service';
 import { setupConnectorWorkers } from './workers/worker.manager';
 import { alertService } from './services/alert.service';
 import { verifyAccessToken } from './utils/jwt';
+import { redisHealthCheck } from './config/redis';
 
 const PORT = process.env.PORT || 3000;
 const httpServer = createServer(app);
@@ -89,7 +90,7 @@ io.use(async (socket, next) => {
     }
 
     const payload = verifyAccessToken(token) as any;
-    if (!payload?.id) {
+    if (!payload || typeof payload === 'string' || !payload.id || !payload.organizationId) {
       return next(new Error('Invalid socket token'));
     }
 
@@ -98,12 +99,18 @@ io.use(async (socket, next) => {
       include: { organizations: true },
     });
 
-    if (!user || !user.is_active || !user.organizations?.is_active) {
+    if (
+      !user ||
+      !user.is_active ||
+      !user.organizations?.is_active ||
+      user.organizationId !== payload.organizationId
+    ) {
       return next(new Error('Unauthorized socket user'));
     }
 
     socket.data.userId = user.id;
     socket.data.organizationId = user.organizationId;
+    socket.data.authenticated = true;
     next();
   } catch (error) {
     next(new Error('Socket authentication failed'));
@@ -111,6 +118,12 @@ io.use(async (socket, next) => {
 });
 
 io.on('connection', (socket) => {
+  if (!socket.data.authenticated || !socket.data.userId || !socket.data.organizationId) {
+    logger.warn(`Rejecting unauthenticated socket connection: ${socket.id}`);
+    socket.disconnect(true);
+    return;
+  }
+
   logger.info(`Client connected to real-time feed: ${socket.id}`);
 
   const organizationId = socket.data.organizationId as string | undefined;
@@ -122,6 +135,7 @@ io.on('connection', (socket) => {
   socket.on('join_company', (requestedOrganizationId) => {
     if (!organizationId || requestedOrganizationId !== organizationId) {
       logger.warn(`Socket ${socket.id} attempted invalid room join for org ${requestedOrganizationId}`);
+      socket.disconnect(true);
       return;
     }
 
@@ -146,6 +160,9 @@ const startServer = async () => {
   try {
     await initializePrisma();
     logger.info('Database layer initialized');
+
+    const redisReady = await redisHealthCheck();
+    logger.info(`Redis health at startup: ${redisReady ? 'connected' : 'degraded'}`);
 
     // Initialize Background Workers & Schedules (Non-blocking)
     setupConnectorWorkers();

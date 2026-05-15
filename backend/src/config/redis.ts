@@ -1,7 +1,11 @@
 import { Redis, RedisOptions } from 'ioredis';
 import logger from '../utils/logger';
 
-const REDIS_URL = process.env.REDIS_URL;
+const REDIS_URL =
+  process.env.REDIS_URL?.trim() ||
+  process.env.UPSTASH_REDIS_URL?.trim() ||
+  process.env.RENDER_REDIS_URL?.trim() ||
+  '';
 
 /**
  * Shared Redis Connection Pool
@@ -17,22 +21,56 @@ const REDIS_URL = process.env.REDIS_URL;
 let _generalClient: Redis | null = null;
 let _bullMqConnection: Redis | null = null;
 
+export function getRedisUrl(): string | null {
+  return REDIS_URL || null;
+}
+
+export function buildRedisOptions(overrides: Partial<RedisOptions> = {}): RedisOptions {
+  const options: RedisOptions = {
+    lazyConnect: true,
+    enableOfflineQueue: false,
+    enableReadyCheck: true,
+    maxRetriesPerRequest: 1,
+    connectTimeout: 5000,
+    retryStrategy: (times) => Math.min(times * 200, 2000),
+    ...overrides,
+  };
+
+  const needsTls =
+    REDIS_URL.startsWith('rediss://') ||
+    /upstash\.io/i.test(REDIS_URL) ||
+    process.env.REDIS_TLS === 'true';
+
+  if (needsTls && REDIS_URL) {
+    try {
+      const hostname = new URL(REDIS_URL).hostname;
+      options.tls = {
+        servername: hostname,
+        ...(options.tls || {}),
+      };
+    } catch (error) {
+      logger.warn('[Redis] Failed to derive TLS hostname from REDIS_URL');
+    }
+  }
+
+  return options;
+}
+
 function createClient(name: string, overrides: Partial<RedisOptions> = {}): Redis | null {
   if (!REDIS_URL) return null;
 
-  const client = new Redis(REDIS_URL, {
-    maxRetriesPerRequest: 3,
-    retryStrategy: (times) => Math.min(times * 50, 2000),
-    lazyConnect: false,
-    ...overrides,
-  });
+  const client = new Redis(REDIS_URL, buildRedisOptions(overrides));
 
   client.on('error', (err) => {
     logger.warn(`[Redis:${name}] Connection error:`, err.message);
   });
 
-  client.on('connect', () => {
-    logger.info(`[Redis:${name}] Connected.`);
+  client.on('ready', () => {
+    logger.info(`[Redis:${name}] Ready.`);
+  });
+
+  client.connect().catch((err) => {
+    logger.warn(`[Redis:${name}] Initial connect failed: ${err.message}`);
   });
 
   return client;
@@ -63,11 +101,34 @@ export function getBullMqConnection(): Redis | null {
   return _bullMqConnection;
 }
 
+export async function ensureRedisConnection(client: Redis | null = getRedisClient()): Promise<Redis | null> {
+  if (!client) return null;
+
+  try {
+    const status = client.status;
+    if (status === 'ready') return client;
+
+    if (status === 'wait') {
+      await client.connect();
+    } else if (status === 'end') {
+      return null;
+    }
+
+    if (client.status !== 'ready') {
+      await client.ping();
+    }
+
+    return client.status === 'ready' ? client : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Health check — pings the general Redis client.
  */
 export async function redisHealthCheck(): Promise<boolean> {
-  const client = getRedisClient();
+  const client = await ensureRedisConnection();
   if (!client) return false;
   try {
     const result = await client.ping();

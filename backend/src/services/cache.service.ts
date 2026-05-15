@@ -1,37 +1,67 @@
-import IORedis from 'ioredis';
 import logger from '../utils/logger';
+import { ensureRedisConnection, getRedisClient } from '../config/redis';
 
-const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
+type MemoryEntry = {
+  value: string;
+  expiresAt: number;
+};
 
 class CacheService {
-  private redis: IORedis;
   private readonly DEFAULT_TTL = 60; // 60 seconds
+  private readonly memoryCache = new Map<string, MemoryEntry>();
 
   constructor() {
-    this.redis = new IORedis(REDIS_URL, {
-      maxRetriesPerRequest: 3,
-      retryStrategy: (times) => Math.min(times * 50, 2000),
-    });
+    const redis = getRedisClient();
+    if (!redis) {
+      logger.warn('CacheService: Redis unavailable, using in-memory cache fallback.');
+    }
+  }
 
-    this.redis.on('error', (err) => {
-      logger.warn('Redis Cache Error:', err);
+  private getMemory(key: string): string | null {
+    const entry = this.memoryCache.get(key);
+    if (!entry) return null;
+    if (Date.now() > entry.expiresAt) {
+      this.memoryCache.delete(key);
+      return null;
+    }
+    return entry.value;
+  }
+
+  private setMemory(key: string, value: string, ttl: number) {
+    this.memoryCache.set(key, {
+      value,
+      expiresAt: Date.now() + (ttl * 1000),
     });
   }
 
   async getOrSet<T>(key: string, fetchFn: () => Promise<T>, ttl = this.DEFAULT_TTL): Promise<T> {
+    const redis = await ensureRedisConnection();
+
     try {
-      const cached = await this.redis.get(key);
-      if (cached) {
-        return JSON.parse(cached);
+      if (redis) {
+        const cached = await redis.get(key);
+        if (cached) {
+          return JSON.parse(cached);
+        }
+      } else {
+        const cached = this.getMemory(key);
+        if (cached) {
+          return JSON.parse(cached);
+        }
       }
     } catch (error) {
       logger.warn(`Cache read error for key ${key}:`, error);
     }
 
     const freshData = await fetchFn();
-    
+
     try {
-      await this.redis.set(key, JSON.stringify(freshData), 'EX', ttl);
+      const serialized = JSON.stringify(freshData);
+      if (redis) {
+        await redis.set(key, serialized, 'EX', ttl);
+      } else {
+        this.setMemory(key, serialized, ttl);
+      }
     } catch (error) {
       logger.warn(`Cache write error for key ${key}:`, error);
     }
@@ -40,8 +70,13 @@ class CacheService {
   }
 
   async invalidate(key: string) {
+    const redis = await ensureRedisConnection();
+
     try {
-      await this.redis.del(key);
+      if (redis) {
+        await redis.del(key);
+      }
+      this.memoryCache.delete(key);
     } catch (error) {
       logger.warn(`Cache invalidation error for key ${key}:`, error);
     }
@@ -52,11 +87,15 @@ class CacheService {
    * Useful for bulk invalidation when policies are updated.
    */
   async invalidatePattern(pattern: string) {
+    const redis = await ensureRedisConnection();
+
     try {
-      const keys = await this.redis.keys(pattern);
-      if (keys.length > 0) {
-        await this.redis.del(...keys);
-        logger.info(`Cache: invalidated ${keys.length} keys matching ${pattern}`);
+      if (redis) {
+        const keys = await redis.keys(pattern);
+        if (keys.length > 0) {
+          await redis.del(...keys);
+          logger.info(`Cache: invalidated ${keys.length} keys matching ${pattern}`);
+        }
       }
     } catch (error) {
       logger.warn(`Cache pattern invalidation error for ${pattern}:`, error);
@@ -68,7 +107,9 @@ class CacheService {
    */
   async ping(): Promise<boolean> {
     try {
-      const result = await this.redis.ping();
+      const redis = await ensureRedisConnection();
+      if (!redis) return false;
+      const result = await redis.ping();
       return result === 'PONG';
     } catch {
       return false;

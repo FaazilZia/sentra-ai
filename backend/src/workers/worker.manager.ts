@@ -5,8 +5,9 @@ import prisma from '../config/db';
 import { processS3Scan } from './s3.worker';
 import { processSqlScan } from './sql.worker';
 import { processGDriveScan } from './gdrive.worker';
+import { buildRedisOptions, getRedisUrl } from '../config/redis';
 
-const REDIS_URL = process.env.REDIS_URL;
+const REDIS_URL = getRedisUrl();
 
 export function setupConnectorWorkers() {
   if (!REDIS_URL) {
@@ -14,10 +15,10 @@ export function setupConnectorWorkers() {
     return;
   }
 
-  const connection = new IORedis(REDIS_URL, {
+  const connection = new IORedis(REDIS_URL, buildRedisOptions({
     maxRetriesPerRequest: null,
     enableOfflineQueue: false,
-  });
+  }));
 
   const worker = new Worker(
     'connector-scans',

@@ -1,38 +1,40 @@
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
-import Redis from 'ioredis';
 import logger from '../utils/logger';
-
-// Optionally connect to Redis. If not provided, it falls back to memory store
-const redisUrl = process.env.REDIS_URL;
-let redisClient: Redis | undefined;
-
-if (redisUrl) {
-  redisClient = new Redis(redisUrl);
-  redisClient.on('error', (err) => logger.error('Redis Rate Limit Error', err));
-  logger.info('Distributed Rate Limiting enabled (Redis)');
-}
+import { getRedisClient, isRedisConfigured } from './redis';
 
 class FailClosedStore {
+  constructor(private readonly prefix: string) {}
+
   async increment() {
-    throw new Error('Rate limiting unavailable (Redis down). Failing closed to protect infrastructure.');
+    throw new Error(`Rate limiting unavailable for ${this.prefix} (Redis down). Failing closed to protect infrastructure.`);
   }
   async decrement() {}
   async resetKey() {}
 }
 
+const createRedisStore = (prefix: string) => {
+  const redisClient = getRedisClient();
+  if (!redisClient) return undefined;
+
+  logger.info(`Distributed Rate Limiting enabled (Redis) for ${prefix}`);
+
+  return new RedisStore({
+    // rate-limit-redis expects a raw Redis command bridge
+    sendCommand: (...args: string[]) => redisClient.call(args[0], ...args.slice(1)) as Promise<any>,
+    prefix
+  });
+};
+
 const getStore = (prefix: string, failClosed: boolean = false) => {
-  if (redisClient && redisClient.status === 'ready') {
-    return new RedisStore({
-      // @ts-ignore
-      sendCommand: (...args: string[]) => redisClient!.call(args[0], ...args.slice(1)),
-      prefix
-    });
+  if (isRedisConfigured) {
+    const store = createRedisStore(prefix);
+    if (store) return store;
   }
   
   if (failClosed && process.env.NODE_ENV === 'production') {
     logger.error(`[CRITICAL] Redis unavailable for ${prefix}. Failing closed.`);
-    return new FailClosedStore() as any;
+    return new FailClosedStore(prefix) as any;
   }
   
   return undefined; // Fallback to memory
@@ -59,6 +61,7 @@ export const authRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: getStore('rl:auth:'),
+  passOnStoreError: true,
   keyGenerator: (req) => `${ipKeyGenerator(req.ip!)}-${req.body.email || 'anon'}`,
   handler: onLimitReached
 });
@@ -70,6 +73,7 @@ export const apiRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: getStore('rl:api:'),
+  passOnStoreError: true,
   handler: onLimitReached
 });
 
@@ -80,6 +84,7 @@ export const aiActionRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: getStore('rl:ai:min:', true), // AI endpoints are fail-closed
+  passOnStoreError: false,
   keyGenerator: (req: any) => {
     return (req.headers['x-api-key'] as string) || (req.user?.organizationId) || ipKeyGenerator(req, undefined) || 'global';
   },
@@ -93,6 +98,7 @@ export const aiDailyRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: getStore('rl:ai:day:', true), // AI endpoints are fail-closed
+  passOnStoreError: false,
   keyGenerator: (req: any) => {
     return (req.headers['x-api-key'] as string) || (req.user?.organizationId) || ipKeyGenerator(req, undefined) || 'global';
   },
