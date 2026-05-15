@@ -39,22 +39,17 @@ const getStore = (prefix: string, failClosed: boolean = false) => {
 };
 
 const onLimitReached = (req: any, res: any, options: any) => {
-  const key = options.keyGenerator(req, res);
+  const key = typeof options.keyGenerator === 'function' ? options.keyGenerator(req, res) : (req.ip || 'unknown');
+  const statusCode = options.statusCode || 429;
+  const message = options.message || { success: false, message: 'Too many requests' };
+
   logger.warn(`Rate limit breached: ${options.prefix || 'unknown'}`, {
     ip: req.ip,
     key,
     endpoint: req.originalUrl
   });
   
-  import('@sentry/node').then(Sentry => {
-    Sentry.captureMessage(`Rate limit breached: ${options.prefix || 'unknown'}`, {
-      level: 'warning',
-      tags: { endpoint: req.originalUrl, rateLimitKey: key },
-      extra: { ip: req.ip }
-    });
-  });
-
-  res.status(options.statusCode).send(options.message);
+  res.status(statusCode).json(typeof message === 'string' ? { message } : message);
 };
 
 export const authRateLimiter = rateLimit({

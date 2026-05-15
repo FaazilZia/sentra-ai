@@ -57,9 +57,11 @@ export const logActivity = async (data: LogActivityData) => {
 
   // Real-time Update: Emit to the specific organization room
   if (io) {
-    io.to(`company_${data.organizationId}`).emit('new_activity', {
+    io.to(`company_${data.organizationId}`).emit('activity_log', {
       ...log,
-      // Map fields for frontend consistency if needed
+      id: data.requestId || log.id,
+      decision: data.status === 'blocked' ? 'BLOCK' : (data.isPendingApproval ? 'MODIFY' : 'ALLOW'),
+      // Map fields for frontend consistency
       agent_id: log.agent,
       risk_score: log.risk,
       created_at: log.timestamp
