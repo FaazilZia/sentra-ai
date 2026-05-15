@@ -15,19 +15,33 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Debounce state to prevent rapid UI flickering
+    let timeoutId: NodeJS.Timeout;
+
+    const updateStatus = (status: 'connected' | 'disconnected' | 'reconnecting') => {
+      clearTimeout(timeoutId);
+      if (status === 'connected') {
+        setConnectionStatus(status);
+      } else {
+        timeoutId = setTimeout(() => {
+          setConnectionStatus(status);
+        }, 1500); // 1.5s debounce
+      }
+    };
+
     // Handlers
     const onConnect = () => {
-      setConnectionStatus('connected');
+      updateStatus('connected');
       // Join the organization's specific room
       socket.emit('join_company', user.organizationId);
     };
 
     const onDisconnect = () => {
-      setConnectionStatus('disconnected');
+      updateStatus('disconnected');
     };
 
     const onConnectError = () => {
-      setConnectionStatus('reconnecting');
+      updateStatus('reconnecting');
     };
 
     const onActivityLog = (payload: any) => {
@@ -52,6 +66,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       socket.off('disconnect', onDisconnect);
       socket.off('connect_error', onConnectError);
       socket.off('activity_log', onActivityLog);
+      clearTimeout(timeoutId);
       // We don't disconnect entirely here to allow fast navigation,
       // but if user changes/logs out, the outer effect will handle disconnect.
     };

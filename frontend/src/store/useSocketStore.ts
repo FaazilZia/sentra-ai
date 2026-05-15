@@ -56,17 +56,18 @@ export const useSocketStore = create<SocketState>((set) => ({
   setConnectionStatus: (status) => set({ connectionStatus: status }),
   
   addEvent: (payload) => set((state) => {
-    // Generate an ID if missing
-    const id = payload.id || Math.random().toString(36).substring(2, 9);
+    // Rely exclusively on backend-generated stable ID
+    const id = payload.id;
+    if (!id) return state; // Ignore invalid payloads without IDs
     
     // Check if we already have this event to prevent duplicates
     if (state.activities.some(a => a.id === id)) return state;
 
-    const time = formatTime(payload.timestamp || new Date().toISOString());
-    const agent = payload.metadata?.agent || payload.user_id || 'System';
-    const actionTarget = payload.metadata?.action || payload.input_text || 'evaluated action';
-    const decision = payload.decision || 'ALLOW';
-    const policy = payload.policy_triggered || 'None';
+    const time = formatTime(payload.timestamp);
+    const agent = payload.metadata?.agent || 'System';
+    const actionTarget = payload.metadata?.action || 'evaluated action';
+    const decision = payload.decision;
+    const policy = payload.reason || 'None';
     
     // 1. Create Activity Feed Item
     const newActivity: Activity = {
@@ -89,7 +90,7 @@ export const useSocketStore = create<SocketState>((set) => ({
       id,
       agent,
       action: actionTarget,
-      severity: payload.risk_level ? (payload.risk_level as any) : severityMap[decision],
+      severity: payload.risk ? (payload.risk as any) : severityMap[decision] || 'Low',
       time,
       status: decision === 'BLOCK' ? 'Blocked' : decision === 'MODIFY' ? 'Flagged' : 'Allowed',
     };
