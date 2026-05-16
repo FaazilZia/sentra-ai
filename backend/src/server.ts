@@ -21,6 +21,9 @@ if (!process.env.REDIS_URL) {
 if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.length < 10) {
   console.warn('[STARTUP WARNING] OPENAI_API_KEY not set. Semantic risk analysis will be disabled — pattern-based engines will enforce governance.');
 }
+if (!process.env.ENCRYPTION_KEY || process.env.ENCRYPTION_KEY.length < 32) {
+  console.warn('[STARTUP WARNING] ENCRYPTION_KEY not set or too short. Connector credential encryption and connector workers may fail until this is configured.');
+}
 
 
 // Production-specific hardening
