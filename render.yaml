@@ -5,7 +5,7 @@ services:
     plan: free
     numInstances: 1
     rootDir: backend
-    buildCommand: npm install && npx prisma generate && npm run build
+    buildCommand: npm install && npx prisma generate && npx prisma migrate deploy && npm run build
     startCommand: npm start
     healthCheckPath: /api/v1/health
     envVars:
@@ -27,6 +27,10 @@ services:
         value: 10000
       - key: ENCRYPTION_KEY
         sync: false
+      - key: HUGGINGFACE_API_KEY
+        sync: false
+      - key: HUGGINGFACE_MODEL
+        value: mistralai/Mistral-7B-Instruct-v0.2
       - key: REDIS_URL
         sync: false
       - key: GOOGLE_CLIENT_ID
