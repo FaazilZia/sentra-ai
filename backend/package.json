@@ -7,7 +7,7 @@
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "rm -rf dist && tsc",
     "start": "node dist/src/server.js",
-    "start:render": "prisma migrate deploy && node dist/src/server.js",
+    "start:render": "echo '[DEPLOY] Resolving failed migrations...' && node scripts/resolve-failed-migration.js && echo '[DEPLOY] Starting Prisma migrations...' && prisma migrate deploy && echo '[DEPLOY] Migrations complete. Starting application...' && node dist/src/server.js",
     "seed": "ts-node prisma/seed.ts",
     "postinstall": "prisma generate",
     "test": "jest --coverage"

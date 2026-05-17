@@ -2,15 +2,22 @@ import 'dotenv/config';
 
 // Hard-required: server cannot function without these
 const REQUIRED_ENV_VARS = [
-  'DATABASE_URL',
   'JWT_SECRET',
   'REFRESH_SECRET',
 ];
 
+// Database URL check with DIRECT_URL fallback
+const dbUrl = process.env.DATABASE_URL || process.env.DIRECT_URL;
 const missing = REQUIRED_ENV_VARS.filter((v) => !process.env[v]);
+
+if (!dbUrl) missing.push('DATABASE_URL');
+
 if (missing.length > 0) {
-  console.error(`[STARTUP FATAL] Missing required environment variables: ${missing.join(', ')}`);
+  console.error('\n' + '='.repeat(50));
+  console.error('[STARTUP FATAL] Missing required environment variables:');
+  missing.forEach(v => console.error(` - ${v}`));
   console.error('Please ensure these are set in your Render dashboard or .env file.');
+  console.error('='.repeat(50) + '\n');
   process.exit(1);
 }
 
@@ -29,7 +36,10 @@ if (!process.env.ENCRYPTION_KEY || process.env.ENCRYPTION_KEY.length < 32) {
 // Production-specific hardening
 if (process.env.NODE_ENV === 'production') {
   if (!process.env.FRONTEND_URL) {
-    console.error('[STARTUP FATAL] FRONTEND_URL is required in production');
+    console.error('\n' + '!'.repeat(50));
+    console.error('[STARTUP FATAL] FRONTEND_URL is required in production.');
+    console.error('This is used for CORS and Secure Cookie configuration.');
+    console.error('!'.repeat(50) + '\n');
     process.exit(1);
   }
 

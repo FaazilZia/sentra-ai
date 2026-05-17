@@ -1,6 +1,28 @@
 -- Database Security Implementation
 -- This script enables Row Level Security (RLS) on all tables and applies baseline safe policies.
 
+-- 0. Ensure compatibility with standard PostgreSQL
+CREATE SCHEMA IF NOT EXISTS auth;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_proc p JOIN pg_namespace n ON p.pronamespace = n.oid 
+    WHERE n.nspname = 'auth' AND p.proname = 'uid'
+  ) THEN
+    CREATE FUNCTION auth.uid() RETURNS uuid AS $func$ SELECT NULL::uuid; $func$ LANGUAGE sql STABLE;
+  END IF;
+END
+$$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'authenticated') THEN
+    CREATE ROLE authenticated;
+  END IF;
+END
+$$;
+
 -- 1. Enable RLS on all tables
 ALTER TABLE "api_keys" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "companies" ENABLE ROW LEVEL SECURITY;
