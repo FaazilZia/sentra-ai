@@ -3,6 +3,7 @@
 
 import express, { Application } from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { errorHandler } from './middleware/error.middleware';
@@ -157,6 +158,7 @@ app.use(cors({
 }));
 
 app.use(express.json({ limit: '100kb' }));
+app.use(cookieParser());
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(contextMiddleware);
 

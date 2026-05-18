@@ -169,30 +169,8 @@ const startServer = async () => {
     logger.info(`Server is running on port ${PORT}`);
   });
 
-  // Run migration safety wrapper before Prisma Client initialization
-  if (process.env.NODE_ENV === 'production') {
-    const { execSync } = require('child_process');
-    try {
-      execSync('npx prisma migrate deploy', { stdio: 'inherit' });
-    } catch (e) {
-      console.error('Migration failed, attempting recovery...', e);
-      try {
-        const statusOutput = execSync('npx prisma migrate status --json', { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] });
-        const status = JSON.parse(statusOutput);
-        const failedMigration = status.migrations?.find((x: any) => x.status === 'failed')?.migrationName;
-        if (failedMigration) {
-          console.log(`Found failed migration: ${failedMigration}. Attempting to resolve...`);
-          execSync(`npx prisma migrate resolve --rolled-back ${failedMigration} --preview-feature || true`, { stdio: 'inherit' });
-        } else {
-          execSync('npx prisma migrate resolve --rolled-back --preview-feature || true', { stdio: 'inherit' });
-        }
-      } catch (innerErr) {
-        console.error('Failed to query migration status, attempting generic resolve...', innerErr);
-        execSync('npx prisma migrate resolve --rolled-back --preview-feature || true', { stdio: 'inherit' });
-      }
-      execSync('npx prisma migrate deploy', { stdio: 'inherit' });
-    }
-  }
+  // Migrations are handled by the start:render script before this process starts.
+  // No need to run them again here.
 
   try {
     await initializePrisma();

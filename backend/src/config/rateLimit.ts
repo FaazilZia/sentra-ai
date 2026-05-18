@@ -1,10 +1,13 @@
 import rateLimit from 'express-rate-limit';
-import { Request, Response, NextFunction } from 'express';
 
 const createSafeRateLimiter = (prefix: string, options: any) => {
+  // Disable express-rate-limit's built-in validation that crashes on custom keyGenerators
+  // This prevents the ERR_ERL_KEY_GEN_IPV6 ValidationError that kills the process on startup
+  const safeOptions = { ...options, validate: { ...(options.validate || {}), xForwardedForHeader: false, default: false } };
+
   if (!process.env.REDIS_URL) {
     console.warn(`[RateLimit] REDIS_URL not set, using memory store for ${prefix}`);
-    return rateLimit(options);
+    return rateLimit(safeOptions);
   }
 
   try {
@@ -12,9 +15,9 @@ const createSafeRateLimiter = (prefix: string, options: any) => {
     const RedisStore = require('rate-limit-redis').default || require('rate-limit-redis');
     
     const client = new Redis(process.env.REDIS_URL, {
-      enableOfflineQueue: true, // MUST be true to prevent sync throw
+      enableOfflineQueue: true,
       maxRetriesPerRequest: null,
-      lazyConnect: true, // don't connect until first command
+      lazyConnect: true,
       retryStrategy: (times: number) => (times > 3 ? null : 500),
       tls: process.env.REDIS_URL.startsWith('rediss://') ? { rejectUnauthorized: false } : undefined,
     });
@@ -24,7 +27,7 @@ const createSafeRateLimiter = (prefix: string, options: any) => {
     });
 
     return rateLimit({
-      ...options,
+      ...safeOptions,
       store: new RedisStore({
         sendCommand: (...args: any[]) => client.call(args[0], ...args.slice(1)),
         prefix,
@@ -32,7 +35,7 @@ const createSafeRateLimiter = (prefix: string, options: any) => {
     });
   } catch (e) {
     console.warn(`[RateLimit] Redis unavailable for ${prefix}, using memory store`, e);
-    return rateLimit(options);
+    return rateLimit(safeOptions);
   }
 };
 

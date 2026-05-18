@@ -7,7 +7,7 @@
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "prisma generate && rm -rf dist && tsc",
     "start": "node dist/src/server.js",
-    "start:render": "echo '[DEPLOY] Resolving failed migrations...' && node scripts/resolve-failed-migration.js && (npx prisma migrate resolve --rolled-back $(npx prisma migrate status --json 2>/dev/null | node -e \"const d=require('fs').readFileSync('/dev/stdin','utf8');const m=JSON.parse(d);const failed=m.migrations?.find(x=>x.status==='failed');console.log(failed?.migrationName||'')\") 2>/dev/null || true) && echo '[DEPLOY] Starting Prisma migrations...' && npx prisma migrate deploy && echo '[DEPLOY] Migrations complete. Starting application...' && node dist/src/server.js",
+    "start:render": "node scripts/resolve-failed-migration.js && npx prisma migrate deploy && node dist/src/server.js",
     "seed": "ts-node prisma/seed.ts",
     "postinstall": "prisma generate",
     "test": "jest --coverage"
@@ -37,6 +37,7 @@
     "bcrypt": "^6.0.0",
     "better-sqlite3": "^12.9.0",
     "bullmq": "^5.74.1",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "date-fns": "^4.1.0",
     "dotenv": "^17.4.2",
@@ -67,6 +68,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/bcrypt": "^6.0.0",
+    "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/json2csv": "^5.0.7",
