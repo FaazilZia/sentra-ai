@@ -1,4 +1,5 @@
 import { Queue, Worker } from 'bullmq';
+import IORedis from 'ioredis';
 import { S3Client, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3';
 import { google } from 'googleapis';
 import { Client as PgClient } from 'pg';
@@ -7,12 +8,28 @@ import prisma from '../config/db';
 import { logActivity } from './policy.service';
 import { decrypt } from '../utils/encryption';
 import { SENSITIVE_PATTERNS } from './riskEngine';
-import { getBullMqConnection } from '../config/redis';
+import { buildRedisOptions, getRedisUrl } from '../config/redis';
 
-const connection = getBullMqConnection();
+const REDIS_URL = getRedisUrl();
+
+let connection: IORedis | undefined;
+if (REDIS_URL) {
+  connection = new IORedis(REDIS_URL, buildRedisOptions({
+    maxRetriesPerRequest: null,
+    enableOfflineQueue: true,
+  }));
+  connection.on('error', (err) => {
+    logger.error('Redis Connection Error:', err);
+  });
+}
 
 export const activityQueue = connection ? new Queue('activity-logs', { connection }) : null;
 export const connectorQueue = connection ? new Queue('connector-scans', { connection }) : null;
+export const driftQueue = connection ? new Queue('drift-scans', { connection }) : null;
+
+if (activityQueue) activityQueue.on('error', (err) => logger.warn('[BULLMQ] activityQueue connection issue:', err));
+if (connectorQueue) connectorQueue.on('error', (err) => logger.warn('[BULLMQ] connectorQueue connection issue:', err));
+if (driftQueue) driftQueue.on('error', (err) => logger.warn('[BULLMQ] driftQueue connection issue:', err));
 
 /**
  * Worker to process activity logs asynchronously.
@@ -67,6 +84,8 @@ export const enqueueLog = async (data: any) => {
 
 // --- Scheduled Data Retention (Audit Compliance) ---
 export const retentionQueue = connection ? new Queue('data-retention', { connection }) : null;
+
+if (retentionQueue) retentionQueue.on('error', (err) => logger.warn('[BULLMQ] retentionQueue connection issue:', err));
 
 if (connection) {
   const retentionWorker = new Worker(
@@ -333,8 +352,8 @@ async function performPIIScan(content: string, metadata: { connectorId: string, 
 
 // Schedule it to run every day at midnight
 export const setupScheduledJobs = async () => {
-  if (!retentionQueue) {
-    logger.info('Skipping background job scheduling (Redis offline)');
+  if (!retentionQueue || !driftQueue) {
+    logger.warn('Skipping background job scheduling (Redis offline or driftQueue unavailable)');
     return;
   }
   
@@ -353,7 +372,16 @@ export const setupScheduledJobs = async () => {
       { repeat: { pattern: '*/15 * * * *' } }
     );
 
-    logger.info('Scheduled Adaptive Connector Discovery & Budget Reset Engine');
+    // Schedule repeatable drift scan (every 15 mins in production, every 2 mins in development)
+    const isDev = process.env.NODE_ENV === 'development';
+    const driftPattern = isDev ? '*/2 * * * *' : '*/15 * * * *';
+    await driftQueue?.add(
+      'drift-scan',
+      { action: 'drift-scan' },
+      { repeat: { pattern: driftPattern } }
+    );
+
+    logger.info('Scheduled Adaptive Connector Discovery & Budget Reset Engine & Drift Scanner');
   } catch (err) {
     logger.warn('Could not schedule background jobs', err);
   }

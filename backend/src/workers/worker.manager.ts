@@ -1,17 +1,28 @@
 import { Worker, Job, Queue } from 'bullmq';
+import IORedis from 'ioredis';
 import logger from '../utils/logger';
 import prisma from '../config/db';
 import { processS3Scan } from './s3.worker';
 import { processSqlScan } from './sql.worker';
 import { processGDriveScan } from './gdrive.worker';
-import { getBullMqConnection } from '../config/redis';
+import { buildRedisOptions, getRedisUrl } from '../config/redis';
+import { DriftAlertService } from '../services/driftAlert.service';
+
+const REDIS_URL = getRedisUrl();
 
 export function setupConnectorWorkers() {
-  const connection = getBullMqConnection();
-  if (!connection) {
+  if (!REDIS_URL) {
     logger.warn('Skipping Connector Workers (Redis offline)');
     return;
   }
+
+  const connection = new IORedis(REDIS_URL, buildRedisOptions({
+    maxRetriesPerRequest: null,
+    enableOfflineQueue: true,
+  }));
+  connection.on('error', (err) => {
+    logger.warn('Connector Worker Redis Connection Error:', err);
+  });
 
   const worker = new Worker(
     'connector-scans',
@@ -59,6 +70,10 @@ export function setupConnectorWorkers() {
     },
     { connection, concurrency: 5 }
   );
+
+  worker.on('error', (err) => {
+    logger.warn('[BULLMQ] connector-scans worker error:', err);
+  });
 
   return worker;
 }
@@ -126,7 +141,7 @@ async function updateConnectorHealth(connectorId: string, success: boolean, late
 /**
  * Adaptive Scheduling Logic
  */
-async function handleAdaptiveScheduling(connection: import('ioredis').default) {
+async function handleAdaptiveScheduling(connection: IORedis) {
   const connectors = await prisma.connectors.findMany({ where: { status: { notIn: ['failed', 'paused_budget'] } } });
   const connectorQueue = new Queue('connector-scans', { connection });
 
@@ -146,4 +161,42 @@ async function handleAdaptiveScheduling(connection: import('ioredis').default) {
       { repeat: { pattern } }
     );
   }
+}
+
+export function setupDriftWorker() {
+  if (!REDIS_URL) {
+    logger.warn('Skipping Drift Worker (Redis offline)');
+    return;
+  }
+
+  const connection = new IORedis(REDIS_URL, buildRedisOptions({
+    maxRetriesPerRequest: null,
+    enableOfflineQueue: true,
+  }));
+  connection.on('error', (err) => {
+    logger.warn('Drift Worker Redis Connection Error:', err);
+  });
+
+  const driftWorker = new Worker(
+    'drift-scans',
+    async (job: Job) => {
+      logger.info(`[DRIFT WORKER] Running drift scan background job ${job.id}...`);
+      await DriftAlertService.runDriftScan();
+    },
+    { connection, concurrency: 1 }
+  );
+
+  driftWorker.on('completed', (job) => {
+    logger.info(`[DRIFT WORKER] Job ${job.id} completed successfully`);
+  });
+
+  driftWorker.on('failed', (job, err) => {
+    logger.error(`[DRIFT WORKER] Job ${job?.id} failed:`, err);
+  });
+
+  driftWorker.on('error', (err) => {
+    logger.warn('[BULLMQ] drift-scans worker error:', err);
+  });
+
+  return driftWorker;
 }

@@ -3,17 +3,16 @@ import bcrypt from 'bcrypt';
 import { verifyAccessToken } from '../utils/jwt';
 import prisma from '../config/db';
 import logger from '../utils/logger';
-import { getRedisClient } from '../config/redis';
+import { Redis } from 'ioredis';
 import * as Sentry from '@sentry/node';
-
-// Use the shared Redis client (cache is optional, degrades gracefully)
-const redis = getRedisClient();
+import { getRedisClient } from '../config/redis';
 
 const API_KEY_CACHE_TTL = 300; // 5 minutes
 
 import { updateApiKeyLastUsed } from '../utils/usage';
 
 async function resolveApiKey(token: string): Promise<{ organizationId: string; slug: string; id: string } | null> {
+  const redis = getRedisClient();
   const parts = token.split('_');
   const lookupPrefix = parts[1];
   if (!lookupPrefix) return null;
@@ -67,17 +66,14 @@ export const authenticate = async (req: any, res: Response, next: NextFunction) 
       return res.status(401).json({ success: false, message: 'Authentication required' });
     }
 
-    // 1. Bearer token or Cookie
-    let token = '';
+    let token = cookieToken;
     if (authHeader && authHeader.startsWith('Bearer ')) {
       token = authHeader.split(' ')[1];
-    } else if (cookieToken) {
-      token = cookieToken;
     }
 
+    // 1. Bearer or Cookie token
     if (token) {
-
-      // API key path
+      // SDK key path
       if (token.startsWith('sentra_')) {
         const resolved = await resolveApiKey(token);
         if (resolved) {

@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { 
   AreaChart, 
   Area, 
@@ -21,15 +22,35 @@ import {
 import KPICard from '@/components/dashboard/KPICard';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store/useStore';
+import { useSocketStore } from '@/store/useSocketStore';
+import { fetchGuardrailMetrics, GuardrailMetrics } from '@/lib/api';
 
 const trendData: any[] = [];
 
 const severityData: any[] = [];
 
-const riskEvents: any[] = [];
-
 export default function RiskCenter() {
   const addToast = useStore((state) => state.addToast);
+  const { riskEvents } = useSocketStore();
+  const [metrics, setMetrics] = useState<GuardrailMetrics | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = async () => {
+    try {
+      const data = await fetchGuardrailMetrics();
+      setMetrics(data);
+    } catch (err) {
+      console.error('Failed to fetch risk metrics', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleExport = () => {
     addToast({ message: 'Generating Global Risk Report...', type: 'info' });
@@ -75,28 +96,34 @@ export default function RiskCenter() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <KPICard 
           label="Aggregate Risk Score" 
-          value="0" 
+          value={metrics ? Math.round(metrics.blocked) : "0"} 
           icon="risks" 
           status="warning" 
+          isLoading={loading}
         />
         <KPICard 
           label="Critical Findings" 
-          value="0" 
+          value={metrics?.blockedCount ?? "0"} 
           icon="risks" 
           status="danger" 
+          isLoading={loading}
         />
         <KPICard 
           label="Active Threats" 
-          value="0" 
+          value={metrics?.total ?? "0"} 
           icon="risks" 
           status="danger" 
+          isLoading={loading}
         />
         <KPICard 
           label="Auto-Mitigations" 
-          value="0" 
+          value={metrics?.blockedCount ?? "0"} 
           icon="compliance" 
           status="success" 
+          testId="threats-prevented-count"
+          isLoading={loading}
         />
+
       </div>
 
       {/* Main Charts Row */}
@@ -234,7 +261,14 @@ export default function RiskCenter() {
                     <span className="text-[var(--text-sm)] font-bold text-[var(--text-primary)]">{event.agent}</span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-[var(--text-xs)] text-[var(--text-secondary)] font-medium">{event.action}</span>
+                    <div className="space-y-1">
+                      <span className="text-[var(--text-xs)] text-[var(--text-secondary)] font-medium">{event.action}</span>
+                      {event.aiSummary && (
+                        <p className="max-w-xl text-[10px] leading-relaxed text-[var(--text-muted)]">
+                          {event.aiSummary}
+                        </p>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <span className={cn(

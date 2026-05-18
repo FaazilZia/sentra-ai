@@ -101,11 +101,18 @@ export const postCheckAction = async (req: any, res: Response, next: NextFunctio
     Sentry.setTag('latency', latency);
 
     // 4. Push Real-time Update
-    io.to(`company_${organizationId}`).emit('activity_log', { 
-      ...decision, 
-      organizationId, 
-      timestamp: new Date(),
-      ai_summary 
+    io.to(`company_${organizationId}`).emit('activity_log', {
+      id: requestId,
+      organizationId,
+      timestamp: new Date().toISOString(),
+      decision: decision.status === 'blocked' ? 'BLOCK' : (decision.isPendingApproval ? 'MODIFY' : 'ALLOW'),
+      risk: decision.risk,
+      reason: decision.reason,
+      ai_summary,
+      metadata: {
+        agent,
+        action
+      }
     });
 
     logRequest({ requestId, orgId: organizationId, endpoint: req.path, status: 200, latency });

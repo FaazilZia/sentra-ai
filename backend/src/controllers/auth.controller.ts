@@ -7,7 +7,11 @@ import logger from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
 import { OAuth2Client } from 'google-auth-library';
 
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const googleClient = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.GOOGLE_CALLBACK_URL
+);
 
 const seedDefaultPolicy = async (tx: any, organizationId: string) => {
   const policyId = randomUUID();
@@ -192,24 +196,32 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
       metadata: { ip: req.ip }
     });
 
+    // Set HTTP-only secure cookies
     const isProduction = process.env.NODE_ENV === 'production';
-    res.cookie('sentra_access_token', accessToken, {
+    const cookieOptions: {
+      httpOnly: boolean;
+      secure: boolean;
+      sameSite: 'strict' | 'lax' | 'none';
+      maxAge: number;
+      path: string;
+    } = {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? 'none' : 'lax',
-      maxAge: 15 * 60 * 1000, // 15 mins
-    });
-
+      path: '/',
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    };
+    res.cookie('sentra_access_token', accessToken, cookieOptions);
     res.cookie('sentra_refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
+      ...cookieOptions,
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
     res.status(200).json({
       success: true,
       data: {
+        accessToken,
+        refreshToken,
         user: {
           id: user.id,
           email: user.email,
@@ -230,6 +242,11 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
     const { idToken, organizationName } = req.body;
     if (!idToken) {
       return res.status(400).json({ success: false, message: 'Google ID Token required' });
+    }
+
+    if (!process.env.GOOGLE_CLIENT_ID) {
+      logger.error('GOOGLE_CLIENT_ID is not set in environment variables');
+      return res.status(500).json({ success: false, message: 'Google authentication is not configured' });
     }
 
     const ticket = await googleClient.verifyIdToken({
@@ -291,24 +308,32 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
 
     await prisma.refreshToken.create({ data: { token: refreshToken, userId: user.id, expiresAt } });
 
+    // Set HTTP-only secure cookies
     const isProduction = process.env.NODE_ENV === 'production';
-    res.cookie('sentra_access_token', accessToken, {
+    const cookieOptions: {
+      httpOnly: boolean;
+      secure: boolean;
+      sameSite: 'strict' | 'lax' | 'none';
+      maxAge: number;
+      path: string;
+    } = {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? 'none' : 'lax',
-      maxAge: 15 * 60 * 1000, // 15 mins
-    });
-
+      path: '/',
+      maxAge: 15 * 60 * 1000,
+    };
+    res.cookie('sentra_access_token', accessToken, cookieOptions);
     res.cookie('sentra_refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      ...cookieOptions,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     res.status(200).json({
       success: true,
       data: {
+        accessToken,
+        refreshToken,
         user: { id: user.id, email: user.email, fullName: user.full_name, role, organizationId: user.organizationId },
       },
     });
@@ -318,9 +343,17 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
+export const googleCallback = async (req: Request, res: Response) => {
+  // This is a stub for the traditional redirect flow callback
+  // Currently, the app uses the frontend-driven One Tap flow.
+  // If a 'code' is present, it would be exchanged here.
+  const frontendUrl = process.env.FRONTEND_URL?.split(',')[0] || 'http://localhost:5173';
+  res.redirect(`${frontendUrl}/login?error=callback_not_implemented`);
+};
+
 export const refreshToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const token = req.cookies?.sentra_refresh_token || req.body.token;
+    const { token } = req.body;
     if (!token) return res.status(401).json({ success: false, message: 'Refresh token required' });
 
     // 1. Verify and lookup token
@@ -360,24 +393,33 @@ export const refreshToken = async (req: Request, res: Response, next: NextFuncti
       },
     });
 
+    // Set HTTP-only secure cookies
     const isProduction = process.env.NODE_ENV === 'production';
-    res.cookie('sentra_access_token', newAccessToken, {
+    const cookieOptions: {
+      httpOnly: boolean;
+      secure: boolean;
+      sameSite: 'strict' | 'lax' | 'none';
+      maxAge: number;
+      path: string;
+    } = {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? 'none' : 'lax',
-      maxAge: 15 * 60 * 1000, // 15 mins
-    });
-
+      path: '/',
+      maxAge: 15 * 60 * 1000,
+    };
+    res.cookie('sentra_access_token', newAccessToken, cookieOptions);
     res.cookie('sentra_refresh_token', newRefreshToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      ...cookieOptions,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     res.status(200).json({
       success: true,
-      message: 'Tokens refreshed'
+      data: {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken
+      },
     });
   } catch (error) {
     next(error);
@@ -405,17 +447,9 @@ export const getMe = async (req: any, res: Response, next: NextFunction) => {
   }
 };
 
-export const logout = async (req: any, res: Response, next: NextFunction) => {
+export const logout = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const isProduction = process.env.NODE_ENV === 'production';
-    const cookieOptions: any = {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
-    };
-    
-    // Attempt to revoke the refresh token if provided
-    const refreshToken = req.cookies?.sentra_refresh_token;
+    const { refreshToken } = req.body;
     if (refreshToken) {
       await prisma.refreshToken.updateMany({
         where: { token: refreshToken },
@@ -423,9 +457,9 @@ export const logout = async (req: any, res: Response, next: NextFunction) => {
       });
     }
 
-    res.clearCookie('sentra_access_token', cookieOptions);
-    res.clearCookie('sentra_refresh_token', cookieOptions);
-    
+    // Clear HTTP-only cookies
+    res.clearCookie('sentra_access_token', { path: '/' });
+    res.clearCookie('sentra_refresh_token', { path: '/' });
     res.status(200).json({ success: true, message: 'Logged out successfully' });
   } catch (error) {
     next(error);

@@ -3,13 +3,13 @@ services:
     name: sentra-backend-node
     env: node
     plan: free
-    buildCommand: npm install && npx prisma generate && npx prisma migrate deploy && npm run build
-    startCommand: npm start
-    healthCheckPath: /api/health
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:render
+    healthCheckPath: /api/v1/health
     envVars:
-      - key: DATABASE_URL # Supabase Transaction Pooler URL (Port 6543)
+      - key: DATABASE_URL
         sync: false
-      - key: DIRECT_URL   # Supabase Direct Connection URL (Port 5432)
+      - key: DIRECT_URL
         sync: false
       - key: JWT_SECRET
         generateValue: true
@@ -21,3 +21,17 @@ services:
         value: https://sentra-ai-tau.vercel.app,https://sentra-ai.vercel.app,http://localhost:5173
       - key: PORT
         value: 10000
+      - key: HUGGINGFACE_API_KEY
+        sync: false
+      - key: HUGGINGFACE_MODEL
+        value: mistralai/Mistral-7B-Instruct-v0.2
+      - key: REDIS_URL
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false

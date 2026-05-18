@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { GuardrailService } from '../services/guardrail.service';
 import { EventTriggerService } from '../services/eventTrigger.service';
+import { alertService } from '../services/alert.service';
 import prisma from '../config/db';
 import logger from '../utils/logger';
 
@@ -276,6 +277,16 @@ export const checkAction = async (req: any, res: Response, next: NextFunction) =
       policy_triggered: result.policy_triggered,
       metadata: { agent, action, ...metadata }
     });
+
+    if (result.decision === 'BLOCK') {
+      logger.info(`[GOVERNANCE] Action blocked for organization ${organizationId}. Triggering alert notification...`);
+      // Fire-and-forget to avoid blocking the API response
+      try {
+        alertService.notify(organizationId, result, agent, action);
+      } catch (alertError) {
+        logger.error(`[ALERTS] Failed to dispatch alert for block decision: ${alertError instanceof Error ? alertError.message : String(alertError)}`);
+      }
+    }
 
     res.status(200).json({
       success: true,

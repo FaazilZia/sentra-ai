@@ -4,8 +4,6 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 model api_keys {
@@ -18,7 +16,7 @@ model api_keys {
   is_active      Boolean
   last_used_at   DateTime?     @map("last_used_at")
   created_at     DateTime      @default(now())
-  updated_at     DateTime      @updatedAt @map("updated_at")
+  updated_at     DateTime      @updatedAt
   organizations  organizations @relation(fields: [organizationId], references: [id])
 
   @@map("api_keys")
@@ -64,12 +62,12 @@ model organizations {
   scan_jobs       scan_jobs[]
   users           users[]
   usage_stats     usage_stats[]
-  alerts               alerts[]
-  compliance_snapshots compliance_snapshots[]
-  compliance_fix_tasks compliance_fix_tasks[]
-  outcome_validations  outcome_validations[]
-  monitoring_status    monitoring_status[]
-  compliance_drift     compliance_drift[]
+  alerts                alerts[]
+  compliance_snapshots  compliance_snapshots[]
+  compliance_fix_tasks  compliance_fix_tasks[]
+  outcome_validations   outcome_validations[]
+  monitoring_status     monitoring_status[]
+  compliance_drift      compliance_drift[]
 
   @@map("companies")
 }
@@ -145,7 +143,7 @@ model incidents {
   response_excerpt String
   event_metadata   Json
   created_at       DateTime      @default(now())
-  updated_at       DateTime      @default(now())
+  updated_at       DateTime      @updatedAt
   status           String        @default("unresolved")
   user_id          String?
   resolved_by_id   String?
@@ -185,7 +183,7 @@ model policy_versions {
   obligations           Json
   is_published_snapshot Boolean
   created_at            DateTime      @default(now())
-  updated_at            DateTime      @default(now())
+  updated_at            DateTime      @updatedAt
   organizations         organizations @relation(fields: [organizationId], references: [id])
   policies              policies      @relation(fields: [policy_id], references: [id])
 
@@ -194,17 +192,21 @@ model policy_versions {
 }
 
 model ai_agents {
-  id             String            @id @default(uuid())
-  organizationId String            @map("organization_id")
-  name           String
-  model          String
-  permissions    Json
-  status         String
-  metadata       Json?
-  created_at     DateTime          @default(now())
-  updated_at     DateTime          @default(now())
-  organizations  organizations     @relation(fields: [organizationId], references: [id])
-  dependencies   ai_dependencies[]
+  id                 String            @id @default(uuid())
+  organizationId     String            @map("organization_id")
+  name               String
+  model              String
+  permissions        Json
+  status             String
+  metadata           Json?
+  created_at         DateTime          @default(now())
+  updated_at         DateTime          @updatedAt
+  organizations      organizations     @relation(fields: [organizationId], references: [id])
+  dependencies       ai_dependencies[]
+  baselineActions    String[]
+  baselineDataScopes String[]
+  baselineSampledAt  DateTime?
+  riskThreshold      Float             @default(0.3)
 
   @@map("ai_agents")
 }
@@ -222,15 +224,19 @@ model ai_dependencies {
 }
 
 model drift_alerts {
-  id             String        @id @default(uuid())
-  organizationId String        @map("organization_id")
-  agentId        String        @map("agent_id")
-  type           String
-  severity       String
-  description    String
-  status         String        @default("open")
-  timestamp      DateTime      @default(now())
-  organizations  organizations @relation(fields: [organizationId], references: [id])
+  id                String        @id @default(uuid())
+  organizationId    String        @map("organization_id")
+  agentId           String        @map("agent_id")
+  type              String
+  severity          String
+  description       String
+  status            String        @default("open")
+  timestamp         DateTime      @default(now())
+  organizations     organizations @relation(fields: [organizationId], references: [id])
+  driftScore        Float         @default(0.0)
+  unexpectedActions String[]
+  detectedAt        DateTime      @default(now())
+  message           String?
 
   @@map("drift_alerts")
 }
@@ -244,7 +250,7 @@ model connectors {
   status             String
   last_scan_at       String?
   created_at         DateTime      @default(now())
-  updated_at         DateTime      @default(now())
+  updated_at         DateTime      @updatedAt
   daily_cost_total   Float         @default(0)
   daily_scan_count   Int           @default(0)
   estimated_cost     Float         @default(0)
@@ -271,7 +277,7 @@ model scan_jobs {
   incidents_detected Int           @default(0)
   sources_scanned    Int           @default(0)
   created_at         DateTime      @default(now())
-  updated_at         DateTime      @default(now())
+  updated_at         DateTime      @updatedAt
   organizations      organizations @relation(fields: [organizationId], references: [id])
 
   @@map("scan_jobs")
@@ -287,7 +293,7 @@ model users {
   role               String            @default("AUDITOR")
   is_active          Boolean
   created_at         DateTime          @default(now())
-  updated_at         DateTime          @default(now())
+  updated_at         DateTime          @updatedAt
   consent_records    consent_records[]
   incidents_resolved incidents[]       @relation("IncidentResolver")
   incidents_created  incidents[]       @relation("IncidentAuthor")
@@ -311,19 +317,18 @@ model consent_records {
 }
 
 model compliance_fix_tasks {
-  id             String             @id @default(uuid())
-  organizationId String             @map("organization_id")
-  featureId      String             @map("feature_id")
+  id             String               @id @default(uuid())
+  organizationId String               @map("organization_id")
+  featureId      String               @map("feature_id")
   title          String
   description    String?
   priority       Int
-  status         String             @default("pending")
-  created_at     DateTime           @default(now())
-  updated_at     DateTime           @updatedAt
+  status         String               @default("pending")
+  created_at     DateTime             @default(now())
+  updated_at     DateTime             @updatedAt
   evidence       evidence_records[]
-  organizations  organizations      @relation(fields: [organizationId], references: [id])
+  organizations  organizations        @relation(fields: [organizationId], references: [id])
 
-  @@index([organizationId])
   @@map("compliance_fix_tasks")
 }
 
@@ -354,7 +359,6 @@ model compliance_snapshots {
   created_at     DateTime      @default(now())
   organizations  organizations @relation(fields: [organizationId], references: [id])
 
-  @@index([organizationId])
   @@map("compliance_snapshots")
 }
 
@@ -382,7 +386,6 @@ model alerts {
   created_at     DateTime      @default(now())
   organizations  organizations @relation(fields: [organizationId], references: [id])
 
-  @@index([organizationId])
   @@map("alerts")
 }
 
@@ -432,7 +435,7 @@ model roles {
   name        String   @unique
   description String
   created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  updated_at DateTime @updatedAt
 }
 
 model user_roles {
@@ -469,7 +472,6 @@ model outcome_validations {
   validated_at       DateTime      @default(now())
   organizations      organizations @relation(fields: [organizationId], references: [id])
 
-  @@index([organizationId])
   @@map("outcome_validations")
 }
 
@@ -483,7 +485,6 @@ model monitoring_status {
   stability           String        @default("stable")
   organizations       organizations @relation(fields: [organizationId], references: [id])
 
-  @@index([organizationId])
   @@map("monitoring_status")
 }
 
@@ -497,6 +498,5 @@ model compliance_drift {
   severity         String        @default("low")
   organizations    organizations @relation(fields: [organizationId], references: [id])
 
-  @@index([organizationId])
   @@map("compliance_drift")
 }

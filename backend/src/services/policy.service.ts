@@ -28,6 +28,7 @@ export interface LogActivityData {
   overriddenBy?: string;
   overrideTimestamp?: Date;
   approvedBy?: string;
+  emitRealtime?: boolean;
 }
 
 export const logActivity = async (data: LogActivityData) => {
@@ -56,13 +57,18 @@ export const logActivity = async (data: LogActivityData) => {
   });
 
   // Real-time Update: Emit to the specific organization room
-  if (io) {
-    io.to(`company_${data.organizationId}`).emit('new_activity', {
-      ...log,
-      // Map fields for frontend consistency if needed
-      agent_id: log.agent,
-      risk_score: log.risk,
-      created_at: log.timestamp
+  if (io && data.emitRealtime !== false) {
+    io.to(`company_${data.organizationId}`).emit('activity_log', {
+      id: data.requestId || log.id,
+      organizationId: data.organizationId,
+      timestamp: log.timestamp instanceof Date ? log.timestamp.toISOString() : String(log.timestamp),
+      decision: data.status === 'blocked' ? 'BLOCK' : (data.isPendingApproval ? 'MODIFY' : 'ALLOW'),
+      risk: data.risk,
+      reason: data.reason || undefined,
+      metadata: {
+        agent: data.agent,
+        action: data.action
+      }
     });
   }
 
@@ -102,4 +108,3 @@ export const calculateSecurityScore = async (organizationId: string) => {
   
   return Math.min(Math.max(score, 0), 100);
 };
-

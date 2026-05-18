@@ -44,7 +44,8 @@ export async function interceptAction(input: any, callback: () => Promise<any>) 
       requestId,
       latency: Date.now() - startTime,
       isPendingApproval: decision.isPendingApproval || false,
-      explanation: decision.explanation
+      explanation: decision.explanation,
+      emitRealtime: false,
     });
     return decision;
   }
@@ -70,7 +71,8 @@ export async function interceptAction(input: any, callback: () => Promise<any>) 
     metadata: { ...metadata, result },
     requestId,
     latency: Date.now() - startTime,
-    explanation: decision.explanation
+    explanation: decision.explanation,
+    emitRealtime: false,
   });
 
   return {
@@ -78,4 +80,3 @@ export async function interceptAction(input: any, callback: () => Promise<any>) 
     result
   };
 }
-

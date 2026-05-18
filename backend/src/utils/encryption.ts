@@ -8,17 +8,19 @@ function getEncryptionKey(): string {
   if (!key || key.length < 32) {
     throw new Error(
       '[SECURITY FATAL] ENCRYPTION_KEY environment variable is missing or too short (min 32 chars). ' +
-      'Connector credential encryption requires a strong key. Server cannot operate without it.'
+      'Connector credential encryption requires a strong key before connector credentials can be encrypted or decrypted.'
     );
   }
   return key;
 }
 
-const SECRET_KEY = getEncryptionKey();
+function getSecretKeyBuffer(): Buffer {
+  return Buffer.from(getEncryptionKey().slice(0, 32));
+}
 
 export function encrypt(text: string): string {
   const iv = crypto.randomBytes(IV_LENGTH);
-  const cipher = crypto.createCipheriv(ALGORITHM, Buffer.from(SECRET_KEY.slice(0, 32)), iv);
+  const cipher = crypto.createCipheriv(ALGORITHM, getSecretKeyBuffer(), iv);
   
   let encrypted = cipher.update(text, 'utf8', 'hex');
   encrypted += cipher.final('hex');
@@ -33,7 +35,7 @@ export function decrypt(hash: string): string {
   
   const iv = Buffer.from(ivHex, 'hex');
   const authTag = Buffer.from(authTagHex, 'hex');
-  const decipher = crypto.createDecipheriv(ALGORITHM, Buffer.from(SECRET_KEY.slice(0, 32)), iv);
+  const decipher = crypto.createDecipheriv(ALGORITHM, getSecretKeyBuffer(), iv);
   
   decipher.setAuthTag(authTag);
   

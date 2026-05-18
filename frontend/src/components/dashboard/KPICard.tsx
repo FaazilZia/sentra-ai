@@ -18,9 +18,10 @@ interface KPICardProps {
     isUp: boolean;
   };
   isLoading?: boolean;
+  testId?: string;
 }
 
-export default function KPICard({ label, value, icon, status, trend, isLoading }: KPICardProps) {
+export default function KPICard({ label, value, icon, status, trend, isLoading, testId }: KPICardProps) {
   const Icon = icons[icon] || LayoutDashboard;
 
   const statusColors = {
@@ -39,6 +40,8 @@ export default function KPICard({ label, value, icon, status, trend, isLoading }
 
   return (
     <div className="card-base p-6 flex flex-col relative overflow-hidden group hover:shadow-md transition-all min-h-[140px]">
+
+
       <div className="flex items-start justify-between mb-5">
         <div 
           className="h-10 w-10 rounded-lg flex items-center justify-center shadow-sm"
@@ -63,10 +66,13 @@ export default function KPICard({ label, value, icon, status, trend, isLoading }
           {isLoading ? (
             <div className="h-8 w-20 bg-[var(--bg-page)] animate-pulse rounded" />
           ) : (
-            <span className={cn(
-              "text-[var(--text-3xl)] font-bold tracking-tighter transition-colors",
-              value === '--' ? "text-[var(--text-muted)]" : "text-[var(--violet-blue)]"
-            )}>
+            <span 
+              className={cn(
+                "text-[var(--text-3xl)] font-bold tracking-tighter transition-colors",
+                value === '--' ? "text-[var(--text-muted)]" : "text-[var(--violet-blue)]"
+              )}
+              data-testid={testId}
+            >
               {value}
             </span>
           )}

@@ -1,12 +1,12 @@
 import { test, expect, Page } from '@playwright/test';
 
 const ADMIN_EMAIL = 'admin@sentra.ai';
-const ADMIN_PASS  = 'Admin@Sentra2024';
+const ADMIN_PASS  = 'Sentra@Admin123';
 const API_BASE    = 'http://localhost:3000/api/v1';
 
 async function loginAsAdmin(page: Page) {
   await page.goto('/login', { waitUntil: 'domcontentloaded' });
-  await page.context().clearCookies();
+  await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.fill('input[type="email"]', ADMIN_EMAIL);
   await page.fill('input[type="password"]', ADMIN_PASS);
@@ -15,9 +15,19 @@ async function loginAsAdmin(page: Page) {
   await expect(page.locator('aside')).toBeVisible({ timeout: 15_000 });
 }
 
+async function getToken(page: Page): Promise<string> {
+  const token = await page.evaluate(() =>
+    localStorage.getItem('sentra_access_token') ?? localStorage.getItem('accessToken')
+  );
+  if (!token) throw new Error('Access token missing from localStorage');
+  return token;
+}
+
+
 async function apiPost(page: Page, path: string, body: object) {
+  const token = await getToken(page);
   return page.request.post(`${API_BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     data: body,
   });
 }
@@ -44,7 +54,10 @@ test.describe('Authentication', () => {
 
   test('logout clears session and redirects to /login', async ({ page }) => {
     await loginAsAdmin(page);
-    await page.context().clearCookies();
+    await page.evaluate(() => {
+      localStorage.removeItem('sentra_access_token');
+      localStorage.removeItem('sentra_refresh_token');
+    });
     await page.goto('/app');
     await expect(page).toHaveURL(/\/login/, { timeout: 10_000 });
   });
@@ -251,8 +264,10 @@ test.describe('Compliance', () => {
 test.describe('Security & Edge Cases', () => {
   test('protected routes redirect to login when token is cleared', async ({ page }) => {
     await loginAsAdmin(page);
-    await page.context().clearCookies();
     await page.evaluate(() => {
+      localStorage.removeItem('sentra_access_token');
+      localStorage.removeItem('sentra_refresh_token');
+      localStorage.removeItem('accessToken');
       sessionStorage.clear();
     });
     // Hard reload forces the auth check

@@ -4,8 +4,8 @@ function normalizeApiBaseUrl(value?: string): string {
   const trimmed = value?.trim().replace(/\/$/, '') || '';
   
   if (!trimmed) {
-    console.warn('⚠️ No VITE_API_BASE_URL found, falling back to localhost:3000/api/v1');
-    return 'http://localhost:3000/api/v1';
+    console.warn('⚠️ No VITE_API_BASE_URL found, falling back to localhost:10000/api/v1');
+    return 'http://localhost:10000/api/v1';
   }
 
   // If it already ends with /api/v1, use it as is
@@ -216,6 +216,7 @@ export async function apiRequest<T>(
         const refreshResponse = await fetch(`${apiBaseUrl}/auth/refresh-token`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: refreshToken }),
           credentials: 'include',
         });
 
@@ -576,6 +577,9 @@ export interface GuardrailMetrics {
   allowed: number;
   blocked: number;
   modified: number;
+  allowedCount: number;
+  blockedCount: number;
+  modifiedCount: number;
 }
 
 
@@ -797,4 +801,56 @@ export async function updateAlertSettings(payload: { alertEmail?: string; slackW
 
 export async function testAlert(): Promise<any> {
   return apiRequest<any>('/organizations/test-alert', { method: 'POST' });
+}
+
+export async function rotateApiKey(): Promise<{ api_key: string }> {
+  return apiRequest<{ api_key: string }>('/api-keys/rotate', { method: 'POST' });
+}
+
+export async function updateAlertEmail(email: string): Promise<any> {
+  return apiRequest<any>('/organizations/alert-email', {
+    method: 'PUT',
+    body: JSON.stringify({ email })
+  });
+}
+
+export async function updateWebhookUrl(url: string): Promise<any> {
+  return apiRequest<any>('/organizations/webhook', {
+    method: 'PUT',
+    body: JSON.stringify({ url })
+  });
+}
+
+/**
+ * DRIFT DETECTION ENDPOINTS
+ */
+export interface DriftAlert {
+  id: string;
+  organizationId: string;
+  agentId: string;
+  type: string;
+  severity: string;
+  description: string;
+  status: 'open' | 'resolved';
+  timestamp: string;
+  driftScore: number;
+  unexpectedActions: string[];
+  detectedAt: string;
+  message?: string;
+}
+
+export async function fetchDriftAlerts(status?: string, agentId?: string): Promise<DriftAlert[]> {
+  const params = new URLSearchParams();
+  if (status) params.append('status', status);
+  if (agentId) params.append('agentId', agentId);
+  const queryStr = params.toString() ? `?${params.toString()}` : '';
+  return apiRequest<DriftAlert[]>(`/drift/alerts${queryStr}`);
+}
+
+export async function triggerDriftScan(): Promise<DriftAlert[]> {
+  return apiRequest<DriftAlert[]>('/drift/scan', { method: 'POST' });
+}
+
+export async function resolveDriftAlert(id: string): Promise<DriftAlert> {
+  return apiRequest<DriftAlert>(`/drift/alerts/${id}/resolve`, { method: 'PATCH' });
 }

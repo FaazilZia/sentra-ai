@@ -1,13 +1,12 @@
 import crypto from 'crypto';
-
-// Safe performance.now() fallback for older environments
-const getNow = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 import { evaluateRisk } from './riskEngine';
 import { evaluatePolicy } from './policyEngine';
 import { evaluateSemanticRisk } from './semanticRiskEngine';
 import { maskPII } from '../utils/masking';
 import logger from '../utils/logger';
 import { cacheService } from './cache.service';
+
+const getNow = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
 export interface Decision {
   status: 'allowed' | 'blocked';

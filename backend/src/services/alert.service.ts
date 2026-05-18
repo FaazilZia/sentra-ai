@@ -1,7 +1,6 @@
 import nodemailer from 'nodemailer';
 import axios from 'axios';
 import prisma from '../config/db';
-import logger from '../utils/logger';
 
 export interface AlertViolation {
   agent: string;
@@ -23,10 +22,10 @@ class AlertService {
     if (!this.transporter) return false;
     try {
       await this.transporter.verify();
-      logger.info('[AlertService] SMTP connection verified.');
+      console.log('✅ [AlertService] SMTP connection verified.');
       return true;
     } catch (error: any) {
-      logger.error('[AlertService] SMTP verification failed:', error.message);
+      console.error('❌ [AlertService] SMTP verification failed:', error.message);
       return false;
     }
   }
@@ -42,9 +41,9 @@ class AlertService {
           pass: process.env.SMTP_PASS,
         },
       });
-      logger.info(`[AlertService] SMTP initialized with host: ${process.env.SMTP_HOST}`);
+      console.log(`[AlertService] SMTP initialized with host: ${process.env.SMTP_HOST}`);
     } else {
-      logger.warn('[AlertService] SMTP_HOST not provided. Email alerts will be disabled.');
+      console.warn('[AlertService] SMTP_HOST not provided. Email alerts will be disabled.');
     }
   }
 
@@ -56,12 +55,12 @@ class AlertService {
       });
 
       if (!org?.alertEmail) {
-        logger.warn(`[AlertService] No alertEmail found for organization: ${orgId}`);
+        console.warn(`[AlertService] No alertEmail found for organization: ${orgId}`);
         return;
       }
 
       if (!this.transporter) {
-        logger.warn('[AlertService] SMTP transporter not initialized. Cannot send alert.');
+        console.warn('[AlertService] SMTP transporter not initialized. Cannot send alert.');
         return;
       }
 
@@ -113,9 +112,9 @@ class AlertService {
       };
 
       const info = await this.transporter.sendMail(mailOptions);
-      logger.info(`[AlertService] Email alert sent to ${org.alertEmail}. MessageId: ${info.messageId}`);
+      console.log(`[AlertService] Email alert sent to ${org.alertEmail}. MessageId: ${info.messageId}`);
     } catch (error: any) {
-      logger.error('[AlertService] Failed to send email alert:', error.message || error);
+      console.error('[AlertService] Failed to send email alert:', error.message || error);
     }
   }
 
@@ -187,7 +186,7 @@ class AlertService {
 
       await axios.post(org.slackWebhookUrl, slackMessage);
     } catch (error) {
-      logger.error('[AlertService] Failed to send Slack alert:', error);
+      console.error('[AlertService] Failed to send Slack alert:', error);
     }
   }
 
@@ -206,8 +205,8 @@ class AlertService {
     };
 
     // Fire and forget
-    this.sendEmailAlert(orgId, violation).catch(err => logger.error('[AlertService] Email dispatch error:', err));
-    this.sendSlackAlert(orgId, violation).catch(err => logger.error('[AlertService] Slack dispatch error:', err));
+    this.sendEmailAlert(orgId, violation).catch(err => console.error(err));
+    this.sendSlackAlert(orgId, violation).catch(err => console.error(err));
   }
 
   async sendTestEmail(email: string, orgName: string) {

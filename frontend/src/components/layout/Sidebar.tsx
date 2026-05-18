@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { useNavigate, NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   ShieldAlert, 
@@ -7,37 +7,45 @@ import {
   LogOut,
   ChevronRight,
   ShieldCheck,
-  Lock,
   FileText,
-  Database
+  Box,
+  Settings2,
+  Activity
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Overview', path: '/app' },
+  { icon: FileText, label: 'Policies', path: '/app/policies' },
+  { icon: ShieldCheck, label: 'Guardrails', path: '/app/guardrails' },
   { icon: ShieldAlert, label: 'Risk Center', path: '/app/risk' },
   { icon: ClipboardCheck, label: 'Compliance', path: '/app/compliance' },
+  { icon: Activity, label: 'Drift Detection', path: '/app/drift' },
   { icon: EyeOff, label: 'Shadow AI', path: '/app/shadow' },
-  { icon: Lock, label: 'Guardrails', path: '/app/guardrails' },
-  { icon: FileText, label: 'Policies', path: '/app/policies' },
-  { icon: Database, label: 'Inventory', path: '/app/inventory' },
+  { icon: Box, label: 'Inventory', path: '/app/inventory' },
+  { icon: Settings2, label: 'Settings', path: '/app/settings' },
 ];
 
 export function Sidebar() {
-  const { logout, user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
       await logout();
-      window.location.href = '/login';
-    } catch (error) {
-      console.error('Logout failed:', error);
+      navigate('/login');
+    } catch (err) {
+      console.error('Logout failed', err);
     }
   };
 
-  const userInitials = user?.fullName 
-    ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase()
+  const userInitials = user?.fullName
+    ? user.fullName
+        .split(' ')
+        .map((n: string) => n[0])
+        .join('')
+        .toUpperCase()
     : 'AD';
 
   return (

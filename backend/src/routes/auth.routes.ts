@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, refreshToken, getMe, googleLogin, logout } from '../controllers/auth.controller';
+import { register, login, refreshToken, getMe, googleLogin, googleCallback, logout } from '../controllers/auth.controller';
 import { authenticate } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validate.middleware';
 import { registerSchema, loginSchema, refreshTokenSchema } from '../validations/auth.validation';
@@ -9,8 +9,8 @@ const router = Router();
 
 router.post('/register', authRateLimiter, validate(registerSchema), register);
 router.post('/login', authRateLimiter, validate(loginSchema), login);
-router.post('/logout', logout);
 router.post('/google', authRateLimiter, googleLogin);
+router.get('/google/callback', googleCallback);
 router.post('/refresh-token', authRateLimiter, validate(refreshTokenSchema), refreshToken);
 router.post('/refresh', authRateLimiter, validate(refreshTokenSchema), refreshToken); // alias
 router.get('/me', authenticate, getMe);

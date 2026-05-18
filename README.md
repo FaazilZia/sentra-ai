@@ -4,13 +4,9 @@
 
 Traditional security tools monitor and report issues *after* they happen. **Sentra AI acts before execution** — enforcing pre-execution control, preventing risks, and mapping every decision to human-readable governance insights with compliance impact tracking (GDPR, HIPAA, DPDP).
 
----
+### 🚀 [Live Demo Dashboard](https://sentra-ai-tau.vercel.app)
 
-## 🌐 Live Deployments
-
-- **Staging Dashboard:** [https://sentra-ai-tau.vercel.app](https://sentra-ai-tau.vercel.app)
-- **API Backend:** [https://sentra-backend-node.onrender.com](https://sentra-backend-node.onrender.com)
-- **System Health:** [https://sentra-backend-node.onrender.com/api/health](https://sentra-backend-node.onrender.com/api/health)
+[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen?style=for-the-badge&logo=vercel)](https://sentra-ai-tau.vercel.app)
 
 ---
 
@@ -343,16 +339,12 @@ Control AI access to production APIs and internal systems.
 - ✅ **Fail-closed governance** — Actions blocked when risk engine is unavailable
 - ✅ **AES-256-GCM encryption** — All secrets encrypted at rest
 - ✅ **No hardcoded credentials** — All secrets via environment variables
-- ✅ **CORS-locked** — Strict origin allowlisting (Sentra-specific regex, HTTP + WebSocket)
+- ✅ **CORS-locked** — Strict origin allowlisting (HTTP + WebSocket)
 - ✅ **Rate limiting** — Redis-backed distributed rate limiting
 - ✅ **CSP nonce enforcement** — Per-request Content-Security-Policy
 - ✅ **Brute-force protection** — 10 attempts / 15 min on auth endpoints
 - ✅ **Role-based access** — ADMIN, AUDITOR, ENGINEER, USER scoping
 - ✅ **Audit logging** — Every governance decision is cryptographically traced
-- ✅ **Redis connection pooling** — Centralized 2-connection pool (no socket leaks)
-- ✅ **Multi-tenancy enforced** — All tables scoped to `organizationId` with FK + indexes
-- ✅ **Error boundaries** — React crash recovery prevents total UI failures
-- ✅ **Zero dead dependencies** — No unused packages in production bundle
 
 ---
 
@@ -387,39 +379,6 @@ Control AI access to production APIs and internal systems.
 | `OPENAI_API_KEY` | No | Enables L3 semantic risk analysis |
 | `SMTP_HOST` | No | Email alert dispatch |
 | `VITE_GOOGLE_CLIENT_ID` | No | Google OAuth for frontend |
-
----
-
-## 📊 Production Hardening Changelog
-
-Sentra AI has undergone **two comprehensive hardening sessions** with **53 total fixes** across security, performance, infrastructure, and code quality.
-
-For the complete, detailed changelog with code diffs and verification results, see:
-
-📄 **[`sentra_all_fixes.md`](sentra_all_fixes.md)** — Full hardening report
-
-### Summary
-
-| Category | Fixes Applied |
-|----------|---------------|
-| 🔒 Security | 10 (fail-closed, CORS, encryption, credentials) |
-| 🚀 Performance | 9 (Redis pooling, caching, DB aggregation) |
-| 🐛 Bug Fixes | 11 (validation, serialization, runtime crashes) |
-| 🗄️ Schema | 8 (multi-tenancy, @updatedAt, FK enforcement) |
-| 📦 Dependencies | 5 (dead packages, devDeps separation) |
-| 🧹 Code Cleanup | 10 (dead files, unused imports, CSP) |
-| **Total** | **53** |
-
-### Build & Runtime Status
-
-```
-✅ Backend Build:   0 TypeScript errors
-✅ Frontend Build:  0 TypeScript errors (2.3s)
-✅ PostgreSQL:      Connected & seeded
-✅ Redis:           Connected (2-connection shared pool)
-✅ All API routes:  53/53 passing
-✅ All UI pages:    8/8 rendering correctly
-```
 
 ---
 

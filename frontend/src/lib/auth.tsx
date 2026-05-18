@@ -56,9 +56,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser({
         id: '00000000-0000-0000-0000-000000000000',
         email: 'admin@sentra.ai',
-        fullName: 'Governance Admin',
+        fullName: 'Demo Administrator',
         role: 'admin',
-        organizationId: 'default-org-id',
+        organizationId: 'demo-org-id',
         created_at: new Date().toISOString(),
         is_active: true,
       } as any);
@@ -151,12 +151,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function logout() {
     try {
-      await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/v1/auth/logout`, {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+      await fetch(`${baseUrl}/v1/auth/logout`, {
         method: 'POST',
-        credentials: 'include'
+        credentials: 'include',
       });
-    } catch (e) {
-      console.error('Logout error', e);
+    } catch (error) {
+      console.error('Logout request failed:', error);
     }
     localStorage.removeItem('sentra_access_token');
     localStorage.removeItem('sentra_refresh_token');

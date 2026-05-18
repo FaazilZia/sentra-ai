@@ -5,7 +5,6 @@ import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import cookieParser from 'cookie-parser';
 import { errorHandler } from './middleware/error.middleware';
 import { contextMiddleware } from './middleware/context.middleware';
 import authRoutes from './routes/auth.routes';
@@ -26,6 +25,7 @@ import riskRoutes from './routes/risk.routes';
 import intelligenceRoutes from './routes/intelligence.routes';
 import demoRoutes from './routes/demo.routes';
 import prisma from './config/db';
+import { redisHealthCheck } from './config/redis';
 
 import { apiRateLimiter } from './config/rateLimit';
 import { securityObservability } from './middleware/security.middleware';
@@ -55,8 +55,32 @@ app.use((req, res, next) => {
 });
 
 // Direct Health Checks (Above Rate Limiting for Render Stability)
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'healthy', version: 'v1.5' });
+app.get('/api/health', async (req, res) => {
+  let dbStatus = 'disconnected';
+  let redisStatus = 'disconnected';
+  let isHealthy = true;
+
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    dbStatus = 'connected';
+  } catch (error) {
+    isHealthy = false;
+  }
+
+  try {
+    const isRedisReady = await redisHealthCheck();
+    redisStatus = isRedisReady ? 'connected' : 'degraded';
+  } catch (error) {
+    // redisStatus stays 'disconnected' by default
+  }
+
+  res.status(isHealthy ? 200 : 503).json({
+    status: isHealthy ? 'healthy' : 'unhealthy',
+    version: 'v1.5',
+    database: dbStatus,
+    redis: redisStatus,
+    timestamp: new Date().toISOString()
+  });
 });
 
 app.get('/api/ready', async (req, res) => {
@@ -69,11 +93,7 @@ app.get('/api/ready', async (req, res) => {
     dbStatus = 'connected';
 
     try {
-      // Reuse the shared cache service Redis connection instead of
-      // creating a new one on every health check (prevents connection leaks)
-      const { cacheService } = require('./services/cache.service');
-      const pong = await cacheService.ping();
-      if (pong) redisStatus = 'connected';
+      if (await redisHealthCheck()) redisStatus = 'connected';
     } catch (e) {
       redisStatus = 'failed (degraded)';
     }
@@ -106,7 +126,7 @@ app.use(helmet({
       scriptSrc: ["'self'", (req, res: any) => `'nonce-${res.locals.nonce}'`],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", 'data:', 'https:'],
-      connectSrc: ["'self'", 'https://api.openai.com'],
+      connectSrc: ["'self'", 'https://api.openai.com', 'https://*.supabase.co', 'wss://*.supabase.co'],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: [],
     }
@@ -123,8 +143,7 @@ app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
     const isAllowed = allowedOrigins.includes(origin) || 
-                      // Allow Sentra-specific Vercel preview deployments only
-                      /^https:\/\/sentra-ai(-[a-z0-9]+)?\.vercel\.app$/.test(origin) ||
+                      origin.endsWith('.vercel.app') || 
                       (!isProduction && origin.includes('localhost'));
     if (isAllowed) {
       callback(null, true);
@@ -138,7 +157,6 @@ app.use(cors({
 }));
 
 app.use(express.json({ limit: '100kb' }));
-app.use(cookieParser());
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(contextMiddleware);
 
@@ -171,14 +189,44 @@ if (process.env.NODE_ENV !== 'production' && process.env.VITE_DEMO_MODE !== 'fal
 }
 
 
-// v1 health/ready delegate to the top-level /api/health and /api/ready probes
-// to avoid duplicate logic and the Redis connection leak that existed here.
-v1Router.get('/health', async (_req, res) => {
+// Health check under v1
+v1Router.get('/health', async (req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
     res.status(200).json({ status: 'ok', database: 'connected' });
   } catch (error) {
     res.status(200).json({ status: 'degraded', database: 'disconnected' });
+  }
+});
+
+// Readiness probe (Supports Degraded Mode)
+v1Router.get('/ready', async (req, res) => {
+  let dbStatus = 'disconnected';
+  let redisStatus = 'disconnected';
+  
+  try {
+    const prisma = require('./config/db').default;
+    await prisma.$queryRaw`SELECT 1`;
+    dbStatus = 'connected';
+
+    // Check Redis (Non-critical, allows degraded mode)
+    try {
+      if (await redisHealthCheck()) redisStatus = 'connected';
+    } catch (e) {
+      redisStatus = 'failed (degraded)';
+    }
+
+    if (dbStatus === 'connected') {
+      const isDegraded = redisStatus !== 'connected';
+      return res.status(200).json({ 
+        status: isDegraded ? 'degraded' : 'ready', 
+        db: dbStatus, 
+        redis: redisStatus,
+        message: isDegraded ? 'Operational but distributed rate limiting is offline.' : 'Full system operational'
+      });
+    }
+  } catch (err) {
+    res.status(503).json({ status: 'unhealthy', db: dbStatus, redis: redisStatus, error: 'Critical database failure' });
   }
 });
 
@@ -192,9 +240,6 @@ v1Router.get('/', (req, res) => {
 });
 
 app.use('/api/v1', v1Router);
-
-// Compatibility Layer: Support /api/auth without /v1 prefix for older clients
-app.use('/api/auth', authRoutes);
 
 
 

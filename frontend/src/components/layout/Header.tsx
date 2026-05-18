@@ -1,13 +1,16 @@
 import { Search, Bell, Download, Plus, ChevronRight } from 'lucide-react';
 import { useLocation, Link } from 'react-router-dom';
 import { useStore } from '@/store/useStore';
+import { useSocketStore } from '@/store/useSocketStore';
+import { cn } from '@/lib/utils';
 
 export function Header() {
   const location = useLocation();
   const pathnames = location.pathname.split('/').filter(x => x);
+  const connectionStatus = useSocketStore(state => state.connectionStatus);
 
   return (
-    <header className="fixed top-0 right-0 z-40 h-[var(--topbar-height)] w-full lg:w-[calc(100%-var(--sidebar-width))] bg-white/70 backdrop-blur-xl border-b border-[var(--border-default)] px-6 flex items-center justify-between shadow-sm">
+    <header className="fixed top-0 right-0 z-40 h-[var(--topbar-height)] w-full lg:w-[calc(100%-var(--sidebar-width))] bg-[var(--bg-topbar)] border-b border-[var(--border-default)] px-6 flex items-center justify-between shadow-sm">
       <div className="flex items-center gap-4">
         {/* Breadcrumbs */}
         <nav className="flex items-center gap-2 text-[var(--text-xs)] font-medium text-[var(--text-secondary)]">
@@ -41,6 +44,20 @@ export function Header() {
 
         {/* Actions */}
         <div className="flex items-center gap-3 pl-5 border-l border-[var(--border-default)]">
+          {/* Connection Status Indicator */}
+          <div className="flex items-center gap-2 mr-2" title={`Realtime: ${connectionStatus}`}>
+            <div className="relative flex h-2.5 w-2.5">
+              {connectionStatus === 'connected' && (
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              )}
+              <span className={cn(
+                "relative inline-flex rounded-full h-2.5 w-2.5",
+                connectionStatus === 'connected' ? "bg-emerald-500" :
+                connectionStatus === 'reconnecting' ? "bg-amber-500" : "bg-slate-500"
+              )}></span>
+            </div>
+          </div>
+
           <button 
             onClick={() => useStore.getState().addToast({ message: 'NO NEW NOTIFICATIONS', type: 'info' })}
             className="p-2 rounded text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-all relative"
@@ -49,7 +66,6 @@ export function Header() {
           </button>
           
           <button 
-            onClick={() => useStore.getState().addToast({ message: 'Initializing workspace export...', type: 'info' })}
             className="btn-secondary h-8 flex items-center gap-2 !px-3 !py-0 !text-[10px] uppercase tracking-widest"
           >
             <Download className="h-3 w-3" />

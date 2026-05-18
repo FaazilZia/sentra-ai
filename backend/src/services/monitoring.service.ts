@@ -1,4 +1,6 @@
-import prisma from '../config/db';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export class MonitoringService {
   /**
@@ -10,6 +12,7 @@ export class MonitoringService {
     // 1. Count violations in last 24h
     const violationsCount = await prisma.logs.count({
       where: {
+        organizationId,
         timestamp: { gte: oneDayAgo },
         status: 'blocked'
       }
@@ -33,8 +36,8 @@ export class MonitoringService {
         stability
       },
       create: {
-        feature_id: featureId,
         organizationId,
+        feature_id: featureId,
         status,
         violations_last_24h: violationsCount,
         stability
@@ -42,4 +45,3 @@ export class MonitoringService {
     });
   }
 }
-

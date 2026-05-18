@@ -1,4 +1,5 @@
 import prisma from '../config/db';
+import { DriftBaselineService } from './driftBaseline.service';
 
 export class InventoryService {
   static async listAgents(organizationId: string) {
@@ -22,7 +23,7 @@ export class InventoryService {
   static async createAgent(organizationId: string, data: any) {
     const { name, model, permissions, status, dependencies } = data;
     
-    return await prisma.ai_agents.create({
+    const agent = await prisma.ai_agents.create({
       data: {
         organizationId,
         name,
@@ -34,6 +35,15 @@ export class InventoryService {
         },
       },
     });
+
+    // Compute baseline immediately on registration
+    try {
+      await DriftBaselineService.computeBaseline(agent.id);
+    } catch (error) {
+      console.error(`[INVENTORY] Failed to compute baseline for newly registered agent ${agent.id}:`, error);
+    }
+
+    return agent;
   }
 
   static async updateAgent(id: string, organizationId: string, data: any) {

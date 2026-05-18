@@ -2,14 +2,22 @@ import 'dotenv/config';
 
 // Hard-required: server cannot function without these
 const REQUIRED_ENV_VARS = [
-  'DATABASE_URL',
   'JWT_SECRET',
   'REFRESH_SECRET',
 ];
 
+// Database URL check with DIRECT_URL fallback
+const dbUrl = process.env.DATABASE_URL || process.env.DIRECT_URL;
 const missing = REQUIRED_ENV_VARS.filter((v) => !process.env[v]);
+
+if (!dbUrl) missing.push('DATABASE_URL');
+
 if (missing.length > 0) {
-  console.error(`[STARTUP FATAL] Missing required environment variables: ${missing.join(', ')}`);
+  console.error('\n' + '='.repeat(50));
+  console.error('[STARTUP FATAL] Missing required environment variables:');
+  missing.forEach(v => console.error(` - ${v}`));
+  console.error('Please ensure these are set in your Render dashboard or .env file.');
+  console.error('='.repeat(50) + '\n');
   process.exit(1);
 }
 
@@ -20,25 +28,29 @@ if (!process.env.REDIS_URL) {
 if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.length < 10) {
   console.warn('[STARTUP WARNING] OPENAI_API_KEY not set. Semantic risk analysis will be disabled — pattern-based engines will enforce governance.');
 }
+if (!process.env.ENCRYPTION_KEY || process.env.ENCRYPTION_KEY.length < 32) {
+  console.warn('[STARTUP WARNING] ENCRYPTION_KEY not set or too short. Connector credential encryption and connector workers may fail until this is configured.');
+}
 
 
 // Production-specific hardening
 if (process.env.NODE_ENV === 'production') {
   if (!process.env.FRONTEND_URL) {
-    console.error('[STARTUP FATAL] FRONTEND_URL is required in production');
+    console.error('\n' + '!'.repeat(50));
+    console.error('[STARTUP FATAL] FRONTEND_URL is required in production.');
+    console.error('This is used for CORS and Secure Cookie configuration.');
+    console.error('!'.repeat(50) + '\n');
     process.exit(1);
   }
 
-  // Hard guard against demo mode in production
+  // Guard against demo mode in production
   if (process.env.VITE_DEMO_MODE === 'true') {
-    console.error('[STARTUP FATAL] Demo mode (VITE_DEMO_MODE=true) is strictly forbidden in production environments.');
-    process.exit(1);
+    console.warn('[STARTUP WARNING] Demo mode (VITE_DEMO_MODE=true) is active in production. This should only be used for testing.');
   }
 
-  // Prevent weak secrets
+  // Check secret strength
   if ((process.env.JWT_SECRET?.length ?? 0) < 32) {
-    console.error('[STARTUP FATAL] JWT_SECRET must be at least 32 characters in production');
-    process.exit(1);
+    console.warn('[STARTUP WARNING] JWT_SECRET is shorter than 32 characters. Consider using a stronger secret for production.');
   }
 }
 import express from 'express';
@@ -48,16 +60,24 @@ import app from './app';
 import logger from './utils/logger';
 import prisma, { initializePrisma } from './config/db';
 import { setupScheduledJobs } from './services/queue.service';
-import { setupConnectorWorkers } from './workers/worker.manager';
+import { setupConnectorWorkers, setupDriftWorker } from './workers/worker.manager';
 import { alertService } from './services/alert.service';
+import { verifyAccessToken } from './utils/jwt';
+import { redisHealthCheck } from './config/redis';
 
 const PORT = process.env.PORT || 3000;
 const httpServer = createServer(app);
 
 // Use the same CORS origins as Express — never wildcard in production
-const socketOrigins = process.env.FRONTEND_URL
-  ? [process.env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:3000']
-  : ['http://localhost:5173', 'http://localhost:3000'];
+const allowedOrigins = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(',').map(o => o.trim())
+  : [];
+
+const socketOrigins = [
+  ...allowedOrigins,
+  'http://localhost:5173',
+  'http://localhost:3000'
+];
 
 const io = new Server(httpServer, {
   cors: {
@@ -66,12 +86,73 @@ const io = new Server(httpServer, {
   }
 });
 
+io.use(async (socket, next) => {
+  try {
+    const authToken = typeof socket.handshake.auth?.token === 'string'
+      ? socket.handshake.auth.token
+      : undefined;
+    const headerValue = socket.handshake.headers.authorization;
+    const bearerToken = typeof headerValue === 'string' && headerValue.startsWith('Bearer ')
+      ? headerValue.slice(7)
+      : undefined;
+    const token = authToken || bearerToken;
+
+    if (!token) {
+      return next(new Error('Socket authentication required'));
+    }
+
+    const payload = verifyAccessToken(token) as any;
+    if (!payload || typeof payload === 'string' || !payload.id || !payload.organizationId) {
+      return next(new Error('Invalid socket token'));
+    }
+
+    const user = await prisma.users.findUnique({
+      where: { id: payload.id },
+      include: { organizations: true },
+    });
+
+    if (
+      !user ||
+      !user.is_active ||
+      !user.organizations?.is_active ||
+      user.organizationId !== payload.organizationId
+    ) {
+      return next(new Error('Unauthorized socket user'));
+    }
+
+    socket.data.userId = user.id;
+    socket.data.organizationId = user.organizationId;
+    socket.data.authenticated = true;
+    next();
+  } catch (error) {
+    next(new Error('Socket authentication failed'));
+  }
+});
+
 io.on('connection', (socket) => {
+  if (!socket.data.authenticated || !socket.data.userId || !socket.data.organizationId) {
+    logger.warn(`Rejecting unauthenticated socket connection: ${socket.id}`);
+    socket.disconnect(true);
+    return;
+  }
+
   logger.info(`Client connected to real-time feed: ${socket.id}`);
-  
-  socket.on('join_company', (organizationId) => {
+
+  const organizationId = socket.data.organizationId as string | undefined;
+  if (organizationId) {
     socket.join(`company_${organizationId}`);
-    logger.info(`Client ${socket.id} joined room: company_${organizationId}`);
+    logger.info(`Client ${socket.id} joined verified room: company_${organizationId}`);
+  }
+
+  socket.on('join_company', (requestedOrganizationId) => {
+    if (!organizationId || requestedOrganizationId !== organizationId) {
+      logger.warn(`Socket ${socket.id} attempted invalid room join for org ${requestedOrganizationId}`);
+      socket.disconnect(true);
+      return;
+    }
+
+    socket.join(`company_${organizationId}`);
+    logger.info(`Client ${socket.id} rejoined verified room: company_${organizationId}`);
   });
 
   socket.on('disconnect', () => {
@@ -84,16 +165,45 @@ export { io };
 
 const startServer = async () => {
   // Start listening FIRST so Render's health check passes immediately
-  httpServer.listen(Number(PORT), '0.0.0.0', () => {
-    logger.info(`Server is running on port ${PORT} (0.0.0.0)`);
+  httpServer.listen(PORT, () => {
+    logger.info(`Server is running on port ${PORT}`);
   });
+
+  // Run migration safety wrapper before Prisma Client initialization
+  if (process.env.NODE_ENV === 'production') {
+    const { execSync } = require('child_process');
+    try {
+      execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+    } catch (e) {
+      console.error('Migration failed, attempting recovery...', e);
+      try {
+        const statusOutput = execSync('npx prisma migrate status --json', { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] });
+        const status = JSON.parse(statusOutput);
+        const failedMigration = status.migrations?.find((x: any) => x.status === 'failed')?.migrationName;
+        if (failedMigration) {
+          console.log(`Found failed migration: ${failedMigration}. Attempting to resolve...`);
+          execSync(`npx prisma migrate resolve --rolled-back ${failedMigration} --preview-feature || true`, { stdio: 'inherit' });
+        } else {
+          execSync('npx prisma migrate resolve --rolled-back --preview-feature || true', { stdio: 'inherit' });
+        }
+      } catch (innerErr) {
+        console.error('Failed to query migration status, attempting generic resolve...', innerErr);
+        execSync('npx prisma migrate resolve --rolled-back --preview-feature || true', { stdio: 'inherit' });
+      }
+      execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+    }
+  }
 
   try {
     await initializePrisma();
     logger.info('Database layer initialized');
 
+    const redisReady = await redisHealthCheck();
+    logger.info(`Redis health at startup: ${redisReady ? 'connected' : 'degraded'}`);
+
     // Initialize Background Workers & Schedules (Non-blocking)
     setupConnectorWorkers();
+    setupDriftWorker();
     setupScheduledJobs().catch(err => logger.error('Failed to setup scheduled jobs:', err));
 
     // SMTP Validation

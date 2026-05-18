@@ -1,39 +1,39 @@
 services:
   - type: web
-    name: sentra-backend
-    runtime: node
+    name: sentra-backend-node
+    env: node
     plan: free
-    rootDir: backend
-    buildCommand: npm install && npx prisma generate && npm run build
-    startCommand: npx prisma migrate deploy && npm start
-    healthCheckPath: /api/health
     numInstances: 1
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:render
+    healthCheckPath: /api/v1/health
     envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 10000
+      - key: SENTRY_DSN
+        sync: false
       - key: DATABASE_URL
         sync: false
       - key: DIRECT_URL
-        sync: false
-      - key: REDIS_URL
         sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: REFRESH_SECRET
         generateValue: true
+      - key: NODE_ENV
+        value: production
+      - key: FRONTEND_URL
+        value: https://sentra-ai-tau.vercel.app,https://sentra-ai.vercel.app,http://localhost:5173
+      - key: PORT
+        value: 10000
       - key: ENCRYPTION_KEY
         sync: false
-      - key: FRONTEND_URL
-        value: https://sentra-ai.vercel.app,https://sentra-ai-tau.vercel.app,https://sentra-ai-88f7.vercel.app,http://localhost:5173
-      - key: OPENAI_API_KEY
+      - key: HUGGINGFACE_API_KEY
         sync: false
-      - key: SENTRY_DSN
+      - key: HUGGINGFACE_MODEL
+        value: mistralai/Mistral-7B-Instruct-v0.2
+      - key: REDIS_URL
         sync: false
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET
-        sync: false
-      - key: SEED_ADMIN_PASSWORD
         sync: false

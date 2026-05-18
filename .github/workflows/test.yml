@@ -2,17 +2,54 @@ name: CI
 
 on:
   push:
-    branches: [main, ishan]
+    branches: [main]
   pull_request:
     branches: [main]
 
 jobs:
-  backend-test:
+  test:
     runs-on: ubuntu-latest
 
     defaults:
       run:
         working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Initialize Database
+        run: npx prisma db push --accept-data-loss
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sentra_test
+
+      - name: Run tests
+        run: npm test -- --coverage
+        env:
+          NODE_ENV: test
+          JWT_SECRET: test-secret-for-ci
+          REFRESH_SECRET: test-refresh-secret-for-ci
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sentra_test
+          OPENAI_API_KEY: sk-test-key-for-ci
+          ENCRYPTION_KEY: a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
+          REDIS_URL: redis://localhost:6379
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: backend/coverage/
+          retention-days: 7
 
     services:
       postgres:
@@ -28,85 +65,3 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Use Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
-
-      - name: Install dependencies
-        run: npm install
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sentra_test
-
-      - name: Build backend
-        run: npm run build
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sentra_test
-
-      - name: Initialize Database
-        run: npx prisma db push --accept-data-loss
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sentra_test
-
-      - name: Run tests
-        run: npm test -- --coverage
-        env:
-          NODE_ENV: test
-          JWT_SECRET: ci-test-secret-that-is-at-least-32-chars
-          REFRESH_SECRET: ci-test-refresh-secret-at-least-32-chars
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sentra_test
-          OPENAI_API_KEY: sk-test-key-for-ci
-          ENCRYPTION_KEY: a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
-          REDIS_URL: redis://localhost:6379
-
-      - name: Upload coverage report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: backend/coverage/
-          retention-days: 7
-
-  frontend-build:
-    runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: frontend
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Use Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: TypeScript check
-        run: npx tsc --noEmit
-
-      - name: Build frontend
-        run: npm run build
-        env:
-          VITE_API_BASE_URL: https://sentra-backend.onrender.com

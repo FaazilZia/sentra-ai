@@ -117,8 +117,8 @@ export const validateRequest = (schema: z.ZodObject<any, any>) => {
       return next();
     } catch (error) {
       if (error instanceof z.ZodError) {
-        // Return 400 for validation errors — NOT 403 which would trigger
-        // the security anomaly detector and pollute alert signals.
+        // Trigger a 403 or 400 for bad validation. 
+        // Returning 403 will trigger our security anomaly hook.
         res.status(400).json({
           success: false,
           message: 'Invalid request payload.',

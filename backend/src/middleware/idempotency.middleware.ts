@@ -1,11 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { createHash } from 'crypto';
-import { getRedisClient } from '../config/redis';
 import logger from '../utils/logger';
-
-const redis = getRedisClient();
+import { getRedisClient } from '../config/redis';
 
 export const idempotencyMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+  const redis = getRedisClient();
   // If Redis is unavailable, skip idempotency — degrade gracefully
   if (!redis) return next();
 

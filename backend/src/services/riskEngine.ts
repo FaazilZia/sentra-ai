@@ -46,6 +46,25 @@ const JAILBREAK_PATTERNS = [
   /delete\s+all\s+(users?|records?|data)/i,
 ];
 
+const SHELL_INJECTION_PATTERNS = [
+  /&&/, /\|\|/, /;/, /\|/, /\$\(/, /`/,
+  /bash\s+-c/i, /sh\s+-c/i, /cmd\.exe/i, /powershell/i,
+  /rm\s+-rf/i, /curl\s+.*\|/i, /wget\s+.*\|/i, /nc\s+-e/i,
+  /chmod\s+777/i, /\bsudo\b/i
+];
+
+const PATH_TRAVERSAL_PATTERNS = [
+  /\.\.\//, /\.\.\\/, /\/etc\/passwd/i, /\/proc\/self/i,
+  /~\/\.ssh/i, /\.env/, /id_rsa/i,
+  /config\s+secrets/i, /credentials\s+dump/i
+];
+
+const ENCODED_PAYLOAD_PATTERNS = [
+  /%2e%2e%2f/i, // encoded ../
+  /eval\(/i, /atob\(/i, /fromCharCode/i,
+  /(?:\\x[0-9a-f]{2}){3,}/i // Hex encoded patterns like \x2e\x2e\x2f
+];
+
 export interface RiskEvaluation {
   score: 'low' | 'medium' | 'high';
   triggers: string[];
@@ -105,6 +124,27 @@ export const evaluateRisk = (action: string, metadata: any = {}): RiskEvaluation
     if (HIGH_RISK_ACTIONS.some(a => target.includes(a.toLowerCase()))) {
       score = 'high';
       triggers.push('High-risk action signature');
+    }
+
+    // OS Command Injection Detection
+    const shellMatch = SHELL_INJECTION_PATTERNS.find(pattern => pattern.test(target));
+    if (shellMatch) {
+      score = 'high';
+      triggers.push(`OS Command Injection attempt: ${shellMatch.source}`);
+    }
+
+    // Path Traversal Detection
+    const traversalMatch = PATH_TRAVERSAL_PATTERNS.find(pattern => pattern.test(target));
+    if (traversalMatch) {
+      score = 'high';
+      triggers.push(`Path Traversal attempt: ${traversalMatch.source}`);
+    }
+
+    // Encoded Payload Detection
+    const encodedMatch = ENCODED_PAYLOAD_PATTERNS.find(pattern => pattern.test(target));
+    if (encodedMatch) {
+      score = 'high';
+      triggers.push(`Obfuscated/Encoded payload attempt: ${encodedMatch.source}`);
     }
 
     // Multi-signal: Intent + Data
