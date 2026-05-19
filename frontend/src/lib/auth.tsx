@@ -6,7 +6,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { fetchCurrentUser, loginRequest, registerRequest } from './api';
+import { fetchCurrentUser, loginRequest, registerRequest, apiBaseUrl } from './api';
 
 export interface AppUser {
   id: string;
@@ -127,8 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function logout() {
     try {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
-      await fetch(`${baseUrl}/v1/auth/logout`, {
+      await fetch(`${apiBaseUrl}/auth/logout`, {
         method: 'POST',
         credentials: 'include',
       });
