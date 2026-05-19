@@ -1,6 +1,8 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  coverageProvider: 'v8',
+  maxWorkers: 2,
   testMatch: ['**/tests/**/*.test.ts'],
   verbose: true,
   forceExit: true,
