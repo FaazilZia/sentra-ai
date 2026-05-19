@@ -25,7 +25,7 @@ import guardrailRoutes from './routes/guardrail.routes';
 import riskRoutes from './routes/risk.routes';
 import intelligenceRoutes from './routes/intelligence.routes';
 import demoRoutes from './routes/demo.routes';
-import prisma from './config/db';
+import prisma, { isDbHealthy } from './config/db';
 import { redisHealthCheck } from './config/redis';
 
 import { apiRateLimiter, getRateLimitRedisStatus } from './config/rateLimit';
@@ -55,64 +55,94 @@ app.use((req, res, next) => {
   next();
 });
 
+// [BOOT] Startup Logs
+console.log('[BOOT] Express initialized');
+
 // Direct Health Checks (Above Rate Limiting for Render Stability)
-app.get('/api/health', async (req, res) => {
-  let dbStatus = 'disconnected';
-  let redisStatus = 'disconnected';
-  let isHealthy = true;
-
-  try {
-    await prisma.$queryRaw`SELECT 1`;
-    dbStatus = 'connected';
-  } catch (error) {
-    isHealthy = false;
-  }
-
-  try {
-    const isRedisReady = await redisHealthCheck();
-    redisStatus = isRedisReady ? 'connected' : 'degraded';
-  } catch (error) {
-    // redisStatus stays 'disconnected' by default
-  }
-
-  res.status(isHealthy ? 200 : 503).json({
-    status: isHealthy ? 'healthy' : 'unhealthy',
+app.get('/api/health', (req, res) => {
+  const start = performance.now();
+  const dbStatus = isDbHealthy ? 'connected' : 'disconnected';
+  const redisStatus = getRateLimitRedisStatus();
+  
+  res.status(isDbHealthy ? 200 : 503).json({
+    status: isDbHealthy ? 'healthy' : 'unhealthy',
     version: 'v1.5',
     database: dbStatus,
     redis: redisStatus,
-    rateLimitingRedis: getRateLimitRedisStatus(),
+    rateLimitingRedis: redisStatus,
     timestamp: new Date().toISOString()
   });
-});
-
-app.get('/api/ready', async (req, res) => {
-  let dbStatus = 'disconnected';
-  let redisStatus = 'disconnected';
   
-  try {
-    const prisma = require('./config/db').default;
-    await prisma.$queryRaw`SELECT 1`;
-    dbStatus = 'connected';
-
-    try {
-      if (await redisHealthCheck()) redisStatus = 'connected';
-    } catch (e) {
-      redisStatus = 'failed (degraded)';
-    }
-
-    if (dbStatus === 'connected') {
-      const isDegraded = redisStatus !== 'connected';
-      return res.status(200).json({ 
-        status: isDegraded ? 'degraded' : 'ready', 
-        db: dbStatus, 
-        redis: redisStatus,
-        message: isDegraded ? 'Operational but distributed rate limiting is offline.' : 'Full system operational'
-      });
-    }
-  } catch (err) {
-    res.status(503).json({ status: 'unhealthy', db: dbStatus, redis: redisStatus, error: 'Critical database failure' });
-  }
+  const duration = (performance.now() - start).toFixed(3);
+  console.log(`[HEALTH] Responded to /api/health in ${duration} ms`);
 });
+
+app.get('/api/v1/health', (req, res) => {
+  const start = performance.now();
+  const dbStatus = isDbHealthy ? 'connected' : 'disconnected';
+  
+  res.status(isDbHealthy ? 200 : 503).json({ 
+    status: isDbHealthy ? 'ok' : 'degraded', 
+    database: dbStatus 
+  });
+  
+  const duration = (performance.now() - start).toFixed(3);
+  console.log(`[HEALTH] Responded to /api/v1/health in ${duration} ms`);
+});
+
+app.get('/api/ready', (req, res) => {
+  const start = performance.now();
+  const dbStatus = isDbHealthy ? 'connected' : 'disconnected';
+  const redisStatus = getRateLimitRedisStatus();
+
+  if (isDbHealthy) {
+    const isDegraded = redisStatus === 'degraded';
+    res.status(200).json({ 
+      status: isDegraded ? 'degraded' : 'ready', 
+      db: dbStatus, 
+      redis: redisStatus,
+      message: isDegraded ? 'Operational but distributed rate limiting is offline.' : 'Full system operational'
+    });
+  } else {
+    res.status(503).json({ 
+      status: 'unhealthy', 
+      db: dbStatus, 
+      redis: redisStatus, 
+      error: 'Critical database failure' 
+    });
+  }
+  
+  const duration = (performance.now() - start).toFixed(3);
+  console.log(`[HEALTH] Responded to /api/ready in ${duration} ms`);
+});
+
+app.get('/api/v1/ready', (req, res) => {
+  const start = performance.now();
+  const dbStatus = isDbHealthy ? 'connected' : 'disconnected';
+  const redisStatus = getRateLimitRedisStatus();
+
+  if (isDbHealthy) {
+    const isDegraded = redisStatus === 'degraded';
+    res.status(200).json({ 
+      status: isDegraded ? 'degraded' : 'ready', 
+      db: dbStatus, 
+      redis: redisStatus,
+      message: isDegraded ? 'Operational but distributed rate limiting is offline.' : 'Full system operational'
+    });
+  } else {
+    res.status(503).json({ 
+      status: 'unhealthy', 
+      db: dbStatus, 
+      redis: redisStatus, 
+      error: 'Critical database failure' 
+    });
+  }
+  
+  const duration = (performance.now() - start).toFixed(3);
+  console.log(`[HEALTH] Responded to /api/v1/ready in ${duration} ms`);
+});
+
+console.log('[BOOT] Health routes mounted');
 
 // Strict Security Middleware with Nonce
 app.use(helmet({
@@ -192,46 +222,7 @@ if (process.env.NODE_ENV !== 'production' && process.env.VITE_DEMO_MODE !== 'fal
 }
 
 
-// Health check under v1
-v1Router.get('/health', async (req, res) => {
-  try {
-    await prisma.$queryRaw`SELECT 1`;
-    res.status(200).json({ status: 'ok', database: 'connected' });
-  } catch (error) {
-    res.status(200).json({ status: 'degraded', database: 'disconnected' });
-  }
-});
-
-// Readiness probe (Supports Degraded Mode)
-v1Router.get('/ready', async (req, res) => {
-  let dbStatus = 'disconnected';
-  let redisStatus = 'disconnected';
-  
-  try {
-    const prisma = require('./config/db').default;
-    await prisma.$queryRaw`SELECT 1`;
-    dbStatus = 'connected';
-
-    // Check Redis (Non-critical, allows degraded mode)
-    try {
-      if (await redisHealthCheck()) redisStatus = 'connected';
-    } catch (e) {
-      redisStatus = 'failed (degraded)';
-    }
-
-    if (dbStatus === 'connected') {
-      const isDegraded = redisStatus !== 'connected';
-      return res.status(200).json({ 
-        status: isDegraded ? 'degraded' : 'ready', 
-        db: dbStatus, 
-        redis: redisStatus,
-        message: isDegraded ? 'Operational but distributed rate limiting is offline.' : 'Full system operational'
-      });
-    }
-  } catch (err) {
-    res.status(503).json({ status: 'unhealthy', db: dbStatus, redis: redisStatus, error: 'Critical database failure' });
-  }
-});
+// Note: /api/v1/health and /api/v1/ready are mounted directly on the app instance above for non-blocking execution.
 
 // Root of v1
 v1Router.get('/', (req, res) => {

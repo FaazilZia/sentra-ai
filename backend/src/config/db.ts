@@ -10,6 +10,8 @@ import logger from '../utils/logger';
 
 let prisma: PrismaClient;
 
+export let isDbHealthy = false;
+
 export const initializePrisma = async () => {
   if (prisma) return prisma;
 
@@ -34,10 +36,12 @@ export const initializePrisma = async () => {
 
     // Test connection
     await prisma.$connect();
+    isDbHealthy = true;
     logger.info('Database connection established successfully.');
     
     return prisma;
   } catch (error) {
+    isDbHealthy = false;
     logger.error('Failed to initialize database connection:', error);
     throw error;
   }

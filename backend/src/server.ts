@@ -166,6 +166,7 @@ export { io };
 const startServer = async () => {
   // Start listening FIRST so Render's health check passes immediately
   httpServer.listen(PORT, () => {
+    console.log(`[BOOT] Server listening on port ${PORT}`);
     logger.info(`Server is running on port ${PORT}`);
   });
 
@@ -176,8 +177,16 @@ const startServer = async () => {
     await initializePrisma();
     logger.info('Database layer initialized');
 
-    const redisReady = await redisHealthCheck();
-    logger.info(`Redis health at startup: ${redisReady ? 'connected' : 'degraded'}`);
+    // Run Redis connection checks asynchronously to prevent startup deadlocks
+    redisHealthCheck()
+      .then((redisReady) => {
+        logger.info(`Redis health at startup check resolved: ${redisReady ? 'connected' : 'degraded'}`);
+      })
+      .catch((err) => {
+        logger.error('Redis health check exception at boot:', err?.message || err);
+      });
+
+    console.log('[BOOT] Redis lifecycle continuing asynchronously');
 
     // Initialize Background Workers & Schedules (Non-blocking)
     setupConnectorWorkers();
