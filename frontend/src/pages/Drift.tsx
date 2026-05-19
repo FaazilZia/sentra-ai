@@ -28,16 +28,17 @@ export default function Drift() {
       setLoading(true);
       const [allAlerts, allAgents] = await Promise.all([
         fetchDriftAlerts(filter === 'all' ? undefined : filter),
-        fetchAIAgents()
+        fetchAIAgents(),
       ]);
-      setAlerts(allAlerts);
-      setAgents(allAgents);
+      setAlerts(allAlerts || []);
+      setAgents(allAgents || []);
       if (showToast) {
         addToast({ message: 'Drift data successfully synced.', type: 'success' });
       }
-    } catch (err: any) {
-      console.error('Failed to load drift diagnostics:', err);
-      addToast({ message: err.message || 'Failed to sync drift diagnostics', type: 'error' });
+    } catch (err) {
+      console.error('Drift load error:', err);
+      setAlerts([]);
+      setAgents([]);
     } finally {
       setLoading(false);
     }

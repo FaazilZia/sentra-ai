@@ -6,7 +6,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { fetchCurrentUser, loginRequest, registerRequest, googleLoginRequest } from './api';
+import { fetchCurrentUser, loginRequest, registerRequest } from './api';
 
 export interface AppUser {
   id: string;
@@ -28,7 +28,6 @@ interface AuthContextValue {
   loginError: string | null;
   login: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, fullName?: string, organizationName?: string) => Promise<void>;
-  googleLogin: (idToken: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -36,7 +35,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(localStorage.getItem('sentra_access_token'));
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loginPending, setLoginPending] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -48,10 +47,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     window.addEventListener('auth:expired', handleAuthExpired);
 
-    const token = localStorage.getItem('sentra_access_token');
-    
     // Auth Bypass for local development/demo
-    if (!token && import.meta.env.VITE_BYPASS_AUTH === 'true') {
+    if (import.meta.env.VITE_BYPASS_AUTH === 'true') {
       console.info('🛡️ Sentra AI: Auth bypass enabled. Session restored with demo credentials.');
       setUser({
         id: '00000000-0000-0000-0000-000000000000',
@@ -62,22 +59,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         created_at: new Date().toISOString(),
         is_active: true,
       } as any);
+      setAccessToken('demo-active-token');
       setLoading(false);
       return;
     }
 
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
-    // Attempt to fetch current user (api.ts will use the token in localStorage)
+    // Attempt to fetch current user directly using browser credentials (cookies)
     fetchCurrentUser()
       .then((currentUser) => {
         setUser(currentUser);
+        setAccessToken('session-valid');
       })
       .catch(() => {
-        logout();
+        setUser(null);
+        setAccessToken(null);
       })
       .finally(() => {
         setLoading(false);
@@ -93,9 +88,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoginError(null);
 
     try {
-      // loginRequest in api.ts automatically stores tokens in localStorage
-      const { user: loggedInUser, accessToken: token } = await loginRequest(email, password);
-      setAccessToken(token);
+      const { user: loggedInUser } = await loginRequest(email, password);
+      setAccessToken('session-valid');
       setUser(loggedInUser);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to sign in';
@@ -111,7 +105,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoginError(null);
 
     try {
-      // Use provided values; fall back to email-derived values only if fields are empty
       const derivedName = fullName?.trim() || email.split('@')[0] || 'Sentra User';
       const derivedOrg = organizationName?.trim() || 
         `${email.split('@')[1]?.split('.')[0]?.toUpperCase() || 'Sentra Org'} Workspace`;
@@ -122,26 +115,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         fullName: derivedName,
         organizationName: derivedOrg,
       });
-      localStorage.setItem('sentra_new_signup', 'true');
       await login(email, password);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to sign up';
-      setLoginError(message);
-      throw error;
-    } finally {
-      setLoginPending(false);
-    }
-  }
-
-  async function googleLogin(idToken: string) {
-    setLoginPending(true);
-    setLoginError(null);
-    try {
-      const { user: loggedInUser, accessToken: token } = await googleLoginRequest(idToken);
-      setAccessToken(token);
-      setUser(loggedInUser);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Google login failed';
       setLoginError(message);
       throw error;
     } finally {
@@ -159,8 +135,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Logout request failed:', error);
     }
-    localStorage.removeItem('sentra_access_token');
-    localStorage.removeItem('sentra_refresh_token');
     setAccessToken(null);
     setUser(null);
     setLoginError(null);
@@ -174,7 +148,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loginError,
     login,
     signUp,
-    googleLogin,
     logout,
   }), [user, accessToken, loading, loginPending, loginError]);
 

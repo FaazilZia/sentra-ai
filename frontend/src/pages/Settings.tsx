@@ -26,12 +26,11 @@ export default function Settings() {
       try {
         const keys = await fetchApiKeys();
         if (keys && keys.length > 0) {
-          // Display the first key prefix if available, otherwise masked
           const key = keys[0];
-          setApiKey(`sk-sentra-****${key.key_prefix || 'abcd'}`);
+          setApiKey(key.key || `sk-sentra-****${key.key_prefix || 'abcd'}`);
         }
       } catch (err) {
-        console.error('Failed to load settings', err);
+        console.error('Settings load error:', err);
       }
     }
     loadData();

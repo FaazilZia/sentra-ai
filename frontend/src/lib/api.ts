@@ -169,23 +169,6 @@ export class ApiError extends Error {
   }
 }
 
-// Helper to manage tokens in localStorage
-const getTokens = () => {
-  const access = localStorage.getItem('sentra_access_token');
-  const refresh = localStorage.getItem('sentra_refresh_token');
-  return { accessToken: access, refreshToken: refresh };
-};
-
-const setTokens = (access: string, refresh?: string) => {
-  localStorage.setItem('sentra_access_token', access);
-  if (refresh) localStorage.setItem('sentra_refresh_token', refresh);
-};
-
-const clearTokens = () => {
-  localStorage.removeItem('sentra_access_token');
-  localStorage.removeItem('sentra_refresh_token');
-};
-
 /**
  * Enhanced API Request wrapper with automatic token refresh
  */
@@ -194,13 +177,8 @@ export async function apiRequest<T>(
   init: RequestInit = {},
   retry: boolean = true
 ): Promise<T> {
-  const { accessToken } = getTokens();
   const headers = new Headers(init.headers);
   headers.set('Content-Type', 'application/json');
-
-  if (accessToken) {
-    headers.set('Authorization', `Bearer ${accessToken}`);
-  }
 
   const response = await fetch(`${apiBaseUrl}${path}`, {
     ...init,
@@ -210,28 +188,7 @@ export async function apiRequest<T>(
 
   // Handle Token Refresh on 401
   if (response.status === 401 && retry) {
-    const { refreshToken } = getTokens();
-    if (refreshToken) {
-      try {
-        const refreshResponse = await fetch(`${apiBaseUrl}/auth/refresh-token`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: refreshToken }),
-          credentials: 'include',
-        });
-
-        if (refreshResponse.ok) {
-          const { data } = await refreshResponse.json();
-          setTokens(data.accessToken);
-          // Retry original request with NEW token
-          return apiRequest<T>(path, init, false);
-        }
-      } catch (e) {
-        console.error('Token refresh failed', e);
-      }
-    }
-    // If refresh failed or no token, cleanup and throw
-    clearTokens();
+    // Rely strictly on httpOnly secure cookie session verification
     window.dispatchEvent(new CustomEvent('auth:expired'));
   }
 
@@ -259,16 +216,12 @@ export async function apiRequest<T>(
 }
 
 /**
- * AUTH ENTPOINTS
+ * AUTH ENDPOINTS
  */
 export function loginRequest(email: string, password: string): Promise<TokenResponse> {
   return apiRequest<any>('/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
-  }).then(data => {
-    // Specifically handle the auth response to store tokens
-    setTokens(data.accessToken, data.refreshToken);
-    return data;
   });
 }
 
@@ -276,16 +229,6 @@ export function registerRequest(payload: any): Promise<any> {
   return apiRequest<any>('/auth/register', {
     method: 'POST',
     body: JSON.stringify(payload),
-  });
-}
-
-export function googleLoginRequest(idToken: string): Promise<TokenResponse> {
-  return apiRequest<any>('/auth/google', {
-    method: 'POST',
-    body: JSON.stringify({ idToken }),
-  }).then(data => {
-    setTokens(data.accessToken, data.refreshToken);
-    return data;
   });
 }
 
@@ -541,9 +484,7 @@ export async function markAlertRead(alertId: string): Promise<void> {
 
 export async function exportComplianceReport(featureId: string): Promise<Blob> {
   const response = await fetch(`${apiBaseUrl}/compliance/export/${featureId}`, {
-    headers: {
-      'Authorization': `Bearer ${localStorage.getItem('sentra_access_token')}`
-    }
+    credentials: 'include'
   });
   if (!response.ok) throw new Error('Failed to export report');
   return response.blob();
@@ -597,13 +538,10 @@ export async function fetchGuardrailLogs(params?: any): Promise<{ data: Intercep
 
 export async function exportGuardrailLogs(format: 'csv' | 'json' = 'csv', params?: any) {
   const query = new URLSearchParams({ ...params, format }).toString();
-  const { accessToken } = getTokens();
   
   try {
     const response = await fetch(`${apiBaseUrl}/guardrails/logs/export?${query}`, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`
-      }
+      credentials: 'include'
     });
 
     if (!response.ok) throw new Error('Export failed');

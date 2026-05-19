@@ -4,7 +4,6 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
 import { AuthProvider, useAuth } from './lib/auth';
 import { SidebarProvider } from './context/SidebarContext';
-import { GoogleOAuthProvider } from '@react-oauth/google';
 
 const DashboardPage = lazy(() => import('./pages/Dashboard'));
 const PoliciesPage = lazy(() => import('./pages/Policies'));
@@ -106,14 +105,10 @@ function AppRoutes() {
 }
 
 function App() {
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
-
   return (
-    <GoogleOAuthProvider clientId={googleClientId}>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </GoogleOAuthProvider>
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
   );
 }
 
