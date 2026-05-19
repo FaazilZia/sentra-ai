@@ -10,7 +10,7 @@
     "start:render": "node scripts/resolve-failed-migration.js && npx prisma migrate deploy && node dist/src/server.js",
     "seed": "ts-node prisma/seed.ts",
     "postinstall": "prisma generate",
-    "test": "jest --coverage"
+    "test": "node --max-old-space-size=4096 ./node_modules/.bin/jest --coverage --maxWorkers=2"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
