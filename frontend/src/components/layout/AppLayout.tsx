@@ -9,15 +9,15 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   return (
-    <div className="flex min-h-screen bg-[var(--bg-page)] text-[var(--text-primary)]">
+    <div className="flex h-screen bg-[var(--bg-page)] text-[var(--text-primary)] overflow-hidden">
       {/* Sidebar - Fixed Width */}
       <Sidebar />
 
       {/* Main Content Area */}
-      <div className="flex flex-1 flex-col lg:pl-[var(--sidebar-width)] transition-all duration-300">
+      <div className="flex flex-1 flex-col lg:pl-[var(--sidebar-width)] transition-all duration-300 h-screen overflow-hidden">
         <Header />
         
-        <main className="flex-1 pt-[var(--topbar-height)]">
+        <main className="flex-1 pt-[var(--topbar-height)] overflow-y-auto h-[calc(100vh-var(--topbar-height))]">
           <SocketProvider>
             <Suspense fallback={
               <div className="flex h-full items-center justify-center">
