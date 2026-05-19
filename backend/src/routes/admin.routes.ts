@@ -4,6 +4,7 @@ import { validate } from '../middleware/validate.middleware';
 import { createApiKeySchema, apiKeyIdParamSchema } from '../validations/admin.validation';
 import { listApiKeys, createApiKey, deleteApiKey } from '../controllers/apiKey.controller';
 import { getLogs as getActivityLogs } from '../controllers/ai.controller';
+import { authRateLimiter } from '../config/rateLimit';
 
 const router = Router();
 
@@ -77,12 +78,13 @@ router.get('/security-metrics', authenticate, authorizeRoles('ADMIN'), async (re
 
 
 router.get('/logs', authenticate, authorizeRoles('ADMIN', 'AUDITOR'), getActivityLogs);
-router.get('/api-keys', authenticate, authorizeRoles('ADMIN'), listApiKeys);
-router.post('/api-keys', authenticate, authorizeRoles('ADMIN'), validate(createApiKeySchema), createApiKey);
+router.get('/api-keys', authenticate, authorizeRoles('ADMIN'), authRateLimiter, listApiKeys);
+router.post('/api-keys', authenticate, authorizeRoles('ADMIN'), authRateLimiter, validate(createApiKeySchema), createApiKey);
 router.delete(
   '/api-keys/:keyId',
   authenticate,
   authorizeRoles('ADMIN'),
+  authRateLimiter,
   validate(apiKeyIdParamSchema),
   deleteApiKey
 );

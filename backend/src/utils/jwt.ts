@@ -1,5 +1,6 @@
 import jwt, { SignOptions } from 'jsonwebtoken';
 import logger from './logger';
+import crypto from 'crypto';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const REFRESH_SECRET = process.env.REFRESH_SECRET;
@@ -13,8 +14,10 @@ if (!JWT_SECRET || !REFRESH_SECRET) {
   }
 }
 
-const FINAL_JWT_SECRET = JWT_SECRET || 'dev_jwt_secret_do_not_use_in_prod';
-const FINAL_REFRESH_SECRET = REFRESH_SECRET || 'dev_refresh_secret_do_not_use_in_prod';
+// Generate dynamic 256-bit fallback secret at runtime to eliminate hardcoded string secrets
+const dynamicFallback = crypto.randomBytes(32).toString('hex');
+const FINAL_JWT_SECRET = JWT_SECRET || dynamicFallback;
+const FINAL_REFRESH_SECRET = REFRESH_SECRET || dynamicFallback;
 
 export const generateAccessToken = (payload: object): string => {
   const options: SignOptions = { expiresIn: '15m' };

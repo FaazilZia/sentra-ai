@@ -23,7 +23,7 @@ async function finalizeScanJob(organizationId: string, jobId: string, incidentsD
           user_id: null,
           agent_id: 'deep-scan-engine',
           action: 'automated_policy_scan',
-          severity: Math.floor(Math.random() * 45) + 35,
+          severity: crypto.randomInt(35, 80),
           policy_id: null,
           details: `Automated deep-scan finding #${i + 1}: policy-sensitive pattern in connected data sources.`,
           prompt_excerpt: '',
@@ -281,7 +281,7 @@ export const triggerScan = async (req: any, res: Response, next: NextFunction) =
       }
 
       clearInterval(intervalId);
-      const incidentsDetected = Math.floor(Math.random() * 6) + 1;
+      const incidentsDetected = crypto.randomInt(1, 7);
       await finalizeScanJob(organizationId, jobId, incidentsDetected);
     }, SCAN_TICK_MS);
 

@@ -45,7 +45,7 @@ export const useStore = create<ModalState & ToastState & UIState>((set) => ({
   // Toast State
   toasts: [],
   addToast: (toast) => {
-    const id = Math.random().toString(36).substring(2, 9);
+    const id = (typeof window !== 'undefined' && window.crypto?.randomUUID) ? window.crypto.randomUUID() : String(Date.now());
     set((state) => ({
       toasts: [...state.toasts, { ...toast, id }],
     }));

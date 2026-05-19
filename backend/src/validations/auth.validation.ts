@@ -21,3 +21,10 @@ export const refreshTokenSchema = z.object({
     token: z.string(),
   }),
 });
+
+export const googleLoginSchema = z.object({
+  body: z.object({
+    idToken: z.string().min(1, 'Google ID Token is required'),
+    organizationName: z.string().optional(),
+  }),
+});
