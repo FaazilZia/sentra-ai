@@ -12,6 +12,7 @@ jest.mock('express-rate-limit', () => {
 jest.mock('ioredis', () => {
   return jest.fn().mockImplementation(() => {
     return {
+      status: 'ready',
       call: jest.fn().mockResolvedValue('OK'),
       on: jest.fn(),
       connect: jest.fn().mockResolvedValue(undefined),
@@ -64,6 +65,8 @@ describe('Resilient Rate Limiter Hardening Test Suite', () => {
     let mockRedisStore: any;
     let mockMemoryStore: any;
     let isRedisReady: boolean;
+    let mockClient: any;
+    let MockRedisStoreClass: any;
     let store: ResilientRedisStore;
 
     beforeEach(() => {
@@ -81,8 +84,15 @@ describe('Resilient Rate Limiter Hardening Test Suite', () => {
       };
       isRedisReady = true;
 
+      mockClient = {
+        status: 'ready',
+        call: jest.fn().mockResolvedValue('OK'),
+      };
+      MockRedisStoreClass = jest.fn().mockImplementation(() => mockRedisStore);
+
       store = new ResilientRedisStore(
-        mockRedisStore,
+        mockClient,
+        MockRedisStoreClass,
         mockMemoryStore,
         'test:',
         () => isRedisReady,
@@ -166,7 +176,6 @@ describe('Resilient Rate Limiter Hardening Test Suite', () => {
       process.env.REDIS_URL = 'redis://localhost:6379';
       const limiterOptions: any = createSafeRateLimiter('test:prefix', {});
       const storeInstance = limiterOptions.store as any;
-      const redisStoreInstance = storeInstance.redisStore;
 
       const mockClient = {
         call: jest.fn().mockResolvedValue('MAPPED_OK'),

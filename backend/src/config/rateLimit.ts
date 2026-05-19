@@ -73,17 +73,25 @@ export const withTimeout = <T>(promise: Promise<T>, ms: number, errorMessage = '
  * A highly resilient rate-limit store wrapper utilizing the Circuit Breaker pattern.
  * Toggles between RedisStore and MemoryStore depending on connectivity and query health.
  * 
+ * DEFERRED INITIALIZATION DESIGN:
+ * Instead of eager initialization in the constructor, `RedisStore` is lazily instantiated
+ * ONLY when `client.status === 'ready'`. This guarantees that ioredis is fully connected and
+ * writable, preventing synchronous constructor crashes under startup outages or slow streams.
+ * 
  * WARNING ON STATELESSNESS / MULTI-INSTANCE TOPOLOGY:
  * During fallback mode, limits are enforced strictly but local to the specific container or 
  * Render instance (non-distributed). This acts as a per-instance shield during Redis outages 
  * rather than a global distributed limit, which is stateless-safe and prevents unlimited bypass paths.
  */
 export class ResilientRedisStore {
-  private redisStore: any;
+  private redisStore: any = null;
   private memoryStore: any;
   private prefix: string;
   private getRedisStatus: () => boolean;
   private setRedisStatus: (status: boolean) => void;
+  private client: any;
+  private RedisStoreClass: any;
+  private lastOptions: any = null;
 
   // Lightweight Circuit Breaker State Configuration
   private circuitState: 'CLOSED' | 'OPEN' | 'HALF_OPEN' = 'CLOSED';
@@ -93,13 +101,15 @@ export class ResilientRedisStore {
   private readonly COOLDOWN_MS = 30000;    // 30 seconds cooling window before probing again
 
   constructor(
-    redisStore: any, 
-    memoryStore: any, 
+    client: any,
+    RedisStoreClass: any,
+    memoryStore: any,
     prefix: string, 
     getStatus: () => boolean, 
     setStatus: (status: boolean) => void
   ) {
-    this.redisStore = redisStore;
+    this.client = client;
+    this.RedisStoreClass = RedisStoreClass;
     this.memoryStore = memoryStore;
     this.prefix = prefix;
     this.getRedisStatus = getStatus;
@@ -115,6 +125,33 @@ export class ResilientRedisStore {
     } catch (err) {
       // Safely catch caller callback errors
     }
+  }
+
+  // Safely and lazily construct the RedisStore only when client is active and writable
+  private getOrInitRedisStore(): any {
+    if (this.redisStore) {
+      return this.redisStore;
+    }
+
+    if (this.client && this.client.status === 'ready') {
+      try {
+        console.log(`[RateLimitStore:${this.prefix}] Client is active. Initializing RedisStore dynamically...`);
+        this.redisStore = new this.RedisStoreClass({
+          sendCommand: (command: string, ...args: string[]) => {
+            return withTimeout(this.client.call(command, ...args), 1000, `Command execution timed out on Redis`);
+          },
+          prefix: this.prefix
+        });
+
+        if (this.redisStore && typeof this.redisStore.init === 'function') {
+          this.redisStore.init(this.lastOptions || {});
+        }
+      } catch (err: any) {
+        console.error(`[RateLimitStore:${this.prefix}] Failed to dynamically instantiate RedisStore:`, err?.message || err);
+        this.redisStore = null;
+      }
+    }
+    return this.redisStore;
   }
 
   private handleStoreError(method: string, error: any) {
@@ -172,9 +209,11 @@ export class ResilientRedisStore {
   }
 
   init(options: any) {
-    if (this.redisStore && typeof this.redisStore.init === 'function') {
+    this.lastOptions = options;
+    const store = this.getOrInitRedisStore();
+    if (store && typeof store.init === 'function') {
       try {
-        this.redisStore.init(options);
+        store.init(options);
       } catch (err) {
         this.handleStoreError('init', err);
       }
@@ -186,12 +225,15 @@ export class ResilientRedisStore {
 
   async increment(key: string) {
     if (this.shouldAttemptRedis()) {
-      try {
-        const result = await this.redisStore.increment(key);
-        this.recordSuccess();
-        return result;
-      } catch (err) {
-        this.handleStoreError('increment', err);
+      const store = this.getOrInitRedisStore();
+      if (store) {
+        try {
+          const result = await store.increment(key);
+          this.recordSuccess();
+          return result;
+        } catch (err) {
+          this.handleStoreError('increment', err);
+        }
       }
     }
     return this.memoryStore.increment(key);
@@ -199,12 +241,15 @@ export class ResilientRedisStore {
 
   async decrement(key: string) {
     if (this.shouldAttemptRedis()) {
-      try {
-        const result = await this.redisStore.decrement(key);
-        this.recordSuccess();
-        return result;
-      } catch (err) {
-        this.handleStoreError('decrement', err);
+      const store = this.getOrInitRedisStore();
+      if (store) {
+        try {
+          const result = await store.decrement(key);
+          this.recordSuccess();
+          return result;
+        } catch (err) {
+          this.handleStoreError('decrement', err);
+        }
       }
     }
     return this.memoryStore.decrement(key);
@@ -212,12 +257,15 @@ export class ResilientRedisStore {
 
   async resetKey(key: string) {
     if (this.shouldAttemptRedis()) {
-      try {
-        const result = await this.redisStore.resetKey(key);
-        this.recordSuccess();
-        return result;
-      } catch (err) {
-        this.handleStoreError('resetKey', err);
+      const store = this.getOrInitRedisStore();
+      if (store) {
+        try {
+          const result = await store.resetKey(key);
+          this.recordSuccess();
+          return result;
+        } catch (err) {
+          this.handleStoreError('resetKey', err);
+        }
       }
     }
     return this.memoryStore.resetKey(key);
@@ -249,8 +297,8 @@ export const createSafeRateLimiter = (prefix: string, options: any) => {
     // Status flag tracking if Redis client connection is established
     let isRedisReady = false;
 
+    // TEMPORARILY REMOVED enableOfflineQueue: false during lazy transition stabilization
     const client = new Redis(process.env.REDIS_URL, {
-      enableOfflineQueue: false, // Prevents command queue bloating in memory during downtime
       maxRetriesPerRequest: 3, // Fail fast on commands when offline
       lazyConnect: true, // Non-blocking boot structure
       connectTimeout: 3000, // Terminate connection attempts after 3 seconds
@@ -306,18 +354,11 @@ export const createSafeRateLimiter = (prefix: string, options: any) => {
       globalRedisHealthy = false;
     });
 
-    const redisStoreInstance = new RedisStore({
-      // Explicit command forwarding signature with a tight 1000ms query timeout
-      sendCommand: (command: string, ...args: string[]) => {
-        return withTimeout(client.call(command, ...args), 1000, `Command execution timed out on Redis`);
-      },
-      prefix,
-    });
-
     const memoryStoreInstance = new MemoryStore();
     
     const resilientStore = new ResilientRedisStore(
-      redisStoreInstance, 
+      client,
+      RedisStore,
       memoryStoreInstance, 
       prefix,
       () => isRedisReady,
