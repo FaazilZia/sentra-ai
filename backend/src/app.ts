@@ -28,7 +28,7 @@ import demoRoutes from './routes/demo.routes';
 import prisma from './config/db';
 import { redisHealthCheck } from './config/redis';
 
-import { apiRateLimiter } from './config/rateLimit';
+import { apiRateLimiter, getRateLimitRedisStatus } from './config/rateLimit';
 import { securityObservability } from './middleware/security.middleware';
 
 import * as Sentry from '@sentry/node';
@@ -80,6 +80,7 @@ app.get('/api/health', async (req, res) => {
     version: 'v1.5',
     database: dbStatus,
     redis: redisStatus,
+    rateLimitingRedis: getRateLimitRedisStatus(),
     timestamp: new Date().toISOString()
   });
 });
