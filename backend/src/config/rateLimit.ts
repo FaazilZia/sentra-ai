@@ -24,17 +24,42 @@ const Redis = (IORedis.default || IORedis) as any;
 let globalRedisHealthy = false;
 let globalRedisMode = 'Disabled';
 
-export const getRateLimitRedisStatus = (): string => {
-  if (!process.env.REDIS_URL) return 'disabled (local memory)';
-  return globalRedisHealthy ? 'connected (distributed)' : 'degraded (local memory fallback)';
+// Falling metrics counters for production-safe observability
+export const rateLimiterMetrics = {
+  redisFailures: 0,
+  fallbackActivations: 0,
+  recoveryCount: 0,
+  timeoutCount: 0,
 };
 
-// Protects Redis queries from hanging indefinitely by enforcing a strict execution timeout
+export const getRateLimitRedisStatus = (): string => {
+  if (!process.env.REDIS_URL) return 'disabled';
+  return globalRedisHealthy ? 'connected' : 'degraded';
+};
+
+/**
+ * Enforces a strict execution timeout on Redis commands.
+ * CRITICAL SAFETY MECHANISM:
+ * Proactively registers a catch handler on the original command promise.
+ * This guarantees that even if a Redis command fails or rejects AFTER the timeout
+ * race has already fired, it will NEVER cause an 'Unhandled Promise Rejection' process crash.
+ */
 export const withTimeout = <T>(promise: Promise<T>, ms: number, errorMessage = 'Redis execution timeout exceeded'): Promise<T> => {
   let timeoutId: NodeJS.Timeout;
+  
   const timeoutPromise = new Promise<never>((_, reject) => {
-    timeoutId = setTimeout(() => reject(new Error(errorMessage)), ms);
+    timeoutId = setTimeout(() => {
+      rateLimiterMetrics.timeoutCount++;
+      reject(new Error(errorMessage));
+    }, ms);
   });
+
+  // Shield against unhandled promise rejections if the slower promise rejects post-timeout
+  promise.catch((err) => {
+    // Silently capture post-timeout failures to preserve application stability
+    console.debug(`[RateLimit:TimeoutGuard] Redis call rejected post-timeout:`, err?.message || err);
+  });
+
   return Promise.race([
     promise.then((res) => {
       clearTimeout(timeoutId);
@@ -60,7 +85,7 @@ export class ResilientRedisStore {
   private getRedisStatus: () => boolean;
   private setRedisStatus: (status: boolean) => void;
 
-  // Circuit Breaker State Configuration
+  // Lightweight Circuit Breaker State Configuration
   private circuitState: 'CLOSED' | 'OPEN' | 'HALF_OPEN' = 'CLOSED';
   private consecutiveFailures = 0;
   private lastFailureTime = 0;
@@ -79,25 +104,36 @@ export class ResilientRedisStore {
     this.prefix = prefix;
     this.getRedisStatus = getStatus;
     this.setRedisStatus = setStatus;
+    globalRedisHealthy = getStatus();
+  }
+
+  // Helper to ensure concurrent state changes remain fully synchronized
+  private setStatusState(healthy: boolean) {
+    globalRedisHealthy = healthy;
+    try {
+      this.setRedisStatus(healthy);
+    } catch (err) {
+      // Safely catch caller callback errors
+    }
   }
 
   private handleStoreError(method: string, error: any) {
+    rateLimiterMetrics.redisFailures++;
     console.error(`[RateLimitStore:${this.prefix}] Redis store ${method} execution error:`, error?.message || error);
     
     this.consecutiveFailures++;
     this.lastFailureTime = Date.now();
 
+    // Settle circuit state changes synchronously to prevent middleware concurrent race anomalies
     if (this.consecutiveFailures >= this.FAILURE_THRESHOLD) {
       if (this.circuitState !== 'OPEN') {
         console.warn(`[RateLimitStore:${this.prefix}] Circuit broken! Tripping to OPEN state. Cooldown backoff initiated for ${this.COOLDOWN_MS}ms.`);
         this.circuitState = 'OPEN';
-        this.setRedisStatus(false);
-        globalRedisHealthy = false;
+        rateLimiterMetrics.fallbackActivations++;
+        this.setStatusState(false);
       }
     } else {
-      // Force temporary failover to protect incoming requests immediately
-      this.setRedisStatus(false);
-      globalRedisHealthy = false;
+      this.setStatusState(false);
     }
   }
 
@@ -130,8 +166,8 @@ export class ResilientRedisStore {
       console.log(`[RateLimitStore:${this.prefix}] Success observed! Closing circuit. Distributed rate limiting fully restored.`);
       this.circuitState = 'CLOSED';
       this.consecutiveFailures = 0;
-      this.setRedisStatus(true);
-      globalRedisHealthy = true;
+      this.setStatusState(true);
+      rateLimiterMetrics.recoveryCount++;
     }
   }
 
