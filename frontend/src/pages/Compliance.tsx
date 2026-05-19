@@ -13,11 +13,62 @@ import { cn } from '@/lib/utils';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { useStore } from '@/store/useStore';
 
-const frameworkData: any[] = [];
+const frameworkData: any[] = [
+  {
+    name: 'GDPR Compliance',
+    status: 'Healthy',
+    lastAudit: '2026-05-18',
+    controls: '18 / 20',
+    progress: 90
+  },
+  {
+    name: 'HIPAA Security',
+    status: 'Warning',
+    lastAudit: '2026-05-15',
+    controls: '12 / 15',
+    progress: 80
+  },
+  {
+    name: 'DPDP Act (India)',
+    status: 'Healthy',
+    lastAudit: '2026-05-19',
+    controls: '8 / 10',
+    progress: 80
+  }
+];
 
-const auditLogs: any[] = [];
+const auditLogs: any[] = [
+  {
+    id: '1',
+    event: 'Access Policy Modification',
+    user: 'admin@sentra.ai',
+    role: 'ADMIN',
+    time: '10 mins ago',
+    status: 'Approved'
+  },
+  {
+    id: '2',
+    event: 'Credential Rotation Audit',
+    user: 'sdk@sentra-production.com',
+    role: 'SERVICE_AGENT',
+    time: '1 hour ago',
+    status: 'Completed'
+  },
+  {
+    id: '3',
+    event: 'Data Export Request',
+    user: 'auditor@sentra.ai',
+    role: 'AUDITOR',
+    time: '2 hours ago',
+    status: 'Flagged'
+  }
+];
 
-const violationData: any[] = [];
+const violationData: any[] = [
+  { name: 'GDPR', value: 4, color: '#EF4444' },
+  { name: 'HIPAA', value: 2, color: '#F59E0B' },
+  { name: 'DPDP', value: 1, color: '#3B82F6' }
+];
 
 export default function Compliance() {
   const { addToast, openModal } = useStore();
