@@ -1,5 +1,7 @@
 import { Queue, Worker } from 'bullmq';
-import IORedis from 'ioredis';
+import type IORedisClass from 'ioredis';
+import * as IORedisModule from 'ioredis';
+const IORedis = (IORedisModule.default || IORedisModule) as any;
 import { S3Client, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3';
 import { google } from 'googleapis';
 import { Client as PgClient } from 'pg';
@@ -12,15 +14,17 @@ import { buildRedisOptions, getRedisUrl } from '../config/redis';
 
 const REDIS_URL = getRedisUrl();
 
-let connection: IORedis | undefined;
+let connection: IORedisClass | undefined;
 if (REDIS_URL) {
   connection = new IORedis(REDIS_URL, buildRedisOptions({
     maxRetriesPerRequest: null,
     enableOfflineQueue: true,
   }));
-  connection.on('error', (err) => {
-    logger.error('Redis Connection Error:', err);
-  });
+  if (connection) {
+    connection.on('error', (err) => {
+      logger.error('Redis Connection Error:', err);
+    });
+  }
 }
 
 export const activityQueue = connection ? new Queue('activity-logs', { connection }) : null;

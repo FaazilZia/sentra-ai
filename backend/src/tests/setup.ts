@@ -35,3 +35,12 @@ jest.mock('../services/semanticRiskEngine', () => ({
     confidence: 0.95,
   }),
 }));
+
+jest.mock('../services/cache.service', () => ({
+  cacheService: {
+    getOrSet: jest.fn().mockImplementation((key, fetchFn) => fetchFn()),
+    invalidate: jest.fn().mockResolvedValue(undefined),
+    invalidatePattern: jest.fn().mockResolvedValue(undefined),
+    ping: jest.fn().mockResolvedValue(true),
+  },
+}));

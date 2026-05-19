@@ -1,5 +1,8 @@
 import { Redis, RedisOptions } from 'ioredis';
+import * as IORedis from 'ioredis';
 import logger from '../utils/logger';
+
+const RedisConstructor = (IORedis.default || IORedis) as any;
 
 const REDIS_URL = (
   process.env.REDIS_URL?.trim() ||
@@ -60,7 +63,7 @@ export function buildRedisOptions(overrides: Partial<RedisOptions> = {}): RedisO
 function createClient(name: string, overrides: Partial<RedisOptions> = {}): Redis | null {
   if (!REDIS_URL) return null;
 
-  const client = new Redis(REDIS_URL, buildRedisOptions(overrides));
+  const client = new RedisConstructor(REDIS_URL, buildRedisOptions(overrides)) as Redis;
 
   client.on('error', (err) => {
     logger.warn(`[Redis:${name}] Connection error:`, err.message);

@@ -29,7 +29,7 @@ const createSafeRateLimiter = (prefix: string, options: any) => {
     return rateLimit({
       ...safeOptions,
       store: new RedisStore({
-        sendCommand: (...args: any[]) => client.call(args[0], ...args.slice(1)),
+        sendCommand: (...args: any[]) => client.sendCommand(args),
         prefix,
       }),
     });
