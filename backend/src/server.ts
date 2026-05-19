@@ -65,7 +65,7 @@ import { alertService } from './services/alert.service';
 import { verifyAccessToken } from './utils/jwt';
 import { redisHealthCheck } from './config/redis';
 
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 10000;
 const httpServer = createServer(app);
 
 // Use the same CORS origins as Express — never wildcard in production
@@ -164,9 +164,11 @@ io.on('connection', (socket) => {
 export { io };
 
 const startServer = async () => {
+  console.log('[BOOT] About to bind server');
+
   // Start listening FIRST so Render's health check passes immediately
-  httpServer.listen(PORT, () => {
-    console.log(`[BOOT] Server listening on port ${PORT}`);
+  httpServer.listen(PORT, '0.0.0.0', () => {
+    console.log(`[BOOT] Server successfully listening on ${PORT}`);
     logger.info(`Server is running on port ${PORT}`);
   });
 

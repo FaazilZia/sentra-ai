@@ -7,7 +7,7 @@ services:
     rootDir: backend
     buildCommand: npm install && npm run build
     startCommand: npm run start:render
-    healthCheckPath: /api/v1/health
+    healthCheckPath: /ping
     envVars:
       - key: SENTRY_DSN
         sync: false

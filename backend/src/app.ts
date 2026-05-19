@@ -37,28 +37,20 @@ import crypto from 'crypto';
 
 const app: Application = express();
 
-// Initialize Sentry for observability
-if (process.env.SENTRY_DSN) {
-  Sentry.init({
-    dsn: process.env.SENTRY_DSN,
-    tracesSampleRate: 0.1, // Reduced in production for cost/performance
-    environment: process.env.NODE_ENV || 'production',
-    integrations: [
-      // Express integration is added automatically in newer versions or via integrations
-    ],
-  });
-}
+console.log('[BOOT] Express app created');
+console.log(`[BOOT] Timestamp: ${new Date().toISOString()}`);
 
-// Nonce Middleware for CSP
-app.use((req, res, next) => {
-  res.locals.nonce = crypto.randomBytes(16).toString('base64');
-  next();
+// Minimal diagnostics & health check routes (MUST be registered first to bypass all middlewares)
+app.get('/ping', (_, res) => res.status(200).send('ok'));
+
+app.get('/startup-check', (_, res) => {
+  return res.json({
+    status: 'alive',
+    port: process.env.PORT,
+    uptime: process.uptime()
+  });
 });
 
-// [BOOT] Startup Logs
-console.log('[BOOT] Express initialized');
-
-// Direct Health Checks (Above Rate Limiting for Render Stability)
 app.get('/api/health', (req, res) => {
   const start = performance.now();
   const dbStatus = isDbHealthy ? 'connected' : 'disconnected';
@@ -142,7 +134,25 @@ app.get('/api/v1/ready', (req, res) => {
   console.log(`[HEALTH] Responded to /api/v1/ready in ${duration} ms`);
 });
 
-console.log('[BOOT] Health routes mounted');
+console.log('[BOOT] Health endpoints active');
+
+// Initialize Sentry for observability
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    tracesSampleRate: 0.1, // Reduced in production for cost/performance
+    environment: process.env.NODE_ENV || 'production',
+    integrations: [
+      // Express integration is added automatically in newer versions or via integrations
+    ],
+  });
+}
+
+// Nonce Middleware for CSP
+app.use((req, res, next) => {
+  res.locals.nonce = crypto.randomBytes(16).toString('base64');
+  next();
+});
 
 // Strict Security Middleware with Nonce
 app.use(helmet({
@@ -249,5 +259,7 @@ app.get('/', (req, res) => {
 // Global Error Handler
 Sentry.setupExpressErrorHandler(app);
 app.use(errorHandler);
+
+console.log('[BOOT] Routes mounted');
 
 export default app;
