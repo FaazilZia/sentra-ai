@@ -655,15 +655,15 @@ model evidence_records {
 }
 
 model compliance_snapshots {
-  id             String        @id @default(uuid())
-  organizationId String        @map("organization_id")
-  featureId      String        @map("feature_id")
+  id             String         @id @default(uuid())
+  organizationId String?        @map("organization_id")
+  featureId      String         @map("feature_id")
   gdpr_score     Int
   dpdp_score     Int
   hipaa_score    Int
   risk_level     String
-  created_at     DateTime      @default(now())
-  organizations  organizations @relation(fields: [organizationId], references: [id])
+  created_at     DateTime       @default(now())
+  organizations  organizations? @relation(fields: [organizationId], references: [id])
 
   @@map("compliance_snapshots")
 }
@@ -815,15 +815,15 @@ model consent_records {
 }
 
 model alerts {
-  id             String        @id @default(uuid())
-  organizationId String        @map("organization_id")
+  id             String         @id @default(uuid())
+  organizationId String?        @map("organization_id")
   feature_id     String?
   type           String
   message        String
-  severity       String        @default("low")
-  is_read        Boolean       @default(false)
-  created_at     DateTime      @default(now())
-  organizations  organizations @relation(fields: [organizationId], references: [id])
+  severity       String         @default("low")
+  is_read        Boolean        @default(false)
+  created_at     DateTime       @default(now())
+  organizations  organizations? @relation(fields: [organizationId], references: [id])
 
   @@map("alerts")
 }
