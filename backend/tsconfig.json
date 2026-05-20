@@ -15,8 +15,8 @@
     "noImplicitAny": false,
     "forceConsistentCasingInFileNames": true,
     "incremental": true,
-    "types": ["node", "jest"]
+    "types": ["node"]
   },
-  "include": ["src/**/*.ts", "prisma/**/*.ts", "prisma.config.ts", "tests/**/*.ts"],
-  "exclude": ["node_modules", "dist", "src/tests"]
+  "include": ["src/**/*.ts", "prisma/**/*.ts", "prisma.config.ts"],
+  "exclude": ["node_modules", "dist", "src/tests", "tests"]
 }
