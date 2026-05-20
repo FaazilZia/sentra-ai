@@ -3,78 +3,292 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider = "postgresql"
 }
 
-model api_keys {
-  id             String        @id @default(uuid())
-  organizationId String        @map("organization_id")
-  name           String
-  key_prefix     String
-  key_hash       String
-  key_type       String
-  is_active      Boolean
-  last_used_at   DateTime?     @map("last_used_at")
-  created_at     DateTime      @default(now())
-  updated_at     DateTime      @updatedAt
-  organizations  organizations @relation(fields: [organizationId], references: [id])
-
-  @@map("api_keys")
-}
-
-model usage_stats {
-  id             String        @id @default(uuid())
-  organizationId String        @map("organization_id")
-  date           DateTime      @db.Date
-  requests_count Int           @default(0)
-  tokens_used    Int           @default(0)
-  estimated_cost Float         @default(0)
-  organizations  organizations @relation(fields: [organizationId], references: [id])
-
-  @@unique([organizationId, date])
-  @@map("usage_stats")
-}
+// ============================================================
+// CORE ORGANIZATION & TENANCY
+// ============================================================
 
 model organizations {
-  id              String       @id @default(uuid())
+  id              String   @id @default(uuid())
   name            String
-  apiKey          String?      @unique @map("api_key")
-  slug            String       @unique
+  apiKey          String?  @unique @map("api_key")
+  slug            String   @unique
   is_active       Boolean
-  created_at      DateTime     @default(now())
-  updated_at      DateTime     @updatedAt
-  alertEmail      String?      @map("alert_email")
-  slackWebhookUrl String?      @map("slack_webhook_url")
-  data_region     String       @default("US") @map("data_region")
-  ai_agents       ai_agents[]
-  api_keys        api_keys[]
-  audit_logs      audit_logs[]
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  alertEmail      String?  @map("alert_email")
+  slackWebhookUrl String?  @map("slack_webhook_url")
+  data_region     String   @default("US") @map("data_region")
 
-  connectors        connectors[]
-  drift_alerts      drift_alerts[]
-  incidents         incidents[]
-  interception_logs interception_logs[]
-  alert_rules       alert_rules[]
+  // Enterprise fields
+  plan           String  @default("free")
+  max_users      Int     @default(10)
+  max_workspaces Int     @default(3)
+  sso_enabled    Boolean @default(false)
+  sso_provider   String?
+  saml_metadata  Json?
+  custom_domain  String? @unique
 
-  logs            logs[]
-  policies        policies[]
-  policy_versions policy_versions[]
-  scan_jobs       scan_jobs[]
-  users           users[]
-  usage_stats     usage_stats[]
-  alerts                alerts[]
-  compliance_snapshots  compliance_snapshots[]
-  compliance_fix_tasks  compliance_fix_tasks[]
-  outcome_validations   outcome_validations[]
-  monitoring_status     monitoring_status[]
-  compliance_drift      compliance_drift[]
+  // Relations
+  ai_agents            ai_agents[]
+  api_keys             api_keys[]
+  audit_logs           audit_logs[]
+  connectors           connectors[]
+  drift_alerts         drift_alerts[]
+  incidents            incidents[]
+  interception_logs    interception_logs[]
+  alert_rules          alert_rules[]
+  logs                 logs[]
+  policies             policies[]
+  policy_versions      policy_versions[]
+  scan_jobs            scan_jobs[]
+  users                users[]
+  usage_stats          usage_stats[]
+  alerts               alerts[]
+  compliance_snapshots compliance_snapshots[]
+  compliance_fix_tasks compliance_fix_tasks[]
+  outcome_validations  outcome_validations[]
+  monitoring_status    monitoring_status[]
+  compliance_drift     compliance_drift[]
+  workspaces           workspaces[]
+  org_settings         org_settings?
+  org_invitations      org_invitations[]
+  evaluation_runs      evaluation_runs[]
+  benchmark_datasets   benchmark_datasets[]
+  feature_flag_overrides feature_flag_overrides[]
+  platform_events      platform_events[]
+  workflow_tasks       workflow_tasks[]
 
   @@map("companies")
 }
 
+model workspaces {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  name           String
+  slug           String
+  description    String?
+  is_default     Boolean  @default(false)
+  is_active      Boolean  @default(true)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  organization organizations          @relation(fields: [organizationId], references: [id])
+  memberships  workspace_memberships[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@map("workspaces")
+}
+
+model workspace_memberships {
+  id          String   @id @default(uuid())
+  workspaceId String   @map("workspace_id")
+  userId      String   @map("user_id")
+  role        String   @default("MEMBER")
+  created_at  DateTime @default(now())
+
+  workspace workspaces @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      users      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@map("workspace_memberships")
+}
+
+model org_invitations {
+  id             String    @id @default(uuid())
+  organizationId String    @map("organization_id")
+  email          String
+  role           String    @default("VIEWER")
+  token          String    @unique
+  expires_at     DateTime
+  accepted_at    DateTime?
+  invited_by     String    @map("invited_by")
+  created_at     DateTime  @default(now())
+
+  organization organizations @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@index([token])
+  @@map("org_invitations")
+}
+
+model org_settings {
+  id                      String   @id @default(uuid())
+  organizationId          String   @unique @map("organization_id")
+  mfa_required            Boolean  @default(false)
+  session_timeout_minutes Int      @default(1440)
+  allowed_ip_ranges       Json?
+  data_retention_days     Int      @default(90)
+  audit_export_enabled    Boolean  @default(true)
+  logo_url                String?
+  primary_color           String?
+  webhook_url             String?
+  webhook_events          Json?
+  updated_at              DateTime @updatedAt
+
+  organization organizations @relation(fields: [organizationId], references: [id])
+
+  @@map("org_settings")
+}
+
+// ============================================================
+// USERS
+// ============================================================
+
+model users {
+  id                    String   @id @default(uuid())
+  organizationId        String   @map("organization_id")
+  email                 String   @unique
+  full_name             String
+  employeeId            String?  @unique @map("employee_id")
+  password_hash         String?
+  role                  String   @default("VIEWER")
+  is_active             Boolean
+  created_at            DateTime @default(now())
+  updated_at            DateTime @updatedAt
+  email_verified        Boolean  @default(false)
+  email_verify_token    String?
+  email_verify_expires  DateTime?
+  mfa_enabled           Boolean  @default(false)
+  mfa_secret            String?
+  mfa_recovery_codes    String[]
+  password_reset_token  String?
+  password_reset_expires DateTime?
+  last_login_at         DateTime?
+  login_count           Int      @default(0)
+  google_id             String?  @unique
+  github_id             String?  @unique
+
+  consent_records           consent_records[]
+  incidents_resolved        incidents[]               @relation("IncidentResolver")
+  incidents_created         incidents[]               @relation("IncidentAuthor")
+  refresh_tokens            RefreshToken[]
+  requests                  requests[]
+  organizations             organizations             @relation(fields: [organizationId], references: [id])
+  user_roles                user_roles[]
+  login_sessions            login_sessions[]
+  workspace_memberships     workspace_memberships[]
+  workflow_approvals        workflow_approvals[]
+  workflow_tasks_assigned   workflow_tasks[]          @relation("WorkflowTaskAssignee")
+  workflow_tasks_created    workflow_tasks[]          @relation("WorkflowTaskCreator")
+  audit_logs_authored       audit_logs[]
+
+  @@map("users")
+}
+
+// ============================================================
+// ENTERPRISE RBAC
+// ============================================================
+
+model roles {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String
+  is_system   Boolean  @default(false)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  user_roles       user_roles[]
+  role_permissions role_permissions[]
+
+  @@map("roles")
+}
+
+model permissions {
+  id          String   @id @default(uuid())
+  resource    String
+  action      String
+  description String?
+  created_at  DateTime @default(now())
+
+  role_permissions role_permissions[]
+
+  @@unique([resource, action])
+  @@map("permissions")
+}
+
+model role_permissions {
+  id           String   @id @default(uuid())
+  roleId       String   @map("role_id")
+  permissionId String   @map("permission_id")
+  created_at   DateTime @default(now())
+
+  role       roles       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission permissions @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model user_roles {
+  id             String   @id @default(uuid())
+  user_id        String
+  role_id        String
+  organizationId String   @map("organization_id")
+  assigned_by    String?
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  role roles @relation(fields: [role_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, role_id, organizationId])
+  @@map("user_roles")
+}
+
+// ============================================================
+// SESSIONS & DEVICES
+// ============================================================
+
+model RefreshToken {
+  id         String   @id @default(uuid())
+  token      String   @unique
+  userId     String
+  expiresAt  DateTime
+  revoked    Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  device_id  String?
+  ip_address String?
+  user_agent String?
+  session_id String?
+
+  user users @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model login_sessions {
+  id            String    @id @default(uuid())
+  userId        String    @map("user_id")
+  session_token String    @unique
+  device_id     String?
+  device_name   String?
+  ip_address    String?
+  user_agent    String?
+  location      String?
+  is_active     Boolean   @default(true)
+  last_active   DateTime  @default(now())
+  created_at    DateTime  @default(now())
+  expires_at    DateTime
+  revoked_at    DateTime?
+
+  user users @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("login_sessions")
+}
+
+// ============================================================
+// POLICIES & GOVERNANCE (PRESERVED)
+// ============================================================
+
 model policies {
-  id                String            @id @default(uuid())
-  organizationId    String            @map("organization_id")
+  id                String          @id @default(uuid())
+  organizationId    String          @map("organization_id")
   name              String
   description       String
   explanation       String?
@@ -84,18 +298,18 @@ model policies {
   priority          Int
   effect            String
   status            String
-  rule              Json?             @map("rule")
+  rule              Json?           @map("rule")
   current_version   Int
   published_version Int?
   scope             Json
   conditions        Json
   obligations       Json
-  isTemplate        Boolean           @default(false)
+  isTemplate        Boolean         @default(false)
   category          String?
-  created_at        DateTime          @default(now())
-  updated_at        DateTime          @updatedAt
+  created_at        DateTime        @default(now())
+  updated_at        DateTime        @updatedAt
   incidents         incidents[]
-  organizations     organizations     @relation(fields: [organizationId], references: [id])
+  organizations     organizations   @relation(fields: [organizationId], references: [id])
   policy_versions   policy_versions[]
 
   @@unique([organizationId, name])
@@ -192,21 +406,22 @@ model policy_versions {
 }
 
 model ai_agents {
-  id                 String            @id @default(uuid())
-  organizationId     String            @map("organization_id")
+  id                 String          @id @default(uuid())
+  organizationId     String          @map("organization_id")
   name               String
   model              String
   permissions        Json
   status             String
   metadata           Json?
-  created_at         DateTime          @default(now())
-  updated_at         DateTime          @updatedAt
-  organizations      organizations     @relation(fields: [organizationId], references: [id])
+  created_at         DateTime        @default(now())
+  updated_at         DateTime        @updatedAt
+  organizations      organizations   @relation(fields: [organizationId], references: [id])
   dependencies       ai_dependencies[]
   baselineActions    String[]
   baselineDataScopes String[]
   baselineSampledAt  DateTime?
-  riskThreshold      Float             @default(0.3)
+  riskThreshold      Float           @default(0.3)
+  evaluation_runs    evaluation_runs[]
 
   @@map("ai_agents")
 }
@@ -283,53 +498,144 @@ model scan_jobs {
   @@map("scan_jobs")
 }
 
-model users {
-  id                 String            @id @default(uuid())
-  organizationId     String            @map("organization_id")
-  email              String            @unique
-  full_name          String
-  employeeId         String?           @unique @map("employee_id")
-  password_hash      String?
-  role               String            @default("AUDITOR")
-  is_active          Boolean
-  created_at         DateTime          @default(now())
-  updated_at         DateTime          @updatedAt
-  consent_records    consent_records[]
-  incidents_resolved incidents[]       @relation("IncidentResolver")
-  incidents_created  incidents[]       @relation("IncidentAuthor")
-  refresh_tokens     RefreshToken[]
-  requests           requests[]
-  organizations      organizations     @relation(fields: [organizationId], references: [id])
+model api_keys {
+  id             String        @id @default(uuid())
+  organizationId String        @map("organization_id")
+  name           String
+  key_prefix     String
+  key_hash       String
+  key_type       String
+  is_active      Boolean
+  last_used_at   DateTime?     @map("last_used_at")
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+  organizations  organizations @relation(fields: [organizationId], references: [id])
 
-  @@map("users")
+  @@map("api_keys")
 }
 
-model consent_records {
-  id             String   @id @default(uuid())
+model usage_stats {
+  id             String        @id @default(uuid())
+  organizationId String        @map("organization_id")
+  date           DateTime      @db.Date
+  requests_count Int           @default(0)
+  tokens_used    Int           @default(0)
+  estimated_cost Float         @default(0)
+  organizations  organizations @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, date])
+  @@map("usage_stats")
+}
+
+// ============================================================
+// IMMUTABLE AUDIT INFRASTRUCTURE
+// ============================================================
+
+model audit_logs {
+  id             String    @id @default(uuid())
+  organizationId String    @map("organization_id")
   user_id        String
   action         String
-  notice_version String
-  hashing_chain  String
-  metadata_json  Json
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
-  users          users    @relation(fields: [user_id], references: [id])
+  feature_id     String?
+  metadata       Json?
+  timestamp      DateTime  @default(now())
+  prev_hash      String?
+  entry_hash     String?
+  event_type     String    @default("USER_ACTION")
+  severity       String    @default("info")
+  resource_type  String?
+  resource_id    String?
+  ip_address     String?
+  user_agent     String?
+  session_id     String?
+  outcome        String    @default("success")
+
+  organizations organizations @relation(fields: [organizationId], references: [id])
+  user          users?        @relation(fields: [user_id], references: [id])
+
+  @@index([organizationId, timestamp])
+  @@index([organizationId, event_type])
+  @@index([organizationId, resource_type, resource_id])
+  @@map("audit_logs")
 }
 
+// ============================================================
+// COMPLIANCE & WORKFLOW ENGINE
+// ============================================================
+
 model compliance_fix_tasks {
-  id             String               @id @default(uuid())
-  organizationId String               @map("organization_id")
-  featureId      String               @map("feature_id")
+  id             String           @id @default(uuid())
+  organizationId String           @map("organization_id")
+  featureId      String           @map("feature_id")
   title          String
   description    String?
   priority       Int
-  status         String               @default("pending")
-  created_at     DateTime             @default(now())
-  updated_at     DateTime             @updatedAt
+  status         String           @default("pending")
+  created_at     DateTime         @default(now())
+  updated_at     DateTime         @updatedAt
   evidence       evidence_records[]
-  organizations  organizations        @relation(fields: [organizationId], references: [id])
+  organizations  organizations    @relation(fields: [organizationId], references: [id])
+  workflow_tasks workflow_tasks[]
 
   @@map("compliance_fix_tasks")
+}
+
+model workflow_tasks {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  fix_task_id    String?  @map("fix_task_id")
+  title          String
+  description    String?
+  state          String   @default("DRAFT")
+  priority       String   @default("medium")
+  due_date       DateTime?
+  created_by     String   @map("created_by")
+  assigned_to    String?  @map("assigned_to")
+  category       String   @default("COMPLIANCE")
+  framework      String?
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  organization organizations         @relation(fields: [organizationId], references: [id])
+  fix_task     compliance_fix_tasks? @relation(fields: [fix_task_id], references: [id])
+  creator      users                 @relation("WorkflowTaskCreator", fields: [created_by], references: [id])
+  assignee     users?                @relation("WorkflowTaskAssignee", fields: [assigned_to], references: [id])
+  approvals    workflow_approvals[]
+  state_history workflow_state_history[]
+
+  @@index([organizationId])
+  @@index([organizationId, state])
+  @@map("workflow_tasks")
+}
+
+model workflow_approvals {
+  id          String   @id @default(uuid())
+  task_id     String   @map("task_id")
+  reviewer_id String   @map("reviewer_id")
+  decision    String
+  comment     String?
+  created_at  DateTime @default(now())
+
+  task     workflow_tasks @relation(fields: [task_id], references: [id], onDelete: Cascade)
+  reviewer users          @relation(fields: [reviewer_id], references: [id])
+
+  @@map("workflow_approvals")
+}
+
+model workflow_state_history {
+  id         String   @id @default(uuid())
+  task_id    String   @map("task_id")
+  from_state String
+  to_state   String
+  actor_id   String
+  comment    String?
+  metadata   Json?
+  created_at DateTime @default(now())
+
+  task workflow_tasks @relation(fields: [task_id], references: [id], onDelete: Cascade)
+
+  @@index([task_id])
+  @@map("workflow_state_history")
 }
 
 model evidence_records {
@@ -362,17 +668,150 @@ model compliance_snapshots {
   @@map("compliance_snapshots")
 }
 
-model audit_logs {
-  id             String        @id @default(uuid())
-  organizationId String        @map("organization_id")
+model compliance_drift {
+  id               String        @id @default(uuid())
+  organizationId   String        @map("organization_id")
+  feature_id       String
+  drift_percentage Float
+  time_window      String        @default("6h")
+  detected_at      DateTime      @default(now())
+  severity         String        @default("low")
+  organizations    organizations @relation(fields: [organizationId], references: [id])
+
+  @@map("compliance_drift")
+}
+
+// ============================================================
+// AI EVALUATION FRAMEWORK
+// ============================================================
+
+model evaluation_runs {
+  id                 String    @id @default(uuid())
+  organizationId     String    @map("organization_id")
+  agent_id           String?   @map("agent_id")
+  dataset_id         String?   @map("dataset_id")
+  run_type           String
+  status             String    @default("pending")
+  governance_score   Float?
+  safety_score       Float?
+  hallucination_rate Float?
+  total_tests        Int       @default(0)
+  passed_tests       Int       @default(0)
+  failed_tests       Int       @default(0)
+  triggered_by       String?
+  started_at         DateTime?
+  completed_at       DateTime?
+  created_at         DateTime  @default(now())
+  metadata           Json?
+
+  organization organizations       @relation(fields: [organizationId], references: [id])
+  agent        ai_agents?          @relation(fields: [agent_id], references: [id])
+  dataset      benchmark_datasets? @relation(fields: [dataset_id], references: [id])
+  results      evaluation_results[]
+
+  @@index([organizationId])
+  @@map("evaluation_runs")
+}
+
+model evaluation_results {
+  id         String   @id @default(uuid())
+  run_id     String   @map("run_id")
+  test_name  String
+  test_type  String
+  input      String
+  expected   String?
+  actual     String?
+  passed     Boolean
+  score      Float    @default(0)
+  risk_level String   @default("low")
+  details    Json?
+  created_at DateTime @default(now())
+
+  run evaluation_runs @relation(fields: [run_id], references: [id], onDelete: Cascade)
+
+  @@index([run_id])
+  @@map("evaluation_results")
+}
+
+model benchmark_datasets {
+  id             String    @id @default(uuid())
+  organizationId String?   @map("organization_id")
+  name           String
+  description    String?
+  category       String
+  test_cases     Json
+  is_builtin     Boolean   @default(false)
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+
+  organization    organizations?  @relation(fields: [organizationId], references: [id])
+  evaluation_runs evaluation_runs[]
+
+  @@map("benchmark_datasets")
+}
+
+// ============================================================
+// ADMIN PLATFORM
+// ============================================================
+
+model feature_flags {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  name        String
+  description String?
+  enabled     Boolean  @default(false)
+  rollout_pct Int      @default(0)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  overrides feature_flag_overrides[]
+
+  @@map("feature_flags")
+}
+
+model feature_flag_overrides {
+  id             String   @id @default(uuid())
+  flag_id        String   @map("flag_id")
+  organizationId String   @map("organization_id")
+  enabled        Boolean
+  created_at     DateTime @default(now())
+
+  flag         feature_flags @relation(fields: [flag_id], references: [id], onDelete: Cascade)
+  organization organizations @relation(fields: [organizationId], references: [id])
+
+  @@unique([flag_id, organizationId])
+  @@map("feature_flag_overrides")
+}
+
+model platform_events {
+  id             String    @id @default(uuid())
+  organizationId String?   @map("organization_id")
+  actor_id       String?   @map("actor_id")
+  event_type     String
+  payload        Json?
+  created_at     DateTime  @default(now())
+
+  organization organizations? @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@index([event_type])
+  @@map("platform_events")
+}
+
+// ============================================================
+// EXISTING — PRESERVED UNCHANGED
+// ============================================================
+
+model consent_records {
+  id             String   @id @default(uuid())
   user_id        String
   action         String
-  feature_id     String?
-  metadata       Json?
-  timestamp      DateTime      @default(now())
-  organizations  organizations @relation(fields: [organizationId], references: [id])
-
-  @@map("audit_logs")
+  notice_version String
+  hashing_chain  String
+  metadata_json  Json
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+  users          users    @relation(fields: [user_id], references: [id])
 }
 
 model alerts {
@@ -390,19 +829,19 @@ model alerts {
 }
 
 model interception_logs {
-  id               String                @id @default(uuid())
+  id               String              @id @default(uuid())
   user_id          String
-  organizationId   String                @map("organization_id")
+  organizationId   String              @map("organization_id")
   input_text       String
   output_text      String?
   decision         String
-  confidence       String                @default("High")
-  override_status  String                @default("none")
+  confidence       String              @default("High")
+  override_status  String              @default("none")
   reason           String?
   policy_triggered String?
   metadata         Json?
-  timestamp        DateTime              @default(now())
-  organizations    organizations         @relation(fields: [organizationId], references: [id])
+  timestamp        DateTime            @default(now())
+  organizations    organizations       @relation(fields: [organizationId], references: [id])
   overrides        guardrail_overrides[]
 
   @@map("interception_logs")
@@ -428,34 +867,6 @@ model requests {
   response   String
   created_at DateTime @default(now())
   users      users    @relation(fields: [user_id], references: [id])
-}
-
-model roles {
-  id          String   @id @default(uuid())
-  name        String   @unique
-  description String
-  created_at  DateTime @default(now())
-  updated_at DateTime @updatedAt
-}
-
-model user_roles {
-  id         String   @id @default(uuid())
-  user_id    String
-  role_id    String
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-}
-
-model RefreshToken {
-  id        String   @id @default(uuid())
-  token     String   @unique
-  userId    String
-  expiresAt DateTime
-  revoked   Boolean  @default(false)
-  createdAt DateTime @default(now())
-  user      users    @relation(fields: [userId], references: [id])
-
-  @@map("refresh_tokens")
 }
 
 model outcome_validations {
@@ -486,17 +897,4 @@ model monitoring_status {
   organizations       organizations @relation(fields: [organizationId], references: [id])
 
   @@map("monitoring_status")
-}
-
-model compliance_drift {
-  id               String        @id @default(uuid())
-  organizationId   String        @map("organization_id")
-  feature_id       String
-  drift_percentage Float
-  time_window      String        @default("6h")
-  detected_at      DateTime      @default(now())
-  severity         String        @default("low")
-  organizations    organizations @relation(fields: [organizationId], references: [id])
-
-  @@map("compliance_drift")
 }

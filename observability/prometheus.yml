@@ -1,0 +1,20 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: sentra-production
+
+scrape_configs:
+  - job_name: "sentra-backend"
+    static_configs:
+      - targets: ["host.docker.internal:3000"]
+    metrics_path: /metrics
+    bearer_token: "${METRICS_SECRET_TOKEN}"
+
+  - job_name: "node-exporter"
+    static_configs:
+      - targets: ["node-exporter:9100"]
+
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]

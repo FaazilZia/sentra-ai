@@ -3,10 +3,12 @@
   "compilerOptions": {
     "types": ["node", "jest"],
     "isolatedModules": true,
+    "composite": true,
     "noEmit": true
   },
   "include": [
     "src/**/*.ts",
+    "src/__mocks__/**/*.ts",
     "prisma/**/*.ts",
     "prisma.config.ts",
     "tests/**/*.ts"

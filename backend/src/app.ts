@@ -25,8 +25,17 @@ import guardrailRoutes from './routes/guardrail.routes';
 import riskRoutes from './routes/risk.routes';
 import intelligenceRoutes from './routes/intelligence.routes';
 import demoRoutes from './routes/demo.routes';
+import tenantRoutes from './routes/tenant.routes';
+import rbacRoutes from './routes/rbac.routes';
+import auditRoutes from './routes/audit.routes';
+import workflowRoutes from './routes/workflow.routes';
+import evaluationRoutes from './routes/evaluation.routes';
+import superadminRoutes from './routes/superadmin.routes';
+import metricsRoutes from './routes/metrics.routes';
 import prisma, { isDbHealthy } from './config/db';
 import { redisHealthCheck } from './config/redis';
+import { prometheusMiddleware } from './config/telemetry';
+import { auditRequest } from './middleware/audit.middleware';
 
 import { apiRateLimiter, getRateLimitRedisStatus } from './config/rateLimit';
 import { securityObservability } from './middleware/security.middleware';
@@ -195,13 +204,21 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-API-Key']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-API-Key', 'X-Workspace-Id', 'X-Idempotency-Key']
 }));
+
+// Prometheus HTTP instrumentation
+app.use(prometheusMiddleware);
+
+// Prometheus metrics endpoint (before auth)
+app.use('/metrics', metricsRoutes);
 
 app.use(express.json({ limit: '100kb' }));
 app.use(cookieParser());
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(contextMiddleware);
+// Automatic audit logging for all mutating requests
+app.use(auditRequest);
 
 // Global API Rate Limiter
 app.use('/api', apiRateLimiter);
@@ -225,6 +242,14 @@ v1Router.use('/compliance', complianceRoutes);
 v1Router.use('/guardrails', guardrailRoutes);
 v1Router.use('/risk', riskRoutes);
 v1Router.use('/intelligence', intelligenceRoutes);
+
+// ── Enterprise SaaS Routes ────────────────────
+v1Router.use('/tenant', tenantRoutes);
+v1Router.use('/rbac', rbacRoutes);
+v1Router.use('/audit', auditRoutes);
+v1Router.use('/workflows', workflowRoutes);
+v1Router.use('/evaluation', evaluationRoutes);
+v1Router.use('/superadmin', superadminRoutes);
 
 // Conditionally load demo routes (Strictly non-production)
 if (process.env.NODE_ENV !== 'production' && process.env.VITE_DEMO_MODE !== 'false') {
@@ -251,8 +276,8 @@ app.use('/api/v1', v1Router);
 app.get('/', (req, res) => {
   res.status(200).json({ 
     success: true, 
-    message: 'Sentra AI Node Backend',
-    version: '1.0.0'
+    message: 'Sentra AI Enterprise API',
+    version: '2.0.0'
   });
 });
 

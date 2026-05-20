@@ -1,0 +1,11 @@
+apiVersion: v2
+name: sentra
+description: Sentra AI Enterprise SaaS Platform
+type: application
+version: 2.0.0
+appVersion: "2.0.0"
+keywords:
+  - ai-governance
+  - saas
+  - compliance
+home: https://sentra.ai

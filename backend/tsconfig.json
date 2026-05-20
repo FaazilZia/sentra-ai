@@ -14,9 +14,8 @@
     "declaration": true,
     "noImplicitAny": false,
     "forceConsistentCasingInFileNames": true,
-    "incremental": true,
     "types": ["node"]
   },
   "include": ["src/**/*.ts", "prisma/**/*.ts", "prisma.config.ts"],
-  "exclude": ["node_modules", "dist", "src/tests", "src/__mocks__", "tests"]
+  "exclude": ["node_modules", "dist", "src/tests", "src/__mocks__", "tests/**/*.test.ts", "tests/**/*.spec.ts"]
 }
