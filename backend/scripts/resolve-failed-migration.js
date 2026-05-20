@@ -42,14 +42,7 @@ async function main() {
       
       const tablesExist = companiesCheck.rows[0].exists;
       
-      if (!tablesExist) {
-        console.log("[SELF-HEAL] Core tables (companies) do not exist. Deleting history for '0_init_production' and '0_rls_policies' so Prisma can create them...");
-        const resetResult = await client.query(`
-          DELETE FROM _prisma_migrations 
-          WHERE migration_name IN ('0_init_production', '0_rls_policies');
-        `);
-        console.log(`[SELF-HEAL] Purged ${resetResult.rowCount} stale migration records from empty database.`);
-      } else {
+      if (tablesExist) {
         console.log("[SELF-HEAL] Database tables already exist. Checking if RLS migration is in a failed state...");
         const checkFailed = await client.query(`
           SELECT finished_at FROM _prisma_migrations 
@@ -69,6 +62,13 @@ async function main() {
         } else {
           console.log("[SELF-HEAL] No failed '0_rls_policies' migration records found.");
         }
+      } else {
+        console.log("[SELF-HEAL] Core tables (companies) do not exist. Deleting history for '0_init_production' and '0_rls_policies' so Prisma can create them...");
+        const resetResult = await client.query(`
+          DELETE FROM _prisma_migrations 
+          WHERE migration_name IN ('0_init_production', '0_rls_policies');
+        `);
+        console.log(`[SELF-HEAL] Purged ${resetResult.rowCount} stale migration records from empty database.`);
       }
     } else {
       console.log("[SELF-HEAL] '_prisma_migrations' table does not exist yet (fresh database).");
@@ -79,7 +79,9 @@ async function main() {
   } finally {
     try {
       await client.end();
-    } catch (e) {}
+    } catch (error) {
+      console.error('[SELF-HEAL WARNING] Error closing client connection:', error.message);
+    }
   }
 }
 

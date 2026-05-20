@@ -1,3 +1,5 @@
+import logger from '../utils/logger';
+
 export const SENSITIVE_PATTERNS = {
   CREDIT_CARD: /\b(?:\d[ -]*?){13,16}\b/,
   EMAIL: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/,
@@ -101,7 +103,9 @@ export const evaluateRisk = (action: string, metadata: any = {}): RiskEvaluation
           triggers.push('Evasion attempt detected: Base64 payload decoded');
         }
       }
-    } catch (e) {}
+    } catch (error) {
+      logger.error('Failed to parse potential base64 payload', { error });
+    }
   }
 
   // 3. Multi-Signal Detection (Intent + Pattern)

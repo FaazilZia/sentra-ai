@@ -37,10 +37,20 @@ export const updateAlertSettings = async (req: any, res: Response, next: NextFun
     const { alertEmail, slackWebhookUrl } = req.body;
 
     // Basic validation
-    if (alertEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(alertEmail)) {
+    const isValidEmail = (email: string): boolean => {
+      if (!email || email.length > 254) return false;
+      const parts = email.split('@');
+      if (parts.length !== 2) return false;
+      return parts[0].length > 0 && parts[1].includes('.');
+    };
+
+    const isValidSlackWebhook = (url: string): boolean =>
+      url.startsWith('https://hooks.slack.com/');
+
+    if (alertEmail && !isValidEmail(alertEmail)) {
       return res.status(400).json({ success: false, message: 'Invalid email format' });
     }
-    if (slackWebhookUrl && !slackWebhookUrl.startsWith('https://hooks.slack.com/')) {
+    if (slackWebhookUrl && !isValidSlackWebhook(slackWebhookUrl)) {
       return res.status(400).json({ success: false, message: 'Invalid Slack webhook URL' });
     }
 

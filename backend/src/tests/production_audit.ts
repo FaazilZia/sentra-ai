@@ -45,8 +45,8 @@ async function runLoadTest(rps: number, durationSeconds: number) {
           const data = await res.json() as any;
           if (data.data?.status === 'blocked') blockedRequests++;
         }
-      } catch (err) {
-        // Error logging for system instability
+      } catch (err: any) {
+        console.error('Request failed during load test:', { error: err.message });
       }
     }, interval);
   });
