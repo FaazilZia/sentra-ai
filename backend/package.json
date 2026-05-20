@@ -10,7 +10,7 @@
     "start:render": "node scripts/resolve-failed-migration.js && npx prisma migrate deploy && node dist/src/server.js",
     "seed": "ts-node prisma/seed.ts",
     "postinstall": "prisma generate",
-    "test:unit": "jest --testPathPattern=\"(api|auth|sdk|rate-limiting|drift-detection|compliance-export|agent-interception)\"",
+    "test:unit": "jest --testPathPatterns=\"(api|auth|sdk|rate-limiting|drift-detection|compliance-export|agent-interception)\"",
     "test:e2e": "playwright test",
     "test:load": "artillery run tests/load/artillery.config.yml",
     "test:all": "npm run test:unit && npm run test:e2e",

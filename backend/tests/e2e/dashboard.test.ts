@@ -31,7 +31,7 @@ test.describe('Dashboard E2E', () => {
     await page.click('button[type="submit"]');
 
     // Assert: dashboard loads
-    await expect(page).toHaveURL(/.*dashboard.*/, { timeout: 10000 });
+    await expect(page).toHaveURL(/.*(?:dashboard|app).*/, { timeout: 10000 });
     
     // Assert: no console errors
     // Often there are some non-critical errors (like hydration or network), so we log them but maybe not fail strictly
@@ -46,10 +46,10 @@ test.describe('Dashboard E2E', () => {
     await page.fill('input[type="email"], input[name="email"]', testEmail);
     await page.fill('input[type="password"], input[name="password"]', testPassword);
     await page.click('button[type="submit"]');
-    await expect(page).toHaveURL(/.*dashboard.*/);
+    await expect(page).toHaveURL(/.*(?:dashboard|app).*/);
 
     // Navigate to /agents
-    await page.click('a[href="/dashboard/agents"], a:has-text("Agents")');
+    await page.click('a[href="/.*(?:dashboard|app).*/agents"], a:has-text("Agents")');
     await expect(page).toHaveURL(/.*agents/);
 
     // Assert: agent list renders
@@ -61,9 +61,9 @@ test.describe('Dashboard E2E', () => {
     await page.fill('input[type="email"], input[name="email"]', testEmail);
     await page.fill('input[type="password"], input[name="password"]', testPassword);
     await page.click('button[type="submit"]');
-    await expect(page).toHaveURL(/.*dashboard.*/);
+    await expect(page).toHaveURL(/.*(?:dashboard|app).*/);
 
-    await page.click('a[href="/dashboard/risk"], a:has-text("Risk")');
+    await page.click('a[href="/.*(?:dashboard|app).*/risk"], a:has-text("Risk")');
     await expect(page).toHaveURL(/.*risk/);
   });
 
@@ -72,9 +72,9 @@ test.describe('Dashboard E2E', () => {
     await page.fill('input[type="email"], input[name="email"]', testEmail);
     await page.fill('input[type="password"], input[name="password"]', testPassword);
     await page.click('button[type="submit"]');
-    await expect(page).toHaveURL(/.*dashboard.*/);
+    await expect(page).toHaveURL(/.*(?:dashboard|app).*/);
 
-    await page.click('a[href="/dashboard/observability"], a:has-text("Observability")');
+    await page.click('a[href="/.*(?:dashboard|app).*/observability"], a:has-text("Observability")');
     await expect(page).toHaveURL(/.*observability/);
   });
 
@@ -83,9 +83,9 @@ test.describe('Dashboard E2E', () => {
     await page.fill('input[type="email"], input[name="email"]', testEmail);
     await page.fill('input[type="password"], input[name="password"]', testPassword);
     await page.click('button[type="submit"]');
-    await expect(page).toHaveURL(/.*dashboard.*/);
+    await expect(page).toHaveURL(/.*(?:dashboard|app).*/);
 
-    await page.click('a[href="/dashboard/alerts"], a:has-text("Alerts")');
+    await page.click('a[href="/.*(?:dashboard|app).*/alerts"], a:has-text("Alerts")');
     await expect(page).toHaveURL(/.*alerts/);
   });
 
@@ -94,9 +94,9 @@ test.describe('Dashboard E2E', () => {
     await page.fill('input[type="email"], input[name="email"]', testEmail);
     await page.fill('input[type="password"], input[name="password"]', testPassword);
     await page.click('button[type="submit"]');
-    await expect(page).toHaveURL(/.*dashboard.*/);
+    await expect(page).toHaveURL(/.*(?:dashboard|app).*/);
 
-    await page.click('a[href="/dashboard/settings"], a:has-text("Settings")');
+    await page.click('a[href="/.*(?:dashboard|app).*/settings"], a:has-text("Settings")');
     await expect(page).toHaveURL(/.*settings/);
     
     // Assert: API key section present

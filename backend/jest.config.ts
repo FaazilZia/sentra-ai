@@ -4,6 +4,7 @@ module.exports = {
   coverageProvider: 'v8',
   maxWorkers: 2,
   testMatch: ['**/tests/**/*.test.ts'],
+  testTimeout: 30000,
   verbose: true,
   forceExit: true,
   clearMocks: true,

@@ -9,6 +9,7 @@ import { interceptAction } from '../middleware/interceptor';
 import { runFairly } from '../config/queue';
 import { trackUsage } from '../utils/usage';
 import * as Sentry from '@sentry/node';
+import { updateBaseline, detectDrift, persistDriftAlerts } from '../services/driftDetection.service';
 
 export const postCheckAction = async (req: any, res: Response, next: NextFunction) => {
   const { requestId, startTime } = req.context;
@@ -100,7 +101,24 @@ export const postCheckAction = async (req: any, res: Response, next: NextFunctio
     const latency = Date.now() - startTime;
     Sentry.setTag('latency', latency);
 
-    // 4. Push Real-time Update
+    // 4. Real Drift Detection (async — does not block response)
+    const riskNumeric =
+      decision.risk === 'high' ? 80 : decision.risk === 'medium' ? 50 : 20;
+    setImmediate(async () => {
+      try {
+        await updateBaseline(agent, organizationId, { metadata }, riskNumeric);
+        const driftChecks = await detectDrift(agent, organizationId, { action, metadata }, riskNumeric);
+        if (driftChecks.length > 0) {
+          await persistDriftAlerts(agent, organizationId, driftChecks);
+          io.to(`org:${organizationId}`).emit('drift:detected', driftChecks);
+          logger.info(`[DRIFT] ${driftChecks.length} drift alert(s) for agent ${agent}`);
+        }
+      } catch (err: any) {
+        logger.warn(`[DRIFT] Non-fatal drift detection error: ${err.message}`);
+      }
+    });
+
+    // 5. Push Real-time Update
     io.to(`company_${organizationId}`).emit('activity_log', {
       id: requestId,
       organizationId,

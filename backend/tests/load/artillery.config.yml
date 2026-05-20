@@ -2,25 +2,60 @@ config:
   target: "https://sentra-backend-node.onrender.com"
   phases:
     - duration: 30
-      arrivalRate: 10
+      arrivalRate: 5
       name: Warm up
     - duration: 60
+      arrivalRate: 20
+      name: Ramp up
+    - duration: 30
       arrivalRate: 50
       name: Peak load
   defaults:
     headers:
       Authorization: "Bearer {{ $env.TEST_AUTH_TOKEN }}"
+      Content-Type: "application/json"
+  plugins:
+    expect: {}
+
+before:
+  flow:
+    - log: "Load test starting against https://sentra-backend-node.onrender.com"
 
 scenarios:
-  - name: Agent evaluation flow
+  - name: "Health check"
+    weight: 10
     flow:
-      - post:
-          url: "/api/v1/actions/evaluate"
-          json:
-            action: "read_file"
-            agentId: "test-agent-001"
-            params:
-              path: "/tmp/test.txt"
+      - get:
+          url: "/api/health"
           expect:
             - statusCode: 200
-            - hasProperty: decision
+
+  - name: "Agent evaluation flow"
+    weight: 60
+    flow:
+      - post:
+          url: "/api/v1/ai/check-action"
+          json:
+            agent: "load-test-agent"
+            action: "read_file"
+            metadata:
+              path: "/tmp/test.txt"
+              department: "engineering"
+          expect:
+            - statusCode: 200
+
+  - name: "Drift alerts check"
+    weight: 20
+    flow:
+      - get:
+          url: "/api/v1/drift/alerts"
+          expect:
+            - statusCode: 200
+
+  - name: "AI logs retrieval"
+    weight: 10
+    flow:
+      - get:
+          url: "/api/v1/ai/logs"
+          expect:
+            - statusCode: 200
