@@ -13,8 +13,7 @@ describe('Auth Flow', () => {
   let orgId2: string;
 
   beforeAll(async () => {
-    // 3 seconds warm-up delay for Render free tier
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    // Server warm-up handled by globalSetup — no sleep needed here
   });
 
   afterAll(async () => {

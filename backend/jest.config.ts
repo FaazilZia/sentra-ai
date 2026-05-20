@@ -1,4 +1,5 @@
 module.exports = {
+  globalSetup: '<rootDir>/src/tests/globalSetup.ts',
   preset: 'ts-jest',
   testEnvironment: 'node',
   coverageProvider: 'v8',
@@ -9,7 +10,7 @@ module.exports = {
     '/dist/',
     'tests/e2e/dashboard.test.ts', // Playwright only — run via: npx playwright test
   ],
-  testTimeout: 30000,
+  testTimeout: 60000,
   verbose: true,
   forceExit: true,
   clearMocks: true,

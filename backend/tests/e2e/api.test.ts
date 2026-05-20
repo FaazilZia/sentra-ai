@@ -9,8 +9,6 @@ describe('Core API Routes', () => {
   let agentId: string;
 
   beforeAll(async () => {
-    // 3 seconds warm-up
-    await new Promise(resolve => setTimeout(resolve, 3000));
     
     await request(TEST_BASE_URL).post('/api/v1/auth/register').send({
       email: testEmail, password: 'TestPass123!', fullName: 'Test', organizationName: testOrg
