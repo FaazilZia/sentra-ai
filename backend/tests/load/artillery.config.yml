@@ -1,0 +1,26 @@
+config:
+  target: "https://sentra-backend-node.onrender.com"
+  phases:
+    - duration: 30
+      arrivalRate: 10
+      name: Warm up
+    - duration: 60
+      arrivalRate: 50
+      name: Peak load
+  defaults:
+    headers:
+      Authorization: "Bearer {{ $env.TEST_AUTH_TOKEN }}"
+
+scenarios:
+  - name: Agent evaluation flow
+    flow:
+      - post:
+          url: "/api/v1/actions/evaluate"
+          json:
+            action: "read_file"
+            agentId: "test-agent-001"
+            params:
+              path: "/tmp/test.txt"
+          expect:
+            - statusCode: 200
+            - hasProperty: decision
