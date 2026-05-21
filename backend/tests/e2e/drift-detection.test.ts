@@ -1,28 +1,48 @@
 import request from 'supertest';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
 
+function getCiAuthToken(): string {
+  try {
+    const tokenFilePath = path.join(os.tmpdir(), 'sentra_ci_token.json');
+    if (fs.existsSync(tokenFilePath)) {
+      const data = JSON.parse(fs.readFileSync(tokenFilePath, 'utf8'));
+      return data.CI_AUTH_TOKEN || '';
+    }
+  } catch (err) {
+    console.error('Failed to read sentra_ci_token.json:', err);
+  }
+  return process.env.CI_AUTH_TOKEN || '';
+}
+
+const AUTH_TOKEN = getCiAuthToken();
 const TEST_BASE_URL = process.env.TEST_BASE_URL || 'https://sentra-backend-node.onrender.com';
-const testOrg = `test-org-drift-${Date.now()}`;
-const testEmail = `test-drift-${Date.now()}@sentra-test.com`;
-const testPassword = 'TestPass123!';
 
 describe('Drift Detection', () => {
-  let authToken: string;
+  let authToken: string = AUTH_TOKEN;
 
   beforeAll(async () => {
     await new Promise(resolve => setTimeout(resolve, 3000));
 
-    await request(TEST_BASE_URL).post('/api/v1/auth/register').send({
-      email: testEmail,
-      password: testPassword,
-      fullName: 'Drift Tester',
-      organizationName: testOrg
-    });
+    // If no token is loaded, fallback to registering locally
+    if (!authToken) {
+      const testOrg = `test-org-drift-${Date.now()}`;
+      const testEmail = `test-drift-${Date.now()}@sentra-test.com`;
+      const testPassword = 'TestPass123!';
+      await request(TEST_BASE_URL).post('/api/v1/auth/register').send({
+        email: testEmail,
+        password: testPassword,
+        fullName: 'Drift Tester',
+        organizationName: testOrg
+      });
 
-    const loginRes = await request(TEST_BASE_URL).post('/api/v1/auth/login').send({
-      email: testEmail,
-      password: testPassword
-    });
-    authToken = loginRes.body.data?.accessToken;
+      const loginRes = await request(TEST_BASE_URL).post('/api/v1/auth/login').send({
+        email: testEmail,
+        password: testPassword
+      });
+      authToken = loginRes.body.data?.accessToken;
+    }
   });
 
   test('GET /api/v1/drift/alerts - returns alert list', async () => {

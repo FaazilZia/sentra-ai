@@ -1,13 +1,31 @@
 import request from 'supertest';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
 
+function getCiAuthToken(): string {
+  try {
+    const tokenFilePath = path.join(os.tmpdir(), 'sentra_ci_token.json');
+    if (fs.existsSync(tokenFilePath)) {
+      const data = JSON.parse(fs.readFileSync(tokenFilePath, 'utf8'));
+      return data.CI_AUTH_TOKEN || '';
+    }
+  } catch (err) {
+    console.error('Failed to read sentra_ci_token.json:', err);
+  }
+  return process.env.CI_AUTH_TOKEN || '';
+}
+
+const AUTH_TOKEN = getCiAuthToken();
 const TEST_BASE_URL = process.env.TEST_BASE_URL || 'https://sentra-backend-node.onrender.com';
-const testOrg = `test-org-${Date.now()}`;
-const testEmail = `test-${Date.now()}@sentra-test.com`;
-const testEmail2 = `test2-${Date.now()}@sentra-test.com`;
+
+const testOrg = `ci-org-${Date.now()}`;
+const testEmail = `ci-auth-${Date.now()}@sentra-test.com`;
+const testEmail2 = `ci-auth-2-${Date.now()}@sentra-test.com`;
 const testPassword = 'TestPass123!';
 
 describe('Auth Flow', () => {
-  let authToken: string;
+  let authToken: string = AUTH_TOKEN;
   let orgId: string;
   let authToken2: string;
   let orgId2: string;

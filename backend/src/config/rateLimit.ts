@@ -382,7 +382,7 @@ export const createSafeRateLimiter = (prefix: string, options: any) => {
 
 export const authRateLimiter = createSafeRateLimiter('rl:auth:', {
   windowMs: 15 * 60 * 1000,
-  max: process.env.NODE_ENV === 'production' ? 10 : 1000,
+  max: (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'test' || process.env.IS_E2E_TEST === 'true') ? 10 : 1000,
   message: { success: false, message: 'Too many login attempts, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,

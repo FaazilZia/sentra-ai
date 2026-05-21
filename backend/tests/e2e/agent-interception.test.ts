@@ -1,28 +1,47 @@
 import request from 'supertest';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
 
+function getCiAuthToken(): string {
+  try {
+    const tokenFilePath = path.join(os.tmpdir(), 'sentra_ci_token.json');
+    if (fs.existsSync(tokenFilePath)) {
+      const data = JSON.parse(fs.readFileSync(tokenFilePath, 'utf8'));
+      return data.CI_AUTH_TOKEN || '';
+    }
+  } catch (err) {
+    console.error('Failed to read sentra_ci_token.json:', err);
+  }
+  return process.env.CI_AUTH_TOKEN || '';
+}
+
+const AUTH_TOKEN = getCiAuthToken();
 const TEST_BASE_URL = process.env.TEST_BASE_URL || 'https://sentra-backend-node.onrender.com';
-const testOrg = `test-org-interception-${Date.now()}`;
-const testEmail = `test-interception-${Date.now()}@sentra-test.com`;
 
 describe('Agent Interception Engine', () => {
-  let token: string;
+  let token: string = AUTH_TOKEN;
   let agentId: string;
 
   beforeAll(async () => {
-    // Register and login
-    await request(TEST_BASE_URL).post('/api/v1/auth/register').send({
-      email: testEmail, password: 'TestPass123!', fullName: 'Test', organizationName: testOrg
-    });
-    const loginRes = await request(TEST_BASE_URL).post('/api/v1/auth/login').send({
-      email: testEmail, password: 'TestPass123!'
-    });
-    token = loginRes.body.data?.accessToken;
+    // If no token is loaded, fallback to registering locally
+    if (!token) {
+      const testOrg = `test-org-interception-${Date.now()}`;
+      const testEmail = `test-interception-${Date.now()}@sentra-test.com`;
+      await request(TEST_BASE_URL).post('/api/v1/auth/register').send({
+        email: testEmail, password: 'TestPass123!', fullName: 'Test', organizationName: testOrg
+      });
+      const loginRes = await request(TEST_BASE_URL).post('/api/v1/auth/login').send({
+        email: testEmail, password: 'TestPass123!'
+      });
+      token = loginRes.body.data?.accessToken;
+    }
 
     // Create an agent to use
     const agentRes = await request(TEST_BASE_URL).post('/api/v1/inventory/agents').set('Authorization', `Bearer ${token}`).send({
-      name: 'Test Interception Agent', description: 'Testing the engine'
+      name: 'Test Interception Agent', description: 'Testing the engine', permissions: ['read'], status: 'active'
     });
-    agentId = agentRes.body.data?.id || 'test-agent';
+    agentId = agentRes.body.data?.id || agentRes.body.id || 'test-agent';
     
     // Wait for systems to settle
     await new Promise(resolve => setTimeout(resolve, 3000));
