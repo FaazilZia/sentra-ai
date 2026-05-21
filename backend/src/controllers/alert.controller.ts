@@ -15,8 +15,8 @@ export const createAlertRule = async (req: any, res: Response, next: NextFunctio
     const rule = await prisma.alert_rules.create({
       data: {
         organizationId: organizationId,
-        threshold_count: parseInt(threshold_count),
-        time_window_minutes: parseInt(time_window_minutes),
+        threshold_count: Number.parseInt(threshold_count, 10),
+        time_window_minutes: Number.parseInt(time_window_minutes, 10),
         webhook_url
       }
     });

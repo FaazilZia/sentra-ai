@@ -37,8 +37,6 @@ spec:
           imagePullPolicy: IfNotPresent
           command: ["node", "dist/worker.js"]
           env:
-            - name: NODE_ENV
-              value: "production"
             - name: WORKER_MODE
               value: "true"
             - name: DATABASE_URL
@@ -58,6 +56,7 @@ spec:
             requests:
               cpu: "200m"
               memory: "256Mi"
+              ephemeral-storage: "64Mi"
             limits:
               cpu: "500m"
               memory: "512Mi"

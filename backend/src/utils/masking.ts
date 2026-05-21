@@ -18,7 +18,7 @@ export const anonymizeText = (text: string | null, options: MaskingOptions = {})
 
   // 1. Precise Email Masking: user@domain.com -> u***@domain.com
   const emailRegex = /\b([a-zA-Z0-9._%+-])[^@]+(@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\b/g;
-  result = result.replace(emailRegex, (match, p1, p2) => {
+  result = result.replaceAll(emailRegex, (match, p1, p2) => {
     return options.deterministic 
       ? `[EMAIL_${hashString(match, salt)}]` 
       : `${p1}***${p2}`;
@@ -26,19 +26,19 @@ export const anonymizeText = (text: string | null, options: MaskingOptions = {})
 
   // 2. Financial / Card Masking: 1234-5678-9012-3456 -> ****-****-****-3456
   const cardRegex = /\b(?:\d[ -]*?){13,16}\b/g;
-  result = result.replace(cardRegex, (match) => {
-    const clean = match.replace(/[- ]/g, '');
+  result = result.replaceAll(cardRegex, (match) => {
+    const clean = match.replaceAll(/[- ]/g, '');
     const last4 = clean.slice(-4);
     return `****-****-****-${last4}`;
   });
 
   // 3. Identification Masking (SSN/Passports)
   const idRegex = /\b\d{3}-\d{2}-\d{4}\b/g;
-  result = result.replace(idRegex, "[ID_REDACTED]");
+  result = result.replaceAll(idRegex, "[ID_REDACTED]");
 
   // 4. Phone Number Masking
   const phoneRegex = /\b(?:\+?\d{1,3}[- ]?)?\(?\d{3}\)?[- ]?\d{3}[- ]?\d{4}\b/g;
-  result = result.replace(phoneRegex, "[PHONE_REDACTED]");
+  result = result.replaceAll(phoneRegex, "[PHONE_REDACTED]");
 
   return result;
 };

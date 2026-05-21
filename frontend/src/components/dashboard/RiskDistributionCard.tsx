@@ -45,7 +45,7 @@ export default function RiskDistributionCard({ data = [], isLoading = false }: R
       {/* Legend Pills */}
       <div className="mt-8 flex flex-wrap gap-2.5 flex-1 content-start">
         {isLoading ? (
-          [...Array(5)].map((_, i) => (
+          [...new Array(5)].map((_, i) => (
              <div key={i} className="h-8 w-20 bg-[var(--bg-page)] animate-pulse rounded" />
           ))
         ) : data.length > 0 ? (

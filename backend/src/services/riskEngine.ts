@@ -80,11 +80,11 @@ export const evaluateRisk = (action: string, metadata: any = {}): RiskEvaluation
   
   // 1. Normalization Layer
   const normalized = combinedText.toLowerCase()
-    .replace(/\s+/g, ' ') // Normalize spaces
+    .replaceAll(/\s+/g, ' ') // Normalize spaces
     .trim();
 
   // Handle "s p a c e d" attacks
-  const deSpaced = normalized.replace(/\s/g, '');
+  const deSpaced = normalized.replaceAll(/\s/g, '');
   
   // Handle Leetspeak (Basic Mapping)
   const leetMap: Record<string, string> = { '4': 'a', '@': 'a', '3': 'e', '1': 'i', '!': 'i', '0': 'o', '5': 's', '$': 's', '7': 't' };

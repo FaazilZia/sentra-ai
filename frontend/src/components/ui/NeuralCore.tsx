@@ -90,7 +90,7 @@ const NeuralCore = () => {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-white blur-[4px] shadow-[0_0_100px_rgba(255,255,255,1)]" />
 
         {/* Floating abstract particles orbiting the core */}
-        {[...Array(6)].map((_, i) => (
+        {[...new Array(6)].map((_, i) => (
           <motion.div
             key={i}
             className="absolute rounded-full bg-pink-300 shadow-[0_0_10px_rgba(244,114,182,0.8)]"

@@ -96,7 +96,7 @@ export default function Settings() {
             
             <div className="space-y-6">
               <div>
-                <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Active API Key</label>
+                <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Active API Key</span>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2.5 font-mono text-[11px] text-[var(--text-primary)] overflow-hidden text-ellipsis">
                     {apiKey}
@@ -140,8 +140,9 @@ export default function Settings() {
               <form onSubmit={handleSaveEmail}>
                 <div className="flex flex-col gap-3">
                   <div>
-                    <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Alert Email</label>
+                    <label htmlFor="alert-email" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Alert Email</label>
                     <input 
+                      id="alert-email"
                       type="email" 
                       placeholder="alerts@company.com" 
                       value={email}
@@ -164,8 +165,9 @@ export default function Settings() {
               <form onSubmit={handleSaveWebhook}>
                 <div className="flex flex-col gap-3">
                   <div>
-                    <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Webhook URL</label>
+                    <label htmlFor="webhook-url" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Webhook URL</label>
                     <input 
+                      id="webhook-url"
                       type="url" 
                       placeholder="https://hooks.slack.com/services/..." 
                       value={webhookUrl}

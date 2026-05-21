@@ -1,6 +1,4 @@
 import { safeRandom } from '@/lib/safeRandom';
-'use client';
-
 import { useRef, useEffect, useCallback } from 'react';
 
 /* ─── Molecule shape templates (relative coords 0-100) ─── */

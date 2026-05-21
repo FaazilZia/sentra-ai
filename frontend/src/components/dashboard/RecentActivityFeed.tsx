@@ -27,7 +27,7 @@ export default function RecentActivityFeed({ data = [], isLoading = false }: Rec
         )}
 
         {isLoading ? (
-          [...Array(4)].map((_, i) => (
+          [...new Array(4)].map((_, i) => (
             <div key={i} className="flex gap-4 animate-pulse">
               <div className="h-9 w-9 rounded-full bg-[var(--bg-page)]" />
               <div className="flex-1 py-1 space-y-2">

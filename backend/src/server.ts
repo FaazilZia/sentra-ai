@@ -65,7 +65,7 @@ import { alertService } from './services/alert.service';
 import { verifyAccessToken } from './utils/jwt';
 import { redisHealthCheck } from './config/redis';
 
-const PORT = parseInt(process.env.PORT || '10000', 10);
+const PORT = Number.parseInt(process.env.PORT || '10000', 10);
 const httpServer = createServer(app);
 
 // Use the same CORS origins as Express — never wildcard in production

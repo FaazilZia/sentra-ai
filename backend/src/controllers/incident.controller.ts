@@ -4,6 +4,7 @@ import prisma from '../config/db';
 import { resolveOrganizationId } from '../utils/company';
 import { serializeIncident } from '../utils/incidentSerialize';
 import logger from '../utils/logger';
+import { parsePagination } from '../utils/pagination';
 
 const SCAN_PROGRESS_STEP = 20;
 const SCAN_TICK_MS = 500;
@@ -61,8 +62,7 @@ async function finalizeScanJob(organizationId: string, jobId: string, incidentsD
 
 export const getIncidents = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const limitParam = req.query['limit'];
-    const take = limitParam ? parseInt(String(limitParam), 10) : 50;
+    const { limit: take } = parsePagination(req.query, 50, 200);
     const statusParam = req.query['status'];
     const status = statusParam ? String(statusParam) : undefined;
 
@@ -215,7 +215,7 @@ export const logIncident = async (req: any, res: Response, next: NextFunction) =
         user_id: userId,
         agent_id: String(agent_id || 'unknown-agent'),
         action: String(action || 'detected'),
-        severity: parseInt(String(severity ?? 1), 10),
+        severity: Number.parseInt(String(severity ?? 1), 10),
         policy_id: policyUuid,
         details: String(details || 'No details provided'),
         prompt_excerpt: String(prompt_excerpt || ''),

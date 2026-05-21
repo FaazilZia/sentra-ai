@@ -4,6 +4,7 @@ import { EventTriggerService } from '../services/eventTrigger.service';
 import { alertService } from '../services/alert.service';
 import prisma from '../config/db';
 import logger from '../utils/logger';
+import { parsePagination } from '../utils/pagination';
 
 export const processAIRequest = async (req: any, res: Response, next: NextFunction) => {
   const { prompt, model = 'gpt-4o' } = req.body;
@@ -164,10 +165,11 @@ export const processDemoRequest = async (req: any, res: Response, next: NextFunc
 
 export const getGuardrailLogs = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const { page, limit, decision } = req.query;
+    const { decision } = req.query;
+    const { page, limit } = parsePagination(req.query, 20, 200);
     const logs = await GuardrailService.getInterceptionLogs(
-      page ? parseInt(page as string) : 1,
-      limit ? parseInt(limit as string) : 20,
+      page,
+      limit,
       { organizationId: req.user.organizationId, decision: decision as string }
     );
     res.status(200).json({ success: true, data: logs });
@@ -202,9 +204,9 @@ export const exportGuardrailLogs = async (req: any, res: Response, next: NextFun
         new Date(log.timestamp).toISOString(),
         log.decision,
         `"${log.policy_triggered || 'None'}"`,
-        `"${(log.reason || '').replace(/"/g, '""')}"`,
-        `"${log.input_text.replace(/"/g, '""').replace(/\n/g, ' ')}"`,
-        `"${(log.output_text || '').replace(/"/g, '""').replace(/\n/g, ' ')}"`
+        `"${(log.reason || '').replaceAll(/"/g, '""')}"`,
+        `"${log.input_text.replaceAll(/"/g, '""').replaceAll(/\n/g, ' ')}"`,
+        `"${(log.output_text || '').replaceAll(/"/g, '""').replaceAll(/\n/g, ' ')}"`
       ].join(','))
     ];
 

@@ -101,7 +101,7 @@ export const inviteUser = async (req: any, res: Response, next: NextFunction) =>
       if (process.env.SMTP_HOST) {
         const transporter = nodemailer.createTransport({
           host: process.env.SMTP_HOST,
-          port: parseInt(process.env.SMTP_PORT || '587'),
+          port: Number.parseInt(process.env.SMTP_PORT || '587', 10),
           secure: process.env.SMTP_PORT === '465',
           auth: {
             user: process.env.SMTP_USER,

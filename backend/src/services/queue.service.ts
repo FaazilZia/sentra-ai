@@ -215,7 +215,7 @@ export async function processConnectorScan(type: string, connectorId: string) {
       const auth = new (google.auth.JWT as any)(
         client_email,
         null,
-        (private_key as string || '').replace(/\\n/g, '\n'),
+        (private_key as string || '').replaceAll(/\\n/g, '\n'),
         [driveScope || 'https://www.googleapis.com/auth/drive.readonly']
       );
       const drive = google.drive({ version: 'v3', auth });

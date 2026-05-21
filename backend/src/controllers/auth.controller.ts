@@ -98,8 +98,8 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
     // Generate a URL-safe slug from the org name
     const baseSlug = derivedOrgName
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '');
+      .replaceAll(/[^a-z0-9]+/g, '-')
+      .replaceAll(/^-|-$/g, '');
 
     // Ensure slug uniqueness
     let slug = baseSlug;
@@ -271,8 +271,8 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
 
       const baseSlug = derivedOrgName
         .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '');
+        .replaceAll(/[^a-z0-9]+/g, '-')
+        .replaceAll(/^-|-$/g, '');
       let slug = baseSlug;
       let slugSuffix = 1;
       while (await prisma.organizations.findUnique({ where: { slug } })) {

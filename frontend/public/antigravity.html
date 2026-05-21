@@ -5,12 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sentra AI - Intelligent LLM Security</title>
     
-    <!-- Three.js & Matter.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha512-dLRZEogMPtHTHLMkFIaI/OkMdnFTMaLPas4SnqJOGOF4oOr5vO3Txf+F3EhL/sFzFLriOam3sJMesNhXkMjfQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js" integrity="sha512-0z5LbMIYtEOjQY1bcHsBNmhVkbiqKzmrBF2DP/JT72sVJLNoadKMurVlfKcr2BFBwvUFlkcNoVqFbXeMErG/Rg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" integrity="sha384-k/qokSqSuAFc21aLaSr4YUUl8vJ28+FvBPvlNGPRJX+b1N599zS1OFZBByDgkblh" crossorigin="anonymous">
     
     <style>
         :root {
@@ -894,7 +893,7 @@
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     const valEl = entry.target;
-                    const target = parseFloat(valEl.getAttribute('data-target'));
+                    const target = Number.parseFloat(valEl.getAttribute('data-target'));
                     const prefix = valEl.getAttribute('data-prefix') || '';
                     const suffix = valEl.getAttribute('data-suffix') || '';
                     let start = 0;

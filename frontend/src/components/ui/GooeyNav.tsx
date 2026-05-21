@@ -351,23 +351,20 @@ const GooeyNav: React.FC<GooeyNavProps> = ({
         `}
       </style>
       
-      <nav role="navigation" aria-label="Main Navigation">
+      <nav aria-label="Main Navigation">
         <ul
           ref={navRef}
-          role="menubar"
           className="flex gap-2 list-none p-1 m-0 relative z-[3]"
         >
           {items.map((item, index) => (
             <li
               key={item.label}
-              role="none"
               className={cn(
                 "rounded-full relative cursor-pointer transition-all duration-300 ease",
                 activeIndex === index ? "active pointer-events-none" : "hover:scale-[1.02]"
               )}
             >
               <a
-                role="menuitem"
                 tabIndex={0}
                 aria-current={activeIndex === index ? "page" : undefined}
                 onClick={e => { e.preventDefault(); handleClick(e, index); }}

@@ -28,6 +28,16 @@ describe('Agent Interception Engine', () => {
     });
     agentId = agentRes.body.data?.id || agentRes.body.id || 'test-agent';
     
+    // Warm up check-action endpoint to avoid cold-start latency spikes
+    await request(TEST_BASE_URL)
+      .post('/api/v1/ai/check-action')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        agent: agentId,
+        action: 'warm_up',
+        metadata: {}
+      }).catch(() => {});
+
     // Wait for systems to settle
     await new Promise(resolve => setTimeout(resolve, 3000));
   });

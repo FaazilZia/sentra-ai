@@ -1,6 +1,4 @@
 import { safeRandom } from '@/lib/safeRandom';
-'use client';
-
 import React, { useRef, useEffect } from 'react';
 
 interface FloatingLinesProps {

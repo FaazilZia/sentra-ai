@@ -123,8 +123,8 @@ export const FeatureFlagService = {
 function hashStringToInt(str: string): number {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    hash |= 0;
+    hash = (str.codePointAt(i) || 0) + ((hash << 5) - hash);
+    hash = Math.trunc(hash);
   }
   return Math.abs(hash);
 }

@@ -1,5 +1,6 @@
 import { Response, NextFunction } from 'express';
 import { WorkflowService, WorkflowState } from '../services/workflow.service';
+import { parsePagination } from '../utils/pagination';
 
 export const createTask = async (req: any, res: Response, next: NextFunction) => {
   try {
@@ -14,12 +15,13 @@ export const createTask = async (req: any, res: Response, next: NextFunction) =>
 
 export const listTasks = async (req: any, res: Response, next: NextFunction) => {
   try {
+    const { page, limit } = parsePagination(req.query, 20, 200);
     const result = await WorkflowService.listTasks(req.user.organizationId, {
       state: req.query.state as string,
       category: req.query.category as string,
       assignedTo: req.query.assignedTo as string,
-      page: req.query.page ? parseInt(req.query.page as string) : 1,
-      limit: req.query.limit ? parseInt(req.query.limit as string) : 20,
+      page,
+      limit,
     });
     res.json({ success: true, ...result });
   } catch (e) { next(e); }

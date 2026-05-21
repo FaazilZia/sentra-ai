@@ -33,7 +33,7 @@ export class IntelligenceController {
   static async getRiskTrend(req: Request, res: Response, next: NextFunction) {
     try {
       const organizationId = (req as any).user?.organizationId || req.query.organizationId as string;
-      const days = parseInt(req.query.days as string) || 7;
+      const days = Number.parseInt(req.query.days as string, 10) || 7;
 
       if (!organizationId) {
         return res.status(400).json({ error: 'Organization ID is required' });

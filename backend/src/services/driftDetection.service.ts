@@ -125,8 +125,8 @@ export async function updateBaseline(
     const updated: AgentBaseline = {
       agentId,
       orgId,
-      avgRequestsPerHour: parseFloat(newAvgReqPerHr.toFixed(4)),
-      avgRiskScore: parseFloat(newAvgRisk.toFixed(4)),
+      avgRequestsPerHour: Number.parseFloat(newAvgReqPerHr.toFixed(4)),
+      avgRiskScore: Number.parseFloat(newAvgRisk.toFixed(4)),
       commonResources: resources,
       activeHours,
       totalRequests: (existing.totalRequests ?? 0) + 1,

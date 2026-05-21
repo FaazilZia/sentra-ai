@@ -37,7 +37,7 @@ export class IntelligenceService {
       totalActions,
       blockedActions,
       highRiskActions,
-      blockRate: parseFloat(blockRate.toFixed(2)),
+      blockRate: Number.parseFloat(blockRate.toFixed(2)),
       safetyScore: Math.max(0, 100 - (blockRate * 2))
     };
   }

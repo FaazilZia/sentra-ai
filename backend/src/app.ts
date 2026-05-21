@@ -32,7 +32,7 @@ import workflowRoutes from './routes/workflow.routes';
 import evaluationRoutes from './routes/evaluation.routes';
 import superadminRoutes from './routes/superadmin.routes';
 import metricsRoutes from './routes/metrics.routes';
-import prisma, { isDbHealthy } from './config/db';
+import prisma, { dbHealth } from './config/db';
 import { redisHealthCheck } from './config/redis';
 import { prometheusMiddleware } from './config/telemetry';
 import { auditRequest } from './middleware/audit.middleware';
@@ -62,11 +62,11 @@ app.get('/startup-check', (_, res) => {
 
 app.get('/api/health', (req, res) => {
   const start = performance.now();
-  const dbStatus = isDbHealthy ? 'connected' : 'disconnected';
+  const dbStatus = dbHealth.isHealthy ? 'connected' : 'disconnected';
   const redisStatus = getRateLimitRedisStatus();
   
-  res.status(isDbHealthy ? 200 : 503).json({
-    status: isDbHealthy ? 'healthy' : 'unhealthy',
+  res.status(dbHealth.isHealthy ? 200 : 503).json({
+    status: dbHealth.isHealthy ? 'healthy' : 'unhealthy',
     version: 'v1.5',
     database: dbStatus,
     redis: redisStatus,
@@ -80,10 +80,10 @@ app.get('/api/health', (req, res) => {
 
 app.get('/api/v1/health', (req, res) => {
   const start = performance.now();
-  const dbStatus = isDbHealthy ? 'connected' : 'disconnected';
+  const dbStatus = dbHealth.isHealthy ? 'connected' : 'disconnected';
   
-  res.status(isDbHealthy ? 200 : 503).json({ 
-    status: isDbHealthy ? 'ok' : 'degraded', 
+  res.status(dbHealth.isHealthy ? 200 : 503).json({ 
+    status: dbHealth.isHealthy ? 'ok' : 'degraded', 
     database: dbStatus 
   });
   
@@ -93,10 +93,10 @@ app.get('/api/v1/health', (req, res) => {
 
 app.get('/api/ready', (req, res) => {
   const start = performance.now();
-  const dbStatus = isDbHealthy ? 'connected' : 'disconnected';
+  const dbStatus = dbHealth.isHealthy ? 'connected' : 'disconnected';
   const redisStatus = getRateLimitRedisStatus();
 
-  if (isDbHealthy) {
+  if (dbHealth.isHealthy) {
     const isDegraded = redisStatus === 'degraded';
     res.status(200).json({ 
       status: isDegraded ? 'degraded' : 'ready', 
@@ -119,10 +119,10 @@ app.get('/api/ready', (req, res) => {
 
 app.get('/api/v1/ready', (req, res) => {
   const start = performance.now();
-  const dbStatus = isDbHealthy ? 'connected' : 'disconnected';
+  const dbStatus = dbHealth.isHealthy ? 'connected' : 'disconnected';
   const redisStatus = getRateLimitRedisStatus();
 
-  if (isDbHealthy) {
+  if (dbHealth.isHealthy) {
     const isDegraded = redisStatus === 'degraded';
     res.status(200).json({ 
       status: isDegraded ? 'degraded' : 'ready', 

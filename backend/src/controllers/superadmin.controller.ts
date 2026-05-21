@@ -4,13 +4,13 @@ import logger from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
 import { FeatureFlagService } from '../services/featureFlag.service';
 import { activityQueue, connectorQueue, driftQueue, retentionQueue } from '../services/queue.service';
+import { parsePagination } from '../utils/pagination';
 
 // ── Tenant Management ─────────────────────────
 
 export const getAllOrganizations = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+    const { page, limit } = parsePagination(req.query, 20, 100);
     const search = req.query.search as string;
 
     const where: any = {};
@@ -177,8 +177,7 @@ export const setOrgFeatureFlag = async (req: any, res: Response, next: NextFunct
 
 export const getPlatformEvents = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
+    const { page, limit } = parsePagination(req.query, 50, 200);
     const eventType = req.query.eventType as string;
 
     const where: any = {};

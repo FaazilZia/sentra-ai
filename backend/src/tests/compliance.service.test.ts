@@ -26,6 +26,7 @@ const db = prisma as any;
 
 const ORG_ID = 'org-test-123';
 const USER_ID = 'user-test-456';
+const TEST_IP_ADDRESS = '1.2.3.4';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  getAuditProof
@@ -86,7 +87,7 @@ describe('ComplianceService.getAuditProof()', () => {
 
   it('includes consent evidence mapped correctly', async () => {
     db.consent_records.findMany.mockResolvedValue([
-      { action: 'signup', notice_version: '2.0', created_at: new Date(), metadata_json: { ip: '1.2.3.4' }, users: { full_name: 'Bob', email: 'bob@test.com' } }
+      { action: 'signup', notice_version: '2.0', created_at: new Date(), metadata_json: { ip: TEST_IP_ADDRESS }, users: { full_name: 'Bob', email: 'bob@test.com' } }
     ]);
     db.policies.findMany.mockResolvedValue([{ name: 'p1', effect: 'allow', priority: 1 }]);
 

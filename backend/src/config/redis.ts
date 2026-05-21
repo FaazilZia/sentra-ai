@@ -9,7 +9,7 @@ const REDIS_URL = (
   process.env.UPSTASH_REDIS_URL?.trim() ||
   process.env.RENDER_REDIS_URL?.trim() ||
   ''
-).replace(/^['"]|['"]$/g, ''); // Remove potential quotes from env injection
+).replaceAll(/^['"]|['"]$/g, ''); // Remove potential quotes from env injection
 
 /**
  * Shared Redis Connection Pool

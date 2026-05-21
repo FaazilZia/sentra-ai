@@ -97,7 +97,6 @@ export const PillNav: React.FC<PillNavProps> = ({
       ref={containerRef}
       className={cn("relative flex items-center p-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md h-full transition-all duration-300", className)}
       onMouseLeave={handleMouseLeave}
-      role="menubar"
     >
       <div 
         ref={pillRef}

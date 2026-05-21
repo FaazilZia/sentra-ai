@@ -37,7 +37,7 @@ export default function ActiveAlertsPanel({ data = [], isLoading = false }: Acti
 
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {isLoading ? (
-          [...Array(3)].map((_, i) => (
+          [...new Array(3)].map((_, i) => (
             <div key={i} className="p-4 rounded-lg border border-[var(--border-default)] bg-[var(--bg-page)]/20 animate-pulse">
               <div className="h-2 bg-[var(--bg-page)] rounded w-1/4 mb-3" />
               <div className="h-4 bg-[var(--bg-page)] rounded w-3/4" />

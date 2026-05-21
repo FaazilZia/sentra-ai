@@ -34,7 +34,7 @@ export default function ComplianceTracker({ data = [], isLoading = false }: Comp
 
       <div className="space-y-6 flex-1">
         {isLoading ? (
-          [...Array(4)].map((_, i) => (
+          [...new Array(4)].map((_, i) => (
             <div key={i} className="space-y-2 animate-pulse">
               <div className="h-3 bg-[var(--bg-page)] rounded w-1/2" />
               <div className="h-1 bg-[var(--bg-page)] rounded w-full" />

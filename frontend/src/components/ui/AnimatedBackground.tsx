@@ -34,7 +34,7 @@ const Atom: React.FC<AtomProps> = ({ size, top, left, rings, speedMultiplier, an
       />
 
       {/* Rings & Electrons */}
-      {[...Array(rings)].map((_, i) => {
+      {[...new Array(rings)].map((_, i) => {
         const rotationSpeed = (10 + (i * 5)) / speedMultiplier;
         const tilt = i * 60; // Spread rings
 

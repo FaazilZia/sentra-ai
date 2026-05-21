@@ -1,5 +1,6 @@
 import { Response, NextFunction } from 'express';
 import { EvaluationService } from '../services/evaluation.service';
+import { parsePagination } from '../utils/pagination';
 
 export const triggerEvaluation = async (req: any, res: Response, next: NextFunction) => {
   try {
@@ -17,8 +18,7 @@ export const triggerEvaluation = async (req: any, res: Response, next: NextFunct
 
 export const listRuns = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 20;
+    const { page, limit } = parsePagination(req.query, 20, 200);
     const result = await EvaluationService.getRuns(req.user.organizationId, page, limit);
     res.json({ success: true, ...result });
   } catch (e) { next(e); }

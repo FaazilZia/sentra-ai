@@ -149,12 +149,12 @@ export default function Guardrails() {
             </h3>
             <form className="space-y-4" onSubmit={e => e.preventDefault()}>
               <div>
-                <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Rule Name</label>
-                <input type="text" placeholder="e.g. Finance Data Filter" className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]" />
+                <label htmlFor="rule-name" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Rule Name</label>
+                <input id="rule-name" type="text" placeholder="e.g. Finance Data Filter" className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]" />
               </div>
               <div>
-                <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Category</label>
-                <select className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]">
+                <label htmlFor="rule-category" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Category</label>
+                <select id="rule-category" className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]">
                   <option>Security</option>
                   <option>Privacy</option>
                   <option>Safety</option>
@@ -162,8 +162,8 @@ export default function Guardrails() {
                 </select>
               </div>
               <div>
-                <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Interception Logic</label>
-                <textarea rows={3} placeholder="Describe what to intercept..." className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)] resize-none" />
+                <label htmlFor="rule-logic" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Interception Logic</label>
+                <textarea id="rule-logic" rows={3} placeholder="Describe what to intercept..." className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)] resize-none" />
               </div>
               <div className="p-3 bg-blue-500/5 border border-blue-500/10 rounded-lg">
                 <div className="flex items-center gap-2 text-blue-400 mb-1">

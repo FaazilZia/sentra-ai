@@ -42,7 +42,7 @@ export default function AIRegistryTable({ data = [], isLoading = false }: AIRegi
           </thead>
           <tbody className="divide-y divide-[var(--border-default)] min-h-[400px]">
             {isLoading ? (
-              [...Array(5)].map((_, i) => (
+              [...new Array(5)].map((_, i) => (
                 <tr key={i} className="animate-pulse">
                   <td colSpan={6} className="px-6 py-4">
                     <div className="h-4 bg-[var(--bg-page)] rounded w-full" />

@@ -1,9 +1,11 @@
 import { Response, NextFunction } from 'express';
 import { AuditService } from '../utils/auditLogger';
+import { parsePagination } from '../utils/pagination';
 
 export const getAuditLogs = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const { eventType, userId, resourceType, resourceId, severity, fromDate, toDate, page, limit, search } = req.query;
+    const { eventType, userId, resourceType, resourceId, severity, fromDate, toDate, search } = req.query;
+    const { page, limit } = parsePagination(req.query, 50, 200);
     const result = await AuditService.getLogs(req.user.organizationId, {
       eventType: eventType as string,
       userId: userId as string,
@@ -12,8 +14,8 @@ export const getAuditLogs = async (req: any, res: Response, next: NextFunction) 
       severity: severity as string,
       fromDate: fromDate ? new Date(fromDate as string) : undefined,
       toDate: toDate ? new Date(toDate as string) : undefined,
-      page: page ? parseInt(page as string) : 1,
-      limit: limit ? Math.min(parseInt(limit as string), 200) : 50,
+      page,
+      limit,
       search: search as string,
     });
     res.json({ success: true, ...result });
