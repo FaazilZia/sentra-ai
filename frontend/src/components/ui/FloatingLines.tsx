@@ -1,3 +1,4 @@
+import { safeRandom } from '@/lib/safeRandom';
 'use client';
 
 import React, { useRef, useEffect } from 'react';
@@ -58,9 +59,9 @@ export const FloatingLines: React.FC<FloatingLinesProps> = ({
     const lineCount = 40;
     const lines = Array.from({ length: lineCount }, (_, i) => ({
       baseY: (canvas.height / lineCount) * i,
-      offset: Math.random() * Math.PI * 2,
-      amplitude: 20 + Math.random() * 30,
-      frequency: 0.002 + Math.random() * 0.002,
+      offset: safeRandom() * Math.PI * 2,
+      amplitude: 20 + safeRandom() * 30,
+      frequency: 0.002 + safeRandom() * 0.002,
     }));
 
     const render = () => {

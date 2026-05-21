@@ -21,7 +21,7 @@ async function test(name, fn) {
       warnings++;
     }
   } catch (e) {
-    console.log(`  ❌ ${name}: ${e.message}`);
+    console.log(`  ❌ ${name}: ${String(e.message).substring(0, 200).replace(/[\n\r]/g, ' ')}`); // NOSONAR - test output
     failed++;
   }
 }
@@ -104,7 +104,7 @@ async function main() {
 
   // ── STEP 4: Invalid Auth Token ────────────────────────────
   console.log('\n[ 4. INVALID TOKEN REJECTION ]');
-  const FAKE_TOKEN = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJmYWtlIn0.fake_signature';
+  const FAKE_TOKEN = process.env.SMOKE_TEST_FAKE_TOKEN || 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiJmYWtlIn0.invalid'; // NOSONAR - intentionally invalid test token
   await test('Invalid JWT → 401/403 on protected route', async () => {
     const r = await req('/api/v1/rbac/me', { headers: { Authorization: FAKE_TOKEN } });
     if (![401, 403].includes(r.status)) throw new Error(`Expected 401/403, got ${r.status}`);

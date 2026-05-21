@@ -1,3 +1,4 @@
+import { safeRandom } from '@/lib/safeRandom';
 import { useEffect, useRef } from 'react';
 
 interface Particle {
@@ -38,14 +39,14 @@ export const FloatingParticles = () => {
     };
 
     const spawn = (): Particle => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      vx: (Math.random() - 0.5) * 0.35,
-      vy: (Math.random() - 0.5) * 0.35 - 0.1, // slight upward drift
-      size: Math.random() * 2.5 + 0.5,
-      opacity: Math.random() * 0.4 + 0.1,
-      opacityDir: Math.random() > 0.5 ? 1 : -1,
-      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      x: safeRandom() * canvas.width,
+      y: safeRandom() * canvas.height,
+      vx: (safeRandom() - 0.5) * 0.35,
+      vy: (safeRandom() - 0.5) * 0.35 - 0.1, // slight upward drift
+      size: safeRandom() * 2.5 + 0.5,
+      opacity: safeRandom() * 0.4 + 0.1,
+      opacityDir: safeRandom() > 0.5 ? 1 : -1,
+      color: COLORS[Math.floor(safeRandom() * COLORS.length)],
     });
 
     const init = () => {

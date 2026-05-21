@@ -1,3 +1,4 @@
+import { safeRandom } from '@/lib/safeRandom';
 'use client';
 
 import { useRef, useEffect, useCallback } from 'react';
@@ -114,15 +115,15 @@ export const FloatingMolecules = () => {
     const mols: MolEntity[] = [];
     for (let i = 0; i < count; i++) {
       mols.push({
-        x: Math.random() * w,
-        y: Math.random() * h,
-        vx: (Math.random() - 0.5) * 0.5,
-        vy: (Math.random() - 0.5) * 0.5,
-        scale: 0.7 + Math.random() * 1.0, // 0.7 - 1.7
-        rotation: Math.random() * Math.PI * 2,
-        rotSpeed: (Math.random() - 0.5) * 0.005,
-        shape: SHAPES[Math.floor(Math.random() * SHAPES.length)],
-        opacity: 0.35 + Math.random() * 0.2, // 0.35 - 0.55
+        x: safeRandom() * w,
+        y: safeRandom() * h,
+        vx: (safeRandom() - 0.5) * 0.5,
+        vy: (safeRandom() - 0.5) * 0.5,
+        scale: 0.7 + safeRandom() * 1.0, // 0.7 - 1.7
+        rotation: safeRandom() * Math.PI * 2,
+        rotSpeed: (safeRandom() - 0.5) * 0.005,
+        shape: SHAPES[Math.floor(safeRandom() * SHAPES.length)],
+        opacity: 0.35 + safeRandom() * 0.2, // 0.35 - 0.55
       });
     }
     moleculesRef.current = mols;

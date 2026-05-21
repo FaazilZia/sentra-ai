@@ -15,7 +15,7 @@ describe('@sentra-ai/sdk Integration', () => {
       client = {
         evaluate: async (payload: any) => {
           if (client.apiKey === 'invalid_key') throw new Error('Unauthorized');
-          if (client.baseURL === 'http://invalid.url.local') throw new Error('Network timeout');
+          if (client.baseURL === 'https://invalid.url.local') throw new Error('Network timeout');
           return { decision: 'allowed', risk_score: 10, reason: 'Safe' };
         },
         apiKey: TEST_API_KEY,
@@ -33,7 +33,7 @@ describe('@sentra-ai/sdk Integration', () => {
     const res = await client.evaluate({
       action: 'read_file',
       agentId: 'test-agent',
-      params: { path: '/tmp/test.txt' }
+      params: { path: './test-data/test.txt' }
     });
     
     expect(res).toHaveProperty('decision');
@@ -41,7 +41,7 @@ describe('@sentra-ai/sdk Integration', () => {
   });
 
   test('SDK handles network timeout gracefully', async () => {
-    client.baseURL = 'http://invalid.url.local';
+    client.baseURL = 'https://invalid.url.local';
     
     await expect(client.evaluate({
       action: 'read_file',

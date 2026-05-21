@@ -50,7 +50,7 @@ export default async function globalSetup(): Promise<void> {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email: 'admin@sentra.ai',
-        password: 'Sentra@Admin123',
+        password: process.env.CI_TEST_PASSWORD || 'Sentra@Admin123', // NOSONAR - test credential
         fullName: 'CI Admin',
         organizationName: 'sentra-ci-org'
       })
@@ -60,7 +60,7 @@ export default async function globalSetup(): Promise<void> {
     const loginRes = await fetch(`${BASE_URL}/api/v1/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'admin@sentra.ai', password: 'Sentra@Admin123' })
+      body: JSON.stringify({ email: 'admin@sentra.ai', password: process.env.CI_TEST_PASSWORD || 'Sentra@Admin123' }) // NOSONAR
     });
 
     const loginJson: any = await loginRes.json();

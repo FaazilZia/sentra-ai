@@ -1,0 +1,23 @@
+# Docker ignore — prevent sensitive files from being copied into the image
+.env
+*.env
+.env.*
+.git
+.github
+node_modules
+dist
+coverage
+playwright-report
+test-results
+tests
+*.test.ts
+*.spec.ts
+__mocks__
+scratch
+*.md
+*.log
+.DS_Store
+.temp-backup
+.fresh-clone
+.vscode
+.idea

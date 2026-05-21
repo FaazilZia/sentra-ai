@@ -1,3 +1,4 @@
+import { safeRandom } from '@/lib/safeRandom';
 import React, { useRef, useEffect, useState, useCallback, useId } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -55,7 +56,7 @@ const GooeyNav: React.FC<GooeyNavProps> = ({
     return id;
   };
 
-  const noise = (n = 1) => n / 2 - Math.random() * n;
+  const noise = (n = 1) => n / 2 - safeRandom() * n;
   
   const getXY = (distance: number, pointIndex: number, totalPoints: number): [number, number] => {
     const angle = ((360 + noise(8)) / totalPoints) * pointIndex * (Math.PI / 180);
@@ -69,7 +70,7 @@ const GooeyNav: React.FC<GooeyNavProps> = ({
       end: getXY(d[1] + noise(7), particleCount - i, particleCount),
       time: t,
       scale: 1 + noise(0.2),
-      color: colors[Math.floor(Math.random() * colors.length)],
+      color: colors[Math.floor(safeRandom() * colors.length)],
       rotate: rotate > 0 ? (rotate + r / 20) * 10 : (rotate - r / 20) * 10
     };
   };

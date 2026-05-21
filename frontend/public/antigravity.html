@@ -6,11 +6,11 @@
     <title>Sentra AI - Intelligent LLM Security</title>
     
     <!-- Three.js & Matter.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha512-dLRZEogMPtHTHLMkFIaI/OkMdnFTMaLPas4SnqJOGOF4oOr5vO3Txf+F3EhL/sFzFLriOam3sJMesNhXkMjfQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js" integrity="sha512-0z5LbMIYtEOjQY1bcHsBNmhVkbiqKzmrBF2DP/JT72sVJLNoadKMurVlfKcr2BFBwvUFlkcNoVqFbXeMErG/Rg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" crossorigin="anonymous">
     
     <style>
         :root {
@@ -617,6 +617,8 @@
     </div> <!-- End Scroll Wrapper -->
 
     <script>
+        // Crypto-safe random for visual effects (satisfies SonarCloud weak-crypto rules)
+        function safeRandom() { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] / (0xFFFFFFFF + 1); }
         // ----------------------------------------------------
         // 1. Custom Cursor & Magnetic Buttons
         // ----------------------------------------------------
@@ -692,12 +694,12 @@
         // ----------------------------------------------------
         const blobs = document.querySelectorAll('.blob');
         const blobData = Array.from(blobs).map(() => ({
-            offsetX: Math.random() * Math.PI * 2,
-            offsetY: Math.random() * Math.PI * 2,
-            speedX: 0.0005 + Math.random() * 0.0005,
-            speedY: 0.0005 + Math.random() * 0.0005,
-            radiusX: 100 + Math.random() * 150,
-            radiusY: 100 + Math.random() * 150,
+            offsetX: safeRandom() * Math.PI * 2,
+            offsetY: safeRandom() * Math.PI * 2,
+            speedX: 0.0005 + safeRandom() * 0.0005,
+            speedY: 0.0005 + safeRandom() * 0.0005,
+            radiusX: 100 + safeRandom() * 150,
+            radiusY: 100 + safeRandom() * 150,
             x: window.innerWidth / 2,
             y: window.innerHeight / 2,
             targetScale: 1,
@@ -721,12 +723,12 @@
             particles = [];
             for (let i=0; i<numParticles; i++) {
                 particles.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    vx: (Math.random() - 0.5) * 0.3,
-                    vy: (Math.random() - 0.5) * 0.3,
-                    size: 1 + Math.random() * 1.5,
-                    opacity: 0.15 + Math.random() * 0.25
+                    x: safeRandom() * canvas.width,
+                    y: safeRandom() * canvas.height,
+                    vx: (safeRandom() - 0.5) * 0.3,
+                    vy: (safeRandom() - 0.5) * 0.3,
+                    size: 1 + safeRandom() * 1.5,
+                    opacity: 0.15 + safeRandom() * 0.25
                 });
             }
         }
@@ -789,19 +791,19 @@
                 const w = 240;
                 const h = 180;
                 // Spawn randomly around center
-                const x = ww/2 + (Math.random() - 0.5) * 400;
-                const y = Math.max(100, Math.min(wh-100, wh/2 + (Math.random() - 0.5) * 400)); // Clamp Y a bit
+                const x = ww/2 + (safeRandom() - 0.5) * 400;
+                const y = Math.max(100, Math.min(wh-100, wh/2 + (safeRandom() - 0.5) * 400)); // Clamp Y a bit
 
                 const body = Bodies.rectangle(x, y, w, h, {
                     frictionAir: 0.02,
                     restitution: 0.6,
-                    angle: (Math.random() - 0.5) * 0.5
+                    angle: (safeRandom() - 0.5) * 0.5
                 });
 
                 // Initial random velocity
                 Body.setVelocity(body, { 
-                    x: (Math.random() - 0.5) * 10, 
-                    y: (Math.random() - 0.5) * 10 
+                    x: (safeRandom() - 0.5) * 10, 
+                    y: (safeRandom() - 0.5) * 10 
                 });
 
                 physicsBodies.push({ dom: card, body: body, w, h });
@@ -810,8 +812,8 @@
                 // Click burst
                 card.addEventListener('mousedown', () => {
                     Body.setVelocity(body, {
-                        x: (Math.random() - 0.5) * 30,
-                        y: (Math.random() - 0.5) * 30
+                        x: (safeRandom() - 0.5) * 30,
+                        y: (safeRandom() - 0.5) * 30
                     });
                 });
             });
@@ -944,12 +946,12 @@
             for(let i=0; i<80; i++) {
                 confettis.push({
                     x: x, y: y,
-                    vx: (Math.random()-0.5) * 20,
-                    vy: (Math.random()-1) * 20 - 5,
-                    size: Math.random() * 8 + 4,
-                    color: colors[Math.floor(Math.random()*colors.length)],
-                    rot: Math.random() * 360,
-                    vrot: (Math.random()-0.5) * 10
+                    vx: (safeRandom()-0.5) * 20,
+                    vy: (safeRandom()-1) * 20 - 5,
+                    size: safeRandom() * 8 + 4,
+                    color: colors[Math.floor(safeRandom()*colors.length)],
+                    rot: safeRandom() * 360,
+                    vrot: (safeRandom()-0.5) * 10
                 });
             }
         });

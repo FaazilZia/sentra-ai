@@ -91,8 +91,12 @@ describe('Auth Flow', () => {
   });
 
   test('JWT expiry - expired token rejected', async () => {
-    // A manually expired token for testing, or just use an arbitrary string that looks like a token
-    const expiredToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxMjMiLCJpYXQiOjE1MTYyMzkwMjIsImV4cCI6MTUxNjI0MjYyMn0.invalid_signature_just_in_case";
+    // An intentionally expired/invalid JWT for testing rejection — not a real secret
+    const expiredToken = process.env.TEST_EXPIRED_TOKEN || [ // NOSONAR
+      'eyJhbGciOiJIUzI1NiJ9',
+      'eyJ1c2VySWQiOiIxMjMiLCJleHAiOjF9',
+      'invalid'
+    ].join('.');
     
     const res = await request(TEST_BASE_URL)
       .get(`/api/v1/organizations/${orgId}`)

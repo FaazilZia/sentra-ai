@@ -5,7 +5,7 @@ const TEST_BASE_URL = process.env.TEST_BASE_URL || 'https://sentra-backend-node.
 
 const testOrg = `test-org-dash-${Date.now()}`;
 const testEmail = `test-dash-${Date.now()}@sentra-test.com`;
-const testPassword = 'TestPass123!';
+const testPassword = 'TestPass123!'; // NOSONAR - test credential, not a real secret
 
 async function login(page: any) {
   await page.setViewportSize({ width: 1280, height: 720 });
@@ -13,7 +13,7 @@ async function login(page: any) {
   await page.fill('input[type="email"]', testEmail);
   await page.fill('input[type="password"]', testPassword);
   await page.click('button[type="submit"]');
-  await expect(page).toHaveURL(/.*(?:dashboard|app).*/, { timeout: 15000 });
+  await expect(page).toHaveURL(/(?:dashboard|app)/, { timeout: 15000 });
   await expect(page.locator('aside')).toBeVisible({ timeout: 10000 });
 }
 
@@ -31,7 +31,7 @@ test.describe('Dashboard E2E', () => {
       if (msg.type() === 'error') consoleErrors.push(msg.text());
     });
     await login(page);
-    await expect(page).toHaveURL(/.*(?:dashboard|app).*/);
+    await expect(page).toHaveURL(/(?:dashboard|app)/);
     if (consoleErrors.length > 0) {
       console.log('Console errors found:', consoleErrors);
     }
@@ -41,7 +41,7 @@ test.describe('Dashboard E2E', () => {
   test('Agents page shows registered agents', async ({ page }) => {
     await login(page);
     await page.click('aside a[href="/app/inventory"]');
-    await expect(page).toHaveURL(/.*inventory/, { timeout: 10000 });
+    await expect(page).toHaveURL(/inventory/, { timeout: 10000 });
     await expect(page.locator('table')).toBeVisible({ timeout: 10000 });
   });
 
@@ -49,7 +49,7 @@ test.describe('Dashboard E2E', () => {
   test('Observability page loads with data', async ({ page }) => {
     await login(page);
     await page.click('aside a[href="/app/drift"]');
-    await expect(page).toHaveURL(/.*drift/, { timeout: 10000 });
+    await expect(page).toHaveURL(/drift/, { timeout: 10000 });
     await expect(page.locator('h1, h2, [class*="text-2xl"]').first()).toBeVisible({ timeout: 10000 });
   });
 
@@ -58,7 +58,7 @@ test.describe('Dashboard E2E', () => {
     await login(page);
     // Alerts are shown on the main dashboard via ActiveAlertsPanel
     await page.goto(`${TEST_FRONTEND_URL}/app`);
-    await expect(page).toHaveURL(/.*app/, { timeout: 10000 });
+    await expect(page).toHaveURL(/app/, { timeout: 10000 });
     await expect(page.locator('main, [class*="dashboard"], [class*="grid"]').first()).toBeVisible({ timeout: 10000 });
   });
 
@@ -66,7 +66,7 @@ test.describe('Dashboard E2E', () => {
   test('Settings page - API key visible', async ({ page }) => {
     await login(page);
     await page.click('aside a[href="/app/settings"]');
-    await expect(page).toHaveURL(/.*settings/, { timeout: 10000 });
+    await expect(page).toHaveURL(/settings/, { timeout: 10000 });
     // The settings page renders "API Authentication" as the section heading
     await expect(page.locator('text=API Authentication')).toBeVisible({ timeout: 10000 });
   });

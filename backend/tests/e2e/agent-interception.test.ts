@@ -44,7 +44,7 @@ describe('Agent Interception Engine', () => {
       .send({
         agent: agentId,
         action: 'read_file',
-        metadata: { path: '/tmp/test.txt' }
+        metadata: { path: './test-data/test.txt' }
       });
       
     const latency = performance.now() - start;

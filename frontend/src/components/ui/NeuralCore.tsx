@@ -1,3 +1,4 @@
+import { safeRandom } from '@/lib/safeRandom';
 import { useEffect, useRef } from 'react';
 import { motion, useMotionValue, useSpring, useScroll, useTransform } from 'framer-motion';
 
@@ -94,25 +95,25 @@ const NeuralCore = () => {
             key={i}
             className="absolute rounded-full bg-pink-300 shadow-[0_0_10px_rgba(244,114,182,0.8)]"
             style={{
-              width: Math.random() * 6 + 2,
-              height: Math.random() * 6 + 2,
+              width: safeRandom() * 6 + 2,
+              height: safeRandom() * 6 + 2,
               top: '50%',
               left: '50%',
             }}
             animate={{
               x: [
-                Math.random() * 300 - 150, 
-                Math.random() * 300 - 150, 
-                Math.random() * 300 - 150
+                safeRandom() * 300 - 150, 
+                safeRandom() * 300 - 150, 
+                safeRandom() * 300 - 150
               ],
               y: [
-                Math.random() * 300 - 150, 
-                Math.random() * 300 - 150, 
-                Math.random() * 300 - 150
+                safeRandom() * 300 - 150, 
+                safeRandom() * 300 - 150, 
+                safeRandom() * 300 - 150
               ],
             }}
             transition={{
-              duration: Math.random() * 10 + 10,
+              duration: safeRandom() * 10 + 10,
               ease: "easeInOut",
               repeat: Infinity,
               repeatType: "mirror"

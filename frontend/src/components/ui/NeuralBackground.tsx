@@ -1,3 +1,4 @@
+import { safeRandom } from '@/lib/safeRandom';
 import React, { useEffect, useRef, useState } from 'react';
 
 interface Node {
@@ -77,22 +78,22 @@ const NeuralBackground: React.FC = () => {
       // 1. Create Core Network Nodes
       nodes = [];
       for (let i = 0; i < nodeCount; i++) {
-        const z = Math.random() * 0.8 + 0.2; 
-        const x = Math.random() * canvas.width;
-        const y = Math.random() * canvas.height;
-        const isBlack = Math.random() > 0.6; // 40% are black atoms
+        const z = safeRandom() * 0.8 + 0.2; 
+        const x = safeRandom() * canvas.width;
+        const y = safeRandom() * canvas.height;
+        const isBlack = safeRandom() > 0.6; // 40% are black atoms
         
         nodes.push({
           x, y, baseX: x, baseY: y, z,
-          vx: (Math.random() - 0.5) * (isBlack ? 0.08 : 0.1),
-          vy: (Math.random() - 0.5) * (isBlack ? 0.08 : 0.1),
+          vx: (safeRandom() - 0.5) * (isBlack ? 0.08 : 0.1),
+          vy: (safeRandom() - 0.5) * (isBlack ? 0.08 : 0.1),
           radius: (isBlack ? 0.4 : 1.2) * z,
-          glow: isBlack ? 2 : Math.random() * 8 + 4,
-          pulsePhase: Math.random() * Math.PI * 2,
-          pulseSpeed: 0.01 + Math.random() * 0.015,
-          orbitRadius: isBlack ? Math.random() * 2 + 1 : Math.random() * 4 + 2,
-          orbitPhase: Math.random() * Math.PI * 2,
-          orbitSpeed: (Math.random() - 0.5) * (isBlack ? 0.005 : 0.008),
+          glow: isBlack ? 2 : safeRandom() * 8 + 4,
+          pulsePhase: safeRandom() * Math.PI * 2,
+          pulseSpeed: 0.01 + safeRandom() * 0.015,
+          orbitRadius: isBlack ? safeRandom() * 2 + 1 : safeRandom() * 4 + 2,
+          orbitPhase: safeRandom() * Math.PI * 2,
+          orbitSpeed: (safeRandom() - 0.5) * (isBlack ? 0.005 : 0.008),
           color: isBlack ? SECONDARY_BLACK : PRIMARY_BLUE
         });
       }
@@ -101,13 +102,13 @@ const NeuralBackground: React.FC = () => {
       glowBlobs = [];
       const blobCount = isMobile ? 2 : 4;
       for (let i = 0; i < blobCount; i++) {
-        const x = Math.random() * canvas.width;
-        const y = Math.random() * canvas.height;
+        const x = safeRandom() * canvas.width;
+        const y = safeRandom() * canvas.height;
         glowBlobs.push({
           x, y, baseX: x, baseY: y,
-          radius: (canvas.width * (0.2 + Math.random() * 0.2)),
-          vx: (Math.random() - 0.5) * 0.05,
-          vy: (Math.random() - 0.5) * 0.05,
+          radius: (canvas.width * (0.2 + safeRandom() * 0.2)),
+          vx: (safeRandom() - 0.5) * 0.05,
+          vy: (safeRandom() - 0.5) * 0.05,
           color: i % 2 === 0 ? `rgba(${PRIMARY_BLUE}, 0.03)` : `rgba(56, 189, 248, 0.02)`
         });
       }
@@ -188,7 +189,7 @@ const NeuralBackground: React.FC = () => {
           const dist = Math.sqrt(dx * dx + dy * dy);
 
           if (dist < connectionDistance) {
-            const flicker = 0.9 + Math.random() * 0.1;
+            const flicker = 0.9 + safeRandom() * 0.1;
             const connectionAlpha = (1 - dist / connectionDistance) * (0.04 + waveIntensity * 0.05) * flicker * Math.min(node.z, other.z);
             
             const crossConnect = node.color !== other.color;

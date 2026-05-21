@@ -1,3 +1,4 @@
+import { safeRandom } from '@/lib/safeRandom';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 interface AtomProps {
@@ -72,17 +73,17 @@ const AtomBackground: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const atomCount = Math.floor(Math.random() * 4) + 5; // 5-8 atoms
+    const atomCount = Math.floor(safeRandom() * 4) + 5; // 5-8 atoms
     const newAtoms: AtomProps[] = [];
 
     for (let i = 0; i < atomCount; i++) {
       newAtoms.push({
-        size: Math.floor(Math.random() * 100) + 60, // 60px - 160px
-        top: `${Math.random() * 100}%`,
-        left: `${Math.random() * 100}%`,
-        rings: Math.floor(Math.random() * 2) + 2, // 2-3 rings
-        speedMultiplier: 0.5 + Math.random(),
-        angle: Math.random() * 360,
+        size: Math.floor(safeRandom() * 100) + 60, // 60px - 160px
+        top: `${safeRandom() * 100}%`,
+        left: `${safeRandom() * 100}%`,
+        rings: Math.floor(safeRandom() * 2) + 2, // 2-3 rings
+        speedMultiplier: 0.5 + safeRandom(),
+        angle: safeRandom() * 360,
       });
     }
 
