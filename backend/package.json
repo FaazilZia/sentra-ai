@@ -15,11 +15,12 @@
     "migrate:create": "npx prisma migrate dev",
     "migrate:deploy": "npx prisma migrate deploy",
     "postinstall": "prisma generate",
-    "test:unit": "jest --testPathPatterns=\"(api|auth|sdk|rate-limiting|drift-detection|compliance-export|agent-interception)\"",
+    "test:unit": "jest --testPathIgnorePatterns='tests/e2e/'",
     "test:e2e": "playwright test",
+    "test:e2e:jest": "jest --testPathPatterns='tests/e2e/' --globalSetup='<rootDir>/src/tests/globalSetup.ts'",
     "test:load": "artillery run tests/load/artillery.config.yml",
     "test:all": "npm run test:unit && npm run test:e2e",
-    "test:ci": "jest --coverage --ci --testPathIgnorePatterns=dashboard.test.ts",
+    "test:ci": "jest --coverage --ci --testPathIgnorePatterns='tests/e2e/'",
     "test": "node --max-old-space-size=4096 ./node_modules/.bin/jest --coverage --maxWorkers=2"
   },
   "prisma": {

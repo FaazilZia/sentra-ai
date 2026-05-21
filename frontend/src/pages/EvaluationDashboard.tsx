@@ -179,7 +179,10 @@ const EvaluationDashboard: React.FC = () => {
           ) : runs.map((run) => (
             <div
               key={run.id}
+              role="button"
+              tabIndex={0}
               onClick={() => viewResults(run)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); viewResults(run); } }}
               style={{
                 padding: '14px 20px', borderBottom: '1px solid #0f172a', cursor: 'pointer',
                 background: selectedRun?.id === run.id ? 'rgba(99,102,241,0.1)' : 'transparent',

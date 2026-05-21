@@ -25,6 +25,7 @@ spec:
         prometheus.io/scrape: "false"
     spec:
       serviceAccountName: sentra-backend
+      automountServiceAccountToken: false
       terminationGracePeriodSeconds: 60  # Workers need more time to drain jobs
       securityContext:
         runAsNonRoot: true
@@ -60,6 +61,7 @@ spec:
             limits:
               cpu: "500m"
               memory: "512Mi"
+              ephemeral-storage: "256Mi"
           livenessProbe:
             exec:
               command: ["node", "-e", "require('./dist/health-worker.js')"]

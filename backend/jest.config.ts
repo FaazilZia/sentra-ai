@@ -1,5 +1,4 @@
 module.exports = {
-  globalSetup: '<rootDir>/src/tests/globalSetup.ts',
   preset: 'ts-jest',
   testEnvironment: 'node',
   coverageProvider: 'v8',
@@ -8,7 +7,7 @@ module.exports = {
   testPathIgnorePatterns: [
     '/node_modules/',
     '/dist/',
-    'tests/e2e/dashboard.test.ts', // Playwright only — run via: npx playwright test
+    'tests/e2e/', // E2E tests require a running server — run separately via: npm run test:e2e
   ],
   testTimeout: 60000,
   verbose: true,

@@ -48,7 +48,11 @@ backend/scratch/
 # Playwright test artifacts
 frontend/test-results/
 frontend/playwright-report/
+backend/test-results/
+backend/playwright-report/
 
 # Local development artifacts
 .local-dev/
 backend/src/scratch/
+.temp-backup/
+.fresh-clone/
