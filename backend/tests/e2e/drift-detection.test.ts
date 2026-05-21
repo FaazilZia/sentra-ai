@@ -1,22 +1,7 @@
 import request from 'supertest';
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
+import { getAuthToken } from './helpers/getAuthToken';
 
-function getCiAuthToken(): string {
-  try {
-    const tokenFilePath = path.join(os.tmpdir(), 'sentra_ci_token.json');
-    if (fs.existsSync(tokenFilePath)) {
-      const data = JSON.parse(fs.readFileSync(tokenFilePath, 'utf8'));
-      return data.CI_AUTH_TOKEN || '';
-    }
-  } catch (err) {
-    console.error('Failed to read sentra_ci_token.json:', err);
-  }
-  return process.env.CI_AUTH_TOKEN || '';
-}
-
-const AUTH_TOKEN = getCiAuthToken();
+const AUTH_TOKEN = getAuthToken();
 const TEST_BASE_URL = process.env.TEST_BASE_URL || 'https://sentra-backend-node.onrender.com';
 
 describe('Drift Detection', () => {

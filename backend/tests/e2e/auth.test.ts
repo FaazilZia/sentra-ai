@@ -1,28 +1,14 @@
 import request from 'supertest';
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
+import { getAuthToken } from './helpers/getAuthToken';
 
-function getCiAuthToken(): string {
-  try {
-    const tokenFilePath = path.join(os.tmpdir(), 'sentra_ci_token.json');
-    if (fs.existsSync(tokenFilePath)) {
-      const data = JSON.parse(fs.readFileSync(tokenFilePath, 'utf8'));
-      return data.CI_AUTH_TOKEN || '';
-    }
-  } catch (err) {
-    console.error('Failed to read sentra_ci_token.json:', err);
-  }
-  return process.env.CI_AUTH_TOKEN || '';
-}
-
-const AUTH_TOKEN = getCiAuthToken();
+const AUTH_TOKEN = getAuthToken();
 const TEST_BASE_URL = process.env.TEST_BASE_URL || 'https://sentra-backend-node.onrender.com';
 
+const testEmail = `ci-e2e-${Date.now()}@sentra-test.com`;
 const testOrg = `ci-org-${Date.now()}`;
-const testEmail = `ci-auth-${Date.now()}@sentra-test.com`;
-const testEmail2 = `ci-auth-2-${Date.now()}@sentra-test.com`;
 const testPassword = 'TestPass123!';
+const testEmail2 = `ci-e2e2-${Date.now()}@sentra-test.com`;
+const testOrg2 = `ci-org2-${Date.now()}`;
 
 describe('Auth Flow', () => {
   let authToken: string = AUTH_TOKEN;
@@ -78,7 +64,7 @@ describe('Auth Flow', () => {
         email: testEmail2,
         password: testPassword,
         fullName: 'Test User 2',
-        organizationName: `${testOrg}-2`
+        organizationName: testOrg2
       });
 
     const loginRes = await request(TEST_BASE_URL)
