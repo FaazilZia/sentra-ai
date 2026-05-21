@@ -1,6 +1,6 @@
 import React from 'react';
-import { useAuthContext } from '../context/AuthContext';
-import { PERMISSION_MATRIX } from '../lib/permissions';
+import { useAuth } from '@/lib/auth';
+import { PERMISSION_MATRIX } from '@/lib/permissions';
 
 interface PermissionGateProps {
   /** Resource to check, e.g. 'policies', 'audit', 'evaluation' */
@@ -41,7 +41,7 @@ const PermissionGate: React.FC<PermissionGateProps> = ({
   fallback = null,
   children,
 }) => {
-  const { user } = useAuthContext();
+  const { user } = useAuth();
 
   if (!user) return <>{fallback}</>;
 

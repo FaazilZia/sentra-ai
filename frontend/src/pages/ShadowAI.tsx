@@ -51,20 +51,40 @@ export default function ShadowAI() {
         });
         setTimelineData(Object.values(byDay).slice(-7));
 
-        // Build dept data: group by agent name (top 5 agents by action count)
-        const byAgent: Record<string, number> = {};
+        // Helper mapping function to derive department from agent name
+        const getDepartment = (log: any): string => {
+          if (log.department) return log.department;
+          const agent = (log.agent || '').toLowerCase();
+          if (agent.includes('gpt') || agent.includes('openai') || agent.includes('completion')) {
+            return 'AI/ML';
+          }
+          if (agent.includes('sql') || agent.includes('db') || agent.includes('database') || agent.includes('query')) {
+            return 'Data';
+          }
+          if (agent.includes('code') || agent.includes('git') || agent.includes('deploy') || agent.includes('ci')) {
+            return 'Engineering';
+          }
+          if (agent.includes('email') || agent.includes('slack') || agent.includes('notify') || agent.includes('message')) {
+            return 'Ops';
+          }
+          return 'General';
+        };
+
+        // Build dept data: group by derived/real department
+        const byDept: Record<string, number> = {};
         rawLogs.forEach((log: any) => {
-          const agent = log.agent || log.user_id || 'Unknown';
-          byAgent[agent] = (byAgent[agent] || 0) + 1;
+          const dept = getDepartment(log);
+          byDept[dept] = (byDept[dept] || 0) + 1;
         });
+
         const colors = ['#6366f1', '#a855f7', '#ec4899', '#f43f5e', '#eab308'];
-        const sorted = Object.entries(byAgent)
+        const totalLogs = rawLogs.length || 1;
+        const sorted = Object.entries(byDept)
           .sort((a, b) => b[1] - a[1])
-          .slice(0, 5)
           .map(([name, count], index) => ({
             name,
             count,
-            value: count,
+            value: Math.round((count / totalLogs) * 100),
             color: colors[index % colors.length]
           }));
         setDeptData(sorted);
@@ -76,7 +96,7 @@ export default function ShadowAI() {
           .map((log: any) => ({
             id: log.id || Math.random().toString(),
             user: log.user_id || log.agent || 'Unknown User',
-            dept: log.department || 'Engineering',
+            dept: getDepartment(log),
             tool: log.tool || log.model || log.service || 'Unknown Tool',
             time: new Date(log.timestamp || log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             severity: log.severity || 'High',

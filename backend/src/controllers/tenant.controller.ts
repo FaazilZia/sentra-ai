@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import nodemailer from 'nodemailer';
 import { TenantService } from '../services/tenant.service';
 import { auditLogger } from '../utils/auditLogger';
 
@@ -95,7 +96,53 @@ export const inviteUser = async (req: any, res: Response, next: NextFunction) =>
       metadata: { email, role },
     });
 
-    // TODO: Send invitation email via nodemailer
+    // Send invitation email via nodemailer
+    try {
+      if (process.env.SMTP_HOST) {
+        const transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST,
+          port: parseInt(process.env.SMTP_PORT || '587'),
+          secure: process.env.SMTP_PORT === '465',
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+          },
+        });
+
+        const org = await TenantService.getOrganization(req.user.organizationId);
+        const orgName = org?.name || 'Sentra AI';
+        const joinLink = `${process.env.FRONTEND_URL}/accept-invite?token=${invitation.token}`;
+
+        await transporter.sendMail({
+          from: process.env.SMTP_FROM || '"Sentra AI" <noreply@sentra.ai>',
+          to: email,
+          subject: `You've been invited to join ${orgName} on Sentra AI`,
+          html: `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px;">
+              <h2 style="color: #0f172a; margin-top: 0;">You've been invited!</h2>
+              <p>You have been invited to join <strong>${orgName}</strong> on Sentra AI.</p>
+              <p>Click the link below to accept the invitation and set up your account:</p>
+              <p style="margin: 24px 0;">
+                <a href="${joinLink}" style="display: inline-block; background: #0f172a; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">Accept Invitation</a>
+              </p>
+              <p style="font-size: 12px; color: #64748b;">
+                Or copy and paste this URL into your browser: <br/>
+                <a href="${joinLink}" style="color: #0284c7;">${joinLink}</a>
+              </p>
+              <p style="font-size: 12px; color: #94a3b8; margin-top: 32px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+                This invitation was sent by Sentra AI Governance Platform.
+              </p>
+            </div>
+          `
+        });
+        console.log(`[TenantController] Invitation email sent to ${email}`);
+      } else {
+        console.warn('[TenantController] SMTP_HOST not provided. Email invitation was not sent.');
+      }
+    } catch (emailError: any) {
+      console.error('[TenantController] Failed to send invitation email:', emailError.message || emailError);
+    }
+
     res.status(201).json({
       success: true,
       message: `Invitation sent to ${email}`,

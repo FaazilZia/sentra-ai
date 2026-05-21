@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useAuthContext } from './AuthContext';
 
 // ─────────────────────────────────────────────
 // Types
