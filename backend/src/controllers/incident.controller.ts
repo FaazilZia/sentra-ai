@@ -1,14 +1,14 @@
-import { Response, NextFunction } from 'express';
+import { Response } from 'express';
 import crypto from 'crypto';
 import prisma from '../config/db';
 import { resolveOrganizationId } from '../utils/company';
 import { serializeIncident } from '../utils/incidentSerialize';
 import logger from '../utils/logger';
 import { parsePagination } from '../utils/pagination';
+import { asyncHandler, sendSuccess, sendError } from '../utils/controllerHelpers';
 
 const SCAN_PROGRESS_STEP = 20;
 const SCAN_TICK_MS = 500;
-const SOURCES_SCANNED_DEFAULT = 15;
 const PII_LABELS = ['EMAIL', 'CREDIT_CARD', 'PHONE', 'ADDRESS'] as const;
 
 async function finalizeScanJob(organizationId: string, jobId: string, incidentsDetected: number) {
@@ -60,275 +60,235 @@ async function finalizeScanJob(organizationId: string, jobId: string, incidentsD
   }
 }
 
-export const getIncidents = async (req: any, res: Response, next: NextFunction) => {
-  try {
-    const { limit: take } = parsePagination(req.query, 50, 200);
-    const statusParam = req.query['status'];
-    const status = statusParam ? String(statusParam) : undefined;
+export const getIncidents = asyncHandler(async (req: any, res: Response) => {
+  const { limit: take } = parsePagination(req.query, 50, 200);
+  const statusParam = req.query['status'];
+  const status = statusParam ? String(statusParam) : undefined;
 
-    const organizationId = await resolveOrganizationId(req);
-    if (!organizationId) {
-      return res.status(200).json([]);
-    }
-
-    const incidents = await prisma.incidents.findMany({
-      where: {
-        organizationId: organizationId,
-        ...(status ? { status } : {}),
-      },
-      orderBy: { created_at: 'desc' },
-      take,
-    });
-
-    res.status(200).json(incidents.map(serializeIncident));
-  } catch (error) {
-    next(error);
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) {
+    return sendSuccess(res, []);
   }
-};
 
-export const getIncidentById = async (req: any, res: Response, next: NextFunction) => {
-  try {
-    const id = String(req.params['id'] ?? '');
-    const organizationId = await resolveOrganizationId(req);
-    if (!organizationId) {
-      return res.status(404).json({ message: 'Incident not found' });
-    }
+  const incidents = await prisma.incidents.findMany({
+    where: {
+      organizationId: organizationId,
+      ...(status ? { status } : {}),
+    },
+    orderBy: { created_at: 'desc' },
+    take,
+  });
 
-    const incident = await prisma.incidents.findUnique({ where: { id } });
+  return sendSuccess(res, incidents.map(serializeIncident));
+});
 
-    if (!incident || incident.organizationId !== organizationId) {
-      return res.status(404).json({ message: 'Incident not found' });
-    }
-
-    res.status(200).json(serializeIncident(incident));
-  } catch (error) {
-    next(error);
+export const getIncidentById = asyncHandler(async (req: any, res: Response) => {
+  const id = String(req.params['id'] ?? '');
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) {
+    return sendError(res, 404, 'Incident not found');
   }
-};
 
-export const updateIncidentStatus = async (req: any, res: Response, next: NextFunction) => {
-  try {
-    const id = String(req.params['id'] ?? '');
-    const organizationId = await resolveOrganizationId(req);
-    if (!organizationId) {
-      return res.status(404).json({ message: 'Incident not found' });
-    }
-    const { status } = req.body as { status: string };
+  const incident = await prisma.incidents.findUnique({ where: { id } });
 
-    const existing = await prisma.incidents.findUnique({ where: { id } });
-    if (!existing || existing.organizationId !== organizationId) {
-      return res.status(404).json({ message: 'Incident not found' });
-    }
-
-    const normalized = status.toLowerCase();
-    const markResolved = normalized !== 'unresolved';
-
-    const updatedIncident = await prisma.incidents.update({
-      where: { id },
-      data: {
-        status: normalized,
-        ...(markResolved && req.user?.role !== 'SERVICE_AGENT'
-          ? {
-              resolved_at: new Date(),
-              resolved_by_id: req.user.id,
-            }
-          : {}),
-      },
-    });
-
-    res.status(200).json(serializeIncident(updatedIncident));
-  } catch (error) {
-    next(error);
+  if (!incident || incident.organizationId !== organizationId) {
+    return sendError(res, 404, 'Incident not found');
   }
-};
+
+  return sendSuccess(res, serializeIncident(incident));
+});
+
+export const updateIncidentStatus = asyncHandler(async (req: any, res: Response) => {
+  const id = String(req.params['id'] ?? '');
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) {
+    return sendError(res, 404, 'Incident not found');
+  }
+  const { status } = req.body as { status: string };
+
+  const existing = await prisma.incidents.findUnique({ where: { id } });
+  if (!existing || existing.organizationId !== organizationId) {
+    return sendError(res, 404, 'Incident not found');
+  }
+
+  const normalized = status.toLowerCase();
+  const markResolved = normalized !== 'unresolved';
+
+  const updatedIncident = await prisma.incidents.update({
+    where: { id },
+    data: {
+      status: normalized,
+      ...(markResolved && req.user?.role !== 'SERVICE_AGENT'
+        ? {
+            resolved_at: new Date(),
+            resolved_by_id: req.user.id,
+          }
+        : {}),
+    },
+  });
+
+  return sendSuccess(res, serializeIncident(updatedIncident));
+});
 
 /** Audit / remediation trail: resolved or non-unresolved incidents for the company */
-export const getIncidentHistory = async (req: any, res: Response, next: NextFunction) => {
-  try {
-    const organizationId = await resolveOrganizationId(req);
-    if (!organizationId) {
-      return res.status(200).json({ success: true, data: { items: [] } });
-    }
+export const getIncidentHistory = asyncHandler(async (req: any, res: Response) => {
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) {
+    return sendSuccess(res, { items: [] });
+  }
 
-    // Explicitly typing the rows to help IDE with relation inference
-    const rows = await prisma.incidents.findMany({
-      where: {
-        organizationId: organizationId,
-        OR: [{ status: { not: 'unresolved' } }, { resolved_at: { not: null } }],
+  // Explicitly typing the rows to help IDE with relation inference
+  const rows = await prisma.incidents.findMany({
+    where: {
+      organizationId: organizationId,
+      OR: [{ status: { not: 'unresolved' } }, { resolved_at: { not: null } }],
+    },
+    orderBy: [{ resolved_at: 'desc' }, { updated_at: 'desc' }],
+    take: 200,
+    include: {
+      resolved_by: {
+        select: { full_name: true, email: true },
       },
-      orderBy: [{ resolved_at: 'desc' }, { updated_at: 'desc' }],
-      take: 200,
-      include: {
-        resolved_by: {
-          select: { full_name: true, email: true },
-        },
-      },
-    }) as Array<any>; 
+    },
+  }) as Array<any>; 
 
-    const items = rows.map((row) => ({
-      id: row.id,
-      agent_id: row.agent_id,
-      status: row.status,
-      details: row.details,
-      operator:
-        row.resolved_by?.full_name ||
-        row.resolved_by?.email ||
-        (row.status === 'unresolved' ? 'System' : 'Operator'),
-      resolved_at: (row.resolved_at || row.updated_at).toISOString(),
-      severity: row.severity,
-    }));
+  const items = rows.map((row) => ({
+    id: row.id,
+    agent_id: row.agent_id,
+    status: row.status,
+    details: row.details,
+    operator:
+      row.resolved_by?.full_name ||
+      row.resolved_by?.email ||
+      (row.status === 'unresolved' ? 'System' : 'Operator'),
+    resolved_at: (row.resolved_at || row.updated_at).toISOString(),
+    severity: row.severity,
+  }));
 
-    res.status(200).json({ success: true, data: { items } });
-  } catch (error) {
-    next(error);
+  return sendSuccess(res, { items });
+});
+
+export const logIncident = asyncHandler(async (req: any, res: Response) => {
+  const { 
+    agent_id, action, severity, policy_id, 
+    details, prompt_excerpt, response_excerpt, metadata 
+  } = req.body;
+
+  const organizationId = await resolveOrganizationId(req);
+  
+  // If company resolution fails (e.g. invalid API key or session), 
+  // we should not proceed. The auth middleware should catch this, but we check again.
+  if (!organizationId) {
+     return sendError(res, 401, 'Invalid organization context');
   }
-};
 
-export const logIncident = async (req: any, res: Response, next: NextFunction) => {
-  try {
-    const { 
-      agent_id, action, severity, policy_id, 
-      details, prompt_excerpt, response_excerpt, metadata 
-    } = req.body;
+  const isServiceAgent = req.user?.role === 'SERVICE_AGENT';
+  const userId =
+    !isServiceAgent && req.user?.id && typeof req.user.id === 'string'
+      ? req.user.id
+      : null;
 
-    const organizationId = await resolveOrganizationId(req);
-    
-    // If company resolution fails (e.g. invalid API key or session), 
-    // we should not proceed. The auth middleware should catch this, but we check again.
-    if (!organizationId) {
-       return res.status(401).json({ success: false, message: 'Invalid organization context' });
+  const policyUuid =
+    policy_id && typeof policy_id === 'string' && policy_id.length > 0 ? policy_id : null;
+
+  const newIncident = await prisma.incidents.create({
+    data: {
+      id: crypto.randomUUID(),
+      organizationId,
+      user_id: userId,
+      agent_id: String(agent_id || 'unknown-agent'),
+      action: String(action || 'detected'),
+      severity: Number.parseInt(String(severity ?? 1), 10),
+      policy_id: policyUuid,
+      details: String(details || 'No details provided'),
+      prompt_excerpt: String(prompt_excerpt || ''),
+      response_excerpt: String(response_excerpt || ''),
+      event_metadata: metadata ?? {},
+      status: 'unresolved'
     }
+  });
 
-    const isServiceAgent = req.user?.role === 'SERVICE_AGENT';
-    const userId =
-      !isServiceAgent && req.user?.id && typeof req.user.id === 'string'
-        ? req.user.id
-        : null;
+  const payload = serializeIncident(newIncident);
+  return sendSuccess(res, {
+    success: true,
+    status: 'logged',
+    id: newIncident.id,
+    data: payload,
+  }, 201);
+});
 
-    const policyUuid =
-      policy_id && typeof policy_id === 'string' && policy_id.length > 0 ? policy_id : null;
-
-    const newIncident = await prisma.incidents.create({
-      data: {
-        id: crypto.randomUUID(),
-        organizationId,
-        user_id: userId,
-        agent_id: String(agent_id || 'unknown-agent'),
-        action: String(action || 'detected'),
-        severity: Number.parseInt(String(severity ?? 1), 10),
-        policy_id: policyUuid,
-        details: String(details || 'No details provided'),
-        prompt_excerpt: String(prompt_excerpt || ''),
-        response_excerpt: String(response_excerpt || ''),
-        event_metadata: metadata ?? {},
-        status: 'unresolved'
-      }
-    });
-
-    const payload = serializeIncident(newIncident);
-    res.status(201).json({
-      success: true,
-      status: 'logged',
-      id: newIncident.id,
-      data: payload,
-    });
-  } catch (error) {
-    next(error);
+export const triggerScan = asyncHandler(async (req: any, res: Response) => {
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) {
+    return sendError(res, 400, 'Company context required to run scan');
   }
-};
 
-export const triggerScan = async (req: any, res: Response, next: NextFunction) => {
-  try {
-    const organizationId = await resolveOrganizationId(req);
-    if (!organizationId) {
-      return res.status(400).json({ success: false, message: 'Company context required to run scan' });
-    }
+  // Check for existing processing job in DB
+  const existingJob = await prisma.scan_jobs.findFirst({
+    where: { organizationId: organizationId, phase: 'PROCESSING' }
+  });
 
-    // Check for existing processing job in DB
-    const existingJob = await prisma.scan_jobs.findFirst({
-      where: { organizationId: organizationId, phase: 'PROCESSING' }
+  if (existingJob) {
+    return res.status(409).json({
+      success: false,
+      message: 'Scan already in progress',
+      data: { progress: existingJob.progress },
     });
-
-    if (existingJob) {
-      return res.status(409).json({
-        success: false,
-        message: 'Scan already in progress',
-        data: { progress: existingJob.progress },
-      });
-    }
-
-    // Create new job in DB
-    const jobId = crypto.randomUUID();
-    await prisma.scan_jobs.create({
-      data: {
-        id: jobId,
-        organizationId: organizationId,
-        phase: 'PROCESSING',
-        progress: 0
-      }
-    });
-
-    // Simulate async processing (in a real app, use a dedicated worker)
-    let accumulated = 0;
-    const intervalId = setInterval(async () => {
-      accumulated += SCAN_PROGRESS_STEP;
-      if (accumulated < 100) {
-        await prisma.scan_jobs.update({
-          where: { id: jobId },
-          data: { progress: accumulated }
-        }).catch(() => {});
-        return;
-      }
-
-      clearInterval(intervalId);
-      const incidentsDetected = crypto.randomInt(1, 7);
-      await finalizeScanJob(organizationId, jobId, incidentsDetected);
-    }, SCAN_TICK_MS);
-
-    res.status(202).json({
-      success: true,
-      data: { message: 'Deep scan initiated' },
-    });
-  } catch (error) {
-    next(error);
   }
-};
 
-export const getScanStatus = async (req: any, res: Response, next: NextFunction) => {
-  try {
-    const organizationId = await resolveOrganizationId(req);
-    if (!organizationId) {
-      return res.status(200).json({
-        success: true,
-        data: { status: 'IDLE', progress: 0, result: null },
-      });
+  // Create new job in DB
+  const jobId = crypto.randomUUID();
+  await prisma.scan_jobs.create({
+    data: {
+      id: jobId,
+      organizationId: organizationId,
+      phase: 'PROCESSING',
+      progress: 0
+    }
+  });
+
+  // Simulate async processing (in a real app, use a dedicated worker)
+  let accumulated = 0;
+  const intervalId = setInterval(async () => {
+    accumulated += SCAN_PROGRESS_STEP;
+    if (accumulated < 100) {
+      await prisma.scan_jobs.update({
+        where: { id: jobId },
+        data: { progress: accumulated }
+      }).catch(() => {});
+      return;
     }
 
-    const job = await prisma.scan_jobs.findFirst({
-      where: { organizationId: organizationId },
-      orderBy: { created_at: 'desc' }
-    });
+    clearInterval(intervalId);
+    const incidentsDetected = crypto.randomInt(1, 7);
+    await finalizeScanJob(organizationId, jobId, incidentsDetected);
+  }, SCAN_TICK_MS);
 
-    if (!job) {
-      return res.status(200).json({
-        success: true,
-        data: { status: 'IDLE', progress: 0, result: null },
-      });
-    }
+  return sendSuccess(res, { message: 'Deep scan initiated' }, 202);
+});
 
-    res.status(200).json({
-      success: true,
-      data: {
-        status: job.phase,
-        progress: job.progress,
-        result: job.phase === 'SUCCESS' ? {
-          incidents_detected: job.incidents_detected,
-          sources_scanned: job.sources_scanned,
-          timestamp: job.updated_at.toISOString()
-        } : null,
-      },
-    });
-  } catch (error) {
-    next(error);
+export const getScanStatus = asyncHandler(async (req: any, res: Response) => {
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) {
+    return sendSuccess(res, { status: 'IDLE', progress: 0, result: null });
   }
-};
+
+  const job = await prisma.scan_jobs.findFirst({
+    where: { organizationId: organizationId },
+    orderBy: { created_at: 'desc' }
+  });
+
+  if (!job) {
+    return sendSuccess(res, { status: 'IDLE', progress: 0, result: null });
+  }
+
+  return sendSuccess(res, {
+    status: job.phase,
+    progress: job.progress,
+    result: job.phase === 'SUCCESS' ? {
+      incidents_detected: job.incidents_detected,
+      sources_scanned: job.sources_scanned,
+      timestamp: job.updated_at.toISOString()
+    } : null,
+  });
+});

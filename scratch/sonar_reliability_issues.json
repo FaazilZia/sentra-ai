@@ -1,0 +1,641 @@
+[
+  {
+    "key": "AZ5LJhZlDB9KZJKvO3es",
+    "rule": "typescript:S905",
+    "severity": "MAJOR",
+    "component": "frontend/src/components/ui/FloatingLines.tsx",
+    "line": 2,
+    "message": "Expected an assignment or function call and instead saw an expression.",
+    "type": "BUG"
+  },
+  {
+    "key": "AZ5LJhTfDB9KZJKvO3eq",
+    "rule": "typescript:S905",
+    "severity": "MAJOR",
+    "component": "frontend/src/components/ui/FloatingMolecules.tsx",
+    "line": 2,
+    "message": "Expected an assignment or function call and instead saw an expression.",
+    "type": "BUG"
+  },
+  {
+    "key": "AZ5KlLfVr1OAa8NmQNpK",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "backend/src/controllers/tenant.controller.ts",
+    "line": 104,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ5G5iHrhjmDCPpNi9dm",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "backend/src/controllers/audit.controller.ts",
+    "line": 15,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ5G5iHrhjmDCPpNi9dn",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "backend/src/controllers/audit.controller.ts",
+    "line": 16,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ5G5iIUhjmDCPpNi9dt",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "backend/src/controllers/evaluation.controller.ts",
+    "line": 20,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ5G5iIUhjmDCPpNi9du",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "backend/src/controllers/evaluation.controller.ts",
+    "line": 21,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ5G5iH8hjmDCPpNi9dp",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "backend/src/controllers/superadmin.controller.ts",
+    "line": 12,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ5G5iH8hjmDCPpNi9dq",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "backend/src/controllers/superadmin.controller.ts",
+    "line": 13,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ5G5iH8hjmDCPpNi9dr",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "backend/src/controllers/superadmin.controller.ts",
+    "line": 180,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ5G5iH8hjmDCPpNi9ds",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "backend/src/controllers/superadmin.controller.ts",
+    "line": 181,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ5G5iHXhjmDCPpNi9dk",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "backend/src/controllers/workflow.controller.ts",
+    "line": 21,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ5G5iHXhjmDCPpNi9dl",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "backend/src/controllers/workflow.controller.ts",
+    "line": 22,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ5G5iMshjmDCPpNi9d4",
+    "rule": "typescript:S7758",
+    "severity": "MINOR",
+    "component": "backend/src/services/featureFlag.service.ts",
+    "line": 126,
+    "message": "Prefer `String#codePointAt()` over `String#charCodeAt()`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ5G5iMshjmDCPpNi9d5",
+    "rule": "typescript:S7767",
+    "severity": "MAJOR",
+    "component": "backend/src/services/featureFlag.service.ts",
+    "line": 127,
+    "message": "Use `Math.trunc` instead of `|= 0`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ5G5iZ7hjmDCPpNi9eZ",
+    "rule": "kubernetes:S6897",
+    "severity": "MAJOR",
+    "component": "k8s/deployment-backend.yaml",
+    "line": 40,
+    "message": "Specify a storage request for this container.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ5G5iZ7hjmDCPpNi9eY",
+    "rule": "kubernetes:S6907",
+    "severity": "MAJOR",
+    "component": "k8s/deployment-backend.yaml",
+    "line": 86,
+    "message": "Resolve the duplication of the environment variable 'NODE_ENV' in this ConfigMap.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ5G5iZwhjmDCPpNi9eV",
+    "rule": "kubernetes:S6897",
+    "severity": "MAJOR",
+    "component": "k8s/deployment-worker.yaml",
+    "line": 35,
+    "message": "Specify a storage request for this container.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ5G5iZwhjmDCPpNi9eU",
+    "rule": "kubernetes:S6907",
+    "severity": "MAJOR",
+    "component": "k8s/deployment-worker.yaml",
+    "line": 56,
+    "message": "Resolve the duplication of the environment variable 'NODE_ENV' in this ConfigMap.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ5EKidjsEK8ZHe8HHXY",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "backend/src/services/driftDetection.service.ts",
+    "line": 128,
+    "message": "Prefer `Number.parseFloat` over `parseFloat`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ5EKidjsEK8ZHe8HHXZ",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "backend/src/services/driftDetection.service.ts",
+    "line": 129,
+    "message": "Prefer `Number.parseFloat` over `parseFloat`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ5D2JINk0uZeavv_kyB",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "backend/src/server.ts",
+    "line": 68,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ5A6n99kGlwGgAySRUZ",
+    "rule": "typescript:S6861",
+    "severity": "CRITICAL",
+    "component": "backend/src/config/db.ts",
+    "line": 13,
+    "message": "Exporting mutable 'let' binding, use 'const' instead.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4q4Cf4ITJenEK1YTS9",
+    "rule": "typescript:S6853",
+    "severity": "MAJOR",
+    "component": "frontend/src/pages/Settings.tsx",
+    "line": 99,
+    "message": "A form label must be associated with a control.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4q4Cf4ITJenEK1YTS-",
+    "rule": "typescript:S6853",
+    "severity": "MAJOR",
+    "component": "frontend/src/pages/Settings.tsx",
+    "line": 143,
+    "message": "A form label must be associated with a control.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4q4Cf4ITJenEK1YTS_",
+    "rule": "typescript:S6853",
+    "severity": "MAJOR",
+    "component": "frontend/src/pages/Settings.tsx",
+    "line": 167,
+    "message": "A form label must be associated with a control.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ47y3JohGLAwqBaBMB4",
+    "rule": "typescript:S7781",
+    "severity": "MINOR",
+    "component": "frontend/e2e/sentra.spec.ts",
+    "line": 84,
+    "message": "Prefer `String#replaceAll()` over `String#replace()`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4av2vvozMLA0f1lB5h",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "frontend/e2e/sentra.spec.ts",
+    "line": 141,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4av2vvozMLA0f1lB5i",
+    "rule": "typescript:S7781",
+    "severity": "MINOR",
+    "component": "frontend/e2e/sentra.spec.ts",
+    "line": 141,
+    "message": "Prefer `String#replaceAll()` over `String#replace()`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4av2vvozMLA0f1lB5j",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "frontend/e2e/sentra.spec.ts",
+    "line": 147,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4av2vvozMLA0f1lB5k",
+    "rule": "typescript:S7781",
+    "severity": "MINOR",
+    "component": "frontend/e2e/sentra.spec.ts",
+    "line": 147,
+    "message": "Prefer `String#replaceAll()` over `String#replace()`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZ1UfPTsnlsQUqpA",
+    "rule": "typescript:S6853",
+    "severity": "MAJOR",
+    "component": "frontend/src/pages/Guardrails.tsx",
+    "line": 152,
+    "message": "A form label must be associated with a control.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZ1UfPTsnlsQUqpB",
+    "rule": "typescript:S6853",
+    "severity": "MAJOR",
+    "component": "frontend/src/pages/Guardrails.tsx",
+    "line": 156,
+    "message": "A form label must be associated with a control.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZ1UfPTsnlsQUqpC",
+    "rule": "typescript:S6853",
+    "severity": "MAJOR",
+    "component": "frontend/src/pages/Guardrails.tsx",
+    "line": 165,
+    "message": "A form label must be associated with a control.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZzufPTsnlsQUqoP",
+    "rule": "typescript:S7723",
+    "severity": "MINOR",
+    "component": "frontend/src/components/dashboard/AIRegistryTable.tsx",
+    "line": 45,
+    "message": "Use `new Array()` instead of `Array()`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZ0EfPTsnlsQUqob",
+    "rule": "typescript:S7723",
+    "severity": "MINOR",
+    "component": "frontend/src/components/dashboard/ActiveAlertsPanel.tsx",
+    "line": 40,
+    "message": "Use `new Array()` instead of `Array()`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZzmfPTsnlsQUqoI",
+    "rule": "typescript:S7723",
+    "severity": "MINOR",
+    "component": "frontend/src/components/dashboard/ComplianceTracker.tsx",
+    "line": 37,
+    "message": "Use `new Array()` instead of `Array()`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZzffPTsnlsQUqoE",
+    "rule": "typescript:S7723",
+    "severity": "MINOR",
+    "component": "frontend/src/components/dashboard/RecentActivityFeed.tsx",
+    "line": 30,
+    "message": "Use `new Array()` instead of `Array()`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZz2fPTsnlsQUqoW",
+    "rule": "typescript:S7723",
+    "severity": "MINOR",
+    "component": "frontend/src/components/dashboard/RiskDistributionCard.tsx",
+    "line": 48,
+    "message": "Use `new Array()` instead of `Array()`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZvqfPTsnlsQUqlv",
+    "rule": "typescript:S7781",
+    "severity": "MINOR",
+    "component": "backend/prisma/seed.ts",
+    "line": 118,
+    "message": "Prefer `String#replaceAll()` over `String#replace()`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZpOfPTsnlsQUqkP",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "backend/src/controllers/alert.controller.ts",
+    "line": 18,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZpOfPTsnlsQUqkQ",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "backend/src/controllers/alert.controller.ts",
+    "line": 19,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZo1fPTsnlsQUqkA",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "backend/src/controllers/guardrail.controller.ts",
+    "line": 169,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZo1fPTsnlsQUqkB",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "backend/src/controllers/guardrail.controller.ts",
+    "line": 170,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZo1fPTsnlsQUqkC",
+    "rule": "typescript:S7781",
+    "severity": "MINOR",
+    "component": "backend/src/controllers/guardrail.controller.ts",
+    "line": 205,
+    "message": "Prefer `String#replaceAll()` over `String#replace()`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZo1fPTsnlsQUqkD",
+    "rule": "typescript:S7781",
+    "severity": "MINOR",
+    "component": "backend/src/controllers/guardrail.controller.ts",
+    "line": 206,
+    "message": "Prefer `String#replaceAll()` over `String#replace()`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZo1fPTsnlsQUqkE",
+    "rule": "typescript:S7781",
+    "severity": "MINOR",
+    "component": "backend/src/controllers/guardrail.controller.ts",
+    "line": 206,
+    "message": "Prefer `String#replaceAll()` over `String#replace()`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZo1fPTsnlsQUqkF",
+    "rule": "typescript:S7781",
+    "severity": "MINOR",
+    "component": "backend/src/controllers/guardrail.controller.ts",
+    "line": 207,
+    "message": "Prefer `String#replaceAll()` over `String#replace()`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZo1fPTsnlsQUqkG",
+    "rule": "typescript:S7781",
+    "severity": "MINOR",
+    "component": "backend/src/controllers/guardrail.controller.ts",
+    "line": 207,
+    "message": "Prefer `String#replaceAll()` over `String#replace()`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZtofPTsnlsQUqlK",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "backend/src/services/alert.service.ts",
+    "line": 37,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZ2efPTsnlsQUqp_",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "frontend/e2e/production_audit.spec.ts",
+    "line": 57,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZ2efPTsnlsQUqqA",
+    "rule": "typescript:S7781",
+    "severity": "MINOR",
+    "component": "frontend/e2e/production_audit.spec.ts",
+    "line": 57,
+    "message": "Prefer `String#replaceAll()` over `String#replace()`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZ2efPTsnlsQUqqB",
+    "rule": "typescript:S7781",
+    "severity": "MINOR",
+    "component": "frontend/e2e/production_audit.spec.ts",
+    "line": 76,
+    "message": "Prefer `String#replaceAll()` over `String#replace()`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZ2efPTsnlsQUqqC",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "frontend/e2e/production_audit.spec.ts",
+    "line": 77,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZ2XfPTsnlsQUqp7",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "frontend/e2e/dashboard_realtime.spec.ts",
+    "line": 37,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZ2XfPTsnlsQUqp8",
+    "rule": "typescript:S7781",
+    "severity": "MINOR",
+    "component": "frontend/e2e/dashboard_realtime.spec.ts",
+    "line": 37,
+    "message": "Prefer `String#replaceAll()` over `String#replace()`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZ2XfPTsnlsQUqp9",
+    "rule": "typescript:S7781",
+    "severity": "MINOR",
+    "component": "frontend/e2e/dashboard_realtime.spec.ts",
+    "line": 57,
+    "message": "Prefer `String#replaceAll()` over `String#replace()`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZ2XfPTsnlsQUqp-",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "frontend/e2e/dashboard_realtime.spec.ts",
+    "line": 58,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZpofPTsnlsQUqkc",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "backend/src/controllers/intelligence.controller.ts",
+    "line": 36,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZsWfPTsnlsQUqkw",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "backend/src/services/intelligence.service.ts",
+    "line": 40,
+    "message": "Prefer `Number.parseFloat` over `parseFloat`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZspfPTsnlsQUqk5",
+    "rule": "typescript:S7781",
+    "severity": "MINOR",
+    "component": "backend/src/services/queue.service.ts",
+    "line": 218,
+    "message": "Prefer `String#replaceAll()` over `String#replace()`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZo_fPTsnlsQUqkM",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "backend/src/controllers/incident.controller.ts",
+    "line": 218,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZo_fPTsnlsQUqkJ",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "backend/src/controllers/incident.controller.ts",
+    "line": 65,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZ2OfPTsnlsQUqpv",
+    "rule": "javascript:S7773",
+    "severity": "MINOR",
+    "component": "frontend/public/antigravity.html",
+    "line": 897,
+    "message": "Prefer `Number.parseFloat` over `parseFloat`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZwxfPTsnlsQUqmA",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "frontend/src/components/ui/Aurora.tsx",
+    "line": 47,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZwxfPTsnlsQUqmB",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "frontend/src/components/ui/Aurora.tsx",
+    "line": 48,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZwxfPTsnlsQUqmC",
+    "rule": "typescript:S7773",
+    "severity": "MINOR",
+    "component": "frontend/src/components/ui/Aurora.tsx",
+    "line": 49,
+    "message": "Prefer `Number.parseInt` over `parseInt`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZxQfPTsnlsQUqme",
+    "rule": "typescript:S6842",
+    "severity": "MAJOR",
+    "component": "frontend/src/components/ui/GooeyNav.tsx",
+    "line": 357,
+    "message": "Non-interactive elements should not be assigned interactive roles.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZxnfPTsnlsQUqmu",
+    "rule": "typescript:S7723",
+    "severity": "MINOR",
+    "component": "frontend/src/components/ui/NeuralCore.tsx",
+    "line": 93,
+    "message": "Use `new Array()` instead of `Array()`.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZyGfPTsnlsQUqnL",
+    "rule": "typescript:S6852",
+    "severity": "MAJOR",
+    "component": "frontend/src/components/ui/PillNav.tsx",
+    "line": 96,
+    "message": "Elements with the 'menubar' interactive role must be focusable.",
+    "type": "CODE_SMELL"
+  },
+  {
+    "key": "AZ4WNZyyfPTsnlsQUqnr",
+    "rule": "typescript:S7723",
+    "severity": "MINOR",
+    "component": "frontend/src/components/ui/AnimatedBackground.tsx",
+    "line": 37,
+    "message": "Use `new Array()` instead of `Array()`.",
+    "type": "CODE_SMELL"
+  }
+]

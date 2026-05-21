@@ -1,88 +1,84 @@
-import { Response, NextFunction } from 'express';
+import { Response } from 'express';
 import { RBACService } from '../services/rbac.service';
 import { auditLogger } from '../utils/auditLogger';
+import { asyncHandler, sendSuccess, getOrgId } from '../utils/controllerHelpers';
 
-export const listRoles = async (req: any, res: Response, next: NextFunction) => {
-  try {
-    const roles = await RBACService.listRoles();
-    res.json({ success: true, data: roles });
-  } catch (e) { next(e); }
-};
+export const listRoles = asyncHandler(async (req: any, res: Response) => {
+  const roles = await RBACService.listRoles();
+  return sendSuccess(res, roles);
+});
 
-export const getUserRoles = async (req: any, res: Response, next: NextFunction) => {
-  try {
-    const { userId } = req.params;
-    const roles = await RBACService.getUserRoles(userId, req.user.organizationId);
-    res.json({ success: true, data: roles });
-  } catch (e) { next(e); }
-};
+export const getUserRoles = asyncHandler(async (req: any, res: Response) => {
+  const { userId } = req.params;
+  const organizationId = getOrgId(req);
+  const roles = await RBACService.getUserRoles(userId, organizationId);
+  return sendSuccess(res, roles);
+});
 
-export const assignRole = async (req: any, res: Response, next: NextFunction) => {
-  try {
-    const { userId } = req.params;
-    const { roleId } = req.body;
+export const assignRole = asyncHandler(async (req: any, res: Response) => {
+  const { userId } = req.params;
+  const { roleId } = req.body;
+  const organizationId = getOrgId(req);
+  const operatorId = req.user.id;
 
-    const assignment = await RBACService.assignRole({
-      userId,
-      roleId,
-      organizationId: req.user.organizationId,
-      assignedBy: req.user.id,
-    });
+  const assignment = await RBACService.assignRole({
+    userId,
+    roleId,
+    organizationId,
+    assignedBy: operatorId,
+  });
 
-    await auditLogger.log({
-      organizationId: req.user.organizationId,
-      userId: req.user.id,
-      action: 'ROLE_ASSIGNED',
-      resourceType: 'user',
-      resourceId: userId,
-      eventType: 'USER_ACTION',
-      severity: 'warn',
-      metadata: { roleId, assignedBy: req.user.id },
-    });
+  await auditLogger.log({
+    organizationId,
+    userId: operatorId,
+    action: 'ROLE_ASSIGNED',
+    resourceType: 'user',
+    resourceId: userId,
+    eventType: 'USER_ACTION',
+    severity: 'warn',
+    metadata: { roleId, assignedBy: operatorId },
+  });
 
-    res.status(201).json({ success: true, data: assignment });
-  } catch (e) { next(e); }
-};
+  return sendSuccess(res, assignment, 201);
+});
 
-export const revokeRole = async (req: any, res: Response, next: NextFunction) => {
-  try {
-    const { userId, roleId } = req.params;
-    await RBACService.revokeRole(userId, roleId, req.user.organizationId);
+export const revokeRole = asyncHandler(async (req: any, res: Response) => {
+  const { userId, roleId } = req.params;
+  const organizationId = getOrgId(req);
+  const operatorId = req.user.id;
 
-    await auditLogger.log({
-      organizationId: req.user.organizationId,
-      userId: req.user.id,
-      action: 'ROLE_REVOKED',
-      resourceType: 'user',
-      resourceId: userId,
-      eventType: 'USER_ACTION',
-      severity: 'warn',
-      metadata: { roleId },
-    });
+  await RBACService.revokeRole(userId, roleId, organizationId);
 
-    res.json({ success: true, message: 'Role revoked' });
-  } catch (e) { next(e); }
-};
+  await auditLogger.log({
+    organizationId,
+    userId: operatorId,
+    action: 'ROLE_REVOKED',
+    resourceType: 'user',
+    resourceId: userId,
+    eventType: 'USER_ACTION',
+    severity: 'warn',
+    metadata: { roleId },
+  });
 
-export const getUserPermissions = async (req: any, res: Response, next: NextFunction) => {
-  try {
-    const { userId } = req.params;
-    const perms = await RBACService.getUserPermissions(userId, req.user.organizationId);
-    res.json({ success: true, data: perms });
-  } catch (e) { next(e); }
-};
+  return sendSuccess(res, undefined, 200, 'Role revoked');
+});
 
-export const getMyPermissions = async (req: any, res: Response, next: NextFunction) => {
-  try {
-    const perms = await RBACService.getUserPermissions(req.user.id, req.user.organizationId);
-    res.json({
-      success: true,
-      data: {
-        role: req.user.role,
-        permissions: perms,
-        isAdmin: ['ADMIN', 'SUPER_ADMIN'].includes(req.user.role),
-        isSuperAdmin: req.user.role === 'SUPER_ADMIN',
-      },
-    });
-  } catch (e) { next(e); }
-};
+export const getUserPermissions = asyncHandler(async (req: any, res: Response) => {
+  const { userId } = req.params;
+  const organizationId = getOrgId(req);
+  const perms = await RBACService.getUserPermissions(userId, organizationId);
+  return sendSuccess(res, perms);
+});
+
+export const getMyPermissions = asyncHandler(async (req: any, res: Response) => {
+  const userId = req.user.id;
+  const organizationId = getOrgId(req);
+  const perms = await RBACService.getUserPermissions(userId, organizationId);
+  return sendSuccess(res, {
+    role: req.user.role,
+    permissions: perms,
+    isAdmin: ['ADMIN', 'SUPER_ADMIN'].includes(req.user.role),
+    isSuperAdmin: req.user.role === 'SUPER_ADMIN',
+  });
+});
+

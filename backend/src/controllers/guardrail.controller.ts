@@ -1,100 +1,94 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response } from 'express';
 import { GuardrailService } from '../services/guardrail.service';
 import { EventTriggerService } from '../services/eventTrigger.service';
 import { alertService } from '../services/alert.service';
 import prisma from '../config/db';
 import logger from '../utils/logger';
 import { parsePagination } from '../utils/pagination';
+import { asyncHandler, sendSuccess, sendError, getOrgId } from '../utils/controllerHelpers';
 
-export const processAIRequest = async (req: any, res: Response, next: NextFunction) => {
+export const processAIRequest = asyncHandler(async (req: any, res: Response) => {
   const { prompt, model = 'gpt-4o' } = req.body;
   const userId = req.user.id;
-  const organizationId = req.user.organizationId;
+  const organizationId = getOrgId(req);
 
-  try {
-    // 0. Data Residency Check
-    const org = await prisma.organizations.findUnique({
-      where: { id: organizationId },
-      select: { data_region: true }
-    });
+  // 0. Data Residency Check
+  const org = await prisma.organizations.findUnique({
+    where: { id: organizationId },
+    select: { data_region: true }
+  });
 
-    const requestRegion = req.headers['x-sentra-region'] || 'US';
-    if (org && org.data_region !== requestRegion) {
-      logger.warn(`Data Residency Violation: Org ${organizationId} (Region: ${org.data_region}) accessed from ${requestRegion}`);
-      // For MVP, we log a warning but allow (configurable in real logic)
-    }
+  const requestRegion = req.headers['x-sentra-region'] || 'US';
+  if (org && org.data_region !== requestRegion) {
+    logger.warn(`Data Residency Violation: Org ${organizationId} (Region: ${org.data_region}) accessed from ${requestRegion}`);
+    // For MVP, we log a warning but allow (configurable in real logic)
+  }
 
-    // 1. Pre-AI Check (Input)
-    const inputResult = await GuardrailService.evaluateInput(prompt);
+  // 1. Pre-AI Check (Input)
+  const inputResult = await GuardrailService.evaluateInput(prompt);
 
-    if (inputResult.decision === 'BLOCK') {
-      await GuardrailService.logInterception({
-        user_id: userId,
-        organizationId: organizationId,
-        input_text: prompt,
-        decision: 'BLOCK',
-        confidence: inputResult.confidence,
-        reason: inputResult.reason,
-        policy_triggered: inputResult.policy_triggered
-      });
-
-      // Trigger the Alerts Engine in background (fire and forget)
-      EventTriggerService.evaluateThresholds(organizationId).catch(err => {
-        logger.error('Failed to trigger alert evaluation', err);
-      });
-
-      return res.status(403).json({
-        success: false,
-        decision: 'BLOCK',
-        message: 'Request blocked by compliance guardrails.',
-        reason: inputResult.reason
-      });
-    }
-
-    // 2. Mock AI Call (In a real system, call OpenAI/Anthropic here)
-    // We simulate an AI response that might leak sensitive data to test post-AI check
-    let aiResponse = `This is a simulated AI response for guardrail pipeline testing.`;
-
-    if (prompt.toLowerCase().includes('hello')) {
-      aiResponse = `Hi there! How can I assist you today?`;
-    }
-
-    // 3. Post-AI Check (Output)
-    const outputResult = await GuardrailService.evaluateOutput(aiResponse);
-
-    // 4. Log the final decision
+  if (inputResult.decision === 'BLOCK') {
     await GuardrailService.logInterception({
       user_id: userId,
       organizationId: organizationId,
-      input_text: inputResult.processedText,
-      output_text: outputResult.processedText,
-      decision: outputResult.decision,
-      confidence: outputResult.confidence,
-      reason: outputResult.reason,
-      policy_triggered: outputResult.policy_triggered,
-      metadata: { original_prompt: prompt, original_output: aiResponse }
+      input_text: prompt,
+      decision: 'BLOCK',
+      confidence: inputResult.confidence,
+      reason: inputResult.reason,
+      policy_triggered: inputResult.policy_triggered
     });
 
-    res.status(200).json({
-      success: true,
-      input: inputResult.processedText,
-      output: outputResult.processedText,
-      decision: outputResult.decision,
-      confidence: outputResult.confidence,
-      reason: outputResult.reason,
-      policy_triggered: outputResult.policy_triggered
+    // Trigger the Alerts Engine in background (fire and forget)
+    EventTriggerService.evaluateThresholds(organizationId).catch(err => {
+      logger.error('Failed to trigger alert evaluation', err);
     });
 
-  } catch (error) {
-    logger.error('Guardrail processing error:', error);
-    next(error);
+    return res.status(403).json({
+      success: false,
+      decision: 'BLOCK',
+      message: 'Request blocked by compliance guardrails.',
+      reason: inputResult.reason
+    });
   }
-};
 
-export const processDemoRequest = async (req: any, res: Response, next: NextFunction) => {
+  // 2. Mock AI Call (In a real system, call OpenAI/Anthropic here)
+  // We simulate an AI response that might leak sensitive data to test post-AI check
+  let aiResponse = `This is a simulated AI response for guardrail pipeline testing.`;
+
+  if (prompt.toLowerCase().includes('hello')) {
+    aiResponse = `Hi there! How can I assist you today?`;
+  }
+
+  // 3. Post-AI Check (Output)
+  const outputResult = await GuardrailService.evaluateOutput(aiResponse);
+
+  // 4. Log the final decision
+  await GuardrailService.logInterception({
+    user_id: userId,
+    organizationId: organizationId,
+    input_text: inputResult.processedText,
+    output_text: outputResult.processedText,
+    decision: outputResult.decision,
+    confidence: outputResult.confidence,
+    reason: outputResult.reason,
+    policy_triggered: outputResult.policy_triggered,
+    metadata: { original_prompt: prompt, original_output: aiResponse }
+  });
+
+  return sendSuccess(res, {
+    input: inputResult.processedText,
+    output: outputResult.processedText,
+    decision: outputResult.decision,
+    confidence: outputResult.confidence,
+    reason: outputResult.reason,
+    policy_triggered: outputResult.policy_triggered
+  });
+});
+
+export const processDemoRequest = asyncHandler(async (req: any, res: Response) => {
   const { prompt } = req.body;
   if (!prompt) {
-    return res.status(400).json({ success: false, message: 'Prompt is required' });
+    return sendError(res, 400, 'Prompt is required');
   }
 
   try {
@@ -140,8 +134,7 @@ export const processDemoRequest = async (req: any, res: Response, next: NextFunc
     }
 
     if (inputResult.decision === 'BLOCK') {
-      return res.status(200).json({
-        success: true,
+      return sendSuccess(res, {
         status: 'blocked',
         reason: inputResult.reason || 'Prompt Injection Detected',
         explanation: 'This input tried to override system instructions and manipulate the AI.',
@@ -149,8 +142,7 @@ export const processDemoRequest = async (req: any, res: Response, next: NextFunc
       });
     }
 
-    return res.status(200).json({
-      success: true,
+    return sendSuccess(res, {
       status: 'allowed',
       reason: 'Safe Prompt',
       explanation: 'This input does not contain harmful or manipulative patterns.',
@@ -159,144 +151,122 @@ export const processDemoRequest = async (req: any, res: Response, next: NextFunc
 
   } catch (error) {
     logger.error('Demo guardrail processing error:', error);
-    res.status(500).json({ success: false, status: 'error', reason: 'Internal testing error' });
+    return res.status(500).json({ success: false, status: 'error', reason: 'Internal testing error' });
   }
-};
+});
 
-export const getGuardrailLogs = async (req: any, res: Response, next: NextFunction) => {
-  try {
-    const { decision } = req.query;
-    const { page, limit } = parsePagination(req.query, 20, 200);
-    const logs = await GuardrailService.getInterceptionLogs(
-      page,
-      limit,
-      { organizationId: req.user.organizationId, decision: decision as string }
-    );
-    res.status(200).json({ success: true, data: logs });
-  } catch (error) {
-    next(error);
+export const getGuardrailLogs = asyncHandler(async (req: any, res: Response) => {
+  const { decision } = req.query;
+  const { page, limit } = parsePagination(req.query, 20, 200);
+  const organizationId = getOrgId(req);
+  const logs = await GuardrailService.getInterceptionLogs(
+    page,
+    limit,
+    { organizationId, decision: decision as string }
+  );
+  return sendSuccess(res, logs);
+});
+
+export const exportGuardrailLogs = asyncHandler(async (req: any, res: Response) => {
+  const { format = 'csv', decision } = req.query;
+  const organizationId = getOrgId(req);
+  
+  // Fetch all logs for export (up to 1000 for safety in MVP)
+  const result = await GuardrailService.getInterceptionLogs(1, 1000, {
+    organizationId,
+    decision: decision as string
+  });
+  
+  const logs = result.data;
+
+  if (format === 'json') {
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', 'attachment; filename=audit-logs.json');
+    return res.send(JSON.stringify(logs, null, 2));
   }
-};
 
-export const exportGuardrailLogs = async (req: any, res: Response, next: NextFunction) => {
-  try {
-    const { format = 'csv', decision } = req.query;
-    
-    // Fetch all logs for export (up to 1000 for safety in MVP)
-    const result = await GuardrailService.getInterceptionLogs(1, 1000, {
-      organizationId: req.user.organizationId,
-      decision: decision as string
-    });
-    
-    const logs = result.data;
+  // Default to CSV
+  const csvRows = [
+    ['ID', 'Timestamp', 'Decision', 'Policy', 'Reason', 'Input Text', 'Output Text'].join(','),
+    ...logs.map(log => [
+      log.id,
+      new Date(log.timestamp).toISOString(),
+      log.decision,
+      `"${log.policy_triggered || 'None'}"`,
+      `"${(log.reason || '').replaceAll(/"/g, '""')}"`,
+      `"${log.input_text.replaceAll(/"/g, '""').replaceAll(/\n/g, ' ')}"`,
+      `"${(log.output_text || '').replaceAll(/"/g, '""').replaceAll(/\n/g, ' ')}"`
+    ].join(','))
+  ];
 
-    if (format === 'json') {
-      res.setHeader('Content-Type', 'application/json');
-      res.setHeader('Content-Disposition', 'attachment; filename=audit-logs.json');
-      return res.send(JSON.stringify(logs, null, 2));
-    }
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', 'attachment; filename=audit-logs.csv');
+  return res.status(200).send(csvRows.join('\n'));
+});
 
-    // Default to CSV
-    const csvRows = [
-      ['ID', 'Timestamp', 'Decision', 'Policy', 'Reason', 'Input Text', 'Output Text'].join(','),
-      ...logs.map(log => [
-        log.id,
-        new Date(log.timestamp).toISOString(),
-        log.decision,
-        `"${log.policy_triggered || 'None'}"`,
-        `"${(log.reason || '').replaceAll(/"/g, '""')}"`,
-        `"${log.input_text.replaceAll(/"/g, '""').replaceAll(/\n/g, ' ')}"`,
-        `"${(log.output_text || '').replaceAll(/"/g, '""').replaceAll(/\n/g, ' ')}"`
-      ].join(','))
-    ];
+export const postRequestOverride = asyncHandler(async (req: any, res: Response) => {
+  const { logId, reason } = req.body;
+  const userId = req.user.id;
+  const override = await GuardrailService.requestOverride(logId, userId, reason);
+  return sendSuccess(res, override);
+});
 
-    res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', 'attachment; filename=audit-logs.csv');
-    res.status(200).send(csvRows.join('\n'));
-  } catch (error) {
-    next(error);
-  }
-};
+export const postApproveOverride = asyncHandler(async (req: any, res: Response) => {
+  const { overrideId, status } = req.body;
+  const userId = req.user.id;
+  const override = await GuardrailService.approveOverride(overrideId, userId, status);
+  return sendSuccess(res, override);
+});
 
-export const postRequestOverride = async (req: any, res: Response, next: NextFunction) => {
-  try {
-    const { logId, reason } = req.body;
-    const override = await GuardrailService.requestOverride(logId, req.user.id, reason);
-    res.status(200).json({ success: true, data: override });
-  } catch (error) {
-    next(error);
-  }
-};
+export const getOverrides = asyncHandler(async (req: any, res: Response) => {
+  const organizationId = getOrgId(req);
+  const overrides = await GuardrailService.getOverrides(organizationId);
+  return sendSuccess(res, overrides);
+});
 
-export const postApproveOverride = async (req: any, res: Response, next: NextFunction) => {
-  try {
-    const { overrideId, status } = req.body;
-    const override = await GuardrailService.approveOverride(overrideId, req.user.id, status);
-    res.status(200).json({ success: true, data: override });
-  } catch (error) {
-    next(error);
-  }
-};
+export const getMetrics = asyncHandler(async (req: any, res: Response) => {
+  const organizationId = getOrgId(req);
+  const metrics = await GuardrailService.getMetrics(organizationId);
+  return sendSuccess(res, metrics);
+});
 
-export const getOverrides = async (req: any, res: Response, next: NextFunction) => {
-  try {
-    const overrides = await GuardrailService.getOverrides(req.user.organizationId);
-    res.status(200).json({ success: true, data: overrides });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getMetrics = async (req: any, res: Response, next: NextFunction) => {
-  try {
-    const metrics = await GuardrailService.getMetrics(req.user.organizationId);
-    res.status(200).json({ success: true, data: metrics });
-  } catch (error) {
-    next(error);
-  }
-};
-export const checkAction = async (req: any, res: Response, next: NextFunction) => {
+export const checkAction = asyncHandler(async (req: any, res: Response) => {
   const { agent, action, metadata = {} } = req.body;
   const userId = req.user.id;
-  const organizationId = req.user.organizationId;
+  const organizationId = getOrgId(req);
 
-  try {
-    if (!agent || !action) {
-      return res.status(400).json({ success: false, message: 'Missing agent or action in request' });
-    }
-
-    // Basic context string for evaluation
-    const context = `Agent: ${agent} | Action: ${action} | Metadata: ${JSON.stringify(metadata)}`;
-    const result = await GuardrailService.evaluateInput(context);
-
-    await GuardrailService.logInterception({
-      user_id: userId,
-      organizationId: organizationId,
-      input_text: context,
-      decision: result.decision,
-      confidence: result.confidence,
-      reason: result.reason,
-      policy_triggered: result.policy_triggered,
-      metadata: { agent, action, ...metadata }
-    });
-
-    if (result.decision === 'BLOCK') {
-      logger.info(`[GOVERNANCE] Action blocked for organization ${organizationId}. Triggering alert notification...`);
-      // Fire-and-forget to avoid blocking the API response
-      try {
-        alertService.notify(organizationId, result, agent, action);
-      } catch (alertError) {
-        logger.error(`[ALERTS] Failed to dispatch alert for block decision: ${alertError instanceof Error ? alertError.message : String(alertError)}`);
-      }
-    }
-
-    res.status(200).json({
-      success: true,
-      decision: result.decision,
-      reason: result.reason
-    });
-  } catch (error) {
-    logger.error('Check action error:', error);
-    next(error);
+  if (!agent || !action) {
+    return sendError(res, 400, 'Missing agent or action in request');
   }
-};
+
+  // Basic context string for evaluation
+  const context = `Agent: ${agent} | Action: ${action} | Metadata: ${JSON.stringify(metadata)}`;
+  const result = await GuardrailService.evaluateInput(context);
+
+  await GuardrailService.logInterception({
+    user_id: userId,
+    organizationId: organizationId,
+    input_text: context,
+    decision: result.decision,
+    confidence: result.confidence,
+    reason: result.reason,
+    policy_triggered: result.policy_triggered,
+    metadata: { agent, action, ...metadata }
+  });
+
+  if (result.decision === 'BLOCK') {
+    logger.info(`[GOVERNANCE] Action blocked for organization ${organizationId}. Triggering alert notification...`);
+    // Fire-and-forget to avoid blocking the API response
+    try {
+      alertService.notify(organizationId, result, agent, action);
+    } catch (alertError) {
+      logger.error(`[ALERTS] Failed to dispatch alert for block decision: ${alertError instanceof Error ? alertError.message : String(alertError)}`);
+    }
+  }
+
+  return sendSuccess(res, {
+    decision: result.decision,
+    reason: result.reason
+  });
+});
+

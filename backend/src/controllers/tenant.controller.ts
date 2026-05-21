@@ -1,26 +1,26 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response } from 'express';
 import nodemailer from 'nodemailer';
 import { TenantService } from '../services/tenant.service';
 import { auditLogger } from '../utils/auditLogger';
+import { asyncHandler, sendSuccess, sendError, getOrgId } from '../utils/controllerHelpers';
 
 // ─────────────────────────────────────────────
 // Workspace Controllers
 // ─────────────────────────────────────────────
 
-export const listWorkspaces = async (req: any, res: Response, next: NextFunction) => {
-  try {
-    const workspaces = await TenantService.listWorkspaces(req.user.organizationId);
-    res.json({ success: true, data: workspaces });
-  } catch (e) { next(e); }
-};
+export const listWorkspaces = asyncHandler(async (req: any, res: Response) => {
+  const workspaces = await TenantService.listWorkspaces(getOrgId(req));
+  return sendSuccess(res, workspaces);
+});
 
-export const createWorkspace = async (req: any, res: Response, next: NextFunction) => {
+export const createWorkspace = asyncHandler(async (req: any, res: Response) => {
+  const { name, slug, description } = req.body;
+  const orgId = getOrgId(req);
   try {
-    const { name, slug, description } = req.body;
-    const ws = await TenantService.createWorkspace(req.user.organizationId, { name, slug, description });
+    const ws = await TenantService.createWorkspace(orgId, { name, slug, description });
 
     await auditLogger.log({
-      organizationId: req.user.organizationId,
+      organizationId: orgId,
       userId: req.user.id,
       action: 'WORKSPACE_CREATED',
       resourceType: 'workspace',
@@ -29,33 +29,37 @@ export const createWorkspace = async (req: any, res: Response, next: NextFunctio
       metadata: { name, slug },
     });
 
-    res.status(201).json({ success: true, data: ws });
+    return sendSuccess(res, ws, 201);
   } catch (e: any) {
     if (e.message?.includes('limit') || e.message?.includes('already exists')) {
-      return res.status(400).json({ success: false, message: e.message });
+      return sendError(res, 400, e.message);
     }
-    next(e);
+    throw e;
   }
-};
+});
 
-export const updateWorkspace = async (req: any, res: Response, next: NextFunction) => {
+export const updateWorkspace = asyncHandler(async (req: any, res: Response) => {
+  const { id } = req.params;
+  const orgId = getOrgId(req);
   try {
-    const { id } = req.params;
-    const ws = await TenantService.updateWorkspace(req.user.organizationId, id, req.body);
-    res.json({ success: true, data: ws });
+    const ws = await TenantService.updateWorkspace(orgId, id, req.body);
+    return sendSuccess(res, ws);
   } catch (e: any) {
-    if (e.message === 'Workspace not found or access denied') return res.status(404).json({ success: false, message: e.message });
-    next(e);
+    if (e.message === 'Workspace not found or access denied') {
+      return sendError(res, 404, e.message);
+    }
+    throw e;
   }
-};
+});
 
-export const deleteWorkspace = async (req: any, res: Response, next: NextFunction) => {
+export const deleteWorkspace = asyncHandler(async (req: any, res: Response) => {
+  const { id } = req.params;
+  const orgId = getOrgId(req);
   try {
-    const { id } = req.params;
-    await TenantService.deleteWorkspace(req.user.organizationId, id);
+    await TenantService.deleteWorkspace(orgId, id);
 
     await auditLogger.log({
-      organizationId: req.user.organizationId,
+      organizationId: orgId,
       userId: req.user.id,
       action: 'WORKSPACE_DELETED',
       resourceType: 'workspace',
@@ -63,31 +67,32 @@ export const deleteWorkspace = async (req: any, res: Response, next: NextFunctio
       eventType: 'GOVERNANCE',
     });
 
-    res.json({ success: true, message: 'Workspace deactivated' });
+    return sendSuccess(res, undefined, 200, 'Workspace deactivated');
   } catch (e: any) {
     if (e.message?.includes('not found') || e.message?.includes('default')) {
-      return res.status(400).json({ success: false, message: e.message });
+      return sendError(res, 400, e.message);
     }
-    next(e);
+    throw e;
   }
-};
+});
 
 // ─────────────────────────────────────────────
 // Invitation Controllers
 // ─────────────────────────────────────────────
 
-export const inviteUser = async (req: any, res: Response, next: NextFunction) => {
+export const inviteUser = asyncHandler(async (req: any, res: Response) => {
+  const { email, role } = req.body;
+  const orgId = getOrgId(req);
   try {
-    const { email, role } = req.body;
     const invitation = await TenantService.inviteUser({
-      organizationId: req.user.organizationId,
+      organizationId: orgId,
       email,
       role: role || 'VIEWER',
       invitedBy: req.user.id,
     });
 
     await auditLogger.log({
-      organizationId: req.user.organizationId,
+      organizationId: orgId,
       userId: req.user.id,
       action: 'USER_INVITED',
       resourceType: 'invitation',
@@ -109,7 +114,7 @@ export const inviteUser = async (req: any, res: Response, next: NextFunction) =>
           },
         });
 
-        const org = await TenantService.getOrganization(req.user.organizationId);
+        const org = await TenantService.getOrganization(orgId);
         const orgName = org?.name || 'Sentra AI';
         const joinLink = `${process.env.FRONTEND_URL}/accept-invite?token=${invitation.token}`;
 
@@ -143,101 +148,89 @@ export const inviteUser = async (req: any, res: Response, next: NextFunction) =>
       console.error('[TenantController] Failed to send invitation email:', emailError.message || emailError);
     }
 
-    res.status(201).json({
+    return sendSuccess(res, {
       success: true,
       message: `Invitation sent to ${email}`,
       data: { id: invitation.id, email: invitation.email, token: invitation.token, expires_at: invitation.expires_at },
-    });
+    }, 201);
   } catch (e: any) {
     if (e.message?.includes('already') || e.message?.includes('active invitation')) {
-      return res.status(409).json({ success: false, message: e.message });
+      return sendError(res, 409, e.message);
     }
-    next(e);
+    throw e;
   }
-};
+});
 
-export const listInvitations = async (req: any, res: Response, next: NextFunction) => {
-  try {
-    const invitations = await TenantService.listInvitations(req.user.organizationId);
-    res.json({ success: true, data: invitations });
-  } catch (e) { next(e); }
-};
+export const listInvitations = asyncHandler(async (req: any, res: Response) => {
+  const invitations = await TenantService.listInvitations(getOrgId(req));
+  return sendSuccess(res, invitations);
+});
 
-export const acceptInvitation = async (req: any, res: Response, next: NextFunction) => {
+export const acceptInvitation = asyncHandler(async (req: any, res: Response) => {
+  const { token } = req.params;
   try {
-    const { token } = req.params;
     const invitation = await TenantService.getInvitation(token);
 
-    if (!invitation) return res.status(404).json({ success: false, message: 'Invitation not found' });
-    if (invitation.accepted_at) return res.status(410).json({ success: false, message: 'Invitation already used' });
-    if (invitation.expires_at < new Date()) return res.status(410).json({ success: false, message: 'Invitation expired' });
+    if (!invitation) return sendError(res, 404, 'Invitation not found');
+    if (invitation.accepted_at) return sendError(res, 410, 'Invitation already used');
+    if (invitation.expires_at < new Date()) return sendError(res, 410, 'Invitation expired');
 
     await TenantService.acceptInvitation(token, req.user.id);
 
-    res.json({
+    return sendSuccess(res, {
       success: true,
       message: `Joined ${invitation.organization.name} successfully`,
       data: { organizationId: invitation.organizationId, organizationName: invitation.organization.name },
     });
   } catch (e: any) {
     if (e.message?.includes('expired') || e.message?.includes('already used')) {
-      return res.status(410).json({ success: false, message: e.message });
+      return sendError(res, 410, e.message);
     }
-    next(e);
+    throw e;
   }
-};
+});
 
-export const revokeInvitation = async (req: any, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    await TenantService.revokeInvitation(req.user.organizationId, id);
-    res.json({ success: true, message: 'Invitation revoked' });
-  } catch (e) { next(e); }
-};
+export const revokeInvitation = asyncHandler(async (req: any, res: Response) => {
+  const { id } = req.params;
+  await TenantService.revokeInvitation(getOrgId(req), id);
+  return sendSuccess(res, undefined, 200, 'Invitation revoked');
+});
 
-export const getInvitationInfo = async (req: any, res: Response, next: NextFunction) => {
-  try {
-    const { token } = req.params;
-    const invitation = await TenantService.getInvitation(token);
-    if (!invitation) return res.status(404).json({ success: false, message: 'Invitation not found' });
+export const getInvitationInfo = asyncHandler(async (req: any, res: Response) => {
+  const { token } = req.params;
+  const invitation = await TenantService.getInvitation(token);
+  if (!invitation) return sendError(res, 404, 'Invitation not found');
 
-    res.json({
-      success: true,
-      data: {
-        email: invitation.email,
-        role: invitation.role,
-        organization: invitation.organization,
-        expires_at: invitation.expires_at,
-        valid: !invitation.accepted_at && invitation.expires_at > new Date(),
-      },
-    });
-  } catch (e) { next(e); }
-};
+  return sendSuccess(res, {
+    email: invitation.email,
+    role: invitation.role,
+    organization: invitation.organization,
+    expires_at: invitation.expires_at,
+    valid: !invitation.accepted_at && invitation.expires_at > new Date(),
+  });
+});
 
 // ─────────────────────────────────────────────
 // Org Settings Controllers
 // ─────────────────────────────────────────────
 
-export const getOrgSettings = async (req: any, res: Response, next: NextFunction) => {
-  try {
-    const settings = await TenantService.getOrgSettings(req.user.organizationId);
-    res.json({ success: true, data: settings });
-  } catch (e) { next(e); }
-};
+export const getOrgSettings = asyncHandler(async (req: any, res: Response) => {
+  const settings = await TenantService.getOrgSettings(getOrgId(req));
+  return sendSuccess(res, settings);
+});
 
-export const updateOrgSettings = async (req: any, res: Response, next: NextFunction) => {
-  try {
-    const settings = await TenantService.updateOrgSettings(req.user.organizationId, req.body);
+export const updateOrgSettings = asyncHandler(async (req: any, res: Response) => {
+  const orgId = getOrgId(req);
+  const settings = await TenantService.updateOrgSettings(orgId, req.body);
 
-    await auditLogger.log({
-      organizationId: req.user.organizationId,
-      userId: req.user.id,
-      action: 'ORG_SETTINGS_UPDATED',
-      resourceType: 'org_settings',
-      eventType: 'GOVERNANCE',
-      metadata: req.body,
-    });
+  await auditLogger.log({
+    organizationId: orgId,
+    userId: req.user.id,
+    action: 'ORG_SETTINGS_UPDATED',
+    resourceType: 'org_settings',
+    eventType: 'GOVERNANCE',
+    metadata: req.body,
+  });
 
-    res.json({ success: true, data: settings });
-  } catch (e) { next(e); }
-};
+  return sendSuccess(res, settings);
+});

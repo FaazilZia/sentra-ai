@@ -1,48 +1,38 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response } from 'express';
 import { IntelligenceService } from '../services/intelligence.service';
+import { asyncHandler, sendSuccess, sendError } from '../utils/controllerHelpers';
 
 export class IntelligenceController {
-  static async getExecutiveMetrics(req: Request, res: Response, next: NextFunction) {
-    try {
-      const organizationId = (req as any).user?.organizationId || req.query.organizationId as string;
-      if (!organizationId) {
-        return res.status(400).json({ error: 'Organization ID is required' });
-      }
-
-      const metrics = await IntelligenceService.getExecutiveMetrics(organizationId);
-      res.json(metrics);
-    } catch (error) {
-      next(error);
+  static getExecutiveMetrics = asyncHandler(async (req: any, res: Response) => {
+    const organizationId = req.user?.organizationId || req.query.organizationId as string;
+    if (!organizationId) {
+      return sendError(res, 400, 'Organization ID is required');
     }
-  }
 
-  static async getTopAttackPatterns(req: Request, res: Response, next: NextFunction) {
-    try {
-      const organizationId = (req as any).user?.organizationId || req.query.organizationId as string;
-      if (!organizationId) {
-        return res.status(400).json({ error: 'Organization ID is required' });
-      }
+    const metrics = await IntelligenceService.getExecutiveMetrics(organizationId);
+    return sendSuccess(res, metrics);
+  });
 
-      const patterns = await IntelligenceService.getTopAttackPatterns(organizationId);
-      res.json(patterns);
-    } catch (error) {
-      next(error);
+  static getTopAttackPatterns = asyncHandler(async (req: any, res: Response) => {
+    const organizationId = req.user?.organizationId || req.query.organizationId as string;
+    if (!organizationId) {
+      return sendError(res, 400, 'Organization ID is required');
     }
-  }
 
-  static async getRiskTrend(req: Request, res: Response, next: NextFunction) {
-    try {
-      const organizationId = (req as any).user?.organizationId || req.query.organizationId as string;
-      const days = Number.parseInt(req.query.days as string, 10) || 7;
+    const patterns = await IntelligenceService.getTopAttackPatterns(organizationId);
+    return sendSuccess(res, patterns);
+  });
 
-      if (!organizationId) {
-        return res.status(400).json({ error: 'Organization ID is required' });
-      }
+  static getRiskTrend = asyncHandler(async (req: any, res: Response) => {
+    const organizationId = req.user?.organizationId || req.query.organizationId as string;
+    const days = Number.parseInt(req.query.days as string, 10) || 7;
 
-      const trend = await IntelligenceService.getRiskTrend(organizationId, days);
-      res.json(trend);
-    } catch (error) {
-      next(error);
+    if (!organizationId) {
+      return sendError(res, 400, 'Organization ID is required');
     }
-  }
+
+    const trend = await IntelligenceService.getRiskTrend(organizationId, days);
+    return sendSuccess(res, trend);
+  });
 }
+
