@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { 
   AreaChart, 
   Area, 
@@ -20,17 +21,83 @@ import KPICard from '@/components/dashboard/KPICard';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store/useStore';
 
-const timelineData: any[] = [];
-
-const deptData: any[] = [];
-
-const incidents: any[] = [];
-
 export default function ShadowAI() {
   const addToast = useStore((state) => state.addToast);
+  const [timelineData, setTimelineData] = useState<any[]>([]);
+  const [deptData, setDeptData] = useState<any[]>([]);
+  const [incidents, setIncidents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadShadowData() {
+      try {
+        const token = localStorage.getItem('sentra_access_token') || localStorage.getItem('accessToken');
+        const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+        const base = import.meta.env.VITE_API_URL || 'https://sentra-backend-node.onrender.com/api/v1';
+
+        // Fetch recent interception logs (last 7 days)
+        const logsRes = await fetch(`${base}/audit/logs?limit=100`, { headers });
+        const logsJson = await logsRes.json();
+        const rawLogs: any[] = logsJson?.data?.logs || logsJson?.logs || [];
+
+        // Build timeline: group blocked actions by day
+        const byDay: Record<string, { name: string; date: string; blocked: number; total: number; detections: number }> = {};
+        rawLogs.forEach((log: any) => {
+          const day = new Date(log.timestamp || log.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          if (!byDay[day]) byDay[day] = { name: day, date: day, blocked: 0, total: 0, detections: 0 };
+          byDay[day].total++;
+          byDay[day].detections++;
+          if (log.status === 'blocked' || log.decision === 'BLOCK') byDay[day].blocked++;
+        });
+        setTimelineData(Object.values(byDay).slice(-7));
+
+        // Build dept data: group by agent name (top 5 agents by action count)
+        const byAgent: Record<string, number> = {};
+        rawLogs.forEach((log: any) => {
+          const agent = log.agent || log.user_id || 'Unknown';
+          byAgent[agent] = (byAgent[agent] || 0) + 1;
+        });
+        const colors = ['#6366f1', '#a855f7', '#ec4899', '#f43f5e', '#eab308'];
+        const sorted = Object.entries(byAgent)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5)
+          .map(([name, count], index) => ({
+            name,
+            count,
+            value: count,
+            color: colors[index % colors.length]
+          }));
+        setDeptData(sorted);
+
+        // Build incidents: blocked actions as incident list
+        const blocked = rawLogs
+          .filter((log: any) => log.status === 'blocked' || log.decision === 'BLOCK')
+          .slice(0, 10)
+          .map((log: any) => ({
+            id: log.id || Math.random().toString(),
+            user: log.user_id || log.agent || 'Unknown User',
+            dept: log.department || 'Engineering',
+            tool: log.tool || log.model || log.service || 'Unknown Tool',
+            time: new Date(log.timestamp || log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            severity: log.severity || 'High',
+            action: log.decision || log.status || 'BLOCK',
+            reason: log.reason || 'Policy violation',
+          }));
+        setIncidents(blocked);
+      } catch (err) {
+        console.error('[ShadowAI] Failed to load data:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadShadowData();
+  }, []);
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in p-6">
+      {loading && (
+        <div className="text-center py-12 text-[var(--text-secondary)] text-sm">Loading Shadow AI data...</div>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-black text-[var(--text-primary)] tracking-tight uppercase">Shadow AI Discovery</h1>
@@ -166,8 +233,8 @@ export default function ShadowAI() {
                 <tr key={incident.id} className="group hover:bg-[var(--bg-hover)] transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <div className="h-7 w-7 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[9px] font-black">
-                        {incident.user.split(' ').map((n: string) => n[0]).join('')}
+                      <div className="h-7 w-7 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[9px] font-black uppercase">
+                        {incident.user ? incident.user.split(' ').filter(Boolean).map((n: string) => n[0] || '').join('').slice(0, 2) : 'U'}
                       </div>
                       <span className="text-[var(--text-sm)] font-bold text-[var(--text-primary)]">{incident.user}</span>
                     </div>

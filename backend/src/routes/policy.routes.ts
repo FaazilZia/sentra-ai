@@ -3,6 +3,7 @@ import { authenticate } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validate.middleware';
 import { getPolicies, getPolicyHealth, getPolicyVersions, createPolicy, getPolicyTemplates, duplicatePolicy, updatePolicy, deletePolicy } from '../controllers/policy.controller';
 import { policyIdVersionsParamSchema, createPolicySchema } from '../validations/policy.validation';
+import { enforcePolicyLimit } from '../middleware/plan.middleware';
 
 const router = Router();
 
@@ -16,7 +17,7 @@ router.get(
 router.get('/templates', authenticate, getPolicyTemplates);
 router.get('/', authenticate, getPolicies);
 router.post('/:id/duplicate', authenticate, duplicatePolicy);
-router.post('/', authenticate, validate(createPolicySchema), createPolicy);
+router.post('/', authenticate, enforcePolicyLimit, validate(createPolicySchema), createPolicy);
 router.patch('/:id', authenticate, updatePolicy);
 router.delete('/:id', authenticate, deletePolicy);
 

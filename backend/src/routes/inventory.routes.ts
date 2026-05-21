@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { InventoryService } from '../services/inventory.service';
 import { authenticate } from '../middleware/auth.middleware';
+import { enforceAgentLimit } from '../middleware/plan.middleware';
 
 const router = Router();
 
@@ -13,7 +14,7 @@ router.get('/agents', authenticate, async (req: any, res) => {
   }
 });
 
-router.post('/agents', authenticate, async (req: any, res) => {
+router.post('/agents', authenticate, enforceAgentLimit, async (req: any, res) => {
   try {
     const agent = await InventoryService.createAgent(req.user.organizationId, req.body);
     res.status(201).json(agent);

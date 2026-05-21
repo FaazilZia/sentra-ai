@@ -3,6 +3,7 @@
  * Polls the Render health endpoint until the server is warm (free-tier cold start
  * can take up to 60s). This prevents per-suite 30s timeout failures.
  */
+import http from 'http';
 import https from 'https';
 
 const BASE_URL = process.env.TEST_BASE_URL || 'https://sentra-backend-node.onrender.com';
@@ -11,7 +12,8 @@ const POLL_INTERVAL_MS = 3_000;
 
 function ping(url: string): Promise<boolean> {
   return new Promise((resolve) => {
-    const req = https.get(`${url}/api/health`, { timeout: 8000 }, (res) => {
+    const client = url.startsWith('https') ? https : http;
+    const req = client.get(`${url}/api/health`, { timeout: 8000 }, (res) => {
       resolve(res.statusCode === 200);
     });
     req.on('error', () => resolve(false));
