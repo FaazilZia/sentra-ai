@@ -30,7 +30,7 @@ const POLICIES = [
   {
     id: 'NO_PII_EXPOSURE',
     patterns: [
-      /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, // Email
+      /[a-zA-Z0-9._%+-]{1,64}@[a-zA-Z0-9-]{1,63}\.[a-zA-Z]{2,10}/g, // Email
       /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g, // Phone (simple)
       /\b\d{3}-\d{2}-\d{4}\b/g, // SSN
     ],
@@ -59,7 +59,7 @@ const POLICIES = [
   {
     id: 'OS_COMMAND_INJECTION',
     patterns: [
-      /bash\s+-c/i, /sh\s+-c/i, /rm\s+-rf/i, /curl\s+.*\|/i, /wget\s+.*\|/i
+      /bash\s+-c/i, /sh\s+-c/i, /rm\s+-rf/i, /curl\s+[^|]{1,200}\|/i, /wget\s+[^|]{1,200}\|/i
     ],
     action: 'BLOCK',
     description: 'Blocks OS command execution and shell pipelines'

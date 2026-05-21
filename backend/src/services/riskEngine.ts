@@ -1,10 +1,10 @@
 import logger from '../utils/logger';
 
 export const SENSITIVE_PATTERNS = {
-  CREDIT_CARD: /\b(?:\d[ -]*?){13,16}\b/,
-  EMAIL: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/,
+  CREDIT_CARD: /\b\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{1,4}\b/,
+  EMAIL: /\b[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9-]{1,63}\.[A-Za-z]{2,10}\b/,
   SSN: /\b\d{3}-\d{2}-\d{4}\b/,
-  JWT: /\beyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\b/
+  JWT: /\beyJhbGciOi[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/
 };
 
 const SENSITIVE_KEYWORDS = [
@@ -51,7 +51,7 @@ const JAILBREAK_PATTERNS = [
 const SHELL_INJECTION_PATTERNS = [
   /&&/, /\|\|/, /;/, /\|/, /\$\(/, /`/,
   /bash\s+-c/i, /sh\s+-c/i, /cmd\.exe/i, /powershell/i,
-  /rm\s+-rf/i, /curl\s+.*\|/i, /wget\s+.*\|/i, /nc\s+-e/i,
+  /rm\s+-rf/i, /curl\s+[^|]{1,200}\|/i, /wget\s+[^|]{1,200}\|/i, /nc\s+-e/i,
   /chmod\s+777/i, /\bsudo\b/i
 ];
 

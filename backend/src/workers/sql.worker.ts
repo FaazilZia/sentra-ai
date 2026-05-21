@@ -93,7 +93,7 @@ async function scanRows(rows: any[], tableName: string, organizationId: string) 
   }
 
   // Row content scan
-  const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+  const emailRegex = /[a-zA-Z0-9._%+-]{1,64}@[a-zA-Z0-9-]{1,63}\.[a-zA-Z]{2,10}/g;
   let piiMatchCount = 0;
   for (const row of rows) {
     const rowStr = JSON.stringify(row);

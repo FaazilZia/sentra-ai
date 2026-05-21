@@ -94,7 +94,7 @@ export default function ShadowAI() {
           .filter((log: any) => log.status === 'blocked' || log.decision === 'BLOCK')
           .slice(0, 10)
           .map((log: any) => ({
-            id: log.id || Math.random().toString(),
+            id: log.id || crypto.randomUUID(),
             user: log.user_id || log.agent || 'Unknown User',
             dept: getDepartment(log),
             tool: log.tool || log.model || log.service || 'Unknown Tool',

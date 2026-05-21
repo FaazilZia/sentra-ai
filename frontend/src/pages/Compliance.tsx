@@ -124,8 +124,11 @@ export default function Compliance() {
         <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-4">
           {frameworkData.length > 0 ? frameworkData.map((fw) => (
             <div 
-              key={fw.name} 
+              key={fw.name}
+              role="button"
+              tabIndex={0}
               onClick={() => addToast({ message: `Accessing ${fw.name} controls...`, type: 'info' })}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); addToast({ message: `Accessing ${fw.name} controls...`, type: 'info' }); } }}
               className="card-base p-5 group hover:border-[var(--royal-indigo)] transition-all cursor-pointer relative overflow-hidden"
             >
               {/* ... existing card content ... */}

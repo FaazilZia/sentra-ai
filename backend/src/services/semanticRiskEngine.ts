@@ -104,7 +104,7 @@ Output nothing except the raw JSON block.`;
       }
 
       // Robust JSON Extraction
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      const jsonMatch = content.match(/\{[^}]{1,5000}\}/);
       if (!jsonMatch) {
         throw new Error('No JSON object found in response');
       }

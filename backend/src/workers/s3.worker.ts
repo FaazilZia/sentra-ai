@@ -94,7 +94,7 @@ export async function processS3Scan(connectorId: string) {
 async function scanContent(content: string, fileName: string, organizationId: string) {
   const findings: any[] = [];
   const patterns = {
-    EMAIL: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
+    EMAIL: /[a-zA-Z0-9._%+-]{1,64}@[a-zA-Z0-9-]{1,63}\.[a-zA-Z]{2,10}/g,
     PHONE: /(\+\d{1,2}\s?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/g,
     HEALTH_KEYWORD: /\b(patient|diagnosis|treatment|prescription|medical record)\b/gi
   };

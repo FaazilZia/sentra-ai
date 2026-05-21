@@ -93,8 +93,11 @@ export default function Policies() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {policies.map((policy) => (
           <div 
-            key={policy.id} 
+            key={policy.id}
+            role="button"
+            tabIndex={0}
             onClick={() => addToast({ message: `Opening ${policy.name} for review...`, type: 'info' })}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); addToast({ message: `Opening ${policy.name} for review...`, type: 'info' }); } }}
             className="card-base p-6 group hover:border-[var(--royal-indigo)] transition-all cursor-pointer relative overflow-hidden"
           >
             <div className="flex items-start justify-between mb-6">
@@ -143,8 +146,11 @@ export default function Policies() {
         ))}
 
         {/* Create Placeholder */}
-        <div 
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => addToast({ message: 'Policy creation wizard initializing...', type: 'info' })}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); addToast({ message: 'Policy creation wizard initializing...', type: 'info' }); } }}
           className="border-2 border-dashed border-[var(--border-default)] rounded-2xl flex flex-col items-center justify-center p-8 hover:bg-white/5 transition-all cursor-pointer group"
         >
           <div className="h-12 w-12 rounded-full bg-white/5 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">

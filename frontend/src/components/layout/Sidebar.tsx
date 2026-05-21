@@ -93,7 +93,10 @@ export function Sidebar() {
       {/* Footer Profile */}
       <div className="p-4 border-t border-white/5 bg-black/5">
         <div 
+          role="button"
+          tabIndex={0}
           onClick={handleLogout}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleLogout(); } }}
           className="flex items-center gap-3 p-2 rounded hover:bg-white/5 transition-colors cursor-pointer group"
         >
           <div className="h-8 w-8 rounded bg-[var(--mid-indigo)] border border-white/10 flex items-center justify-center text-[10px] font-black text-white">
