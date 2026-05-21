@@ -1,10 +1,9 @@
 import request from 'supertest';
 import { getAuthToken } from './helpers/getAuthToken';
+import { setupE2ETestToken } from './helpers/testSetup';
 
 const AUTH_TOKEN = getAuthToken();
 const TEST_BASE_URL = process.env.TEST_BASE_URL || 'https://sentra-backend-node.onrender.com';
-const testOrg = `test-org-plan-${Date.now()}`;
-const testEmail = `test-plan-${Date.now()}@sentra-test.com`;
 
 const jestTest = test as any;
 if (!jestTest.skipIf) {
@@ -15,19 +14,8 @@ describe('Plan Limits Enforcement E2E', () => {
   let token: string;
 
   beforeAll(async () => {
-    // Wait for the server to be ready
-    await new Promise(resolve => setTimeout(resolve, 2000));
     try {
-      const regRes = await request(TEST_BASE_URL).post('/api/v1/auth/register').send({
-        email: testEmail, password: 'TestPass123!', fullName: 'Test Plan Limit', organizationName: testOrg
-      });
-      expect([200, 201]).toContain(regRes.status);
-
-      const loginRes = await request(TEST_BASE_URL).post('/api/v1/auth/login').send({
-        email: testEmail, password: 'TestPass123!'
-      });
-      expect(loginRes.status).toBe(200);
-      token = loginRes.body.data?.accessToken;
+      token = await setupE2ETestToken('plan');
       expect(token).toBeDefined();
     } catch (err) {
       console.error('Setup failed for Plan Limits E2E:', err);

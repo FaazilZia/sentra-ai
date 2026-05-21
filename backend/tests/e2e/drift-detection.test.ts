@@ -1,5 +1,6 @@
 import request from 'supertest';
 import { getAuthToken } from './helpers/getAuthToken';
+import { setupE2ETestToken } from './helpers/testSetup';
 
 const AUTH_TOKEN = getAuthToken();
 const TEST_BASE_URL = process.env.TEST_BASE_URL || 'https://sentra-backend-node.onrender.com';
@@ -8,26 +9,7 @@ describe('Drift Detection', () => {
   let authToken: string = AUTH_TOKEN;
 
   beforeAll(async () => {
-    await new Promise(resolve => setTimeout(resolve, 3000));
-
-    // If no token is loaded, fallback to registering locally
-    if (!authToken) {
-      const testOrg = `test-org-drift-${Date.now()}`;
-      const testEmail = `test-drift-${Date.now()}@sentra-test.com`;
-      const testPassword = 'TestPass123!';
-      await request(TEST_BASE_URL).post('/api/v1/auth/register').send({
-        email: testEmail,
-        password: testPassword,
-        fullName: 'Drift Tester',
-        organizationName: testOrg
-      });
-
-      const loginRes = await request(TEST_BASE_URL).post('/api/v1/auth/login').send({
-        email: testEmail,
-        password: testPassword
-      });
-      authToken = loginRes.body.data?.accessToken;
-    }
+    authToken = await setupE2ETestToken('drift');
   });
 
   test('GET /api/v1/drift/alerts - returns alert list', async () => {

@@ -81,6 +81,78 @@ const seedDefaultPolicy = async (tx: any, organizationId: string) => {
   });
 };
 
+const setAuthCookiesAndTokens = async (
+  res: Response,
+  user: { id: string; role: string; organizationId: string },
+  req?: Request,
+  logAction?: string
+) => {
+  const role = user.role || 'USER';
+  const accessToken = generateAccessToken({ id: user.id, role, organizationId: user.organizationId });
+  const refreshToken = generateRefreshToken({ id: user.id, organizationId: user.organizationId });
+
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 7);
+
+  await prisma.refreshToken.create({
+    data: {
+      token: refreshToken,
+      userId: user.id,
+      expiresAt,
+    },
+  });
+
+  if (logAction && req) {
+    await auditLogger.log({
+      userId: user.id,
+      organizationId: user.organizationId,
+      action: logAction,
+      metadata: { ip: req.ip }
+    });
+  }
+
+  const isProduction = process.env.NODE_ENV === 'production';
+  const cookieOptions: {
+    httpOnly: boolean;
+    secure: boolean;
+    sameSite: 'strict' | 'lax' | 'none';
+    maxAge: number;
+    path: string;
+  } = {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+    path: '/',
+    maxAge: 15 * 60 * 1000,
+  };
+  res.cookie('sentra_access_token', accessToken, cookieOptions);
+  res.cookie('sentra_refresh_token', refreshToken, {
+    ...cookieOptions,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  return { accessToken, refreshToken };
+};
+
+const generateUniqueOrgSlug = async (email: string, organizationName?: string) => {
+  const emailDomain = email.split('@')[1]?.split('.')[0] || 'sentra';
+  const derivedOrgName = organizationName?.trim() || 
+    (emailDomain.charAt(0).toUpperCase() + emailDomain.slice(1) + ' Org');
+
+  const baseSlug = derivedOrgName
+    .toLowerCase()
+    .replaceAll(/[^a-z0-9]+/g, '-')
+    .replaceAll(/^-|-$/g, '');
+
+  let slug = baseSlug;
+  let slugSuffix = 1;
+  while (await prisma.organizations.findUnique({ where: { slug } })) {
+    slug = `${baseSlug}-${slugSuffix++}`;
+  }
+
+  return { derivedOrgName, slug };
+};
+
 export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password, fullName, organizationName } = req.body;
@@ -90,23 +162,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
       return res.status(400).json({ success: false, message: 'User already exists' });
     }
 
-    // Fallback: derive org name from email domain if not provided
-    const emailDomain = email.split('@')[1]?.split('.')[0] || 'sentra';
-    const derivedOrgName = organizationName?.trim() || 
-      (emailDomain.charAt(0).toUpperCase() + emailDomain.slice(1) + ' Org');
-
-    // Generate a URL-safe slug from the org name
-    const baseSlug = derivedOrgName
-      .toLowerCase()
-      .replaceAll(/[^a-z0-9]+/g, '-')
-      .replaceAll(/^-|-$/g, '');
-
-    // Ensure slug uniqueness
-    let slug = baseSlug;
-    let slugSuffix = 1;
-    while (await prisma.organizations.findUnique({ where: { slug } })) {
-      slug = `${baseSlug}-${slugSuffix++}`;
-    }
+    const { derivedOrgName, slug } = await generateUniqueOrgSlug(email, organizationName);
 
     const passwordHash = await bcrypt.hash(password, 12); // 12 rounds for production
 
@@ -174,48 +230,12 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     }
 
     const role = user.role || 'USER';
-    const accessToken = generateAccessToken({ id: user.id, role, organizationId: user.organizationId });
-    const refreshToken = generateRefreshToken({ id: user.id, organizationId: user.organizationId });
-
-    // Store refresh token
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
-
-    await prisma.refreshToken.create({
-      data: {
-        token: refreshToken,
-        userId: user.id,
-        expiresAt,
-      },
-    });
-
-    await auditLogger.log({
-      userId: user.id,
-      organizationId: user.organizationId,
-      action: 'LOGIN_SUCCESS',
-      metadata: { ip: req.ip }
-    });
-
-    // Set HTTP-only secure cookies
-    const isProduction = process.env.NODE_ENV === 'production';
-    const cookieOptions: {
-      httpOnly: boolean;
-      secure: boolean;
-      sameSite: 'strict' | 'lax' | 'none';
-      maxAge: number;
-      path: string;
-    } = {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
-      path: '/',
-      maxAge: 15 * 60 * 1000, // 15 minutes
-    };
-    res.cookie('sentra_access_token', accessToken, cookieOptions);
-    res.cookie('sentra_refresh_token', refreshToken, {
-      ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
+    const { accessToken, refreshToken } = await setAuthCookiesAndTokens(
+      res,
+      { id: user.id, role, organizationId: user.organizationId },
+      req,
+      'LOGIN_SUCCESS'
+    );
 
     res.status(200).json({
       success: true,
@@ -264,20 +284,7 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
     let user = await prisma.users.findUnique({ where: { email } });
 
     if (!user) {
-      // New Google user — use provided org name or derive from email domain
-      const emailDomain = email.split('@')[1]?.split('.')[0] || 'sentra';
-      const derivedOrgName = organizationName?.trim() || 
-        (emailDomain.charAt(0).toUpperCase() + emailDomain.slice(1) + ' Org');
-
-      const baseSlug = derivedOrgName
-        .toLowerCase()
-        .replaceAll(/[^a-z0-9]+/g, '-')
-        .replaceAll(/^-|-$/g, '');
-      let slug = baseSlug;
-      let slugSuffix = 1;
-      while (await prisma.organizations.findUnique({ where: { slug } })) {
-        slug = `${baseSlug}-${slugSuffix++}`;
-      }
+      const { derivedOrgName, slug } = await generateUniqueOrgSlug(email, organizationName);
 
       const result = await prisma.$transaction(async (tx) => {
         const org = await tx.organizations.create({
@@ -300,34 +307,12 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
     }
 
     const role = user.role || 'USER';
-    const accessToken = generateAccessToken({ id: user.id, role, organizationId: user.organizationId });
-    const refreshToken = generateRefreshToken({ id: user.id, organizationId: user.organizationId });
-
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-
-    await prisma.refreshToken.create({ data: { token: refreshToken, userId: user.id, expiresAt } });
-
-    // Set HTTP-only secure cookies
-    const isProduction = process.env.NODE_ENV === 'production';
-    const cookieOptions: {
-      httpOnly: boolean;
-      secure: boolean;
-      sameSite: 'strict' | 'lax' | 'none';
-      maxAge: number;
-      path: string;
-    } = {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
-      path: '/',
-      maxAge: 15 * 60 * 1000,
-    };
-    res.cookie('sentra_access_token', accessToken, cookieOptions);
-    res.cookie('sentra_refresh_token', refreshToken, {
-      ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    const { accessToken, refreshToken } = await setAuthCookiesAndTokens(
+      res,
+      { id: user.id, role, organizationId: user.organizationId },
+      req,
+      'LOGIN_SUCCESS'
+    );
 
     res.status(200).json({
       success: true,
@@ -378,41 +363,10 @@ export const refreshToken = async (req: Request, res: Response, next: NextFuncti
     const user = await prisma.users.findUnique({ where: { id: storedToken.userId } });
     if (!user) return res.status(401).json({ success: false, message: 'User not found' });
 
-    const newAccessToken = generateAccessToken({ id: user.id, role: user.role || 'USER', organizationId: user.organizationId });
-    const newRefreshToken = generateRefreshToken({ id: user.id, organizationId: user.organizationId });
-
-    // Store the new refresh token
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
-
-    await prisma.refreshToken.create({
-      data: {
-        token: newRefreshToken,
-        userId: user.id,
-        expiresAt,
-      },
-    });
-
-    // Set HTTP-only secure cookies
-    const isProduction = process.env.NODE_ENV === 'production';
-    const cookieOptions: {
-      httpOnly: boolean;
-      secure: boolean;
-      sameSite: 'strict' | 'lax' | 'none';
-      maxAge: number;
-      path: string;
-    } = {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
-      path: '/',
-      maxAge: 15 * 60 * 1000,
-    };
-    res.cookie('sentra_access_token', newAccessToken, cookieOptions);
-    res.cookie('sentra_refresh_token', newRefreshToken, {
-      ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    const { accessToken: newAccessToken, refreshToken: newRefreshToken } = await setAuthCookiesAndTokens(
+      res,
+      { id: user.id, role: user.role || 'USER', organizationId: user.organizationId }
+    );
 
     res.status(200).json({
       success: true,

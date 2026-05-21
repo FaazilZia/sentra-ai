@@ -156,6 +156,37 @@ export const WorkflowService = {
     return this.transition({ taskId, organizationId, toState: 'PENDING_REVIEW', actorId, actorRole, comment });
   },
 
+  async handleTaskApprovalDecision(
+    decision: 'APPROVED' | 'REJECTED',
+    params: {
+      taskId: string;
+      organizationId: string;
+      reviewerId: string;
+      reviewerRole: string;
+      comment?: string;
+    }
+  ) {
+    const { task, history } = await this.transition({
+      taskId: params.taskId,
+      organizationId: params.organizationId,
+      toState: decision,
+      actorId: params.reviewerId,
+      actorRole: params.reviewerRole,
+      comment: params.comment,
+    });
+
+    await prisma.workflow_approvals.create({
+      data: {
+        task_id: params.taskId,
+        reviewer_id: params.reviewerId,
+        decision,
+        comment: params.comment,
+      },
+    });
+
+    return { task, history };
+  },
+
   /**
    * Approve a task (reviewer action).
    */
@@ -166,26 +197,7 @@ export const WorkflowService = {
     reviewerRole: string;
     comment?: string;
   }) {
-    const { task, history } = await this.transition({
-      taskId: params.taskId,
-      organizationId: params.organizationId,
-      toState: 'APPROVED',
-      actorId: params.reviewerId,
-      actorRole: params.reviewerRole,
-      comment: params.comment,
-    });
-
-    // Record approval
-    await prisma.workflow_approvals.create({
-      data: {
-        task_id: params.taskId,
-        reviewer_id: params.reviewerId,
-        decision: 'APPROVED',
-        comment: params.comment,
-      },
-    });
-
-    return { task, history };
+    return this.handleTaskApprovalDecision('APPROVED', params);
   },
 
   /**
@@ -198,25 +210,7 @@ export const WorkflowService = {
     reviewerRole: string;
     comment: string;
   }) {
-    const { task, history } = await this.transition({
-      taskId: params.taskId,
-      organizationId: params.organizationId,
-      toState: 'REJECTED',
-      actorId: params.reviewerId,
-      actorRole: params.reviewerRole,
-      comment: params.comment,
-    });
-
-    await prisma.workflow_approvals.create({
-      data: {
-        task_id: params.taskId,
-        reviewer_id: params.reviewerId,
-        decision: 'REJECTED',
-        comment: params.comment,
-      },
-    });
-
-    return { task, history };
+    return this.handleTaskApprovalDecision('REJECTED', params);
   },
 
   /**

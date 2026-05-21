@@ -1,25 +1,15 @@
 import request from 'supertest';
 import { getAuthToken } from './helpers/getAuthToken';
+import { setupE2ETestToken } from './helpers/testSetup';
 
 const AUTH_TOKEN = getAuthToken();
 const TEST_BASE_URL = process.env.TEST_BASE_URL || 'https://sentra-backend-node.onrender.com';
-const testOrg = `test-org-compliance-${Date.now()}`;
-const testEmail = `test-compliance-${Date.now()}@sentra-test.com`;
 
 describe('Compliance PDF Export', () => {
   let token: string = AUTH_TOKEN;
 
   beforeAll(async () => {
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    if (!token) {
-      await request(TEST_BASE_URL).post('/api/v1/auth/register').send({
-        email: testEmail, password: 'TestPass123!', fullName: 'Test', organizationName: testOrg
-      });
-      const loginRes = await request(TEST_BASE_URL).post('/api/v1/auth/login').send({
-        email: testEmail, password: 'TestPass123!'
-      });
-      token = loginRes.body.data?.accessToken;
-    }
+    token = await setupE2ETestToken('compliance');
   });
 
   test('GET /api/v1/compliance/export - returns PDF', async () => {

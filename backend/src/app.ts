@@ -91,7 +91,7 @@ app.get('/api/v1/health', (req, res) => {
   console.log(`[HEALTH] Responded to /api/v1/health in ${duration} ms`);
 });
 
-app.get('/api/ready', (req, res) => {
+const handleReadyRequest = (req: any, res: any) => {
   const start = performance.now();
   const dbStatus = dbHealth.isHealthy ? 'connected' : 'disconnected';
   const redisStatus = getRateLimitRedisStatus();
@@ -114,34 +114,11 @@ app.get('/api/ready', (req, res) => {
   }
   
   const duration = (performance.now() - start).toFixed(3);
-  console.log(`[HEALTH] Responded to /api/ready in ${duration} ms`);
-});
+  console.log(`[HEALTH] Responded to ${req.originalUrl || req.url} in ${duration} ms`);
+};
 
-app.get('/api/v1/ready', (req, res) => {
-  const start = performance.now();
-  const dbStatus = dbHealth.isHealthy ? 'connected' : 'disconnected';
-  const redisStatus = getRateLimitRedisStatus();
-
-  if (dbHealth.isHealthy) {
-    const isDegraded = redisStatus === 'degraded';
-    res.status(200).json({ 
-      status: isDegraded ? 'degraded' : 'ready', 
-      db: dbStatus, 
-      redis: redisStatus,
-      message: isDegraded ? 'Operational but distributed rate limiting is offline.' : 'Full system operational'
-    });
-  } else {
-    res.status(503).json({ 
-      status: 'unhealthy', 
-      db: dbStatus, 
-      redis: redisStatus, 
-      error: 'Critical database failure' 
-    });
-  }
-  
-  const duration = (performance.now() - start).toFixed(3);
-  console.log(`[HEALTH] Responded to /api/v1/ready in ${duration} ms`);
-});
+app.get('/api/ready', handleReadyRequest);
+app.get('/api/v1/ready', handleReadyRequest);
 
 console.log('[BOOT] Health endpoints active');
 

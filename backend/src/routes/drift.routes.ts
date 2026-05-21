@@ -51,11 +51,7 @@ router.get('/alerts/:agentId', authenticate, async (req: any, res) => {
   }
 });
 
-/**
- * PATCH /api/v1/drift/alerts/:id/resolve
- * Resolves an active drift alert.
- */
-router.patch('/alerts/:id/resolve', authenticate, async (req: any, res) => {
+const resolveDriftAlert = async (req: any, res: any) => {
   try {
     const { id } = req.params;
     const organizationId = req.user.organizationId;
@@ -77,61 +73,40 @@ router.patch('/alerts/:id/resolve', authenticate, async (req: any, res) => {
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
-});
+};
+
+const runDriftScanAndGetAlerts = async (req: any, res: any) => {
+  try {
+    const organizationId = req.user.organizationId;
+    const scanResult = await DriftAlertService.runDriftScan(organizationId);
+
+    const alerts = await prisma.drift_alerts.findMany({
+      where: { organizationId, status: 'open' },
+      orderBy: { detectedAt: 'desc' },
+    });
+
+    res.json({ success: true, scanResult, alerts, data: alerts });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+/**
+ * PATCH /api/v1/drift/alerts/:id/resolve
+ * Resolves an active drift alert.
+ */
+router.patch('/alerts/:id/resolve', authenticate, resolveDriftAlert);
 
 /**
  * POST /api/v1/drift/scan
  * Manually triggers a behavioral drift scan for the organization.
  */
-router.post('/scan', authenticate, async (req: any, res) => {
-  try {
-    const organizationId = req.user.organizationId;
-    const scanResult = await DriftAlertService.runDriftScan(organizationId);
-
-    const alerts = await prisma.drift_alerts.findMany({
-      where: { organizationId, status: 'open' },
-      orderBy: { detectedAt: 'desc' },
-    });
-
-    res.json({ success: true, scanResult, alerts, data: alerts });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
+router.post('/scan', authenticate, runDriftScanAndGetAlerts);
 
 // Backward-compatibility alias for POST /detect
-router.post('/detect', authenticate, async (req: any, res) => {
-  try {
-    const organizationId = req.user.organizationId;
-    const scanResult = await DriftAlertService.runDriftScan(organizationId);
-    const alerts = await prisma.drift_alerts.findMany({
-      where: { organizationId, status: 'open' },
-      orderBy: { detectedAt: 'desc' },
-    });
-    res.json({ success: true, scanResult, alerts, data: alerts });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
+router.post('/detect', authenticate, runDriftScanAndGetAlerts);
 
 // Backward-compatibility alias for POST /resolve/:id
-router.post('/resolve/:id', authenticate, async (req: any, res) => {
-  try {
-    const { id } = req.params;
-    const organizationId = req.user.organizationId;
-
-    const alert = await prisma.drift_alerts.findFirst({ where: { id, organizationId } });
-    if (!alert) return res.status(404).json({ error: 'Drift alert not found' });
-
-    const updated = await prisma.drift_alerts.update({
-      where: { id },
-      data: { status: 'resolved' },
-    });
-
-    res.json({ success: true, data: updated });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
+router.post('/resolve/:id', authenticate, resolveDriftAlert);
 
 export default router;
