@@ -88,7 +88,7 @@ export const TenantService = {
       await seedOrganizationGovernance(createdOrg.id, tx);
 
       return createdOrg;
-    });
+    }, { timeout: 35000 });
 
     logger.info(`[TenantService] Created org ${org.slug} (${org.id}) and seeded governance frameworks`);
     return org;

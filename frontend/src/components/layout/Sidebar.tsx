@@ -1,9 +1,9 @@
 import { useNavigate, NavLink } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  ShieldAlert, 
-  ClipboardCheck, 
-  EyeOff, 
+import {
+  LayoutDashboard,
+  ShieldAlert,
+  ClipboardCheck,
+  EyeOff,
   LogOut,
   ChevronRight,
   ShieldCheck,
@@ -12,7 +12,6 @@ import {
   Settings2,
   Activity,
   Bot,
-  Columns,
   Building2,
   ListTodo,
   GitPullRequestDraft,
@@ -37,7 +36,7 @@ const operationsItems = [
 const governanceItems = [
   { icon: Bot, label: 'AI Registry', path: '/app/ai-registry' },
   { icon: Award, label: 'Risk Audits', path: '/app/risk-assessment' },
-  { icon: Columns, label: 'Impact Boards', path: '/app/impact-assessments' },
+  { icon: LayoutKanban, label: 'Impact Boards', path: '/app/impact-assessments' },
   { icon: ShieldCheck, label: 'Controls', path: '/app/controls' },
   { icon: Building2, label: 'Vendor Risk', path: '/app/vendor-risk' },
   { icon: ListTodo, label: 'Obligations', path: '/app/obligations' },
@@ -60,10 +59,10 @@ export function Sidebar() {
 
   const userInitials = user?.fullName
     ? user.fullName
-        .split(' ')
-        .map((n: string) => n[0])
-        .join('')
-        .toUpperCase()
+      .split(' ')
+      .map((n: string) => n[0])
+      .join('')
+      .toUpperCase()
     : 'AD';
 
   return (
@@ -83,7 +82,7 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 space-y-6 px-3 pt-6 overflow-y-auto custom-scrollbar pb-6">
-        
+
         {/* Operations Section */}
         <div>
           <p className="px-4 mb-2 text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400 opacity-80">Security Operations</p>
@@ -95,8 +94,8 @@ export function Sidebar() {
                 end={item.path === '/app'}
                 className={({ isActive }) => cn(
                   "group flex items-center justify-between px-4 py-2 rounded transition-all duration-200",
-                  isActive 
-                    ? "bg-[#2563eb] text-white shadow-md shadow-black/10" 
+                  isActive
+                    ? "bg-[#2563eb] text-white shadow-md shadow-black/10"
                     : "text-[var(--lavender)] hover:bg-[#334155]/60 hover:text-white"
                 )}
               >
@@ -123,8 +122,8 @@ export function Sidebar() {
                 to={item.path}
                 className={({ isActive }) => cn(
                   "group flex items-center justify-between px-4 py-2 rounded transition-all duration-200",
-                  isActive 
-                    ? "bg-[#8b5cf6] text-white shadow-md shadow-black/10" 
+                  isActive
+                    ? "bg-[#8b5cf6] text-white shadow-md shadow-black/10"
                     : "text-[var(--lavender)] hover:bg-[#334155]/60 hover:text-white"
                 )}
               >
@@ -149,8 +148,8 @@ export function Sidebar() {
               to="/app/settings"
               className={({ isActive }) => cn(
                 "group flex items-center justify-between px-4 py-2 rounded transition-all duration-200",
-                isActive 
-                  ? "bg-[#64748b] text-white shadow-md shadow-black/10" 
+                isActive
+                  ? "bg-[#64748b] text-white shadow-md shadow-black/10"
                   : "text-[var(--lavender)] hover:bg-[#334155]/60 hover:text-white"
               )}
             >
@@ -170,7 +169,7 @@ export function Sidebar() {
 
       {/* Footer Profile */}
       <div className="p-4 border-t border-white/5 bg-[#0f172a]/20">
-        <div 
+        <div
           role="button"
           tabIndex={0}
           onClick={handleLogout}

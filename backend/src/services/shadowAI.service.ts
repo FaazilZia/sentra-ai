@@ -17,6 +17,13 @@ export interface ShadowAIDetectionsResult {
     action: string;
     reason: string;
   }>;
+  scanner_ready: boolean;
+  detections: Array<{
+    name: string;
+    risk_level: string;
+    count: number;
+    last_detected: Date;
+  }>;
 }
 
 export const ShadowAIService = {
@@ -38,6 +45,8 @@ export const ShadowAIService = {
           timelineData: [],
           deptData: [],
           incidents: [],
+          scanner_ready: false,
+          detections: [],
         };
       }
 
@@ -154,6 +163,24 @@ export const ShadowAIService = {
 
       logger.info(`[ShadowAIService] Scan completed. Unauthorized tools: ${uniqueTools.size}, Security interceptions: ${securityInterceptionsCount}`);
 
+      // Compute detections list
+      const detectionsMap: Record<string, { name: string; risk_level: string; count: number; last_detected: Date }> = {};
+      for (const log of shadowLogs) {
+        if (!detectionsMap[log.agent]) {
+          detectionsMap[log.agent] = {
+            name: log.agent,
+            risk_level: log.risk || 'MEDIUM',
+            count: 0,
+            last_detected: log.timestamp,
+          };
+        }
+        detectionsMap[log.agent].count++;
+        if (log.risk?.toUpperCase() === 'HIGH') {
+          detectionsMap[log.agent].risk_level = 'HIGH';
+        }
+      }
+      const detections = Object.values(detectionsMap);
+
       return {
         unauthorizedToolsCount: uniqueTools.size,
         uniqueUsersCount: uniqueUsers.size,
@@ -161,6 +188,8 @@ export const ShadowAIService = {
         timelineData: timelineDataSorted,
         deptData: deptDataFormatted,
         incidents: incidentsList,
+        scanner_ready: true,
+        detections,
       };
     } catch (error) {
       logger.error(`[ShadowAIService] Failed to perform Shadow AI scan:`, error);

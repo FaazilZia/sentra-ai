@@ -293,82 +293,100 @@ export async function seedOrganizationGovernance(organizationId: string, txClien
     logger.info(`[GovernanceSeeder] Starting seeding for org ${organizationId}`);
 
     const runSeeding = async (tx: any) => {
-      // 1. Seed Controls
-      const createdControlsMap = new Map<string, string>(); // framework_control_id -> UUID
-      
-      for (const ctrl of BASELINE_CONTROLS) {
-        const dbCtrl = await tx.controls.upsert({
-          where: {
-            organizationId_framework_control_id: {
-              organizationId,
-              framework: ctrl.framework,
-              control_id: ctrl.control_id,
-            },
-          },
-          create: {
-            id: randomUUID(),
-            organizationId,
-            framework: ctrl.framework,
-            control_id: ctrl.control_id,
-            title: ctrl.title,
-            description: ctrl.description,
-            category: ctrl.category,
-          },
-          update: {}, // Skip updates if already present
-        });
-        
-        const mapKey = `${ctrl.framework}_${ctrl.control_id}`;
-        createdControlsMap.set(mapKey, dbCtrl.id);
+      // 1. Fetch all existing controls, control implementations, and compliance obligations in single queries
+      const [existingControls, existingImplementations, existingObligations] = await Promise.all([
+        tx.controls.findMany({ where: { organizationId } }),
+        tx.control_implementations.findMany({ where: { organizationId } }),
+        tx.compliance_obligations.findMany({ where: { organizationId } })
+      ]);
 
-        // Seed default Control Implementation with status NOT_STARTED
-        await tx.control_implementations.upsert({
-          where: {
-            organizationId_control_id: {
-              organizationId,
-              control_id: dbCtrl.id,
-            },
-          },
-          create: {
-            id: randomUUID(),
-            organizationId,
-            control_id: dbCtrl.id,
-            status: 'NOT_STARTED',
-            evidence: '[]',
-          },
-          update: {},
-        });
+      const existingControlsMap = new Map<string, string>(
+        existingControls.map((c: any) => [`${c.framework}_${c.control_id}`, c.id])
+      );
+      const existingImplementationsSet = new Set<string>(
+        existingImplementations.map((ci: any) => ci.control_id)
+      );
+      const existingObligationsSet = new Set<string>(
+        existingObligations.map((o: any) => `${o.framework}_${o.article_or_task}`)
+      );
+
+      const controlsPromises: Promise<any>[] = [];
+      const implPromises: Promise<any>[] = [];
+      const createdControlsMap = new Map<string, string>();
+
+      for (const ctrl of BASELINE_CONTROLS) {
+        const mapKey = `${ctrl.framework}_${ctrl.control_id}`;
+        let controlId = existingControlsMap.get(mapKey);
+
+        if (!controlId) {
+          controlId = randomUUID();
+          controlsPromises.push(
+            tx.controls.create({
+              data: {
+                id: controlId,
+                organizationId,
+                framework: ctrl.framework,
+                control_id: ctrl.control_id,
+                title: ctrl.title,
+                description: ctrl.description,
+                category: ctrl.category,
+              },
+            })
+          );
+        }
+        createdControlsMap.set(mapKey, controlId);
+
+        if (!existingImplementationsSet.has(controlId)) {
+          implPromises.push(
+            tx.control_implementations.create({
+              data: {
+                id: randomUUID(),
+                organizationId,
+                control_id: controlId,
+                status: 'NOT_STARTED',
+                evidence: '[]',
+              },
+            })
+          );
+        }
+      }
+
+      // Execute controls creation concurrently
+      if (controlsPromises.length > 0) {
+        await Promise.all(controlsPromises);
+      }
+      if (implPromises.length > 0) {
+        await Promise.all(implPromises);
       }
 
       // 2. Seed Compliance Obligations
+      const obligationsPromises: Promise<any>[] = [];
       for (const ob of BASELINE_OBLIGATIONS) {
-        let linkedControlId: string | null = null;
-        if (ob.linked_control_code) {
-          const mapKey = `${ob.framework}_${ob.linked_control_code}`;
-          linkedControlId = createdControlsMap.get(mapKey) || null;
+        const obKey = `${ob.framework}_${ob.article_or_task}`;
+        if (!existingObligationsSet.has(obKey)) {
+          let linkedControlId: string | null = null;
+          if (ob.linked_control_code) {
+            const mapKey = `${ob.framework}_${ob.linked_control_code}`;
+            linkedControlId = createdControlsMap.get(mapKey) || null;
+          }
+          obligationsPromises.push(
+            tx.compliance_obligations.create({
+              data: {
+                id: randomUUID(),
+                organizationId,
+                framework: ob.framework,
+                article_or_task: ob.article_or_task,
+                description: ob.description,
+                status: 'PENDING',
+                linked_control_id: linkedControlId,
+              },
+            })
+          );
         }
+      }
 
-        // Check if obligation already exists to prevent duplicate entries
-        const existing = await tx.compliance_obligations.findFirst({
-          where: {
-            organizationId,
-            framework: ob.framework,
-            article_or_task: ob.article_or_task,
-          },
-        });
-
-        if (!existing) {
-          await tx.compliance_obligations.create({
-            data: {
-              id: randomUUID(),
-              organizationId,
-              framework: ob.framework,
-              article_or_task: ob.article_or_task,
-              description: ob.description,
-              status: 'PENDING',
-              linked_control_id: linkedControlId,
-            },
-          });
-        }
+      if (obligationsPromises.length > 0) {
+        await Promise.all(obligationsPromises);
       }
     };
 
@@ -377,7 +395,7 @@ export async function seedOrganizationGovernance(organizationId: string, txClien
     } else {
       await prisma.$transaction(async (tx) => {
         await runSeeding(tx);
-      });
+      }, { timeout: 35000 });
     }
 
     logger.info(`[GovernanceSeeder] Finished seeding controls and obligations successfully for org ${organizationId}`);

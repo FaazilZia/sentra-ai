@@ -22,6 +22,8 @@ import {
   createImpactAssessment,
   updateImpactAssessment,
   deleteImpactAssessment,
+  submitImpactAssessment,
+  approveImpactAssessment,
   listControls,
   createControl,
   updateControlImplementation,
@@ -46,6 +48,8 @@ router.put('/risk-assessments/:id/submit', authenticate, validate(submitRiskAsse
 router.get('/impact-assessments', authenticate, listImpactAssessments);
 router.post('/impact-assessments', authenticate, validate(createImpactAssessmentSchema), createImpactAssessment);
 router.patch('/impact-assessments/:id', authenticate, validate(updateImpactAssessmentSchema), updateImpactAssessment);
+router.patch('/impact-assessments/:id/submit', authenticate, submitImpactAssessment);
+router.patch('/impact-assessments/:id/approve', authenticate, approveImpactAssessment);
 router.delete('/impact-assessments/:id', authenticate, deleteImpactAssessment);
 
 // Controls Library & Implementations

@@ -13,7 +13,7 @@ export const triggerEvaluation = asyncHandler(async (req: any, res: Response) =>
     runType: runType || 'MANUAL',
     triggeredBy: req.user.id,
   });
-  return sendSuccess(res, { runId }, 202, 'Evaluation started');
+  return res.status(202).json({ status: "queued", runId });
 });
 
 export const listRuns = asyncHandler(async (req: any, res: Response) => {

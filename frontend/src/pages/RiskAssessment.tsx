@@ -307,25 +307,25 @@ export default function RiskAssessment() {
               <div className="flex flex-col gap-2 bg-black/20 p-3.5 rounded-xl border border-gray-800/60 mt-1">
                 <div className="flex justify-between items-center">
                   <span className="font-semibold text-emerald-400">LOW TIER</span>
-                  <span className="text-gray-500 font-mono">0 - 35 pts</span>
+                  <span className="text-gray-500 font-mono">0 - 30 pts</span>
                 </div>
                 <p className="text-[10px] text-gray-500">Internal utility pipelines or heavily audited sandboxes with active masking/filtering.</p>
                 
                 <div className="flex justify-between items-center mt-1">
                   <span className="font-semibold text-yellow-400">MEDIUM TIER</span>
-                  <span className="text-gray-500 font-mono">36 - 65 pts</span>
+                  <span className="text-gray-500 font-mono">31 - 60 pts</span>
                 </div>
                 <p className="text-[10px] text-gray-500">Standard customer interactions with active logging and human-in-the-loop review.</p>
 
                 <div className="flex justify-between items-center mt-1">
                   <span className="font-semibold text-orange-400">HIGH TIER</span>
-                  <span className="text-gray-500 font-mono">66 - 85 pts</span>
+                  <span className="text-gray-500 font-mono">61 - 80 pts</span>
                 </div>
                 <p className="text-[10px] text-gray-500">HR, evaluation, access control or financial data pipelines. Requires rigorous auditing.</p>
 
                 <div className="flex justify-between items-center mt-1">
                   <span className="font-semibold text-red-400">CRITICAL TIER</span>
-                  <span className="text-gray-500 font-mono">86 - 100 pts</span>
+                  <span className="text-gray-500 font-mono">81 - 100 pts</span>
                 </div>
                 <p className="text-[10px] text-gray-500">Highly autonomous systems processing sensitive health, financial or biometrics pipelines.</p>
               </div>

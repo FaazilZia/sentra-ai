@@ -93,6 +93,33 @@ export const updateImpactAssessment = asyncHandler(async (req: any, res: Respons
   return sendSuccess(res, item);
 });
 
+export const submitImpactAssessment = asyncHandler(async (req: any, res: Response) => {
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) return sendError(res, 400, 'Company context required');
+
+  const { id } = req.params;
+  const item = await GovernanceService.updateImpactAssessment(id, organizationId, {
+    status: 'IN_REVIEW'
+  });
+  if (!item) return sendError(res, 404, 'Impact assessment not found');
+
+  return sendSuccess(res, item);
+});
+
+export const approveImpactAssessment = asyncHandler(async (req: any, res: Response) => {
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) return sendError(res, 400, 'Company context required');
+
+  const { id } = req.params;
+  const item = await GovernanceService.updateImpactAssessment(id, organizationId, {
+    status: 'APPROVED',
+    reviewed_by: req.user?.email || 'admin@sentra.ai'
+  });
+  if (!item) return sendError(res, 404, 'Impact assessment not found');
+
+  return sendSuccess(res, item);
+});
+
 export const deleteImpactAssessment = asyncHandler(async (req: any, res: Response) => {
   const organizationId = await resolveOrganizationId(req);
   if (!organizationId) return sendError(res, 400, 'Company context required');

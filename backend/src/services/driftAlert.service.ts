@@ -1,11 +1,13 @@
 import prisma from '../config/db';
 import logger from '../utils/logger';
 import { DriftScoringService } from './driftScoring.service';
+import { getRedisClient } from '../config/redis';
 
 export interface DriftScanResult {
   scannedCount: number;
   alertsCreated: number;
   alertsUpdated: number;
+  message?: string;
 }
 
 export class DriftAlertService {
@@ -14,6 +16,25 @@ export class DriftAlertService {
    * If driftScore > riskThreshold, creates or updates an open alert.
    */
   static async runDriftScan(organizationId?: string): Promise<DriftScanResult> {
+    const redis = getRedisClient();
+    const lockKey = organizationId ? `drift-scan:lock:org:${organizationId}` : null;
+    let acquired = false;
+
+    if (redis && lockKey) {
+      // TTL is 10 minutes (600 seconds)
+      const res = await redis.set(lockKey, 'locked', 'EX', 600, 'NX');
+      if (!res) {
+        logger.info(`[DRIFT ALERT] Drift scan for organization ${organizationId} was deduplicated (skipped concurrent run).`);
+        return {
+          scannedCount: 0,
+          alertsCreated: 0,
+          alertsUpdated: 0,
+          message: 'Deduplicated simultaneous scan job'
+        };
+      }
+      acquired = true;
+    }
+
     try {
       logger.info(`[DRIFT ALERT] Starting drift scan... organizationId: ${organizationId || 'all'}`);
 
@@ -94,6 +115,10 @@ export class DriftAlertService {
     } catch (error) {
       logger.error(`[DRIFT ALERT] Drift scan failed:`, error);
       throw error;
+    } finally {
+      if (redis && lockKey && acquired) {
+        await redis.del(lockKey);
+      }
     }
   }
 }

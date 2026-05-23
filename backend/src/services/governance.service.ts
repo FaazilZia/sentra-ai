@@ -95,11 +95,11 @@ export const GovernanceService = {
     const totalScore = savedAnswers.reduce((sum, ans) => sum + ans.score, 0);
 
     // Score classification
-    // 0-35: LOW | 36-65: MEDIUM | 66-85: HIGH | 86-100: CRITICAL
+    // 0-30: LOW | 31-60: MEDIUM | 61-80: HIGH | 81-100: CRITICAL
     let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'MEDIUM';
-    if (totalScore <= 35) riskLevel = 'LOW';
-    else if (totalScore <= 65) riskLevel = 'MEDIUM';
-    else if (totalScore <= 85) riskLevel = 'HIGH';
+    if (totalScore <= 30) riskLevel = 'LOW';
+    else if (totalScore <= 60) riskLevel = 'MEDIUM';
+    else if (totalScore <= 80) riskLevel = 'HIGH';
     else riskLevel = 'CRITICAL';
 
     // 3. Update assessment and corresponding AI System risk tier
