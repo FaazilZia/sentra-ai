@@ -21,6 +21,13 @@ import inventoryRoutes from './routes/inventory.routes';
 import alertRoutes from './routes/alert.routes';
 import driftRoutes from './routes/drift.routes';
 import complianceRoutes from './routes/compliance.routes';
+import shadowAIRoutes from './routes/shadowAI.routes';
+import aiSystemRoutes from './routes/aiSystem.routes';
+import governanceRoutes from './routes/governance.routes';
+import ssoRoutes from './routes/sso.routes';
+import executiveReportRoutes from './routes/executiveReport.routes';
+import publicRoutes from './routes/public.routes';
+
 import guardrailRoutes from './routes/guardrail.routes';
 import riskRoutes from './routes/risk.routes';
 import intelligenceRoutes from './routes/intelligence.routes';
@@ -30,6 +37,8 @@ import rbacRoutes from './routes/rbac.routes';
 import auditRoutes from './routes/audit.routes';
 import workflowRoutes from './routes/workflow.routes';
 import evaluationRoutes from './routes/evaluation.routes';
+import evaluationsRoutes from './routes/evaluations.routes';
+
 import superadminRoutes from './routes/superadmin.routes';
 import metricsRoutes from './routes/metrics.routes';
 import prisma, { dbHealth } from './config/db';
@@ -220,6 +229,13 @@ v1Router.use('/compliance', complianceRoutes);
 v1Router.use('/guardrails', guardrailRoutes);
 v1Router.use('/risk', riskRoutes);
 v1Router.use('/intelligence', intelligenceRoutes);
+v1Router.use('/shadow-ai', shadowAIRoutes);
+v1Router.use('/ai-systems', aiSystemRoutes);
+v1Router.use('/governance', governanceRoutes);
+v1Router.use('/reports/executive', executiveReportRoutes);
+v1Router.use('/public', publicRoutes);
+v1Router.use('/', ssoRoutes);
+
 
 // ── Enterprise SaaS Routes ────────────────────
 v1Router.use('/tenant', tenantRoutes);
@@ -227,6 +243,8 @@ v1Router.use('/rbac', rbacRoutes);
 v1Router.use('/audit', auditRoutes);
 v1Router.use('/workflows', workflowRoutes);
 v1Router.use('/evaluation', evaluationRoutes);
+v1Router.use('/evaluations', evaluationsRoutes);
+
 v1Router.use('/superadmin', superadminRoutes);
 
 // Conditionally load demo routes (Strictly non-production)

@@ -16,6 +16,17 @@ const InventoryPage = lazy(() => import('./pages/Inventory'));
 const SettingsPage = lazy(() => import('./pages/Settings'));
 const DriftPage = lazy(() => import('./pages/Drift'));
 
+// Governance pages
+const AIRegistryPage = lazy(() => import('./pages/AIRegistry'));
+const RiskAssessmentPage = lazy(() => import('./pages/RiskAssessment'));
+const ImpactAssessmentsPage = lazy(() => import('./pages/ImpactAssessments'));
+const ControlsPage = lazy(() => import('./pages/Controls'));
+const VendorRiskPage = lazy(() => import('./pages/VendorRisk'));
+const ObligationsPage = lazy(() => import('./pages/Obligations'));
+const WorkflowsPage = lazy(() => import('./pages/Workflows'));
+const ExecutiveReportPage = lazy(() => import('./pages/ExecutiveReport'));
+const TrustPortalPage = lazy(() => import('./pages/TrustPortal'));
+
 import { ModalProvider } from './components/shared/ModalProvider';
 import { ToastProvider } from './components/shared/ToastProvider';
 
@@ -49,6 +60,9 @@ function AppRoutes() {
       <SidebarProvider>
         <Suspense fallback={<RouteFallback />}>
           <Routes>
+            {/* Standalone completely public trust portal bypasses app shell */}
+            <Route path="/public/:orgSlug/trust" element={<TrustPortalPage />} />
+
             <Route path="/login" element={!user ? <LoginPage /> : <Navigate to="/app" replace />} />
 
             <Route 
@@ -91,6 +105,47 @@ function AppRoutes() {
               element={user ? <AppLayout><InventoryPage /></AppLayout> : <Navigate to="/login" replace />}
             />
 
+            {/* Governance routes */}
+            <Route 
+              path="/app/ai-registry" 
+              element={user ? <AppLayout><AIRegistryPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/risk-assessment" 
+              element={user ? <AppLayout><RiskAssessmentPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/impact-assessments" 
+              element={user ? <AppLayout><ImpactAssessmentsPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/controls" 
+              element={user ? <AppLayout><ControlsPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/vendor-risk" 
+              element={user ? <AppLayout><VendorRiskPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/obligations" 
+              element={user ? <AppLayout><ObligationsPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/workflows" 
+              element={user ? <AppLayout><WorkflowsPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/executive-report" 
+              element={user ? <AppLayout><ExecutiveReportPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
             <Route path="/app/settings" element={user ? <AppLayout><SettingsPage /></AppLayout> : <Navigate to="/login" replace />} />
 
             <Route path="*" element={<Navigate to={user ? "/app" : "/login"} replace />} />
@@ -113,3 +168,4 @@ function App() {
 }
 
 export default App;
+

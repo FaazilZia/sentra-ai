@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 import dotenv from 'dotenv';
+import { seedOrganizationGovernance } from '../src/services/governanceSeed.service';
 
 dotenv.config();
 
@@ -135,6 +136,18 @@ async function main() {
   console.log(`✅ Demo API Key seeded (Prefix: demo, source: ${process.env.SEED_DEMO_API_KEY ? 'env' : 'auto-generated'})`);
   if (!process.env.SEED_DEMO_API_KEY) {
     console.log(`   Generated API Key: ${demoApiKey}`);
+  }
+
+  // 5. Seed baseline controls & obligations for all companies
+  console.log('🌱 Seeding baseline controls and obligations for all organizations...');
+  const allCompanies = await prisma.organizations.findMany();
+  for (const c of allCompanies) {
+    try {
+      await seedOrganizationGovernance(c.id, prisma);
+      console.log(`   Seeded governance frameworks for org: ${c.name} (${c.id})`);
+    } catch (e: any) {
+      console.error(`   Failed to seed governance frameworks for org ${c.name}:`, e.message);
+    }
   }
 
   console.log('\n🎉 Seed completed!');

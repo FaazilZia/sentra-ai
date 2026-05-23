@@ -26,6 +26,9 @@ export default function ShadowAI() {
   const [timelineData, setTimelineData] = useState<any[]>([]);
   const [deptData, setDeptData] = useState<any[]>([]);
   const [incidents, setIncidents] = useState<any[]>([]);
+  const [unauthorizedToolsCount, setUnauthorizedToolsCount] = useState(0);
+  const [uniqueUsersCount, setUniqueUsersCount] = useState(0);
+  const [securityInterceptionsCount, setSecurityInterceptionsCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -35,75 +38,19 @@ export default function ShadowAI() {
         const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
         const base = import.meta.env.VITE_API_URL || 'https://sentra-backend-node.onrender.com/api/v1';
 
-        // Fetch recent interception logs (last 7 days)
-        const logsRes = await fetch(`${base}/audit/logs?limit=100`, { headers });
-        const logsJson = await logsRes.json();
-        const rawLogs: any[] = logsJson?.data?.logs || logsJson?.logs || [];
-
-        // Build timeline: group blocked actions by day
-        const byDay: Record<string, { name: string; date: string; blocked: number; total: number; detections: number }> = {};
-        rawLogs.forEach((log: any) => {
-          const day = new Date(log.timestamp || log.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-          if (!byDay[day]) byDay[day] = { name: day, date: day, blocked: 0, total: 0, detections: 0 };
-          byDay[day].total++;
-          byDay[day].detections++;
-          if (log.status === 'blocked' || log.decision === 'BLOCK') byDay[day].blocked++;
-        });
-        setTimelineData(Object.values(byDay).slice(-7));
-
-        // Helper mapping function to derive department from agent name
-        const getDepartment = (log: any): string => {
-          if (log.department) return log.department;
-          const agent = (log.agent || '').toLowerCase();
-          if (agent.includes('gpt') || agent.includes('openai') || agent.includes('completion')) {
-            return 'AI/ML';
-          }
-          if (agent.includes('sql') || agent.includes('db') || agent.includes('database') || agent.includes('query')) {
-            return 'Data';
-          }
-          if (agent.includes('code') || agent.includes('git') || agent.includes('deploy') || agent.includes('ci')) {
-            return 'Engineering';
-          }
-          if (agent.includes('email') || agent.includes('slack') || agent.includes('notify') || agent.includes('message')) {
-            return 'Ops';
-          }
-          return 'General';
-        };
-
-        // Build dept data: group by derived/real department
-        const byDept: Record<string, number> = {};
-        rawLogs.forEach((log: any) => {
-          const dept = getDepartment(log);
-          byDept[dept] = (byDept[dept] || 0) + 1;
-        });
-
-        const colors = ['#6366f1', '#a855f7', '#ec4899', '#f43f5e', '#eab308'];
-        const totalLogs = rawLogs.length || 1;
-        const sorted = Object.entries(byDept)
-          .sort((a, b) => b[1] - a[1])
-          .map(([name, count], index) => ({
-            name,
-            count,
-            value: Math.round((count / totalLogs) * 100),
-            color: colors[index % colors.length]
-          }));
-        setDeptData(sorted);
-
-        // Build incidents: blocked actions as incident list
-        const blocked = rawLogs
-          .filter((log: any) => log.status === 'blocked' || log.decision === 'BLOCK')
-          .slice(0, 10)
-          .map((log: any) => ({
-            id: log.id || crypto.randomUUID(),
-            user: log.user_id || log.agent || 'Unknown User',
-            dept: getDepartment(log),
-            tool: log.tool || log.model || log.service || 'Unknown Tool',
-            time: new Date(log.timestamp || log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            severity: log.severity || 'High',
-            action: log.decision || log.status || 'BLOCK',
-            reason: log.reason || 'Policy violation',
-          }));
-        setIncidents(blocked);
+        const res = await fetch(`${base}/shadow-ai/detections`, { headers });
+        const json = await res.json();
+        
+        if (json.success) {
+          setTimelineData(json.timelineData || []);
+          setDeptData(json.deptData || []);
+          setIncidents(json.incidents || []);
+          setUnauthorizedToolsCount(json.unauthorizedToolsCount || 0);
+          setUniqueUsersCount(json.uniqueUsersCount || 0);
+          setSecurityInterceptionsCount(json.securityInterceptionsCount || 0);
+        } else {
+          console.error('[ShadowAI] API responded with failure:', json.error);
+        }
       } catch (err) {
         console.error('[ShadowAI] Failed to load data:', err);
       } finally {
@@ -112,6 +59,20 @@ export default function ShadowAI() {
     }
     loadShadowData();
   }, []);
+
+  const getDataLeakageRisk = () => {
+    if (unauthorizedToolsCount === 0) return 'NONE';
+    if (unauthorizedToolsCount > 5) return 'CRITICAL';
+    if (unauthorizedToolsCount > 2) return 'HIGH';
+    return 'MEDIUM';
+  };
+
+  const getRiskStatus = () => {
+    const risk = getDataLeakageRisk();
+    if (risk === 'NONE') return 'success';
+    if (risk === 'CRITICAL' || risk === 'HIGH') return 'danger';
+    return 'warning';
+  };
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in p-6">
@@ -135,25 +96,25 @@ export default function ShadowAI() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <KPICard 
           label="Unauthorized Tools" 
-          value="0" 
+          value={String(unauthorizedToolsCount)} 
           icon="shadow" 
-          status="danger" 
+          status={unauthorizedToolsCount > 0 ? "danger" : "success"} 
         />
         <KPICard 
           label="Unique Users" 
-          value="0" 
+          value={String(uniqueUsersCount)} 
           icon="systems" 
           status="primary" 
         />
         <KPICard 
           label="Data Leakage Risk" 
-          value="N/A" 
+          value={getDataLeakageRisk()} 
           icon="risks" 
-          status="danger" 
+          status={getRiskStatus()} 
         />
         <KPICard 
           label="Security Interceptions" 
-          value="0" 
+          value={String(securityInterceptionsCount)} 
           icon="compliance" 
           status="success" 
         />

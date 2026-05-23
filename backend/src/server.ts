@@ -60,7 +60,8 @@ import app from './app';
 import logger from './utils/logger';
 import prisma, { initializePrisma } from './config/db';
 import { setupScheduledJobs } from './services/queue.service';
-import { setupConnectorWorkers, setupDriftWorker } from './workers/worker.manager';
+import { setupConnectorWorkers, setupDriftWorker, setupEvaluationWorker } from './workers/worker.manager';
+
 import { alertService } from './services/alert.service';
 import { verifyAccessToken } from './utils/jwt';
 import { redisHealthCheck } from './config/redis';
@@ -193,7 +194,9 @@ const startServer = async () => {
     // Initialize Background Workers & Schedules (Non-blocking)
     setupConnectorWorkers();
     setupDriftWorker();
+    setupEvaluationWorker();
     setupScheduledJobs().catch(err => logger.error('Failed to setup scheduled jobs:', err));
+
 
     // SMTP Validation
     alertService.verifyConnection().catch(err => logger.error('SMTP Verification failed:', err));

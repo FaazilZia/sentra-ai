@@ -3,6 +3,7 @@ import * as crypto from 'crypto';
 import prisma from '../config/db';
 import logger from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
+import { seedOrganizationGovernance } from './governanceSeed.service';
 
 // ─────────────────────────────────────────────
 // Tenant Context
@@ -49,40 +50,47 @@ export const TenantService = {
     ownerId?: string;
     plan?: string;
   }) {
-    const org = await prisma.organizations.create({
-      data: {
-        id: randomUUID(),
-        name: params.name,
-        slug: params.slug,
-        is_active: true,
-        plan: params.plan || 'free',
-      },
+    const org = await prisma.$transaction(async (tx) => {
+      const createdOrg = await tx.organizations.create({
+        data: {
+          id: randomUUID(),
+          name: params.name,
+          slug: params.slug,
+          is_active: true,
+          plan: params.plan || 'free',
+        },
+      });
+
+      // Create default workspace
+      await tx.workspaces.create({
+        data: {
+          id: randomUUID(),
+          organizationId: createdOrg.id,
+          name: 'Default',
+          slug: 'default',
+          is_default: true,
+          is_active: true,
+        },
+      });
+
+      // Seed default org settings
+      await tx.org_settings.create({
+        data: {
+          organizationId: createdOrg.id,
+          mfa_required: false,
+          session_timeout_minutes: 1440,
+          data_retention_days: 90,
+          audit_export_enabled: true,
+        },
+      });
+
+      // Seed baseline controls and obligations
+      await seedOrganizationGovernance(createdOrg.id, tx);
+
+      return createdOrg;
     });
 
-    // Create default workspace
-    await prisma.workspaces.create({
-      data: {
-        id: randomUUID(),
-        organizationId: org.id,
-        name: 'Default',
-        slug: 'default',
-        is_default: true,
-        is_active: true,
-      },
-    });
-
-    // Seed default org settings
-    await prisma.org_settings.create({
-      data: {
-        organizationId: org.id,
-        mfa_required: false,
-        session_timeout_minutes: 1440,
-        data_retention_days: 90,
-        audit_export_enabled: true,
-      },
-    });
-
-    logger.info(`[TenantService] Created org ${org.slug} (${org.id})`);
+    logger.info(`[TenantService] Created org ${org.slug} (${org.id}) and seeded governance frameworks`);
     return org;
   },
 

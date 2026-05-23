@@ -30,10 +30,12 @@ if (REDIS_URL) {
 export const activityQueue = connection ? new Queue('activity-logs', { connection }) : null;
 export const connectorQueue = connection ? new Queue('connector-scans', { connection }) : null;
 export const driftQueue = connection ? new Queue('drift-scans', { connection }) : null;
+export const evaluationQueue = connection ? new Queue('evaluation-runs', { connection }) : null;
 
 if (activityQueue) activityQueue.on('error', (err) => logger.warn('[BULLMQ] activityQueue connection issue:', err));
 if (connectorQueue) connectorQueue.on('error', (err) => logger.warn('[BULLMQ] connectorQueue connection issue:', err));
 if (driftQueue) driftQueue.on('error', (err) => logger.warn('[BULLMQ] driftQueue connection issue:', err));
+if (evaluationQueue) evaluationQueue.on('error', (err) => logger.warn('[BULLMQ] evaluationQueue connection issue:', err));
 
 /**
  * Worker to process activity logs asynchronously.

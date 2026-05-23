@@ -7,6 +7,8 @@ import { processSqlScan } from './sql.worker';
 import { processGDriveScan } from './gdrive.worker';
 import { buildRedisOptions, getRedisUrl } from '../config/redis';
 import { DriftAlertService } from '../services/driftAlert.service';
+import { EvaluationService } from '../services/evaluation.service';
+
 
 const REDIS_URL = getRedisUrl();
 
@@ -181,7 +183,29 @@ export function setupDriftWorker() {
     'drift-scans',
     async (job: Job) => {
       logger.info(`[DRIFT WORKER] Running drift scan background job ${job.id}...`);
-      await DriftAlertService.runDriftScan();
+      const activeOrgs = await prisma.organizations.findMany({
+        where: { is_active: true }
+      });
+      
+      for (const org of activeOrgs) {
+        const lockKey = `drift-scan:lock:org:${org.id}`;
+        
+        // Try to acquire lock for 10 minutes (600s)
+        const acquired = await connection.set(lockKey, 'locked', 'EX', 600, 'NX');
+        if (!acquired) {
+          logger.info(`[DRIFT WORKER] Drift scan for organization ${org.name} (${org.id}) is already running or locked. Skipping.`);
+          continue;
+        }
+
+        try {
+          logger.info(`[DRIFT WORKER] Triggering drift scan for active organization: ${org.name} (${org.id})`);
+          await DriftAlertService.runDriftScan(org.id);
+        } catch (err) {
+          logger.error(`[DRIFT WORKER] Drift scan failed for organization ${org.name} (${org.id}):`, err);
+        } finally {
+          await connection.del(lockKey);
+        }
+      }
     },
     { connection, concurrency: 1 }
   );
@@ -200,3 +224,43 @@ export function setupDriftWorker() {
 
   return driftWorker;
 }
+
+export function setupEvaluationWorker() {
+  if (!REDIS_URL) {
+    logger.warn('Skipping Evaluation Worker (Redis offline)');
+    return;
+  }
+
+  const connection = new IORedis(REDIS_URL, buildRedisOptions({
+    maxRetriesPerRequest: null,
+    enableOfflineQueue: true,
+  }));
+  connection.on('error', (err) => {
+    logger.warn('Evaluation Worker Redis Connection Error:', err);
+  });
+
+  const evaluationWorker = new Worker(
+    'evaluation-runs',
+    async (job: Job) => {
+      const { runId, organizationId, datasetId } = job.data;
+      logger.info(`[EVALUATION WORKER] Executing evaluation run ${runId} for org ${organizationId}...`);
+      await EvaluationService.executeEvaluationRun(runId, organizationId, datasetId);
+    },
+    { connection, concurrency: 2 }
+  );
+
+  evaluationWorker.on('completed', (job) => {
+    logger.info(`[EVALUATION WORKER] Job ${job.id} completed successfully`);
+  });
+
+  evaluationWorker.on('failed', (job, err) => {
+    logger.error(`[EVALUATION WORKER] Job ${job?.id} failed:`, err);
+  });
+
+  evaluationWorker.on('error', (err) => {
+    logger.warn('[BULLMQ] evaluation-runs worker error:', err);
+  });
+
+  return evaluationWorker;
+}
+

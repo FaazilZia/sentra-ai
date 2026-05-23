@@ -10,12 +10,20 @@ import {
   FileText,
   Box,
   Settings2,
-  Activity
+  Activity,
+  Bot,
+  Columns,
+  Building2,
+  ListTodo,
+  GitPullRequestDraft,
+  BarChart3,
+  Globe,
+  Award
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth';
 
-const navItems = [
+const operationsItems = [
   { icon: LayoutDashboard, label: 'Overview', path: '/app' },
   { icon: FileText, label: 'Policies', path: '/app/policies' },
   { icon: ShieldCheck, label: 'Guardrails', path: '/app/guardrails' },
@@ -24,7 +32,17 @@ const navItems = [
   { icon: Activity, label: 'Drift Detection', path: '/app/drift' },
   { icon: EyeOff, label: 'Shadow AI', path: '/app/shadow' },
   { icon: Box, label: 'Inventory', path: '/app/inventory' },
-  { icon: Settings2, label: 'Settings', path: '/app/settings' },
+];
+
+const governanceItems = [
+  { icon: Bot, label: 'AI Registry', path: '/app/ai-registry' },
+  { icon: Award, label: 'Risk Audits', path: '/app/risk-assessment' },
+  { icon: Columns, label: 'Impact Boards', path: '/app/impact-assessments' },
+  { icon: ShieldCheck, label: 'Controls', path: '/app/controls' },
+  { icon: Building2, label: 'Vendor Risk', path: '/app/vendor-risk' },
+  { icon: ListTodo, label: 'Obligations', path: '/app/obligations' },
+  { icon: GitPullRequestDraft, label: 'Approvals', path: '/app/workflows' },
+  { icon: BarChart3, label: 'Executive Report', path: '/app/executive-report' },
 ];
 
 export function Sidebar() {
@@ -49,9 +67,9 @@ export function Sidebar() {
     : 'AD';
 
   return (
-    <aside className="fixed left-0 top-0 z-50 h-screen w-[var(--sidebar-width)] bg-[#2D3AC0]/95 backdrop-blur-xl border-r border-white/5 flex flex-col transition-all duration-300 hidden lg:flex shadow-2xl shadow-black/5">
+    <aside className="fixed left-0 top-0 z-50 h-screen w-[var(--sidebar-width)] bg-[#1e293b] backdrop-blur-xl border-r border-white/5 flex flex-col transition-all duration-300 hidden lg:flex shadow-2xl shadow-black/5">
       {/* Brand Logo */}
-      <div className="flex h-[var(--topbar-height)] items-center px-6 border-b border-white/5">
+      <div className="flex h-[var(--topbar-height)] items-center px-6 border-b border-white/5 bg-[#0f172a]/20">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded bg-[var(--mid-indigo)] text-white shadow-lg shadow-indigo-500/20">
             <ShieldCheck className="h-5 w-5" />
@@ -64,34 +82,94 @@ export function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1.5 px-3 pt-8">
-        <p className="px-4 mb-4 text-[9px] font-black uppercase tracking-[0.2em] text-[var(--lavender)] opacity-40">Main Interface</p>
-        {navItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            end={item.path === '/app'}
-            className={({ isActive }) => cn(
-              "group flex items-center justify-between px-4 py-2.5 rounded transition-all duration-200",
-              isActive 
-                ? "bg-[var(--mid-indigo)] text-white shadow-md shadow-black/10" 
-                : "text-[var(--lavender)] hover:bg-[var(--soft-indigo)] hover:text-white"
-            )}
-          >
-            <div className="flex items-center gap-3">
-              <item.icon className={cn(
-                "h-4 w-4 transition-transform group-hover:scale-110",
-                "text-current"
-              )} />
-              <span className="text-[11px] font-bold uppercase tracking-widest">{item.label}</span>
-            </div>
-            <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-40 transition-opacity" />
-          </NavLink>
-        ))}
+      <nav className="flex-1 space-y-6 px-3 pt-6 overflow-y-auto custom-scrollbar pb-6">
+        
+        {/* Operations Section */}
+        <div>
+          <p className="px-4 mb-2 text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400 opacity-80">Security Operations</p>
+          <div className="space-y-1">
+            {operationsItems.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                end={item.path === '/app'}
+                className={({ isActive }) => cn(
+                  "group flex items-center justify-between px-4 py-2 rounded transition-all duration-200",
+                  isActive 
+                    ? "bg-[#2563eb] text-white shadow-md shadow-black/10" 
+                    : "text-[var(--lavender)] hover:bg-[#334155]/60 hover:text-white"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <item.icon className={cn(
+                    "h-4 w-4 transition-transform group-hover:scale-110",
+                    "text-current"
+                  )} />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">{item.label}</span>
+                </div>
+                <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-40 transition-opacity" />
+              </NavLink>
+            ))}
+          </div>
+        </div>
+
+        {/* Governance Section */}
+        <div>
+          <p className="px-4 mb-2 text-[9px] font-black uppercase tracking-[0.2em] text-purple-400 opacity-80">AI Governance</p>
+          <div className="space-y-1">
+            {governanceItems.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={({ isActive }) => cn(
+                  "group flex items-center justify-between px-4 py-2 rounded transition-all duration-200",
+                  isActive 
+                    ? "bg-[#8b5cf6] text-white shadow-md shadow-black/10" 
+                    : "text-[var(--lavender)] hover:bg-[#334155]/60 hover:text-white"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <item.icon className={cn(
+                    "h-4 w-4 transition-transform group-hover:scale-110",
+                    "text-current"
+                  )} />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">{item.label}</span>
+                </div>
+                <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-40 transition-opacity" />
+              </NavLink>
+            ))}
+          </div>
+        </div>
+
+        {/* System Settings Section */}
+        <div>
+          <p className="px-4 mb-2 text-[9px] font-black uppercase tracking-[0.2em] text-gray-500 opacity-80">System Config</p>
+          <div className="space-y-1">
+            <NavLink
+              to="/app/settings"
+              className={({ isActive }) => cn(
+                "group flex items-center justify-between px-4 py-2 rounded transition-all duration-200",
+                isActive 
+                  ? "bg-[#64748b] text-white shadow-md shadow-black/10" 
+                  : "text-[var(--lavender)] hover:bg-[#334155]/60 hover:text-white"
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <Settings2 className={cn(
+                  "h-4 w-4 transition-transform group-hover:scale-110",
+                  "text-current"
+                )} />
+                <span className="text-[10px] font-bold uppercase tracking-widest">Settings</span>
+              </div>
+              <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-40 transition-opacity" />
+            </NavLink>
+          </div>
+        </div>
+
       </nav>
 
       {/* Footer Profile */}
-      <div className="p-4 border-t border-white/5 bg-black/5">
+      <div className="p-4 border-t border-white/5 bg-[#0f172a]/20">
         <div 
           role="button"
           tabIndex={0}
@@ -99,7 +177,7 @@ export function Sidebar() {
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleLogout(); } }}
           className="flex items-center gap-3 p-2 rounded hover:bg-white/5 transition-colors cursor-pointer group"
         >
-          <div className="h-8 w-8 rounded bg-[var(--mid-indigo)] border border-white/10 flex items-center justify-center text-[10px] font-black text-white">
+          <div className="h-8 w-8 rounded bg-[#4f46e5] border border-white/10 flex items-center justify-center text-[10px] font-black text-white">
             {userInitials}
           </div>
           <div className="flex-1 min-w-0">
@@ -112,3 +190,4 @@ export function Sidebar() {
     </aside>
   );
 }
+

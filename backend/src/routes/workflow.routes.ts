@@ -6,11 +6,16 @@ import {
   createTask, listTasks, getTask,
   submitForReview, approveTask, rejectTask,
   assignTask, getTaskHistory,
+  listPendingWorkflows, resolveWorkflow
 } from '../controllers/workflow.controller';
 
 const router = Router();
 
 router.use(authenticate, requireTenant);
+
+// ── Governance Human Oversight ────────────────
+router.get('/pending', requirePermission('compliance', 'read'), listPendingWorkflows);
+router.post('/:id/resolve', requirePermission('compliance', 'update'), resolveWorkflow);
 
 // ── Task CRUD ─────────────────────────────────
 router.get('/', requirePermission('compliance', 'read'), listTasks);
@@ -27,3 +32,4 @@ router.patch('/:id/assign', requirePermission('compliance', 'update'), assignTas
 router.get('/:id/history', requirePermission('compliance', 'read'), getTaskHistory);
 
 export default router;
+

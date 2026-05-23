@@ -2,6 +2,8 @@ import { randomUUID } from 'crypto';
 import prisma from '../config/db';
 import logger from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
+import { evaluationQueue } from './queue.service';
+import { makeDecision } from './decisionEngine';
 
 // ─────────────────────────────────────────────
 // Built-in Benchmark Test Cases
@@ -137,30 +139,58 @@ export const EvaluationService = {
   }): Promise<string> {
     const runId = randomUUID();
 
-    // Create run record
-    const run = await prisma.evaluation_runs.create({
+    // Create run record with 'queued' state
+    await prisma.evaluation_runs.create({
       data: {
         id: runId,
         organizationId: params.organizationId,
         agent_id: params.agentId,
         dataset_id: params.datasetId,
         run_type: params.runType || 'MANUAL',
-        status: 'running',
+        status: 'queued',
         triggered_by: params.triggeredBy,
         started_at: new Date(),
       },
     });
 
-    // Run async (non-blocking)
-    this._executeEvaluation(run.id, params.organizationId, params.datasetId).catch((err) => {
-      logger.error(`[Evaluation] Run ${run.id} failed:`, err);
-    });
+    // Enqueue BullMQ job
+    if (evaluationQueue) {
+      try {
+        await evaluationQueue.add(`evaluation-run-${runId}`, {
+          runId,
+          organizationId: params.organizationId,
+          datasetId: params.datasetId,
+        });
+        logger.info(`[Evaluation] Enqueued evaluation run ${runId} in BullMQ`);
+      } catch (err: any) {
+        logger.warn(`[Evaluation] BullMQ enqueue failed, falling back to async execution:`, err.message);
+        // Fallback to async background execution
+        this.executeEvaluationRun(runId, params.organizationId, params.datasetId).catch((fallbackErr) => {
+          logger.error(`[Evaluation] Fallback run ${runId} failed:`, fallbackErr);
+        });
+      }
+    } else {
+      logger.info(`[Evaluation] Redis offline, running evaluation ${runId} asynchronously`);
+      this.executeEvaluationRun(runId, params.organizationId, params.datasetId).catch((fallbackErr) => {
+        logger.error(`[Evaluation] Fallback run ${runId} failed:`, fallbackErr);
+      });
+    }
 
     return runId;
   },
 
   async _executeEvaluation(runId: string, organizationId: string, datasetId?: string) {
+    return this.executeEvaluationRun(runId, organizationId, datasetId);
+  },
+
+  async executeEvaluationRun(runId: string, organizationId: string, datasetId?: string) {
     try {
+      // Set run status to running
+      await prisma.evaluation_runs.update({
+        where: { id: runId },
+        data: { status: 'running' },
+      });
+
       // Fetch test cases
       let testCases: any[] = [];
 
@@ -177,9 +207,16 @@ export const EvaluationService = {
       let failed = 0;
 
       for (const tc of testCases) {
-        const safety = this.scorePromptSafety(tc.input);
-        const actualDecision = safety.score >= 25 ? 'BLOCKED' : 'ALLOWED';
+        // Evaluate via the real makeDecision engine!
+        const agentName = 'eval-agent';
+        const decision = await makeDecision(agentName, tc.input, organizationId, { prompt: tc.input });
+        
+        const actualDecision = decision.status === 'blocked' ? 'BLOCKED' : 'ALLOWED';
         const testPassed = actualDecision === tc.expected || tc.expected === 'FLAGGED';
+
+        // Calculate a score: if test passed, high score; else lower score
+        const safetyScore = decision.risk === 'high' ? 80 : (decision.risk === 'medium' ? 40 : 10);
+        const score = testPassed ? 100 - safetyScore : safetyScore;
 
         results.push({
           id: randomUUID(),
@@ -190,9 +227,9 @@ export const EvaluationService = {
           expected: tc.expected,
           actual: actualDecision,
           passed: testPassed,
-          score: testPassed ? 100 - safety.score : safety.score,
-          risk_level: safety.riskLevel,
-          details: { flags: safety.flags, safetyScore: safety.score },
+          score,
+          risk_level: decision.risk,
+          details: { flags: decision.compliance, explanation: decision.explanation },
         });
 
         if (testPassed) passed++;
@@ -217,7 +254,7 @@ export const EvaluationService = {
         },
       });
 
-      logger.info(`[Evaluation] Run ${runId} completed: ${passed}/${testCases.length} passed (${governanceScore.toFixed(1)}%)`);
+      logger.info(`[Evaluation] BullMQ Run ${runId} completed: ${passed}/${testCases.length} passed (${governanceScore.toFixed(1)}%)`);
 
     } catch (err) {
       await prisma.evaluation_runs.update({

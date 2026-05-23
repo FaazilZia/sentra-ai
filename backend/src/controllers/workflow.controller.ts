@@ -99,3 +99,37 @@ export const getTaskHistory = asyncHandler(async (req: any, res: Response) => {
     throw e;
   }
 });
+
+export const listPendingWorkflows = asyncHandler(async (req: any, res: Response) => {
+  const orgId = getOrgId(req);
+  const tasks = await WorkflowService.listPendingTasks(orgId);
+  return sendSuccess(res, { items: tasks });
+});
+
+export const resolveWorkflow = asyncHandler(async (req: any, res: Response) => {
+  const orgId = getOrgId(req);
+  const { id } = req.params;
+  const { decision, comment } = req.body;
+
+  if (!decision || !['APPROVED', 'REJECTED'].includes(decision)) {
+    return sendError(res, 400, 'Decision must be either APPROVED or REJECTED');
+  }
+
+  try {
+    const result = await WorkflowService.resolveTask(
+      id,
+      orgId,
+      decision,
+      req.user.id,
+      req.user.role,
+      comment
+    );
+    return sendSuccess(res, result);
+  } catch (e: any) {
+    if (e.message?.includes('not found')) {
+      return sendError(res, 404, e.message);
+    }
+    return sendError(res, 400, e.message);
+  }
+});
+

@@ -1,6 +1,7 @@
 import { makeDecision } from '../services/decisionEngine';
 import { enqueueLog } from '../services/queue.service';
 import { alertService } from '../services/alert.service';
+import { WorkflowService } from '../services/workflow.service';
 
 /**
  * Core interception layer for AI actions.
@@ -31,6 +32,12 @@ export async function interceptAction(input: any, callback: () => Promise<any>) 
     // Async alerting (fire and forget)
     alertService.notify(organizationId, decision, agent, action);
 
+    if (decision.isPendingApproval) {
+      await WorkflowService.createPendingWorkflowTask(organizationId, agent, action, decision, metadata).catch(err => {
+        console.error('[Interceptor] Failed to create pending workflow task:', err);
+      });
+    }
+
     await enqueueLog({
       organizationId,
       agent,
@@ -49,6 +56,7 @@ export async function interceptAction(input: any, callback: () => Promise<any>) 
     });
     return decision;
   }
+
 
   // 3. Execute the actual action (callback)
   let result;

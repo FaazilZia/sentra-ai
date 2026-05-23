@@ -296,4 +296,104 @@ export const WorkflowService = {
       orderBy: { created_at: 'desc' },
     });
   },
+
+  async listPendingTasks(organizationId: string) {
+    return prisma.workflow_tasks.findMany({
+      where: {
+        organizationId,
+        state: 'PENDING_REVIEW',
+        category: 'GOVERNANCE',
+      },
+      orderBy: { created_at: 'desc' },
+    });
+  },
+
+  async resolveTask(
+    taskId: string,
+    organizationId: string,
+    decision: 'APPROVED' | 'REJECTED',
+    actorId: string,
+    actorRole: string,
+    comment?: string
+  ) {
+    const task = await prisma.workflow_tasks.findFirst({
+      where: { id: taskId, organizationId },
+    });
+    if (!task) throw new Error('Workflow task not found');
+
+    const toState = decision === 'APPROVED' ? 'APPROVED' : 'REJECTED';
+
+    const [updatedTask] = await prisma.$transaction([
+      prisma.workflow_tasks.update({
+        where: { id: taskId },
+        data: { state: toState, updated_at: new Date() },
+      }),
+      prisma.workflow_state_history.create({
+        data: {
+          task_id: taskId,
+          from_state: task.state,
+          to_state: toState,
+          actor_id: actorId,
+          comment: comment || `Governance resolved as ${decision}`,
+          metadata: { role: actorRole },
+        },
+      }),
+    ]);
+
+    await auditLogger.log({
+      organizationId,
+      userId: actorId,
+      action: `GOVERNANCE_RESOLVE:${decision}`,
+      eventType: 'GOVERNANCE',
+      severity: 'info',
+      resourceType: 'workflow_task',
+      resourceId: taskId,
+      outcome: 'success',
+      metadata: { decision, comment },
+    });
+
+    return updatedTask;
+  },
+
+  async createPendingWorkflowTask(
+    organizationId: string,
+    agent: string,
+    action: string,
+    decision: any,
+    metadata: any
+  ) {
+    const adminUser = await prisma.users.findFirst({
+      where: { organizationId, role: 'ADMIN', is_active: true }
+    }) || await prisma.users.findFirst({
+      where: { organizationId, is_active: true }
+    });
+
+    const createdBy = adminUser?.id;
+    if (!createdBy) {
+      throw new Error('No active user found in organization to assign task creation');
+    }
+
+    return prisma.workflow_tasks.create({
+      data: {
+        id: randomUUID(),
+        organizationId,
+        title: `Pending Approval: ${agent} - ${action}`,
+        description: `Action blocked by governance due to high risk. Human review required. Reason: ${decision.reason}`,
+        state: 'PENDING_REVIEW',
+        priority: 'high',
+        category: 'GOVERNANCE',
+        framework: decision.compliance?.[0] || 'GENERAL',
+        created_by: createdBy,
+        metadata: {
+          agent,
+          action,
+          organizationId,
+          decision,
+          metadata,
+        },
+      },
+    });
+  },
 };
+
+
