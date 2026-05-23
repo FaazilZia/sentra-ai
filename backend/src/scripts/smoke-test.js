@@ -21,7 +21,7 @@ async function test(name, fn) {
       warnings++;
     }
   } catch (e) {
-    console.log(`  ❌ ${name}: ${String(e.message).substring(0, 200).replace(/[\n\r]/g, ' ')}`); // NOSONAR - test output
+    console.log(`  ❌ ${name}: ${String(e.message).substring(0, 200).replaceAll(/[\n\r]/g, ' ')}`); // NOSONAR - test output
     failed++;
   }
 }

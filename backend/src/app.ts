@@ -123,7 +123,7 @@ const handleReadyRequest = (req: any, res: any) => {
   }
   
   const duration = (performance.now() - start).toFixed(3);
-  const sanitizedUrl = String(req.originalUrl || req.url).replace(/[\r\n]/g, '');
+  const sanitizedUrl = String(req.originalUrl || req.url).replaceAll(/[\r\n]/g, '');
   console.log(`[HEALTH] Responded to ${sanitizedUrl} in ${duration} ms`);
 };
 

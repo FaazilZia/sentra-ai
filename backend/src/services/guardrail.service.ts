@@ -116,7 +116,7 @@ export class GuardrailService {
             decision = 'MODIFY';
             policy_triggered = policy.id;
             reason = `Action modified: sensitive data masked for safety`;
-            processedText = processedText.replace(pattern, (match) => {
+            processedText = processedText.replaceAll(pattern, (match) => {
               return match[0] + '***' + (match.includes('@') ? match.split('@')[1] : '');
             });
           }

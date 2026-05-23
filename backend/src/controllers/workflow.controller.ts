@@ -45,10 +45,14 @@ export const submitForReview = asyncHandler(async (req: any, res: Response) => {
   }
 });
 
-export const approveTask = asyncHandler(async (req: any, res: Response) => {
+const handleWorkflowTransition = async (
+  req: any,
+  res: Response,
+  actionFn: (args: any) => Promise<any>
+) => {
   const orgId = getOrgId(req);
   try {
-    const result = await WorkflowService.approveTask({
+    const result = await actionFn({
       taskId: req.params.id,
       organizationId: orgId,
       reviewerId: req.user.id,
@@ -62,26 +66,15 @@ export const approveTask = asyncHandler(async (req: any, res: Response) => {
     }
     throw e;
   }
+};
+
+export const approveTask = asyncHandler(async (req: any, res: Response) => {
+  return await handleWorkflowTransition(req, res, WorkflowService.approveTask);
 });
 
 export const rejectTask = asyncHandler(async (req: any, res: Response) => {
   if (!req.body.comment) return sendError(res, 400, 'Rejection comment required');
-  const orgId = getOrgId(req);
-  try {
-    const result = await WorkflowService.rejectTask({
-      taskId: req.params.id,
-      organizationId: orgId,
-      reviewerId: req.user.id,
-      reviewerRole: req.user.role,
-      comment: req.body.comment,
-    });
-    return sendSuccess(res, result);
-  } catch (e: any) {
-    if (e.message?.includes('transition') || e.message?.includes('Role')) {
-      return sendError(res, 400, e.message);
-    }
-    throw e;
-  }
+  return await handleWorkflowTransition(req, res, WorkflowService.rejectTask);
 });
 
 export const assignTask = asyncHandler(async (req: any, res: Response) => {

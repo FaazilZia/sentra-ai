@@ -3,6 +3,7 @@ import prisma from '../config/db';
 import logger from '../utils/logger';
 import { decrypt } from '../utils/encryption';
 import { interceptAction } from '../middleware/interceptor';
+import { updateConnectorTelemetry } from './worker.manager';
 
 const MAX_ROWS_PER_TABLE = 50;
 const COST_PER_QUERY = 0.0001; // Internal resource cost estimate
@@ -60,17 +61,7 @@ export async function processSqlScan(connectorId: string) {
     const scanConfidence = tablesScanned === tablesToScan.length ? 0.98 : 0.70;
     const scanCost = (apiCalls * COST_PER_QUERY);
 
-    await prisma.connectors.update({
-      where: { id: connectorId },
-      data: {
-        last_scan_at: new Date().toISOString(),
-        status: 'active',
-        total_api_calls: connector.total_api_calls + apiCalls,
-        estimated_cost: connector.estimated_cost + scanCost,
-        daily_cost_total: connector.daily_cost_total + scanCost,
-        last_confidence: scanConfidence
-      }
-    });
+    await updateConnectorTelemetry(connectorId, apiCalls, scanCost, scanConfidence, 'active');
 
   } catch (error) {
     logger.error(`SQL Scan failed for ${connectorId}:`, error);

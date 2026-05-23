@@ -81,7 +81,7 @@ const seedDefaultPolicy = async (tx: any, organizationId: string) => {
   });
 };
 
-const setAuthCookiesAndTokens = async (
+export const setAuthCookiesAndTokens = async (
   res: Response,
   user: { id: string; role: string; organizationId: string },
   req?: Request,

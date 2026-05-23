@@ -17,7 +17,7 @@ export function Header() {
           <Link to="/app" className="hover:text-[var(--royal-indigo)] transition-colors">Governance Workspace</Link>
           {pathnames.map((name, index) => {
             const isLast = index === pathnames.length - 1;
-            const label = name.replace('-', ' ');
+            const label = name.replaceAll('-', ' ');
             
             return (
               <div key={name} className="flex items-center gap-2">

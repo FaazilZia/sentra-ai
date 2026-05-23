@@ -34,7 +34,7 @@ test.describe('Sentra AI Real-time Dashboard', () => {
     await expect(blockedCountLocator).toBeVisible({ timeout: 20000 });
     
     const initialText = await blockedCountLocator.innerText();
-    const initialCount = Number.parseInt(initialText.replace(/,/g, ''), 10) || 0;
+    const initialCount = Number.parseInt(initialText.replaceAll(',', ''), 10) || 0;
     console.log(`Initial blocked count: ${initialCount}`);
 
     // 4. Simulate a malicious prompt via Backend API (outside browser)
@@ -54,7 +54,7 @@ test.describe('Sentra AI Real-time Dashboard', () => {
     // 5. Verify the UI updates
     console.log('Waiting for real-time UI update (up to 45s)...');
     await expect(async () => {
-      const text = (await blockedCountLocator.innerText()).replace(/,/g, '');
+      const text = (await blockedCountLocator.innerText()).replaceAll(',', '');
       const newCount = Number.parseInt(text, 10) || 0;
       console.log(`Checking UI count: ${newCount} (vs initial ${initialCount})`);
       expect(newCount).toBeGreaterThan(initialCount);

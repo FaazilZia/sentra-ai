@@ -264,3 +264,33 @@ export function setupEvaluationWorker() {
   return evaluationWorker;
 }
 
+export async function updateConnectorTelemetry(
+  connectorId: string,
+  apiCalls: number,
+  scanCost: number,
+  scanConfidence: number,
+  status: string = 'active',
+  bytesScanned: bigint = BigInt(0)
+) {
+  const connector = await prisma.connectors.findUnique({ where: { id: connectorId } });
+  if (!connector) return;
+
+  const dataToUpdate: any = {
+    last_scan_at: new Date().toISOString(),
+    status,
+    total_api_calls: connector.total_api_calls + apiCalls,
+    estimated_cost: connector.estimated_cost + scanCost,
+    daily_cost_total: connector.daily_cost_total + scanCost,
+    last_confidence: scanConfidence,
+  };
+
+  if (bytesScanned > BigInt(0)) {
+    dataToUpdate.total_data_scanned = connector.total_data_scanned + bytesScanned;
+  }
+
+  await prisma.connectors.update({
+    where: { id: connectorId },
+    data: dataToUpdate,
+  });
+}
+

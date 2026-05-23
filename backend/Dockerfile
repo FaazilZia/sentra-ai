@@ -7,10 +7,13 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openssl python3 make g++ \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && chown -R node:node /app
 
-COPY package*.json ./
-COPY prisma ./prisma/
+USER node
+
+COPY --chown=node:node package*.json ./
+COPY --chown=node:node prisma ./prisma/
 
 RUN npm ci --production=false
 
@@ -22,10 +25,13 @@ FROM node:20-slim AS builder
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends openssl \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && chown -R node:node /app
 
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+USER node
+
+COPY --chown=node:node --from=deps /app/node_modules ./node_modules
+COPY --chown=node:node . .
 
 RUN npx prisma generate
 RUN npm run build
@@ -41,16 +47,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl \
     && rm -rf /var/lib/apt/lists/* \
     # Create non-root user
     && groupadd --gid 1001 sentra \
-    && useradd --uid 1001 --gid sentra --shell /bin/bash --create-home sentra
+    && useradd --uid 1001 --gid sentra --shell /bin/bash --create-home sentra \
+    && mkdir -p /tmp && chmod 1777 /tmp \
+    && chown -R sentra:sentra /app
 
 # Copy only production artifacts
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules ./node_modules
-
-# Ensure tmp dir is writable by non-root
-RUN mkdir -p /tmp && chmod 1777 /tmp
+COPY --chown=sentra:sentra --from=builder /app/package*.json ./
+COPY --chown=sentra:sentra --from=builder /app/dist ./dist
+COPY --chown=sentra:sentra --from=builder /app/prisma ./prisma
+COPY --chown=sentra:sentra --from=builder /app/node_modules ./node_modules
 
 USER sentra
 

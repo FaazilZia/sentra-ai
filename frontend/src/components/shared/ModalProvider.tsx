@@ -38,7 +38,7 @@ export function ModalProvider() {
           {/* Header */}
           <div className="px-8 py-6 border-b border-[var(--border-default)] flex items-center justify-between bg-[var(--bg-page)]">
             <h3 className="text-[var(--text-sm)] font-bold uppercase tracking-[0.1em] text-[var(--text-primary)]">
-              {type?.replace(/_/g, ' ')}
+              {type?.replaceAll('_', ' ')}
             </h3>
             <button 
               onClick={closeModal}

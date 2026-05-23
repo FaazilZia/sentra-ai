@@ -3,6 +3,33 @@ import { randomUUID, createHash } from 'crypto';
 import prisma from '../config/db';
 import { asyncHandler, sendSuccess } from '../utils/controllerHelpers';
 
+const createConsentRecord = async (
+  userId: string,
+  action: 'GRANT' | 'WITHDRAW',
+  noticeVersion: string,
+  req: any,
+  extraMetadata: Record<string, any> = {}
+) => {
+  const timestamp = new Date().toISOString();
+  const hashInput = `${userId}-${action}-${timestamp}-${noticeVersion}`;
+  const hash = createHash('sha256').update(hashInput).digest('hex');
+
+  return await prisma.consent_records.create({
+    data: {
+      id: randomUUID(),
+      user_id: userId,
+      action,
+      notice_version: noticeVersion,
+      hashing_chain: hash,
+      metadata_json: {
+        ip: req.ip,
+        userAgent: req.get('user-agent'),
+        ...extraMetadata
+      },
+    },
+  });
+};
+
 export const getConsentHistory = asyncHandler(async (req: any, res: Response) => {
   const history = await prisma.consent_records.findMany({
     where: { user_id: req.user.id },
@@ -25,20 +52,7 @@ export const grantConsent = asyncHandler(async (req: any, res: Response) => {
   const action = 'GRANT';
   const noticeVersion = '1.0.0';
   
-  const timestamp = new Date().toISOString();
-  const hashInput = `${userId}-${action}-${timestamp}-${noticeVersion}`;
-  const hash = createHash('sha256').update(hashInput).digest('hex');
-
-  await prisma.consent_records.create({
-    data: {
-      id: randomUUID(),
-      user_id: userId,
-      action,
-      notice_version: noticeVersion,
-      hashing_chain: hash,
-      metadata_json: { ip: req.ip, userAgent: req.get('user-agent') },
-    },
-  });
+  await createConsentRecord(userId, action, noticeVersion, req);
 
   return sendSuccess(res, undefined, 201, 'Consent granted successfully');
 });
@@ -48,20 +62,7 @@ export const withdrawConsent = asyncHandler(async (req: any, res: Response) => {
   const action = 'WITHDRAW';
   const noticeVersion = '1.0.0';
   
-  const timestamp = new Date().toISOString();
-  const hashInput = `${userId}-${action}-${timestamp}-${noticeVersion}`;
-  const hash = createHash('sha256').update(hashInput).digest('hex');
-
-  await prisma.consent_records.create({
-    data: {
-      id: randomUUID(),
-      user_id: userId,
-      action,
-      notice_version: noticeVersion,
-      hashing_chain: hash,
-      metadata_json: { ip: req.ip, userAgent: req.get('user-agent'), reason: 'user_request' },
-    },
-  });
+  await createConsentRecord(userId, action, noticeVersion, req, { reason: 'user_request' });
   
   return sendSuccess(res, undefined, 201, 'Consent withdrawn successfully');
 });

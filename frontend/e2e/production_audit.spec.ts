@@ -54,7 +54,7 @@ test.describe('Sentra AI - Full Production Audit Flow', () => {
     await expect(blockedCountLocator).toBeVisible({ timeout: 15000 });
     
     const initialText = await blockedCountLocator.innerText();
-    const initialCount = Number.parseInt(initialText.replace(/,/g, ''), 10) || 0;
+    const initialCount = Number.parseInt(initialText.replaceAll(',', ''), 10) || 0;
 
     const token = await page.evaluate(() => localStorage.getItem('sentra_access_token'));
     if (!token) throw new Error('Auth token missing from localStorage');
@@ -73,7 +73,7 @@ test.describe('Sentra AI - Full Production Audit Flow', () => {
     // Verify UI update
     console.log('Waiting for UI increment...');
     await expect(async () => {
-      const text = (await blockedCountLocator.innerText()).replace(/,/g, '');
+      const text = (await blockedCountLocator.innerText()).replaceAll(',', '');
       const newCount = Number.parseInt(text, 10) || 0;
       expect(newCount).toBeGreaterThan(initialCount);
     }).toPass({ timeout: 30000, intervals: [2000] });

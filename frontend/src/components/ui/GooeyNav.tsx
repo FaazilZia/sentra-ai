@@ -42,7 +42,7 @@ const GooeyNav: React.FC<GooeyNavProps> = ({
   
   const [activeIndex, setActiveIndex] = useState(initialActiveIndex);
   const [isMounted, setIsMounted] = useState(false);
-  const filterId = useId().replace(/:/g, ''); // Generate unique clean ID for SVG filter
+  const filterId = useId().replaceAll(':', ''); // Generate unique clean ID for SVG filter
   
   const activeTimeouts = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
   const rafId = useRef<number | null>(null);

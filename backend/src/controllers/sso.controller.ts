@@ -1,53 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../config/db';
-import { generateAccessToken, generateRefreshToken } from '../utils/jwt';
 import { randomUUID } from 'crypto';
 import logger from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
-
-// Helper to set auth cookies and tokens
-const setSSOAuthCookies = async (
-  res: Response,
-  user: { id: string; role: string; organizationId: string }
-) => {
-  const role = user.role || 'VIEWER';
-  const accessToken = generateAccessToken({ id: user.id, role, organizationId: user.organizationId });
-  const refreshToken = generateRefreshToken({ id: user.id, organizationId: user.organizationId });
-
-  const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + 7);
-
-  await prisma.refreshToken.create({
-    data: {
-      token: refreshToken,
-      userId: user.id,
-      expiresAt,
-    },
-  });
-
-  const isProduction = process.env.NODE_ENV === 'production';
-  const cookieOptions: {
-    httpOnly: boolean;
-    secure: boolean;
-    sameSite: 'strict' | 'lax' | 'none';
-    maxAge: number;
-    path: string;
-  } = {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? 'none' : 'lax',
-    path: '/',
-    maxAge: 15 * 60 * 1000,
-  };
-
-  res.cookie('sentra_access_token', accessToken, cookieOptions);
-  res.cookie('sentra_refresh_token', refreshToken, {
-    ...cookieOptions,
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
-
-  return { accessToken, refreshToken };
-};
+import { setAuthCookiesAndTokens } from './auth.controller';
 
 // ==========================================
 // SAML 2.0 SSO CONTROLLER
@@ -236,7 +192,7 @@ export const samlCallback = async (req: Request, res: Response, next: NextFuncti
     }
 
     // Setup active session, set HTTP-only cookies
-    await setSSOAuthCookies(res, {
+    await setAuthCookiesAndTokens(res, {
       id: user.id,
       role: user.role,
       organizationId: user.organizationId,

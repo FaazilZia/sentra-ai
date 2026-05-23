@@ -140,7 +140,7 @@ export const inviteUser = asyncHandler(async (req: any, res: Response) => {
             </div>
           `
         });
-        console.log(`[TenantController] Invitation email sent to ${String(email).substring(0, 50).replace(/[^\w@.+-]/g, '')}`);
+        console.log(`[TenantController] Invitation email sent to ${String(email).substring(0, 50).replaceAll(/[^\w@.+-]/g, '')}`);
       } else {
         console.warn('[TenantController] SMTP_HOST not provided. Email invitation was not sent.');
       }

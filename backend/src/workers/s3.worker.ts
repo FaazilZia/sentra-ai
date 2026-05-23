@@ -3,6 +3,7 @@ import prisma from '../config/db';
 import logger from '../utils/logger';
 import { decrypt } from '../utils/encryption';
 import { interceptAction } from '../middleware/interceptor';
+import { updateConnectorTelemetry } from './worker.manager';
 
 const MAX_SCAN_ITEMS = 100;
 const COST_PER_S3_GET = 0.0000004; // AWS approximate cost per GET request
@@ -71,19 +72,8 @@ export async function processS3Scan(connectorId: string) {
 
   const scanCost = (apiCalls * COST_PER_S3_GET);
 
-  // Update Telemetry & Budget Accumulator
-  await prisma.connectors.update({
-    where: { id: connectorId },
-    data: {
-      last_scan_at: new Date().toISOString(),
-      status: totalItemsScanned >= MAX_SCAN_ITEMS ? 'active_partial' : 'active',
-      total_api_calls: connector.total_api_calls + apiCalls,
-      total_data_scanned: connector.total_data_scanned + bytesScanned,
-      estimated_cost: connector.estimated_cost + scanCost,
-      daily_cost_total: connector.daily_cost_total + scanCost,
-      last_confidence: scanConfidence
-    }
-  });
+  const status = totalItemsScanned >= MAX_SCAN_ITEMS ? 'active_partial' : 'active';
+  await updateConnectorTelemetry(connectorId, apiCalls, scanCost, scanConfidence, status, bytesScanned);
 
   // Adaptive logic: If violations spike, escalate priority
   if (totalViolations > 5 && connector.priority !== 'high') {

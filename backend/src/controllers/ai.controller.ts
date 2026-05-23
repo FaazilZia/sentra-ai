@@ -11,6 +11,58 @@ import { trackUsage } from '../utils/usage';
 import * as Sentry from '@sentry/node';
 import { updateBaseline, detectDrift, persistDriftAlerts } from '../services/driftDetection.service';
 
+const callOpenAiCompletions = async (
+  openaiKey: string,
+  organizationId: string,
+  messages: any[],
+  maxTokens: number,
+  maxRetries: number = 1,
+  timeoutMs: number = 8000
+): Promise<string> => {
+  const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const r = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${openaiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          max_tokens: maxTokens,
+        }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (r.ok) {
+        const data = (await r.json()) as any;
+        const text = data.choices?.[0]?.message?.content?.trim() || '';
+        
+        // Track Usage
+        const usage = data.usage;
+        if (usage) {
+          trackUsage(organizationId, usage.prompt_tokens, usage.completion_tokens);
+        }
+        return text;
+      } else {
+        throw new Error(`OpenAI API returned ${r.status}`);
+      }
+    } catch (e: any) {
+      clearTimeout(timeoutId);
+      if (attempt === maxRetries) throw e;
+      await new Promise(resolve => setTimeout(resolve, attempt === 0 ? 500 : 800));
+    }
+  }
+  throw new Error('Completions failed');
+};
+
 export const postCheckAction = async (req: any, res: Response, next: NextFunction) => {
   const { requestId, startTime } = req.context;
   const organizationId = await resolveOrganizationId(req);
@@ -38,59 +90,23 @@ export const postCheckAction = async (req: any, res: Response, next: NextFunctio
       if (openaiKey && openaiKey.length >= 10) {
         try {
           await runFairly(organizationId, async () => {
-            const maxRetries = 1; // Lower retries in high-load summary path
-            const timeoutMs = 8000;
-
-            for (let attempt = 0; attempt <= maxRetries; attempt++) {
-              const controller = new AbortController();
-              const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-              try {
-                const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-                const r = await fetch('https://api.openai.com/v1/chat/completions', {
-                  method: 'POST',
-                  headers: {
-                    Authorization: `Bearer ${openaiKey}`,
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    model,
-                    messages: [
-                      {
-                        role: 'system',
-                        content: 'You are a governance assistant. In one sentence, explain why this AI action was allowed or blocked.'
-                      },
-                      { 
-                        role: 'user', 
-                        content: `Action: ${action}, Agent: ${agent}, Decision: ALLOWED. Context: ${JSON.stringify(metadata)}` 
-                      },
-                    ],
-                    max_tokens: 100,
-                  }),
-                  signal: controller.signal
-                });
-
-                clearTimeout(timeoutId);
-
-                if (r.ok) {
-                  const data = (await r.json()) as any;
-                  ai_summary = data.choices?.[0]?.message?.content?.trim();
-                  
-                  // Track Usage
-                  const usage = data.usage;
-                  if (usage) {
-                    trackUsage(organizationId, usage.prompt_tokens, usage.completion_tokens);
-                  }
-                  break;
-                } else {
-                  throw new Error(`OpenAI API returned ${r.status}`);
-                }
-              } catch (e: any) {
-                clearTimeout(timeoutId);
-                if (attempt === maxRetries) throw e;
-                await new Promise(resolve => setTimeout(resolve, 500));
-              }
-            }
+            ai_summary = await callOpenAiCompletions(
+              openaiKey,
+              organizationId,
+              [
+                {
+                  role: 'system',
+                  content: 'You are a governance assistant. In one sentence, explain why this AI action was allowed or blocked.'
+                },
+                { 
+                  role: 'user', 
+                  content: `Action: ${action}, Agent: ${agent}, Decision: ALLOWED. Context: ${JSON.stringify(metadata)}` 
+                },
+              ],
+              100,
+              1,
+              8000
+            );
           });
         } catch (e: any) {
           logger.warn(`AI Summary generation skipped for org ${organizationId}: ${e.message}`);
@@ -419,60 +435,23 @@ export const postChat = async (req: any, res: Response, next: NextFunction) => {
     if (openaiKey && openaiKey.length >= 10) {
       try {
         const response = await runFairly(organizationId, async () => {
-          const maxRetries = 2;
-          const timeoutMs = 12000;
-
-          for (let attempt = 0; attempt <= maxRetries; attempt++) {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-            try {
-              const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-              const r = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                  Authorization: `Bearer ${openaiKey}`,
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  model,
-                  messages: [
-                    {
-                      role: 'system',
-                      content: `You are Sentra Copilot, an AI governance assistant. 
-                      Use this REAL-TIME CONTEXT to answer the user's questions:
-                      ${contextSummary}
-                      Answer clearly and concisely based on this data.`
-                    },
-                    { role: 'user', content: message },
-                  ],
-                  max_tokens: 600,
-                }),
-                signal: controller.signal
-              });
-
-              clearTimeout(timeoutId);
-
-              if (r.ok) {
-                const data = (await r.json()) as any;
-                const text = data.choices?.[0]?.message?.content?.trim() || '';
-                
-                // Track Usage
-                const usage = data.usage;
-                if (usage) {
-                  trackUsage(organizationId, usage.prompt_tokens, usage.completion_tokens);
-                }
-
-                return text;
-              } else {
-                throw new Error(`OpenAI API returned ${r.status}`);
-              }
-            } catch (e: any) {
-              clearTimeout(timeoutId);
-              if (attempt === maxRetries) throw e;
-              await new Promise(resolve => setTimeout(resolve, 800));
-            }
-          }
+          return await callOpenAiCompletions(
+            openaiKey,
+            organizationId,
+            [
+              {
+                role: 'system',
+                content: `You are Sentra Copilot, an AI governance assistant. 
+                Use this REAL-TIME CONTEXT to answer the user's questions:
+                ${contextSummary}
+                Answer clearly and concisely based on this data.`
+              },
+              { role: 'user', content: message },
+            ],
+            600,
+            2,
+            12000
+          );
         });
 
         if (response) {
