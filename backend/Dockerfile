@@ -12,8 +12,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 USER node
 
-COPY --chown=node:node package*.json ./
-COPY --chown=node:node prisma ./prisma/
+COPY --chown=node:node --chmod=644 package*.json ./
+COPY --chown=node:node --chmod=755 prisma ./prisma/
 
 RUN npm ci --production=false
 
@@ -30,8 +30,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl \
 
 USER node
 
-COPY --chown=node:node --from=deps /app/node_modules ./node_modules
-COPY --chown=node:node . .
+COPY --chown=node:node --chmod=755 --from=deps /app/node_modules ./node_modules
+COPY --chown=node:node --chmod=755 . .
 
 RUN npx prisma generate
 RUN npm run build
@@ -52,10 +52,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl \
     && chown -R sentra:sentra /app
 
 # Copy only production artifacts
-COPY --chown=sentra:sentra --from=builder /app/package*.json ./
-COPY --chown=sentra:sentra --from=builder /app/dist ./dist
-COPY --chown=sentra:sentra --from=builder /app/prisma ./prisma
-COPY --chown=sentra:sentra --from=builder /app/node_modules ./node_modules
+COPY --chown=sentra:sentra --chmod=644 --from=builder /app/package*.json ./
+COPY --chown=sentra:sentra --chmod=755 --from=builder /app/dist ./dist
+COPY --chown=sentra:sentra --chmod=755 --from=builder /app/prisma ./prisma
+COPY --chown=sentra:sentra --chmod=755 --from=builder /app/node_modules ./node_modules
 
 USER sentra
 

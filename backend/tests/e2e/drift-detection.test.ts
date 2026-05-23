@@ -12,10 +12,14 @@ describe('Drift Detection', () => {
     authToken = await setupE2ETestToken('drift');
   });
 
-  test('GET /api/v1/drift/alerts - returns alert list', async () => {
-    const res = await request(TEST_BASE_URL)
-      .get('/api/v1/drift/alerts')
+  const fetchDriftAlerts = (path = '/api/v1/drift/alerts') => {
+    return request(TEST_BASE_URL)
+      .get(path)
       .set('Authorization', `Bearer ${authToken}`);
+  };
+
+  test('GET /api/v1/drift/alerts - returns alert list', async () => {
+    const res = await fetchDriftAlerts();
 
     expect(res.status).toBe(200);
     // Support both old (data) and new (alerts) response shape
@@ -24,9 +28,7 @@ describe('Drift Detection', () => {
   });
 
   test('Drift alert contains required fields', async () => {
-    const res = await request(TEST_BASE_URL)
-      .get('/api/v1/drift/alerts')
-      .set('Authorization', `Bearer ${authToken}`);
+    const res = await fetchDriftAlerts();
 
     expect(res.status).toBe(200);
     const list = res.body.alerts ?? res.body.data;
@@ -56,9 +58,7 @@ describe('Drift Detection', () => {
 
     // High severity drift is detected asynchronously after action evaluation.
     // We verify the endpoint is healthy and returns expected shape.
-    const res = await request(TEST_BASE_URL)
-      .get('/api/v1/drift/alerts')
-      .set('Authorization', `Bearer ${authToken}`);
+    const res = await fetchDriftAlerts();
 
     expect(res.status).toBe(200);
     const list = res.body.alerts ?? res.body.data;
@@ -66,9 +66,7 @@ describe('Drift Detection', () => {
   });
 
   test('Drift alerts with status filter', async () => {
-    const res = await request(TEST_BASE_URL)
-      .get('/api/v1/drift/alerts?status=open')
-      .set('Authorization', `Bearer ${authToken}`);
+    const res = await fetchDriftAlerts('/api/v1/drift/alerts?status=open');
 
     expect(res.status).toBe(200);
     const list = res.body.alerts ?? res.body.data;

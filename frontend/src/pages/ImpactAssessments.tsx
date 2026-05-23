@@ -161,6 +161,14 @@ export default function ImpactAssessments() {
                     <div
                       key={ass.id}
                       onClick={() => setSelectedAssessment(ass)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setSelectedAssessment(ass);
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
                       className="bg-[#111827]/40 border border-gray-800/60 hover:border-indigo-500/40 p-4 rounded-xl cursor-pointer transition-all hover:-translate-y-0.5"
                     >
                       <div className="flex items-center justify-between gap-2">

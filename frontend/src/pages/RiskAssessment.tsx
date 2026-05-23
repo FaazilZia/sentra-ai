@@ -387,6 +387,14 @@ export default function RiskAssessment() {
                           <div
                             key={i}
                             onClick={() => handleSelectOption(questionKey, opt.text, opt.score)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                handleSelectOption(questionKey, opt.text, opt.score);
+                              }
+                            }}
+                            role="button"
+                            tabIndex={0}
                             className={`p-4 rounded-xl border transition-all cursor-pointer text-xs font-semibold leading-relaxed flex items-center justify-between gap-4 ${
                               isSelected 
                                 ? 'bg-indigo-950/20 border-indigo-500/60 text-white shadow-md' 

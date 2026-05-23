@@ -153,6 +153,12 @@ export const EvaluationService = {
       },
     });
 
+    const triggerFallbackRun = () => {
+      this.executeEvaluationRun(runId, params.organizationId, params.datasetId).catch((fallbackErr) => {
+        logger.error(`[Evaluation] Fallback run ${runId} failed:`, fallbackErr);
+      });
+    };
+
     // Enqueue BullMQ job
     if (evaluationQueue) {
       try {
@@ -165,15 +171,11 @@ export const EvaluationService = {
       } catch (err: any) {
         logger.warn(`[Evaluation] BullMQ enqueue failed, falling back to async execution:`, err.message);
         // Fallback to async background execution
-        this.executeEvaluationRun(runId, params.organizationId, params.datasetId).catch((fallbackErr) => {
-          logger.error(`[Evaluation] Fallback run ${runId} failed:`, fallbackErr);
-        });
+        triggerFallbackRun();
       }
     } else {
       logger.info(`[Evaluation] Redis offline, running evaluation ${runId} asynchronously`);
-      this.executeEvaluationRun(runId, params.organizationId, params.datasetId).catch((fallbackErr) => {
-        logger.error(`[Evaluation] Fallback run ${runId} failed:`, fallbackErr);
-      });
+      triggerFallbackRun();
     }
 
     return runId;

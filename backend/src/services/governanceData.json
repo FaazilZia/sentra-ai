@@ -1,0 +1,263 @@
+{
+  "controls": [
+    {
+      "framework": "NIST_AI_RMF",
+      "control_id": "NIST-GOV-1",
+      "title": "Establish Governance Policies",
+      "description": "Establish AI risk management governance policies, including organizational roles and alignment with risk appetite.",
+      "category": "GOVERN"
+    },
+    {
+      "framework": "NIST_AI_RMF",
+      "control_id": "NIST-MAP-1",
+      "title": "Map AI Context & Risks",
+      "description": "Map the AI system context, specify business goals, and categorize risks and potential negative impacts.",
+      "category": "MAP"
+    },
+    {
+      "framework": "NIST_AI_RMF",
+      "control_id": "NIST-MEASURE-1",
+      "title": "Measure trustworthiness",
+      "description": "Measure AI system trustworthiness, bias, robustness, and accuracy against standards before and during deployment.",
+      "category": "MEASURE"
+    },
+    {
+      "framework": "NIST_AI_RMF",
+      "control_id": "NIST-MANAGE-1",
+      "title": "Manage Operational Risks",
+      "description": "Manage risks of active systems, establish incident reporting pathways, and continuous validation pipelines.",
+      "category": "MANAGE"
+    },
+    {
+      "framework": "EU_AI_ACT",
+      "control_id": "EU-AIA-9",
+      "title": "Risk Management System",
+      "description": "Establish and maintain a continuous risk management system for high-risk AI systems.",
+      "category": "RISK_MANAGEMENT"
+    },
+    {
+      "framework": "EU_AI_ACT",
+      "control_id": "EU-AIA-10",
+      "title": "Data Governance Controls",
+      "description": "Enforce training data quality control, checking for bias, representation, and target security vectors.",
+      "category": "DATA_GOVERNANCE"
+    },
+    {
+      "framework": "EU_AI_ACT",
+      "control_id": "EU-AIA-11",
+      "title": "Technical Documentation",
+      "description": "Draft and compile comprehensive technical documentation demonstrating conformity before system deployment.",
+      "category": "COMPLIANCE_PROOF"
+    },
+    {
+      "framework": "EU_AI_ACT",
+      "control_id": "EU-AIA-12",
+      "title": "Automatic Logging & Auditing",
+      "description": "Enable automatic logging of system decisions, prompt/response telemetry, and lifecycle events.",
+      "category": "AUDITABILITY"
+    },
+    {
+      "framework": "EU_AI_ACT",
+      "control_id": "EU-AIA-13",
+      "title": "User Transparency Provisions",
+      "description": "Provide clear documentation on system behavior, scope, performance limitations, and intended use boundaries.",
+      "category": "TRANSPARENCY"
+    },
+    {
+      "framework": "EU_AI_ACT",
+      "control_id": "EU-AIA-14",
+      "title": "Human Oversight Mechanisms",
+      "description": "Design systems to allow effective human oversight, including intervention and operational bypass switches.",
+      "category": "HUMAN_OVERSIGHT"
+    },
+    {
+      "framework": "EU_AI_ACT",
+      "control_id": "EU-AIA-15",
+      "title": "Accuracy, Robustness & Security",
+      "description": "Maintain high standards of accuracy, cybersecurity, and resistance to adversarial prompt inputs.",
+      "category": "SECURITY"
+    },
+    {
+      "framework": "ISO_42001",
+      "control_id": "ISO-42001-A5",
+      "title": "AI Policy Alignment",
+      "description": "Draft, publish, and align organizational AI policies with overall business governance targets.",
+      "category": "POLICY"
+    },
+    {
+      "framework": "ISO_42001",
+      "control_id": "ISO-42001-A6",
+      "title": "Internal Roles Definition",
+      "description": "Define clear internal roles, responsibilities, and authorizations for AI system management.",
+      "category": "ROLES"
+    },
+    {
+      "framework": "ISO_42001",
+      "control_id": "ISO-42001-A7",
+      "title": "System Resources Audit",
+      "description": "Evaluate compute, dataset, human, and service resources required for the AI system lifecycle.",
+      "category": "RESOURCES"
+    },
+    {
+      "framework": "ISO_42001",
+      "control_id": "ISO-42001-A8",
+      "title": "Impact Assessment Workflow",
+      "description": "Design and document standardized templates for AI system impact assessments (DPIA / AIA).",
+      "category": "IMPACT"
+    },
+    {
+      "framework": "GDPR",
+      "control_id": "GDPR-ART-22",
+      "title": "Automated Decision Protections",
+      "description": "Enforce safeguards against automated profiling and decisions without explicit human review mechanisms.",
+      "category": "OVERSIGHT"
+    },
+    {
+      "framework": "GDPR",
+      "control_id": "GDPR-ART-35",
+      "title": "DPIA Requirements",
+      "description": "Mandate and track Data Protection Impact Assessments for AI applications handling sensitive demographic information.",
+      "category": "PRIVACY"
+    }
+  ],
+  "obligations": [
+    {
+      "framework": "EU_AI_ACT",
+      "article_or_task": "EU AI Act Art. 6 — System Risk Tiering",
+      "description": "Determine and record the system's risk classification (Prohibited, High, Limited, or Minimal Risk) prior to deployment.",
+      "linked_control_code": "EU-AIA-9"
+    },
+    {
+      "framework": "EU_AI_ACT",
+      "article_or_task": "EU AI Act Art. 9 — Conformity Assessment",
+      "description": "Conduct a formal conformity assessment for any designated High-Risk AI system.",
+      "linked_control_code": "EU-AIA-11"
+    },
+    {
+      "framework": "EU_AI_ACT",
+      "article_or_task": "EU AI Act Art. 51 — EU DB Registration",
+      "description": "Formally register the High-Risk AI system in the official EU database for AI systems.",
+      "linked_control_code": "EU-AIA-11"
+    },
+    {
+      "framework": "EU_AI_ACT",
+      "article_or_task": "EU AI Act Art. 61 — Post-Market Monitoring",
+      "description": "Design and operationalize a post-market monitoring plan to collect real-time behavior and performance statistics.",
+      "linked_control_code": "EU-AIA-9"
+    },
+    {
+      "framework": "EU_AI_ACT",
+      "article_or_task": "EU AI Act Art. 14 — Human-In-The-Loop",
+      "description": "Provide an active interface for humans to review and override automated decisions in high-stakes fields.",
+      "linked_control_code": "EU-AIA-14"
+    },
+    {
+      "framework": "EU_AI_ACT",
+      "article_or_task": "EU AI Act Art. 52 — AI Interaction Disclosure",
+      "description": "Disclose explicitly to end-users that they are interacting with an AI system, especially in natural language chat interfaces.",
+      "linked_control_code": "EU-AIA-13"
+    },
+    {
+      "framework": "EU_AI_ACT",
+      "article_or_task": "EU AI Act Art. 13 — Model Cards & Intended Use",
+      "description": "Document and publish standardized model capability cards outlining operational parameters and out-of-scope boundaries.",
+      "linked_control_code": "EU-AIA-13"
+    },
+    {
+      "framework": "EU_AI_ACT",
+      "article_or_task": "EU AI Act Art. 10 — Dataset Bias Screening",
+      "description": "Establish automated screening scripts to test training datasets for demographic bias, representation gaps, and toxic content.",
+      "linked_control_code": "EU-AIA-10"
+    },
+    {
+      "framework": "EU_AI_ACT",
+      "article_or_task": "EU AI Act Art. 12 — Telemetry Auditing",
+      "description": "Maintain persistent execution logs capturing prompt input, model metadata, latency, and full governance decision actions.",
+      "linked_control_code": "EU-AIA-12"
+    },
+    {
+      "framework": "EU_AI_ACT",
+      "article_or_task": "EU AI Act Art. 17 — Continuous Quality Management",
+      "description": "Establish a structured quality management program including standard operating procedures and version control.",
+      "linked_control_code": "EU-AIA-9"
+    },
+    {
+      "framework": "NIST_AI_RMF",
+      "article_or_task": "NIST RMF GOV-1.2 — Define Authority Matrices",
+      "description": "Formally define the roles, responsibilities, and authorization levels for all AI builders, risk managers, and auditors.",
+      "linked_control_code": "NIST-GOV-1"
+    },
+    {
+      "framework": "NIST_AI_RMF",
+      "article_or_task": "NIST RMF MAP-1.1 — Document Use-Cases",
+      "description": "Document the intended business goals, operational environment, and specific problem the AI system aims to solve.",
+      "linked_control_code": "NIST-MAP-1"
+    },
+    {
+      "framework": "NIST_AI_RMF",
+      "article_or_task": "NIST RMF MAP-1.5 — Stakeholder Safeguards",
+      "description": "Map and log potential negative impacts of AI outputs on customer civil rights, data privacy, and physical safety.",
+      "linked_control_code": "NIST-MAP-1"
+    },
+    {
+      "framework": "NIST_AI_RMF",
+      "article_or_task": "NIST RMF MEASURE-1.1 — Vendor Model Auditing",
+      "description": "Conduct security and robustness evaluations on third-party foundational models (e.g. GPT-4, Claude) before integrations.",
+      "linked_control_code": "NIST-MEASURE-1"
+    },
+    {
+      "framework": "NIST_AI_RMF",
+      "article_or_task": "NIST RMF MEASURE-2.3 — Prompt Injection Threat Model",
+      "description": "Run recurring red-teaming simulations evaluating model vulnerabilities to jailbreaks, prompt injections, and data extraction.",
+      "linked_control_code": "NIST-MEASURE-1"
+    },
+    {
+      "framework": "NIST_AI_RMF",
+      "article_or_task": "NIST RMF MANAGE-1.2 — Performance Drift Alerting",
+      "description": "Configure automated monitors tracking model semantic shift and output distribution drift over time.",
+      "linked_control_code": "NIST-MANAGE-1"
+    },
+    {
+      "framework": "ISO_42001",
+      "article_or_task": "ISO 42001 A5 — AIMS Scope Definition",
+      "description": "Establish and document the boundaries, limitations, and regulatory sphere of the AI Management System (AIMS).",
+      "linked_control_code": "ISO-42001-A5"
+    },
+    {
+      "framework": "ISO_42001",
+      "article_or_task": "ISO 42001 A6 — AI System Inventory",
+      "description": "Build and maintain a central active registry of all models, microservices, and AI-enabled components in production.",
+      "linked_control_code": "ISO-42001-A6"
+    },
+    {
+      "framework": "ISO_42001",
+      "article_or_task": "ISO 42001 A8 — AI Risk Treatment Plan",
+      "description": "Draft and review a structured risk treatment blueprint detailing immediate mitigating actions for high-risk operations.",
+      "linked_control_code": "ISO-42001-A8"
+    },
+    {
+      "framework": "ISO_42001",
+      "article_or_task": "ISO 42001 Art. 9.2 — AIMS Internal Audit",
+      "description": "Schedule and perform periodic internal audits evaluating AIMS compliance with corporate governance standards.",
+      "linked_control_code": "ISO-42001-A5"
+    },
+    {
+      "framework": "GDPR",
+      "article_or_task": "GDPR Art. 22 — Explicit Profiling Consent",
+      "description": "Set up clear data privacy consent notices obtaining explicit user sign-off for automated profile generation.",
+      "linked_control_code": "GDPR-ART-22"
+    },
+    {
+      "framework": "GDPR",
+      "article_or_task": "GDPR Art. 22.3 — Intervention Right",
+      "description": "Provide an accessible mechanism letting customers challenge automated scoring and demand manual review.",
+      "linked_control_code": "GDPR-ART-22"
+    },
+    {
+      "framework": "GDPR",
+      "article_or_task": "GDPR Art. 35 — AIA / DPIA Masking Verification",
+      "description": "Enforce and log strict PII redaction (masking emails, names, SSNs) before payload transfer to cloud LLMs.",
+      "linked_control_code": "GDPR-ART-35"
+    }
+  ]
+}

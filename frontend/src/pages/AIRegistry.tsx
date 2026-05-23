@@ -236,6 +236,14 @@ export default function AIRegistry() {
                 <div
                   key={sys.id}
                   onClick={() => handleSelectSystem(sys)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleSelectSystem(sys);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
                   className={`group relative overflow-hidden rounded-xl border p-5 transition-all cursor-pointer ${
                     selectedSystem?.id === sys.id 
                       ? 'bg-indigo-950/20 border-indigo-500/50 shadow-md shadow-indigo-500/5' 
