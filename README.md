@@ -382,6 +382,40 @@ Control AI access to production APIs and internal systems.
 
 ---
 
+## Post-Migration Steps
+
+After running `prisma migrate deploy` in any environment, always run the following:
+
+1. Apply RLS policies:
+   Run the SQL from `backend/prisma/migrations/rls_policies/migration.sql` 
+   directly in the Supabase SQL editor for that environment.
+
+2. Seed framework controls and obligations:
+   ```bash
+   npx prisma db seed
+   ```
+   
+   Expected counts per organization:
+   - Controls: 17
+   - Compliance obligations: 23
+
+3. Verify RLS is active:
+   ```sql
+   SELECT tablename, rowsecurity FROM pg_tables 
+   WHERE schemaname = 'public' 
+   AND tablename IN (
+     'ai_systems', 'risk_assessments', 'risk_assessment_answers',
+     'impact_assessments', 'controls', 'control_implementations',
+     'vendor_ai_tools', 'model_cards', 'compliance_obligations'
+   );
+   ```
+   All 9 tables must show rowsecurity = true.
+
+Skipping any of these steps will result in missing data or broken 
+tenant isolation in production.
+
+---
+
 ## 📝 License
 
 MIT License
