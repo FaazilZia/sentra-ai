@@ -4,6 +4,7 @@ import { evaluateRisk } from './riskEngine';
 import { evaluateSemanticRisk } from './semanticRiskEngine';
 import { DriftService } from './drift.service';
 import { SAFE_ACTION_ALLOWLIST } from './policyEngine';
+import { NotificationService } from './notification.service';
 
 export interface GuardrailDecision {
   decision: 'ALLOW' | 'MODIFY' | 'BLOCK';
@@ -188,6 +189,21 @@ export class GuardrailService {
           }
         }
       });
+
+      if (data.decision === 'BLOCK') {
+        const title = `Guardrail Blocked: ${data.policy_triggered || 'Adversarial Action'}`;
+        const message = data.reason || `Action blocked by guardrail policy ${data.policy_triggered || ''}`;
+        NotificationService.notifyGuardrailBlock(
+          data.organizationId,
+          data.user_id,
+          title,
+          message,
+          'guardrail',
+          data.policy_triggered || log.id
+        ).catch(err => {
+          logger.error('Failed to notify guardrail block:', err);
+        });
+      }
 
       // Background Drift Check (Fire and forget)
       DriftService.checkAgentDrift(data.organizationId, data.user_id).catch(err => {

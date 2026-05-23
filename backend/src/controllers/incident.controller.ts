@@ -6,6 +6,7 @@ import { serializeIncident } from '../utils/incidentSerialize';
 import logger from '../utils/logger';
 import { parsePagination } from '../utils/pagination';
 import { asyncHandler, sendSuccess, sendError } from '../utils/controllerHelpers';
+import { NotificationService } from '../services/notification.service';
 
 const SCAN_PROGRESS_STEP = 20;
 const SCAN_TICK_MS = 500;
@@ -17,16 +18,18 @@ async function finalizeScanJob(organizationId: string, jobId: string, incidentsD
     
     // Create actual incidents in DB
     for (let i = 0; i < incidentsDetected; i++) {
+      const incidentId = crypto.randomUUID();
+      const details = `Automated deep-scan finding #${i + 1}: policy-sensitive pattern in connected data sources.`;
       await prisma.incidents.create({
         data: {
-          id: crypto.randomUUID(),
+          id: incidentId,
           organizationId: organizationId,
           user_id: null,
           agent_id: 'deep-scan-engine',
           action: 'automated_policy_scan',
           severity: crypto.randomInt(35, 80),
           policy_id: null,
-          details: `Automated deep-scan finding #${i + 1}: policy-sensitive pattern in connected data sources.`,
+          details,
           prompt_excerpt: '',
           response_excerpt: '',
           event_metadata: {
@@ -37,6 +40,14 @@ async function finalizeScanJob(organizationId: string, jobId: string, incidentsD
           status: 'unresolved',
         },
       });
+
+      await NotificationService.notifyIncidentCreated(
+        organizationId,
+        'New Scan Incident Detected',
+        details,
+        'incident',
+        incidentId
+      );
     }
 
     // Update job status in DB
@@ -191,9 +202,10 @@ export const logIncident = asyncHandler(async (req: any, res: Response) => {
   const policyUuid =
     policy_id && typeof policy_id === 'string' && policy_id.length > 0 ? policy_id : null;
 
+  const incidentId = crypto.randomUUID();
   const newIncident = await prisma.incidents.create({
     data: {
-      id: crypto.randomUUID(),
+      id: incidentId,
       organizationId,
       user_id: userId,
       agent_id: String(agent_id || 'unknown-agent'),
@@ -207,6 +219,14 @@ export const logIncident = asyncHandler(async (req: any, res: Response) => {
       status: 'unresolved'
     }
   });
+
+  await NotificationService.notifyIncidentCreated(
+    organizationId,
+    `New Incident: ${newIncident.action}`,
+    newIncident.details,
+    'incident',
+    newIncident.id
+  );
 
   const payload = serializeIncident(newIncident);
   return sendSuccess(res, {

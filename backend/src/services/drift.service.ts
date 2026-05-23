@@ -2,6 +2,7 @@ import prisma from '../config/db';
 import logger from '../utils/logger';
 import { EventTriggerService } from './eventTrigger.service';
 import axios from 'axios';
+import { NotificationService } from './notification.service';
 
 export class DriftService {
   /**
@@ -38,7 +39,7 @@ export class DriftService {
       if (actionsLast60Min > threshold) {
         logger.warn(`Anomalous activity detected for agent ${agentId} in org ${organizationId}`);
         
-        await prisma.drift_alerts.create({
+        const driftAlert = await prisma.drift_alerts.create({
           data: {
             organizationId,
             agentId,
@@ -48,6 +49,14 @@ export class DriftService {
             status: 'open'
           }
         });
+
+        await NotificationService.notifyDriftDetected(
+          organizationId,
+          `Drift Detected: Anomalous Activity`,
+          driftAlert.description,
+          'drift',
+          driftAlert.id
+        );
 
         const rules = await prisma.alert_rules.findMany({
           where: { organizationId }

@@ -9,16 +9,19 @@ import {
   CheckCircle2,
   Clock,
   ArrowRight,
-  LoaderCircle
+  LoaderCircle,
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store/useStore';
 import { fetchPolicies, PolicyResponse } from '@/lib/api';
+import { EvidenceSection } from '../components/shared/EvidenceSection';
 
 export default function Policies() {
   const addToast = useStore((state) => state.addToast);
   const [policies, setPolicies] = useState<PolicyResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedPolicy, setSelectedPolicy] = useState<PolicyResponse | null>(null);
 
   useEffect(() => {
     async function loadPolicies() {
@@ -96,8 +99,8 @@ export default function Policies() {
             key={policy.id}
             role="button"
             tabIndex={0}
-            onClick={() => addToast({ message: `Opening ${policy.name} for review...`, type: 'info' })}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); addToast({ message: `Opening ${policy.name} for review...`, type: 'info' }); } }}
+            onClick={() => setSelectedPolicy(policy)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedPolicy(policy); } }}
             className="card-base p-6 group hover:border-[var(--royal-indigo)] transition-all cursor-pointer relative overflow-hidden"
           >
             <div className="flex items-start justify-between mb-6">
@@ -159,6 +162,44 @@ export default function Policies() {
           <p className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em]">New Policy Document</p>
         </div>
       </div>
+
+      {selectedPolicy && (
+        <div className="fixed inset-y-0 right-0 z-50 w-[440px] bg-white border-l border-[var(--border-default)] shadow-2xl p-6 flex flex-col justify-between animate-fade-in text-left">
+          <div className="flex-1 overflow-y-auto space-y-6 custom-scrollbar pr-1">
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-4">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4.5 w-4.5 text-[var(--royal-indigo)]" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-primary)]">Policy details</span>
+              </div>
+              <button 
+                onClick={() => setSelectedPolicy(null)}
+                className="p-1 rounded hover:bg-[var(--bg-hover)] transition-all outline-none"
+              >
+                <X className="h-4 w-4 text-[var(--text-secondary)]" />
+              </button>
+            </div>
+            
+            <div className="space-y-1">
+              <h2 className="text-[13px] font-black uppercase tracking-tight text-[var(--text-primary)]">{selectedPolicy.name}</h2>
+              <div className="flex items-center gap-2 text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                <span>v{selectedPolicy.current_version || 1}</span>
+                <span>•</span>
+                <span>{selectedPolicy.effect}</span>
+              </div>
+            </div>
+
+            <div className="space-y-1 text-left">
+              <h4 className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Description</h4>
+              <p className="text-[var(--text-xs)] text-[var(--text-secondary)] leading-relaxed">{selectedPolicy.description || 'No description provided.'}</p>
+            </div>
+
+            {/* Evidence Sub-section */}
+            <div className="pt-4 border-t border-[var(--border-default)]/60">
+              <EvidenceSection entityType="policy" entityId={selectedPolicy.id} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

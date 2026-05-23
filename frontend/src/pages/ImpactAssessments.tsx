@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { apiRequest } from '@/lib/api';
 import { 
-  Columns, Plus, X, ArrowRight, CheckCircle2, AlertTriangle, 
-  FileText, ShieldAlert, User, Cpu, Sparkles, Building, ChevronRight
+  Plus, X, CheckCircle2, FileText, ShieldAlert, 
+  User, Sparkles, Building
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 

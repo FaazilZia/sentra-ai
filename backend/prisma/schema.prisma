@@ -67,6 +67,8 @@ model organizations {
   control_implementations control_implementations[]
   vendor_ai_tools        vendor_ai_tools[]
   compliance_obligations  compliance_obligations[]
+  notifications          notifications[]
+  evidence               evidence[]
 
   @@map("companies")
 }
@@ -183,6 +185,8 @@ model users {
   workflow_tasks_created    workflow_tasks[]          @relation("WorkflowTaskCreator")
   audit_logs_authored       audit_logs[]
   ai_systems_owned          ai_systems[]              @relation("OwnerUser")
+  notifications             notifications[]
+  evidence                  evidence[]
 
   @@map("users")
 }
@@ -1080,3 +1084,69 @@ model compliance_obligations {
   @@index([organizationId])
   @@map("compliance_obligations")
 }
+
+// ============================================================
+// WAVE 1 MODULES: NOTIFICATIONS & EVIDENCE
+// ============================================================
+
+enum NotificationType {
+  alert
+  policy
+  risk
+  incident
+  workflow
+  drift
+}
+
+model notifications {
+  id         String           @id @default(uuid())
+  userId     String           @map("user_id")
+  orgId      String           @map("organization_id")
+  type       NotificationType
+  title      String
+  message    String
+  entityType String?          @map("entity_type")
+  entityId   String?          @map("entity_id")
+  isRead     Boolean          @default(false) @map("is_read")
+  createdAt  DateTime         @default(now()) @map("created_at")
+
+  user         users         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization organizations @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([orgId])
+  @@map("notifications")
+}
+
+enum EvidenceType {
+  risk
+  policy
+  compliance
+  incident
+  guardrail
+}
+
+model evidence {
+  id          String       @id @default(uuid())
+  orgId       String       @map("organization_id")
+  uploadedBy  String       @map("uploaded_by")
+  title       String
+  description String?
+  fileUrl     String       @map("file_url")
+  fileName    String       @map("file_name")
+  fileSize    Int          @map("file_size")
+  mimeType    String       @map("mime_type")
+  entityType  EvidenceType @map("entity_type")
+  entityId    String?      @map("entity_id")
+  tags        String[]
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  organization organizations @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user         users         @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([uploadedBy])
+  @@map("evidence")
+}
+

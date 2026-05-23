@@ -11,6 +11,7 @@ const GuardrailsPage = lazy(() => import('./pages/Guardrails'));
 const LoginPage = lazy(() => import('./pages/Login'));
 const RiskCenterPage = lazy(() => import('./pages/RiskCenter'));
 const CompliancePage = lazy(() => import('./pages/Compliance'));
+const EvidencePage = lazy(() => import('./pages/Evidence'));
 const ShadowAIPage = lazy(() => import('./pages/ShadowAI'));
 const InventoryPage = lazy(() => import('./pages/Inventory'));
 const SettingsPage = lazy(() => import('./pages/Settings'));
@@ -88,6 +89,11 @@ function AppRoutes() {
             <Route 
               path="/app/compliance" 
               element={user ? <AppLayout><CompliancePage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/evidence" 
+              element={user ? <AppLayout><EvidencePage /></AppLayout> : <Navigate to="/login" replace />}
             />
 
             <Route 

@@ -6,6 +6,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import path from 'path';
 import { errorHandler } from './middleware/error.middleware';
 import { contextMiddleware } from './middleware/context.middleware';
 import authRoutes from './routes/auth.routes';
@@ -41,6 +42,9 @@ import evaluationsRoutes from './routes/evaluations.routes';
 
 import superadminRoutes from './routes/superadmin.routes';
 import metricsRoutes from './routes/metrics.routes';
+import notificationRoutes from './routes/notification.routes';
+import evidenceRoutes from './routes/evidence.routes';
+import searchRoutes from './routes/search.routes';
 import prisma, { dbHealth } from './config/db';
 import { redisHealthCheck } from './config/redis';
 import { prometheusMiddleware } from './config/telemetry';
@@ -203,6 +207,7 @@ app.use('/metrics', metricsRoutes);
 app.use(express.json({ limit: '100kb' }));
 app.use(cookieParser());
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 app.use(contextMiddleware);
 // Automatic audit logging for all mutating requests
 app.use(auditRequest);
@@ -233,6 +238,9 @@ v1Router.use('/shadow-ai', shadowAIRoutes);
 v1Router.use('/ai-systems', aiSystemRoutes);
 v1Router.use('/governance', governanceRoutes);
 v1Router.use('/reports/executive', executiveReportRoutes);
+v1Router.use('/notifications', notificationRoutes);
+v1Router.use('/evidence', evidenceRoutes);
+v1Router.use('/search', searchRoutes);
 v1Router.use('/public', publicRoutes);
 v1Router.use('/', ssoRoutes);
 

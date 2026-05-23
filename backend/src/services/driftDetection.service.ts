@@ -1,6 +1,7 @@
 import { getRedisClient } from '../config/redis';
 import prisma from '../config/db';
 import logger from '../utils/logger';
+import { NotificationService } from './notification.service';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -256,23 +257,32 @@ export async function persistDriftAlerts(
 ): Promise<void> {
   if (checks.length === 0) return;
 
-  try {
-    await prisma.drift_alerts.createMany({
-      data: checks.map((c) => ({
-        organizationId: orgId,
-        agentId,
-        type: c.type,
-        severity: c.severity,
-        description: c.message,
-        message: c.message,
-        status: 'open',
-        driftScore: c.currentValue / Math.max(c.baselineValue, 1),
-        unexpectedActions: [],
-        detectedAt: new Date(),
-      })),
-      skipDuplicates: true,
-    });
-  } catch (err) {
-    logger.warn(`[DriftDetection] Failed to persist drift alerts:`, err);
+  for (const c of checks) {
+    try {
+      const driftAlert = await prisma.drift_alerts.create({
+        data: {
+          organizationId: orgId,
+          agentId,
+          type: c.type,
+          severity: c.severity,
+          description: c.message,
+          message: c.message,
+          status: 'open',
+          driftScore: c.currentValue / Math.max(c.baselineValue, 1),
+          unexpectedActions: [],
+          detectedAt: new Date(),
+        }
+      });
+
+      await NotificationService.notifyDriftDetected(
+        orgId,
+        `Drift Alert: ${c.type}`,
+        driftAlert.description,
+        'drift',
+        driftAlert.id
+      );
+    } catch (err) {
+      logger.warn(`[DriftDetection] Failed to persist drift alert:`, err);
+    }
   }
 }

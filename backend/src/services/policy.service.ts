@@ -1,6 +1,7 @@
 import prisma from '../config/db';
 import { makeDecision, Decision } from './decisionEngine';
 import { io } from '../server';
+import { NotificationService } from './notification.service';
 
 export type CheckPermissionResult = Decision;
 
@@ -74,19 +75,30 @@ export const logActivity = async (data: LogActivityData) => {
 
   // Auto-create incident for blocked high-risk actions (Flow 4 requirement)
   if (data.status === 'blocked' && data.risk === 'high') {
+    const incidentId = require('crypto').randomUUID();
+    const details = data.reason || `High-risk action "${data.action}" was blocked by policy.`;
     await prisma.incidents.create({
       data: {
+        id: incidentId,
         organizationId: data.organizationId,
         agent_id: data.agent,
         severity: 85, // High severity
         action: data.action,
-        details: data.reason || `High-risk action "${data.action}" was blocked by policy.`,
+        details,
         prompt_excerpt: data.action,
         response_excerpt: 'ACTION_BLOCKED',
         event_metadata: data.metadata || {},
         status: 'unresolved'
       }
     });
+
+    await NotificationService.notifyIncidentCreated(
+      data.organizationId,
+      'High-Risk Incident Blocked',
+      details,
+      'incident',
+      incidentId
+    );
   }
 
   return log;

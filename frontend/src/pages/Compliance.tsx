@@ -6,8 +6,11 @@ import {
   FileText,
   History,
   ArrowRight,
-  Plus
+  Plus,
+  X
 } from 'lucide-react';
+import { useState } from 'react';
+import { EvidenceSection } from '../components/shared/EvidenceSection';
 import KPICard from '@/components/dashboard/KPICard';
 import { cn } from '@/lib/utils';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
@@ -72,6 +75,7 @@ const violationData: any[] = [
 
 export default function Compliance() {
   const { addToast, openModal } = useStore();
+  const [selectedFramework, setSelectedFramework] = useState<any | null>(null);
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in p-6">
@@ -127,8 +131,8 @@ export default function Compliance() {
               key={fw.name}
               role="button"
               tabIndex={0}
-              onClick={() => addToast({ message: `Accessing ${fw.name} controls...`, type: 'info' })}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); addToast({ message: `Accessing ${fw.name} controls...`, type: 'info' }); } }}
+              onClick={() => setSelectedFramework(fw)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedFramework(fw); } }}
               className="card-base p-5 group hover:border-[var(--royal-indigo)] transition-all cursor-pointer relative overflow-hidden"
             >
               {/* ... existing card content ... */}
@@ -306,6 +310,47 @@ export default function Compliance() {
           </table>
         </div>
       </div>
+
+      {selectedFramework && (
+        <div className="fixed inset-y-0 right-0 z-50 w-[440px] bg-white border-l border-[var(--border-default)] shadow-2xl p-6 flex flex-col justify-between animate-fade-in text-left">
+          <div className="flex-1 overflow-y-auto space-y-6 custom-scrollbar pr-1">
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-4">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4.5 w-4.5 text-[var(--royal-indigo)]" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-primary)]">Framework details</span>
+              </div>
+              <button 
+                onClick={() => setSelectedFramework(null)}
+                className="p-1 rounded hover:bg-[var(--bg-hover)] transition-all outline-none"
+              >
+                <X className="h-4 w-4 text-[var(--text-secondary)]" />
+              </button>
+            </div>
+            
+            <div className="space-y-1">
+              <h2 className="text-[13px] font-black uppercase tracking-tight text-[var(--text-primary)]">{selectedFramework.name}</h2>
+              <div className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                Controls: {selectedFramework.controls} • Progress: {selectedFramework.progress}%
+              </div>
+            </div>
+
+            <div className="space-y-1 text-left">
+              <h4 className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Audit Status</h4>
+              <span className={cn(
+                "text-[9px] font-black uppercase px-2 py-0.5 rounded inline-block",
+                selectedFramework.status === 'Healthy' ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"
+              )}>
+                {selectedFramework.status}
+              </span>
+            </div>
+
+            {/* Evidence Sub-section */}
+            <div className="pt-4 border-t border-[var(--border-default)]/60">
+              <EvidenceSection entityType="compliance" entityId={selectedFramework.name.toLowerCase().replace(' compliance', '').replace(' security', '').split(' ')[0]} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

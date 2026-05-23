@@ -17,7 +17,8 @@ import {
   GitPullRequestDraft,
   BarChart3,
   Globe,
-  Award
+  Award,
+  FolderOpen
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth';
@@ -28,6 +29,7 @@ const operationsItems = [
   { icon: ShieldCheck, label: 'Guardrails', path: '/app/guardrails' },
   { icon: ShieldAlert, label: 'Risk Center', path: '/app/risk' },
   { icon: ClipboardCheck, label: 'Compliance', path: '/app/compliance' },
+  { icon: FolderOpen, label: 'Evidence Hub', path: '/app/evidence' },
   { icon: Activity, label: 'Drift Detection', path: '/app/drift' },
   { icon: EyeOff, label: 'Shadow AI', path: '/app/shadow' },
   { icon: Box, label: 'Inventory', path: '/app/inventory' },

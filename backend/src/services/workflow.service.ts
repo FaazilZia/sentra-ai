@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import prisma from '../config/db';
 import logger from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
+import { NotificationService } from './notification.service';
 
 // ─────────────────────────────────────────────
 // State Machine Definition
@@ -131,6 +132,19 @@ export const WorkflowService = {
         },
       }),
     ]);
+
+    // Create notifications for transition (notify assignee + creator)
+    NotificationService.notifyWorkflowTransition(
+      params.organizationId,
+      updatedTask.assigned_to,
+      updatedTask.created_by,
+      `Workflow Task Transitioned: ${updatedTask.title}`,
+      `Task state transitioned from ${fromState} to ${toState}.`,
+      'workflow_task',
+      updatedTask.id
+    ).catch(err => {
+      logger.error('Failed to send workflow transition notification:', err);
+    });
 
     // Audit log
     await auditLogger.log({
@@ -373,7 +387,7 @@ export const WorkflowService = {
       throw new Error('No active user found in organization to assign task creation');
     }
 
-    return prisma.workflow_tasks.create({
+    const task = await prisma.workflow_tasks.create({
       data: {
         id: randomUUID(),
         organizationId,
@@ -393,6 +407,20 @@ export const WorkflowService = {
         },
       },
     });
+
+    NotificationService.notifyWorkflowTransition(
+      organizationId,
+      task.assigned_to,
+      task.created_by,
+      `New Workflow Task: ${task.title}`,
+      task.description || '',
+      'workflow_task',
+      task.id
+    ).catch(err => {
+      logger.error('Failed to send workflow pending creation notification:', err);
+    });
+
+    return task;
   },
 };
 

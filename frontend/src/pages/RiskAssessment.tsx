@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { apiRequest } from '@/lib/api';
 import { 
   ClipboardCheck, ChevronLeft, ChevronRight, CheckCircle2, 
-  AlertTriangle, Shield, Play, HelpCircle, Bot, AlertCircle
+  Shield, Play, HelpCircle, X
 } from 'lucide-react';
+import { EvidenceSection } from '../components/shared/EvidenceSection';
 
 interface AISystem {
   id: string;
@@ -78,6 +79,7 @@ export default function RiskAssessment() {
   const [assessments, setAssessments] = useState<RiskAssessmentItem[]>([]);
   const [systems, setSystems] = useState<AISystem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedAssessment, setSelectedAssessment] = useState<RiskAssessmentItem | null>(null);
   
   // Wizard State
   const [isWizardOpen, setIsWizardOpen] = useState(false);
@@ -263,7 +265,8 @@ export default function RiskAssessment() {
                 {assessments.map((ass) => (
                   <div
                     key={ass.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-gray-800/60 bg-[#0b0f19]/30 hover:border-gray-700 transition-all"
+                    onClick={() => setSelectedAssessment(ass)}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-gray-800/60 bg-[#0b0f19]/30 hover:border-gray-700 transition-all cursor-pointer"
                   >
                     <div className="flex items-start gap-3">
                       <div className="rounded-lg bg-gray-800 p-2 text-gray-400">
@@ -473,6 +476,51 @@ export default function RiskAssessment() {
               )}
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {selectedAssessment && (
+        <div className="fixed inset-y-0 right-0 z-50 w-[440px] bg-[#111827] border-l border-gray-800 shadow-2xl p-6 flex flex-col justify-between animate-fade-in text-left">
+          <div className="flex-1 overflow-y-auto space-y-6 custom-scrollbar pr-1">
+            <div className="flex items-center justify-between border-b border-gray-800 pb-4">
+              <div className="flex items-center gap-2">
+                <ClipboardCheck className="h-4.5 w-4.5 text-indigo-400" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-white">Risk Audit details</span>
+              </div>
+              <button 
+                onClick={() => setSelectedAssessment(null)}
+                className="p-1 rounded hover:bg-gray-800 transition-all outline-none"
+              >
+                <X className="h-4 w-4 text-gray-400 hover:text-white" />
+              </button>
+            </div>
+            
+            <div className="space-y-1">
+              <h2 className="text-[13px] font-black uppercase tracking-tight text-white">{selectedAssessment.ai_system?.name || 'Unknown AI System'}</h2>
+              <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                Usecase: {selectedAssessment.ai_system?.use_case}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-6 bg-black/20 p-4 rounded-xl border border-gray-800/80">
+              <div>
+                <span className="text-[9px] text-gray-500 uppercase font-black block tracking-wider">Final Score</span>
+                <span className="text-xl font-black text-white">{selectedAssessment.score} / 100</span>
+              </div>
+              <div className="border-r border-gray-800 self-stretch" />
+              <div>
+                <span className="text-[9px] text-gray-500 uppercase font-black block tracking-wider">Risk Level</span>
+                <span className={`text-[10px] px-2.5 py-0.5 rounded-full border font-black uppercase inline-block mt-1 ${getRiskLevelColor(selectedAssessment.risk_level)}`}>
+                  {selectedAssessment.risk_level}
+                </span>
+              </div>
+            </div>
+
+            {/* Evidence Sub-section */}
+            <div className="pt-4 border-t border-gray-800">
+              <EvidenceSection entityType="risk" entityId={selectedAssessment.id} />
+            </div>
           </div>
         </div>
       )}

@@ -2,6 +2,7 @@ import prisma from '../config/db';
 import logger from '../utils/logger';
 import { DriftScoringService } from './driftScoring.service';
 import { getRedisClient } from '../config/redis';
+import { NotificationService } from './notification.service';
 
 export interface DriftScanResult {
   scannedCount: number;
@@ -90,7 +91,7 @@ export class DriftAlertService {
             logger.info(`[DRIFT ALERT] Updated open alert for agent: ${agent.name} (Drift: ${Math.round(driftScore * 100)}%)`);
           } else {
             // Create new alert
-            await prisma.drift_alerts.create({
+            const driftAlert = await prisma.drift_alerts.create({
               data: {
                 organizationId: agent.organizationId,
                 agentId: agent.id,
@@ -105,6 +106,14 @@ export class DriftAlertService {
               },
             });
             alertsCreated++;
+
+            await NotificationService.notifyDriftDetected(
+              agent.organizationId,
+              `Behavioral Drift: ${agent.name}`,
+              driftAlert.description,
+              'drift',
+              driftAlert.id
+            );
             logger.info(`[DRIFT ALERT] Created new drift alert for agent: ${agent.name} (Drift: ${Math.round(driftScore * 100)}%)`);
           }
         }

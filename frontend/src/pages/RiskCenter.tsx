@@ -17,8 +17,11 @@ import {
   Search,
   Filter,
   Download,
-  MoreVertical
+  MoreVertical,
+  X,
+  ShieldAlert
 } from 'lucide-react';
+import { EvidenceSection } from '../components/shared/EvidenceSection';
 import KPICard from '@/components/dashboard/KPICard';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store/useStore';
@@ -34,6 +37,7 @@ export default function RiskCenter() {
   const { riskEvents } = useSocketStore();
   const [metrics, setMetrics] = useState<GuardrailMetrics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedIncident, setSelectedIncident] = useState<any | null>(null);
 
   const fetchData = async () => {
     try {
@@ -297,7 +301,7 @@ export default function RiskCenter() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <button 
-                      onClick={() => addToast({ message: `Viewing details for ${event.agent}`, type: 'info' })}
+                      onClick={() => setSelectedIncident(event)}
                       className="p-1.5 rounded text-[var(--text-muted)] hover:text-[var(--royal-indigo)] hover:bg-white/5 transition-all"
                     >
                       <MoreVertical className="h-4 w-4" />
@@ -318,6 +322,51 @@ export default function RiskCenter() {
           </table>
         </div>
       </div>
+
+      {selectedIncident && (
+        <div className="fixed inset-y-0 right-0 z-50 w-[440px] bg-white border-l border-[var(--border-default)] shadow-2xl p-6 flex flex-col justify-between animate-fade-in text-left">
+          <div className="flex-1 overflow-y-auto space-y-6 custom-scrollbar pr-1">
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-4">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="h-4.5 w-4.5 text-[var(--royal-indigo)]" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-primary)]">Incident details</span>
+              </div>
+              <button 
+                onClick={() => setSelectedIncident(null)}
+                className="p-1 rounded hover:bg-[var(--bg-hover)] transition-all outline-none"
+              >
+                <X className="h-4 w-4 text-[var(--text-secondary)]" />
+              </button>
+            </div>
+            
+            <div className="space-y-1">
+              <h2 className="text-[13px] font-black uppercase tracking-tight text-[var(--text-primary)]">Threat in {selectedIncident.agent}</h2>
+              <div className="flex items-center gap-2 text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                <span>Severity: {selectedIncident.severity}</span>
+                <span>•</span>
+                <span>{selectedIncident.time}</span>
+              </div>
+            </div>
+
+            <div className="space-y-1 text-left">
+              <h4 className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Detected Action</h4>
+              <p className="text-[var(--text-xs)] text-[var(--text-secondary)] leading-relaxed font-mono bg-slate-50 p-2.5 rounded border border-[var(--border-default)] break-words">{selectedIncident.action}</p>
+            </div>
+
+            {selectedIncident.aiSummary && (
+              <div className="space-y-1 text-left">
+                <h4 className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">AI Insight Summary</h4>
+                <p className="text-[var(--text-xs)] text-[var(--text-secondary)] leading-relaxed">{selectedIncident.aiSummary}</p>
+              </div>
+            )}
+
+            {/* Evidence Sub-section */}
+            <div className="pt-4 border-t border-[var(--border-default)]/60">
+              <EvidenceSection entityType="incident" entityId={selectedIncident.id} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
