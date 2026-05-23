@@ -4,6 +4,8 @@ import {
   Building2, Plus, X, Search, CheckCircle2, ShieldAlert, 
   AlertCircle, ShieldCheck, User, Sparkles, Server, Info, ShieldX
 } from 'lucide-react';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 interface VendorTool {
   id: string;
@@ -139,25 +141,19 @@ export default function VendorRisk() {
   return (
     <div className="flex flex-col gap-6 p-6 animate-fade-in text-gray-200">
       
-      {/* Header section */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-white flex items-center gap-3">
-            <Building2 className="h-8 w-8 text-indigo-400" />
-            THIRD-PARTY VENDOR AI RISK
-          </h1>
-          <p className="text-gray-400 text-sm mt-1">
-            Conduct risk assessments on external foundation models and third-party SaaS integrations.
-          </p>
-        </div>
-        <button
-          onClick={() => setIsOpen(true)}
-          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 hover:from-indigo-500 hover:to-purple-500 transition-all hover:scale-105 active:scale-95"
-        >
-          <Plus className="h-5 w-5" />
-          Add Vendor Tool
-        </button>
-      </div>
+      <PageHeader 
+        title="Third-Party Vendor AI Risk"
+        description="Conduct risk assessments on external foundation models and third-party SaaS integrations."
+        action={
+          <button
+            onClick={() => setIsOpen(true)}
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 hover:from-indigo-500 hover:to-purple-500 transition-all hover:scale-105 active:scale-95"
+          >
+            <Plus className="h-5 w-5" />
+            Add Vendor Tool
+          </button>
+        }
+      />
 
       {/* Operations Bar */}
       <div className="relative">
@@ -177,9 +173,11 @@ export default function VendorRisk() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
         </div>
       ) : filteredVendors.length === 0 ? (
-        <div className="text-center py-20 text-gray-500 text-xs">
-          No external vendor AI tools registered yet.
-        </div>
+        <EmptyState 
+          icon={Building2}
+          title="No Vendor Tools Registered"
+          description="Conduct risk assessments on external foundation models and third-party SaaS integrations."
+        />
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
           {filteredVendors.map((v) => (
@@ -283,8 +281,9 @@ export default function VendorRisk() {
               <div className="grid grid-cols-2 gap-4">
                 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-gray-400 font-semibold">Vendor / Partner Name *</label>
+                  <label htmlFor="v-vendor-name" className="text-gray-400 font-semibold">Vendor / Partner Name *</label>
                   <input
+                    id="v-vendor-name"
                     type="text"
                     required
                     placeholder="e.g. OpenAI"
@@ -295,8 +294,9 @@ export default function VendorRisk() {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-gray-400 font-semibold">Model / Integration Name *</label>
+                  <label htmlFor="v-tool-name" className="text-gray-400 font-semibold">Model / Integration Name *</label>
                   <input
+                    id="v-tool-name"
                     type="text"
                     required
                     placeholder="e.g. Claude 3.5 Sonnet API"
@@ -307,8 +307,9 @@ export default function VendorRisk() {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-gray-400 font-semibold">Tool Category *</label>
+                  <label htmlFor="v-tool-category" className="text-gray-400 font-semibold">Tool Category *</label>
                   <select
+                    id="v-tool-category"
                     value={newVendor.tool_category}
                     onChange={(e) => setNewVendor({ ...newVendor, tool_category: e.target.value })}
                     className="bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 text-xs"
@@ -321,8 +322,9 @@ export default function VendorRisk() {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-gray-400 font-semibold">Risk Classification *</label>
+                  <label htmlFor="v-risk-level" className="text-gray-400 font-semibold">Risk Classification *</label>
                   <select
+                    id="v-risk-level"
                     value={newVendor.risk_level}
                     onChange={(e) => setNewVendor({ ...newVendor, risk_level: e.target.value as any })}
                     className="bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 text-xs"
@@ -336,15 +338,16 @@ export default function VendorRisk() {
 
                 {/* Checklist */}
                 <div className="flex flex-col gap-2 col-span-2 border-t border-gray-800/80 pt-4 mt-2">
-                  <label className="text-gray-400 font-semibold flex items-center gap-1">
+                  <span className="text-gray-400 font-semibold flex items-center gap-1">
                     <Info className="h-4 w-4 text-indigo-400" />
                     Data Sharing & Egress Mapping
-                  </label>
+                  </span>
                   <p className="text-[10px] text-gray-500">Check all types of enterprise data sent to or processed by this external model.</p>
                   
                   <div className="grid grid-cols-2 gap-3 mt-2">
-                    <label className="flex items-center gap-2.5 cursor-pointer bg-black/20 border border-gray-800 p-3 rounded-xl hover:border-gray-700 select-none">
+                    <label htmlFor="chk-pii" className="flex items-center gap-2.5 cursor-pointer bg-black/20 border border-gray-800 p-3 rounded-xl hover:border-gray-700 select-none">
                       <input
+                        id="chk-pii"
                         type="checkbox"
                         checked={piiShared}
                         onChange={(e) => setPiiShared(e.target.checked)}
@@ -353,8 +356,9 @@ export default function VendorRisk() {
                       <span>Customer PII Data</span>
                     </label>
 
-                    <label className="flex items-center gap-2.5 cursor-pointer bg-black/20 border border-gray-800 p-3 rounded-xl hover:border-gray-700 select-none">
+                    <label htmlFor="chk-financials" className="flex items-center gap-2.5 cursor-pointer bg-black/20 border border-gray-800 p-3 rounded-xl hover:border-gray-700 select-none">
                       <input
+                        id="chk-financials"
                         type="checkbox"
                         checked={financialsShared}
                         onChange={(e) => setFinancialsShared(e.target.checked)}
@@ -363,8 +367,9 @@ export default function VendorRisk() {
                       <span>Financial Records</span>
                     </label>
 
-                    <label className="flex items-center gap-2.5 cursor-pointer bg-black/20 border border-gray-800 p-3 rounded-xl hover:border-gray-700 select-none">
+                    <label htmlFor="chk-code" className="flex items-center gap-2.5 cursor-pointer bg-black/20 border border-gray-800 p-3 rounded-xl hover:border-gray-700 select-none">
                       <input
+                        id="chk-code"
                         type="checkbox"
                         checked={codeShared}
                         onChange={(e) => setCodeShared(e.target.checked)}
@@ -373,8 +378,9 @@ export default function VendorRisk() {
                       <span>Source Code / IP</span>
                     </label>
 
-                    <label className="flex items-center gap-2.5 cursor-pointer bg-black/20 border border-gray-800 p-3 rounded-xl hover:border-gray-700 select-none">
+                    <label htmlFor="chk-logs" className="flex items-center gap-2.5 cursor-pointer bg-black/20 border border-gray-800 p-3 rounded-xl hover:border-gray-700 select-none">
                       <input
+                        id="chk-logs"
                         type="checkbox"
                         checked={logsShared}
                         onChange={(e) => setLogsShared(e.target.checked)}

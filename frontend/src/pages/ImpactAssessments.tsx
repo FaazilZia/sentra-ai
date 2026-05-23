@@ -4,6 +4,7 @@ import {
   Columns, Plus, X, ArrowRight, CheckCircle2, AlertTriangle, 
   FileText, ShieldAlert, User, Cpu, Sparkles, Building, ChevronRight
 } from 'lucide-react';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 interface AISystem {
   id: string;
@@ -120,24 +121,19 @@ export default function ImpactAssessments() {
     <div className="flex flex-col gap-6 p-6 animate-fade-in text-gray-200">
       
       {/* Header section */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-white flex items-center gap-3">
-            <Columns className="h-8 w-8 text-indigo-400" />
-            IMPACT ASSESSMENTS (DPIA / AIA)
-          </h1>
-          <p className="text-gray-400 text-sm mt-1">
-            Conduct Data Protection Impact Assessments (DPIA) and Algorithmic Impact Assessments (AIA) inside a dynamic Kanban review workflow.
-          </p>
-        </div>
-        <button
-          onClick={() => setIsOpen(true)}
-          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 hover:from-indigo-500 hover:to-purple-500 transition-all hover:scale-105 active:scale-95"
-        >
-          <Plus className="h-5 w-5" />
-          Launch Assessment
-        </button>
-      </div>
+      <PageHeader 
+        title="Impact Assessments (DPIA / AIA)"
+        description="Conduct Data Protection Impact Assessments (DPIA) and Algorithmic Impact Assessments (AIA) inside a dynamic Kanban review workflow."
+        action={
+          <button
+            onClick={() => setIsOpen(true)}
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 hover:from-indigo-500 hover:to-purple-500 transition-all hover:scale-105 active:scale-95"
+          >
+            <Plus className="h-5 w-5" />
+            Launch Assessment
+          </button>
+        }
+      />
 
       {/* Kanban Board Grid */}
       {loading ? (
@@ -218,8 +214,9 @@ export default function ImpactAssessments() {
               <div className="grid grid-cols-2 gap-4">
                 
                 <div className="flex flex-col gap-1.5 col-span-2">
-                  <label className="text-gray-400 font-semibold">Select Target AI System *</label>
+                  <label htmlFor="target-ai-system" className="text-gray-400 font-semibold">Select Target AI System *</label>
                   <select
+                    id="target-ai-system"
                     required
                     value={selectedSystemId}
                     onChange={(e) => setSelectedSystemId(e.target.value)}
@@ -231,9 +228,9 @@ export default function ImpactAssessments() {
                     ))}
                   </select>
                 </div>
-
+ 
                 <div className="flex flex-col gap-1.5 col-span-2">
-                  <label className="text-gray-400 font-semibold">Assessment Type *</label>
+                  <span className="text-gray-400 font-semibold">Assessment Type *</span>
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
@@ -257,8 +254,9 @@ export default function ImpactAssessments() {
                 </div>
 
                 <div className="flex flex-col gap-1.5 col-span-2">
-                  <label className="text-gray-400 font-semibold">Description of AI Pipeline *</label>
+                  <label htmlFor="pipeline-description" className="text-gray-400 font-semibold">Description of AI Pipeline *</label>
                   <textarea
+                    id="pipeline-description"
                     required
                     placeholder="Provide details on model operations, data flows, and pipeline inputs..."
                     value={formData.description}
@@ -266,10 +264,11 @@ export default function ImpactAssessments() {
                     className="bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
                   />
                 </div>
-
+ 
                 <div className="flex flex-col gap-1.5 col-span-2">
-                  <label className="text-gray-400 font-semibold">Anticipated Usecase Benefits *</label>
+                  <label htmlFor="pipeline-benefits" className="text-gray-400 font-semibold">Anticipated Usecase Benefits *</label>
                   <textarea
+                    id="pipeline-benefits"
                     required
                     placeholder="List expected functional, speed, or performance utility gains..."
                     value={formData.benefits}
@@ -277,10 +276,11 @@ export default function ImpactAssessments() {
                     className="bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
                   />
                 </div>
-
+ 
                 <div className="flex flex-col gap-1.5 col-span-2">
-                  <label className="text-gray-400 font-semibold">Data Protection & Privacy Safeguards *</label>
+                  <label htmlFor="pipeline-protection" className="text-gray-400 font-semibold">Data Protection & Privacy Safeguards *</label>
                   <textarea
+                    id="pipeline-protection"
                     required
                     placeholder="Detail active masking, filter APIs, retention controls, or PII scrubbers..."
                     value={formData.data_protection}
@@ -288,10 +288,11 @@ export default function ImpactAssessments() {
                     className="bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
                   />
                 </div>
-
+ 
                 <div className="flex flex-col gap-1.5 col-span-2">
-                  <label className="text-gray-400 font-semibold">Human Oversight & Fallback Protocols *</label>
+                  <label htmlFor="pipeline-oversight" className="text-gray-400 font-semibold">Human Oversight & Fallback Protocols *</label>
                   <textarea
+                    id="pipeline-oversight"
                     required
                     placeholder="Explain audit rules, human queues, veto options, and panic-stop configurations..."
                     value={formData.oversight}

@@ -179,7 +179,7 @@ export const initiateSamlSso = async (req: Request, res: Response, next: NextFun
             <div class="card-value">sso.compliance.manager@${org.slug}.com</div>
           </div>
 
-          <form action="/api/v1/auth/saml/${orgSlug}/callback" method="POST">
+          <form action="/api/v1/auth/saml/${org.slug}/callback" method="POST">
             <input type="hidden" name="SAMLResponse" value="MOCK_ASSERTION_DATA_BASE64_ENCODED_COMPLIANCE_MANAGER">
             <button type="submit" class="btn">Authorize & Login with SSO</button>
           </form>

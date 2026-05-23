@@ -1,5 +1,6 @@
 import prisma from '../config/db';
 import { randomUUID } from 'crypto';
+import { buildTenantQuery } from '../utils/queryHelpers';
 
 export const GovernanceService = {
   // ==========================================
@@ -7,12 +8,11 @@ export const GovernanceService = {
   // ==========================================
   async listRiskAssessments(organizationId: string) {
     return prisma.risk_assessments.findMany({
-      where: { organizationId },
+      ...buildTenantQuery(organizationId),
       include: {
         ai_system: true,
         answers: true
-      },
-      orderBy: { created_at: 'desc' }
+      }
     });
   },
 
@@ -134,9 +134,8 @@ export const GovernanceService = {
   // ==========================================
   async listImpactAssessments(organizationId: string) {
     return prisma.impact_assessments.findMany({
-      where: { organizationId },
-      include: { ai_system: true },
-      orderBy: { created_at: 'desc' }
+      ...buildTenantQuery(organizationId),
+      include: { ai_system: true }
     });
   },
 
@@ -289,10 +288,7 @@ export const GovernanceService = {
   // VENDOR AI TOOLS
   // ==========================================
   async listVendorAiTools(organizationId: string) {
-    return prisma.vendor_ai_tools.findMany({
-      where: { organizationId },
-      orderBy: { created_at: 'desc' }
-    });
+    return prisma.vendor_ai_tools.findMany(buildTenantQuery(organizationId));
   },
 
   async createVendorAiTool(

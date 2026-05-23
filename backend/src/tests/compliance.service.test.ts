@@ -26,7 +26,7 @@ const db = prisma as any;
 
 const ORG_ID = 'org-test-123';
 const USER_ID = 'user-test-456';
-const TEST_IP_ADDRESS = '1.2.3.4';
+const TEST_IP_ADDRESS = process.env.TEST_HOST_IP || '127.0.0.1';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  getAuditProof

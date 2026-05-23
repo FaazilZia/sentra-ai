@@ -5,6 +5,8 @@ import {
   Layers, User, CheckCircle2, AlertCircle, X, Edit, Save, 
   Sparkles, FileText, Info
 } from 'lucide-react';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 interface AISystem {
   id: string;
@@ -188,25 +190,19 @@ export default function AIRegistry() {
 
   return (
     <div className="flex flex-col gap-6 p-6 animate-fade-in text-gray-200">
-      {/* Header section */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-white flex items-center gap-3">
-            <Bot className="h-8 w-8 text-indigo-400" />
-            AI SYSTEM REGISTRY
-          </h1>
-          <p className="text-gray-400 text-sm mt-1">
-            Maintain your enterprise inventory of AI systems, versions, owners, and dynamic model cards.
-          </p>
-        </div>
-        <button
-          onClick={() => setIsRegisterOpen(true)}
-          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 hover:from-indigo-500 hover:to-purple-500 transition-all hover:scale-105 active:scale-95"
-        >
-          <Plus className="h-5 w-5" />
-          Register System
-        </button>
-      </div>
+      <PageHeader 
+        title="AI System Registry"
+        description="Maintain your enterprise inventory of AI systems, versions, owners, and dynamic model cards."
+        action={
+          <button
+            onClick={() => setIsRegisterOpen(true)}
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 hover:from-indigo-500 hover:to-purple-500 transition-all hover:scale-105 active:scale-95"
+          >
+            <Plus className="h-5 w-5" />
+            Register System
+          </button>
+        }
+      />
 
       {/* Main Layout Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -229,13 +225,11 @@ export default function AIRegistry() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
             </div>
           ) : filteredSystems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 bg-[#111827]/40 border border-gray-800/80 rounded-2xl text-center p-6">
-              <Bot className="h-12 w-12 text-gray-600 mb-3" />
-              <h3 className="font-semibold text-white">No AI Systems Registered</h3>
-              <p className="text-gray-400 text-sm mt-1 max-w-sm">
-                Get started by registering your first LLM, Agent, or Custom AI Pipeline in the inventory.
-              </p>
-            </div>
+            <EmptyState 
+              icon={Bot}
+              title="No AI Systems Registered"
+              description="Get started by registering your first LLM, Agent, or Custom AI Pipeline in the inventory."
+            />
           ) : (
             <div className="flex flex-col gap-3">
               {filteredSystems.map((sys) => (
@@ -352,8 +346,9 @@ export default function AIRegistry() {
                 ) : (
                   <div className="flex flex-col gap-4 text-xs bg-[#0f172a]/20 rounded-xl p-4 max-h-[500px] overflow-y-auto border border-gray-800/80">
                     <div className="flex flex-col gap-1">
-                      <label className="text-[10px] uppercase font-bold text-gray-500">Intended Use</label>
+                      <label htmlFor="card-intended-use" className="text-[10px] uppercase font-bold text-gray-500">Intended Use</label>
                       <textarea
+                        id="card-intended-use"
                         value={modelCardData.intended_use || ''}
                         onChange={(e) => setModelCardData({ ...modelCardData, intended_use: e.target.value })}
                         className="bg-black/30 border border-gray-800 rounded-lg p-2 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
@@ -361,8 +356,9 @@ export default function AIRegistry() {
                     </div>
 
                     <div className="flex flex-col gap-1">
-                      <label className="text-[10px] uppercase font-bold text-gray-500">Out of Scope Use</label>
+                      <label htmlFor="card-out-of-scope" className="text-[10px] uppercase font-bold text-gray-500">Out of Scope Use</label>
                       <textarea
+                        id="card-out-of-scope"
                         value={modelCardData.out_of_scope_use || ''}
                         onChange={(e) => setModelCardData({ ...modelCardData, out_of_scope_use: e.target.value })}
                         className="bg-black/30 border border-gray-800 rounded-lg p-2 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
@@ -370,8 +366,9 @@ export default function AIRegistry() {
                     </div>
 
                     <div className="flex flex-col gap-1">
-                      <label className="text-[10px] uppercase font-bold text-gray-500">Training Data Description</label>
+                      <label htmlFor="card-training-data" className="text-[10px] uppercase font-bold text-gray-500">Training Data Description</label>
                       <textarea
+                        id="card-training-data"
                         value={modelCardData.training_data_description || ''}
                         onChange={(e) => setModelCardData({ ...modelCardData, training_data_description: e.target.value })}
                         className="bg-black/30 border border-gray-800 rounded-lg p-2 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
@@ -379,8 +376,9 @@ export default function AIRegistry() {
                     </div>
 
                     <div className="flex flex-col gap-1">
-                      <label className="text-[10px] uppercase font-bold text-gray-500">Known Limitations</label>
+                      <label htmlFor="card-limitations" className="text-[10px] uppercase font-bold text-gray-500">Known Limitations</label>
                       <textarea
+                        id="card-limitations"
                         value={modelCardData.known_limitations || ''}
                         onChange={(e) => setModelCardData({ ...modelCardData, known_limitations: e.target.value })}
                         className="bg-black/30 border border-gray-800 rounded-lg p-2 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
@@ -388,8 +386,9 @@ export default function AIRegistry() {
                     </div>
 
                     <div className="flex flex-col gap-1">
-                      <label className="text-[10px] uppercase font-bold text-gray-500">Bias Considerations</label>
+                      <label htmlFor="card-bias" className="text-[10px] uppercase font-bold text-gray-500">Bias Considerations</label>
                       <textarea
+                        id="card-bias"
                         value={modelCardData.bias_considerations || ''}
                         onChange={(e) => setModelCardData({ ...modelCardData, bias_considerations: e.target.value })}
                         className="bg-black/30 border border-gray-800 rounded-lg p-2 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
@@ -397,8 +396,9 @@ export default function AIRegistry() {
                     </div>
 
                     <div className="flex flex-col gap-1">
-                      <label className="text-[10px] uppercase font-bold text-gray-500">Performance Metrics (JSON)</label>
+                      <label htmlFor="card-metrics" className="text-[10px] uppercase font-bold text-gray-500">Performance Metrics (JSON)</label>
                       <textarea
+                        id="card-metrics"
                         value={performanceMetricsText}
                         onChange={(e) => setPerformanceMetricsText(e.target.value)}
                         className="bg-black/30 border border-gray-800 rounded-lg p-2 text-emerald-300 font-mono focus:outline-none focus:border-indigo-500 min-h-[80px]"
@@ -441,8 +441,9 @@ export default function AIRegistry() {
             <form onSubmit={handleRegister} className="p-6 flex flex-col gap-4 max-h-[70vh] overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5 col-span-2">
-                  <label className="text-xs font-semibold text-gray-400">System Name *</label>
+                  <label htmlFor="reg-system-name" className="text-xs font-semibold text-gray-400">System Name *</label>
                   <input
+                    id="reg-system-name"
                     type="text"
                     required
                     placeholder="e.g. Sentra Support Agent"
@@ -453,8 +454,9 @@ export default function AIRegistry() {
                 </div>
 
                 <div className="flex flex-col gap-1.5 col-span-2">
-                  <label className="text-xs font-semibold text-gray-400">Description</label>
+                  <label htmlFor="reg-description" className="text-xs font-semibold text-gray-400">Description</label>
                   <textarea
+                    id="reg-description"
                     placeholder="Short description of the system's architecture and capabilities..."
                     value={newSystem.description}
                     onChange={(e) => setNewSystem({ ...newSystem, description: e.target.value })}
@@ -463,8 +465,9 @@ export default function AIRegistry() {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-gray-400">Model Name *</label>
+                  <label htmlFor="reg-model-name" className="text-xs font-semibold text-gray-400">Model Name *</label>
                   <input
+                    id="reg-model-name"
                     type="text"
                     required
                     placeholder="e.g. gpt-4o"
@@ -475,8 +478,9 @@ export default function AIRegistry() {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-gray-400">Model Version *</label>
+                  <label htmlFor="reg-model-version" className="text-xs font-semibold text-gray-400">Model Version *</label>
                   <input
+                    id="reg-model-version"
                     type="text"
                     required
                     placeholder="e.g. 1.0.0"
@@ -487,8 +491,9 @@ export default function AIRegistry() {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-gray-400">Vendor *</label>
+                  <label htmlFor="reg-vendor" className="text-xs font-semibold text-gray-400">Vendor *</label>
                   <input
+                    id="reg-vendor"
                     type="text"
                     required
                     placeholder="e.g. OpenAI"
@@ -499,8 +504,9 @@ export default function AIRegistry() {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-gray-400">Use Case *</label>
+                  <label htmlFor="reg-use-case" className="text-xs font-semibold text-gray-400">Use Case *</label>
                   <input
+                    id="reg-use-case"
                     type="text"
                     required
                     placeholder="e.g. Customer Support"

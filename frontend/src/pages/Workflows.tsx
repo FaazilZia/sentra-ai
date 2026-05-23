@@ -5,6 +5,8 @@ import {
   MessageSquare, User, Cpu, AlertTriangle, ShieldCheck, Play, 
   Terminal, ArrowRight, CornerDownRight
 } from 'lucide-react';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 interface PendingWorkflow {
   id: string;
@@ -93,15 +95,10 @@ export default function Workflows() {
     <div className="flex flex-col gap-6 p-6 animate-fade-in text-gray-200">
       
       {/* Header section */}
-      <div>
-        <h1 className="text-2xl font-black tracking-tight text-white flex items-center gap-3">
-          <GitPullRequestDraft className="h-8 w-8 text-indigo-400 animate-pulse" />
-          HUMAN OVERSIGHT APPROVALS
-        </h1>
-        <p className="text-gray-400 text-sm mt-1">
-          Review blocked high-risk AI actions, inspect their context, and grant manual operational overrides.
-        </p>
-      </div>
+      <PageHeader 
+        title="Human Oversight Approvals"
+        description="Review blocked high-risk AI actions, inspect their context, and grant manual operational overrides."
+      />
 
       {/* Task Queue Grid */}
       {loading ? (
@@ -109,13 +106,11 @@ export default function Workflows() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
         </div>
       ) : tasks.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-[#111827]/20 border border-dashed border-gray-800 rounded-2xl p-6 text-center">
-          <ShieldCheck className="h-12 w-12 text-gray-700 mb-3 animate-pulse" />
-          <h3 className="font-semibold text-gray-400">Approval Queue Empty</h3>
-          <p className="text-gray-500 text-xs mt-1 max-w-sm">
-            All intercepted AI actions are successfully resolved. No pending manual overrides are currently outstanding.
-          </p>
-        </div>
+        <EmptyState 
+          icon={ShieldCheck}
+          title="Approval Queue Empty"
+          description="All intercepted AI actions are successfully resolved. No pending manual overrides are currently outstanding."
+        />
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
           {tasks.map((task) => (
@@ -206,7 +201,7 @@ export default function Workflows() {
             <form onSubmit={handleResolve} className="p-6 flex flex-col gap-4">
               
               <div className="flex flex-col gap-2">
-                <label className="text-gray-400 font-semibold">Governance Resolution *</label>
+                <span className="text-gray-400 font-semibold">Governance Resolution *</span>
                 <div className="grid grid-cols-2 gap-4">
                   <button
                     type="button"
@@ -230,13 +225,14 @@ export default function Workflows() {
                   </button>
                 </div>
               </div>
-
+ 
               {/* Comment */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-gray-400 font-semibold">
+                <label htmlFor="resolution-comment" className="text-gray-400 font-semibold">
                   Resolution Comment {decision === 'REJECTED' ? '*' : '(Optional)'}
                 </label>
                 <textarea
+                  id="resolution-comment"
                   required={decision === 'REJECTED'}
                   placeholder={
                     decision === 'REJECTED' 

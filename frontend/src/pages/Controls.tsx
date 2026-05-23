@@ -4,6 +4,7 @@ import {
   ShieldCheck, Search, Filter, BookOpen, Clock, CheckCircle2, 
   HelpCircle, Edit, Save, Plus, X, ListTodo, Info, Layers
 } from 'lucide-react';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 interface ControlImplementation {
   id: string;
@@ -141,15 +142,10 @@ export default function Controls() {
     <div className="flex flex-col gap-6 p-6 animate-fade-in text-gray-200">
       
       {/* Header section */}
-      <div>
-        <h1 className="text-2xl font-black tracking-tight text-white flex items-center gap-3">
-          <ShieldCheck className="h-8 w-8 text-indigo-400" />
-          GOVERNANCE & CONTROLS LIBRARY
-        </h1>
-        <p className="text-gray-400 text-sm mt-1">
-          Track alignment, compliance implementation states, and operational evidence mapping for standard AI frameworks.
-        </p>
-      </div>
+      <PageHeader 
+        title="Governance & Controls Library"
+        description="Track alignment, compliance implementation states, and operational evidence mapping for standard AI frameworks."
+      />
 
       {/* Framework Progress Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -270,7 +266,7 @@ export default function Controls() {
               
               {/* Status */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-gray-400 font-semibold">Compliance Status *</label>
+                <span className="text-gray-400 font-semibold">Compliance Status *</span>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {(['NOT_STARTED', 'IN_PROGRESS', 'IMPLEMENTED', 'NOT_APPLICABLE'] as const).map((st) => (
                     <button
@@ -289,19 +285,21 @@ export default function Controls() {
 
               {/* Notes */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-gray-400 font-semibold">Notes / Implementation Details</label>
+                <label htmlFor="control-notes" className="text-gray-400 font-semibold">Notes / Implementation Details</label>
                 <textarea
+                  id="control-notes"
                   placeholder="Describe how your AI systems implement or comply with this control safeguard..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   className="bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
                 />
               </div>
-
+ 
               {/* Due date */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-gray-400 font-semibold">Compliance Due Date</label>
+                <label htmlFor="control-due-date" className="text-gray-400 font-semibold">Compliance Due Date</label>
                 <input
+                  id="control-due-date"
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
@@ -311,15 +309,16 @@ export default function Controls() {
 
               {/* Evidence */}
               <div className="flex flex-col gap-1.5 border-t border-gray-800/80 pt-4 mt-1">
-                <label className="text-gray-400 font-semibold flex items-center gap-1.5">
+                <span className="text-gray-400 font-semibold flex items-center gap-1.5">
                   <ListTodo className="h-4 w-4 text-purple-400" />
                   Compliance Evidence Audit Trail
-                </label>
+                </span>
                 
                 {/* Form fields for new evidence */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1.5">
                   <input
                     type="text"
+                    aria-label="Evidence name"
                     placeholder="Evidence name (e.g. LLM Guardrail Logs)"
                     value={evidenceName}
                     onChange={(e) => setEvidenceName(e.target.value)}
@@ -328,6 +327,7 @@ export default function Controls() {
                   <div className="flex gap-2">
                     <input
                       type="text"
+                      aria-label="URL or Reference Link"
                       placeholder="URL/Reference Link (optional)"
                       value={evidenceUrl}
                       onChange={(e) => setEvidenceUrl(e.target.value)}
