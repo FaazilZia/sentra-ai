@@ -792,3 +792,143 @@ export async function triggerDriftScan(): Promise<DriftAlert[]> {
 export async function resolveDriftAlert(id: string): Promise<DriftAlert> {
   return apiRequest<DriftAlert>(`/drift/alerts/${id}/resolve`, { method: 'PATCH' });
 }
+
+/**
+ * SLACK INTEGRATION ENDPOINTS
+ */
+export interface SlackConfig {
+  id?: string;
+  orgId?: string;
+  webhookUrl: string;
+  channel: string;
+  enabled: boolean;
+  notifyOn: string[];
+}
+
+export async function fetchSlackConfig(): Promise<SlackConfig> {
+  return apiRequest<SlackConfig>('/slack/config');
+}
+
+export async function saveSlackConfig(payload: SlackConfig): Promise<SlackConfig> {
+  return apiRequest<SlackConfig>('/slack/config', {
+    method: 'PUT',
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function deleteSlackConfig(): Promise<void> {
+  return apiRequest<void>('/slack/config', { method: 'DELETE' });
+}
+
+export async function testSlackConnection(payload: { webhookUrl: string; channel: string }): Promise<void> {
+  return apiRequest<void>('/slack/test', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+/**
+ * CHANGE HISTORY ENDPOINTS
+ */
+export interface ChangeHistory {
+  id: string;
+  orgId: string;
+  entityType: 'policy' | 'risk' | 'incident' | 'guardrail' | 'agent' | 'compliance' | 'workflow';
+  entityId: string;
+  changedBy: string;
+  changeType: 'created' | 'updated' | 'deleted' | 'status_changed' | 'assigned';
+  previousValue: any;
+  newValue: any;
+  changeNote?: string;
+  createdAt: string;
+  user?: {
+    full_name: string;
+    email: string;
+  };
+}
+
+export async function fetchEntityHistory(entityType: string, entityId: string): Promise<ChangeHistory[]> {
+  return apiRequest<ChangeHistory[]>(`/change-history/${entityType}/${entityId}`);
+}
+
+export async function fetchRecentHistory(limit?: number): Promise<ChangeHistory[]> {
+  const queryStr = limit ? `?limit=${limit}` : '';
+  return apiRequest<ChangeHistory[]>(`/change-history/recent${queryStr}`);
+}
+
+/**
+ * INTAKE FORM ENDPOINTS
+ */
+export interface IntakeForm {
+  id: string;
+  orgId: string;
+  title: string;
+  description?: string;
+  fields: any[];
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IntakeSubmission {
+  id: string;
+  orgId: string;
+  formId: string;
+  submittedBy: string;
+  agentName: string;
+  agentDescription: string;
+  useCase: string;
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+  status: 'pending' | 'approved' | 'rejected';
+  reviewedBy?: string;
+  reviewNote?: string;
+  formData: any;
+  createdAt: string;
+  updatedAt: string;
+  submitter?: {
+    full_name: string;
+    email: string;
+  };
+  reviewer?: {
+    full_name: string;
+    email: string;
+  };
+}
+
+export async function fetchIntakeForm(): Promise<IntakeForm> {
+  return apiRequest<IntakeForm>('/intake/form');
+}
+
+export async function submitIntake(payload: {
+  agentName: string;
+  agentDescription: string;
+  useCase: string;
+  formData: any;
+}): Promise<IntakeSubmission> {
+  return apiRequest<IntakeSubmission>('/intake/submissions', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function fetchSubmissions(status?: string): Promise<IntakeSubmission[]> {
+  const queryStr = status ? `?status=${status}` : '';
+  return apiRequest<IntakeSubmission[]>(`/intake/submissions${queryStr}`);
+}
+
+export async function approveSubmission(id: string, note?: string): Promise<{ submission: IntakeSubmission, system: any }> {
+  return apiRequest<{ submission: IntakeSubmission, system: any }>(`/intake/submissions/${id}/approve`, {
+    method: 'POST',
+    body: JSON.stringify({ note })
+  });
+}
+
+export async function rejectSubmission(id: string, note: string): Promise<IntakeSubmission> {
+  return apiRequest<IntakeSubmission>(`/intake/submissions/${id}/reject`, {
+    method: 'POST',
+    body: JSON.stringify({ note })
+  });
+}
+
+
+

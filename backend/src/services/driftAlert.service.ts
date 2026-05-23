@@ -3,6 +3,7 @@ import logger from '../utils/logger';
 import { DriftScoringService } from './driftScoring.service';
 import { getRedisClient } from '../config/redis';
 import { NotificationService } from './notification.service';
+import { SlackService } from './slack.service';
 
 export interface DriftScanResult {
   scannedCount: number;
@@ -113,6 +114,13 @@ export class DriftAlertService {
               driftAlert.description,
               'drift',
               driftAlert.id
+            );
+
+            await SlackService.notifyDriftDetected(
+              agent.organizationId,
+              agent.name,
+              'Behavioral Drift',
+              driftScore > 0.7 ? 'High' : 'Medium'
             );
             logger.info(`[DRIFT ALERT] Created new drift alert for agent: ${agent.name} (Drift: ${Math.round(driftScore * 100)}%)`);
           }

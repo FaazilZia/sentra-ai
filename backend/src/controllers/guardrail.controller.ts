@@ -6,6 +6,7 @@ import prisma from '../config/db';
 import logger from '../utils/logger';
 import { parsePagination } from '../utils/pagination';
 import { asyncHandler, sendSuccess, sendError, getOrgId } from '../utils/controllerHelpers';
+import { ChangeHistoryService } from '../services/changeHistory.service';
 
 export const processAIRequest = asyncHandler(async (req: any, res: Response) => {
   const { prompt, model = 'gpt-4o' } = req.body;
@@ -208,6 +209,18 @@ export const postRequestOverride = asyncHandler(async (req: any, res: Response) 
   const { logId, reason } = req.body;
   const userId = req.user.id;
   const override = await GuardrailService.requestOverride(logId, userId, reason);
+
+  await ChangeHistoryService.logChange(
+    getOrgId(req),
+    'guardrail',
+    logId,
+    req.user.id,
+    'created',
+    null,
+    override,
+    `Requested guardrail override: ${reason}`
+  );
+
   return sendSuccess(res, override);
 });
 
@@ -215,6 +228,18 @@ export const postApproveOverride = asyncHandler(async (req: any, res: Response) 
   const { overrideId, status } = req.body;
   const userId = req.user.id;
   const override = await GuardrailService.approveOverride(overrideId, userId, status);
+
+  await ChangeHistoryService.logChange(
+    getOrgId(req),
+    'guardrail',
+    override.log_id || overrideId,
+    req.user.id,
+    'status_changed',
+    { status: 'pending' },
+    override,
+    `Guardrail override request was ${status}`
+  );
+
   return sendSuccess(res, override);
 });
 

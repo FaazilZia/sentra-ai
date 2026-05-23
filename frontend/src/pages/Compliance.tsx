@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { EvidenceSection } from '../components/shared/EvidenceSection';
+import { ChangeHistoryTimeline } from '../components/shared/ChangeHistoryTimeline';
 import KPICard from '@/components/dashboard/KPICard';
 import { cn } from '@/lib/utils';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
@@ -347,6 +348,11 @@ export default function Compliance() {
             {/* Evidence Sub-section */}
             <div className="pt-4 border-t border-[var(--border-default)]/60">
               <EvidenceSection entityType="compliance" entityId={selectedFramework.name.toLowerCase().replace(' compliance', '').replace(' security', '').split(' ')[0]} />
+            </div>
+
+            {/* Change History Sub-section */}
+            <div className="pt-4 border-t border-[var(--border-default)]/60">
+              <ChangeHistoryTimeline entityType="compliance" entityId={selectedFramework.name.toLowerCase().replace(' compliance', '').replace(' security', '').split(' ')[0]} />
             </div>
           </div>
         </div>

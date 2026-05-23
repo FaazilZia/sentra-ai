@@ -3,6 +3,7 @@ import logger from '../utils/logger';
 import { EventTriggerService } from './eventTrigger.service';
 import axios from 'axios';
 import { NotificationService } from './notification.service';
+import { SlackService } from './slack.service';
 
 export class DriftService {
   /**
@@ -56,6 +57,13 @@ export class DriftService {
           driftAlert.description,
           'drift',
           driftAlert.id
+        );
+
+        await SlackService.notifyDriftDetected(
+          organizationId,
+          agentId,
+          'ANOMALOUS_ACTIVITY',
+          'High'
         );
 
         const rules = await prisma.alert_rules.findMany({

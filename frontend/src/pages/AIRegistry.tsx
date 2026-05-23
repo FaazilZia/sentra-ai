@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ChangeHistoryTimeline } from '../components/shared/ChangeHistoryTimeline';
 
 interface AISystem {
   id: string;
@@ -414,6 +415,11 @@ export default function AIRegistry() {
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* Change History Sub-section */}
+              <div className="pt-4 border-t border-gray-800">
+                <ChangeHistoryTimeline entityType="agent" entityId={selectedSystem.id} />
               </div>
             </div>
           ) : (

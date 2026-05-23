@@ -22,6 +22,7 @@ import {
   ShieldAlert
 } from 'lucide-react';
 import { EvidenceSection } from '../components/shared/EvidenceSection';
+import { ChangeHistoryTimeline } from '../components/shared/ChangeHistoryTimeline';
 import KPICard from '@/components/dashboard/KPICard';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store/useStore';
@@ -363,6 +364,11 @@ export default function RiskCenter() {
             {/* Evidence Sub-section */}
             <div className="pt-4 border-t border-[var(--border-default)]/60">
               <EvidenceSection entityType="incident" entityId={selectedIncident.id} />
+            </div>
+
+            {/* Change History Sub-section */}
+            <div className="pt-4 border-t border-[var(--border-default)]/60">
+              <ChangeHistoryTimeline entityType="incident" entityId={selectedIncident.id} />
             </div>
           </div>
         </div>

@@ -2,6 +2,8 @@ import { Response } from 'express';
 import { WorkflowService } from '../services/workflow.service';
 import { parsePagination } from '../utils/pagination';
 import { asyncHandler, sendSuccess, sendError, getOrgId } from '../utils/controllerHelpers';
+import { ChangeHistoryService } from '../services/changeHistory.service';
+import prisma from '../config/db';
 
 export const createTask = asyncHandler(async (req: any, res: Response) => {
   const task = await WorkflowService.createTask({
@@ -9,6 +11,18 @@ export const createTask = asyncHandler(async (req: any, res: Response) => {
     createdBy: req.user.id,
     ...req.body,
   });
+
+  await ChangeHistoryService.logChange(
+    getOrgId(req),
+    'workflow',
+    task.id,
+    req.user.id,
+    'created',
+    null,
+    task,
+    'Workflow task created'
+  );
+
   return sendSuccess(res, task, 201);
 });
 
@@ -32,10 +46,23 @@ export const getTask = asyncHandler(async (req: any, res: Response) => {
 
 export const submitForReview = asyncHandler(async (req: any, res: Response) => {
   const orgId = getOrgId(req);
+  const existing = await prisma.workflow_tasks.findUnique({ where: { id: req.params.id } });
   try {
     const result = await WorkflowService.submitForReview(
       req.params.id, orgId, req.user.id, req.user.role, req.body.comment
     );
+
+    await ChangeHistoryService.logChange(
+      orgId,
+      'workflow',
+      req.params.id,
+      req.user.id,
+      'status_changed',
+      existing,
+      result.task || result,
+      'Workflow task submitted for review'
+    );
+
     return sendSuccess(res, result);
   } catch (e: any) {
     if (e.message?.includes('Invalid transition') || e.message?.includes('Role')) {
@@ -51,6 +78,7 @@ const handleWorkflowTransition = async (
   actionFn: (args: any) => Promise<any>
 ) => {
   const orgId = getOrgId(req);
+  const existing = await prisma.workflow_tasks.findUnique({ where: { id: req.params.id } });
   try {
     const result = await actionFn({
       taskId: req.params.id,
@@ -59,6 +87,18 @@ const handleWorkflowTransition = async (
       reviewerRole: req.user.role,
       comment: req.body.comment,
     });
+
+    await ChangeHistoryService.logChange(
+      orgId,
+      'workflow',
+      req.params.id,
+      req.user.id,
+      'status_changed',
+      existing,
+      result.task || result,
+      'Workflow task transitioned status'
+    );
+
     return sendSuccess(res, result);
   } catch (e: any) {
     if (e.message?.includes('transition') || e.message?.includes('Role')) {
@@ -78,7 +118,22 @@ export const rejectTask = asyncHandler(async (req: any, res: Response) => {
 });
 
 export const assignTask = asyncHandler(async (req: any, res: Response) => {
-  await WorkflowService.assignTask(req.params.id, getOrgId(req), req.body.assignedTo, req.user.id);
+  const orgId = getOrgId(req);
+  const existing = await prisma.workflow_tasks.findUnique({ where: { id: req.params.id } });
+  await WorkflowService.assignTask(req.params.id, orgId, req.body.assignedTo, req.user.id);
+  const updated = await prisma.workflow_tasks.findUnique({ where: { id: req.params.id } });
+
+  await ChangeHistoryService.logChange(
+    orgId,
+    'workflow',
+    req.params.id,
+    req.user.id,
+    'assigned',
+    existing,
+    updated,
+    `Workflow task assigned to ${req.body.assignedTo}`
+  );
+
   return sendSuccess(res, undefined, 200, 'Task assigned');
 });
 
@@ -108,6 +163,8 @@ export const resolveWorkflow = asyncHandler(async (req: any, res: Response) => {
     return sendError(res, 400, 'Decision must be either APPROVED or REJECTED');
   }
 
+  const existing = await prisma.workflow_tasks.findUnique({ where: { id } });
+
   try {
     const result = await WorkflowService.resolveTask(
       id,
@@ -117,6 +174,18 @@ export const resolveWorkflow = asyncHandler(async (req: any, res: Response) => {
       req.user.role,
       comment
     );
+
+    await ChangeHistoryService.logChange(
+      orgId,
+      'workflow',
+      id,
+      req.user.id,
+      'status_changed',
+      existing,
+      result,
+      `Workflow task resolved: ${decision}`
+    );
+
     return sendSuccess(res, result);
   } catch (e: any) {
     if (e.message?.includes('not found')) {

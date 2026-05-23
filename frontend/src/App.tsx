@@ -27,6 +27,7 @@ const ObligationsPage = lazy(() => import('./pages/Obligations'));
 const WorkflowsPage = lazy(() => import('./pages/Workflows'));
 const ExecutiveReportPage = lazy(() => import('./pages/ExecutiveReport'));
 const TrustPortalPage = lazy(() => import('./pages/TrustPortal'));
+const IntakePage = lazy(() => import('./pages/Intake'));
 
 import { ModalProvider } from './components/shared/ModalProvider';
 import { ToastProvider } from './components/shared/ToastProvider';
@@ -145,6 +146,11 @@ function AppRoutes() {
             <Route 
               path="/app/workflows" 
               element={user ? <AppLayout><WorkflowsPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/intake" 
+              element={user ? <AppLayout><IntakePage /></AppLayout> : <Navigate to="/login" replace />}
             />
 
             <Route 

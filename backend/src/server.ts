@@ -59,6 +59,7 @@ import { Server } from 'socket.io';
 import app from './app';
 import logger from './utils/logger';
 import prisma, { initializePrisma } from './config/db';
+import { IntakeFormService } from './services/intakeForm.service';
 import { setupScheduledJobs } from './services/queue.service';
 import { setupConnectorWorkers, setupDriftWorker, setupEvaluationWorker } from './workers/worker.manager';
 
@@ -179,6 +180,9 @@ const startServer = async () => {
   try {
     await initializePrisma();
     logger.info('Database layer initialized');
+
+    // Seed default intake forms for all existing organizations safely (check-and-upsert)
+    await IntakeFormService.seedAllExistingOrganizations();
 
     // Run Redis connection checks asynchronously to prevent startup deadlocks
     redisHealthCheck()

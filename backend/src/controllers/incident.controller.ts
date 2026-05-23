@@ -7,6 +7,8 @@ import logger from '../utils/logger';
 import { parsePagination } from '../utils/pagination';
 import { asyncHandler, sendSuccess, sendError } from '../utils/controllerHelpers';
 import { NotificationService } from '../services/notification.service';
+import { SlackService } from '../services/slack.service';
+import { ChangeHistoryService } from '../services/changeHistory.service';
 
 const SCAN_PROGRESS_STEP = 20;
 const SCAN_TICK_MS = 500;
@@ -47,6 +49,12 @@ async function finalizeScanJob(organizationId: string, jobId: string, incidentsD
         details,
         'incident',
         incidentId
+      );
+
+      await SlackService.notifyIncidentCreated(
+        organizationId,
+        `New Scan Incident: ${details}`,
+        50
       );
     }
 
@@ -138,6 +146,17 @@ export const updateIncidentStatus = asyncHandler(async (req: any, res: Response)
     },
   });
 
+  await ChangeHistoryService.logChange(
+    organizationId,
+    'incident',
+    id,
+    req.user.id,
+    'status_changed',
+    existing,
+    updatedIncident,
+    `Incident status changed to ${status}`
+  );
+
   return sendSuccess(res, serializeIncident(updatedIncident));
 });
 
@@ -226,6 +245,12 @@ export const logIncident = asyncHandler(async (req: any, res: Response) => {
     newIncident.details,
     'incident',
     newIncident.id
+  );
+
+  await SlackService.notifyIncidentCreated(
+    organizationId,
+    `New Incident: ${newIncident.action} - ${newIncident.details}`,
+    newIncident.severity
   );
 
   const payload = serializeIncident(newIncident);

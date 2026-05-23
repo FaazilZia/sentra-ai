@@ -5,6 +5,7 @@ import { evaluateSemanticRisk } from './semanticRiskEngine';
 import { DriftService } from './drift.service';
 import { SAFE_ACTION_ALLOWLIST } from './policyEngine';
 import { NotificationService } from './notification.service';
+import { SlackService } from './slack.service';
 
 export interface GuardrailDecision {
   decision: 'ALLOW' | 'MODIFY' | 'BLOCK';
@@ -202,6 +203,26 @@ export class GuardrailService {
           data.policy_triggered || log.id
         ).catch(err => {
           logger.error('Failed to notify guardrail block:', err);
+        });
+
+        const agentName = data.metadata?.agent || 'AI System';
+        const action = data.metadata?.action || 'user request';
+        const policyName = data.policy_triggered || 'System Hardening Rule';
+        SlackService.notifyGuardrailBlock(
+          data.organizationId,
+          agentName,
+          action,
+          policyName
+        ).catch(err => {
+          logger.error('Failed to notify guardrail block via Slack:', err);
+        });
+
+        SlackService.notifyPolicyViolation(
+          data.organizationId,
+          policyName,
+          agentName
+        ).catch(err => {
+          logger.error('Failed to notify policy violation via Slack:', err);
         });
       }
 

@@ -69,6 +69,10 @@ model organizations {
   compliance_obligations  compliance_obligations[]
   notifications          notifications[]
   evidence               evidence[]
+  slack_config           slack_config?
+  change_history         change_history[]
+  intake_forms           intake_forms[]
+  intake_submissions     intake_submissions[]
 
   @@map("companies")
 }
@@ -187,6 +191,9 @@ model users {
   ai_systems_owned          ai_systems[]              @relation("OwnerUser")
   notifications             notifications[]
   evidence                  evidence[]
+  change_history            change_history[]
+  intake_submissions_submitted intake_submissions[] @relation("IntakeSubmitter")
+  intake_submissions_reviewed  intake_submissions[] @relation("IntakeReviewer")
 
   @@map("users")
 }
@@ -1148,5 +1155,110 @@ model evidence {
   @@index([orgId])
   @@index([uploadedBy])
   @@map("evidence")
+}
+
+enum ChangeEntityType {
+  policy
+  risk
+  incident
+  guardrail
+  agent
+  compliance
+  workflow
+}
+
+enum ChangeHistoryType {
+  created
+  updated
+  deleted
+  status_changed
+  assigned
+}
+
+enum IntakeSubmissionStatus {
+  pending
+  approved
+  rejected
+}
+
+model slack_config {
+  id         String   @id @default(uuid())
+  orgId      String   @unique @map("organization_id")
+  webhookUrl String   @map("webhook_url")
+  channel    String
+  enabled    Boolean  @default(true)
+  notifyOn   String[] @map("notify_on")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  organization organizations @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@map("slack_config")
+}
+
+model change_history {
+  id            String            @id @default(uuid())
+  orgId         String            @map("organization_id")
+  entityType    ChangeEntityType  @map("entity_type")
+  entityId      String            @map("entity_id")
+  changedBy     String            @map("changed_by")
+  changeType    ChangeHistoryType @map("change_type")
+  previousValue Json?             @map("previous_value")
+  newValue      Json?             @map("new_value")
+  changeNote    String?           @map("change_note")
+  createdAt     DateTime          @default(now()) @map("created_at")
+
+  organization organizations @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user         users         @relation(fields: [changedBy], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([changedBy])
+  @@index([entityType, entityId])
+  @@map("change_history")
+}
+
+model intake_forms {
+  id          String   @id @default(uuid())
+  orgId       String   @map("organization_id")
+  title       String
+  description String?
+  fields      Json     @map("fields")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  organization        organizations        @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  intake_submissions intake_submissions[]
+
+  @@index([orgId])
+  @@map("intake_forms")
+}
+
+model intake_submissions {
+  id               String                 @id @default(uuid())
+  orgId            String                 @map("organization_id")
+  formId           String                 @map("form_id")
+  submittedBy      String                 @map("submitted_by")
+  agentName        String                 @map("agent_name")
+  agentDescription String                 @map("agent_description")
+  useCase          String                 @map("use_case")
+  riskLevel        String                 @map("risk_level")
+  status           IntakeSubmissionStatus @default(pending) @map("status")
+  reviewedBy       String?                @map("reviewed_by")
+  reviewNote       String?                @map("review_note")
+  formData         Json                   @map("form_data")
+  createdAt        DateTime               @default(now()) @map("created_at")
+  updatedAt        DateTime               @updatedAt @map("updated_at")
+
+  organization organizations @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  form         intake_forms  @relation(fields: [formId], references: [id], onDelete: Cascade)
+  submitter    users         @relation("IntakeSubmitter", fields: [submittedBy], references: [id], onDelete: Cascade)
+  reviewer     users?        @relation("IntakeReviewer", fields: [reviewedBy], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([formId])
+  @@index([submittedBy])
+  @@map("intake_submissions")
 }
 

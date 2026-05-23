@@ -2,6 +2,7 @@ import { getRedisClient } from '../config/redis';
 import prisma from '../config/db';
 import logger from '../utils/logger';
 import { NotificationService } from './notification.service';
+import { SlackService } from './slack.service';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -280,6 +281,13 @@ export async function persistDriftAlerts(
         driftAlert.description,
         'drift',
         driftAlert.id
+      );
+
+      await SlackService.notifyDriftDetected(
+        orgId,
+        agentId,
+        c.type,
+        c.severity === 'high' ? 'High' : 'Medium'
       );
     } catch (err) {
       logger.warn(`[DriftDetection] Failed to persist drift alert:`, err);

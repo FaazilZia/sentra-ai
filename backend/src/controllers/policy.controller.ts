@@ -2,6 +2,7 @@ import { Response } from 'express';
 import prisma from '../config/db';
 import { resolveOrganizationId } from '../utils/company';
 import { asyncHandler, sendSuccess, sendError } from '../utils/controllerHelpers';
+import { ChangeHistoryService } from '../services/changeHistory.service';
 
 export const getPolicies = asyncHandler(async (req: any, res: Response) => {
   const organizationId = req.user.organizationId;
@@ -102,6 +103,17 @@ export const createPolicy = asyncHandler(async (req: any, res: Response) => {
     },
   });
 
+  await ChangeHistoryService.logChange(
+    organizationId,
+    'policy',
+    policy.id,
+    req.user.id,
+    'created',
+    null,
+    policy,
+    'Policy created'
+  );
+
   return sendSuccess(res, policy, 201);
 });
 
@@ -180,6 +192,17 @@ export const duplicatePolicy = asyncHandler(async (req: any, res: Response) => {
     }
   });
 
+  await ChangeHistoryService.logChange(
+    orgId,
+    'policy',
+    newPolicy.id,
+    req.user.id,
+    'created',
+    null,
+    newPolicy,
+    `Duplicated from policy ID ${policyId}`
+  );
+
   return sendSuccess(res, newPolicy, 201);
 });
 
@@ -211,6 +234,17 @@ export const updatePolicy = asyncHandler(async (req: any, res: Response) => {
     }
   });
 
+  await ChangeHistoryService.logChange(
+    orgId,
+    'policy',
+    id,
+    req.user.id,
+    'updated',
+    existing,
+    updated,
+    'Policy updated'
+  );
+
   return sendSuccess(res, updated);
 });
 
@@ -228,6 +262,17 @@ export const deletePolicy = asyncHandler(async (req: any, res: Response) => {
 
   await prisma.policy_versions.deleteMany({ where: { policy_id: id } });
   await prisma.policies.delete({ where: { id } });
+
+  await ChangeHistoryService.logChange(
+    orgId,
+    'policy',
+    id,
+    req.user.id,
+    'deleted',
+    existing,
+    null,
+    'Policy deleted'
+  );
 
   return res.status(204).send();
 });

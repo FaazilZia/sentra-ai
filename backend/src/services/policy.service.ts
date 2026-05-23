@@ -2,6 +2,7 @@ import prisma from '../config/db';
 import { makeDecision, Decision } from './decisionEngine';
 import { io } from '../server';
 import { NotificationService } from './notification.service';
+import { SlackService } from './slack.service';
 
 export type CheckPermissionResult = Decision;
 
@@ -98,6 +99,18 @@ export const logActivity = async (data: LogActivityData) => {
       details,
       'incident',
       incidentId
+    );
+
+    await SlackService.notifyIncidentCreated(
+      data.organizationId,
+      `High-Risk Policy Incident Blocked: ${details}`,
+      85
+    );
+
+    await SlackService.notifyPolicyViolation(
+      data.organizationId,
+      'High-Risk Action Blocked',
+      data.agent
     );
   }
 

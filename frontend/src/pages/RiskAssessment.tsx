@@ -5,6 +5,7 @@ import {
   Shield, Play, HelpCircle, X
 } from 'lucide-react';
 import { EvidenceSection } from '../components/shared/EvidenceSection';
+import { ChangeHistoryTimeline } from '../components/shared/ChangeHistoryTimeline';
 
 interface AISystem {
   id: string;
@@ -520,6 +521,11 @@ export default function RiskAssessment() {
             {/* Evidence Sub-section */}
             <div className="pt-4 border-t border-gray-800">
               <EvidenceSection entityType="risk" entityId={selectedAssessment.id} />
+            </div>
+
+            {/* Change History Sub-section */}
+            <div className="pt-4 border-t border-gray-800">
+              <ChangeHistoryTimeline entityType="risk" entityId={selectedAssessment.id} />
             </div>
           </div>
         </div>

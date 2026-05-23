@@ -3,6 +3,7 @@ import prisma from '../config/db';
 import logger from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
 import { NotificationService } from './notification.service';
+import { SlackService } from './slack.service';
 
 // ─────────────────────────────────────────────
 // State Machine Definition
@@ -143,7 +144,16 @@ export const WorkflowService = {
       'workflow_task',
       updatedTask.id
     ).catch(err => {
-      logger.error('Failed to send workflow transition notification:', err);
+      logger.error('Failed to notify workflow transition:', err);
+    });
+
+    SlackService.notifyWorkflowChange(
+      params.organizationId,
+      updatedTask.title,
+      toState,
+      updatedTask.assigned_to || ''
+    ).catch(err => {
+      logger.error('Failed to notify workflow transition via Slack:', err);
     });
 
     // Audit log
@@ -418,6 +428,15 @@ export const WorkflowService = {
       task.id
     ).catch(err => {
       logger.error('Failed to send workflow pending creation notification:', err);
+    });
+
+    SlackService.notifyWorkflowChange(
+      organizationId,
+      task.title,
+      'PENDING_REVIEW',
+      task.assigned_to || ''
+    ).catch(err => {
+      logger.error('Failed to notify workflow pending creation via Slack:', err);
     });
 
     return task;

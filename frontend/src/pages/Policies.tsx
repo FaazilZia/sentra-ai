@@ -16,6 +16,8 @@ import { cn } from '@/lib/utils';
 import { useStore } from '@/store/useStore';
 import { fetchPolicies, PolicyResponse } from '@/lib/api';
 import { EvidenceSection } from '../components/shared/EvidenceSection';
+import { ChangeHistoryTimeline } from '../components/shared/ChangeHistoryTimeline';
+
 
 export default function Policies() {
   const addToast = useStore((state) => state.addToast);
@@ -197,9 +199,15 @@ export default function Policies() {
             <div className="pt-4 border-t border-[var(--border-default)]/60">
               <EvidenceSection entityType="policy" entityId={selectedPolicy.id} />
             </div>
+
+            {/* Change History Sub-section */}
+            <div className="pt-4 border-t border-[var(--border-default)]/60">
+              <ChangeHistoryTimeline entityType="policy" entityId={selectedPolicy.id} />
+            </div>
           </div>
         </div>
       )}
     </div>
   );
 }
+

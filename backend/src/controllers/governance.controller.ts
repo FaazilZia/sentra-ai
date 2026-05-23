@@ -2,6 +2,8 @@ import { Response } from 'express';
 import { GovernanceService } from '../services/governance.service';
 import { resolveOrganizationId } from '../utils/company';
 import { asyncHandler, sendSuccess, sendError } from '../utils/controllerHelpers';
+import { ChangeHistoryService } from '../services/changeHistory.service';
+import prisma from '../config/db';
 
 // ==========================================
 // RISK ASSESSMENTS
@@ -32,6 +34,18 @@ export const createRiskAssessment = asyncHandler(async (req: any, res: Response)
   const { ai_system_id } = req.body;
   try {
     const item = await GovernanceService.createRiskAssessment(organizationId, ai_system_id);
+
+    await ChangeHistoryService.logChange(
+      organizationId,
+      'risk',
+      item.id,
+      req.user.id,
+      'created',
+      null,
+      item,
+      'Risk assessment created'
+    );
+
     return sendSuccess(res, item, 201);
   } catch (error: any) {
     return sendError(res, 400, error.message);
@@ -46,7 +60,20 @@ export const submitRiskAssessment = asyncHandler(async (req: any, res: Response)
   const { answers } = req.body;
 
   try {
+    const existing = await prisma.risk_assessments.findUnique({ where: { id } });
     const item = await GovernanceService.submitRiskAssessment(id, organizationId, answers);
+
+    await ChangeHistoryService.logChange(
+      organizationId,
+      'risk',
+      id,
+      req.user.id,
+      'status_changed',
+      existing,
+      item,
+      'Risk assessment submitted'
+    );
+
     return sendSuccess(res, item);
   } catch (error: any) {
     return sendError(res, 400, error.message);
@@ -76,6 +103,18 @@ export const createImpactAssessment = asyncHandler(async (req: any, res: Respons
       form_data,
       submitted_by: submitted_by || req.user?.email
     });
+
+    await ChangeHistoryService.logChange(
+      organizationId,
+      'risk',
+      item.id,
+      req.user.id,
+      'created',
+      null,
+      item,
+      `Impact assessment (${type}) created`
+    );
+
     return sendSuccess(res, item, 201);
   } catch (error: any) {
     return sendError(res, 400, error.message);
@@ -87,8 +126,20 @@ export const updateImpactAssessment = asyncHandler(async (req: any, res: Respons
   if (!organizationId) return sendError(res, 400, 'Company context required');
 
   const { id } = req.params;
+  const existing = await prisma.impact_assessments.findUnique({ where: { id } });
   const item = await GovernanceService.updateImpactAssessment(id, organizationId, req.body);
   if (!item) return sendError(res, 404, 'Impact assessment not found');
+
+  await ChangeHistoryService.logChange(
+    organizationId,
+    'risk',
+    id,
+    req.user.id,
+    'updated',
+    existing,
+    item,
+    'Impact assessment updated'
+  );
 
   return sendSuccess(res, item);
 });
@@ -111,11 +162,23 @@ export const approveImpactAssessment = asyncHandler(async (req: any, res: Respon
   if (!organizationId) return sendError(res, 400, 'Company context required');
 
   const { id } = req.params;
+  const existing = await prisma.impact_assessments.findUnique({ where: { id } });
   const item = await GovernanceService.updateImpactAssessment(id, organizationId, {
     status: 'APPROVED',
     reviewed_by: req.user?.email || 'admin@sentra.ai'
   });
   if (!item) return sendError(res, 404, 'Impact assessment not found');
+
+  await ChangeHistoryService.logChange(
+    organizationId,
+    'risk',
+    id,
+    req.user.id,
+    'status_changed',
+    existing,
+    item,
+    'Impact assessment approved'
+  );
 
   return sendSuccess(res, item);
 });
@@ -125,8 +188,20 @@ export const deleteImpactAssessment = asyncHandler(async (req: any, res: Respons
   if (!organizationId) return sendError(res, 400, 'Company context required');
 
   const { id } = req.params;
+  const existing = await prisma.impact_assessments.findUnique({ where: { id } });
   const success = await GovernanceService.deleteImpactAssessment(id, organizationId);
   if (!success) return sendError(res, 404, 'Impact assessment not found or not deleted');
+
+  await ChangeHistoryService.logChange(
+    organizationId,
+    'risk',
+    id,
+    req.user.id,
+    'deleted',
+    existing,
+    null,
+    'Impact assessment deleted'
+  );
 
   return sendSuccess(res, { success: true });
 });

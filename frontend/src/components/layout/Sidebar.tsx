@@ -18,7 +18,8 @@ import {
   BarChart3,
   Globe,
   Award,
-  FolderOpen
+  FolderOpen,
+  Layers
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth';
@@ -38,10 +39,11 @@ const operationsItems = [
 const governanceItems = [
   { icon: Bot, label: 'AI Registry', path: '/app/ai-registry' },
   { icon: Award, label: 'Risk Audits', path: '/app/risk-assessment' },
-  { icon: LayoutKanban, label: 'Impact Boards', path: '/app/impact-assessments' },
+  { icon: Layers, label: 'Impact Boards', path: '/app/impact-assessments' },
   { icon: ShieldCheck, label: 'Controls', path: '/app/controls' },
   { icon: Building2, label: 'Vendor Risk', path: '/app/vendor-risk' },
   { icon: ListTodo, label: 'Obligations', path: '/app/obligations' },
+  { icon: ClipboardCheck, label: 'Intake Queue', path: '/app/intake' },
   { icon: GitPullRequestDraft, label: 'Approvals', path: '/app/workflows' },
   { icon: BarChart3, label: 'Executive Report', path: '/app/executive-report' },
 ];

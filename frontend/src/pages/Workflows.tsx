@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ChangeHistoryTimeline } from '../components/shared/ChangeHistoryTimeline';
 
 interface PendingWorkflow {
   id: string;
@@ -224,6 +225,11 @@ export default function Workflows() {
                     REJECT / BLOCK
                   </button>
                 </div>
+              </div>
+
+              {/* Change History Sub-section */}
+              <div className="border-t border-gray-800 pt-4">
+                <ChangeHistoryTimeline entityType="workflow" entityId={selectedTask.id} />
               </div>
  
               {/* Comment */}
