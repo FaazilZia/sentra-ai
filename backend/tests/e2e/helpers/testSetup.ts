@@ -1,3 +1,6 @@
+
+
+import 'dotenv/config';
 import request from 'supertest';
 import { getAuthToken } from './getAuthToken';
 
@@ -14,7 +17,11 @@ export async function setupE2ETestToken(prefix: string): Promise<string> {
 
   const testOrg = `test-org-${prefix}-${Date.now()}`;
   const testEmail = `test-${prefix}-${Date.now()}@sentra-test.com`;
-  const testPassword = 'TestPass123!';
+  const testPassword = process.env.TEST_PASSWORD;
+
+  if (!testPassword) {
+    throw new Error('TEST_PASSWORD environment variable is required for E2E tests but not defined.');
+  }
 
   const regRes = await request(TEST_BASE_URL)
     .post('/api/v1/auth/register')

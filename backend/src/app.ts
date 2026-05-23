@@ -114,7 +114,8 @@ const handleReadyRequest = (req: any, res: any) => {
   }
   
   const duration = (performance.now() - start).toFixed(3);
-  console.log(`[HEALTH] Responded to ${req.originalUrl || req.url} in ${duration} ms`);
+  const sanitizedUrl = String(req.originalUrl || req.url).replace(/[\r\n]/g, '');
+  console.log(`[HEALTH] Responded to ${sanitizedUrl} in ${duration} ms`);
 };
 
 app.get('/api/ready', handleReadyRequest);
