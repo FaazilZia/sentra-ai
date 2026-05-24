@@ -6,6 +6,7 @@ import { DriftService } from './drift.service';
 import { SAFE_ACTION_ALLOWLIST } from './policyEngine';
 import { NotificationService } from './notification.service';
 import { SlackService } from './slack.service';
+import { QuantitativeRiskService } from './quantitativeRisk.service';
 
 export interface GuardrailDecision {
   decision: 'ALLOW' | 'MODIFY' | 'BLOCK';
@@ -192,6 +193,39 @@ export class GuardrailService {
       });
 
       if (data.decision === 'BLOCK') {
+        // Auto-calculate risk score: increase likelihood by +5 (ceiling 95)
+        const targetAgentName = data.metadata?.agent || 'AI System';
+        prisma.ai_agents.findFirst({
+          where: { name: targetAgentName, organizationId: data.organizationId }
+        }).then(async (agent) => {
+          const targetAgentId = agent ? agent.id : null;
+          const [latestLikelihood, latestImpact] = await Promise.all([
+            prisma.risk_scores.findFirst({
+              where: { orgId: data.organizationId, agentId: targetAgentId, scoreType: 'likelihood' },
+              orderBy: { createdAt: 'desc' }
+            }),
+            prisma.risk_scores.findFirst({
+              where: { orgId: data.organizationId, agentId: targetAgentId, scoreType: 'impact' },
+              orderBy: { createdAt: 'desc' }
+            })
+          ]);
+
+          const currentLikelihood = latestLikelihood ? latestLikelihood.score : 30;
+          const currentImpact = latestImpact ? latestImpact.score : 30;
+          const newLikelihood = Math.min(95, currentLikelihood + 5);
+
+          await QuantitativeRiskService.updateRiskScore(
+            data.organizationId,
+            targetAgentId,
+            newLikelihood,
+            currentImpact,
+            `Guardrail block: ${data.policy_triggered || 'Adversarial Action'}`,
+            'system'
+          );
+        }).catch(err => {
+          logger.error('Failed to auto-update risk score on guardrail block:', err);
+        });
+
         const title = `Guardrail Blocked: ${data.policy_triggered || 'Adversarial Action'}`;
         const message = data.reason || `Action blocked by guardrail policy ${data.policy_triggered || ''}`;
         NotificationService.notifyGuardrailBlock(

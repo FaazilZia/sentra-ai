@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { ShareModal } from '@/components/shared/ShareModal';
 
 interface AuditLog {
   id: string;
@@ -42,6 +43,7 @@ const AuditExplorer: React.FC = () => {
   const [chainStatus, setChainStatus] = useState<ChainStatus | null>(null);
   const [verifying, setVerifying] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
   const [filters, setFilters] = useState({
     eventType: '', severity: '', search: '', fromDate: '', toDate: '',
   });
@@ -101,6 +103,16 @@ const AuditExplorer: React.FC = () => {
           </p>
         </div>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => setIsShareOpen(true)}
+            style={{
+              padding: '8px 16px', borderRadius: '8px', border: '1px solid #334155',
+              background: '#1e293b', color: '#38bdf8', cursor: 'pointer', fontSize: '0.875rem',
+              display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600
+            }}
+          >
+            🔗 Share
+          </button>
           <button
             onClick={verifyChain}
             disabled={verifying}
@@ -264,6 +276,12 @@ const AuditExplorer: React.FC = () => {
           <button onClick={() => setPage(p => Math.min(pages, p + 1))} disabled={page === pages} style={pageBtnStyle}>Next →</button>
         </div>
       )}
+      <ShareModal
+        resourceType="audit"
+        resourceId={null}
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+      />
     </div>
   );
 };

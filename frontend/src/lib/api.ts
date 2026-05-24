@@ -930,5 +930,114 @@ export async function rejectSubmission(id: string, note: string): Promise<Intake
   });
 }
 
+export interface RiskPortfolioResponse {
+  averageScore: number;
+  highRiskCount: number;
+  mediumRiskCount: number;
+  lowRiskCount: number;
+  trend: number;
+  scoresByAgent: Array<{
+    agentId: string;
+    agentName: string;
+    compositeScore: number;
+    likelihood: number;
+    impact: number;
+    lastUpdated: string;
+  }>;
+}
+
+export interface AgentRiskScoreResponse {
+  current: {
+    composite: number;
+    likelihood: number;
+    impact: number;
+    lastUpdated: string;
+  };
+  history: Array<{
+    date: string;
+    composite?: number;
+    likelihood?: number;
+    impact?: number;
+  }>;
+}
+
+export interface ShareLink {
+  id: string;
+  orgId: string;
+  createdBy: string;
+  resourceType: 'report' | 'compliance' | 'risk' | 'audit';
+  resourceId: string | null;
+  token: string;
+  expiresAt: string | null;
+  viewCount: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface SharedViewResponse {
+  resourceType: 'report' | 'compliance' | 'risk' | 'audit';
+  resourceId: string | null;
+  expiresAt: string | null;
+  viewCount: number;
+  createdAt: string;
+  organization: {
+    name: string;
+    slug: string;
+  };
+  data: any;
+}
+
+export async function fetchRiskPortfolio(): Promise<RiskPortfolioResponse> {
+  return apiRequest<RiskPortfolioResponse>('/risk/portfolio');
+}
+
+export async function fetchAgentRiskScore(agentId: string): Promise<AgentRiskScoreResponse> {
+  return apiRequest<AgentRiskScoreResponse>(`/risk/agent/${agentId}/score`);
+}
+
+export async function updateAgentRiskScore(
+  agentId: string,
+  likelihood: number,
+  impact: number,
+  methodology?: string
+): Promise<{ likelihood: number; impact: number; composite: number }> {
+  return apiRequest<{ likelihood: number; impact: number; composite: number }>(`/risk/agent/${agentId}/score`, {
+    method: 'PUT',
+    body: JSON.stringify({ likelihood, impact, methodology })
+  });
+}
+
+export async function fetchOrgRiskTrend(days: number = 30): Promise<Array<{ date: string; score: number }>> {
+  return apiRequest<Array<{ date: string; score: number }>>(`/risk/trend?days=${days}`);
+}
+
+export async function createShareLink(
+  resourceType: 'report' | 'compliance' | 'risk' | 'audit',
+  resourceId: string | null,
+  expiresInDays?: number
+): Promise<ShareLink> {
+  return apiRequest<ShareLink>('/share-links', {
+    method: 'POST',
+    body: JSON.stringify({ resourceType, resourceId, expiresInDays })
+  });
+}
+
+export async function fetchShareLinks(
+  resourceType: 'report' | 'compliance' | 'risk' | 'audit',
+  resourceId: string | null
+): Promise<ShareLink[]> {
+  return apiRequest<ShareLink[]>(`/share-links/${resourceType}/${resourceId || 'null'}`);
+}
+
+export async function revokeShareLink(id: string): Promise<{ success: boolean }> {
+  return apiRequest<{ success: boolean }>(`/share-links/${id}`, {
+    method: 'DELETE'
+  });
+}
+
+export async function resolveShareLink(token: string): Promise<SharedViewResponse> {
+  return apiRequest<SharedViewResponse>(`/share-links/view/${token}`);
+}
+
 
 

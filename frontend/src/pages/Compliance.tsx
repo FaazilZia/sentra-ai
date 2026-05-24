@@ -7,7 +7,8 @@ import {
   History,
   ArrowRight,
   Plus,
-  X
+  X,
+  Share
 } from 'lucide-react';
 import { useState } from 'react';
 import { EvidenceSection } from '../components/shared/EvidenceSection';
@@ -16,6 +17,7 @@ import KPICard from '@/components/dashboard/KPICard';
 import { cn } from '@/lib/utils';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { useStore } from '@/store/useStore';
+import { ShareModal } from '@/components/shared/ShareModal';
 
 const frameworkData: any[] = [
   {
@@ -77,6 +79,7 @@ const violationData: any[] = [
 export default function Compliance() {
   const { addToast, openModal } = useStore();
   const [selectedFramework, setSelectedFramework] = useState<any | null>(null);
+  const [isShareOpen, setIsShareOpen] = useState(false);
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in p-6">
@@ -87,13 +90,23 @@ export default function Compliance() {
             Governance Frameworks & Regulatory Tracking
           </p>
         </div>
-        <button 
-          onClick={() => openModal('ADD_FRAMEWORK')}
-          className="flex items-center gap-2 px-4 py-2.5 bg-[var(--mid-indigo)] rounded-lg text-[10px] font-black text-white uppercase tracking-widest hover:bg-[var(--royal-indigo)] transition-all shadow-lg shadow-indigo-500/20 active:scale-95"
-        >
-          <Plus className="h-4 w-4" />
-          New Framework
-        </button>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setIsShareOpen(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-[var(--bg-card)] border border-[var(--border-default)] rounded-lg text-[10px] font-black text-[var(--text-primary)] uppercase tracking-widest hover:bg-white/5 transition-all active:scale-95"
+          >
+            <Share className="h-4 w-4 text-indigo-400" />
+            Share
+          </button>
+          
+          <button 
+            onClick={() => openModal('ADD_FRAMEWORK')}
+            className="flex items-center gap-2 px-4 py-2.5 bg-[var(--mid-indigo)] rounded-lg text-[10px] font-black text-white uppercase tracking-widest hover:bg-[var(--royal-indigo)] transition-all shadow-lg shadow-indigo-500/20 active:scale-95"
+          >
+            <Plus className="h-4 w-4" />
+            New Framework
+          </button>
+        </div>
       </div>
 
       {/* KPI Overview */}
@@ -357,6 +370,13 @@ export default function Compliance() {
           </div>
         </div>
       )}
+
+      <ShareModal
+        resourceType="compliance"
+        resourceId={null}
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+      />
     </div>
   );
 }

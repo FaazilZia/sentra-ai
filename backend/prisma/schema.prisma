@@ -73,6 +73,8 @@ model organizations {
   change_history         change_history[]
   intake_forms           intake_forms[]
   intake_submissions     intake_submissions[]
+  risk_scores            risk_scores[]
+  share_links            share_links[]
 
   @@map("companies")
 }
@@ -194,6 +196,7 @@ model users {
   change_history            change_history[]
   intake_submissions_submitted intake_submissions[] @relation("IntakeSubmitter")
   intake_submissions_reviewed  intake_submissions[] @relation("IntakeReviewer")
+  share_links               share_links[]
 
   @@map("users")
 }
@@ -441,6 +444,7 @@ model ai_agents {
   baselineSampledAt  DateTime?
   riskThreshold      Float           @default(0.3)
   evaluation_runs    evaluation_runs[]
+  risk_scores        risk_scores[]
 
   @@map("ai_agents")
 }
@@ -1260,5 +1264,62 @@ model intake_submissions {
   @@index([formId])
   @@index([submittedBy])
   @@map("intake_submissions")
+}
+
+enum RiskScoreType {
+  likelihood
+  impact
+  composite
+}
+
+enum RiskScoredBy {
+  system
+  manual
+}
+
+enum ShareLinkResourceType {
+  report
+  compliance
+  risk
+  audit
+}
+
+model risk_scores {
+  id            String        @id @default(uuid())
+  orgId         String        @map("organization_id")
+  agentId       String?       @map("agent_id")
+  scoreType     RiskScoreType @map("score_type")
+  score         Float
+  previousScore Float?        @map("previous_score")
+  scoredBy      RiskScoredBy  @map("scored_by")
+  methodology   String?
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  organization organizations @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  agent        ai_agents?    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([agentId])
+  @@map("risk_scores")
+}
+
+model share_links {
+  id           String                 @id @default(uuid())
+  orgId        String                 @map("organization_id")
+  createdBy    String                 @map("created_by")
+  resourceType ShareLinkResourceType  @map("resource_type")
+  resourceId   String?                @map("resource_id")
+  token        String                 @unique
+  expiresAt    DateTime?              @map("expires_at")
+  viewCount    Int                    @default(0) @map("view_count")
+  isActive     Boolean                @default(true) @map("is_active")
+  createdAt    DateTime               @default(now()) @map("created_at")
+
+  organization organizations @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  creator      users         @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([token])
+  @@map("share_links")
 }
 

@@ -28,6 +28,7 @@ const WorkflowsPage = lazy(() => import('./pages/Workflows'));
 const ExecutiveReportPage = lazy(() => import('./pages/ExecutiveReport'));
 const TrustPortalPage = lazy(() => import('./pages/TrustPortal'));
 const IntakePage = lazy(() => import('./pages/Intake'));
+const SharedViewPage = lazy(() => import('./pages/SharedView'));
 
 import { ModalProvider } from './components/shared/ModalProvider';
 import { ToastProvider } from './components/shared/ToastProvider';
@@ -64,6 +65,7 @@ function AppRoutes() {
           <Routes>
             {/* Standalone completely public trust portal bypasses app shell */}
             <Route path="/public/:orgSlug/trust" element={<TrustPortalPage />} />
+            <Route path="/share/:token" element={<SharedViewPage />} />
 
             <Route path="/login" element={!user ? <LoginPage /> : <Navigate to="/app" replace />} />
 

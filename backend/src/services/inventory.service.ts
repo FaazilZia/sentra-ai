@@ -1,5 +1,6 @@
 import prisma from '../config/db';
 import { DriftBaselineService } from './driftBaseline.service';
+import { QuantitativeRiskService } from './quantitativeRisk.service';
 
 export class InventoryService {
   static async listAgents(organizationId: string) {
@@ -41,6 +42,20 @@ export class InventoryService {
       await DriftBaselineService.computeBaseline(agent.id);
     } catch (error) {
       console.error(`[INVENTORY] Failed to compute baseline for newly registered agent ${agent.id}:`, error);
+    }
+
+    // Initialize default risk scores
+    try {
+      await QuantitativeRiskService.updateRiskScore(
+        organizationId,
+        agent.id,
+        30,
+        30,
+        'Initial registration auto-calculation',
+        'system'
+      );
+    } catch (error) {
+      console.error(`[INVENTORY] Failed to initialize risk score for registered agent ${agent.id}:`, error);
     }
 
     return agent;

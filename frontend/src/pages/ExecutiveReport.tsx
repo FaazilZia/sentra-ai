@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { apiRequest, apiBaseUrl } from '@/lib/api';
 import { 
   BarChart3, FileDown, ShieldCheck, ClipboardCheck, 
-  Building2, AlertTriangle, Layers, Award, ShieldAlert, Cpu
+  Building2, AlertTriangle, Layers, Award, ShieldAlert, Cpu, Share
 } from 'lucide-react';
+import { ShareModal } from '@/components/shared/ShareModal';
 
 interface ExecutiveStats {
   totalSystems: number;
@@ -34,6 +35,7 @@ interface ExecutiveStats {
 export default function ExecutiveReport() {
   const [stats, setStats] = useState<ExecutiveStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isShareOpen, setIsShareOpen] = useState(false);
 
   useEffect(() => {
     loadStats();
@@ -87,13 +89,23 @@ export default function ExecutiveReport() {
           </p>
         </div>
         
-        <button
-          onClick={handleDownloadPdf}
-          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 hover:from-indigo-500 hover:to-purple-500 transition-all hover:scale-105 active:scale-95 animate-pulse"
-        >
-          <FileDown className="h-5 w-5" />
-          Download Executive PDF
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsShareOpen(true)}
+            className="flex items-center gap-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-default)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/5 transition-all hover:scale-105 active:scale-95"
+          >
+            <Share className="h-4 w-4 text-indigo-400" />
+            Share
+          </button>
+
+          <button
+            onClick={handleDownloadPdf}
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 hover:from-indigo-500 hover:to-purple-500 transition-all hover:scale-105 active:scale-95 animate-pulse"
+          >
+            <FileDown className="h-5 w-5" />
+            Download Executive PDF
+          </button>
+        </div>
       </div>
 
       {/* KPI Stats Grid */}
@@ -243,6 +255,12 @@ export default function ExecutiveReport() {
 
       </div>
 
+      <ShareModal
+        resourceType="report"
+        resourceId={null}
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+      />
     </div>
   );
 }

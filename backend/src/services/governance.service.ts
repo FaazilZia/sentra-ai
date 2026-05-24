@@ -1,6 +1,7 @@
 import prisma from '../config/db';
 import { randomUUID } from 'crypto';
 import { buildTenantQuery } from '../utils/queryHelpers';
+import { QuantitativeRiskService } from './quantitativeRisk.service';
 
 export const GovernanceService = {
   // ==========================================
@@ -125,6 +126,31 @@ export const GovernanceService = {
         }
       })
     ]);
+
+    // Auto-update risk score for the corresponding AI Agent
+    try {
+      const agent = await prisma.ai_agents.findFirst({
+        where: { name: updatedAssessment.ai_system.name, organizationId }
+      });
+      const targetAgentId = agent ? agent.id : null;
+
+      const latestLikelihood = await prisma.risk_scores.findFirst({
+        where: { orgId: organizationId, agentId: targetAgentId, scoreType: 'likelihood' },
+        orderBy: { createdAt: 'desc' }
+      });
+      const currentLikelihood = latestLikelihood ? latestLikelihood.score : 30;
+
+      await QuantitativeRiskService.updateRiskScore(
+        organizationId,
+        targetAgentId,
+        currentLikelihood,
+        totalScore,
+        `Risk assessment submission (Assessment ID: ${id})`,
+        'system'
+      );
+    } catch (error) {
+      console.error('[GOVERNANCE] Failed to update quantitative risk score on assessment submission:', error);
+    }
 
     return updatedAssessment;
   },
