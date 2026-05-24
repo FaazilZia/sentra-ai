@@ -62,7 +62,7 @@ export class InventoryService {
   }
 
   static async updateAgent(id: string, organizationId: string, data: any) {
-    const { name, model, permissions, status, dependencies } = data;
+    const { name, model, permissions, status } = data;
 
     // Handle dependency updates separately or using nested writes if supported
     // For MVP, we'll just update the main agent fields

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { apiRequest } from '@/lib/api';
 import { 
-  GitPullRequestDraft, CheckCircle2, XCircle, Search, Clock, 
-  MessageSquare, User, Cpu, AlertTriangle, ShieldCheck, Play, 
-  Terminal, ArrowRight, CornerDownRight
+  CheckCircle2, XCircle, Clock, 
+  Cpu, AlertTriangle, ShieldCheck, 
+  Terminal, ArrowRight
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';

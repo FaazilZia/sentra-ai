@@ -296,7 +296,7 @@ describe('Wave 2 Services', () => {
       });
 
       const message = 'Incoming prompt jailbreak was intercepted by prompt blocker!';
-      const result = await SlackService.notifyGuardrailBlock(
+      await SlackService.notifyGuardrailBlock(
         ORG_ID,
         'Jailbreak Blocker',
         'Mohammad Faazil',

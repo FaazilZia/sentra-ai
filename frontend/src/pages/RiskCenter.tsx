@@ -14,15 +14,12 @@ import {
 import { 
   AlertTriangle, 
   TrendingUp, 
-  Search,
-  Filter,
   Download,
   MoreVertical,
   X,
   ShieldAlert,
   Sliders,
   Share,
-  ShieldCheck,
   Zap
 } from 'lucide-react';
 import { EvidenceSection } from '../components/shared/EvidenceSection';
@@ -462,7 +459,10 @@ export default function RiskCenter() {
       {overrideAgent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div 
+            role="button"
+            tabIndex={0}
             onClick={() => setOverrideAgent(null)}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setOverrideAgent(null)}
             className="absolute inset-0 bg-[#0f172a]/60 backdrop-blur-sm" 
           />
           <div className="relative w-full max-w-md bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl shadow-2xl overflow-hidden text-left flex flex-col">

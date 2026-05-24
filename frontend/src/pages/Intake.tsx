@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { 
   ClipboardCheck, Send, CheckCircle2, AlertTriangle, XCircle, 
-  HelpCircle, Eye, LoaderCircle, Check, ChevronRight, User, 
-  FolderLock, RefreshCw, X 
+  LoaderCircle, Check, ChevronRight, User, 
+  FolderLock, X 
 } from 'lucide-react';
 import { 
   fetchIntakeForm, submitIntake, fetchSubmissions, 

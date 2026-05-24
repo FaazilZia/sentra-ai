@@ -16,7 +16,6 @@ import {
   ListTodo,
   GitPullRequestDraft,
   BarChart3,
-  Globe,
   Award,
   FolderOpen,
   Layers

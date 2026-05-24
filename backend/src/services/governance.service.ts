@@ -97,7 +97,7 @@ export const GovernanceService = {
 
     // Score classification
     // 0-30: LOW | 31-60: MEDIUM | 61-80: HIGH | 81-100: CRITICAL
-    let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'MEDIUM';
+    let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
     if (totalScore <= 30) riskLevel = 'LOW';
     else if (totalScore <= 60) riskLevel = 'MEDIUM';
     else if (totalScore <= 80) riskLevel = 'HIGH';

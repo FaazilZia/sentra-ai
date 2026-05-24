@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  FolderOpen, Plus, Search, Trash2, Download, Eye, FileText, 
-  FileSpreadsheet, FileImage, File, UploadCloud, X, Calendar, User, Tag
+  FolderOpen, Plus, Search, Trash2, Download, FileText, 
+  FileSpreadsheet, FileImage, File, UploadCloud, X, Calendar, User, Tag, LoaderCircle
 } from 'lucide-react';
 import { apiRequest } from '@/lib/api';
 import { useStore } from '@/store/useStore';
@@ -374,10 +374,13 @@ export default function Evidence() {
               
               {/* Drag and Drop Zone */}
               <div 
+                role="button"
+                tabIndex={0}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInputRef.current?.click(); } }}
                 className={cn(
                   "border border-dashed rounded-[var(--radius)] p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[120px]",
                   isDragging ? "border-[var(--royal-indigo)] bg-[var(--ghost-violet)]/10" : "border-[var(--border-strong)] bg-[var(--bg-page)]/30 hover:border-[var(--royal-indigo)]"

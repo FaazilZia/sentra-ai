@@ -6,8 +6,7 @@ import {
 } from '@/lib/api';
 import { 
   LoaderCircle, AlertTriangle, ShieldCheck, ClipboardCheck, 
-  Building2, Cpu, Award, ShieldAlert, Clock, Eye, Calendar,
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+  Building2, Cpu, Award, ShieldAlert, Clock, Eye
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 

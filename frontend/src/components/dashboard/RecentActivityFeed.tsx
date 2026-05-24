@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { History, LoaderCircle, ArrowRight } from 'lucide-react';
+import { History, ArrowRight } from 'lucide-react';
 import { fetchRecentHistory, ChangeHistory } from '@/lib/api';
-import { Badge } from '../shared/Badge';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 

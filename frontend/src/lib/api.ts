@@ -715,15 +715,15 @@ export interface ConsentEvent {
   hash: string;
 }
 
-export async function fetchConsentHistory(_token?: string): Promise<ConsentEvent[]> {
+export async function fetchConsentHistory(): Promise<ConsentEvent[]> {
   return apiRequest<ConsentEvent[]>('/consent/history');
 }
 
-export async function grantConsent(_token?: string): Promise<void> {
+export async function grantConsent(): Promise<void> {
   return apiRequest<void>('/consent/grant', { method: 'POST' });
 }
 
-export async function withdrawConsent(_token?: string): Promise<void> {
+export async function withdrawConsent(): Promise<void> {
   return apiRequest<void>('/consent/withdraw', { method: 'POST' });
 }
 

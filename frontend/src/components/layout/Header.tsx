@@ -271,7 +271,7 @@ export function Header() {
                         <span>{groupName}</span>
                       </div>
                       <div className="divide-y divide-[var(--border-default)]/30">
-                        {groupedSearch[groupName].map((item, idx) => {
+                        {groupedSearch[groupName].map((item) => {
                           const globalIdx = searchResults.findIndex(r => r.id === item.id);
                           const isHighlighted = globalIdx === highlightedIndex;
                           return (
@@ -358,7 +358,10 @@ export function Header() {
                       return (
                         <div 
                           key={notif.id}
+                          role="button"
+                          tabIndex={0}
                           onClick={() => handleNotificationClick(notif)}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleNotificationClick(notif); } }}
                           className={cn(
                             "flex items-start gap-3 p-3.5 cursor-pointer text-left transition-colors relative outline-none border-l-2",
                             notif.isRead ? "border-l-transparent bg-transparent opacity-60 hover:opacity-100" : "border-l-[var(--royal-indigo)] bg-[var(--bg-hover)]/30 hover:bg-[var(--bg-hover)]/50"

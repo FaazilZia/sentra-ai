@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { apiRequest, apiBaseUrl } from '@/lib/api';
 import { 
   BarChart3, FileDown, ShieldCheck, ClipboardCheck, 
-  Building2, AlertTriangle, Layers, Award, ShieldAlert, Cpu, Share
+  Building2, AlertTriangle, Award, ShieldAlert, Cpu, Share
 } from 'lucide-react';
 import { ShareModal } from '@/components/shared/ShareModal';
 

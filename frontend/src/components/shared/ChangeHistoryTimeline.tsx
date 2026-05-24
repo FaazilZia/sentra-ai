@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Clock, User, ArrowRight, CornerDownRight, MessageSquare, LoaderCircle, 
-  Plus, CheckSquare, Trash, Settings, AlertTriangle, HelpCircle, Activity 
+  Clock, User, MessageSquare, LoaderCircle, 
+  Plus, CheckSquare, Trash, Settings, Activity 
 } from 'lucide-react';
 import { fetchEntityHistory, ChangeHistory } from '@/lib/api';
 import { cn } from '@/lib/utils';

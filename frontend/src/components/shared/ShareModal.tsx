@@ -81,7 +81,10 @@ export function ShareModal({ resourceType, resourceId, isOpen, onClose }: ShareM
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div 
+        role="button"
+        tabIndex={0}
         onClick={onClose}
+        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onClose()}
         className="absolute inset-0 bg-[#0f172a]/60 backdrop-blur-sm transition-opacity" 
       />
 
