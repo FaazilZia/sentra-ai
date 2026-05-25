@@ -387,7 +387,15 @@ export const setupScheduledJobs = async () => {
       { repeat: { pattern: driftPattern } }
     );
 
-    logger.info('Scheduled Adaptive Connector Discovery & Budget Reset Engine & Drift Scanner');
+    // Schedule baseline refresh — runs every 6 hours
+    // Re-samples baselines for agents whose baseline is stale or missing
+    await driftQueue?.add(
+      'baseline-refresh',
+      { action: 'baseline-refresh' },
+      { repeat: { pattern: '0 */6 * * *' } }
+    );
+
+    logger.info('Scheduled Adaptive Connector Discovery, Budget Reset, Drift Scanner & Baseline Refresher');
   } catch (err) {
     logger.warn('Could not schedule background jobs', err);
   }

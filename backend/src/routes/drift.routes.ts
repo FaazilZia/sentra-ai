@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authenticate } from '../middleware/auth.middleware';
 import prisma from '../config/db';
 import { DriftAlertService } from '../services/driftAlert.service';
+import { DriftBaselineService } from '../services/driftBaseline.service';
 
 const router = Router();
 
@@ -108,5 +109,54 @@ router.post('/detect', authenticate, runDriftScanAndGetAlerts);
 
 // Backward-compatibility alias for POST /resolve/:id
 router.post('/resolve/:id', authenticate, resolveDriftAlert);
+
+/**
+ * POST /api/v1/drift/baseline/:agentId
+ * Manually re-computes the behavioral baseline for a specific agent.
+ * Useful when an agent has been running for a while and its approved
+ * behaviour has expanded.
+ */
+router.post('/baseline/:agentId', authenticate, async (req: any, res) => {
+  try {
+    const organizationId = req.user.organizationId;
+    const { agentId } = req.params;
+
+    // Verify agent belongs to this org
+    const agent = await prisma.ai_agents.findFirst({
+      where: { id: agentId, organizationId },
+    });
+    if (!agent) {
+      return res.status(404).json({ error: 'Agent not found' });
+    }
+
+    const baseline = await DriftBaselineService.computeBaseline(agentId);
+    res.json({
+      success: true,
+      data: {
+        agentId,
+        agentName: agent.name,
+        baselineActions: baseline,
+        baselineCount: baseline.length,
+        sampledAt: new Date(),
+      },
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * POST /api/v1/drift/baseline/refresh-all
+ * Re-computes baselines for all stale agents in the org.
+ */
+router.post('/baseline/refresh-all', authenticate, async (req: any, res) => {
+  try {
+    const organizationId = req.user.organizationId;
+    const count = await DriftBaselineService.refreshStaleBaselines(organizationId);
+    res.json({ success: true, data: { refreshed: count } });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 export default router;

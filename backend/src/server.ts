@@ -62,6 +62,7 @@ import prisma, { initializePrisma } from './config/db';
 import { IntakeFormService } from './services/intakeForm.service';
 import { setupScheduledJobs } from './services/queue.service';
 import { setupConnectorWorkers, setupDriftWorker, setupEvaluationWorker } from './workers/worker.manager';
+import { DriftBaselineService } from './services/driftBaseline.service';
 
 import { alertService } from './services/alert.service';
 import { verifyAccessToken } from './utils/jwt';
@@ -199,7 +200,25 @@ const startServer = async () => {
     setupConnectorWorkers();
     setupDriftWorker();
     setupEvaluationWorker();
-    setupScheduledJobs().catch(err => logger.error('Failed to setup scheduled jobs:', err));
+    setupScheduledJobs()
+      .then(() => {
+        // Backfill baselines for any existing agents with empty baselines
+        prisma.ai_agents.findMany({
+          where: { baselineSampledAt: null },
+        }).then(async (agentsWithNoBaseline) => {
+          if (agentsWithNoBaseline.length === 0) return;
+          logger.info(`[STARTUP] Backfilling baselines for ${agentsWithNoBaseline.length} agents with no baseline...`);
+          for (const agent of agentsWithNoBaseline) {
+            try {
+              await DriftBaselineService.computeBaseline(agent.id);
+            } catch (err) {
+              logger.error(`[STARTUP] Failed to backfill baseline for agent ${agent.id}:`, err);
+            }
+          }
+          logger.info('[STARTUP] Baseline backfill complete.');
+        }).catch(err => logger.error('[STARTUP] Baseline backfill query failed:', err));
+      })
+      .catch(err => logger.error('Failed to setup scheduled jobs:', err));
 
 
     // SMTP Validation

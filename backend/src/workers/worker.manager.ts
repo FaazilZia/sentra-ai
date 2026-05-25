@@ -8,6 +8,7 @@ import { processGDriveScan } from './gdrive.worker';
 import { buildRedisOptions, getRedisUrl } from '../config/redis';
 import { DriftAlertService } from '../services/driftAlert.service';
 import { EvaluationService } from '../services/evaluation.service';
+import { DriftBaselineService } from '../services/driftBaseline.service';
 
 
 const REDIS_URL = getRedisUrl();
@@ -182,6 +183,26 @@ export function setupDriftWorker() {
   const driftWorker = new Worker(
     'drift-scans',
     async (job: Job) => {
+      const { action } = job.data;
+
+      if (action === 'baseline-refresh') {
+        // Re-compute stale baselines before drift scan runs
+        logger.info(`[DRIFT WORKER] Running baseline refresh job ${job.id}...`);
+        const activeOrgs = await prisma.organizations.findMany({
+          where: { is_active: true },
+        });
+        for (const org of activeOrgs) {
+          try {
+            const count = await DriftBaselineService.refreshStaleBaselines(org.id);
+            logger.info(`[DRIFT WORKER] Refreshed ${count} baselines for org ${org.name}`);
+          } catch (err) {
+            logger.error(`[DRIFT WORKER] Baseline refresh failed for org ${org.name}:`, err);
+          }
+        }
+        return;
+      }
+
+      // Default: drift-scan action
       logger.info(`[DRIFT WORKER] Running drift scan background job ${job.id}...`);
       const activeOrgs = await prisma.organizations.findMany({
         where: { is_active: true }
