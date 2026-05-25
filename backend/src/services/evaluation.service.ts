@@ -4,6 +4,8 @@ import logger from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
 import { evaluationQueue } from './queue.service';
 import { makeDecision } from './decisionEngine';
+import { GovernanceEventBus } from './governanceEventBus.service';
+
 
 // ─────────────────────────────────────────────
 // Built-in Benchmark Test Cases
@@ -255,6 +257,29 @@ export const EvaluationService = {
           completed_at: new Date(),
         },
       });
+
+      // Emit telemetry evidence to governance
+      GovernanceEventBus.emitTelemetryEvent({
+        organizationId,
+        controlCode: 'ME-2.1',
+        evidenceType: 'TELEMETRY',
+        sourceType: 'AUTOMATED',
+        sourceSystem: 'evaluation_engine',
+        sourceReference: runId,
+        confidenceScore: 1.0,
+        metadata: {
+          passed_tests: passed,
+          total_tests: testCases.length,
+          pass_rate: governanceScore,
+          run_id: runId,
+          severity: governanceScore < 80 ? 'HIGH' : 'LOW',
+          incident_triggered: governanceScore < 50,
+          incident_type: 'DRIFT_CASCADE',
+          incident_title: 'Evaluation Pass Rate Breach',
+          incident_desc: `The evaluation run ${runId} achieved a pass rate of ${governanceScore.toFixed(1)}%, falling below the required baseline threshold.`,
+        },
+      }).catch(err => logger.error('Failed to emit evaluation telemetry to governance', err));
+
 
       logger.info(`[Evaluation] BullMQ Run ${runId} completed: ${passed}/${testCases.length} passed (${governanceScore.toFixed(1)}%)`);
 

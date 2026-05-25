@@ -20,8 +20,13 @@ import {
   updateEuAiActImplementation,
   addEuAiActEvidence
 } from '../controllers/euAiAct.controller';
-
-
+import {
+  getNistAiRmfOverview,
+  updateNistAiRmfImplementation,
+  getNistAiRmfCrossFrameworkImpact,
+  exportNistAiRmfSignedConformity,
+  getNistAiRmfHealth
+} from '../controllers/nistAiRmf.controller';
 
 const router = Router();
 
@@ -45,6 +50,12 @@ router.get('/eu-ai-act/controls', authenticate, getEuAiActControls);
 router.patch('/eu-ai-act/controls/:controlCode/implementation', authenticate, authorizeRoles('ADMIN', 'ENGINEER'), updateEuAiActImplementation);
 router.post('/eu-ai-act/evidence/:controlCode', authenticate, authorizeRoles('ADMIN', 'ENGINEER'), addEuAiActEvidence);
 
-
+// NIST AI RMF 1.0 Routes
+router.get('/nist-ai-rmf/overview', authenticate, getNistAiRmfOverview);
+router.patch('/nist-ai-rmf/implementation/:subcategoryCode', authenticate, authorizeRoles('ADMIN', 'ENGINEER'), updateNistAiRmfImplementation);
+router.get('/nist-ai-rmf/cross-framework-impact/:subcategoryCode', authenticate, getNistAiRmfCrossFrameworkImpact);
+router.get('/nist-ai-rmf/export', authenticate, authorizeRoles('ADMIN', 'AUDITOR'), exportNistAiRmfSignedConformity);
+router.get('/nist-ai-rmf/health', authenticate, getNistAiRmfHealth);
 
 export default router;
+

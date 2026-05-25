@@ -71,11 +71,15 @@ model organizations {
   evidence               evidence[]
   slack_config           slack_config?
   change_history         change_history[]
-  intake_forms           intake_forms[]
-  intake_submissions     intake_submissions[]
-  risk_scores            risk_scores[]
-  share_links            share_links[]
-  eu_ai_act_implementations eu_ai_act_implementations[]
+  intake_forms                 intake_forms[]
+  intake_submissions           intake_submissions[]
+  risk_scores                  risk_scores[]
+  share_links                  share_links[]
+  eu_ai_act_implementations    eu_ai_act_implementations[]
+  nist_ai_rmf_implementations  nist_ai_rmf_implementations[]
+  governance_evidence          governance_evidence[]
+  governance_posture_snapshots governance_posture_snapshots[]
+  governance_incidents         governance_incidents[]
 
   @@map("companies")
 }
@@ -680,16 +684,19 @@ model evidence_records {
 }
 
 model compliance_snapshots {
-  id              String         @id @default(uuid())
-  organizationId  String?        @map("organization_id")
-  featureId       String         @map("feature_id")
-  gdpr_score      Int
-  dpdp_score      Int
-  hipaa_score     Int
-  eu_ai_act_score Int            @default(0)
-  risk_level      String
-  created_at      DateTime       @default(now())
-  organizations   organizations? @relation(fields: [organizationId], references: [id])
+  id                       String         @id @default(uuid())
+  organizationId           String?        @map("organization_id")
+  featureId                String         @map("feature_id")
+  gdpr_score               Int
+  dpdp_score               Int
+  hipaa_score              Int
+  eu_ai_act_score          Int            @default(0)
+  nist_ai_rmf_score        Float          @default(0)
+  governance_posture_score Float          @default(0)
+  framework_version        String         @default("1.0.0")
+  risk_level               String
+  created_at               DateTime       @default(now())
+  organizations            organizations? @relation(fields: [organizationId], references: [id])
 
   @@map("compliance_snapshots")
 }
@@ -1369,5 +1376,187 @@ model eu_ai_act_implementations {
   @@unique([organizationId, control_id])
   @@index([organizationId])
   @@map("eu_ai_act_implementations")
+}
+
+model framework_control_mappings {
+  id                    String   @id @default(uuid())
+  source_framework      String   @map("source_framework")
+  source_control_code   String   @map("source_control_code")
+  target_framework      String   @map("target_framework")
+  target_control_code   String   @map("target_control_code")
+  mapping_strength      Float    @default(1.0) @map("mapping_strength")
+  created_at            DateTime @default(now()) @map("created_at")
+
+  @@index([source_framework, source_control_code])
+  @@index([target_framework, target_control_code])
+  @@map("framework_control_mappings")
+}
+
+model governance_evidence {
+  id                  String    @id @default(uuid())
+  organizationId      String    @map("organization_id")
+  framework           String    // GDPR | EU_AI_ACT | NIST_AI_RMF | ISO_42001
+  control_code        String    @map("control_code")
+  framework_version   String    @default("1.0.0") @map("framework_version")
+  
+  evidence_type       String    // TELEMETRY | MANUAL_UPLOAD | RUNTIME_ENFORCEMENT
+  source_type         String    // MANUAL | AUTOMATED | MONITORED | ENFORCED | REPORTED
+  
+  source_system       String    @map("source_system") // e.g. interceptor, drift_monitor
+  source_reference    String    @map("source_reference") // entity ID references
+  
+  confidence_score    Float     @default(0.5) @map("confidence_score")
+  freshness_score     Float     @default(1.0) @map("freshness_score")
+  
+  metadata            Json      @default("{}")
+  created_at          DateTime  @default(now()) @map("created_at")
+  archived_at         DateTime? @map("archived_at")
+  expires_at          DateTime? @map("expires_at")
+  retention_class     String    @default("TELEMETRY") @map("retention_class")
+
+  // Event Deduplication & Dense Aggregation
+  event_hash          String?   @map("event_hash")
+  deduplication_key   String?   @map("deduplication_key")
+  aggregate_count     Int       @default(1) @map("aggregate_count")
+  first_seen_at       DateTime  @default(now()) @map("first_seen_at")
+  last_seen_at        DateTime  @default(now()) @map("last_seen_at")
+
+  // Lineage / Relationship Graph
+  parent_evidence_id  String?   @map("parent_evidence_id")
+  related_entity_type String?   @map("related_entity_type")
+  related_entity_id   String?   @map("related_entity_id")
+
+  // Cryptographic Assurance / Legal Audit Readiness
+  evidence_signature  String?   @map("evidence_signature")
+  signing_key_version String    @default("v1") @map("signing_key_version")
+  checksum            String?   @map("checksum")
+  immutable           Boolean   @default(false) @map("immutable")
+
+  organization        organizations @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  @@index([organizationId])
+  @@index([framework])
+  @@index([control_code])
+  @@index([event_hash])
+  @@index([deduplication_key])
+  @@map("governance_evidence")
+}
+
+model governance_posture_snapshots {
+  id                       String   @id @default(uuid())
+  organizationId           String   @map("organization_id")
+  governance_posture_score Float    @map("governance_posture_score")
+  nist_ai_rmf_score        Float    @map("nist_ai_rmf_score")
+  eu_ai_act_score          Float    @map("eu_ai_act_score")
+  telemetry_coverage       Float    @map("telemetry_coverage")
+  interception_coverage    Float    @map("interception_coverage")
+  maturity_level           Int      @map("maturity_level")
+  snapshot_date            DateTime @default(now()) @map("snapshot_date")
+  data_freshness_status    String   @default("CURRENT") @map("data_freshness_status")
+  reasons                  Json     @default("[]") @map("reasons")
+
+  organization             organizations @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, snapshot_date])
+  @@map("governance_posture_snapshots")
+}
+
+model governance_incidents {
+  id                    String    @id @default(uuid())
+  organizationId        String    @map("organization_id")
+  incident_type         String    @map("incident_type")
+  severity              String    
+  related_frameworks    String[]  @map("related_frameworks")
+  related_controls      String[]  @map("related_controls")
+  title                 String
+  description           String
+  source_event_id       String?   @map("source_event_id")
+  source_system         String    @map("source_system")
+  status                String    @default("OPEN") @map("status")
+
+  // SLA Tracking
+  sla_deadline          DateTime? @map("sla_deadline")
+  sla_breach            Boolean   @default(false) @map("sla_breach")
+
+  created_at            DateTime  @default(now()) @map("created_at")
+  resolved_at           DateTime? @map("resolved_at")
+
+  organization          organizations @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@map("governance_incidents")
+}
+
+model governance_system_health {
+  id                        String   @id @default(uuid())
+  worker_name               String   @map("worker_name")
+  queue_depth               Int      @map("queue_depth")
+  processing_latency_ms     Int      @map("processing_latency_ms")
+  last_successful_run       DateTime? @map("last_successful_run")
+  last_failure              DateTime? @map("last_failure")
+  health_status             String   @map("health_status")
+  created_at                DateTime @default(now()) @map("created_at")
+
+  @@map("governance_system_health")
+}
+
+model nist_ai_rmf_functions {
+  id            String   @id @default(uuid())
+  function_code String   @unique @map("function_code") // GOVERN | MAP | MEASURE | MANAGE
+  title         String
+  description   String
+  categories    nist_ai_rmf_categories[]
+  created_at    DateTime @default(now()) @map("created_at")
+  @@map("nist_ai_rmf_functions")
+}
+
+model nist_ai_rmf_categories {
+  id              String   @id @default(uuid())
+  function_id     String   @map("function_id")
+  category_code   String   @unique @map("category_code") // GV-1, MP-2, etc.
+  title           String
+  description     String
+  function        nist_ai_rmf_functions @relation(fields: [function_id], references: [id])
+  subcategories   nist_ai_rmf_subcategories[]
+  created_at      DateTime @default(now()) @map("created_at")
+  @@map("nist_ai_rmf_categories")
+}
+
+model nist_ai_rmf_subcategories {
+  id                 String   @id @default(uuid())
+  category_id        String   @map("category_id")
+  subcategory_code   String   @unique @map("subcategory_code") // GV-1.1
+  title              String
+  description        String
+  implementation_examples String[] @map("implementation_examples")
+  suggested_evidence String[] @map("suggested_evidence")
+  telemetry_sources  String[] @map("telemetry_sources")
+  severity_weight    Int      @default(5) @map("severity_weight")
+  framework_version  String   @default("1.0.0") @map("framework_version")
+  depends_on_control String?  @map("depends_on_control")
+  category           nist_ai_rmf_categories @relation(fields: [category_id], references: [id])
+  implementations    nist_ai_rmf_implementations[]
+  created_at         DateTime @default(now()) @map("created_at")
+  @@map("nist_ai_rmf_subcategories")
+}
+
+model nist_ai_rmf_implementations {
+  id                     String   @id @default(uuid())
+  organizationId         String   @map("organization_id")
+  subcategory_id         String   @map("subcategory_id")
+  status                 String   @default("NOT_STARTED")
+  maturity_level         Int      @default(1) @map("maturity_level")
+  risk_escalation_level  String   @default("NORMAL") @map("risk_escalation_level")
+  notes                  String?  @map("notes")
+  owner_user_id          String?  @map("owner_user_id")
+  due_date               DateTime? @map("due_date")
+  last_reviewed          DateTime? @map("last_reviewed")
+  organization           organizations @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  subcategory            nist_ai_rmf_subcategories @relation(fields: [subcategory_id], references: [id])
+  created_at             DateTime @default(now()) @map("created_at")
+  updated_at             DateTime @updatedAt @map("updated_at")
+  @@unique([organizationId, subcategory_id])
+  @@index([organizationId])
+  @@map("nist_ai_rmf_implementations")
 }
 

@@ -7,6 +7,8 @@ import { SAFE_ACTION_ALLOWLIST } from './policyEngine';
 import { NotificationService } from './notification.service';
 import { SlackService } from './slack.service';
 import { QuantitativeRiskService } from './quantitativeRisk.service';
+import { GovernanceEventBus } from './governanceEventBus.service';
+
 
 export interface GuardrailDecision {
   decision: 'ALLOW' | 'MODIFY' | 'BLOCK';
@@ -191,6 +193,45 @@ export class GuardrailService {
           }
         }
       });
+
+      // Governance Ingestion integration
+      if (data.decision === 'BLOCK') {
+        GovernanceEventBus.emitTelemetryEvent({
+          organizationId: data.organizationId,
+          controlCode: 'MG-1.2',
+          evidenceType: 'RUNTIME_ENFORCEMENT',
+          sourceType: 'ENFORCED',
+          sourceSystem: 'interceptor',
+          sourceReference: log.id,
+          confidenceScore: 1.0,
+          metadata: {
+            policy_triggered: data.policy_triggered,
+            reason: data.reason,
+            user_id: data.user_id,
+            severity: 'HIGH',
+            incident_triggered: data.policy_triggered === 'PROMPT_INJECTION_DETECT' || data.policy_triggered === 'OS_COMMAND_INJECTION' || data.policy_triggered === 'PATH_TRAVERSAL_DETECT',
+            incident_type: 'MONITORING_OUTAGE',
+            incident_title: `Adversarial Attack Blocked: ${data.policy_triggered || 'Restricted Pattern'}`,
+            incident_desc: `The runtime interceptor successfully blocked an adversarial request targeting policy [${data.policy_triggered || 'Unknown Policy'}]. Details: ${data.reason}`,
+          },
+        }).catch(err => logger.error('Failed to emit BLOCK telemetry to governance', err));
+      } else if (data.decision === 'MODIFY') {
+        GovernanceEventBus.emitTelemetryEvent({
+          organizationId: data.organizationId,
+          controlCode: 'GV-5.1',
+          evidenceType: 'TELEMETRY',
+          sourceType: 'AUTOMATED',
+          sourceSystem: 'interceptor',
+          sourceReference: log.id,
+          confidenceScore: 0.9,
+          metadata: {
+            policy_triggered: data.policy_triggered,
+            reason: data.reason,
+            user_id: data.user_id,
+            severity: 'MEDIUM',
+          },
+        }).catch(err => logger.error('Failed to emit MODIFY telemetry to governance', err));
+      }
 
       if (data.decision === 'BLOCK') {
         // Auto-calculate risk score: increase likelihood by +5 (ceiling 95)

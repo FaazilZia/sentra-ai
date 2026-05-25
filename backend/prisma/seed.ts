@@ -4,6 +4,7 @@ import { randomUUID } from 'crypto';
 import dotenv from 'dotenv';
 import { seedOrganizationGovernance } from '../src/services/governanceSeed.service';
 import { seedEuAiActControls } from '../src/services/euAiActSeed.service';
+import { seedNistAiRmf } from '../src/services/nistAiRmfSeed.service';
 
 dotenv.config();
 
@@ -157,6 +158,14 @@ async function main() {
     await seedEuAiActControls(prisma);
   } catch (e: any) {
     console.error('❌ Failed to seed EU AI Act Controls:', e.message);
+  }
+
+  // 7. Seed NIST AI RMF 1.0 Controls
+  console.log('🇺🇸 Seeding NIST AI RMF 1.0 Controls...');
+  try {
+    await seedNistAiRmf(prisma);
+  } catch (e: any) {
+    console.error('❌ Failed to seed NIST AI RMF 1.0 Controls:', e.message);
   }
 
   console.log('\n🎉 Seed completed!');

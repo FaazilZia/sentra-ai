@@ -1120,5 +1120,37 @@ export async function uploadEuAiActEvidence(
   });
 }
 
+export async function fetchNistAiRmfOverview(): Promise<any> {
+  return apiRequest<any>('/compliance/nist-ai-rmf/overview');
+}
+
+export async function updateNistAiRmfImplementation(
+  subcategoryCode: string,
+  data: {
+    status: string;
+    maturity_level?: number;
+    risk_escalation_level?: string;
+    notes?: string;
+  }
+): Promise<any> {
+  return apiRequest<any>(`/compliance/nist-ai-rmf/implementation/${subcategoryCode}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data)
+  });
+}
+
+export async function fetchNistAiRmfCrossFrameworkImpact(subcategoryCode: string): Promise<any> {
+  return apiRequest<any>(`/compliance/nist-ai-rmf/cross-framework-impact/${subcategoryCode}`);
+}
+
+export async function fetchNistAiRmfHealth(): Promise<any> {
+  return apiRequest<any>('/compliance/nist-ai-rmf/health');
+}
+
+export async function exportNistAiRmfSignedConformity(): Promise<any> {
+  return apiRequest<any>('/compliance/nist-ai-rmf/export');
+}
+
+
 
 

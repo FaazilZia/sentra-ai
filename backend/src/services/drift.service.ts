@@ -4,6 +4,8 @@ import { EventTriggerService } from './eventTrigger.service';
 import axios from 'axios';
 import { NotificationService } from './notification.service';
 import { SlackService } from './slack.service';
+import { GovernanceEventBus } from './governanceEventBus.service';
+
 
 export class DriftService {
   /**
@@ -50,6 +52,25 @@ export class DriftService {
             status: 'open'
           }
         });
+
+        // Emit telemetry evidence to governance
+        GovernanceEventBus.emitTelemetryEvent({
+          organizationId,
+          controlCode: 'ME-4.1',
+          evidenceType: 'TELEMETRY',
+          sourceType: 'AUTOMATED',
+          sourceSystem: 'drift_monitor',
+          sourceReference: driftAlert.id,
+          confidenceScore: 0.95,
+          metadata: {
+            severity: 'HIGH',
+            incident_triggered: true,
+            incident_type: 'DRIFT_CASCADE',
+            incident_title: 'Agent Behavioral Drift Detected',
+            incident_desc: driftAlert.description,
+          },
+        }).catch(err => logger.error('Failed to emit drift telemetry to governance', err));
+
 
         await NotificationService.notifyDriftDetected(
           organizationId,
