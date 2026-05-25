@@ -18,7 +18,8 @@ import {
   BarChart3,
   Award,
   FolderOpen,
-  Layers
+  Layers,
+  Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth';
@@ -33,17 +34,22 @@ const operationsItems = [
   { icon: Activity, label: 'Drift Detection', path: '/app/drift' },
   { icon: EyeOff, label: 'Shadow AI', path: '/app/shadow' },
   { icon: Box, label: 'Inventory', path: '/app/inventory' },
+  { icon: GitPullRequestDraft, label: 'Automations', path: '/app/automations' },
 ];
 
 const governanceItems = [
+  { icon: Sparkles, label: 'AI Advisor', path: '/app/advisor' },
   { icon: Bot, label: 'AI Registry', path: '/app/ai-registry' },
   { icon: Award, label: 'Risk Audits', path: '/app/risk-assessment' },
   { icon: Layers, label: 'Impact Boards', path: '/app/impact-assessments' },
   { icon: ShieldCheck, label: 'Controls', path: '/app/controls' },
+  { icon: Box, label: 'Dataset Registry', path: '/app/datasets' },
   { icon: Building2, label: 'Vendor Risk', path: '/app/vendor-risk' },
   { icon: ListTodo, label: 'Obligations', path: '/app/obligations' },
+  { icon: ListTodo, label: 'Training Register', path: '/app/training' },
   { icon: ClipboardCheck, label: 'Intake Queue', path: '/app/intake' },
   { icon: GitPullRequestDraft, label: 'Approvals', path: '/app/workflows' },
+  { icon: Activity, label: 'GovernanceOS', path: '/app/governance-os' },
   { icon: BarChart3, label: 'Executive Report', path: '/app/executive-report' },
 ];
 

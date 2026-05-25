@@ -93,6 +93,57 @@ export const TenantService = {
       await Iso42001Service.seedImplementations(createdOrg.id, tx);
       await Iso27001Service.seedImplementations(createdOrg.id, tx);
 
+      // Seed default training courses
+      await tx.training_courses.createMany({
+        data: [
+          {
+            id: randomUUID(),
+            organizationId: createdOrg.id,
+            title: 'EU AI Act Fundamentals',
+            description: 'Core legal obligations, risk classification tiers, and conformity requirements under the EU AI Act.',
+            framework_tags: ['EU_AI_ACT'],
+            duration_minutes: 60,
+            is_mandatory: true
+          },
+          {
+            id: randomUUID(),
+            organizationId: createdOrg.id,
+            title: 'AI Risk Management Basics',
+            description: 'Mapping, measuring, and managing structural risks using the NIST AI RMF framework.',
+            framework_tags: ['NIST'],
+            duration_minutes: 45,
+            is_mandatory: true
+          },
+          {
+            id: randomUUID(),
+            organizationId: createdOrg.id,
+            title: 'Data Privacy & GDPR',
+            description: 'Foundational privacy principles, user consent workflows, and secure processing pipelines.',
+            framework_tags: ['GDPR'],
+            duration_minutes: 30,
+            is_mandatory: true
+          },
+          {
+            id: randomUUID(),
+            organizationId: createdOrg.id,
+            title: 'ISO 42001 Overview',
+            description: 'Structural overview of the ISO/IEC 42001 artificial intelligence management system.',
+            framework_tags: ['ISO_42001'],
+            duration_minutes: 45,
+            is_mandatory: false
+          },
+          {
+            id: randomUUID(),
+            organizationId: createdOrg.id,
+            title: 'Responsible AI Principles',
+            description: 'Core concepts in transparency, explainability, robustness, and fairness in machine learning.',
+            framework_tags: ['EU_AI_ACT', 'ISO_42001'],
+            duration_minutes: 30,
+            is_mandatory: false
+          }
+        ]
+      });
+
       return createdOrg;
     }, { timeout: 35000 });
 

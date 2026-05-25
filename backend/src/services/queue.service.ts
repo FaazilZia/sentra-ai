@@ -32,11 +32,15 @@ export const activityQueue = connection ? new Queue('activity-logs', { connectio
 export const connectorQueue = connection ? new Queue('connector-scans', { connection }) : null;
 export const driftQueue = connection ? new Queue('drift-scans', { connection }) : null;
 export const evaluationQueue = connection ? new Queue('evaluation-runs', { connection }) : null;
+export const automationsQueue = connection ? new Queue('automations', { connection }) : null;
+export const intakeLLMQueue = connection ? new Queue('intake-llm', { connection }) : null;
 
 if (activityQueue) activityQueue.on('error', (err) => logger.warn('[BULLMQ] activityQueue connection issue:', err));
 if (connectorQueue) connectorQueue.on('error', (err) => logger.warn('[BULLMQ] connectorQueue connection issue:', err));
 if (driftQueue) driftQueue.on('error', (err) => logger.warn('[BULLMQ] driftQueue connection issue:', err));
 if (evaluationQueue) evaluationQueue.on('error', (err) => logger.warn('[BULLMQ] evaluationQueue connection issue:', err));
+if (automationsQueue) automationsQueue.on('error', (err) => logger.warn('[BULLMQ] automationsQueue connection issue:', err));
+if (intakeLLMQueue) intakeLLMQueue.on('error', (err) => logger.warn('[BULLMQ] intakeLLMQueue connection issue:', err));
 
 /**
  * Worker to process activity logs asynchronously.
@@ -165,6 +169,57 @@ if (connection) {
     },
     { connection }
   );
+
+  const automationsWorker = new Worker(
+    'automations',
+    async (job) => {
+      const { name, data } = job;
+      try {
+        if (name === 'automation-execute') {
+          const { automationId, triggerPayload } = data;
+          const { AutomationService } = require('./automation.service');
+          await AutomationService.executeAutomation(automationId, triggerPayload);
+        } else if (name === 'scheduled-daily-automations') {
+          const { AutomationService } = require('./automation.service');
+          const orgs = await prisma.organizations.findMany({ select: { id: true } });
+          for (const org of orgs) {
+            await AutomationService.triggerByEvent(org.id, 'SCHEDULED_DAILY', { message: 'Daily scheduled automation trigger' });
+          }
+        } else if (name === 'scheduled-weekly-automations') {
+          const { AutomationService } = require('./automation.service');
+          const orgs = await prisma.organizations.findMany({ select: { id: true } });
+          for (const org of orgs) {
+            await AutomationService.triggerByEvent(org.id, 'SCHEDULED_WEEKLY', { message: 'Weekly scheduled automation trigger' });
+          }
+        }
+      } catch (err) {
+        logger.error(`[BULLMQ] automationsWorker job ${job.id} failed:`, err);
+        throw err;
+      }
+    },
+    { connection }
+  );
+
+  const intakeLLMWorker = new Worker(
+    'intake-llm',
+    async (job) => {
+      const { name, data } = job;
+      try {
+        if (name === 'intake-llm-score') {
+          const { submissionId, organizationId } = data;
+          const { IntakeLLMService } = require('./intakeLLM.service');
+          await IntakeLLMService.scoreSubmission(submissionId, organizationId);
+        }
+      } catch (err) {
+        logger.error(`[BULLMQ] intakeLLMWorker job ${job.id} failed:`, err);
+        throw err;
+      }
+    },
+    { connection }
+  );
+
+  automationsWorker.on('failed', (job, err) => logger.error(`[BULLMQ] Automation Job ${job?.id} failed:`, err));
+  intakeLLMWorker.on('failed', (job, err) => logger.error(`[BULLMQ] Intake LLM Job ${job?.id} failed:`, err));
 }
 
 export async function processConnectorScan(type: string, connectorId: string) {
@@ -425,7 +480,20 @@ export const setupScheduledJobs = async () => {
       { repeat: { pattern: '0 */6 * * *' } }
     );
 
-    logger.info('Scheduled Adaptive Connector Discovery, Budget Reset, Drift Scanner & Baseline Refresher');
+    // Schedule repeatable automations daily and weekly checks
+    await automationsQueue?.add(
+      'scheduled-daily-automations',
+      {},
+      { repeat: { pattern: '0 1 * * *' } }
+    );
+
+    await automationsQueue?.add(
+      'scheduled-weekly-automations',
+      {},
+      { repeat: { pattern: '0 2 * * 0' } }
+    );
+
+    logger.info('Scheduled Adaptive Connector Discovery, Budget Reset, Drift Scanner, Baseline Refresher & Automations');
   } catch (err) {
     logger.warn('Could not schedule background jobs', err);
   }

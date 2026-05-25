@@ -176,6 +176,17 @@ export class FriaService {
       }
     });
 
+    try {
+      const { AutomationService } = require('./automation.service');
+      await AutomationService.triggerByEvent(organizationId, 'FRIA_COMPLETED', {
+        assessmentId,
+        aiSystemId: assessment.ai_system_id,
+        message: `Fundamental Rights Impact Assessment completed for AI System.`
+      });
+    } catch (autoErr) {
+      console.error('Failed to trigger automations for FRIA completed:', autoErr);
+    }
+
     // Auto-update EU AI Act Art. 27 to IMPLEMENTED
     await this.updateEuAiActControlStatus(organizationId, 'IMPLEMENTED');
 

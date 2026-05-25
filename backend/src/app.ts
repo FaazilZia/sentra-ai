@@ -35,6 +35,14 @@ import iso27001Routes from './routes/iso27001.routes';
 import fileIngestionRoutes from './routes/fileIngestion.routes';
 import postMarketMonitoringRoutes from './routes/postMarketMonitoring.routes';
 
+import advisorRoutes from './routes/advisor.routes';
+import automationRoutes from './routes/automation.routes';
+import datasetRoutes from './routes/dataset.routes';
+import modelLifecycleRoutes from './routes/modelLifecycle.routes';
+import trainingRoutes from './routes/training.routes';
+import frameworkMapperRoutes from './routes/frameworkMapper.routes';
+import reportsRoutes from './routes/reports.routes';
+
 import guardrailRoutes from './routes/guardrail.routes';
 import quantitativeRiskRoutes from './routes/quantitativeRisk.routes';
 import shareLinkRoutes from './routes/shareLink.routes';
@@ -253,6 +261,15 @@ v1Router.use('/vendors', vendorRoutes);
 v1Router.use('/iso42001', iso42001Routes);
 v1Router.use('/iso27001', iso27001Routes);
 v1Router.use('/reports/executive', executiveReportRoutes);
+
+v1Router.use('/advisor', advisorRoutes);
+v1Router.use('/automations', automationRoutes);
+v1Router.use('/datasets', datasetRoutes);
+v1Router.use('/model-lifecycle', modelLifecycleRoutes);
+v1Router.use('/training', trainingRoutes);
+v1Router.use('/framework-mapper', frameworkMapperRoutes);
+v1Router.use('/reports', reportsRoutes);
+
 v1Router.use('/notifications', notificationRoutes);
 v1Router.use('/evidence', evidenceRoutes);
 v1Router.use('/evidence-files', fileIngestionRoutes);

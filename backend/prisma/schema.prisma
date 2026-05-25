@@ -86,6 +86,14 @@ model organizations {
   iso27001_implementations     iso27001_implementations[]
   evidence_files               evidence_files[]
 
+  // Feature Relations
+  advisor_conversations        advisor_conversations[]
+  automations                  automations[]
+  datasets                     datasets[]
+  model_lifecycle_events       model_lifecycle_events[]
+  training_courses             training_courses[]
+  training_completions         training_completions[]
+
   @@map("companies")
 }
 
@@ -207,6 +215,7 @@ model users {
   intake_submissions_submitted intake_submissions[] @relation("IntakeSubmitter")
   intake_submissions_reviewed  intake_submissions[] @relation("IntakeReviewer")
   share_links               share_links[]
+  training_completions      training_completions[]
 
   @@map("users")
 }
@@ -953,6 +962,7 @@ model ai_systems {
   risk_tier      String   @default("MEDIUM") // LOW | MEDIUM | HIGH | CRITICAL
   owner_user_id  String?  @map("owner_user_id")
   status         String   @default("ACTIVE") // ACTIVE | DEPRECATED | UNDER_REVIEW
+  lifecycle_stage String   @default("DEVELOPMENT") @map("lifecycle_stage")
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
 
@@ -962,6 +972,8 @@ model ai_systems {
   risk_assessments   risk_assessments[]
   impact_assessments impact_assessments[]
   fria_assessments   fria_assessments[]
+  datasets           datasets[]
+  model_lifecycle_events model_lifecycle_events[]
 
   @@index([organizationId])
   @@map("ai_systems")
@@ -1267,6 +1279,7 @@ model intake_submissions {
   reviewedBy       String?                @map("reviewed_by")
   reviewNote       String?                @map("review_note")
   formData         Json                   @map("form_data")
+  llm_risk_score   Json?                  @map("llm_risk_score")
   createdAt        DateTime               @default(now()) @map("created_at")
   updatedAt        DateTime               @updatedAt @map("updated_at")
 
@@ -1727,5 +1740,136 @@ model evidence_files {
 
   @@index([organizationId])
   @@map("evidence_files")
+}
+
+// ============================================================
+// NEW FEATURES MODULES
+// ============================================================
+
+model advisor_conversations {
+  id             String        @id @default(uuid())
+  organizationId String        @map("organization_id")
+  userId         String        @map("user_id")
+  messages       Json          @map("messages")
+  created_at     DateTime      @default(now())
+
+  organization   organizations @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("advisor_conversations")
+}
+
+model automations {
+  id             String        @id @default(uuid())
+  organizationId String        @map("organization_id")
+  name           String
+  description    String?
+  trigger_type   String
+  trigger_config Json
+  action_type    String
+  action_config  Json
+  is_active      Boolean       @default(true)
+  last_run_at    DateTime?
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+
+  organization   organizations @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  execution_logs automation_execution_logs[]
+
+  @@map("automations")
+}
+
+model automation_execution_logs {
+  id            String      @id @default(uuid())
+  automation_id String
+  status        String      // SUCCESS | FAILURE | SKIPPED
+  output        String?
+  ran_at        DateTime    @default(now())
+
+  automation    automations @relation(fields: [automation_id], references: [id], onDelete: Cascade)
+
+  @@map("automation_execution_logs")
+}
+
+model datasets {
+  id                  String        @id @default(uuid())
+  organizationId      String        @map("organization_id")
+  name                String
+  description         String?
+  dataset_type        String        // TRAINING | VALIDATION | TEST | PRODUCTION | SYNTHETIC
+  data_classification String        // PUBLIC | INTERNAL | CONFIDENTIAL | RESTRICTED
+  status              String        @default("ACTIVE") // ACTIVE | ARCHIVED | UNDER_REVIEW
+  source_url          String?
+  ai_system_id        String?       @map("ai_system_id")
+  record_count        Int?
+  last_updated        DateTime?
+  created_by          String
+  created_at          DateTime      @default(now())
+  updated_at          DateTime      @updatedAt
+
+  organization        organizations @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  ai_system           ai_systems?   @relation(fields: [ai_system_id], references: [id], onDelete: SetNull)
+  tags                dataset_tags[]
+
+  @@map("datasets")
+}
+
+model dataset_tags {
+  id         String   @id @default(uuid())
+  dataset_id String
+  tag        String
+
+  dataset    datasets @relation(fields: [dataset_id], references: [id], onDelete: Cascade)
+
+  @@map("dataset_tags")
+}
+
+model model_lifecycle_events {
+  id             String        @id @default(uuid())
+  organizationId String        @map("organization_id")
+  ai_system_id   String        @map("ai_system_id")
+  stage          String        // DEVELOPMENT | TESTING | STAGING | PRODUCTION | DEPRECATED | RETIRED
+  notes          String?
+  changed_by     String        @map("changed_by")
+  effective_date DateTime      @default(now()) @map("effective_date")
+  created_at     DateTime      @default(now())
+
+  organization   organizations @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  ai_system      ai_systems    @relation(fields: [ai_system_id], references: [id], onDelete: Cascade)
+
+  @@map("model_lifecycle_events")
+}
+
+model training_courses {
+  id             String        @id @default(uuid())
+  organizationId String        @map("organization_id")
+  title          String
+  description    String?
+  framework_tags String[]
+  duration_minutes Int
+  is_mandatory   Boolean       @default(false)
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+
+  organization   organizations @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  completions    training_completions[]
+
+  @@map("training_courses")
+}
+
+model training_completions {
+  id             String        @id @default(uuid())
+  organizationId String        @map("organization_id")
+  course_id      String        @map("course_id")
+  user_id        String        @map("user_id")
+  completed_at   DateTime      @default(now())
+  score          Int?
+  passed         Boolean       @default(true)
+  notes          String?
+
+  organization   organizations @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  course         training_courses @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  user           users         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("training_completions")
 }
 

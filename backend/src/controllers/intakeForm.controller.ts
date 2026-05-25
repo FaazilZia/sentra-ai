@@ -1,8 +1,10 @@
 import { Response } from 'express';
 import { IntakeFormService } from '../services/intakeForm.service';
+import { IntakeLLMService } from '../services/intakeLLM.service';
 import { resolveOrganizationId } from '../utils/company';
 import { asyncHandler, sendSuccess, sendError } from '../utils/controllerHelpers';
 import { IntakeSubmissionStatus } from '@prisma/client';
+import prisma from '../config/db';
 
 export const getActiveForm = asyncHandler(async (req: any, res: Response) => {
   const orgId = await resolveOrganizationId(req);
@@ -55,7 +57,6 @@ export const approveSubmission = asyncHandler(async (req: any, res: Response) =>
   const orgId = await resolveOrganizationId(req);
   if (!orgId) return sendError(res, 401, 'Unauthorized');
   
-  // Strict check: Only ADMIN role can approve or reject
   if (req.user.role !== 'ADMIN') {
     return sendError(res, 403, 'Forbidden: Only organization administrators can approve intake submissions.');
   }
@@ -75,7 +76,6 @@ export const rejectSubmission = asyncHandler(async (req: any, res: Response) => 
   const orgId = await resolveOrganizationId(req);
   if (!orgId) return sendError(res, 401, 'Unauthorized');
 
-  // Strict check: Only ADMIN role can approve or reject
   if (req.user.role !== 'ADMIN') {
     return sendError(res, 403, 'Forbidden: Only organization administrators can reject intake submissions.');
   }
@@ -93,4 +93,28 @@ export const rejectSubmission = asyncHandler(async (req: any, res: Response) => 
   } catch (error: any) {
     return sendError(res, 400, error.message || 'Rejection failed');
   }
+});
+
+export const suggestQuestions = asyncHandler(async (req: any, res: Response) => {
+  const { description } = req.body;
+  if (!description) {
+    return sendError(res, 400, 'Agent description is required.');
+  }
+
+  const questions = await IntakeLLMService.generateSuggestedQuestions(description);
+  return sendSuccess(res, questions);
+});
+
+export const getRiskScore = asyncHandler(async (req: any, res: Response) => {
+  const { id } = req.params;
+  const submission = await prisma.intake_submissions.findUnique({
+    where: { id },
+    select: { llm_risk_score: true }
+  });
+
+  if (!submission) {
+    return sendError(res, 404, 'Submission not found');
+  }
+
+  return sendSuccess(res, submission.llm_risk_score);
 });

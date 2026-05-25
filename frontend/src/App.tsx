@@ -17,6 +17,13 @@ const InventoryPage = lazy(() => import('./pages/Inventory'));
 const SettingsPage = lazy(() => import('./pages/Settings'));
 const DriftPage = lazy(() => import('./pages/Drift'));
 
+// GRC features pages
+const AdvisorPage = lazy(() => import('./pages/Advisor'));
+const AutomationsPage = lazy(() => import('./pages/Automations'));
+const DatasetsPage = lazy(() => import('./pages/Datasets'));
+const TrainingRegisterPage = lazy(() => import('./pages/TrainingRegister'));
+const GovernanceOSPage = lazy(() => import('./pages/GovernanceOS'));
+
 // Governance pages
 const AIRegistryPage = lazy(() => import('./pages/AIRegistry'));
 const RiskAssessmentPage = lazy(() => import('./pages/RiskAssessment'));
@@ -158,6 +165,31 @@ function AppRoutes() {
             <Route 
               path="/app/executive-report" 
               element={user ? <AppLayout><ExecutiveReportPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/advisor" 
+              element={user ? <AppLayout><AdvisorPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/automations" 
+              element={user ? <AppLayout><AutomationsPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/datasets" 
+              element={user ? <AppLayout><DatasetsPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/training" 
+              element={user ? <AppLayout><TrainingRegisterPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/governance-os" 
+              element={user ? <AppLayout><GovernanceOSPage /></AppLayout> : <Navigate to="/login" replace />}
             />
 
             <Route path="/app/settings" element={user ? <AppLayout><SettingsPage /></AppLayout> : <Navigate to="/login" replace />} />

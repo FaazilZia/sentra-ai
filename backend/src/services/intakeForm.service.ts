@@ -167,9 +167,29 @@ export const IntakeFormService = {
       userId,
       'created',
       null,
-      submission,
-      `Submitted AI Registration Request with scored Risk Tier: ${score}`
+      submission
     );
+
+    // Enqueue intake-llm-score job
+    try {
+      const { intakeLLMQueue } = require('./queue.service');
+      if (intakeLLMQueue) {
+        await intakeLLMQueue.add('intake-llm-score', {
+          submissionId: submission.id,
+          organizationId: orgId
+        });
+        logger.info(`Enqueued intake-llm-score job for submission: ${submission.id}`);
+      } else {
+        const { IntakeLLMService } = require('./intakeLLM.service');
+        await IntakeLLMService.scoreSubmission(submission.id, orgId);
+      }
+    } catch (queueErr) {
+      logger.error('Failed to enqueue intake LLM score job:', queueErr);
+      try {
+        const { IntakeLLMService } = require('./intakeLLM.service');
+        await IntakeLLMService.scoreSubmission(submission.id, orgId);
+      } catch (err) {}
+    }
 
     return submission;
   },

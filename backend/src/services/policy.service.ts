@@ -93,6 +93,17 @@ export const logActivity = async (data: LogActivityData) => {
       }
     });
 
+    try {
+      const { AutomationService } = require('./automation.service');
+      await AutomationService.triggerByEvent(data.organizationId, 'INCIDENT_CREATED', {
+        incidentId,
+        details,
+        severity: 85
+      });
+    } catch (autoErr) {
+      console.error('Failed to trigger automations for incident:', autoErr);
+    }
+
     await NotificationService.notifyIncidentCreated(
       data.organizationId,
       'High-Risk Incident Blocked',

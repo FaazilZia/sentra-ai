@@ -54,8 +54,11 @@ export default function ExecutiveReport() {
   };
 
   const handleDownloadPdf = () => {
-    // Access HTTP-only cookies session in traditional download redirect flow
-    window.open(`${apiBaseUrl}/reports/executive/pdf`, '_blank');
+    window.open(`${apiBaseUrl}/reports/compliance/pdf`, '_blank');
+  };
+
+  const handleDownloadDocx = () => {
+    window.open(`${apiBaseUrl}/reports/compliance/docx`, '_blank');
   };
 
   if (loading) {
@@ -99,11 +102,19 @@ export default function ExecutiveReport() {
           </button>
 
           <button
+            onClick={handleDownloadDocx}
+            className="flex items-center gap-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-default)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/5 transition-all hover:scale-105 active:scale-95"
+          >
+            <FileDown className="h-4 w-4 text-teal-400" />
+            Download Word
+          </button>
+
+          <button
             onClick={handleDownloadPdf}
             className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 hover:from-indigo-500 hover:to-purple-500 transition-all hover:scale-105 active:scale-95 animate-pulse"
           >
             <FileDown className="h-5 w-5" />
-            Download Executive PDF
+            Download PDF
           </button>
         </div>
       </div>

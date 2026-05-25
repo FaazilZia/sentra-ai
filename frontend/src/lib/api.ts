@@ -1151,6 +1151,296 @@ export async function exportNistAiRmfSignedConformity(): Promise<any> {
   return apiRequest<any>('/compliance/nist-ai-rmf/export');
 }
 
+/**
+ * AI SYSTEMS LISTING FOR DROPDOWNS & TIMELINES
+ */
+export interface AISystemItem {
+  id: string;
+  name: string;
+  description?: string | null;
+  model_name: string;
+  model_version: string;
+  vendor: string;
+  use_case: string;
+  risk_tier: string;
+  status: string;
+  lifecycle_stage: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function fetchAISystems(): Promise<AISystemItem[]> {
+  return apiRequest<AISystemItem[]>('/ai-systems');
+}
+
+/**
+ * AI ADVISOR ENDPOINTS
+ */
+export interface AdvisorMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export async function fetchAdvisorSuggestions(): Promise<string[]> {
+  return apiRequest<string[]>('/advisor/suggestions');
+}
+
+/**
+ * AUTOMATIONS ENDPOINTS
+ */
+export interface Automation {
+  id: string;
+  name: string;
+  description?: string | null;
+  trigger_type: string;
+  trigger_config: any;
+  action_type: string;
+  action_config: any;
+  is_active: boolean;
+  last_run_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  execution_logs?: AutomationExecutionLog[];
+}
+
+export interface AutomationExecutionLog {
+  id: string;
+  automation_id: string;
+  status: 'SUCCESS' | 'FAILURE' | 'SKIPPED';
+  output?: string | null;
+  ran_at: string;
+}
+
+export async function fetchAutomations(): Promise<Automation[]> {
+  return apiRequest<Automation[]>('/automations');
+}
+
+export async function createAutomation(payload: Partial<Automation>): Promise<Automation> {
+  return apiRequest<Automation>('/automations', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function toggleAutomation(id: string, is_active: boolean): Promise<Automation> {
+  return apiRequest<Automation>(`/automations/${id}/toggle`, {
+    method: 'PATCH',
+    body: JSON.stringify({ is_active })
+  });
+}
+
+export async function deleteAutomation(id: string): Promise<void> {
+  return apiRequest<void>(`/automations/${id}`, {
+    method: 'DELETE'
+  });
+}
+
+/**
+ * DATASETS ENDPOINTS
+ */
+export interface Dataset {
+  id: string;
+  name: string;
+  description?: string | null;
+  dataset_type: string;
+  data_classification: string;
+  status: string;
+  source_url?: string | null;
+  ai_system_id?: string | null;
+  record_count?: number | null;
+  last_updated?: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  ai_system?: {
+    id: string;
+    name: string;
+  } | null;
+  tags?: Array<{ id: string; tag: string }> | string[];
+}
+
+export async function fetchDatasets(): Promise<Dataset[]> {
+  return apiRequest<Dataset[]>('/datasets');
+}
+
+export async function createDataset(payload: any): Promise<Dataset> {
+  return apiRequest<Dataset>('/datasets', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function deleteDataset(id: string): Promise<void> {
+  return apiRequest<void>(`/datasets/${id}`, {
+    method: 'DELETE'
+  });
+}
+
+export async function linkDatasetToSystem(id: string, aiSystemId: string | null): Promise<Dataset> {
+  return apiRequest<Dataset>(`/datasets/${id}/link`, {
+    method: 'POST',
+    body: JSON.stringify({ aiSystemId })
+  });
+}
+
+/**
+ * MODEL LIFECYCLE ENDPOINTS
+ */
+export interface LifecycleEvent {
+  id: string;
+  ai_system_id: string;
+  stage: string;
+  notes?: string | null;
+  changed_by: string;
+  effective_date: string;
+  created_at: string;
+}
+
+export interface LifecycleInfo {
+  currentStage: string;
+  history: LifecycleEvent[];
+}
+
+export async function fetchLifecycleInfo(aiSystemId: string): Promise<LifecycleInfo> {
+  return apiRequest<LifecycleInfo>(`/model-lifecycle/${aiSystemId}`);
+}
+
+export async function transitionModelStage(
+  aiSystemId: string,
+  stage: string,
+  notes?: string
+): Promise<any> {
+  return apiRequest<any>(`/model-lifecycle/${aiSystemId}/transition`, {
+    method: 'POST',
+    body: JSON.stringify({ stage, notes })
+  });
+}
+
+/**
+ * TRAINING REGISTER ENDPOINTS
+ */
+export interface TrainingCourse {
+  id: string;
+  title: string;
+  description?: string | null;
+  framework_tags: string[];
+  duration_minutes: number;
+  is_mandatory: boolean;
+  created_at: string;
+  completions?: TrainingCompletion[];
+}
+
+export interface TrainingCompletion {
+  id: string;
+  course_id: string;
+  user_id: string;
+  completed_at: string;
+  score?: number | null;
+  passed: boolean;
+  notes?: string | null;
+  user?: {
+    id: string;
+    full_name: string;
+    email: string;
+  };
+}
+
+export interface TrainingStatus {
+  totalCourses: number;
+  mandatoryCourses: number;
+  completionsCount: number;
+  completionRate: number;
+  pendingGaps: number;
+  gaps: Array<{
+    userId: string;
+    userName: string;
+    userEmail: string;
+    courseId: string;
+    courseTitle: string;
+  }>;
+}
+
+export async function fetchTrainingCourses(): Promise<TrainingCourse[]> {
+  return apiRequest<TrainingCourse[]>('/training/courses');
+}
+
+export async function createTrainingCourse(payload: any): Promise<TrainingCourse> {
+  return apiRequest<TrainingCourse>('/training/courses', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function recordTrainingCompletion(courseId: string, payload: {
+  userId: string;
+  score?: number;
+  passed?: boolean;
+  notes?: string;
+}): Promise<TrainingCompletion> {
+  return apiRequest<TrainingCompletion>(`/training/courses/${courseId}/complete`, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function fetchTrainingStatus(): Promise<TrainingStatus> {
+  return apiRequest<TrainingStatus>('/training/status');
+}
+
+/**
+ * CROSS-FRAMEWORK MAPPER (GovernanceOS) ENDPOINTS
+ */
+export interface FrameworkMappingItem {
+  id: string;
+  concernArea: string;
+  nistCode: string;
+  nistTitle: string;
+  euArticle: string;
+  euTitle: string;
+  iso42001Control: string;
+  iso42001Title: string;
+  iso27001Control: string;
+  iso27001Title: string;
+  status: 'implemented' | 'in_progress' | 'not_started' | 'not_applicable';
+}
+
+export interface GapAnalysisItem {
+  framework: string;
+  controlCode: string;
+  controlTitle: string;
+  mappedFrom: string;
+  mappedControl: string;
+  gapType: 'missing_implementation' | 'no_direct_equivalent';
+  severity: 'high' | 'medium' | 'low';
+}
+
+export async function fetchFrameworkMap(): Promise<FrameworkMappingItem[]> {
+  return apiRequest<FrameworkMappingItem[]>('/framework-mapper/overview');
+}
+
+export async function fetchGapAnalysis(): Promise<GapAnalysisItem[]> {
+  return apiRequest<GapAnalysisItem[]>('/framework-mapper/gaps');
+}
+
+export async function fetchOverlapScore(): Promise<{ score: number; totalMapped: number; totalImplemented: number }> {
+  return apiRequest<{ score: number; totalMapped: number; totalImplemented: number }>('/framework-mapper/overlap-score');
+}
+
+/**
+ * AI INTAKE SUGGESTIONS & RISK SCORING
+ */
+export async function suggestIntakeQuestions(description: string): Promise<string[]> {
+  return apiRequest<string[]>('/intake/suggest-questions', {
+    method: 'POST',
+    body: JSON.stringify({ description })
+  });
+}
+
+export async function fetchSubmissionRiskScore(submissionId: string): Promise<any> {
+  return apiRequest<any>(`/intake/submissions/${submissionId}/risk-score`);
+}
+
+
 
 
 

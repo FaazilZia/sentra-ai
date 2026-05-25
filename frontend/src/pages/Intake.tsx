@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { 
   ClipboardCheck, Send, CheckCircle2, AlertTriangle, XCircle, 
-  LoaderCircle, Check, ChevronRight, User, 
-  FolderLock, X 
+  LoaderCircle, ChevronRight, User, 
+  FolderLock, X, Sparkles, Plus, ClipboardList, HelpCircle
 } from 'lucide-react';
 import { 
   fetchIntakeForm, submitIntake, fetchSubmissions, 
-  approveSubmission, rejectSubmission, IntakeSubmission, IntakeForm 
+  approveSubmission, rejectSubmission, IntakeSubmission, IntakeForm,
+  suggestIntakeQuestions, fetchSubmissionRiskScore
 } from '@/lib/api';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -38,6 +39,14 @@ export default function Intake() {
 
   // Auto-scoring response screen state
   const [scoredResult, setScoredResult] = useState<IntakeSubmission | null>(null);
+  const [pollingSubmissionId, setPollingSubmissionId] = useState<string | null>(null);
+  const [pollingActive, setPollingActive] = useState(false);
+  const [riskScoreResult, setRiskScoreResult] = useState<any>(null);
+
+  // Question suggestions states
+  const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [customQuestions, setCustomQuestions] = useState<Array<{ id: string; question: string; answer: string }>>([]);
 
   // Queue Detail Drawer State
   const [selectedSubmission, setSelectedSubmission] = useState<IntakeSubmission | null>(null);
@@ -55,6 +64,28 @@ export default function Intake() {
       loadSubmissions();
     }
   }, [activeTab]);
+
+  // 3-second dynamic polling effect
+  useEffect(() => {
+    if (!pollingSubmissionId) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const score = await fetchSubmissionRiskScore(pollingSubmissionId);
+        if (score && score.risk_level) {
+          setRiskScoreResult(score);
+          setPollingActive(false);
+          setPollingSubmissionId(null);
+          addToast({ message: 'RISK SCORE COMPILED SUCCESSFULLY', type: 'success' });
+          loadSubmissions();
+        }
+      } catch (err) {
+        console.error('Error polling risk score:', err);
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [pollingSubmissionId, addToast]);
 
   const loadForm = async () => {
     setLoadingForm(true);
@@ -88,6 +119,48 @@ export default function Intake() {
     );
   };
 
+  const handleSuggestQuestions = async () => {
+    if (!agentDescription.trim()) return;
+    setLoadingSuggestions(true);
+    try {
+      const qs = await suggestIntakeQuestions(agentDescription);
+      setSuggestedQuestions(qs);
+      addToast({ message: 'CLAUDE GENERATED SUGGESTIONS', type: 'success' });
+    } catch (err) {
+      console.error('Failed to suggest questions', err);
+      addToast({ message: 'FAILED TO GENERATE QUESTIONS', type: 'error' });
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+
+  const handleAppendQuestion = (question: string) => {
+    if (customQuestions.find(cq => cq.question === question)) {
+      addToast({ message: 'QUESTION ALREADY IN QUESTIONNAIRE', type: 'warning' });
+      return;
+    }
+    const newQ = {
+      id: Math.random().toString(36).substring(7),
+      question,
+      answer: ''
+    };
+    setCustomQuestions(prev => [...prev, newQ]);
+    setSuggestedQuestions(prev => prev.filter(q => q !== question));
+    addToast({ message: 'APPENDED QUESTION TO CUSTOM BUILDER', type: 'success' });
+  };
+
+  const handleRemoveCustomQuestion = (id: string) => {
+    const target = customQuestions.find(cq => cq.id === id);
+    setCustomQuestions(prev => prev.filter(cq => cq.id !== id));
+    if (target) {
+      setSuggestedQuestions(prev => [...prev, target.question]);
+    }
+  };
+
+  const handleUpdateCustomAnswer = (id: string, val: string) => {
+    setCustomQuestions(prev => prev.map(cq => cq.id === id ? { ...cq, answer: val } : cq));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!acknowledged) {
@@ -104,12 +177,20 @@ export default function Intake() {
         formData: {
           department,
           dataAccess: selectedDataAccess,
-          externalIntegrations
+          externalIntegrations,
+          customQuestions: customQuestions.reduce((acc, cq) => {
+            acc[cq.question] = cq.answer;
+            return acc;
+          }, {} as Record<string, string>)
         }
       };
 
       const result = await submitIntake(payload);
       setScoredResult(result);
+      setPollingSubmissionId(result.id);
+      setPollingActive(true);
+      setRiskScoreResult(null);
+      
       addToast({ message: 'AI REGISTRATION REQUEST SUBMITTED', type: 'success' });
       
       // Clear form
@@ -120,6 +201,7 @@ export default function Intake() {
       setSelectedDataAccess([]);
       setExternalIntegrations('');
       setAcknowledged(false);
+      setCustomQuestions([]);
     } catch (err) {
       console.error('Intake submission failed:', err);
       addToast({ message: 'SUBMISSION FAILURE', type: 'error' });
@@ -235,63 +317,86 @@ export default function Intake() {
               {scoredResult ? (
                 /* Auto scored output screen */
                 <div className="bg-[#111827]/60 border border-gray-800/80 rounded-2xl p-8 flex flex-col gap-6 animate-scale-in">
-                  <div className="flex items-center gap-3 border-b border-gray-850 pb-4">
-                    <div className="h-10 w-10 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400">
-                      <Check className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <h3 className="text-base font-bold text-white uppercase tracking-tight">AI Intake Registered</h3>
-                      <p className="text-[10px] text-gray-500 font-bold uppercase mt-0.5">Submission reference: {scoredResult.id.slice(0, 12)}</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-[#0b0f19]/40 border border-gray-850 p-5 rounded-xl flex flex-col justify-center items-center text-center">
-                      <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest block mb-1">Scored Risk Tier</span>
-                      <Badge variant={getRiskBadgeColor(scoredResult.riskLevel)} className="text-xs py-1 px-4 !rounded-full">
-                        {scoredResult.riskLevel} RISK
-                      </Badge>
-                    </div>
-                    <div className="bg-[#0b0f19]/40 border border-gray-850 p-5 rounded-xl flex flex-col justify-center items-center text-center">
-                      <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest block mb-1">Queue Status</span>
-                      <Badge variant="royal" className="text-xs py-1 px-4 !rounded-full">
-                        {scoredResult.status.toUpperCase()}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4 bg-slate-500/5 p-5 rounded-xl border border-gray-850">
-                    <div className="flex gap-2 items-start text-xs leading-relaxed">
-                      <AlertTriangle className={cn(
-                        "h-4 w-4 shrink-0 mt-0.5",
-                        scoredResult.riskLevel === 'HIGH' ? "text-red-400" : "text-yellow-400"
-                      )} />
+                  
+                  {pollingActive ? (
+                    <div className="py-12 flex flex-col items-center justify-center gap-4 text-center">
+                      <LoaderCircle className="h-10 w-10 animate-spin text-indigo-500" />
                       <div>
-                        <span className="font-bold text-white block uppercase text-[9px] tracking-widest mb-0.5">Automated Safety Note:</span>
-                        {scoredResult.riskLevel === 'HIGH' ? (
-                          <span className="text-gray-400">
-                            High risk signals were identified based on sensitive keywords. 
-                            An operational block has been scheduled on the target model. 
-                            Your organization administrator must manually verify integrations and grant an operational override.
-                          </span>
-                        ) : (
-                          <span className="text-gray-400">
-                            Automated parameters indicate a standard or low risk score. 
-                            Your registration has been queued in the architecture review board.
-                          </span>
-                        )}
+                        <h4 className="text-sm font-bold text-white uppercase tracking-widest animate-pulse">Running Claude Safety Analysis...</h4>
+                        <p className="text-[10px] text-gray-500 font-bold uppercase mt-1">Polling real-time risk scores from active BullMQ workers...</p>
                       </div>
                     </div>
-                  </div>
+                  ) : riskScoreResult ? (
+                    <>
+                      <div className="flex items-center justify-between border-b border-gray-850 pb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 bg-indigo-500/10 border border-indigo-500/20 rounded-full flex items-center justify-center text-indigo-400">
+                            <Sparkles className="h-5 w-5 animate-pulse" />
+                          </div>
+                          <div>
+                            <h3 className="text-base font-bold text-white uppercase tracking-tight">AI Intake Risk Profile Card</h3>
+                            <p className="text-[10px] text-gray-500 font-bold uppercase mt-0.5">Submission reference: {scoredResult.id.slice(0, 12)}</p>
+                          </div>
+                        </div>
+                        <Badge variant={getRiskBadgeColor(riskScoreResult.risk_level)} className="text-[10px] py-1 px-4 !rounded-full">
+                          {riskScoreResult.risk_level} RISK (Score: {riskScoreResult.risk_score}/100)
+                        </Badge>
+                      </div>
 
-                  <div className="flex justify-end pt-2">
-                    <button
-                      onClick={() => setScoredResult(null)}
-                      className="px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest text-indigo-400 border border-gray-800 hover:bg-gray-800 transition-all"
-                    >
-                      Submit Another
-                    </button>
-                  </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="bg-[#0b0f19]/40 border border-gray-850 p-5 rounded-xl">
+                          <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest block mb-2">Detected Risk Factors</span>
+                          <ul className="space-y-1.5 text-[11px] text-gray-400">
+                            {riskScoreResult.risk_factors?.map((f: string, i: number) => (
+                              <li key={i} className="flex gap-2 items-start leading-relaxed">
+                                <AlertTriangle className="h-3.5 w-3.5 text-yellow-500 shrink-0 mt-0.5" />
+                                {f}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        <div className="bg-[#0b0f19]/40 border border-gray-850 p-5 rounded-xl">
+                          <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest block mb-2">Recommended Safety Controls</span>
+                          <ul className="space-y-1.5 text-[11px] text-gray-400">
+                            {riskScoreResult.recommended_controls?.map((c: string, i: number) => (
+                              <li key={i} className="flex gap-2 items-start leading-relaxed">
+                                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                                {c}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+
+                      <div className="bg-slate-500/5 p-5 rounded-xl border border-gray-850 text-xs">
+                        <span className="font-bold text-white block uppercase text-[9px] tracking-widest mb-1.5">Compliance Officer review memo:</span>
+                        <p className="text-gray-400 leading-relaxed italic">"{riskScoreResult.suggested_review_notes}"</p>
+                      </div>
+
+                      <div className="flex items-center justify-between border-t border-gray-850 pt-4 mt-2">
+                        <div className="flex items-center gap-1 text-[9px] font-bold text-indigo-400 uppercase tracking-widest bg-indigo-500/5 border border-indigo-500/10 px-2 py-1 rounded">
+                          <HelpCircle className="h-3.5 w-3.5" />
+                          EU AI Act Tier: {riskScoreResult.eu_ai_act_classification}
+                        </div>
+                        <button
+                          onClick={() => setScoredResult(null)}
+                          className="px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest text-indigo-400 border border-gray-800 hover:bg-gray-800 transition-all active:scale-95"
+                        >
+                          Submit Another
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="py-12 flex flex-col items-center justify-center gap-4 text-center">
+                      <LoaderCircle className="h-10 w-10 animate-spin text-indigo-500" />
+                      <div>
+                        <h4 className="text-sm font-bold text-white uppercase tracking-widest animate-pulse">Running Claude Safety Analysis...</h4>
+                        <p className="text-[10px] text-gray-500 font-bold uppercase mt-1">Polling real-time risk scores from active BullMQ workers...</p>
+                      </div>
+                    </div>
+                  )}
+
                 </div>
               ) : (
                 /* The form itself */
@@ -326,7 +431,24 @@ export default function Intake() {
                         </div>
 
                         <div className="flex flex-col gap-1.5 col-span-2">
-                          <label htmlFor="agent-desc" className="text-[10px] font-black uppercase tracking-widest text-gray-400">System Description</label>
+                          <div className="flex justify-between items-center">
+                            <label htmlFor="agent-desc" className="text-[10px] font-black uppercase tracking-widest text-gray-400">System Description</label>
+                            {agentDescription.trim().length > 10 && (
+                              <button
+                                type="button"
+                                onClick={handleSuggestQuestions}
+                                disabled={loadingSuggestions}
+                                className="flex items-center gap-1 text-[9px] font-black uppercase text-indigo-400 hover:text-indigo-300 transition-colors"
+                              >
+                                {loadingSuggestions ? (
+                                  <LoaderCircle className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  <Sparkles className="h-3 w-3" />
+                                )}
+                                Suggest Compliance Questions
+                              </button>
+                            )}
+                          </div>
                           <textarea 
                             id="agent-desc"
                             rows={3}
@@ -335,6 +457,31 @@ export default function Intake() {
                             onChange={e => setAgentDescription(e.target.value)}
                             className="bg-black/30 border border-gray-800 rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500 text-xs resize-none transition-colors"
                           />
+                          
+                          {/* Suggested questions list */}
+                          {suggestedQuestions.length > 0 && (
+                            <div className="mt-2 bg-indigo-950/20 border border-indigo-900/30 rounded-xl p-3.5 space-y-2">
+                              <span className="text-[9px] uppercase font-black text-indigo-400 tracking-wider flex items-center gap-1.5 font-bold">
+                                <ClipboardList className="h-3.5 w-3.5" />
+                                Claude-Suggested Compliance Gaps
+                              </span>
+                              <div className="flex flex-col gap-2">
+                                {suggestedQuestions.map((q, i) => (
+                                  <div key={i} className="flex items-center justify-between gap-3 bg-black/20 border border-gray-850 p-2.5 rounded-lg">
+                                    <span className="text-[10px] text-gray-300 font-medium leading-relaxed">{q}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleAppendQuestion(q)}
+                                      className="flex items-center gap-1 px-2.5 py-1 rounded bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-[8px] font-black uppercase tracking-wider shrink-0 transition-all shadow-md shadow-indigo-600/10"
+                                    >
+                                      <Plus className="h-2.5 w-2.5" />
+                                      Append
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         <div className="flex flex-col gap-1.5 col-span-2">
@@ -393,6 +540,38 @@ export default function Intake() {
                             ))}
                           </div>
                         </div>
+
+                        {/* Custom Form Builder Questions Rendering */}
+                        {customQuestions.length > 0 && (
+                          <div className="col-span-2 flex flex-col gap-3">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 flex items-center gap-1.5 font-bold">
+                              <ClipboardList className="h-3.5 w-3.5" />
+                              Custom Questionnaire Extensions
+                            </span>
+                            <div className="space-y-3.5">
+                              {customQuestions.map((cq) => (
+                                <div key={cq.id} className="flex flex-col gap-1.5 bg-black/10 border border-gray-850 p-4 rounded-xl relative text-left">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveCustomQuestion(cq.id)}
+                                    className="absolute top-3.5 right-3.5 text-gray-550 hover:text-white transition-colors"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </button>
+                                  <label className="text-[10px] font-bold text-gray-300 leading-relaxed pr-8">{cq.question}</label>
+                                  <input 
+                                    type="text"
+                                    required
+                                    placeholder="Type your compliance specification answer..."
+                                    value={cq.answer}
+                                    onChange={e => handleUpdateCustomAnswer(cq.id, e.target.value)}
+                                    className="bg-black/30 border border-gray-800 rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500 text-xs transition-colors"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
                         {/* Glassmorphic Acknowledgement Box */}
                         <div className="col-span-2 bg-indigo-950/20 border border-indigo-500/25 p-4 rounded-xl space-y-3">

@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store/useStore';
-import { fetchPolicies, PolicyResponse } from '@/lib/api';
+import { fetchPolicies, PolicyResponse, apiBaseUrl } from '@/lib/api';
 import { EvidenceSection } from '../components/shared/EvidenceSection';
 import { ChangeHistoryTimeline } from '../components/shared/ChangeHistoryTimeline';
 
@@ -183,10 +183,26 @@ export default function Policies() {
             
             <div className="space-y-1">
               <h2 className="text-[13px] font-black uppercase tracking-tight text-[var(--text-primary)]">{selectedPolicy.name}</h2>
-              <div className="flex items-center gap-2 text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
-                <span>v{selectedPolicy.current_version || 1}</span>
-                <span>•</span>
-                <span>{selectedPolicy.effect}</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                  <span>v{selectedPolicy.current_version || 1}</span>
+                  <span>•</span>
+                  <span>{selectedPolicy.effect}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => window.open(`${apiBaseUrl}/reports/policy/${selectedPolicy.id}/pdf`, '_blank')}
+                    className="px-2 py-1 text-[8px] font-black bg-indigo-50 border border-indigo-100 text-[var(--royal-indigo)] rounded hover:bg-indigo-100 transition-all uppercase tracking-widest"
+                  >
+                    Export PDF
+                  </button>
+                  <button
+                    onClick={() => window.open(`${apiBaseUrl}/reports/policy/${selectedPolicy.id}/docx`, '_blank')}
+                    className="px-2 py-1 text-[8px] font-black bg-teal-50 border border-teal-100 text-teal-700 rounded hover:bg-teal-100 transition-all uppercase tracking-widest"
+                  >
+                    Export Word
+                  </button>
+                </div>
               </div>
             </div>
 

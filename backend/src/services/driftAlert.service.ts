@@ -108,6 +108,17 @@ export class DriftAlertService {
             });
             alertsCreated++;
 
+            try {
+              const { AutomationService } = require('./automation.service');
+              await AutomationService.triggerByEvent(agent.organizationId, 'DRIFT_ALERT_CREATED', {
+                agentId: agent.id,
+                message,
+                driftScore
+              });
+            } catch (autoErr) {
+              logger.error('Failed to trigger automations for drift alert:', autoErr);
+            }
+
             await NotificationService.notifyDriftDetected(
               agent.organizationId,
               `Behavioral Drift: ${agent.name}`,
