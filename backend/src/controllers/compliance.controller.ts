@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { ComplianceService } from '../services/compliance.service';
 import { ReportService } from '../services/report.service';
+import { EuAiActService } from '../services/euAiAct.service';
 import { resolveOrganizationId } from '../utils/company';
 import logger from '../utils/logger';
 import prisma from '../config/db';
@@ -116,9 +117,15 @@ export const getComplianceStats = asyncHandler(async (req: any, res: Response) =
 
   const riskTrends = Object.entries(trendMap).map(([date, risk]) => ({ date, risk }));
 
+  const euAiActOverview = await EuAiActService.getFrameworkOverview(organizationId);
+  const euAiActScore = euAiActOverview.summary.compliance_score;
+
   return sendSuccess(res, {
     totalViolations: violations.length,
-    breakdown,
-    riskTrends
+    breakdown: { GDPR: breakdown.GDPR, HIPAA: breakdown.HIPAA, DPDP: breakdown.DPDP },
+    riskTrends,
+    frameworks: [
+      { name: 'EU AI Act', score: euAiActScore, controls: euAiActOverview.summary }
+    ]
   });
 });

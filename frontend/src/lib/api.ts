@@ -1039,5 +1039,81 @@ export async function resolveShareLink(token: string): Promise<SharedViewRespons
   return apiRequest<SharedViewResponse>(`/share-links/view/${token}`);
 }
 
+export interface EuAiActControlImplementation {
+  status: string;
+  notes: string | null;
+  owner_user_id: string | null;
+  due_date: string | null;
+  evidence_links: Array<{
+    type: string;
+    url: string;
+    description: string;
+    uploaded_at: string;
+  }>;
+  last_reviewed: string | null;
+}
+
+export interface EuAiActControl {
+  control_code: string;
+  title: string;
+  description: string;
+  evidence_required: string[];
+  checklist_items: string[];
+  implementation: EuAiActControlImplementation | null;
+}
+
+export interface EuAiActArticle {
+  article_number: string;
+  title: string;
+  chapter: string;
+  risk_tier: string;
+  controls: EuAiActControl[];
+}
+
+export interface EuAiActOverview {
+  articles: EuAiActArticle[];
+  summary: {
+    total_controls: number;
+    implemented: number;
+    in_progress: number;
+    not_started: number;
+    not_applicable: number;
+    compliance_score: number;
+  };
+}
+
+export async function fetchEuAiActOverview(): Promise<EuAiActOverview> {
+  return apiRequest<EuAiActOverview>('/compliance/eu-ai-act/overview');
+}
+
+export async function updateEuAiActImplementation(
+  controlCode: string,
+  data: {
+    status: string;
+    notes?: string;
+    owner_user_id?: string;
+    due_date?: string | null;
+  }
+): Promise<any> {
+  return apiRequest<any>(`/compliance/eu-ai-act/controls/${controlCode}/implementation`, {
+    method: 'PATCH',
+    body: JSON.stringify(data)
+  });
+}
+
+export async function uploadEuAiActEvidence(
+  controlCode: string,
+  data: {
+    type: string;
+    url: string;
+    description: string;
+  }
+): Promise<any> {
+  return apiRequest<any>(`/compliance/eu-ai-act/evidence/${controlCode}`, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  });
+}
+
 
 

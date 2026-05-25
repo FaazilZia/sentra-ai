@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 import dotenv from 'dotenv';
 import { seedOrganizationGovernance } from '../src/services/governanceSeed.service';
+import { seedEuAiActControls } from '../src/services/euAiActSeed.service';
 
 dotenv.config();
 
@@ -148,6 +149,14 @@ async function main() {
     } catch (e: any) {
       console.error(`   Failed to seed governance frameworks for org ${c.name}:`, e.message);
     }
+  }
+
+  // 6. Seed EU AI Act Controls
+  console.log('🇪🇺 Seeding EU AI Act Controls...');
+  try {
+    await seedEuAiActControls(prisma);
+  } catch (e: any) {
+    console.error('❌ Failed to seed EU AI Act Controls:', e.message);
   }
 
   console.log('\n🎉 Seed completed!');

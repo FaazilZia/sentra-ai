@@ -13,6 +13,13 @@ import {
   postMarkAlertRead,
   getComplianceStats
 } from '../controllers/compliance.controller';
+import {
+  getEuAiActOverview,
+  getEuAiActArticle,
+  getEuAiActControls,
+  updateEuAiActImplementation,
+  addEuAiActEvidence
+} from '../controllers/euAiAct.controller';
 
 
 
@@ -30,6 +37,13 @@ router.get('/audit-logs', authenticate, authorizeRoles('ADMIN', 'AUDITOR'), getA
 router.get('/export/:featureId', authenticate, getExportReport);
 router.get('/alerts', authenticate, getAlerts);
 router.post('/alerts/mark-read', authenticate, postMarkAlertRead);
+
+// EU AI Act Routes
+router.get('/eu-ai-act/overview', authenticate, getEuAiActOverview);
+router.get('/eu-ai-act/articles/:articleNumber', authenticate, getEuAiActArticle);
+router.get('/eu-ai-act/controls', authenticate, getEuAiActControls);
+router.patch('/eu-ai-act/controls/:controlCode/implementation', authenticate, authorizeRoles('ADMIN', 'ENGINEER'), updateEuAiActImplementation);
+router.post('/eu-ai-act/evidence/:controlCode', authenticate, authorizeRoles('ADMIN', 'ENGINEER'), addEuAiActEvidence);
 
 
 

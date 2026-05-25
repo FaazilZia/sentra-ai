@@ -75,6 +75,7 @@ model organizations {
   intake_submissions     intake_submissions[]
   risk_scores            risk_scores[]
   share_links            share_links[]
+  eu_ai_act_implementations eu_ai_act_implementations[]
 
   @@map("companies")
 }
@@ -679,15 +680,16 @@ model evidence_records {
 }
 
 model compliance_snapshots {
-  id             String         @id @default(uuid())
-  organizationId String?        @map("organization_id")
-  featureId      String         @map("feature_id")
-  gdpr_score     Int
-  dpdp_score     Int
-  hipaa_score    Int
-  risk_level     String
-  created_at     DateTime       @default(now())
-  organizations  organizations? @relation(fields: [organizationId], references: [id])
+  id              String         @id @default(uuid())
+  organizationId  String?        @map("organization_id")
+  featureId       String         @map("feature_id")
+  gdpr_score      Int
+  dpdp_score      Int
+  hipaa_score     Int
+  eu_ai_act_score Int            @default(0)
+  risk_level      String
+  created_at      DateTime       @default(now())
+  organizations   organizations? @relation(fields: [organizationId], references: [id])
 
   @@map("compliance_snapshots")
 }
@@ -1321,5 +1323,51 @@ model share_links {
   @@index([orgId])
   @@index([token])
   @@map("share_links")
+}
+
+model eu_ai_act_articles {
+  id               String   @id @default(uuid())
+  article_number   String   @unique  // e.g. "Art. 9"
+  title            String             // e.g. "Risk Management System"
+  chapter          String             // e.g. "Chapter III - High-Risk AI Systems"
+  risk_tier        String             // PROHIBITED | HIGH_RISK | LIMITED_RISK | GPAI | ALL
+  obligation_type  String             // PROVIDER | DEPLOYER | BOTH
+  description      String
+  is_active        Boolean  @default(true)
+  controls         eu_ai_act_controls[]
+  @@map("eu_ai_act_articles")
+}
+
+model eu_ai_act_controls {
+  id               String   @id @default(uuid())
+  article_id       String   @map("article_id")
+  control_code     String   @unique  // e.g. "EU-AIA-9-1"
+  title            String
+  description      String
+  evidence_required String[]  // list of what documents prove compliance
+  checklist_items  String[]  // actionable items to implement
+  is_structural    Boolean  @default(false)  // true = framework-level, false = org-specific
+  article          eu_ai_act_articles @relation(fields: [article_id], references: [id])
+  implementations  eu_ai_act_implementations[]
+  @@map("eu_ai_act_controls")
+}
+
+model eu_ai_act_implementations {
+  id             String    @id @default(uuid())
+  organizationId String    @map("organization_id")
+  control_id     String    @map("control_id")
+  status         String    @default("NOT_STARTED")  // NOT_STARTED | IN_PROGRESS | IMPLEMENTED | NOT_APPLICABLE | EXEMPTED
+  evidence_links Json      @default("[]")   // array of { type, url, description, uploaded_at }
+  notes          String?
+  owner_user_id  String?   @map("owner_user_id")
+  due_date       DateTime?
+  last_reviewed  DateTime?
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+  organization   organizations @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  control        eu_ai_act_controls @relation(fields: [control_id], references: [id])
+  @@unique([organizationId, control_id])
+  @@index([organizationId])
+  @@map("eu_ai_act_implementations")
 }
 
