@@ -1609,7 +1609,7 @@ model vendor_risk_assessments {
   risk_level            String        @default("LOW") @map("risk_level") // LOW | MEDIUM | HIGH | CRITICAL
   data_access           String[]      @map("data_access")
   compliance_frameworks String[]      @map("compliance_frameworks")
-  assessment_notes      String        @map("assessment_notes")
+  assessment_notes      String        @default("") @map("assessment_notes")
   status                String        @default("PENDING") @map("status") // PENDING | REVIEWED | APPROVED | REJECTED
   reviewed_by           String?       @map("reviewed_by")
   created_at            DateTime      @default(now())
