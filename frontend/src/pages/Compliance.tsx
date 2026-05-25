@@ -124,6 +124,9 @@ export default function Compliance() {
 
   const totalViolations = stats?.totalViolations || 0;
 
+  const piiBreakdown = stats?.piiViolations || { GDPR: 0, HIPAA: 0, DPDP: 0 };
+  const totalPii = (piiBreakdown.GDPR || 0) + (piiBreakdown.HIPAA || 0) + (piiBreakdown.DPDP || 0);
+
   const handleSaveControl = async () => {
     if (!selectedControl) return;
     setIsSavingControl(true);
@@ -475,6 +478,30 @@ export default function Compliance() {
                 <span className="text-[9px] font-black uppercase text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
                   Autonomous
                 </span>
+              </div>
+            </div>
+          </div>
+
+          {/* PII Compliance Scan Card */}
+          <div className="card-base p-6 border border-red-500/20 bg-gradient-to-br from-zinc-950 to-red-950/10">
+            <h3 className="text-sm font-black text-white uppercase tracking-tight mb-2">PII Compliance Scan</h3>
+            <p className="text-[9px] font-black text-red-400 uppercase tracking-widest mb-4">Realtime Interceptor Violations</p>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
+                <span className="text-xs text-gray-400">GDPR Violations</span>
+                <span className={`text-xs font-black ${piiBreakdown.GDPR > 0 ? 'text-red-400' : 'text-gray-400'}`}>{piiBreakdown.GDPR}</span>
+              </div>
+              <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
+                <span className="text-xs text-gray-400">HIPAA Violations</span>
+                <span className={`text-xs font-black ${piiBreakdown.HIPAA > 0 ? 'text-red-400' : 'text-gray-400'}`}>{piiBreakdown.HIPAA}</span>
+              </div>
+              <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
+                <span className="text-xs text-gray-400">DPDP Violations</span>
+                <span className={`text-xs font-black ${piiBreakdown.DPDP > 0 ? 'text-red-400' : 'text-gray-400'}`}>{piiBreakdown.DPDP}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-gray-400">Total Blocked/Flagged</span>
+                <span className={`text-xs font-black ${totalPii > 0 ? 'text-red-400' : 'text-emerald-400'}`}>{totalPii}</span>
               </div>
             </div>
           </div>

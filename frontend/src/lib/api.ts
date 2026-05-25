@@ -127,6 +127,11 @@ export interface ComplianceStats {
     HIPAA: number;
     DPDP: number;
   };
+  piiViolations?: {
+    GDPR: number;
+    HIPAA: number;
+    DPDP: number;
+  };
   riskTrends: Array<{ date: string; risk: number }>;
 }
 

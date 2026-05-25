@@ -102,6 +102,47 @@ export const getComplianceStats = asyncHandler(async (req: any, res: Response) =
     if (d.includes('DPDP')) breakdown.DPDP++;
   });
 
+  // Query PII action logs with PostgreSQL JSON path filtering and SQLite fallback
+  let piiLogs: any[] = [];
+  try {
+    piiLogs = await prisma.logs.findMany({
+      where: {
+        organizationId,
+        metadata: {
+          path: ['piiDetected'],
+          equals: true,
+        },
+      },
+    });
+    // Fall back if query returns 0 results unexpectedly
+    if (piiLogs.length === 0) {
+      throw new Error('Zero results unexpectedly from JSON path query');
+    }
+  } catch (err) {
+    // SQLite dev fallback: query active organization's logs and filter in-memory
+    const allLogs = await prisma.logs.findMany({
+      where: { organizationId },
+      orderBy: { timestamp: 'desc' },
+    });
+    piiLogs = allLogs.filter((log: any) => {
+      const meta = log.metadata ? (typeof log.metadata === 'string' ? JSON.parse(log.metadata) : log.metadata) : null;
+      return meta && meta.piiDetected === true;
+    });
+  }
+
+  const piiBreakdown = { GDPR: 0, HIPAA: 0, DPDP: 0 };
+  piiLogs.forEach((log: any) => {
+    const meta = log.metadata ? (typeof log.metadata === 'string' ? JSON.parse(log.metadata) : log.metadata) : null;
+    if (meta && Array.isArray(meta.violatedFrameworks)) {
+      meta.violatedFrameworks.forEach((fw: string) => {
+        const upperFw = fw.toUpperCase();
+        if (upperFw === 'GDPR') piiBreakdown.GDPR++;
+        if (upperFw === 'HIPAA') piiBreakdown.HIPAA++;
+        if (upperFw === 'DPDP') piiBreakdown.DPDP++;
+      });
+    }
+  });
+
   const last7 = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const recentViolations = await prisma.incidents.findMany({
     where: { organizationId, created_at: { gte: last7 } },
@@ -121,8 +162,9 @@ export const getComplianceStats = asyncHandler(async (req: any, res: Response) =
   const euAiActScore = euAiActOverview.summary.compliance_score;
 
   return sendSuccess(res, {
-    totalViolations: violations.length,
+    totalViolations: violations.length + piiLogs.length,
     breakdown: { GDPR: breakdown.GDPR, HIPAA: breakdown.HIPAA, DPDP: breakdown.DPDP },
+    piiViolations: piiBreakdown,
     riskTrends,
     frameworks: [
       { name: 'EU AI Act', score: euAiActScore, controls: euAiActOverview.summary }
