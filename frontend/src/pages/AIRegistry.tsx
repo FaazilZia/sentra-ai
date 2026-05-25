@@ -21,12 +21,22 @@ interface AISystem {
   owner_user_id: string | null;
   status: 'ACTIVE' | 'DEPRECATED' | 'UNDER_REVIEW';
   created_at: string;
+  lifecycle_stage?: string;
   owner?: {
     id: string;
     full_name: string;
     email: string;
   } | null;
   model_card?: ModelCard | null;
+}
+
+interface LifecycleHistoryItem {
+  id: string;
+  stage: string;
+  notes: string | null;
+  changed_by: string;
+  effective_date: string;
+  created_at: string;
 }
 
 interface ModelCard {
@@ -73,9 +83,87 @@ export default function AIRegistry() {
   });
   const [performanceMetricsText, setPerformanceMetricsText] = useState('{\n  "accuracy": 0.94,\n  "latency_ms": 120\n}');
 
+  // Lifecycle stage management states
+  const [isTransitionOpen, setIsTransitionOpen] = useState(false);
+  const [targetStage, setTargetStage] = useState('');
+  const [transitionNotes, setTransitionNotes] = useState('');
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [lifecycleHistory, setLifecycleHistory] = useState<LifecycleHistoryItem[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
   useEffect(() => {
     loadSystems();
   }, []);
+
+  const getLifecycleColor = (stage?: string) => {
+    switch (stage?.toUpperCase()) {
+      case 'DEVELOPMENT': return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+      case 'TESTING': return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20';
+      case 'STAGING': return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+      case 'PRODUCTION': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+      case 'DEPRECATED': return 'bg-orange-500/10 text-orange-400 border-orange-500/20';
+      case 'RETIRED': return 'bg-red-500/10 text-red-400 border-red-500/20';
+      default: return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+    }
+  };
+
+  const getNextStage = (currentStage?: string) => {
+    const current = currentStage || 'DEVELOPMENT';
+    if (current === 'DEVELOPMENT') return 'TESTING';
+    if (current === 'TESTING') return 'STAGING';
+    if (current === 'STAGING') return 'PRODUCTION';
+    return null;
+  };
+
+  const fetchLifecycleHistory = async (aiSystemId: string) => {
+    setLoadingHistory(true);
+    try {
+      const res = await apiRequest<LifecycleHistoryItem[]>(`/model-lifecycle/${aiSystemId}/history`);
+      setLifecycleHistory(res || []);
+    } catch (err) {
+      console.error('Failed to fetch lifecycle history:', err);
+      setLifecycleHistory([]);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  const handleTransitionSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedSystem || !targetStage) return;
+
+    setIsTransitioning(true);
+    try {
+      await apiRequest('/model-lifecycle/transition', {
+        method: 'POST',
+        body: JSON.stringify({
+          aiSystemId: selectedSystem.id,
+          newStage: targetStage,
+          notes: transitionNotes
+        })
+      });
+
+      setIsTransitionOpen(false);
+
+      // Refresh system list
+      const refreshedSystemsRes = await apiRequest<{ items: AISystem[] }>('/ai-systems');
+      const items = refreshedSystemsRes.items || [];
+      setSystems(items);
+      
+      const updatedSys = items.find(s => s.id === selectedSystem.id);
+      if (updatedSys) {
+        setSelectedSystem(updatedSys);
+      }
+
+      // Refresh history
+      await fetchLifecycleHistory(selectedSystem.id);
+    } catch (err) {
+      console.error('Failed to transition stage:', err);
+      alert('Failed to transition stage');
+    } finally {
+      setIsTransitioning(false);
+    }
+  };
 
   const loadSystems = async () => {
     setLoading(true);
@@ -116,6 +204,7 @@ export default function AIRegistry() {
   const handleSelectSystem = async (sys: AISystem) => {
     setSelectedSystem(sys);
     setIsModelCardEdit(false);
+    fetchLifecycleHistory(sys.id);
     
     // Fetch model card
     try {
@@ -289,6 +378,11 @@ export default function AIRegistry() {
                 <div>
                   <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Model Specification</span>
                   <h2 className="text-xl font-bold text-white mt-0.5">{selectedSystem.name}</h2>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${getLifecycleColor(selectedSystem.lifecycle_stage)}`}>
+                      {selectedSystem.lifecycle_stage || 'DEVELOPMENT'}
+                    </span>
+                  </div>
                 </div>
                 <button
                   onClick={() => setSelectedSystem(null)}
@@ -296,6 +390,56 @@ export default function AIRegistry() {
                 >
                   <X className="h-5 w-5" />
                 </button>
+              </div>
+
+              {/* Lifecycle Stage Controls */}
+              <div className="bg-[#0f172a]/40 border border-gray-800/60 rounded-xl p-4 flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Lifecycle Management</span>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${getLifecycleColor(selectedSystem.lifecycle_stage)}`}>
+                    {selectedSystem.lifecycle_stage || 'DEVELOPMENT'}
+                  </span>
+                </div>
+                
+                <div className="flex flex-wrap gap-2">
+                  {getNextStage(selectedSystem.lifecycle_stage) && (
+                    <button
+                      onClick={() => {
+                        setTargetStage(getNextStage(selectedSystem.lifecycle_stage)!);
+                        setTransitionNotes('');
+                        setIsTransitionOpen(true);
+                      }}
+                      className="flex-1 min-w-[120px] rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-indigo-500 transition-all active:scale-95"
+                    >
+                      Advance to {getNextStage(selectedSystem.lifecycle_stage)}
+                    </button>
+                  )}
+                  
+                  {selectedSystem.lifecycle_stage !== 'DEPRECATED' && selectedSystem.lifecycle_stage !== 'RETIRED' && (
+                    <>
+                      <button
+                        onClick={() => {
+                          setTargetStage('DEPRECATED');
+                          setTransitionNotes('');
+                          setIsTransitionOpen(true);
+                        }}
+                        className="rounded-lg border border-orange-500/30 bg-orange-500/10 px-3 py-1.5 text-xs font-semibold text-orange-400 hover:bg-orange-500/20 transition-all active:scale-95"
+                      >
+                        Deprecate
+                      </button>
+                      <button
+                        onClick={() => {
+                          setTargetStage('RETIRED');
+                          setTransitionNotes('');
+                          setIsTransitionOpen(true);
+                        }}
+                        className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-400 hover:bg-red-500/20 transition-all active:scale-95"
+                      >
+                        Retire
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
 
               {/* Model Card Block */}
@@ -413,6 +557,43 @@ export default function AIRegistry() {
                         className="bg-black/30 border border-gray-800 rounded-lg p-2 text-emerald-300 font-mono focus:outline-none focus:border-indigo-500 min-h-[80px]"
                       />
                     </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Lifecycle History Timeline */}
+              <div className="pt-4 border-t border-gray-800 flex flex-col gap-3">
+                <h3 className="font-bold text-white flex items-center gap-2 text-sm uppercase tracking-wider text-gray-300">
+                  <Layers className="h-4 w-4 text-indigo-400" />
+                  Lifecycle History
+                </h3>
+                {loadingHistory ? (
+                  <div className="text-xs text-gray-500 font-mono">Loading history...</div>
+                ) : lifecycleHistory.length === 0 ? (
+                  <div className="text-xs text-gray-500 italic">No lifecycle transitions recorded yet.</div>
+                ) : (
+                  <div className="flex flex-col gap-4 pl-2 border-l border-gray-800 mt-2 ml-1.5">
+                    {lifecycleHistory.map((item) => (
+                      <div key={item.id} className="relative pl-4">
+                        <div className="absolute -left-[21px] top-1 h-2.5 w-2.5 rounded-full bg-indigo-500 border border-[#111827]" />
+                        <div className="flex items-center justify-between text-[11px] font-semibold text-gray-300">
+                          <span className={`px-1.5 py-0.5 rounded text-[9px] border font-bold ${getLifecycleColor(item.stage)}`}>
+                            {item.stage}
+                          </span>
+                          <span className="text-[10px] text-gray-500 font-mono">
+                            {new Date(item.effective_date).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-gray-400 mt-1">
+                          Changed by: <span className="font-semibold text-gray-300">{item.changed_by}</span>
+                        </div>
+                        {item.notes && (
+                          <p className="text-[10px] text-gray-500 italic mt-1 bg-black/10 p-1.5 rounded border border-gray-800/40">
+                            "{item.notes}"
+                          </p>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -571,6 +752,67 @@ export default function AIRegistry() {
                   className="rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg hover:from-indigo-500 hover:to-purple-500 transition-all"
                 >
                   Register System
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Lifecycle Transition Modal */}
+      {isTransitionOpen && selectedSystem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-[#111827] border border-gray-800 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl animate-scale-in">
+            <div className="flex items-center justify-between border-b border-gray-800 p-5 bg-[#0f172a]/60">
+              <h3 className="font-bold text-white flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-indigo-400" />
+                Transition Lifecycle Stage
+              </h3>
+              <button
+                onClick={() => setIsTransitionOpen(false)}
+                className="rounded-lg p-1 hover:bg-gray-800 text-gray-500 hover:text-white transition-all"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleTransitionSubmit} className="p-6 flex flex-col gap-4">
+              <div>
+                <p className="text-xs text-gray-400">
+                  You are about to transition <span className="font-bold text-white">{selectedSystem.name}</span> to the stage:
+                </p>
+                <div className="mt-2.5 flex items-center gap-2">
+                  <span className={`px-2.5 py-1 rounded-full border text-xs font-bold ${getLifecycleColor(targetStage)}`}>
+                    {targetStage}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="transition-notes" className="text-xs font-semibold text-gray-400">Optional Notes / Rationale</label>
+                <textarea
+                  id="transition-notes"
+                  placeholder="e.g. Completed initial security checks and standard evaluations."
+                  value={transitionNotes}
+                  onChange={(e) => setTransitionNotes(e.target.value)}
+                  className="bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 min-h-[85px] text-xs"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 border-t border-gray-800 pt-4 mt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsTransitionOpen(false)}
+                  className="rounded-xl border border-gray-800 px-4 py-2 text-xs font-semibold text-gray-400 hover:bg-gray-800 hover:text-white transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isTransitioning}
+                  className="rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2 text-xs font-semibold text-white shadow-lg hover:from-indigo-500 hover:to-purple-500 transition-all disabled:opacity-50"
+                >
+                  {isTransitioning ? 'Transitioning...' : 'Confirm Transition'}
                 </button>
               </div>
             </form>
