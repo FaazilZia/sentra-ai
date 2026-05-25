@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Clock, User, MessageSquare, LoaderCircle, 
   Plus, CheckSquare, Trash, Settings, Activity 

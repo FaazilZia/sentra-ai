@@ -3,7 +3,7 @@ import { apiRequest } from '@/lib/api';
 import { 
   CheckCircle2, XCircle, Clock, 
   Cpu, AlertTriangle, ShieldCheck, 
-  Terminal, ArrowRight
+  Terminal, ArrowRight, X
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';

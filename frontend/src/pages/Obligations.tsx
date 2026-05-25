@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import { apiRequest } from '@/lib/api';
 import { 
-  ListTodo, Search, Filter, CheckCircle2, Clock, HelpCircle, 
-  User, Calendar, Link as LinkIcon, Edit, Save, X, BookOpen, Layers
+  ListTodo, Search, Filter, 
+  Calendar, Link as LinkIcon, Edit, Save, X
 } from 'lucide-react';
 
 interface Control {
   id: string;
   control_id: string;
   title: string;
+  framework: string;
 }
 
 interface Obligation {

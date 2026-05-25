@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { apiRequest, apiBaseUrl } from '@/lib/api';
 import { 
   Globe, ShieldCheck, CheckCircle2, Lock, Bot, 
-  ExternalLink, Sparkles, Building, ChevronRight, Share2, Clipboard
+  Sparkles, Clipboard, Award
 } from 'lucide-react';
 
 interface PublicSystem {
@@ -12,10 +12,20 @@ interface PublicSystem {
   risk_tier: string;
 }
 
+interface PublicScores {
+  euAiActScore: number;
+  iso42001Score: number;
+  iso27001Score: number;
+  gdprScore: number;
+  hipaaScore: number;
+  dpdpScore: number;
+}
+
 interface PublicTrustResponse {
   organizationName: string;
   slug: string;
   systems: PublicSystem[];
+  scores: PublicScores;
 }
 
 export default function TrustPortal() {
@@ -39,7 +49,6 @@ export default function TrustPortal() {
     setLoading(true);
     setError(null);
     try {
-      // Direct raw fetch bypasses auth headers since this is a public page
       const response = await fetch(`${apiBaseUrl}/public/${orgSlug}/trust`);
       const resData = await response.json();
       
@@ -62,7 +71,7 @@ export default function TrustPortal() {
       const res = await apiRequest<{ user: { id: string } }>('/user/me');
       if (res.user?.id) {
         setIsAuthenticated(true);
-        // If authenticated, we check if the toggle is enabled
+        // If authenticated, check if toggle is enabled
         const settingsRes = await fetch(`${apiBaseUrl}/public/${orgSlug}/trust`);
         setIsPortalEnabled(settingsRes.ok);
       }
@@ -105,6 +114,18 @@ export default function TrustPortal() {
     }
   };
 
+  const getComplianceStatusBadge = (score: number) => {
+    if (score >= 80) return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+    if (score >= 50) return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+    return 'bg-red-500/10 text-red-400 border-red-500/20';
+  };
+
+  const getComplianceStatusText = (score: number) => {
+    if (score >= 80) return 'Fully Verified';
+    if (score >= 50) return 'In Progress';
+    return 'Not Started';
+  };
+
   return (
     <div className="min-h-screen bg-[#070a13] text-gray-200 font-sans flex flex-col items-center justify-start p-4 sm:p-8 relative overflow-hidden">
       
@@ -114,10 +135,10 @@ export default function TrustPortal() {
 
       {/* Authenticated Admin Visibility Controls Panel */}
       {isAuthenticated && (
-        <div className="w-full max-w-4xl bg-gradient-to-r from-indigo-950/40 to-purple-950/20 border border-indigo-500/20 backdrop-blur-md rounded-2xl p-5 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 z-10">
+        <div className="w-full max-w-4xl bg-gradient-to-r from-indigo-950/40 to-purple-950/20 border border-indigo-500/20 backdrop-blur-md rounded-2xl p-5 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 z-10 shadow-2xl">
           <div className="flex items-start gap-3.5">
-            <div className="rounded-xl bg-indigo-500/10 p-2.5">
-              <Globe className="h-5 w-5 text-indigo-400" />
+            <div className="rounded-xl bg-indigo-500/10 p-2.5 shadow-md">
+              <Globe className="h-5 w-5 text-indigo-400 animate-pulse" />
             </div>
             <div>
               <h3 className="font-bold text-white text-sm">Public Trust Directory visibility</h3>
@@ -128,7 +149,7 @@ export default function TrustPortal() {
           <div className="flex items-center gap-4">
             <button
               onClick={handleCopyLink}
-              className="flex items-center gap-2 rounded-xl border border-gray-800 px-4 py-2 text-[10px] font-bold uppercase text-gray-400 hover:bg-gray-800 hover:text-white transition-all"
+              className="flex items-center gap-2 rounded-xl border border-gray-800 px-4 py-2 text-[10px] font-bold uppercase text-gray-400 hover:bg-gray-800 hover:text-white transition-all shadow-inner"
             >
               <Clipboard className="h-4 w-4" />
               {isCopied ? 'Copied Link' : 'Copy Public URL'}
@@ -136,7 +157,7 @@ export default function TrustPortal() {
 
             <button
               onClick={() => handleTogglePortal(!isPortalEnabled)}
-              className={`rounded-xl px-5 py-2.5 text-[10px] font-black uppercase shadow transition-all ${
+              className={`rounded-xl px-5 py-2.5 text-[10px] font-black uppercase shadow-lg transition-all ${
                 isPortalEnabled 
                   ? 'bg-red-600 hover:bg-red-500 text-white shadow-red-500/5' 
                   : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/5'
@@ -186,7 +207,7 @@ export default function TrustPortal() {
                 </div>
               </div>
               
-              <div className="flex items-center gap-2 border border-gray-800/80 rounded-xl px-4 py-2 bg-black/20 self-start md:self-auto text-[10px]">
+              <div className="flex items-center gap-2 border border-gray-800/80 rounded-xl px-4 py-2 bg-black/20 self-start md:self-auto text-[10px] shadow-inner">
                 <Globe className="h-4 w-4 text-indigo-400" />
                 <span className="text-gray-400">Status: </span>
                 <span className="font-bold text-emerald-400 uppercase">compliant</span>
@@ -198,6 +219,51 @@ export default function TrustPortal() {
               This registry provides a transparent catalog of AI models and tools utilized by <span className="text-white font-bold">{data?.organizationName}</span>. 
               Every catalog item represents an audited integration verified in real-time against privacy, security, and human oversight standards by <span className="text-indigo-400 font-bold">Sentra AI Governance</span>.
             </div>
+
+            {/* Verified Compliance Badges */}
+            {data?.scores && (
+              <div className="flex flex-col gap-4 relative z-10">
+                <h3 className="font-bold text-white text-xs uppercase tracking-wider text-indigo-300">
+                  Verified Compliance Badges
+                </h3>
+                
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {[
+                    { key: 'eu', label: 'EU AI Act obligations', score: data.scores.euAiActScore },
+                    { key: 'iso42', label: 'ISO 42001 (AIMS)', score: data.scores.iso42001Score },
+                    { key: 'iso27', label: 'ISO 27001 (ISMS)', score: data.scores.iso27001Score },
+                    { key: 'gdpr', label: 'GDPR Privacy Assurance', score: data.scores.gdprScore },
+                    { key: 'hipaa', label: 'HIPAA Health Security', score: data.scores.hipaaScore },
+                    { key: 'dpdp', label: 'DPDP Data Protection', score: data.scores.dpdpScore },
+                  ].map(badge => (
+                    <div 
+                      key={badge.key} 
+                      className="bg-black/20 border border-gray-800 rounded-2xl p-4 flex flex-col justify-between hover:border-indigo-500/20 hover:shadow-indigo-500/2 transition-all relative overflow-hidden"
+                    >
+                      <div className="flex items-start justify-between">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase leading-snug">{badge.label}</span>
+                        <Award className="h-4 w-4 text-indigo-400/50" />
+                      </div>
+                      
+                      <div className="flex items-baseline justify-between mt-4">
+                        <span className="text-2xl font-black text-white">{badge.score}%</span>
+                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider ${getComplianceStatusBadge(badge.score)}`}>
+                          {getComplianceStatusText(badge.score)}
+                        </span>
+                      </div>
+
+                      {/* Progress Visual Mini-Bar */}
+                      <div className="w-full bg-gray-850 h-1 rounded-full mt-2.5 overflow-hidden">
+                        <div 
+                          className="bg-gradient-to-r from-indigo-500 to-purple-500 h-full rounded-full transition-all duration-500" 
+                          style={{ width: `${badge.score}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Public Systems list */}
             <div className="flex flex-col gap-4 relative z-10">

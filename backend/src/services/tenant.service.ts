@@ -5,6 +5,8 @@ import logger from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
 import { seedOrganizationGovernance } from './governanceSeed.service';
 import { seedDefaultIntakeForm } from './intakeForm.service';
+import { Iso42001Service } from './iso42001.service';
+import { Iso27001Service } from './iso27001.service';
 
 // ─────────────────────────────────────────────
 // Tenant Context
@@ -88,6 +90,8 @@ export const TenantService = {
       // Seed baseline controls and obligations
       await seedOrganizationGovernance(createdOrg.id, tx);
       await seedDefaultIntakeForm(createdOrg.id, tx);
+      await Iso42001Service.seedImplementations(createdOrg.id, tx);
+      await Iso27001Service.seedImplementations(createdOrg.id, tx);
 
       return createdOrg;
     }, { timeout: 35000 });

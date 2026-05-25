@@ -20,7 +20,8 @@ import {
   ShieldAlert,
   Sliders,
   Share,
-  Zap
+  Zap,
+  LoaderCircle
 } from 'lucide-react';
 import { EvidenceSection } from '../components/shared/EvidenceSection';
 import { ChangeHistoryTimeline } from '../components/shared/ChangeHistoryTimeline';
@@ -109,7 +110,7 @@ export default function RiskCenter() {
       fetchData(); // reload updated portfolio
     } catch (err) {
       console.error('Failed to update agent risk parameters:', err);
-      addToast({ message: 'Failed to save manual override parameters', type: 'danger' });
+      addToast({ message: 'Failed to save manual override parameters', type: 'error' });
     } finally {
       setSavingOverride(false);
     }

@@ -5,6 +5,8 @@ import dotenv from 'dotenv';
 import { seedOrganizationGovernance } from '../src/services/governanceSeed.service';
 import { seedEuAiActControls } from '../src/services/euAiActSeed.service';
 import { seedNistAiRmf } from '../src/services/nistAiRmfSeed.service';
+import { seedIso42001 } from '../src/services/iso42001Seed.service';
+import { seedIso27001 } from '../src/services/iso27001Seed.service';
 
 dotenv.config();
 
@@ -166,6 +168,22 @@ async function main() {
     await seedNistAiRmf(prisma);
   } catch (e: any) {
     console.error('❌ Failed to seed NIST AI RMF 1.0 Controls:', e.message);
+  }
+
+  // 8. Seed ISO 42001 Controls
+  console.log('🌐 Seeding ISO 42001 Controls...');
+  try {
+    await seedIso42001(prisma);
+  } catch (e: any) {
+    console.error('❌ Failed to seed ISO 42001 Controls:', e.message);
+  }
+
+  // 9. Seed ISO 27001 Controls
+  console.log('🔒 Seeding ISO 27001 Controls...');
+  try {
+    await seedIso27001(prisma);
+  } catch (e: any) {
+    console.error('❌ Failed to seed ISO 27001 Controls:', e.message);
   }
 
   console.log('\n🎉 Seed completed!');

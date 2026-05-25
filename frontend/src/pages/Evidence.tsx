@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  FolderOpen, Plus, Search, Trash2, Download, FileText, 
-  FileSpreadsheet, FileImage, File, UploadCloud, X, Calendar, User, Tag, LoaderCircle
+  FolderOpen, Plus, Trash2, Download, FileText, 
+  FileSpreadsheet, FileImage, File, UploadCloud, X, Calendar, User, LoaderCircle,
+  ShieldCheck, Info
 } from 'lucide-react';
 import { apiRequest } from '@/lib/api';
 import { useStore } from '@/store/useStore';
@@ -29,40 +30,40 @@ function getFileIcon(mimeType: string) {
 export default function Evidence() {
   const addToast = useStore(state => state.addToast);
 
-  // States
+  // Selector States
+  const [selectedFramework, setSelectedFramework] = useState<'EU_AI_ACT' | 'NIST' | 'ISO42001' | 'ISO27001'>('EU_AI_ACT');
+  const [selectedControlId, setSelectedControlId] = useState('EU-AIA-15-1');
+
+  // List States
   const [evidenceList, setEvidenceList] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
 
-  // Filters state
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('');
-  const [filterEntityId, setFilterEntityId] = useState('');
-
   // Upload Form State
-  const [uploadTitle, setUploadTitle] = useState('');
-  const [uploadDescription, setUploadDescription] = useState('');
-  const [uploadEntityType, setUploadEntityType] = useState('policy');
-  const [uploadEntityId, setUploadEntityId] = useState('');
-  const [uploadTags, setUploadTags] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const FRAMEWORK_CONTROLS = {
+    EU_AI_ACT: ['EU-AIA-15-1', 'EU-AIA-15-2', 'EU-AIA-15-3', 'EU-AIA-27-1', 'EU-AIA-72-1', 'EU-AIA-72-2'],
+    NIST: ['NIST-GOVERN-1', 'NIST-MEASURE-2.5', 'NIST-MAP-1.1', 'NIST-PR-AT-1'],
+    ISO42001: ['ISO-42001-A5.1', 'ISO-42001-A6.1', 'ISO-42001-A7.2', 'ISO-42001-A8.1'],
+    ISO27001: ['ISO-27001-A5.1', 'ISO-27001-A6.1', 'ISO-27001-A7.1', 'ISO-27001-A8.1']
+  };
+
+  // Reset control selection when framework changes
+  useEffect(() => {
+    setSelectedControlId(FRAMEWORK_CONTROLS[selectedFramework][0]);
+  }, [selectedFramework]);
+
   // Fetch all evidence records
   const loadEvidence = async () => {
     setIsLoading(true);
     try {
-      // Build query string
-      const params = new URLSearchParams();
-      if (filterType) params.append('entityType', filterType);
-      if (filterEntityId) params.append('entityId', filterEntityId);
-      
-      const query = params.toString() ? `?${params.toString()}` : '';
-      const list = await apiRequest<any[]>(`/evidence${query}`);
-      setEvidenceList(list);
+      const list = await apiRequest<any[]>(`/evidence-files/${selectedFramework}/${selectedControlId}`);
+      setEvidenceList(list || []);
     } catch (err) {
       console.error('Failed to load evidence records:', err);
       addToast({ message: 'FAILED TO LOAD EVIDENCE RECORDS', type: 'error' });
@@ -73,7 +74,7 @@ export default function Evidence() {
 
   useEffect(() => {
     loadEvidence();
-  }, [filterType, filterEntityId]);
+  }, [selectedFramework, selectedControlId]);
 
   // Handle Drag & Drop Events
   const handleDragOver = (e: React.DragEvent) => {
@@ -106,48 +107,33 @@ export default function Evidence() {
       addToast({ message: 'PLEASE SELECT A FILE TO UPLOAD', type: 'warning' });
       return;
     }
-    if (!uploadTitle.trim()) {
-      addToast({ message: 'TITLE IS REQUIRED', type: 'warning' });
-      return;
-    }
 
     setIsUploading(true);
     try {
       const formData = new FormData();
       formData.append('file', selectedFile);
-      formData.append('title', uploadTitle);
-      formData.append('description', uploadDescription);
-      formData.append('entityType', uploadEntityType);
-      formData.append('entityId', uploadEntityId);
-      formData.append('tags', uploadTags);
+      formData.append('controlType', selectedFramework);
+      formData.append('controlId', selectedControlId);
 
-      // Perform multipart upload
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:10000/api/v1'}/evidence`, {
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:10000/api/v1';
+      const response = await fetch(`${apiBaseUrl}/evidence-files/upload`, {
         method: 'POST',
         body: formData,
         credentials: 'include',
       });
 
       if (!response.ok) {
-        throw new Error('Upload failed');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Upload failed');
       }
 
-      addToast({ message: 'EVIDENCE RECORD UPLOADED SUCCESSFULLY', type: 'success' });
-      
-      // Reset form & close modal
-      setUploadTitle('');
-      setUploadDescription('');
-      setUploadEntityType('policy');
-      setUploadEntityId('');
-      setUploadTags('');
+      addToast({ message: 'EVIDENCE FILE UPLOADED SUCCESSFULLY', type: 'success' });
       setSelectedFile(null);
       setIsUploadOpen(false);
-      
-      // Reload evidence records
       loadEvidence();
-    } catch (err) {
+    } catch (err: any) {
       console.error('File upload failed:', err);
-      addToast({ message: 'FILE UPLOAD FAILED', type: 'error' });
+      addToast({ message: err.message || 'FILE UPLOAD FAILED', type: 'error' });
     } finally {
       setIsUploading(false);
     }
@@ -158,7 +144,7 @@ export default function Evidence() {
     if (!window.confirm('Are you sure you want to permanently delete this evidence file?')) return;
     
     try {
-      await apiRequest(`/evidence/${id}`, { method: 'DELETE' });
+      await apiRequest(`/evidence-files/${id}`, { method: 'DELETE' });
       addToast({ message: 'EVIDENCE FILE DELETED', type: 'success' });
       loadEvidence();
     } catch (err) {
@@ -168,173 +154,155 @@ export default function Evidence() {
   };
 
   // View / Download File
-  const handleViewFile = (url: string) => {
-    const fullUrl = url.startsWith('/') 
-      ? `${import.meta.env.VITE_API_BASE_URL?.replace('/api/v1', '') || 'http://localhost:10000'}${url}`
-      : url;
+  const handleViewFile = (storagePath: string) => {
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:10000/api/v1';
+    const baseUrl = apiBaseUrl.replace('/api/v1', '');
+    const cleanPath = storagePath.replace(/\\/g, '/');
+    const fullUrl = `${baseUrl}/${cleanPath}`;
     window.open(fullUrl, '_blank');
   };
 
-  // Filtered lists (client-side text matches)
-  const filteredEvidence = evidenceList.filter(item => {
-    const matchesSearch = 
-      item.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      item.tags.some((t: string) => t.toLowerCase().includes(searchTerm.toLowerCase()));
-    return matchesSearch;
-  });
-
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-fade-in">
+    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-fade-in text-gray-200">
+      
       {/* Header and Add button */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-[20px] font-black uppercase tracking-widest text-[var(--royal-indigo)]">Evidence Hub</h1>
-          <p className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mt-0.5">Central repository for compliance filings, model cards, and remediation proof</p>
+          <h1 className="text-[20px] font-black uppercase tracking-widest text-indigo-400">Evidence Hub</h1>
+          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">
+            Central secure repository for compliance filings, model cards, and continuous remediation proof
+          </p>
         </div>
         <button 
           onClick={() => setIsUploadOpen(true)}
-          className="btn-primary flex items-center justify-center gap-2 h-9 !text-[10px] uppercase tracking-widest self-start sm:self-center"
+          className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 text-xs font-semibold text-white shadow-lg shadow-indigo-500/20 hover:from-indigo-500 hover:to-purple-500 transition-all hover:scale-105 active:scale-95 animate-pulse-subtle"
         >
           <Plus className="h-4 w-4" />
-          <span>Upload Evidence</span>
+          <span>Upload Control Evidence</span>
         </button>
       </div>
 
-      {/* Filter panel */}
-      <div className="card-base p-4 flex flex-col md:flex-row md:items-center gap-4 bg-white shadow-sm border border-[var(--border-default)]">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[var(--text-muted)]" />
-          <input 
-            type="text" 
-            placeholder="Search by Title or Tags..." 
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded py-1.5 pl-9 pr-4 text-[var(--text-xs)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--violet-blue)]"
-          />
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-4 shrink-0">
-          {/* Entity Type Selector */}
+      {/* Selector panel */}
+      <div className="card-base p-5 flex flex-col md:flex-row md:items-center gap-4 bg-[#111827]/40 border border-gray-800 rounded-2xl shadow-xl backdrop-blur-md">
+        
+        <div className="flex flex-col gap-1.5 flex-1">
+          <label htmlFor="framework-select" className="text-[9px] font-black uppercase tracking-widest text-indigo-400">Compliance Framework</label>
           <select 
-            value={filterType}
-            onChange={e => setFilterType(e.target.value)}
-            className="bg-[var(--bg-page)] border border-[var(--border-default)] text-[var(--text-xs)] rounded py-1.5 px-3 focus:outline-none focus:border-[var(--violet-blue)] font-bold text-[var(--text-secondary)] h-8 outline-none"
+            id="framework-select"
+            value={selectedFramework}
+            onChange={e => setSelectedFramework(e.target.value as any)}
+            className="w-full bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 text-xs font-bold"
           >
-            <option value="">ALL ENTITIES</option>
-            <option value="policy">POLICIES</option>
-            <option value="risk">RISKS</option>
-            <option value="compliance">COMPLIANCE</option>
-            <option value="incident">INCIDENTS</option>
-            <option value="guardrail">GUARDRAILS</option>
+            <option value="EU_AI_ACT">EU AI Act Obligations</option>
+            <option value="NIST">NIST AI RMF 1.0 Dashboard</option>
+            <option value="ISO42001">ISO/IEC 42001:2023 AIMS</option>
+            <option value="ISO27001">ISO/IEC 27001:2022 ISMS</option>
           </select>
-
-          {/* Entity ID Filter */}
-          <input 
-            type="text" 
-            placeholder="Filter by Entity ID..." 
-            value={filterEntityId}
-            onChange={e => setFilterEntityId(e.target.value)}
-            className="bg-[var(--bg-page)] border border-[var(--border-default)] text-[var(--text-xs)] rounded py-1.5 px-3 focus:outline-none focus:border-[var(--violet-blue)] h-8"
-          />
         </div>
+
+        <div className="flex flex-col gap-1.5 flex-1">
+          <label htmlFor="control-select" className="text-[9px] font-black uppercase tracking-widest text-indigo-400">Associated Control ID</label>
+          <select 
+            id="control-select"
+            value={selectedControlId}
+            onChange={e => setSelectedControlId(e.target.value)}
+            className="w-full bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 text-xs font-bold font-mono"
+          >
+            {FRAMEWORK_CONTROLS[selectedFramework]?.map(code => (
+              <option key={code} value={code}>{code}</option>
+            ))}
+          </select>
+        </div>
+
       </div>
 
       {/* Main Evidence Table */}
-      <div className="card-base overflow-hidden border border-[var(--border-default)] bg-white shadow-sm">
+      <div className="card-base overflow-hidden border border-gray-800 bg-[#111827]/20 shadow-2xl rounded-2xl backdrop-blur-md">
+        
+        <div className="p-5 border-b border-gray-800 bg-gray-900/10 flex items-center justify-between">
+          <span className="text-[10px] font-black tracking-wider text-indigo-400 uppercase flex items-center gap-1.5">
+            <ShieldCheck className="h-4 w-4 text-emerald-400" />
+            Control Registry: {selectedControlId}
+          </span>
+          <span className="text-xs text-gray-500">{evidenceList.length} files attached</span>
+        </div>
+
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <LoaderCircle className="h-8 w-8 animate-spin text-[var(--royal-indigo)]" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)]">Retrieving Artifacts...</span>
+            <LoaderCircle className="h-8 w-8 animate-spin text-indigo-500" />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Retrieving Secure Ledger...</span>
           </div>
-        ) : filteredEvidence.length === 0 ? (
+        ) : evidenceList.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <FolderOpen className="h-12 w-12 text-[var(--text-muted)] opacity-60 mb-3" />
-            <h3 className="text-[13px] font-bold text-[var(--text-primary)] uppercase tracking-wider">No Evidence Found</h3>
-            <p className="text-[10px] text-[var(--text-secondary)] mt-1 max-w-sm uppercase leading-normal">
-              No files are uploaded matching this criteria. Click the upload button above to add compliance documents.
+            <FolderOpen className="h-12 w-12 text-gray-600 opacity-60 mb-3" />
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider">No Evidence Uploaded</h3>
+            <p className="text-[10px] text-gray-400 mt-1 max-w-sm uppercase leading-normal">
+              No evidentiary files are attached to control {selectedControlId}. Upload a file to verify compliance.
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left">
+            <table className="w-full border-collapse text-left text-xs">
               <thead>
-                <tr className="bg-[var(--bg-page)]/70 text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] border-b border-[var(--border-default)]">
-                  <th className="py-3.5 px-4">Title</th>
-                  <th className="py-3.5 px-4">Entity Context</th>
+                <tr className="bg-gray-950/20 text-[10px] font-black uppercase tracking-widest text-gray-500 border-b border-gray-800">
+                  <th className="py-3.5 px-4 pl-6">Title / Filename</th>
+                  <th className="py-3.5 px-4">Framework</th>
                   <th className="py-3.5 px-4">Uploaded By</th>
                   <th className="py-3.5 px-4">Upload Date</th>
                   <th className="py-3.5 px-4">Size</th>
-                  <th className="py-3.5 px-4">Tags</th>
-                  <th className="py-3.5 px-4 text-right">Actions</th>
+                  <th className="py-3.5 px-4 text-right pr-6">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--border-default)]">
-                {filteredEvidence.map((item) => {
-                  const FileIcon = getFileIcon(item.mimeType);
+              <tbody className="divide-y divide-gray-800/40 text-gray-300">
+                {evidenceList.map((item) => {
+                  const FileIcon = getFileIcon(item.mime_type);
                   return (
-                    <tr key={item.id} className="hover:bg-[var(--bg-hover)]/30 transition-colors">
-                      <td className="py-3 px-4">
+                    <tr key={item.id} className="hover:bg-white/[0.01] transition-colors">
+                      <td className="py-4 px-4 pl-6">
                         <div className="flex items-center gap-3">
-                          <div className="p-2 rounded bg-[var(--ghost-violet)] text-[var(--royal-indigo)] flex items-center justify-center">
+                          <div className="p-2 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/10 flex items-center justify-center shadow-md">
                             <FileIcon className="h-4 w-4" />
                           </div>
                           <div>
-                            <div className="text-[var(--text-xs)] font-bold text-[var(--text-primary)] leading-tight">{item.title}</div>
-                            <div className="text-[10px] text-[var(--text-muted)] mt-0.5 truncate max-w-[200px]" title={item.fileName}>
-                              {item.fileName}
+                            <div className="text-xs font-bold text-white leading-tight">{item.original_name}</div>
+                            <div className="text-[10px] text-gray-500 mt-0.5 font-mono truncate max-w-[240px]" title={item.id}>
+                              ID: {item.id}
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="py-3 px-4">
-                        <span className="badge-pill bg-[var(--ghost-violet)] text-[var(--royal-indigo)] font-bold uppercase tracking-wider mr-2 text-[9px]">
-                          {item.entityType}
+                      <td className="py-4 px-4">
+                        <span className="bg-purple-500/10 text-purple-400 border border-purple-500/20 font-bold uppercase tracking-wider text-[9px] px-2 py-0.5 rounded-full">
+                          {item.control_type}
                         </span>
-                        {item.entityId && (
-                          <span className="text-[10px] font-mono text-[var(--text-secondary)]">{item.entityId.slice(0, 8)}...</span>
-                        )}
                       </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-1.5 text-[var(--text-xs)] font-medium text-[var(--text-primary)]">
-                          <User className="h-3 w-3 text-[var(--text-muted)]" />
-                          <span>{item.user?.full_name || 'Admin'}</span>
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                          <User className="h-3.5 w-3.5 text-gray-500" />
+                          <span>{item.uploaded_by || 'Admin'}</span>
                         </div>
                       </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-1.5 text-[var(--text-xs)] text-[var(--text-secondary)]">
-                          <Calendar className="h-3 w-3 text-[var(--text-muted)]" />
-                          <span>{new Date(item.createdAt).toLocaleDateString()}</span>
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                          <Calendar className="h-3.5 w-3.5 text-gray-500" />
+                          <span>{new Date(item.created_at).toLocaleString()}</span>
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-[var(--text-xs)] text-[var(--text-secondary)] font-medium">
-                        {formatBytes(item.fileSize)}
+                      <td className="py-4 px-4 text-xs font-mono text-gray-400">
+                        {formatBytes(item.size)}
                       </td>
-                      <td className="py-3 px-4">
-                        <div className="flex flex-wrap gap-1">
-                          {item.tags.length === 0 ? (
-                            <span className="text-[9px] text-[var(--text-muted)] uppercase">—</span>
-                          ) : (
-                            item.tags.map((tag: string) => (
-                              <span key={tag} className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[9px] font-semibold border-none">
-                                <Tag className="h-2 w-2 opacity-50" />
-                                <span>{tag}</span>
-                              </span>
-                            ))
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-4 px-4 text-right pr-6">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
-                            onClick={() => handleViewFile(item.fileUrl)}
-                            className="p-1.5 rounded text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-all hover:text-[var(--royal-indigo)]"
-                            title="View/Download File"
+                            onClick={() => handleViewFile(item.storage_path)}
+                            className="p-1.5 rounded-xl border border-gray-800 text-gray-400 hover:text-white hover:bg-gray-800 transition-all shadow-md"
+                            title="Download/View Evidence"
                           >
                             <Download className="h-3.5 w-3.5" />
                           </button>
                           <button
                             onClick={() => handleDeleteEvidence(item.id)}
-                            className="p-1.5 rounded text-[var(--text-secondary)] hover:bg-rose-50 transition-all hover:text-rose-600"
+                            className="p-1.5 rounded-xl border border-gray-800 text-gray-500 hover:text-red-400 hover:bg-red-500/5 hover:border-red-500/20 transition-all shadow-md"
                             title="Delete Record"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -352,25 +320,25 @@ export default function Evidence() {
 
       {/* Reusable Upload Modal Dialog */}
       {isUploadOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0f172a]/55 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white border border-[var(--border-default)] rounded-[var(--radius)] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-[#111827] border border-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col animate-scale-in">
             
             {/* Modal Header */}
-            <div className="px-5 py-4 border-b border-[var(--border-default)] flex items-center justify-between bg-[var(--bg-page)]/40">
+            <div className="px-5 py-4 border-b border-gray-800 flex items-center justify-between bg-gray-900/10">
               <div className="flex items-center gap-2">
-                <UploadCloud className="h-4.5 w-4.5 text-[var(--royal-indigo)]" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-primary)]">Upload Evidence Record</span>
+                <UploadCloud className="h-5 w-5 text-indigo-400" />
+                <span className="text-xs font-bold uppercase tracking-wider text-white">Upload Compliance Evidence</span>
               </div>
               <button 
                 onClick={() => setIsUploadOpen(false)}
-                className="p-1 rounded hover:bg-[var(--bg-hover)] transition-all outline-none"
+                className="p-1 rounded hover:bg-gray-800 text-gray-500 hover:text-white transition-all outline-none"
               >
-                <X className="h-4 w-4 text-[var(--text-secondary)]" />
+                <X className="h-4 w-4" />
               </button>
             </div>
 
             {/* Modal Form */}
-            <form onSubmit={handleUploadSubmit} className="p-5 space-y-4 overflow-y-auto max-h-[80vh] text-left">
+            <form onSubmit={handleUploadSubmit} className="p-6 space-y-5 text-xs text-left">
               
               {/* Drag and Drop Zone */}
               <div 
@@ -382,8 +350,8 @@ export default function Evidence() {
                 onClick={() => fileInputRef.current?.click()}
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInputRef.current?.click(); } }}
                 className={cn(
-                  "border border-dashed rounded-[var(--radius)] p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[120px]",
-                  isDragging ? "border-[var(--royal-indigo)] bg-[var(--ghost-violet)]/10" : "border-[var(--border-strong)] bg-[var(--bg-page)]/30 hover:border-[var(--royal-indigo)]"
+                  "border border-dashed rounded-xl p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[140px]",
+                  isDragging ? "border-indigo-500 bg-indigo-950/20" : "border-gray-800 bg-black/20 hover:border-indigo-500"
                 )}
               >
                 <input 
@@ -395,107 +363,47 @@ export default function Evidence() {
                 
                 {selectedFile ? (
                   <div className="space-y-1">
-                    <FileText className="h-8 w-8 text-[var(--royal-indigo)] mx-auto animate-bounce" />
-                    <div className="text-[var(--text-xs)] font-bold text-[var(--text-primary)]">{selectedFile.name}</div>
-                    <div className="text-[9px] text-[var(--text-secondary)] uppercase">{formatBytes(selectedFile.size)}</div>
+                    <FileText className="h-8 w-8 text-indigo-400 mx-auto animate-bounce" />
+                    <div className="text-xs font-bold text-white">{selectedFile.name}</div>
+                    <div className="text-[10px] text-gray-500 uppercase font-mono">{formatBytes(selectedFile.size)}</div>
                   </div>
                 ) : (
                   <div className="space-y-1">
-                    <UploadCloud className="h-8 w-8 text-[var(--text-muted)] mx-auto opacity-70" />
-                    <div className="text-[var(--text-xs)] font-bold text-[var(--text-primary)] uppercase tracking-wider">Drag & drop files or click to browse</div>
-                    <div className="text-[9px] text-[var(--text-muted)] font-semibold uppercase">PDF, CSV, JPEG, PNG formats supported</div>
+                    <UploadCloud className="h-8 w-8 text-gray-600 mx-auto opacity-70" />
+                    <div className="text-xs font-bold text-gray-300 uppercase tracking-wider">Drag & drop files or click to browse</div>
+                    <div className="text-[10px] text-gray-500 font-semibold uppercase">PDF, CSV, JPEG, PNG formats supported</div>
                   </div>
                 )}
               </div>
 
-              {/* Title */}
-              <div className="space-y-1">
-                <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-secondary)]">Document Title *</label>
-                <input 
-                  type="text" 
-                  required
-                  placeholder="e.g. GDPR Audit Assessment Checklist" 
-                  value={uploadTitle}
-                  onChange={e => setUploadTitle(e.target.value)}
-                  className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-1.5 text-[var(--text-xs)] focus:outline-none focus:border-[var(--violet-blue)]"
-                />
-              </div>
-
-              {/* Description */}
-              <div className="space-y-1">
-                <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-secondary)]">Description</label>
-                <textarea 
-                  placeholder="Provide detailed compliance context..." 
-                  value={uploadDescription}
-                  onChange={e => setUploadDescription(e.target.value)}
-                  rows={2}
-                  className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-1.5 text-[var(--text-xs)] focus:outline-none focus:border-[var(--violet-blue)] resize-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Entity Type Select */}
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-secondary)]">Entity Context *</label>
-                  <select 
-                    value={uploadEntityType}
-                    onChange={e => setUploadEntityType(e.target.value)}
-                    className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-1.5 text-[var(--text-xs)] focus:outline-none focus:border-[var(--violet-blue)] font-bold text-[var(--text-secondary)] h-8 outline-none"
-                  >
-                    <option value="policy">POLICY</option>
-                    <option value="risk">RISK</option>
-                    <option value="compliance">COMPLIANCE</option>
-                    <option value="incident">INCIDENT</option>
-                    <option value="guardrail">GUARDRAIL</option>
-                  </select>
-                </div>
-
-                {/* Entity ID */}
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-secondary)]">Entity ID (Optional)</label>
-                  <input 
-                    type="text" 
-                    placeholder="UUID or key identifier" 
-                    value={uploadEntityId}
-                    onChange={e => setUploadEntityId(e.target.value)}
-                    className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-1.5 text-[var(--text-xs)] focus:outline-none focus:border-[var(--violet-blue)] h-8"
-                  />
-                </div>
-              </div>
-
-              {/* Tags */}
-              <div className="space-y-1">
-                <label className="text-[9px] font-black uppercase tracking-widest text-[var(--text-secondary)]">Tags (Comma-separated)</label>
-                <input 
-                  type="text" 
-                  placeholder="e.g. gdpr, audit-2026, verification" 
-                  value={uploadTags}
-                  onChange={e => setUploadTags(e.target.value)}
-                  className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-1.5 text-[var(--text-xs)] focus:outline-none focus:border-[var(--violet-blue)]"
-                />
+              <div className="bg-indigo-950/10 border border-indigo-900/30 rounded-xl p-3 text-indigo-300 leading-relaxed text-[10px] flex gap-2">
+                <Info className="h-4 w-4 shrink-0 text-indigo-400 mt-0.5" />
+                <span>
+                  This file will be cryptographically associated with control <span className="font-bold text-white font-mono">{selectedControlId}</span> under the <span className="font-bold text-white">{selectedFramework}</span> framework.
+                </span>
               </div>
 
               {/* Modal Actions */}
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[var(--border-default)]">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-850">
                 <button 
                   type="button"
                   onClick={() => setIsUploadOpen(false)}
-                  className="px-4 py-1.5 rounded text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-all border-none bg-transparent"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:bg-gray-800 hover:text-white transition-all border-none bg-transparent"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit"
                   disabled={isUploading}
-                  className="btn-primary h-8 flex items-center justify-center gap-2 !px-5 !py-0 !text-[10px] uppercase tracking-widest shadow-lg shadow-[var(--royal-indigo)]/10"
+                  className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2 text-xs font-semibold text-white shadow-lg hover:from-indigo-500 hover:to-purple-500 transition-all animate-pulse-subtle"
                 >
                   {isUploading ? (
                     <>
-                      <LoaderCircle className="h-4.5 w-4.5 animate-spin" />
+                      <LoaderCircle className="h-4 w-4 animate-spin" />
                       <span>Uploading...</span>
                     </>
                   ) : (
-                    <span>Add Evidence</span>
+                    <span>Upload File</span>
                   )}
                 </button>
               </div>

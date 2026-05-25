@@ -11,6 +11,7 @@ import { logActivity } from './policy.service';
 import { decrypt } from '../utils/encryption';
 import { SENSITIVE_PATTERNS } from './riskEngine';
 import { buildRedisOptions, getRedisUrl } from '../config/redis';
+import { PostMarketMonitoringService } from './postMarketMonitoring.service';
 
 const REDIS_URL = getRedisUrl();
 
@@ -132,6 +133,35 @@ if (connection) {
     async (job) => {
       const { type, connectorId } = job.data;
       await processConnectorScan(type, connectorId);
+    },
+    { connection }
+  );
+
+  const postMarketWorker = new Worker(
+    'post-market-monitoring',
+    async (job) => {
+      const { organizationId } = job.data;
+      if (!organizationId) return;
+      try {
+        logger.info(`[BULLMQ] Processing post-market-monitoring check for organization: ${organizationId}`);
+        const report = await PostMarketMonitoringService.generateMonitoringReport(organizationId);
+        const driftAlerts = report.metrics.driftAlertsCount;
+        const openIncidents = report.metrics.openIncidents;
+        if (driftAlerts > 5 || openIncidents > 3) {
+          await prisma.alerts.create({
+            data: {
+              organizationId,
+              type: 'POST_MARKET_MONITORING',
+              message: `Post-market monitoring check detected high compliance risk. Active drift events: ${driftAlerts} (threshold: 5), unresolved incidents: ${openIncidents} (threshold: 3).`,
+              severity: 'critical',
+              is_read: false
+            }
+          });
+          logger.warn(`[BULLMQ] CRITICAL Post-market monitoring alert created for org ${organizationId}`);
+        }
+      } catch (err: any) {
+        logger.error(`[BULLMQ] Post-market monitoring worker error:`, err);
+      }
     },
     { connection }
   );

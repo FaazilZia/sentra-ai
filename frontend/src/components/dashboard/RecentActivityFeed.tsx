@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { History, ArrowRight } from 'lucide-react';
 import { fetchRecentHistory, ChangeHistory } from '@/lib/api';
 import { cn } from '@/lib/utils';

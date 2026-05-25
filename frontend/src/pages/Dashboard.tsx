@@ -12,7 +12,7 @@ import { useSocketStore } from '@/store/useSocketStore';
 
 export default function Dashboard() {
   const [policiesCount, setPoliciesCount] = useState<number | null>(null);
-  const { activities, alerts } = useSocketStore();
+  const { alerts } = useSocketStore();
 
   useEffect(() => {
     fetchPolicies().then(policies => setPoliciesCount(policies.length)).catch(() => setPoliciesCount(0));
@@ -96,7 +96,7 @@ export default function Dashboard() {
            <ComplianceTracker data={[]} isLoading={false} />
         </div>
         <div className="lg:col-span-4">
-           <RecentActivityFeed data={activities} isLoading={false} />
+           <RecentActivityFeed isLoading={false} />
         </div>
         <div className="lg:col-span-4">
            <RiskDistributionCard data={[]} isLoading={false} />

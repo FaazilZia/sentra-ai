@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { apiRequest } from '@/lib/api';
 import { 
-  ShieldCheck, Search, Filter, BookOpen, Clock, CheckCircle2, 
-  HelpCircle, Edit, Save, Plus, X, ListTodo, Info, Layers
+  Search, Filter, BookOpen, CheckCircle2, 
+  Edit, X, ListTodo
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 

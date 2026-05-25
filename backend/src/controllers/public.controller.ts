@@ -41,12 +41,56 @@ export const getPublicTrustData = async (req: Request, res: Response) => {
       }
     });
 
+    // 1. Calculate EU AI Act compliance score
+    const allEuImplementations = await prisma.eu_ai_act_implementations.findMany({
+      where: { organizationId: org.id }
+    });
+    const totalEuControls = await prisma.eu_ai_act_controls.count();
+    const euImplemented = allEuImplementations.filter(i => i.status === 'IMPLEMENTED').length;
+    const euNotApplicable = allEuImplementations.filter(i => i.status === 'NOT_APPLICABLE').length;
+    const euAiActScore = totalEuControls > 0 ? Math.round(((euImplemented + euNotApplicable) / totalEuControls) * 100) : 0;
+
+    // 2. Calculate ISO 42001 compliance score
+    const allIso42001Implementations = await prisma.iso42001_implementations.findMany({
+      where: { organizationId: org.id }
+    });
+    const totalIso42001Controls = await prisma.iso42001_controls.count();
+    const iso42001Implemented = allIso42001Implementations.filter(i => i.status === 'IMPLEMENTED').length;
+    const iso42001NotApplicable = allIso42001Implementations.filter(i => i.status === 'NOT_APPLICABLE').length;
+    const iso42001Score = totalIso42001Controls > 0 ? Math.round(((iso42001Implemented + iso42001NotApplicable) / totalIso42001Controls) * 100) : 0;
+
+    // 3. Calculate ISO 27001 compliance score
+    const allIso27001Implementations = await prisma.iso27001_implementations.findMany({
+      where: { organizationId: org.id }
+    });
+    const totalIso27001Controls = await prisma.iso27001_controls.count();
+    const iso27001Implemented = allIso27001Implementations.filter(i => i.status === 'IMPLEMENTED').length;
+    const iso27001NotApplicable = allIso27001Implementations.filter(i => i.status === 'NOT_APPLICABLE').length;
+    const iso27001Score = totalIso27001Controls > 0 ? Math.round(((iso27001Implemented + iso27001NotApplicable) / totalIso27001Controls) * 100) : 0;
+
+    // 4. Query compliance snapshots for latest GDPR, HIPAA, and DPDP scores
+    const latestSnapshot = await prisma.compliance_snapshots.findFirst({
+      where: { organizationId: org.id },
+      orderBy: { created_at: 'desc' }
+    });
+    const gdprScore = latestSnapshot ? latestSnapshot.gdpr_score : 0;
+    const hipaaScore = latestSnapshot ? latestSnapshot.hipaa_score : 0;
+    const dpdpScore = latestSnapshot ? latestSnapshot.dpdp_score : 0;
+
     return res.status(200).json({
       success: true,
       data: {
         organizationName: org.name,
         slug: org.slug,
-        systems
+        systems,
+        scores: {
+          euAiActScore,
+          iso42001Score,
+          iso27001Score,
+          gdprScore,
+          hipaaScore,
+          dpdpScore
+        }
       }
     });
   } catch (error: any) {

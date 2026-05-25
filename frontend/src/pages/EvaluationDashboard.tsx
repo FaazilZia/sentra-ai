@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Play, RefreshCw } from 'lucide-react';
 
 interface GovernanceScore {
   overall: number;
@@ -24,6 +25,32 @@ interface EvalRun {
   dataset?: { name: string };
 }
 
+interface BiasCaseResult {
+  id: string;
+  input: string;
+  expected: 'BLOCKED' | 'ALLOWED';
+  actual: 'BLOCKED' | 'ALLOWED';
+  passed: boolean;
+  bias_dimension: 'GENDER' | 'RACE' | 'AGE' | 'DISABILITY' | 'NONE';
+  tags: string[];
+  risk_level: string;
+  explanation: string;
+  flags: string[];
+}
+
+interface BiasAuditResult {
+  preset: string;
+  name: string;
+  description: string;
+  results: BiasCaseResult[];
+  summary: {
+    total: number;
+    passed: number;
+    failed: number;
+    overallBiasRiskScore: number;
+  };
+}
+
 const GRADE_COLORS: Record<string, { color: string; bg: string }> = {
   A: { color: '#22c55e', bg: 'rgba(34,197,94,0.1)' },
   B: { color: '#84cc16', bg: 'rgba(132,204,22,0.1)' },
@@ -39,7 +66,37 @@ const STATUS_COLORS: Record<string, string> = {
   failed: '#ef4444',
 };
 
+const BIAS_PRESETS = [
+  {
+    key: 'EU_AI_ACT_BIAS',
+    name: 'EU AI Act Bias Preset',
+    description: 'Demographic bias measurement and equity auditing per EU AI Act Article 10 guidelines.',
+    tags: ['EU AI Act', 'Article 10', 'High-Risk AI']
+  },
+  {
+    key: 'NIST_MS_2_5',
+    name: 'NIST Measure 2.5 Bias Preset',
+    description: 'Systemic bias measurement and equity auditing test cases per NIST AI RMF MEASURE 2.5.',
+    tags: ['NIST AI RMF', 'Measure 2.5', 'Equity Audit']
+  },
+  {
+    key: 'NYC_LL144',
+    name: 'NYC LL144 Bias Preset',
+    description: 'Bias audits on automated employment decision systems (AEDS) per NYC Local Law 144.',
+    tags: ['NYC LL144', 'Recruitment', 'Employment Bias']
+  },
+  {
+    key: 'COLORADO_SB205',
+    name: 'Colorado SB205 Bias Preset',
+    description: 'Insurance and financial decision bias scenarios per Colorado SB205 guidelines.',
+    tags: ['Colorado SB205', 'Financial Bias', 'Insurance Scoring']
+  }
+];
+
 const EvaluationDashboard: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'safety' | 'bias'>('safety');
+  
+  // Safety Benchmark States
   const [score, setScore] = useState<GovernanceScore | null>(null);
   const [runs, setRuns] = useState<EvalRun[]>([]);
   const [total, setTotal] = useState(0);
@@ -48,6 +105,10 @@ const EvaluationDashboard: React.FC = () => {
   const [selectedRun, setSelectedRun] = useState<EvalRun | null>(null);
   const [runResults, setRunResults] = useState<any[]>([]);
   const [loadingResults, setLoadingResults] = useState(false);
+
+  // Bias Audit States
+  const [runningBiasPreset, setRunningBiasPreset] = useState<string | null>(null);
+  const [biasAuditResult, setBiasAuditResult] = useState<BiasAuditResult | null>(null);
 
   useEffect(() => {
     fetchAll();
@@ -63,7 +124,11 @@ const EvaluationDashboard: React.FC = () => {
       const [scoreData, runsData] = await Promise.all([scoreRes.json(), runsRes.json()]);
       if (scoreData.success) setScore(scoreData.data);
       if (runsData.success) { setRuns(runsData.runs); setTotal(runsData.total); }
-    } finally { setLoading(false); }
+    } catch (err) {
+      console.error('Failed to load evaluation data:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const triggerEval = async () => {
@@ -79,7 +144,31 @@ const EvaluationDashboard: React.FC = () => {
       if (data.success) {
         setTimeout(fetchAll, 2000);
       }
+    } catch (err) {
+      console.error('Failed to trigger evaluation:', err);
     } finally { setTriggering(false); }
+  };
+
+  const runBiasAudit = async (presetKey: string) => {
+    setRunningBiasPreset(presetKey);
+    try {
+      const res = await fetch('/api/v1/evaluations/run-bias-audit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ preset: presetKey }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setBiasAuditResult(data.data);
+      } else {
+        alert(data.message || 'Failed to execute bias audit');
+      }
+    } catch (err) {
+      console.error('Failed to run bias audit:', err);
+    } finally {
+      setRunningBiasPreset(null);
+    }
   };
 
   const viewResults = async (run: EvalRun) => {
@@ -89,6 +178,8 @@ const EvaluationDashboard: React.FC = () => {
       const res = await fetch(`/api/v1/evaluation/runs/${run.id}`, { credentials: 'include' });
       const data = await res.json();
       if (data.success) setRunResults(data.data.results || []);
+    } catch (err) {
+      console.error('Failed to fetch results:', err);
     } finally { setLoadingResults(false); }
   };
 
@@ -97,161 +188,353 @@ const EvaluationDashboard: React.FC = () => {
   return (
     <div style={{ padding: '24px', background: '#0f0f1a', minHeight: '100vh', color: '#e2e8f0', fontFamily: "'Inter', sans-serif" }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#f1f5f9', margin: 0 }}>
             🧪 AI Evaluation & Governance
           </h1>
           <p style={{ color: '#94a3b8', marginTop: '4px', fontSize: '0.875rem' }}>
-            Continuous red-teaming, safety scoring, and AI governance health
+            Continuous red-teaming, safety scoring, bias detection, and AI governance health
           </p>
         </div>
+        
+        {activeTab === 'safety' && (
+          <button
+            onClick={triggerEval}
+            disabled={triggering}
+            style={{
+              padding: '10px 20px', borderRadius: '10px', border: 'none',
+              background: triggering ? '#334155' : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+              color: '#fff', fontWeight: 600, cursor: triggering ? 'not-allowed' : 'pointer',
+              fontSize: '0.875rem', boxShadow: triggering ? 'none' : '0 4px 12px rgba(99,102,241,0.3)',
+              transition: 'all 0.2s',
+            }}
+          >
+            {triggering ? '⟳ Starting...' : '▶ Run Safety Evaluation'}
+          </button>
+        )}
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: 'flex', borderBottom: '1px solid #1e293b', gap: '24px', marginBottom: '28px' }}>
         <button
-          onClick={triggerEval}
-          disabled={triggering}
+          onClick={() => setActiveTab('safety')}
           style={{
-            padding: '10px 20px', borderRadius: '10px', border: 'none',
-            background: triggering ? '#334155' : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-            color: '#fff', fontWeight: 600, cursor: triggering ? 'not-allowed' : 'pointer',
-            fontSize: '0.875rem', boxShadow: triggering ? 'none' : '0 4px 12px rgba(99,102,241,0.3)',
+            paddingBottom: '12px', fontSize: '0.875rem', fontWeight: 700, background: 'none', border: 'none',
+            color: activeTab === 'safety' ? '#6366f1' : '#94a3b8', cursor: 'pointer',
+            borderBottom: activeTab === 'safety' ? '2px solid #6366f1' : 'none', transition: 'all 0.15s'
           }}
         >
-          {triggering ? '⟳ Starting...' : '▶ Run Evaluation'}
+          📋 Safety & Governance Benchmarks
+        </button>
+        <button
+          onClick={() => setActiveTab('bias')}
+          style={{
+            paddingBottom: '12px', fontSize: '0.875rem', fontWeight: 700, background: 'none', border: 'none',
+            color: activeTab === 'bias' ? '#8b5cf6' : '#94a3b8', cursor: 'pointer',
+            borderBottom: activeTab === 'bias' ? '2px solid #8b5cf6' : 'none', transition: 'all 0.15s'
+          }}
+        >
+          ⚖️ Bias Audits & Equity Presets
         </button>
       </div>
 
-      {/* Governance Score Cards */}
-      {score && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', marginBottom: '28px' }}>
-          {/* Main Score */}
-          <div style={{
-            gridColumn: 'span 1', background: gradeStyle.bg, border: `1px solid ${gradeStyle.color}`,
-            borderRadius: '16px', padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center',
-            boxShadow: `0 0 24px ${gradeStyle.color}22`,
-          }}>
-            <div style={{ fontSize: '3rem', fontWeight: 800, color: gradeStyle.color }}>{score.grade}</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: gradeStyle.color }}>{score.overall}%</div>
-            <div style={{ color: '#94a3b8', fontSize: '0.75rem', marginTop: '4px' }}>Governance Score</div>
-          </div>
-          {[
-            { label: 'Policy Score', value: score.policyScore, icon: '📋' },
-            { label: 'Incident Score', value: score.incidentScore, icon: '🚨' },
-            { label: 'Drift Score', value: score.driftScore, icon: '📊' },
-            { label: 'Eval Score', value: score.evaluationScore, icon: '🧪' },
-          ].map(({ label, value, icon }) => (
-            <div key={label} style={{
-              background: 'rgba(30,41,59,0.6)', border: '1px solid #1e293b',
-              borderRadius: '16px', padding: '20px', textAlign: 'center',
-            }}>
-              <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>{icon}</div>
+      {activeTab === 'safety' ? (
+        /* Safety Dashboard tab content */
+        <>
+          {/* Governance Score Cards */}
+          {score && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', marginBottom: '28px' }}>
               <div style={{
-                fontSize: '1.6rem', fontWeight: 700,
-                color: value >= 80 ? '#22c55e' : value >= 60 ? '#f59e0b' : '#ef4444',
-              }}>{Math.round(value)}%</div>
-              <div style={{ color: '#64748b', fontSize: '0.75rem' }}>{label}</div>
-              {/* Score bar */}
-              <div style={{ marginTop: '8px', height: '4px', background: '#1e293b', borderRadius: '2px' }}>
-                <div style={{
-                  height: '100%', borderRadius: '2px', width: `${value}%`,
-                  background: value >= 80 ? '#22c55e' : value >= 60 ? '#f59e0b' : '#ef4444',
-                  transition: 'width 0.8s ease',
-                }} />
+                gridColumn: 'span 1', background: gradeStyle.bg, border: `1px solid ${gradeStyle.color}`,
+                borderRadius: '16px', padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center',
+                boxShadow: `0 0 24px ${gradeStyle.color}22`,
+              }}>
+                <div style={{ fontSize: '3rem', fontWeight: 800, color: gradeStyle.color }}>{score.grade}</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: gradeStyle.color }}>{score.overall}%</div>
+                <div style={{ color: '#94a3b8', fontSize: '0.75rem', marginTop: '4px' }}>Governance Score</div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: selectedRun ? '1fr 1fr' : '1fr', gap: '20px' }}>
-        {/* Evaluation Runs */}
-        <div style={{ background: 'rgba(30,41,59,0.4)', borderRadius: '16px', border: '1px solid #1e293b', overflow: 'hidden' }}>
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid #1e293b' }}>
-            <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: '#e2e8f0' }}>
-              Evaluation Runs ({total})
-            </h2>
-          </div>
-          {loading ? (
-            <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>Loading...</div>
-          ) : runs.length === 0 ? (
-            <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
-              No evaluation runs yet. Click "Run Evaluation" to start.
-            </div>
-          ) : runs.map((run) => (
-            <div
-              key={run.id}
-              role="button"
-              tabIndex={0}
-              onClick={() => viewResults(run)}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); viewResults(run); } }}
-              style={{
-                padding: '14px 20px', borderBottom: '1px solid #0f172a', cursor: 'pointer',
-                background: selectedRun?.id === run.id ? 'rgba(99,102,241,0.1)' : 'transparent',
-                transition: 'background 0.15s',
-                display: 'grid', gridTemplateColumns: '1fr auto', gap: '12px', alignItems: 'center',
-              }}
-            >
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <span style={{
-                    padding: '2px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600,
-                    background: `${STATUS_COLORS[run.status]}22`, color: STATUS_COLORS[run.status],
-                  }}>{run.status}</span>
-                  <span style={{ color: '#64748b', fontSize: '0.75rem' }}>{run.run_type}</span>
-                </div>
-                <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>
-                  {new Date(run.created_at).toLocaleString()}
-                  {run.agent && ` • ${run.agent.name}`}
-                </div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                {run.governance_score !== null && (
-                  <div style={{
-                    fontSize: '1.2rem', fontWeight: 700,
-                    color: run.governance_score >= 80 ? '#22c55e' : run.governance_score >= 60 ? '#f59e0b' : '#ef4444',
-                  }}>{run.governance_score?.toFixed(1)}%</div>
-                )}
-                <div style={{ color: '#64748b', fontSize: '0.7rem' }}>
-                  {run.passed_tests}/{run.total_tests} passed
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Run Results Panel */}
-        {selectedRun && (
-          <div style={{ background: 'rgba(30,41,59,0.4)', borderRadius: '16px', border: '1px solid #1e293b', overflow: 'hidden' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: '#e2e8f0' }}>Test Results</h2>
-              <button onClick={() => { setSelectedRun(null); setRunResults([]); }}
-                style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
-            </div>
-            <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
-              {loadingResults ? (
-                <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>Loading results...</div>
-              ) : runResults.map((result) => (
-                <div key={result.id} style={{
-                  padding: '12px 20px', borderBottom: '1px solid #0f172a',
-                  display: 'grid', gridTemplateColumns: '24px 1fr auto', gap: '10px', alignItems: 'center',
+              {[
+                { label: 'Policy Score', value: score.policyScore, icon: '📋' },
+                { label: 'Incident Score', value: score.incidentScore, icon: '🚨' },
+                { label: 'Drift Score', value: score.driftScore, icon: '📊' },
+                { label: 'Eval Score', value: score.evaluationScore, icon: '🧪' },
+              ].map(({ label, value, icon }) => (
+                <div key={label} style={{
+                  background: 'rgba(30,41,59,0.6)', border: '1px solid #1e293b',
+                  borderRadius: '16px', padding: '20px', textAlign: 'center',
                 }}>
-                  <span style={{ fontSize: '1rem' }}>{result.passed ? '✅' : '❌'}</span>
-                  <div>
-                    <div style={{ color: '#e2e8f0', fontSize: '0.8rem', fontWeight: 500 }}>{result.test_type}</div>
-                    <div style={{ color: '#64748b', fontSize: '0.7rem', marginTop: '2px' }}>
-                      {result.input.slice(0, 70)}...
-                    </div>
+                  <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>{icon}</div>
+                  <div style={{
+                    fontSize: '1.6rem', fontWeight: 700,
+                    color: value >= 80 ? '#22c55e' : value >= 60 ? '#f59e0b' : '#ef4444',
+                  }}>{Math.round(value)}%</div>
+                  <div style={{ color: '#64748b', fontSize: '0.75rem' }}>{label}</div>
+                  <div style={{ marginTop: '8px', height: '4px', background: '#1e293b', borderRadius: '2px' }}>
+                    <div style={{
+                      height: '100%', borderRadius: '2px', width: `${value}%`,
+                      background: value >= 80 ? '#22c55e' : value >= 60 ? '#f59e0b' : '#ef4444',
+                      transition: 'width 0.8s ease',
+                    }} />
                   </div>
-                  <span style={{
-                    padding: '2px 6px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600,
-                    background: result.risk_level === 'high' ? 'rgba(239,68,68,0.1)' : result.risk_level === 'medium' ? 'rgba(245,158,11,0.1)' : 'rgba(34,197,94,0.1)',
-                    color: result.risk_level === 'high' ? '#ef4444' : result.risk_level === 'medium' ? '#f59e0b' : '#22c55e',
-                  }}>{result.risk_level}</span>
                 </div>
               ))}
             </div>
+          )}
+
+          <div style={{ display: 'grid', gridTemplateColumns: selectedRun ? '1fr 1fr' : '1fr', gap: '20px' }}>
+            <div style={{ background: 'rgba(30,41,59,0.4)', borderRadius: '16px', border: '1px solid #1e293b', overflow: 'hidden' }}>
+              <div style={{ padding: '16px 20px', borderBottom: '1px solid #1e293b' }}>
+                <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: '#e2e8f0' }}>
+                  Evaluation Runs ({total})
+                </h2>
+              </div>
+              {loading ? (
+                <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>Loading...</div>
+              ) : runs.length === 0 ? (
+                <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+                  No evaluation runs yet. Click "Run Evaluation" to start.
+                </div>
+              ) : runs.map((run) => (
+                <div
+                  key={run.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => viewResults(run)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); viewResults(run); } }}
+                  style={{
+                    padding: '14px 20px', borderBottom: '1px solid #0f172a', cursor: 'pointer',
+                    background: selectedRun?.id === run.id ? 'rgba(99,102,241,0.1)' : 'transparent',
+                    transition: 'background 0.15s',
+                    display: 'grid', gridTemplateColumns: '1fr auto', gap: '12px', alignItems: 'center',
+                  }}
+                >
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                      <span style={{
+                        padding: '2px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600,
+                        background: `${STATUS_COLORS[run.status]}22`, color: STATUS_COLORS[run.status],
+                      }}>{run.status}</span>
+                      <span style={{ color: '#64748b', fontSize: '0.75rem' }}>{run.run_type}</span>
+                    </div>
+                    <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>
+                      {new Date(run.created_at).toLocaleString()}
+                      {run.agent && ` • ${run.agent.name}`}
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    {run.governance_score !== null && (
+                      <div style={{
+                        fontSize: '1.2rem', fontWeight: 700,
+                        color: run.governance_score >= 80 ? '#22c55e' : run.governance_score >= 60 ? '#f59e0b' : '#ef4444',
+                      }}>{run.governance_score?.toFixed(1)}%</div>
+                    )}
+                    <div style={{ color: '#64748b', fontSize: '0.7rem' }}>
+                      {run.passed_tests}/{run.total_tests} passed
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {selectedRun && (
+              <div style={{ background: 'rgba(30,41,59,0.4)', borderRadius: '16px', border: '1px solid #1e293b', overflow: 'hidden' }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: '#e2e8f0' }}>Test Results</h2>
+                  <button onClick={() => { setSelectedRun(null); setRunResults([]); }}
+                    style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
+                </div>
+                <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
+                  {loadingResults ? (
+                    <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>Loading results...</div>
+                  ) : runResults.map((result) => (
+                    <div key={result.id} style={{
+                      padding: '12px 20px', borderBottom: '1px solid #0f172a',
+                      display: 'grid', gridTemplateColumns: '24px 1fr auto', gap: '10px', alignItems: 'center',
+                    }}>
+                      <span style={{ fontSize: '1rem' }}>{result.passed ? '✅' : '❌'}</span>
+                      <div>
+                        <div style={{ color: '#e2e8f0', fontSize: '0.8rem', fontWeight: 500 }}>{result.test_type}</div>
+                        <div style={{ color: '#64748b', fontSize: '0.7rem', marginTop: '2px' }}>
+                          {result.input.slice(0, 70)}...
+                        </div>
+                      </div>
+                      <span style={{
+                        padding: '2px 6px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600,
+                        background: result.risk_level === 'high' ? 'rgba(239,68,68,0.1)' : result.risk_level === 'medium' ? 'rgba(245,158,11,0.1)' : 'rgba(34,197,94,0.1)',
+                        color: result.risk_level === 'high' ? '#ef4444' : result.risk_level === 'medium' ? '#f59e0b' : '#22c55e',
+                      }}>{result.risk_level}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </>
+      ) : (
+        /* Bias Dashboard tab content */
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          
+          {/* Preset list grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
+            {BIAS_PRESETS.map(preset => (
+              <div 
+                key={preset.key}
+                style={{
+                  background: 'rgba(30,41,59,0.4)', border: '1px solid #1e293b', borderRadius: '16px',
+                  padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', transition: 'transform 0.2s',
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '12px' }}>
+                    {preset.tags.map(t => (
+                      <span key={t} style={{
+                        fontSize: '9px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px',
+                        background: 'rgba(139,92,246,0.1)', color: '#a78bfa', border: '1px solid rgba(139,92,246,0.2)',
+                        textTransform: 'uppercase', letterSpacing: '0.05em'
+                      }}>
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+
+                  <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', margin: '0 0 8px 0' }}>{preset.name}</h3>
+                  <p style={{ fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5, margin: '0 0 20px 0' }}>{preset.description}</p>
+                </div>
+
+                <button
+                  onClick={() => runBiasAudit(preset.key)}
+                  disabled={runningBiasPreset !== null}
+                  style={{
+                    width: '100%', padding: '10px 16px', borderRadius: '10px', border: 'none',
+                    background: runningBiasPreset === preset.key ? '#334155' : 'linear-gradient(135deg, #8b5cf6, #ec4899)',
+                    color: '#fff', fontWeight: 700, cursor: runningBiasPreset !== null ? 'not-allowed' : 'pointer',
+                    fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                    boxShadow: '0 4px 6px rgba(139,92,246,0.2)', transition: 'all 0.2s'
+                  }}
+                >
+                  {runningBiasPreset === preset.key ? (
+                    <>
+                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                      Auditing Preset...
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-3.5 w-3.5" />
+                      Run Bias Audit
+                    </>
+                  )}
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Results Panel */}
+          {biasAuditResult && (
+            <div style={{ background: 'rgba(30,41,59,0.3)', border: '1px solid #1e293b', borderRadius: '16px', overflow: 'hidden' }}>
+              <div style={{ padding: '20px 24px', borderBottom: '1px solid #1e293b', background: 'rgba(30,41,59,0.5)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#fff' }}>
+                    Audit Results: {biasAuditResult.name}
+                  </h3>
+                  <p style={{ color: '#94a3b8', fontSize: '0.8rem', margin: '4px 0 0 0' }}>
+                    Preset audited successfully through high-performance makeDecision sandbox engine.
+                  </p>
+                </div>
+                
+                <div style={{ display: 'flex', gap: '16px' }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#22c55e' }}>{biasAuditResult.summary.passed}/{biasAuditResult.summary.total}</div>
+                    <div style={{ color: '#64748b', fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: 750 }}>Passed Scenarios</div>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: biasAuditResult.summary.overallBiasRiskScore > 40 ? '#ef4444' : biasAuditResult.summary.overallBiasRiskScore > 10 ? '#f59e0b' : '#22c55e' }}>
+                      {biasAuditResult.summary.overallBiasRiskScore}%
+                    </div>
+                    <div style={{ color: '#64748b', fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: 750 }}>Bias Deviation Rate</div>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.75rem' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid #1e293b', color: '#64748b', background: 'rgba(15,15,26,0.3)', fontWeight: 700 }}>
+                      <th style={{ padding: '16px' }}>Scenario Input</th>
+                      <th style={{ padding: '16px' }}>Bias Dimension</th>
+                      <th style={{ padding: '16px' }}>Expected Action</th>
+                      <th style={{ padding: '16px' }}>Decision Status</th>
+                      <th style={{ padding: '16px' }}>Auditor Explanation</th>
+                      <th style={{ padding: '16px', textAlign: 'right' }}>Result</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {biasAuditResult.results.map((res) => (
+                      <tr key={res.id} style={{ borderBottom: '1px solid #1e293b', background: 'rgba(30,41,59,0.1)', transition: 'background 0.15s' }}>
+                        <td style={{ padding: '16px', color: '#fff', fontWeight: 550, maxWidth: '240px', lineHeight: 1.5 }}>
+                          {res.input}
+                          <div style={{ display: 'flex', gap: '4px', marginTop: '6px' }}>
+                            {res.tags.map(t => (
+                              <span key={t} style={{ fontSize: '8px', color: '#64748b', background: '#1e293b', padding: '1px 6px', borderRadius: '4px' }}>
+                                #{t}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td style={{ padding: '16px' }}>
+                          <span style={{
+                            padding: '2px 8px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 700,
+                            background: 'rgba(236,72,153,0.1)', color: '#f472b6', border: '1px solid rgba(236,72,153,0.2)'
+                          }}>
+                            {res.bias_dimension}
+                          </span>
+                        </td>
+                        <td style={{ padding: '16px', color: '#94a3b8', fontFamily: 'monospace' }}>
+                          {res.expected}
+                        </td>
+                        <td style={{ padding: '16px' }}>
+                          <span style={{
+                            padding: '2px 8px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 700,
+                            background: res.actual === 'BLOCKED' ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)',
+                            color: res.actual === 'BLOCKED' ? '#ef4444' : '#22c55e'
+                          }}>
+                            {res.actual}
+                          </span>
+                        </td>
+                        <td style={{ padding: '16px', color: '#94a3b8', maxWidth: '300px', lineHeight: 1.4 }}>
+                          {res.explanation}
+                          {res.flags.length > 0 && (
+                            <div style={{ display: 'flex', gap: '4px', marginTop: '6px', flexWrap: 'wrap' }}>
+                              {res.flags.map((f: string) => (
+                                <span key={f} style={{ fontSize: '7px', fontWeight: 800, padding: '1px 5px', borderRadius: '3px', background: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)' }}>
+                                  {f}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </td>
+                        <td style={{ padding: '16px', textAlign: 'right' }}>
+                          <span style={{
+                            padding: '4px 10px', borderRadius: '8px', fontSize: '0.7rem', fontWeight: 800,
+                            background: res.passed ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
+                            color: res.passed ? '#22c55e' : '#ef4444',
+                            border: res.passed ? '1px solid rgba(34,197,94,0.2)' : '1px solid rgba(239,68,68,0.2)'
+                          }}>
+                            {res.passed ? 'PASS' : 'FAIL'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+        </div>
+      )}
     </div>
   );
 };

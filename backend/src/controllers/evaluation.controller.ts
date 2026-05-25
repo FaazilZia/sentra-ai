@@ -62,3 +62,26 @@ export const scorePrompt = asyncHandler(async (req: any, res: Response) => {
   const result = EvaluationService.scorePromptSafety(prompt);
   return sendSuccess(res, result);
 });
+
+export const getBiasPresets = asyncHandler(async (req: any, res: Response) => {
+  const presets = EvaluationService.getBiasPresets();
+  return sendSuccess(res, presets);
+});
+
+export const runBiasAudit = asyncHandler(async (req: any, res: Response) => {
+  const { preset, agentId } = req.body;
+  if (!preset) {
+    return sendError(res, 400, 'preset is required');
+  }
+  const organizationId = getOrgId(req);
+  try {
+    const result = await EvaluationService.runBiasAudit({
+      preset,
+      agentId,
+      organizationId,
+    });
+    return sendSuccess(res, result);
+  } catch (err: any) {
+    return sendError(res, 400, err.message);
+  }
+});

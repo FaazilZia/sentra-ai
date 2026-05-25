@@ -282,6 +282,23 @@ export const EU_AI_ACT_SEED_DATA = [
         checklist_items: ["Define serious incident classification criteria", "Document reporting procedures to national authorities", "Maintain incident log with severity classifications", "Test incident reporting pathway"]
       }
     ]
+  },
+  {
+    article_number: "Art. 27",
+    title: "Fundamental Rights Impact Assessment",
+    chapter: "Chapter III - High-Risk AI Systems",
+    risk_tier: "HIGH_RISK",
+    obligation_type: "DEPLOYER",
+    description: "Deployers of high-risk AI systems must conduct a fundamental rights impact assessment (FRIA) before deploying the system.",
+    controls: [
+      {
+        control_code: "EU-AIA-27-1",
+        title: "FRIA Completed",
+        description: "Deployers must conduct a fundamental rights impact assessment covering the intended use, scope, affected groups, and specific risks.",
+        evidence_required: ["Completed FRIA assessment report", "Ethics review board approval"],
+        checklist_items: ["Verify that a FRIA is initiated for high-risk systems", "Ensure all 15 compliance questions are fully answered", "Submit assessment to compliance registry"]
+      }
+    ]
   }
 ];
 

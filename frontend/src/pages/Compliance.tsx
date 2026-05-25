@@ -34,14 +34,15 @@ import {
   updateNistAiRmfImplementation,
   fetchNistAiRmfCrossFrameworkImpact,
   fetchNistAiRmfHealth,
-  exportNistAiRmfSignedConformity
+  exportNistAiRmfSignedConformity,
+  apiRequest
 } from '@/lib/api';
 
 export default function Compliance() {
   const { addToast } = useStore();
   
   // Tab control
-  const [activeTab, setActiveTab] = useState<'eu-ai-act' | 'nist-ai-rmf'>('eu-ai-act');
+  const [activeTab, setActiveTab] = useState<'eu-ai-act' | 'nist-ai-rmf' | 'iso-42001' | 'iso-27001'>('eu-ai-act');
   const [isShareOpen, setIsShareOpen] = useState(false);
 
   // ==========================================
@@ -51,7 +52,7 @@ export default function Compliance() {
   const [selectedControl, setSelectedControl] = useState<any | null>(null);
   const [openArticle, setOpenArticle] = useState<string | null>(null);
   
-  // EU AI Act Slide-out panel form states
+  // Common Slide-out panel form states
   const [editStatus, setEditStatus] = useState<string>('NOT_STARTED');
   const [editNotes, setEditNotes] = useState<string>('');
   const [editOwner, setEditOwner] = useState<string>('');
@@ -82,6 +83,22 @@ export default function Compliance() {
   const [isSavingNist, setIsSavingNist] = useState(false);
   const [isExportingConformity, setIsExportingConformity] = useState(false);
 
+  // ==========================================
+  // ISO 42001 STATES & FETCHERS
+  // ==========================================
+  const [iso42001Overview, setIso42001Overview] = useState<any | null>(null);
+  const [iso42001Loading, setIso42001Loading] = useState(true);
+  const [iso42001Error, setIso42001Error] = useState<string | null>(null);
+  const [isSavingIso42001, setIsSavingIso42001] = useState(false);
+
+  // ==========================================
+  // ISO 27001 STATES & FETCHERS
+  // ==========================================
+  const [iso27001Overview, setIso27001Overview] = useState<any | null>(null);
+  const [iso27001Loading, setIso27001Loading] = useState(true);
+  const [iso27001Error, setIso27001Error] = useState<string | null>(null);
+  const [isSavingIso27001, setIsSavingIso27001] = useState(false);
+
   // Load NIST AI RMF Core Dashboard Data
   const loadNistData = useCallback(async (showSilence = false) => {
     if (!showSilence) setNistIsLoading(true);
@@ -106,15 +123,45 @@ export default function Compliance() {
     }
   }, []);
 
+  // Load ISO 42001 Data
+  const loadIso42001Data = useCallback(async (silent = false) => {
+    if (!silent) setIso42001Loading(true);
+    try {
+      const res = await apiRequest<any>('/iso42001/overview');
+      setIso42001Overview(res);
+      setIso42001Error(null);
+    } catch (err: any) {
+      setIso42001Error(err.message || 'Failed to load ISO 42001 details');
+    } finally {
+      setIso42001Loading(false);
+    }
+  }, []);
 
+  // Load ISO 27001 Data
+  const loadIso27001Data = useCallback(async (silent = false) => {
+    if (!silent) setIso27001Loading(true);
+    try {
+      const res = await apiRequest<any>('/iso27001/overview');
+      setIso27001Overview(res);
+      setIso27001Error(null);
+    } catch (err: any) {
+      setIso27001Error(err.message || 'Failed to load ISO 27001 details');
+    } finally {
+      setIso27001Loading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (activeTab === 'nist-ai-rmf') {
       loadNistData();
+    } else if (activeTab === 'iso-42001') {
+      loadIso42001Data();
+    } else if (activeTab === 'iso-27001') {
+      loadIso27001Data();
     }
-  }, [activeTab, loadNistData]);
+  }, [activeTab, loadNistData, loadIso42001Data, loadIso27001Data]);
 
-  // Sync EU AI Act drawer fields
+  // Sync EU AI Act and ISO drawers fields
   useEffect(() => {
     if (selectedControl) {
       const impl = selectedControl.implementation;
@@ -130,7 +177,7 @@ export default function Compliance() {
     }
   }, [selectedControl]);
 
-  // Sync NIST drawer fields & load cross-framework impact panel mappings
+  // Sync NIST drawer fields
   useEffect(() => {
     if (selectedNistSub) {
       const impl = selectedNistSub.implementation;
@@ -139,7 +186,6 @@ export default function Compliance() {
       setEditNistEscalation(impl?.risk_escalation_level || 'NORMAL');
       setEditNistNotes(impl?.notes || '');
 
-      // Load cross-framework mappings concurrently
       setIsLoadingCrossImpact(true);
       fetchNistAiRmfCrossFrameworkImpact(selectedNistSub.subcategory_code)
         .then(res => {
@@ -156,7 +202,7 @@ export default function Compliance() {
   }, [selectedNistSub]);
 
   // ==========================================
-  // EU AI ACT HANDLERS
+  // SAVE HANDLERS
   // ==========================================
   const handleSaveControl = async () => {
     if (!selectedControl) return;
@@ -190,11 +236,6 @@ export default function Compliance() {
     }
   };
 
-
-
-  // ==========================================
-  // NIST AI RMF HANDLERS
-  // ==========================================
   const handleSaveNistControl = async () => {
     if (!selectedNistSub) return;
     setIsSavingNist(true);
@@ -207,14 +248,56 @@ export default function Compliance() {
       });
 
       addToast({ message: `Successfully updated NIST RMF ${selectedNistSub.subcategory_code}`, type: 'success' });
-      
-      // Close drawer & reload state silenly
       setSelectedNistSub(null);
       await loadNistData(true);
     } catch (err: any) {
       addToast({ message: err.message || 'Failed to save subcategory', type: 'error' });
     } finally {
       setIsSavingNist(false);
+    }
+  };
+
+  const handleSaveIso42001Control = async () => {
+    if (!selectedControl) return;
+    setIsSavingIso42001(true);
+    try {
+      await apiRequest(`/iso42001/controls/${selectedControl.control_code}/implementation`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          status: editStatus,
+          notes: editNotes,
+          due_date: editDueDate ? new Date(editDueDate).toISOString() : null
+        })
+      });
+      addToast({ message: `Successfully updated ISO 42001 control ${selectedControl.control_code}`, type: 'success' });
+      setSelectedControl(null);
+      await loadIso42001Data(true);
+    } catch (err: any) {
+      addToast({ message: err.message || 'Failed to update control', type: 'error' });
+    } finally {
+      setIsSavingIso42001(false);
+    }
+  };
+
+  const handleSaveIso27001Control = async () => {
+    if (!selectedControl) return;
+    setIsSavingIso27001(true);
+    try {
+      await apiRequest(`/iso27001/controls/${selectedControl.control_code}/implementation`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          status: editStatus,
+          notes: editNotes,
+          due_date: editDueDate ? new Date(editDueDate).toISOString() : null
+        })
+      });
+      addToast({ message: `Successfully updated ISO 27001 control ${selectedControl.control_code}`, type: 'success' });
+      setSelectedControl(null);
+      await loadIso27001Data(true);
+    } catch (err: any) {
+      addToast({ message: err.message || 'Failed to update control', type: 'error' });
+    } finally {
+      setIsSavingIso27001(false);
     }
   };
 
@@ -230,7 +313,6 @@ export default function Compliance() {
         addToast({ message: `Signature discrepancy found on ${res?.integrity_check?.corrupted_record_count} evidence records!`, type: 'warning' });
       }
 
-      // Download conformant package JSON file
       const blob = new Blob([JSON.stringify(res, null, 2)], { type: 'application/json' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -313,8 +395,6 @@ export default function Compliance() {
   };
 
   const articles = overview?.articles || [];
-
-  // Parse Violation backlogs from stats
   const breakdown = stats?.breakdown || { GDPR: 0, HIPAA: 0, DPDP: 0 };
   const violationData = [
     { name: 'GDPR', value: breakdown.GDPR, color: '#EF4444' },
@@ -339,7 +419,7 @@ export default function Compliance() {
         <div className="flex items-center gap-3">
           <button 
             onClick={() => setIsShareOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[var(--bg-card)] border border-[var(--border-default)] rounded-lg text-[10px] font-black text-[var(--text-primary)] uppercase tracking-widest hover:bg-white/5 transition-all active:scale-95"
+            className="flex items-center gap-2 px-4 py-2.5 bg-[var(--bg-card)] border border-[var(--border-default)] rounded-lg text-[10px] font-black text-[var(--text-primary)] uppercase tracking-widest hover:bg-white/5 transition-all active:scale-95 shadow-lg"
           >
             <Share className="h-4 w-4 text-indigo-400" />
             Share Portal
@@ -348,28 +428,50 @@ export default function Compliance() {
       </div>
 
       {/* Modern Premium Tabs Switcher */}
-      <div className="flex border-b border-[var(--border-default)] bg-[var(--bg-card)]/50 p-1.5 rounded-xl gap-2 w-fit">
+      <div className="flex flex-wrap border-b border-[var(--border-default)] bg-[var(--bg-card)]/50 p-1.5 rounded-xl gap-2 w-fit">
         <button
           onClick={() => setActiveTab('eu-ai-act')}
           className={cn(
-            "px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all active:scale-95 flex items-center gap-2",
+            "px-5 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all active:scale-95 flex items-center gap-2",
             activeTab === 'eu-ai-act' 
               ? "bg-indigo-600 text-white shadow-md shadow-indigo-950/20" 
               : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
           )}
         >
-          🇪🇺 EU AI Act Obligations
+          🇪🇺 EU AI Act
         </button>
         <button
           onClick={() => setActiveTab('nist-ai-rmf')}
           className={cn(
-            "px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all active:scale-95 flex items-center gap-2",
+            "px-5 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all active:scale-95 flex items-center gap-2",
             activeTab === 'nist-ai-rmf' 
               ? "bg-indigo-600 text-white shadow-md shadow-indigo-950/20" 
               : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
           )}
         >
-          🇺🇸 NIST AI RMF 1.0 Dashboard
+          🇺🇸 NIST AI RMF
+        </button>
+        <button
+          onClick={() => setActiveTab('iso-42001')}
+          className={cn(
+            "px-5 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all active:scale-95 flex items-center gap-2",
+            activeTab === 'iso-42001' 
+              ? "bg-indigo-600 text-white shadow-md shadow-indigo-950/20" 
+              : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
+          )}
+        >
+          🌐 ISO 42001
+        </button>
+        <button
+          onClick={() => setActiveTab('iso-27001')}
+          className={cn(
+            "px-5 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all active:scale-95 flex items-center gap-2",
+            activeTab === 'iso-27001' 
+              ? "bg-indigo-600 text-white shadow-md shadow-indigo-950/20" 
+              : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
+          )}
+        >
+          🔒 ISO 27001
         </button>
       </div>
 
@@ -407,9 +509,9 @@ export default function Compliance() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* EU AI Act Articles Accordion */}
+            {/* Accordion list */}
             <div className="lg:col-span-8 flex flex-col gap-4">
-              <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10">
+              <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10 backdrop-blur-md">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Active Standard</span>
@@ -444,7 +546,6 @@ export default function Compliance() {
                         isOpen ? "border-indigo-500/30 shadow-indigo-950/10 shadow-md bg-zinc-900/40" : "border-[var(--border-default)] hover:border-zinc-700 bg-zinc-950/20"
                       )}
                     >
-                      {/* Accordion Trigger */}
                       <button
                         onClick={() => setOpenArticle(isOpen ? null : art.article_number)}
                         className="w-full flex items-center justify-between p-5 text-left outline-none"
@@ -482,9 +583,8 @@ export default function Compliance() {
                         </div>
                       </button>
 
-                      {/* Accordion Content */}
                       {isOpen && (
-                        <div className="border-t border-[var(--border-default)] bg-black/10 divide-y divide-zinc-900">
+                        <div className="border-t border-[var(--border-default)] bg-black/10 divide-y divide-zinc-900 animate-slide-in">
                           {art.controls.map((c) => {
                             const status = c.implementation?.status || 'NOT_STARTED';
                             const evidenceCount = c.implementation?.evidence_links?.length || 0;
@@ -536,11 +636,10 @@ export default function Compliance() {
               </div>
             </div>
 
-            {/* Backlog distribution & Incident Logs */}
             <div className="lg:col-span-4 flex flex-col gap-6">
-              {/* Pie Chart Backlog */}
-              <div className="card-base p-6">
-                <h3 className="text-[var(--text-md)] font-black text-[var(--text-primary)] mb-4 uppercase tracking-tight">Active Backlog</h3>
+              {/* Backlog Distribution */}
+              <div className="card-base p-6 backdrop-blur-md">
+                <h3 className="text-sm font-black text-white uppercase tracking-tight mb-4">Active Backlog</h3>
                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-6">Cross-Framework Violations</p>
                 
                 {violationData.length > 0 ? (
@@ -587,15 +686,15 @@ export default function Compliance() {
                   </>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-10 text-center opacity-40">
-                    <CheckCircle2 className="h-10 w-10 text-emerald-400 mb-2" />
+                    <CheckCircle2 className="h-10 w-10 text-emerald-400 mb-2 animate-bounce" />
                     <p className="text-[10px] font-black text-white uppercase tracking-widest">Backlog Clean</p>
                     <p className="text-[9px] text-gray-400 mt-1">No active compliance violations recorded.</p>
                   </div>
                 )}
               </div>
 
-              {/* Quick Stats overview */}
-              <div className="card-base p-6 bg-gradient-to-br from-zinc-950 to-indigo-950/10">
+              {/* Integrations Scope */}
+              <div className="card-base p-6 bg-gradient-to-br from-zinc-950 to-indigo-950/10 backdrop-blur-md">
                 <h3 className="text-sm font-black text-white uppercase tracking-tight mb-4">Integrations Scope</h3>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
@@ -619,8 +718,8 @@ export default function Compliance() {
                 </div>
               </div>
 
-              {/* PII Compliance Scan Card */}
-              <div className="card-base p-6 border border-red-500/20 bg-gradient-to-br from-zinc-950 to-red-950/10">
+              {/* PII Compliance Scan */}
+              <div className="card-base p-6 border border-red-500/20 bg-gradient-to-br from-zinc-950 to-red-950/10 backdrop-blur-md">
                 <h3 className="text-sm font-black text-white uppercase tracking-tight mb-2">PII Compliance Scan</h3>
                 <p className="text-[9px] font-black text-red-400 uppercase tracking-widest mb-4">Realtime Interceptor Violations</p>
                 <div className="space-y-3">
@@ -648,13 +747,12 @@ export default function Compliance() {
       )}
 
       {/* =======================================================
-          TAB 2: NIST AI RMF 1.0 (PRODUCTION governance GRADE)
+          TAB 2: NIST AI RMF
           ======================================================= */}
       {activeTab === 'nist-ai-rmf' && (
         <>
           {nistIsSeeding ? (
-            /* Startup Seeding Progress Card overlay */
-            <div className="card-base p-10 flex flex-col items-center justify-center text-center gap-6 border-indigo-500/20 bg-gradient-to-br from-indigo-950/10 to-zinc-950">
+            <div className="card-base p-10 flex flex-col items-center justify-center text-center gap-6 border-indigo-500/20 bg-gradient-to-br from-indigo-950/10 to-zinc-950 backdrop-blur-md">
               <RefreshCw className="h-12 w-12 text-indigo-400 animate-spin" />
               <div>
                 <h3 className="text-lg font-black text-white uppercase tracking-wider">Framework Data Seeding in Progress</h3>
@@ -667,7 +765,7 @@ export default function Compliance() {
               </div>
               <button 
                 onClick={() => loadNistData()}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-xs font-bold text-white uppercase rounded-lg tracking-widest active:scale-95 transition"
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-xs font-bold text-white uppercase rounded-lg tracking-widest active:scale-95 transition shadow-lg"
               >
                 Check Seeder Status
               </button>
@@ -678,13 +776,13 @@ export default function Compliance() {
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Compiling NIST Governance telemetry data...</p>
             </div>
           ) : nistError ? (
-            <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 p-6 border border-zinc-900 rounded-xl bg-zinc-950/10">
+            <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 p-6 border border-zinc-900 rounded-xl bg-zinc-950/10 backdrop-blur-md">
               <ShieldAlert className="h-10 w-10 text-rose-500 animate-pulse" />
               <h3 className="text-sm font-black text-white uppercase tracking-wider">NIST Scoring Engine Disconnected</h3>
               <p className="text-xs text-gray-400">{nistError}</p>
               <button 
                 onClick={() => loadNistData()}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-xs font-bold text-white uppercase rounded-lg tracking-widest transition"
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-xs font-bold text-white uppercase rounded-lg tracking-widest transition shadow-lg"
               >
                 Reconnect scoring
               </button>
@@ -719,12 +817,12 @@ export default function Compliance() {
                 />
               </div>
 
-              {/* NIST Posture Gauge, health, incidents grid */}
+              {/* Grid content */}
               <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
                 
-                {/* Score Gauge & Explainability Change Log */}
+                {/* Score explainability change ledger */}
                 <div className="xl:col-span-5 flex flex-col gap-6">
-                  <div className="card-base p-6 flex flex-col gap-5 bg-gradient-to-b from-zinc-950 to-indigo-950/5">
+                  <div className="card-base p-6 flex flex-col gap-5 bg-gradient-to-b from-zinc-950 to-indigo-950/5 backdrop-blur-md">
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="text-sm font-black text-white uppercase tracking-tight">Governance Posture</h3>
@@ -734,14 +832,13 @@ export default function Compliance() {
                       <button 
                         onClick={handleExportConformity}
                         disabled={isExportingConformity}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600/10 border border-indigo-500/20 hover:border-indigo-500/50 rounded-lg text-[9px] font-black text-indigo-400 hover:text-white uppercase transition active:scale-95 disabled:opacity-50"
+                        className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600/10 border border-indigo-500/20 hover:border-indigo-500/50 rounded-lg text-[9px] font-black text-indigo-400 hover:text-white uppercase transition active:scale-95 disabled:opacity-50 shadow-md"
                       >
                         <Download className="h-3 w-3" />
                         {isExportingConformity ? 'Signing...' : 'Conformity Package'}
                       </button>
                     </div>
 
-                    {/* Circular Posture Ring Gauge */}
                     <div className="flex flex-col items-center justify-center py-6 border border-zinc-900 rounded-xl bg-black/15">
                       <div className="relative h-32 w-32 flex items-center justify-center">
                         <svg className="absolute inset-0 h-full w-full transform -rotate-90">
@@ -775,13 +872,12 @@ export default function Compliance() {
                       )}
                     </div>
 
-                    {/* Explainability Change logs */}
                     <div>
                       <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-3">Score Explainability Ledger</h4>
                       <div className="space-y-2">
                         {(nistOverview?.reasons || []).length > 0 ? (
                           (nistOverview?.reasons || []).map((reason: any, idx: number) => (
-                            <div key={idx} className="p-3 text-xs bg-zinc-900/40 border border-zinc-900 rounded-xl flex items-start gap-3">
+                            <div key={idx} className="p-3 text-xs bg-zinc-900/40 border border-zinc-900 rounded-xl flex items-start gap-3 hover:border-zinc-800 transition">
                               <span className="mt-0.5 flex-shrink-0">{getNistReasonIcon(reason.type)}</span>
                               <div className="min-w-0 flex-1">
                                 <p className="text-white font-bold leading-tight uppercase text-[10px]">
@@ -801,11 +897,11 @@ export default function Compliance() {
                   </div>
                 </div>
 
-                {/* Workers Health & Incidents */}
+                {/* Self-monitoring diagnostics & incident logs */}
                 <div className="xl:col-span-7 flex flex-col gap-6">
                   
-                  {/* Workers Uptime heartbeats */}
-                  <div className="card-base p-6 flex flex-col gap-4">
+                  {/* self-monitoring diagnostics */}
+                  <div className="card-base p-6 flex flex-col gap-4 backdrop-blur-md">
                     <div>
                       <h3 className="text-sm font-black text-white uppercase tracking-tight">Self-Monitoring Diagnostics</h3>
                       <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Worker Health & Reliability</p>
@@ -860,8 +956,8 @@ export default function Compliance() {
                     </div>
                   </div>
 
-                  {/* Incidents (Governance SOC Hub) */}
-                  <div className="card-base p-6 flex flex-col gap-4">
+                  {/* Incidents */}
+                  <div className="card-base p-6 flex flex-col gap-4 backdrop-blur-md">
                     <div>
                       <h3 className="text-sm font-black text-white uppercase tracking-tight">Governance SOC Incidents Hub</h3>
                       <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Active Violations & SLAs</p>
@@ -870,11 +966,11 @@ export default function Compliance() {
                     <div className="space-y-3 max-h-[220px] overflow-y-auto custom-scrollbar">
                       {nistOverview?.incidents?.length > 0 ? (
                         nistOverview.incidents.map((inc: any) => (
-                          <div key={inc.id} className="p-3 bg-zinc-950/40 border border-zinc-900 hover:border-zinc-800 rounded-xl flex items-center justify-between gap-4 transition">
+                          <div key={inc.id} className="p-3 bg-zinc-950/40 border border-zinc-900 hover:border-zinc-800 rounded-xl flex items-center justify-between gap-4 transition shadow-sm">
                             <div className="flex items-start gap-3 min-w-0 flex-1">
                               <span className={cn(
                                 "h-2 w-2 rounded-full mt-1.5 flex-shrink-0",
-                                inc.severity === 'CRITICAL' || inc.severity === 'HIGH' ? "bg-rose-500" : "bg-amber-500"
+                                inc.severity === 'CRITICAL' || inc.severity === 'HIGH' ? "bg-rose-500 shadow" : "bg-amber-500"
                               )} />
                               <div className="min-w-0 flex-1">
                                 <h4 className="text-xs font-bold text-white truncate uppercase tracking-tight">{inc.title}</h4>
@@ -915,9 +1011,9 @@ export default function Compliance() {
                 </div>
               </div>
 
-              {/* NIST AI RMF Maturity Matrix Accordion */}
+              {/* NIST AI RMF Maturity Accordion */}
               <div className="flex flex-col gap-4">
-                <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10">
+                <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10 backdrop-blur-md">
                   <div className="flex items-center justify-between mb-2">
                     <div>
                       <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Operational Maturity Matrix</span>
@@ -950,7 +1046,6 @@ export default function Compliance() {
                           </span>
                         </div>
 
-                        {/* Expandable Categories list */}
                         <div className="space-y-4">
                           {fn.categories.map((cat: any) => (
                             <div key={cat.category_code} className="bg-black/15 rounded-xl border border-zinc-900 p-4 space-y-3">
@@ -962,10 +1057,9 @@ export default function Compliance() {
                                 <p className="text-[10px] text-zinc-500 leading-relaxed mt-0.5">{cat.description}</p>
                               </div>
 
-                              {/* Subcategories list */}
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-zinc-900/50">
                                 {cat.subcategories.map((sub: any) => (
-                                  <div key={sub.code} className="bg-zinc-900/30 border border-zinc-900 hover:border-zinc-800 p-3 rounded-lg flex items-center justify-between gap-4 group">
+                                  <div key={sub.code} className="bg-zinc-900/30 border border-zinc-900 hover:border-zinc-800 p-3 rounded-lg flex items-center justify-between gap-4 group transition shadow-sm">
                                     <div className="min-w-0 flex-1">
                                       <div className="flex items-center gap-2 mb-0.5">
                                         <span className="text-[9px] font-black text-indigo-400">{sub.code}</span>
@@ -973,7 +1067,6 @@ export default function Compliance() {
                                       </div>
                                       
                                       <div className="flex items-center gap-2 mt-1">
-                                        {/* Progress fill visual bar */}
                                         <div className="h-1 w-12 bg-zinc-800 rounded-full overflow-hidden">
                                           <div 
                                             className={cn(
@@ -986,7 +1079,7 @@ export default function Compliance() {
                                           Mat: {sub.maturityLevel}/5
                                         </span>
                                         {sub.telemetryLinked > 0 && (
-                                          <span className="text-[8px] font-black uppercase text-indigo-400 bg-indigo-950/20 px-1 rounded flex items-center gap-0.5">
+                                          <span className="text-[8px] font-black uppercase text-indigo-400 bg-indigo-950/20 px-1 rounded flex items-center gap-0.5 animate-pulse">
                                             <Activity className="h-2 w-2" />
                                             {sub.telemetryLinked}
                                           </span>
@@ -996,7 +1089,6 @@ export default function Compliance() {
 
                                     <button
                                       onClick={() => {
-                                        // Package subcategory data for update drawer
                                         setSelectedNistSub({
                                           subcategory_code: sub.code,
                                           title: sub.title,
@@ -1037,9 +1129,312 @@ export default function Compliance() {
       )}
 
       {/* =======================================================
-          SLIDE-OUT DRAWER 1: EU AI ACT UPDATE
+          TAB 3: ISO 42001 (AI MANAGEMENT SYSTEM)
           ======================================================= */}
-      {selectedControl && activeTab === 'eu-ai-act' && (
+      {activeTab === 'iso-42001' && (
+        <>
+          {iso42001Loading ? (
+            <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Loading ISO 42001 Compliance Matrix...</p>
+            </div>
+          ) : iso42001Error ? (
+            <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 p-6 border border-zinc-900 rounded-xl bg-zinc-950/10 backdrop-blur-md">
+              <ShieldAlert className="h-10 w-10 text-rose-500 animate-pulse" />
+              <h3 className="text-sm font-black text-white uppercase tracking-wider">ISO 42001 Scoring Error</h3>
+              <p className="text-xs text-gray-400">{iso42001Error}</p>
+            </div>
+          ) : (
+            <>
+              {/* KPI Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                <KPICard 
+                  label="ISO 42001 Score" 
+                  value={`${iso42001Overview?.summary?.compliance_score}%`} 
+                  icon="compliance" 
+                  status={iso42001Overview?.summary?.compliance_score >= 80 ? 'success' : iso42001Overview?.summary?.compliance_score >= 50 ? 'warning' : 'danger'} 
+                />
+                <KPICard 
+                  label="Implemented Controls" 
+                  value={iso42001Overview?.summary?.implemented || 0} 
+                  icon="systems" 
+                  status="success" 
+                />
+                <KPICard 
+                  label="In Progress Items" 
+                  value={iso42001Overview?.summary?.in_progress || 0} 
+                  icon="compliance" 
+                  status="warning" 
+                />
+                <KPICard 
+                  label="Not Started Controls" 
+                  value={iso42001Overview?.summary?.not_started || 0} 
+                  icon="risks" 
+                  status="primary" 
+                />
+              </div>
+
+              {/* Clause Trees */}
+              <div className="flex flex-col gap-4">
+                <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10 backdrop-blur-md">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Active Standard</span>
+                      <h2 className="text-lg font-black text-white uppercase tracking-tight">ISO/IEC 42001:2023 Artificial Intelligence Management</h2>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-400 leading-relaxed">
+                    Verify compliance with international standards for establishing, implementing, maintaining, and continually improving an Artificial Intelligence Management System (AIMS). Manage organizational controls and evidence logs.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  {(iso42001Overview?.clauses || []).map((cls: any) => {
+                    const isClauseOpen = openArticle === cls.clause_code;
+                    const completedInClause = cls.controls.filter((c: any) => c.implementation?.status === 'IMPLEMENTED').length;
+                    const totalInClause = cls.controls.length;
+
+                    return (
+                      <div 
+                        key={cls.clause_code} 
+                        className={cn(
+                          "card-base overflow-hidden border transition-all duration-300",
+                          isClauseOpen ? "border-indigo-500/30 shadow-indigo-950/10 bg-zinc-900/40" : "border-[var(--border-default)] hover:border-zinc-700 bg-zinc-950/20"
+                        )}
+                      >
+                        <button
+                          onClick={() => setOpenArticle(isClauseOpen ? null : cls.clause_code)}
+                          className="w-full flex items-center justify-between p-5 text-left outline-none"
+                        >
+                          <div className="flex items-start gap-4 flex-1">
+                            <div className="h-8 w-8 rounded-lg flex items-center justify-center border border-indigo-500/20 bg-indigo-500/10 font-bold text-xs uppercase text-indigo-400 tracking-tight">
+                              {cls.clause_code.replace('Clause ', '').replace('Annex ', 'A')}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <h4 className="text-[12px] font-black text-white uppercase tracking-tight">{cls.title}</h4>
+                                <span className="text-[8px] font-bold tracking-widest px-1.5 py-0.5 rounded border uppercase bg-indigo-950/20 text-indigo-400 border-indigo-500/10">
+                                  {cls.clause_type}
+                                </span>
+                              </div>
+                              <p className="text-[10px] text-gray-400 font-medium leading-relaxed max-w-xl">{cls.description}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-4">
+                            <span className="text-[10px] font-black text-gray-400 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded uppercase tracking-tighter">
+                              {completedInClause} / {totalInClause} Done
+                            </span>
+                            {isClauseOpen ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
+                          </div>
+                        </button>
+
+                        {isClauseOpen && (
+                          <div className="border-t border-[var(--border-default)] bg-black/10 divide-y divide-zinc-900 animate-slide-in">
+                            {cls.controls.map((c: any) => {
+                              const status = c.implementation?.status || 'NOT_STARTED';
+
+                              return (
+                                <div 
+                                  key={c.control_code}
+                                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-3 hover:bg-white/5 transition animate-fade-in"
+                                >
+                                  <div className="flex-1 text-left min-w-0 pr-4">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="text-[10px] font-black text-indigo-400 tracking-tight">{c.control_code}</span>
+                                      <h5 className="text-[12px] font-bold text-white uppercase tracking-tight truncate">{c.title}</h5>
+                                    </div>
+                                    <p className="text-xs text-gray-400 leading-relaxed">{c.description}</p>
+                                  </div>
+                                  
+                                  <div className="flex items-center gap-3 self-end sm:self-auto">
+                                    <span className={cn(
+                                      "text-[9px] font-black px-2 py-0.5 rounded border uppercase tracking-tight",
+                                      getStatusColor(status)
+                                    )}>
+                                      {status.replace('_', ' ')}
+                                    </span>
+
+                                    <button
+                                      onClick={() => setSelectedControl({
+                                        ...c,
+                                        framework: 'iso-42001'
+                                      })}
+                                      className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-indigo-500/30 rounded text-[9px] font-black text-white uppercase hover:bg-zinc-800 transition active:scale-95"
+                                    >
+                                      <Edit2 className="h-2.5 w-2.5 text-indigo-400" />
+                                      Update
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          )}
+        </>
+      )}
+
+      {/* =======================================================
+          TAB 4: ISO 27001 (INFORMATION SECURITY)
+          ======================================================= */}
+      {activeTab === 'iso-27001' && (
+        <>
+          {iso27001Loading ? (
+            <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Loading ISO 27001 Compliance Matrix...</p>
+            </div>
+          ) : iso27001Error ? (
+            <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 p-6 border border-zinc-900 rounded-xl bg-zinc-950/10 backdrop-blur-md">
+              <ShieldAlert className="h-10 w-10 text-rose-500 animate-pulse" />
+              <h3 className="text-sm font-black text-white uppercase tracking-wider">ISO 27001 Scoring Error</h3>
+              <p className="text-xs text-gray-400">{iso27001Error}</p>
+            </div>
+          ) : (
+            <>
+              {/* KPI Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                <KPICard 
+                  label="ISO 27001 Score" 
+                  value={`${iso27001Overview?.summary?.compliance_score}%`} 
+                  icon="compliance" 
+                  status={iso27001Overview?.summary?.compliance_score >= 80 ? 'success' : iso27001Overview?.summary?.compliance_score >= 50 ? 'warning' : 'danger'} 
+                />
+                <KPICard 
+                  label="Implemented Controls" 
+                  value={iso27001Overview?.summary?.implemented || 0} 
+                  icon="systems" 
+                  status="success" 
+                />
+                <KPICard 
+                  label="In Progress Items" 
+                  value={iso27001Overview?.summary?.in_progress || 0} 
+                  icon="compliance" 
+                  status="warning" 
+                />
+                <KPICard 
+                  label="Not Started Controls" 
+                  value={iso27001Overview?.summary?.not_started || 0} 
+                  icon="risks" 
+                  status="primary" 
+                />
+              </div>
+
+              {/* Clause Trees */}
+              <div className="flex flex-col gap-4">
+                <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10 backdrop-blur-md">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Active Standard</span>
+                      <h2 className="text-lg font-black text-white uppercase tracking-tight">ISO/IEC 27001:2022 Information Security Management</h2>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-400 leading-relaxed">
+                    Verify compliance with international standards for establishing, implementing, maintaining, and continually improving an Information Security Management System (ISMS). Review Clauses 4–10 and Annex controls.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  {(iso27001Overview?.clauses || []).map((cls: any) => {
+                    const isClauseOpen = openArticle === cls.clause_code;
+                    const completedInClause = cls.controls.filter((c: any) => c.implementation?.status === 'IMPLEMENTED').length;
+                    const totalInClause = cls.controls.length;
+
+                    return (
+                      <div 
+                        key={cls.clause_code} 
+                        className={cn(
+                          "card-base overflow-hidden border transition-all duration-300",
+                          isClauseOpen ? "border-indigo-500/30 shadow-indigo-950/10 bg-zinc-900/40" : "border-[var(--border-default)] hover:border-zinc-700 bg-zinc-950/20"
+                        )}
+                      >
+                        <button
+                          onClick={() => setOpenArticle(isClauseOpen ? null : cls.clause_code)}
+                          className="w-full flex items-center justify-between p-5 text-left outline-none"
+                        >
+                          <div className="flex items-start gap-4 flex-1">
+                            <div className="h-8 w-8 rounded-lg flex items-center justify-center border border-indigo-500/20 bg-indigo-500/10 font-bold text-xs uppercase text-indigo-400 tracking-tight">
+                              {cls.clause_code.replace('Clause ', '').replace('Annex ', 'A')}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <h4 className="text-[12px] font-black text-white uppercase tracking-tight">{cls.title}</h4>
+                              </div>
+                              <p className="text-[10px] text-gray-400 font-medium leading-relaxed max-w-xl">{cls.description}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-4">
+                            <span className="text-[10px] font-black text-gray-400 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded uppercase tracking-tighter">
+                              {completedInClause} / {totalInClause} Done
+                            </span>
+                            {isClauseOpen ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
+                          </div>
+                        </button>
+
+                        {isClauseOpen && (
+                          <div className="border-t border-[var(--border-default)] bg-black/10 divide-y divide-zinc-900 animate-slide-in">
+                            {cls.controls.map((c: any) => {
+                              const status = c.implementation?.status || 'NOT_STARTED';
+
+                              return (
+                                <div 
+                                  key={c.control_code}
+                                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-3 hover:bg-white/5 transition animate-fade-in"
+                                >
+                                  <div className="flex-1 text-left min-w-0 pr-4">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="text-[10px] font-black text-indigo-400 tracking-tight">{c.control_code}</span>
+                                      <h5 className="text-[12px] font-bold text-white uppercase tracking-tight truncate">{c.title}</h5>
+                                    </div>
+                                    <p className="text-xs text-gray-400 leading-relaxed">{c.description}</p>
+                                  </div>
+                                  
+                                  <div className="flex items-center gap-3 self-end sm:self-auto">
+                                    <span className={cn(
+                                      "text-[9px] font-black px-2 py-0.5 rounded border uppercase tracking-tight",
+                                      getStatusColor(status)
+                                    )}>
+                                      {status.replace('_', ' ')}
+                                    </span>
+
+                                    <button
+                                      onClick={() => setSelectedControl({
+                                        ...c,
+                                        framework: 'iso-27001'
+                                      })}
+                                      className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-indigo-500/30 rounded text-[9px] font-black text-white uppercase hover:bg-zinc-800 transition active:scale-95"
+                                    >
+                                      <Edit2 className="h-2.5 w-2.5 text-indigo-400" />
+                                      Update
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          )}
+        </>
+      )}
+
+      {/* =======================================================
+          SLIDE-OUT DRAWER 1: EU AI ACT / ISO 42001 / ISO 27001 UPDATE
+          ======================================================= */}
+      {selectedControl && activeTab !== 'nist-ai-rmf' && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-end animate-fade-in">
           <div className="flex-1" onClick={() => setSelectedControl(null)} />
           <div className="w-[500px] bg-zinc-950 border-l border-zinc-800 shadow-2xl flex flex-col h-full animate-slide-in text-left">
@@ -1047,7 +1442,9 @@ export default function Compliance() {
               <div className="flex items-center gap-3">
                 <ShieldCheck className="h-5 w-5 text-indigo-400" />
                 <div>
-                  <span className="text-[9px] font-black uppercase tracking-widest text-indigo-400 block">Control Safeguard Detail</span>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-indigo-400 block">
+                    {selectedControl.framework === 'iso-42001' ? 'ISO 42001 Control' : selectedControl.framework === 'iso-27001' ? 'ISO 27001 Control' : 'EU AI Act obligations'}
+                  </span>
                   <h3 className="text-sm font-black text-white uppercase tracking-tight">{selectedControl.control_code}</h3>
                 </div>
               </div>
@@ -1062,31 +1459,35 @@ export default function Compliance() {
                 <p className="text-xs text-gray-400 leading-relaxed">{selectedControl.description}</p>
               </div>
 
-              <div className="space-y-2">
-                <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Required Evidentiary Filings</h5>
-                <div className="border border-zinc-900 rounded-xl divide-y divide-zinc-900 overflow-hidden bg-black/10">
-                  {selectedControl.evidence_required.map((ev: string, idx: number) => (
-                    <div key={idx} className="p-3 text-xs text-gray-300 flex items-start gap-2.5 leading-relaxed">
-                      <span className="h-1.5 w-1.5 bg-indigo-500 rounded-full mt-1.5 flex-shrink-0" />
-                      {ev}
-                    </div>
-                  ))}
+              {selectedControl.evidence_required?.length > 0 && (
+                <div className="space-y-2">
+                  <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Required Evidentiary Filings</h5>
+                  <div className="border border-zinc-900 rounded-xl divide-y divide-zinc-900 overflow-hidden bg-black/10">
+                    {selectedControl.evidence_required.map((ev: string, idx: number) => (
+                      <div key={idx} className="p-3 text-xs text-gray-300 flex items-start gap-2.5 leading-relaxed">
+                        <span className="h-1.5 w-1.5 bg-indigo-500 rounded-full mt-1.5 flex-shrink-0" />
+                        {ev}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <div className="space-y-2">
-                <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Operational Checklist</h5>
-                <div className="border border-zinc-900 rounded-xl divide-y divide-zinc-900 overflow-hidden bg-black/10">
-                  {selectedControl.checklist_items.map((item: string, idx: number) => (
-                    <div key={idx} className="p-3 text-xs text-gray-300 flex items-start gap-2.5 leading-relaxed">
-                      <span className="h-4 w-4 rounded border border-zinc-800 flex items-center justify-center bg-zinc-900 mt-0.5 flex-shrink-0">
-                        {editStatus === 'IMPLEMENTED' ? <Check className="h-3 w-3 text-emerald-400" /> : <span className="text-[9px] text-zinc-700">{idx+1}</span>}
-                      </span>
-                      {item}
-                    </div>
-                  ))}
+              {selectedControl.checklist_items?.length > 0 && (
+                <div className="space-y-2">
+                  <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Operational Checklist</h5>
+                  <div className="border border-zinc-900 rounded-xl divide-y divide-zinc-900 overflow-hidden bg-black/10">
+                    {selectedControl.checklist_items.map((item: string, idx: number) => (
+                      <div key={idx} className="p-3 text-xs text-gray-300 flex items-start gap-2.5 leading-relaxed">
+                        <span className="h-4 w-4 rounded border border-zinc-800 flex items-center justify-center bg-zinc-900 mt-0.5 flex-shrink-0">
+                          {editStatus === 'IMPLEMENTED' ? <Check className="h-3 w-3 text-emerald-400" /> : <span className="text-[9px] text-zinc-700">{idx+1}</span>}
+                        </span>
+                        {item}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="border-t border-zinc-900 pt-6 space-y-4">
                 <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Compliance Status</h5>
@@ -1102,11 +1503,13 @@ export default function Compliance() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><User className="h-3 w-3" /> Owner</label>
-                    <input type="text" value={editOwner} placeholder="user_id" onChange={(e) => setEditOwner(e.target.value)} className="bg-zinc-900 border border-zinc-800 text-xs text-white rounded-lg p-2.5 outline-none" />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
+                  {selectedControl.framework ? null : (
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><User className="h-3 w-3" /> Owner</label>
+                      <input type="text" value={editOwner} placeholder="user_id" onChange={(e) => setEditOwner(e.target.value)} className="bg-zinc-900 border border-zinc-800 text-xs text-white rounded-lg p-2.5 outline-none" />
+                    </div>
+                  )}
+                  <div className="flex flex-col gap-1.5 col-span-2 md:col-span-1">
                     <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><Calendar className="h-3 w-3" /> Due Date</label>
                     <input type="date" value={editDueDate} onChange={(e) => setEditDueDate(e.target.value)} className="bg-zinc-900 border border-zinc-800 text-xs text-white rounded-lg p-2.5 outline-none" />
                   </div>
@@ -1117,8 +1520,18 @@ export default function Compliance() {
                   <textarea rows={3} value={editNotes} onChange={(e) => setEditNotes(e.target.value)} className="bg-zinc-900 border border-zinc-800 text-xs text-white rounded-lg p-2.5 outline-none resize-none" />
                 </div>
 
-                <button onClick={handleSaveControl} disabled={isSavingControl} className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-zinc-800 rounded-lg text-xs font-black text-white uppercase tracking-wider flex items-center justify-center gap-2">
-                  {isSavingControl ? 'Saving...' : 'Save status'}
+                <button 
+                  onClick={
+                    selectedControl.framework === 'iso-42001' 
+                      ? handleSaveIso42001Control 
+                      : selectedControl.framework === 'iso-27001' 
+                        ? handleSaveIso27001Control 
+                        : handleSaveControl
+                  } 
+                  disabled={isSavingControl || isSavingIso42001 || isSavingIso27001} 
+                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-zinc-800 rounded-lg text-xs font-black text-white uppercase tracking-wider flex items-center justify-center gap-2"
+                >
+                  {isSavingControl || isSavingIso42001 || isSavingIso27001 ? 'Saving...' : 'Save status'}
                 </button>
               </div>
             </div>
@@ -1148,13 +1561,11 @@ export default function Compliance() {
 
             <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
               
-              {/* Context Summary */}
               <div className="space-y-2 bg-zinc-900/30 border border-zinc-900 p-4 rounded-xl">
                 <h4 className="text-xs font-black text-white uppercase tracking-tight">{selectedNistSub.title}</h4>
                 <p className="text-xs text-gray-400 leading-relaxed">{selectedNistSub.description}</p>
               </div>
 
-              {/* Cross-Framework Impact Side Panel Mapping */}
               <div className="space-y-2">
                 <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Cross-Framework Impact</h5>
                 {isLoadingCrossImpact ? (
@@ -1162,7 +1573,7 @@ export default function Compliance() {
                     Scanning cross mappings...
                   </div>
                 ) : nistCrossImpact.length > 0 ? (
-                  <div className="border border-zinc-900 rounded-xl divide-y divide-zinc-900 overflow-hidden bg-black/10">
+                  <div className="border border-zinc-900 rounded-xl divide-y divide-zinc-900 overflow-hidden bg-black/10 animate-fade-in">
                     {nistCrossImpact.map((map: any, idx: number) => (
                       <div key={idx} className="p-3 text-xs text-gray-300 flex items-start gap-2.5 leading-relaxed justify-between">
                         <div className="flex items-start gap-2 pr-4">
@@ -1188,7 +1599,6 @@ export default function Compliance() {
                 )}
               </div>
 
-              {/* Actionable Examples Checklist */}
               {selectedNistSub.implementation_examples?.length > 0 && (
                 <div className="space-y-2">
                   <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Implementation Guidelines</h5>
@@ -1203,7 +1613,6 @@ export default function Compliance() {
                 </div>
               )}
 
-              {/* Edit Governance Fields */}
               <div className="border-t border-zinc-900 pt-6 space-y-4">
                 <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Governance Settings</h5>
                 

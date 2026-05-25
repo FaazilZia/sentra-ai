@@ -29,7 +29,7 @@ export function ShareModal({ resourceType, resourceId, isOpen, onClose }: ShareM
       setLinks(res);
     } catch (err) {
       console.error('Failed to load share links:', err);
-      addToast({ message: 'Failed to fetch active share links', type: 'danger' });
+      addToast({ message: 'Failed to fetch active share links', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -50,7 +50,7 @@ export function ShareModal({ resourceType, resourceId, isOpen, onClose }: ShareM
       addToast({ message: 'Share link created successfully!', type: 'success' });
     } catch (err) {
       console.error('Failed to create share link:', err);
-      addToast({ message: 'Failed to create share link', type: 'danger' });
+      addToast({ message: 'Failed to create share link', type: 'error' });
     } finally {
       setCreating(false);
     }
@@ -63,7 +63,7 @@ export function ShareModal({ resourceType, resourceId, isOpen, onClose }: ShareM
       addToast({ message: 'Share link revoked successfully!', type: 'success' });
     } catch (err) {
       console.error('Failed to revoke share link:', err);
-      addToast({ message: 'Failed to revoke share link', type: 'danger' });
+      addToast({ message: 'Failed to revoke share link', type: 'error' });
     }
   };
 
