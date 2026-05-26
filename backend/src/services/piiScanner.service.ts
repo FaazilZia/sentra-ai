@@ -91,7 +91,7 @@ export class PIIScannerService {
       risk: 'medium'
     },
     STREET_ADDRESS: {
-      regex: /\b\d+\s+[A-Za-z0-9#'.\-\s]{1,100}\s+(?:Street|St|Avenue|Ave|Road|Rd|Highway|Hwy|Boulevard|Blvd|Court|Ct|Drive|Dr|Lane|Ln|Way)\b/gi,
+      regex: /\b\d{1,6}\s{1,3}(?:[A-Za-z0-9#'.\-]+\s{1,3}){1,8}(?:Street|St|Avenue|Ave|Road|Rd|Highway|Hwy|Boulevard|Blvd|Court|Ct|Drive|Dr|Lane|Ln|Way)\b/gi,
       redactedLabel: '[ADDRESS_REDACTED]',
       frameworks: ['GDPR', 'DPDP', 'HIPAA'],
       risk: 'medium'

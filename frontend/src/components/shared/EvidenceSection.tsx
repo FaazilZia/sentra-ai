@@ -1,32 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   FolderOpen, Plus, Trash2, Download, FileText, 
-  FileSpreadsheet, FileImage, File, UploadCloud, X, LoaderCircle
+  UploadCloud, X, LoaderCircle
 } from 'lucide-react';
 import { apiRequest } from '@/lib/api';
 import { useStore } from '@/store/useStore';
 import { cn } from '@/lib/utils';
+import { formatBytes, getFileIcon, useFileDragDrop } from '@/lib/evidenceUtils';
 
 interface EvidenceSectionProps {
   entityType: 'risk' | 'policy' | 'compliance' | 'incident' | 'guardrail';
   entityId: string;
-}
-
-function formatBytes(bytes: number, decimals = 2) {
-  if (!bytes) return '0 Bytes';
-  const k = 1024;
-  const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-}
-
-function getFileIcon(mimeType: string) {
-  const mime = mimeType.toLowerCase();
-  if (mime.includes('pdf')) return FileText;
-  if (mime.includes('csv') || mime.includes('sheet') || mime.includes('excel')) return FileSpreadsheet;
-  if (mime.includes('image/') || mime.includes('png') || mime.includes('jpeg') || mime.includes('jpg')) return FileImage;
-  return File;
 }
 
 export function EvidenceSection({ entityType, entityId }: EvidenceSectionProps) {
@@ -40,9 +24,8 @@ export function EvidenceSection({ entityType, entityId }: EvidenceSectionProps) 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState('');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
+  const { selectedFile, setSelectedFile, isDragging, handleDragOver, handleDragLeave, handleDrop, handleFileSelect } = useFileDragDrop();
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -63,29 +46,6 @@ export function EvidenceSection({ entityType, entityId }: EvidenceSectionProps) 
       loadFiles();
     }
   }, [entityType, entityId]);
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setSelectedFile(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

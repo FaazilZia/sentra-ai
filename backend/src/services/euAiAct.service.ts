@@ -1,4 +1,5 @@
 import prisma from '../config/db';
+import { countComplianceStatuses } from '../utils/complianceCounter';
 
 export class EuAiActService {
   /**
@@ -73,67 +74,37 @@ export class EuAiActService {
     });
 
     // 3. Compile count stats
-    let total_controls = 0;
-    let implemented = 0;
-    let in_progress = 0;
-    let not_started = 0;
-    let not_applicable = 0;
+    const allControls = articles.flatMap(art => art.controls);
+    const summary = countComplianceStatuses(allControls);
 
-    const formattedArticles = articles.map(art => {
-      return {
-        article_number: art.article_number,
-        title: art.title,
-        chapter: art.chapter,
-        risk_tier: art.risk_tier,
-        controls: art.controls.map(c => {
-          total_controls++;
-          const impl = c.implementations[0] || null;
+    const formattedArticles = articles.map(art => ({
+      article_number: art.article_number,
+      title: art.title,
+      chapter: art.chapter,
+      risk_tier: art.risk_tier,
+      controls: art.controls.map(c => {
+        const impl = c.implementations[0] || null;
+        return {
+          control_code: c.control_code,
+          title: c.title,
+          description: c.description,
+          evidence_required: c.evidence_required,
+          checklist_items: c.checklist_items,
+          implementation: impl
+            ? {
+                status: impl.status,
+                notes: impl.notes,
+                owner_user_id: impl.owner_user_id,
+                due_date: impl.due_date,
+                evidence_links: Array.isArray(impl.evidence_links) ? impl.evidence_links : [],
+                last_reviewed: impl.last_reviewed
+              }
+            : null
+        };
+      })
+    }));
 
-          if (impl) {
-            if (impl.status === 'IMPLEMENTED') implemented++;
-            else if (impl.status === 'IN_PROGRESS') in_progress++;
-            else if (impl.status === 'NOT_STARTED') not_started++;
-            else if (impl.status === 'NOT_APPLICABLE') not_applicable++;
-          } else {
-            not_started++;
-          }
-
-          return {
-            control_code: c.control_code,
-            title: c.title,
-            description: c.description,
-            evidence_required: c.evidence_required,
-            checklist_items: c.checklist_items,
-            implementation: impl
-              ? {
-                  status: impl.status,
-                  notes: impl.notes,
-                  owner_user_id: impl.owner_user_id,
-                  due_date: impl.due_date,
-                  evidence_links: Array.isArray(impl.evidence_links) ? impl.evidence_links : [],
-                  last_reviewed: impl.last_reviewed
-                }
-              : null
-          };
-        })
-      };
-    });
-
-    const compliance_score = total_controls > 0 
-      ? Math.round(((implemented + not_applicable) / total_controls) * 100) 
-      : 0;
-
-    return {
-      articles: formattedArticles,
-      summary: {
-        total_controls,
-        implemented,
-        in_progress,
-        not_started,
-        not_applicable,
-        compliance_score
-      }
-    };
+    return { articles: formattedArticles, summary };
   }
 
   /**

@@ -1,4 +1,5 @@
 import prisma from '../config/db';
+import { countComplianceStatuses } from '../utils/complianceCounter';
 
 /**
  * Generic base service for ISO framework compliance (ISO 27001 / ISO 42001).
@@ -42,11 +43,8 @@ export function createIsoFrameworkService(config: IsoFrameworkConfig) {
   }
 
   function compileControlStats(clauses: any[]) {
-    let total_controls = 0;
-    let implemented = 0;
-    let in_progress = 0;
-    let not_started = 0;
-    let not_applicable = 0;
+    const allControls = clauses.flatMap((cls: any) => cls.controls);
+    const summary = countComplianceStatuses(allControls);
 
     const formattedClauses = clauses.map(cls => {
       const base: Record<string, any> = {
@@ -54,23 +52,11 @@ export function createIsoFrameworkService(config: IsoFrameworkConfig) {
         title: cls.title,
         description: cls.description,
       };
-      // ISO 42001 has clause_type
       if (cls.clause_type !== undefined) {
         base.clause_type = cls.clause_type;
       }
       base.controls = cls.controls.map((c: any) => {
-        total_controls++;
         const impl = c.implementations[0] || null;
-
-        if (impl) {
-          if (impl.status === 'IMPLEMENTED') implemented++;
-          else if (impl.status === 'IN_PROGRESS') in_progress++;
-          else if (impl.status === 'NOT_STARTED') not_started++;
-          else if (impl.status === 'NOT_APPLICABLE') not_applicable++;
-        } else {
-          not_started++;
-        }
-
         return {
           control_code: c.control_code,
           title: c.title,
@@ -90,14 +76,7 @@ export function createIsoFrameworkService(config: IsoFrameworkConfig) {
       return base;
     });
 
-    const compliance_score = total_controls > 0 
-      ? Math.round(((implemented + not_applicable) / total_controls) * 100) 
-      : 0;
-
-    return {
-      clauses: formattedClauses,
-      summary: { total_controls, implemented, in_progress, not_started, not_applicable, compliance_score }
-    };
+    return { clauses: formattedClauses, summary };
   }
 
   async function getFrameworkOverview(organizationId: string) {

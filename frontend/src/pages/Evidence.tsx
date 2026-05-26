@@ -1,31 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   FolderOpen, Plus, Trash2, Download, FileText, 
-  FileSpreadsheet, FileImage, File, UploadCloud, X, Calendar, User, LoaderCircle,
+  UploadCloud, X, Calendar, User, LoaderCircle,
   ShieldCheck, Info
 } from 'lucide-react';
 import { apiRequest } from '@/lib/api';
 import { useStore } from '@/store/useStore';
 import { cn } from '@/lib/utils';
-
-// File size formatter
-function formatBytes(bytes: number, decimals = 2) {
-  if (!bytes) return '0 Bytes';
-  const k = 1024;
-  const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-}
-
-// Map MIME types to Lucide Icons
-function getFileIcon(mimeType: string) {
-  const mime = mimeType.toLowerCase();
-  if (mime.includes('pdf')) return FileText;
-  if (mime.includes('csv') || mime.includes('sheet') || mime.includes('excel')) return FileSpreadsheet;
-  if (mime.includes('image/') || mime.includes('png') || mime.includes('jpeg') || mime.includes('jpg')) return FileImage;
-  return File;
-}
+import { formatBytes, getFileIcon, useFileDragDrop } from '@/lib/evidenceUtils';
 
 export default function Evidence() {
   const addToast = useStore(state => state.addToast);
@@ -40,9 +22,8 @@ export default function Evidence() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
 
   // Upload Form State
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const { selectedFile, setSelectedFile, isDragging, handleDragOver, handleDragLeave, handleDrop, handleFileSelect } = useFileDragDrop();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -75,30 +56,6 @@ export default function Evidence() {
   useEffect(() => {
     loadEvidence();
   }, [selectedFramework, selectedControlId]);
-
-  // Handle Drag & Drop Events
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setSelectedFile(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
-    }
-  };
 
   // Submit file upload
   const handleUploadSubmit = async (e: React.FormEvent) => {
