@@ -1,5 +1,5 @@
 import prisma from '../config/db';
-import { countComplianceStatuses } from '../utils/complianceCounter';
+import { countComplianceStatuses, seedMissingImplementations, findControlOrThrow } from '../utils/complianceCounter';
 
 export class EuAiActService {
   /**
@@ -38,24 +38,7 @@ export class EuAiActService {
     };
   }> {
     // 1. Ensure all controls have implementations for this organization
-    const controls = await prisma.eu_ai_act_controls.findMany();
-    const implementations = await prisma.eu_ai_act_implementations.findMany({
-      where: { organizationId }
-    });
-
-    const implControlIds = new Set(implementations.map(impl => impl.control_id));
-    const missingControls = controls.filter(c => !implControlIds.has(c.id));
-
-    if (missingControls.length > 0) {
-      await prisma.eu_ai_act_implementations.createMany({
-        data: missingControls.map(c => ({
-          organizationId,
-          control_id: c.id,
-          status: 'NOT_STARTED',
-          evidence_links: []
-        }))
-      });
-    }
+    await seedMissingImplementations(prisma, 'eu_ai_act_controls', 'eu_ai_act_implementations', organizationId, { evidence_links: [] });
 
     // 2. Query articles, controls, and their implementations for this organization
     const articles = await prisma.eu_ai_act_articles.findMany({
@@ -121,13 +104,7 @@ export class EuAiActService {
       evidence_links?: any[];
     }
   ) {
-    const control = await prisma.eu_ai_act_controls.findUnique({
-      where: { control_code: controlCode }
-    });
-
-    if (!control) {
-      throw new Error(`Control not found with code: ${controlCode}`);
-    }
+    const control = await findControlOrThrow(prisma, 'eu_ai_act_controls', controlCode);
 
     const impl = await prisma.eu_ai_act_implementations.upsert({
       where: {

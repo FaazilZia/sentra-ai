@@ -1,5 +1,5 @@
 import prisma from '../config/db';
-import { countComplianceStatuses } from '../utils/complianceCounter';
+import { countComplianceStatuses, seedMissingImplementations, findControlOrThrow } from '../utils/complianceCounter';
 
 /**
  * Generic base service for ISO framework compliance (ISO 27001 / ISO 42001).
@@ -21,25 +21,8 @@ export interface ImplementationUpdateData {
 export function createIsoFrameworkService(config: IsoFrameworkConfig) {
   const { controlsTable, implementationsTable, clausesTable, featureId } = config;
 
-  async function seedImplementations(organizationId: string, tx: any = prisma): Promise<void> {
-    const controls = await (tx as any)[controlsTable].findMany();
-    const implementations = await (tx as any)[implementationsTable].findMany({
-      where: { organizationId }
-    });
-
-    const implControlIds = new Set(implementations.map((impl: any) => impl.control_id));
-    const missingControls = controls.filter((c: any) => !implControlIds.has(c.id));
-
-    if (missingControls.length > 0) {
-      await (tx as any)[implementationsTable].createMany({
-        data: missingControls.map((c: any) => ({
-          organizationId,
-          control_id: c.id,
-          status: 'NOT_STARTED',
-          notes: ''
-        }))
-      });
-    }
+  async function seedImplementations(organizationId: string): Promise<void> {
+    await seedMissingImplementations(prisma, controlsTable, implementationsTable, organizationId, { notes: '' });
   }
 
   function compileControlStats(clauses: any[]) {
@@ -80,7 +63,7 @@ export function createIsoFrameworkService(config: IsoFrameworkConfig) {
   }
 
   async function getFrameworkOverview(organizationId: string) {
-    await seedImplementations(organizationId, prisma);
+    await seedImplementations(organizationId);
 
     const clauses = await (prisma as any)[clausesTable].findMany({
       where: { is_active: true },
@@ -103,13 +86,7 @@ export function createIsoFrameworkService(config: IsoFrameworkConfig) {
     controlCode: string,
     data: ImplementationUpdateData
   ) {
-    const control = await (prisma as any)[controlsTable].findUnique({
-      where: { control_code: controlCode }
-    });
-
-    if (!control) {
-      throw new Error(`Control not found with code: ${controlCode}`);
-    }
+    const control = await findControlOrThrow(prisma, controlsTable, controlCode);
 
     const impl = await (prisma as any)[implementationsTable].upsert({
       where: {

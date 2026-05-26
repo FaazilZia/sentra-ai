@@ -5,6 +5,7 @@ import {
   Edit, X, ListTodo
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { getFrameworkLabel, getStatusBadgeColor, SEARCH_INPUT_CLASS, SELECT_FILTER_CLASS, MODAL_INPUT_CLASS } from '@/lib/governanceUtils';
 
 interface ControlImplementation {
   id: string;
@@ -100,23 +101,7 @@ export default function Controls() {
     }
   };
 
-  const getFrameworkLabel = (fw: string) => {
-    switch (fw) {
-      case 'EU_AI_ACT': return 'EU AI Act';
-      case 'NIST_AI_RMF': return 'NIST AI RMF';
-      case 'ISO_42001': return 'ISO/IEC 42001';
-      default: return fw.replaceAll('_', ' ');
-    }
-  };
 
-  const getStatusBadgeColor = (st?: string) => {
-    switch (st) {
-      case 'IMPLEMENTED': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
-      case 'IN_PROGRESS': return 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20';
-      case 'NOT_APPLICABLE': return 'bg-gray-500/10 text-gray-400 border border-gray-500/20';
-      default: return 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20';
-    }
-  };
 
   // Group controls for stats
   const uniqueFrameworks = Array.from(new Set(controls.map(c => c.framework)));
@@ -178,7 +163,7 @@ export default function Controls() {
             placeholder="Search controls by title, ID, or description..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-[#111827]/60 border border-gray-800 rounded-xl py-2.5 pl-11 pr-4 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition-all"
+            className={SEARCH_INPUT_CLASS}
           />
         </div>
 
@@ -187,7 +172,7 @@ export default function Controls() {
           <select
             value={frameworkFilter}
             onChange={(e) => setFrameworkFilter(e.target.value)}
-            className="bg-[#111827]/60 border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+            className={SELECT_FILTER_CLASS}
           >
             <option value="ALL">All Frameworks</option>
             {uniqueFrameworks.map(fw => (

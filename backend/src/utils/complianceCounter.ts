@@ -1,7 +1,7 @@
 /**
- * Shared compliance status counter used across framework services
+ * Shared compliance utilities used across framework services
  * (ISO 27001, ISO 42001, EU AI Act, NIST AI RMF).
- * Eliminates duplicated status-counting logic detected by SonarCloud.
+ * Eliminates duplicated status-counting and implementation logic.
  */
 export interface ComplianceStatusCounts {
   total_controls: number;
@@ -39,3 +39,49 @@ export function countComplianceStatuses(controlSets: Array<{ implementations: an
 
   return { total_controls, implemented, in_progress, not_started, not_applicable, compliance_score };
 }
+
+/**
+ * Ensure every control has a corresponding implementation row for the org.
+ * Creates NOT_STARTED rows for any missing controls.
+ */
+export async function seedMissingImplementations(
+  db: any,
+  controlsModel: string,
+  implModel: string,
+  organizationId: string,
+  defaultExtra: Record<string, any> = {}
+): Promise<void> {
+  const controls = await db[controlsModel].findMany();
+  const implementations = await db[implModel].findMany({ where: { organizationId } });
+
+  const existingIds = new Set(implementations.map((impl: any) => impl.control_id));
+  const missing = controls.filter((c: any) => !existingIds.has(c.id));
+
+  if (missing.length > 0) {
+    await db[implModel].createMany({
+      data: missing.map((c: any) => ({
+        organizationId,
+        control_id: c.id,
+        status: 'NOT_STARTED',
+        ...defaultExtra
+      }))
+    });
+  }
+}
+
+/**
+ * Find a control by code, then upsert its implementation for the org.
+ * Shared between ISO and EU AI Act updateImplementation methods.
+ */
+export async function findControlOrThrow(
+  db: any,
+  controlsModel: string,
+  controlCode: string
+): Promise<any> {
+  const control = await db[controlsModel].findUnique({ where: { control_code: controlCode } });
+  if (!control) {
+    throw new Error(`Control not found with code: ${controlCode}`);
+  }
+  return control;
+}
+

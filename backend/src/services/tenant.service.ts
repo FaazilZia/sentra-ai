@@ -90,8 +90,8 @@ export const TenantService = {
       // Seed baseline controls and obligations
       await seedOrganizationGovernance(createdOrg.id, tx);
       await seedDefaultIntakeForm(createdOrg.id, tx);
-      await Iso42001Service.seedImplementations(createdOrg.id, tx);
-      await Iso27001Service.seedImplementations(createdOrg.id, tx);
+      await Iso42001Service.seedImplementations(createdOrg.id);
+      await Iso27001Service.seedImplementations(createdOrg.id);
 
       // Seed default training courses
       await tx.training_courses.createMany({

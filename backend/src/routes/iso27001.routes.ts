@@ -1,17 +1,4 @@
-import { Router } from 'express';
-import { authenticate, authorizeRoles } from '../middleware/auth.middleware';
-import {
-  getFrameworkOverview,
-  updateImplementation,
-  getComplianceScore
-} from '../controllers/iso27001.controller';
+import * as controller from '../controllers/iso27001.controller';
+import { createIsoFrameworkRouter } from './isoRouteFactory';
 
-const router = Router();
-
-router.use(authenticate);
-
-router.get('/overview', getFrameworkOverview);
-router.patch('/controls/:controlCode/implementation', authorizeRoles('ADMIN', 'ENGINEER'), updateImplementation);
-router.get('/score', getComplianceScore);
-
-export default router;
+export default createIsoFrameworkRouter(controller);

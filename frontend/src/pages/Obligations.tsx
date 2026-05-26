@@ -4,6 +4,7 @@ import {
   ListTodo, Search, Filter, 
   Calendar, Link as LinkIcon, Edit, Save, X
 } from 'lucide-react';
+import { getFrameworkLabel, getStatusBadgeColor, SEARCH_INPUT_CLASS, SELECT_FILTER_CLASS } from '@/lib/governanceUtils';
 
 interface Control {
   id: string;
@@ -81,22 +82,7 @@ export default function Obligations() {
     }
   };
 
-  const getFrameworkLabel = (fw: string) => {
-    switch (fw) {
-      case 'EU_AI_ACT': return 'EU AI Act';
-      case 'NIST_AI_RMF': return 'NIST AI RMF';
-      default: return fw.replaceAll('_', ' ');
-    }
-  };
 
-  const getStatusBadgeColor = (st: string) => {
-    switch (st) {
-      case 'MET': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
-      case 'IN_PROGRESS': return 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20';
-      case 'NOT_APPLICABLE': return 'bg-gray-500/10 text-gray-400 border border-gray-500/20';
-      default: return 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20';
-    }
-  };
 
   const uniqueFrameworks = Array.from(new Set(obligations.map(o => o.framework)));
   const filteredObligations = obligations.filter(o => {
@@ -129,7 +115,7 @@ export default function Obligations() {
             placeholder="Search by article title or description..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-[#111827]/60 border border-gray-800 rounded-xl py-2.5 pl-11 pr-4 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition-all"
+            className={SEARCH_INPUT_CLASS}
           />
         </div>
 
@@ -138,7 +124,7 @@ export default function Obligations() {
           <select
             value={frameworkFilter}
             onChange={(e) => setFrameworkFilter(e.target.value)}
-            className="bg-[#111827]/60 border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+            className={SELECT_FILTER_CLASS}
           >
             <option value="ALL">All Frameworks</option>
             {uniqueFrameworks.map(fw => (
