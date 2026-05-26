@@ -111,32 +111,101 @@ export class McpController {
   }
 
   /**
+   * Helper to write records to mcp_audit_logs securely
+   */
+  private static async logMcpAudit(agent: any, toolName: string, args: any, decisionStatus: string, riskLevel: string, reason: string, durationMs: number) {
+    try {
+      const inputSummary = JSON.stringify(args);
+      await prisma.mcp_audit_logs.create({
+        data: {
+          organizationId: agent.organizationId,
+          agentKeyId: agent.agentKeyId,
+          tool_name: toolName,
+          input_summary: inputSummary.length > 1000 ? inputSummary.substring(0, 1000) + '...' : inputSummary,
+          decision: decisionStatus,
+          risk_level: riskLevel,
+          reason: reason,
+          duration_ms: durationMs,
+        },
+      });
+    } catch (logErr) {
+      logger.error('[MCP-RPC] Failed to write to mcp_audit_logs:', logErr);
+    }
+  }
+
+  /**
    * Handles the 'tools/list' method
    */
   private static async handleToolsList(req: Request, res: Response, id: any): Promise<any> {
     try {
       const agent = await McpController.getAuthenticatedAgent(req);
       
-      const allTools = [
+      const SENTRA_TOOLS = [
         {
           name: 'sentra.checkAction',
-          description: 'Evaluate an AI action through Sentra governance',
+          description: 'Evaluate any AI agent action through Sentra governance before execution. Returns allowed or blocked with risk level and reason.',
           inputSchema: {
             type: 'object',
             properties: {
-              action: { type: 'string' },
-              metadata: { type: 'object' },
+              action: { type: 'string', description: 'The action the agent wants to perform' },
+              metadata: { type: 'object', description: 'Additional context about the action' }
             },
-            required: ['action'],
-          },
+            required: ['action']
+          }
         },
+        {
+          name: 'sentra.scanPII',
+          description: 'Scan a text payload for personally identifiable information (PII) before sending to an LLM or external service. Returns detected PII categories and a redacted version of the text.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              text: { type: 'string', description: 'The text to scan for PII' }
+            },
+            required: ['text']
+          }
+        },
+        {
+          name: 'sentra.checkPolicy',
+          description: 'Check whether a specific agent action is permitted under the organization active policies. Returns the policy decision with compliance framework references.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              agent: { type: 'string', description: 'The agent identifier' },
+              action: { type: 'string', description: 'The action to check against policies' }
+            },
+            required: ['agent', 'action']
+          }
+        },
+        {
+          name: 'sentra.logAuditEvent',
+          description: 'Log a custom audit event to the Sentra governance audit trail. Use this to record significant agent decisions or actions for compliance evidence.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              event: { type: 'string', description: 'The audit event name' },
+              details: { type: 'object', description: 'Additional details about the event' }
+            },
+            required: ['event']
+          }
+        },
+        {
+          name: 'sentra.getRiskScore',
+          description: 'Get the current risk score for a given action string without blocking execution. Useful for monitoring and dashboards.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              action: { type: 'string', description: 'The action to score' }
+            },
+            required: ['action']
+          }
+        }
       ];
 
       // Filter based on agent allowed_tools / blocked_tools (ACL checks)
       const allowed = agent.allowedTools;
       const blocked = agent.blockedTools;
 
-      const filteredTools = allTools.filter((tool) => {
+      const filteredTools = SENTRA_TOOLS.filter((tool) => {
         // If allowedTools is non-empty, tool must be in it
         if (allowed && allowed.length > 0 && !allowed.includes(tool.name)) {
           return false;
@@ -199,47 +268,93 @@ export class McpController {
         return McpController.sendJsonRpcError(res, -32001, 'Tool not permitted by agent key ACL', id);
       }
 
-      // 3. Evaluate action through decision engine
-      // We pass toolName as action and args as metadata
-      const decision = await makeDecision(
-        agent.agentKeyId, // Using agentKeyId as the agent identifier
-        toolName,
-        agent.organizationId,
-        args
-      );
+      // 3. Route to specific tool logic
+      let toolResult: any;
+      let decisionStatus = 'allowed';
+      let riskLevel = 'low';
+      let decisionReason = 'Success';
+
+      if (toolName === 'sentra.checkAction') {
+        const decision = await makeDecision(
+          agent.agentKeyId,
+          args.action || '',
+          agent.organizationId,
+          args.metadata || {}
+        );
+        decisionStatus = decision.status;
+        riskLevel = decision.risk;
+        decisionReason = decision.reason || '';
+        toolResult = {
+          status: decision.status,
+          reason: decision.reason,
+        };
+
+        if (decision.status === 'blocked') {
+          const durationMs = Math.round(getNow() - startTime);
+          await McpController.logMcpAudit(agent, toolName, args, decisionStatus, riskLevel, decisionReason, durationMs);
+          logger.warn(`[MCP-RPC] Decision Blocked: tool="${toolName}" reason="${decision.reason}" latency=${durationMs}ms`);
+          return McpController.sendJsonRpcError(
+            res,
+            -32002,
+            'Action blocked by Sentra governance',
+            id,
+            { reason: decision.reason }
+          );
+        }
+      } else if (toolName === 'sentra.scanPII') {
+        const { PIIScannerService } = require('../services/piiScanner.service');
+        const scanResult = PIIScannerService.scanPayload(args.text || '', {});
+        toolResult = scanResult;
+        decisionStatus = 'allowed';
+        riskLevel = scanResult.riskLevel;
+        decisionReason = scanResult.piiDetected ? 'PII detected in payload' : 'No PII detected';
+      } else if (toolName === 'sentra.checkPolicy') {
+        const { evaluatePolicy } = require('../services/policyEngine');
+        const policyResult = await evaluatePolicy(agent.agentKeyId, args.action || '', agent.organizationId);
+        toolResult = policyResult;
+        decisionStatus = policyResult.allowed ? 'allowed' : 'blocked';
+        riskLevel = policyResult.allowed ? 'low' : 'high';
+        decisionReason = policyResult.reason || 'Policy evaluation completed';
+
+        if (!policyResult.allowed) {
+          const durationMs = Math.round(getNow() - startTime);
+          await McpController.logMcpAudit(agent, toolName, args, decisionStatus, riskLevel, decisionReason, durationMs);
+          logger.warn(`[MCP-RPC] Policy Blocked: tool="${toolName}" reason="${policyResult.reason}" latency=${durationMs}ms`);
+          return McpController.sendJsonRpcError(
+            res,
+            -32002,
+            'Action blocked by Sentra governance',
+            id,
+            { reason: policyResult.reason }
+          );
+        }
+      } else if (toolName === 'sentra.logAuditEvent') {
+        const { auditLogger } = require('../utils/auditLogger');
+        await auditLogger.log({
+          userId: agent.agentKeyId,
+          organizationId: agent.organizationId,
+          action: args.event || 'custom_mcp_event',
+          metadata: args.details || {}
+        });
+        toolResult = { logged: true };
+        decisionStatus = 'allowed';
+        riskLevel = 'low';
+        decisionReason = 'Audit event logged';
+      } else if (toolName === 'sentra.getRiskScore') {
+        const { evaluateRisk } = require('../services/riskEngine');
+        const riskResult = evaluateRisk(args.action || '', {});
+        toolResult = riskResult;
+        decisionStatus = 'allowed';
+        riskLevel = riskResult.score;
+        decisionReason = `Risk evaluation score: ${riskResult.score}`;
+      } else {
+        return McpController.sendJsonRpcError(res, -32601, `Tool not found: ${toolName}`, id);
+      }
 
       const durationMs = Math.round(getNow() - startTime);
 
       // 4. Log evaluation to mcp_audit_logs
-      try {
-        const inputSummary = JSON.stringify(args);
-        await prisma.mcp_audit_logs.create({
-          data: {
-            organizationId: agent.organizationId,
-            agentKeyId: agent.agentKeyId,
-            tool_name: toolName,
-            input_summary: inputSummary.length > 1000 ? inputSummary.substring(0, 1000) + '...' : inputSummary,
-            decision: decision.status,
-            risk_level: decision.risk,
-            reason: decision.reason,
-            duration_ms: durationMs,
-          },
-        });
-      } catch (logErr) {
-        logger.error('[MCP-RPC] Failed to write to mcp_audit_logs:', logErr);
-      }
-
-      // 5. Handle block vs allow response formats
-      if (decision.status === 'blocked') {
-        logger.warn(`[MCP-RPC] Decision Blocked: tool="${toolName}" reason="${decision.reason}" latency=${durationMs}ms`);
-        return McpController.sendJsonRpcError(
-          res,
-          -32002,
-          'Action blocked by Sentra governance',
-          id,
-          { reason: decision.reason }
-        );
-      }
+      await McpController.logMcpAudit(agent, toolName, args, decisionStatus, riskLevel, decisionReason, durationMs);
 
       logger.info(`[MCP-RPC] Decision Allowed: tool="${toolName}" latency=${durationMs}ms`);
       return res.status(200).json({
@@ -248,10 +363,7 @@ export class McpController {
           content: [
             {
               type: 'text',
-              text: JSON.stringify({
-                status: 'allowed',
-                reason: decision.reason,
-              }),
+              text: JSON.stringify(toolResult),
             },
           ],
         },

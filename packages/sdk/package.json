@@ -1,6 +1,6 @@
 {
   "name": "@sentra-ai/sdk",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Enterprise-grade SDK for real-time AI governance and runtime security.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
