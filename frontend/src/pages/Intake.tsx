@@ -140,7 +140,7 @@ export default function Intake() {
       return;
     }
     const newQ = {
-      id: Math.random().toString(36).substring(7),
+      id: crypto.randomUUID(),
       question,
       answer: ''
     };

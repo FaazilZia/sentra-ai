@@ -16,6 +16,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Required for SonarCloud new code detection
 
       - name: Use Node.js 20
         uses: actions/setup-node@v4
@@ -68,6 +70,13 @@ jobs:
           name: playwright-report
           path: backend/playwright-report/
           retention-days: 7
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v5
+        with:
+          projectBaseDir: .
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     services:
       postgres:

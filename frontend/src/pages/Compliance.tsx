@@ -1436,7 +1436,7 @@ export default function Compliance() {
           ======================================================= */}
       {selectedControl && activeTab !== 'nist-ai-rmf' && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-end animate-fade-in">
-          <div className="flex-1" onClick={() => setSelectedControl(null)} />
+          <div className="flex-1" onClick={() => setSelectedControl(null)} onKeyDown={(e) => { if (e.key === 'Escape') setSelectedControl(null); }} role="button" tabIndex={0} aria-label="Close drawer" />
           <div className="w-[500px] bg-zinc-950 border-l border-zinc-800 shadow-2xl flex flex-col h-full animate-slide-in text-left">
             <div className="p-6 border-b border-zinc-900 flex items-center justify-between bg-black/20">
               <div className="flex items-center gap-3">
@@ -1544,7 +1544,7 @@ export default function Compliance() {
           ======================================================= */}
       {selectedNistSub && activeTab === 'nist-ai-rmf' && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-end animate-fade-in">
-          <div className="flex-1" onClick={() => setSelectedNistSub(null)} />
+          <div className="flex-1" onClick={() => setSelectedNistSub(null)} onKeyDown={(e) => { if (e.key === 'Escape') setSelectedNistSub(null); }} role="button" tabIndex={0} aria-label="Close drawer" />
           <div className="w-[500px] bg-zinc-950 border-l border-zinc-800 shadow-2xl flex flex-col h-full animate-slide-in text-left">
             <div className="p-6 border-b border-zinc-900 flex items-center justify-between bg-black/20">
               <div className="flex items-center gap-3">

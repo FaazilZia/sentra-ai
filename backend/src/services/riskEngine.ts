@@ -44,7 +44,7 @@ const JAILBREAK_PATTERNS = [
   // Destructive SQL operations
   /drop\s+table/i,
   /truncate\s+table/i,
-  /delete\s+from.*where\s+1\s*=\s*1/i,
+  /delete\s+from[^;]{0,200}where\s+1\s*=\s*1/i,
   /delete\s+all\s+(users?|records?|data)/i,
 ];
 
