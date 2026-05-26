@@ -30,6 +30,24 @@ async function main() {
     }
   }
 
+  async function cleanupOrg(orgId: string) {
+    try {
+      await prisma.iso27001_implementations.deleteMany({ where: { organizationId: orgId } }).catch(() => {});
+      await prisma.iso42001_implementations.deleteMany({ where: { organizationId: orgId } }).catch(() => {});
+      await prisma.control_implementations.deleteMany({ where: { organizationId: orgId } }).catch(() => {});
+      await prisma.compliance_obligations.deleteMany({ where: { organizationId: orgId } }).catch(() => {});
+      await prisma.controls.deleteMany({ where: { organizationId: orgId } }).catch(() => {});
+      await prisma.training_courses.deleteMany({ where: { organizationId: orgId } }).catch(() => {});
+      await prisma.intake_forms.deleteMany({ where: { orgId } }).catch(() => {});
+      await prisma.workspace_memberships.deleteMany({ where: { workspace: { organizationId: orgId } } }).catch(() => {});
+      await prisma.workspaces.deleteMany({ where: { organizationId: orgId } }).catch(() => {});
+      await prisma.org_settings.deleteMany({ where: { organizationId: orgId } }).catch(() => {});
+      await prisma.organizations.delete({ where: { id: orgId } }).catch(() => {});
+    } catch (err) {
+      // Suppress cleanup error
+    }
+  }
+
   // 1. Find a test organization
   const org = await prisma.organizations.findFirst({
     where: { is_active: true }
@@ -196,7 +214,7 @@ async function main() {
         throw new Error(`Expected empty systems array, got: ${JSON.stringify(systems)}`);
       }
     } finally {
-      await prisma.organizations.delete({ where: { id: newOrg.id } }).catch(() => {});
+      await cleanupOrg(newOrg.id);
     }
   });
 
@@ -282,7 +300,7 @@ async function main() {
   await assertTest('Step 11 — SSO Guards block when disabled', async () => {
     // 1. SAML route for disabled org
     const samlRes = await request(app)
-      .get(`/api/v1/auth/saml/${org.slug}`)
+      .get(`/api/v1/saml/${org.slug}`)
       .expect(501);
 
     if (samlRes.body.message !== 'SSO is not enabled for this organization') {
@@ -290,14 +308,38 @@ async function main() {
     }
 
     // 2. SCIM route for disabled org
-    const token = generateAccessToken({ id: 'dummy-user-id', role: 'ADMIN', organizationId: orgId });
-    const scimRes = await request(app)
-      .get('/api/v1/scim/v2/Users')
-      .set('Authorization', `Bearer ${token}`)
-      .expect(501);
+    let testUser = await prisma.users.findFirst({
+      where: { organizationId: orgId, role: 'ADMIN', is_active: true }
+    });
+    let createdTestUser = false;
+    if (!testUser) {
+      testUser = await prisma.users.create({
+        data: {
+          id: randomUUID(),
+          organizationId: orgId,
+          email: `smoke-test-admin-${Date.now()}@sentra.ai`,
+          full_name: 'Smoke Test Admin',
+          role: 'ADMIN',
+          is_active: true
+        }
+      });
+      createdTestUser = true;
+    }
 
-    if (scimRes.body.message !== 'SSO is not enabled for this organization') {
-      throw new Error(`Expected SCIM 501 message, got: ${scimRes.body.message}`);
+    try {
+      const token = generateAccessToken({ id: testUser.id, role: 'ADMIN', organizationId: orgId });
+      const scimRes = await request(app)
+        .get('/api/v1/scim/v2/Users')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(501);
+
+      if (scimRes.body.message !== 'SSO is not enabled for this organization') {
+        throw new Error(`Expected SCIM 501 message, got: ${scimRes.body.message}`);
+      }
+    } finally {
+      if (createdTestUser && testUser) {
+        await prisma.users.delete({ where: { id: testUser.id } }).catch(() => {});
+      }
     }
   });
 
@@ -321,7 +363,7 @@ async function main() {
       }
     } finally {
       // Clean up newly created org
-      await prisma.organizations.delete({ where: { id: newOrg.id } }).catch(() => {});
+      await cleanupOrg(newOrg.id);
     }
   });
 

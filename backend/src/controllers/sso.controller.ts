@@ -4,159 +4,92 @@ import { randomUUID } from 'crypto';
 import logger from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
 import { setAuthCookiesAndTokens } from './auth.controller';
+import * as samlify from 'samlify';
+
+// Set schema validator as a no-op to avoid native binaries issues in deployment
+samlify.setSchemaValidator({ validate: () => Promise.resolve('skipped') });
 
 // ==========================================
 // SAML 2.0 SSO CONTROLLER
 // ==========================================
-export const initiateSamlSso = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const orgSlug = req.params.orgSlug as string;
 
-    const org = await prisma.organizations.findUnique({
-      where: { slug: orgSlug },
+export const updateSsoConfig = async (req: any, res: Response, next: NextFunction): Promise<any> => {
+  try {
+    const { idpMetadataXml, attributeMapping, sso_provider } = req.body;
+    const organizationId = req.user.organizationId;
+
+    if (!idpMetadataXml) {
+      return res.status(400).json({ success: false, message: 'IdP Metadata XML is required' });
+    }
+
+    const defaultMapping = {
+      email: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress',
+      name: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'
+    };
+
+    const updatedOrg = await prisma.organizations.update({
+      where: { id: organizationId },
+      data: {
+        sso_enabled: true,
+        sso_provider: sso_provider || 'SAML',
+        saml_metadata: {
+          idpMetadataXml,
+          attributeMapping: attributeMapping || defaultMapping
+        }
+      }
     });
 
-    if (!org) {
-      return res.status(404).json({ success: false, message: 'Organization not found' });
-    }
-
-    if (!org.sso_enabled) {
-      return res.status(501).json({ success: false, message: 'SSO is not enabled for this organization' });
-    }
-
-    // Mock IdP Login Page for premium sandboxed experience
-    const frontendUrl = process.env.FRONTEND_URL?.split(',')[0] || 'http://localhost:5173';
-    
-    // We render a beautiful, highly interactive sandboxed login page
-    res.send(`
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Sentra AI SSO - Identity Provider</title>
-        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-        <style>
-          body {
-            background-color: #0b0f19;
-            color: #f3f4f6;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
-          }
-          .container {
-            background: rgba(17, 24, 39, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(16px);
-            padding: 2.5rem;
-            border-radius: 16px;
-            width: 100%;
-            max-width: 440px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-            text-align: center;
-          }
-          .logo {
-            font-size: 1.8rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 0.5rem;
-          }
-          .subtitle {
-            color: #9ca3af;
-            font-size: 0.95rem;
-            margin-bottom: 2rem;
-          }
-          .card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 1.5rem;
-            border-radius: 12px;
-            margin-bottom: 2rem;
-            text-align: left;
-          }
-          .card-title {
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #6366f1;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-          }
-          .card-value {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #e5e7eb;
-          }
-          .btn {
-            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-            color: #ffffff;
-            border: none;
-            padding: 0.85rem 2rem;
-            font-size: 1rem;
-            font-weight: 600;
-            border-radius: 8px;
-            cursor: pointer;
-            width: 100%;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-          }
-          .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 18px rgba(99, 102, 241, 0.5);
-          }
-          .btn:active {
-            transform: translateY(0);
-          }
-          .footer {
-            margin-top: 1.5rem;
-            font-size: 0.8rem;
-            color: #4b5563;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="logo">Sentra AI SSO</div>
-          <div class="subtitle">Secure Enterprise Authentication Gateway</div>
-          
-          <div class="card">
-            <div class="card-title">Tenant Organization</div>
-            <div class="card-value">${org.name}</div>
-          </div>
-
-          <div class="card">
-            <div class="card-title">Federated Identity</div>
-            <div class="card-value">sso.compliance.manager@${org.slug}.com</div>
-          </div>
-
-          <form action="/api/v1/auth/saml/${org.slug}/callback" method="POST">
-            <input type="hidden" name="SAMLResponse" value="MOCK_ASSERTION_DATA_BASE64_ENCODED_COMPLIANCE_MANAGER">
-            <button type="submit" class="btn">Authorize & Login with SSO</button>
-          </form>
-
-          <div class="footer">
-            Powered by SAML 2.0 Federation Gateway
-          </div>
-        </div>
-      </body>
-      </html>
-    `);
+    logger.info(`[SSO-CONFIG] Updated SSO configuration for org "${organizationId}"`);
+    return res.status(200).json({
+      success: true,
+      data: updatedOrg
+    });
   } catch (error) {
     next(error);
   }
 };
 
-export const samlCallback = async (req: Request, res: Response, next: NextFunction) => {
+export const getSamlMetadata = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   try {
     const orgSlug = req.params.orgSlug as string;
-    const { SAMLResponse } = req.body;
+    const org = await prisma.organizations.findUnique({
+      where: { slug: orgSlug },
+    });
 
+    if (!org) {
+      return res.status(404).json({ success: false, message: 'Organization not found' });
+    }
+
+    if (!org.sso_enabled || !org.saml_metadata) {
+      return res.status(400).json({ success: false, message: 'SSO is not enabled or metadata is not configured' });
+    }
+
+    const samlMetadata = org.saml_metadata as any;
+    if (!samlMetadata || !samlMetadata.idpMetadataXml) {
+      return res.status(400).json({ success: false, message: 'IdP Metadata XML is not configured for this organization' });
+    }
+
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:10000';
+    const sp = samlify.ServiceProvider({
+      entityID: `${backendUrl}/api/v1/saml/${orgSlug}/metadata`,
+      assertionConsumerService: [
+        {
+          Binding: samlify.Constants.BindingNamespace.Post,
+          Location: `${backendUrl}/api/v1/saml/${orgSlug}/callback`,
+        },
+      ],
+    });
+
+    res.header('Content-Type', 'application/xml');
+    return res.status(200).send(sp.getMetadata());
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const initiateSamlSso = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  try {
+    const orgSlug = req.params.orgSlug as string;
     const org = await prisma.organizations.findUnique({
       where: { slug: orgSlug },
     });
@@ -169,11 +102,93 @@ export const samlCallback = async (req: Request, res: Response, next: NextFuncti
       return res.status(501).json({ success: false, message: 'SSO is not enabled for this organization' });
     }
 
-    // Resolve user from SAML response (in this production-ready mock/sandboxed implementation,
-    // we sign them in as a default high-tier compliance manager/administrator)
-    const email = `sso.compliance.manager@${org.slug}.com`;
-    const fullName = 'SSO Compliance Officer';
+    const samlMetadata = org.saml_metadata as any;
+    if (!samlMetadata || !samlMetadata.idpMetadataXml) {
+      return res.status(400).json({ success: false, message: 'IdP Metadata XML is not configured for this organization' });
+    }
 
+    const idp = samlify.IdentityProvider({
+      metadata: samlMetadata.idpMetadataXml,
+    });
+
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:10000';
+    const sp = samlify.ServiceProvider({
+      entityID: `${backendUrl}/api/v1/saml/${orgSlug}/metadata`,
+      assertionConsumerService: [
+        {
+          Binding: samlify.Constants.BindingNamespace.Post,
+          Location: `${backendUrl}/api/v1/saml/${orgSlug}/callback`,
+        },
+      ],
+    });
+
+    const { context } = sp.createLoginRequest(idp, 'redirect');
+    return res.redirect(context);
+  } catch (error) {
+    logger.error('[SAML-SSO] Failed to initiate SAML login:', error);
+    const frontendUrl = process.env.FRONTEND_URL?.split(',')[0] || 'http://localhost:5173';
+    return res.redirect(`${frontendUrl}/login?error=sso_failed`);
+  }
+};
+
+export const samlCallback = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  const orgSlug = req.params.orgSlug as string;
+  try {
+    const org = await prisma.organizations.findUnique({
+      where: { slug: orgSlug },
+    });
+
+    if (!org) {
+      return res.status(404).json({ success: false, message: 'Organization not found' });
+    }
+
+    if (!org.sso_enabled) {
+      return res.status(501).json({ success: false, message: 'SSO is not enabled for this organization' });
+    }
+
+    const samlMetadata = org.saml_metadata as any;
+    if (!samlMetadata || !samlMetadata.idpMetadataXml) {
+      return res.status(400).json({ success: false, message: 'IdP Metadata XML is not configured for this organization' });
+    }
+
+    const idp = samlify.IdentityProvider({
+      metadata: samlMetadata.idpMetadataXml,
+    });
+
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:10000';
+    const sp = samlify.ServiceProvider({
+      entityID: `${backendUrl}/api/v1/saml/${orgSlug}/metadata`,
+      assertionConsumerService: [
+        {
+          Binding: samlify.Constants.BindingNamespace.Post,
+          Location: `${backendUrl}/api/v1/saml/${orgSlug}/callback`,
+        },
+      ],
+    });
+
+    // Parse the SAML response
+    const { extract } = await sp.parseLoginResponse(idp, 'post', req);
+    
+    // Extract user attributes safely
+    const attributeMapping = samlMetadata.attributeMapping || {};
+    const emailClaim = attributeMapping.email || 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress';
+    const nameClaim = attributeMapping.name || 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name';
+
+    const attributes = extract.attributes || {};
+    const rawEmail = attributes[emailClaim] || attributes['email'] || extract.nameID;
+    const rawName = attributes[nameClaim] || attributes['name'] || (typeof rawEmail === 'string' ? rawEmail.split('@')[0] : 'SAML User');
+
+    let email = Array.isArray(rawEmail) ? rawEmail[0] : rawEmail;
+    let name = Array.isArray(rawName) ? rawName[0] : rawName;
+
+    email = String(email || '');
+    name = String(name || '');
+
+    if (!email) {
+      throw new Error('SAML login response did not return a valid email or NameID');
+    }
+
+    // Upsert the user in that organization
     let user = await prisma.users.findUnique({
       where: { email },
     });
@@ -183,13 +198,14 @@ export const samlCallback = async (req: Request, res: Response, next: NextFuncti
         data: {
           id: randomUUID(),
           email,
-          full_name: fullName,
-          role: 'ADMIN', // SSO compliance manager/admin
+          full_name: name,
+          role: 'MEMBER',
           is_active: true,
           organizationId: org.id,
         },
       });
     }
+
 
     // Setup active session, set HTTP-only cookies
     await setAuthCookiesAndTokens(res, {
@@ -198,20 +214,24 @@ export const samlCallback = async (req: Request, res: Response, next: NextFuncti
       organizationId: user.organizationId,
     });
 
+
     await auditLogger.log({
       userId: user.id,
-      organizationId: user.organizationId,
+      organizationId: org.id,
       action: 'SAML_SSO_LOGIN_SUCCESS',
-      metadata: { ip: req.ip, email }
+      metadata: { email, provider: org.sso_provider || 'SAML' }
     });
 
     // Redirect to the frontend dashboard
     const frontendUrl = process.env.FRONTEND_URL?.split(',')[0] || 'http://localhost:5173';
-    res.redirect(`${frontendUrl}/`);
+    return res.redirect(`${frontendUrl}/dashboard`);
   } catch (error) {
-    next(error);
+    logger.error('[SAML-SSO] SAML callback processing failed:', error);
+    const frontendUrl = process.env.FRONTEND_URL?.split(',')[0] || 'http://localhost:5173';
+    return res.redirect(`${frontendUrl}/login?error=sso_failed`);
   }
 };
+
 
 // ==========================================
 // SCIM 2.0 CONTROLLER

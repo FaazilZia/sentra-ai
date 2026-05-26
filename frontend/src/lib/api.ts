@@ -1440,6 +1440,50 @@ export async function fetchSubmissionRiskScore(submissionId: string): Promise<an
   return apiRequest<any>(`/intake/submissions/${submissionId}/risk-score`);
 }
 
+/**
+ * MCP GATEWAY & AGENT KEY ENDPOINTS
+ */
+export async function fetchMcpAgentKeys(): Promise<any[]> {
+  return apiRequest<any[]>('/mcp/agent-keys');
+}
+
+export async function createMcpAgentKey(
+  name: string,
+  allowedTools: string[] = [],
+  blockedTools: string[] = []
+): Promise<any> {
+  return apiRequest<any>('/mcp/agent-keys', {
+    method: 'POST',
+    body: JSON.stringify({ name, allowedTools, blockedTools }),
+  });
+}
+
+export async function revokeMcpAgentKey(keyId: string): Promise<any> {
+  return apiRequest<any>(`/mcp/agent-keys/${keyId}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function fetchMcpAuditLogs(page = 1, limit = 20, decision?: string): Promise<any> {
+  const query = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+    ...(decision && decision !== 'all' ? { decision } : {}),
+  }).toString();
+  return apiRequest<any>(`/mcp/audit-logs?${query}`);
+}
+
+/**
+ * SAML SSO ENDPOINTS
+ */
+export async function saveSsoConfig(idpMetadataXml: string, ssoProvider?: string): Promise<any> {
+  return apiRequest<any>('/sso/config', {
+    method: 'PUT',
+    body: JSON.stringify({ idpMetadataXml, sso_provider: ssoProvider }),
+  });
+}
+
+
 
 
 

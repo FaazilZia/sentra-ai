@@ -93,6 +93,8 @@ model organizations {
   model_lifecycle_events       model_lifecycle_events[]
   training_courses             training_courses[]
   training_completions         training_completions[]
+  mcp_agent_keys               mcp_agent_keys[]
+  mcp_audit_logs               mcp_audit_logs[]
 
   @@map("companies")
 }
@@ -1871,5 +1873,42 @@ model training_completions {
   user           users         @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("training_completions")
+}
+
+model mcp_agent_keys {
+  id             String    @id @default(uuid())
+  organizationId String    @map("organization_id")
+  name           String
+  key_prefix     String    @map("key_prefix")
+  key_hash       String    @map("key_hash")
+  allowed_tools  String[]  @map("allowed_tools")
+  blocked_tools  String[]  @map("blocked_tools")
+  is_active      Boolean   @default(true) @map("is_active")
+  last_used_at   DateTime? @map("last_used_at")
+  created_at     DateTime  @default(now()) @map("created_at")
+  updated_at     DateTime  @updatedAt @map("updated_at")
+
+  organization   organizations @relation(fields: [organizationId], references: [id])
+
+  @@map("mcp_agent_keys")
+}
+
+model mcp_audit_logs {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  agentKeyId     String   @map("agent_key_id")
+  tool_name      String   @map("tool_name")
+  input_summary  String?  @map("input_summary")
+  decision       String
+  risk_level     String?  @map("risk_level")
+  reason         String?
+  duration_ms    Int?     @map("duration_ms")
+  created_at     DateTime @default(now()) @map("created_at")
+
+  organization   organizations @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@index([created_at])
+  @@map("mcp_audit_logs")
 }
 

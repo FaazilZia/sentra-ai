@@ -145,7 +145,7 @@ export const TenantService = {
       });
 
       return createdOrg;
-    }, { timeout: 35000 });
+    }, { timeout: 120000 });
 
     logger.info(`[TenantService] Created org ${org.slug} (${org.id}) and seeded governance frameworks`);
     return org;

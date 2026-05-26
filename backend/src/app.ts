@@ -34,6 +34,8 @@ import iso42001Routes from './routes/iso42001.routes';
 import iso27001Routes from './routes/iso27001.routes';
 import fileIngestionRoutes from './routes/fileIngestion.routes';
 import postMarketMonitoringRoutes from './routes/postMarketMonitoring.routes';
+import mcpRoutes from './routes/mcp.routes';
+import mcpAgentKeyRoutes from './routes/mcpAgentKey.routes';
 
 import advisorRoutes from './routes/advisor.routes';
 import automationRoutes from './routes/automation.routes';
@@ -279,6 +281,8 @@ v1Router.use('/slack', slackRoutes);
 v1Router.use('/change-history', changeHistoryRoutes);
 v1Router.use('/intake', intakeRoutes);
 v1Router.use('/public', publicRoutes);
+v1Router.use('/mcp', mcpRoutes);
+v1Router.use('/mcp', mcpAgentKeyRoutes);
 v1Router.use('/', ssoRoutes);
 
 

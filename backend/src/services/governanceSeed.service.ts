@@ -129,7 +129,7 @@ export async function seedOrganizationGovernance(organizationId: string, txClien
     } else {
       await prisma.$transaction(async (tx) => {
         await runSeeding(tx);
-      }, { timeout: 35000 });
+      }, { timeout: 120000 });
     }
 
     logger.info(`[GovernanceSeeder] Finished seeding controls and obligations successfully for org ${organizationId}`);
