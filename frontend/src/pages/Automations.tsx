@@ -414,6 +414,9 @@ export default function Automations() {
                       setSelectedLogs(auto.execution_logs || []);
                       setSelectedAutoName(auto.name);
                     }}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedLogs(auto.execution_logs || []); setSelectedAutoName(auto.name); } }}
+                    role="button"
+                    tabIndex={0}
                     className={`p-4 flex items-center justify-between hover:bg-slate-50/60 transition-colors cursor-pointer ${
                       selectedAutoName === auto.name ? 'bg-indigo-50/30 border-l-2 border-[var(--royal-indigo)]' : ''
                     }`}

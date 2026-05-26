@@ -6,7 +6,7 @@ import bcrypt from 'bcrypt';
 
 const DEFAULT_ORGANIZATION_ID = '00000000-0000-0000-0000-000000000001';
 const ADMIN_USER_ID = '00000000-0000-0000-0000-000000000002';
-const TARGET_PASSWORD = 'Sentra@Admin123';
+const TARGET_PASSWORD = process.env.ADMIN_RESET_PASSWORD || (() => { throw new Error('ADMIN_RESET_PASSWORD env var is required'); })();
 
 async function main() {
   console.log('🔄 Connecting to Database...');

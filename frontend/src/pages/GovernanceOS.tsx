@@ -261,7 +261,7 @@ export default function GovernanceOS() {
                         <div>
                           <div className="flex items-center justify-between mb-2">
                             <span className="font-mono font-bold text-[10px] text-[var(--royal-indigo)] bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded">
-                              {gap.framework} // {gap.controlCode}
+                              {gap.framework} {'/'} {gap.controlCode}
                             </span>
                             {getSeverityBadge(gap.severity)}
                           </div>

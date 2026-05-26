@@ -120,52 +120,15 @@ export const ISO42001_CONTROLS: IsoControlSeedInput[] = [
   { clause_code: 'Annex A13', control_code: 'ISO-42001-A13-3', title: 'Supply Chain Component Mapping', description: 'Identify and map dependency trees of models and datasets.', evidence_required: ['AI Supply Chain Directory', 'SBOM Document'], checklist_items: ['Track training library versions', 'Map host server physical regions', 'Audit third-party training datasets'] },
 ];
 
+import { seedIsoFramework } from '../utils/isoSeedHelper';
+
 export async function seedIso42001(prisma: any): Promise<void> {
-  logger.info('🌱 Seeding ISO 42001 global framework (Clauses & Controls)...');
-  let clauseCount = 0;
-  let controlCount = 0;
-
-  for (const clauseData of ISO42001_CLAUSES) {
-    const clause = await prisma.iso42001_clauses.upsert({
-      where: { clause_code: clauseData.clause_code },
-      update: {
-        title: clauseData.title,
-        description: clauseData.description,
-        clause_type: clauseData.clause_type,
-      },
-      create: {
-        clause_code: clauseData.clause_code,
-        title: clauseData.title,
-        description: clauseData.description,
-        clause_type: clauseData.clause_type,
-        is_active: true,
-      },
-    });
-    clauseCount++;
-
-    const relatedControls = ISO42001_CONTROLS.filter(c => c.clause_code === clauseData.clause_code);
-    for (const ctrlData of relatedControls) {
-      await prisma.iso42001_controls.upsert({
-        where: { control_code: ctrlData.control_code },
-        update: {
-          clause_id: clause.id,
-          title: ctrlData.title,
-          description: ctrlData.description,
-          evidence_required: ctrlData.evidence_required,
-          checklist_items: ctrlData.checklist_items,
-        },
-        create: {
-          clause_id: clause.id,
-          control_code: ctrlData.control_code,
-          title: ctrlData.title,
-          description: ctrlData.description,
-          evidence_required: ctrlData.evidence_required,
-          checklist_items: ctrlData.checklist_items,
-        },
-      });
-      controlCount++;
-    }
-  }
-
-  logger.info(`✅ ISO 42001 Seeding Completed: seeded ${clauseCount} clauses, ${controlCount} controls.`);
+  await seedIsoFramework(prisma, {
+    frameworkLabel: 'ISO 42001',
+    clauseModel: 'iso42001_clauses',
+    controlModel: 'iso42001_controls',
+    clauses: ISO42001_CLAUSES,
+    controls: ISO42001_CONTROLS,
+  });
 }
+

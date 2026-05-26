@@ -89,50 +89,15 @@ export const ISO27001_CONTROLS: Iso27001ControlSeedInput[] = [
   { clause_code: 'Annex A8', control_code: 'ISO-27001-A8-3', title: 'Endpoint Threat Protection', description: 'Deploy antivirus, file monitoring, and security baselines on user machines.', evidence_required: ['MDM Enrollment Reports', 'Antivirus Detection Records'], checklist_items: ['Enroll corporate devices in MDM', 'Enforce automated software patching cycles', 'Enforce local disk encryption'] },
 ];
 
+import { seedIsoFramework } from '../utils/isoSeedHelper';
+
 export async function seedIso27001(prisma: any): Promise<void> {
-  logger.info('🌱 Seeding ISO 27001 global framework (Clauses & Controls)...');
-  let clauseCount = 0;
-  let controlCount = 0;
-
-  for (const clauseData of ISO27001_CLAUSES) {
-    const clause = await prisma.iso27001_clauses.upsert({
-      where: { clause_code: clauseData.clause_code },
-      update: {
-        title: clauseData.title,
-        description: clauseData.description,
-      },
-      create: {
-        clause_code: clauseData.clause_code,
-        title: clauseData.title,
-        description: clauseData.description,
-        is_active: true,
-      },
-    });
-    clauseCount++;
-
-    const relatedControls = ISO27001_CONTROLS.filter(c => c.clause_code === clauseData.clause_code);
-    for (const ctrlData of relatedControls) {
-      await prisma.iso27001_controls.upsert({
-        where: { control_code: ctrlData.control_code },
-        update: {
-          clause_id: clause.id,
-          title: ctrlData.title,
-          description: ctrlData.description,
-          evidence_required: ctrlData.evidence_required,
-          checklist_items: ctrlData.checklist_items,
-        },
-        create: {
-          clause_id: clause.id,
-          control_code: ctrlData.control_code,
-          title: ctrlData.title,
-          description: ctrlData.description,
-          evidence_required: ctrlData.evidence_required,
-          checklist_items: ctrlData.checklist_items,
-        },
-      });
-      controlCount++;
-    }
-  }
-
-  logger.info(`✅ ISO 27001 Seeding Completed: seeded ${clauseCount} clauses, ${controlCount} controls.`);
+  await seedIsoFramework(prisma, {
+    frameworkLabel: 'ISO 27001',
+    clauseModel: 'iso27001_clauses',
+    controlModel: 'iso27001_controls',
+    clauses: ISO27001_CLAUSES,
+    controls: ISO27001_CONTROLS,
+  });
 }
+
