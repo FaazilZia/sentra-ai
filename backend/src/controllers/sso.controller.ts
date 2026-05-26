@@ -5,6 +5,7 @@ import logger from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
 import { setAuthCookiesAndTokens } from './auth.controller';
 import * as samlify from 'samlify';
+import { encrypt, decrypt } from '../utils/encryption';
 
 // Set schema validator as a no-op to avoid native binaries issues in deployment
 samlify.setSchemaValidator({ validate: () => Promise.resolve('skipped') });
@@ -27,6 +28,33 @@ export const updateSsoConfig = async (req: any, res: Response, next: NextFunctio
       name: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'
     };
 
+    // Get current org configuration to preserve the existing SCIM Bearer token if it exists
+    const org = await prisma.organizations.findUnique({
+      where: { id: organizationId }
+    });
+
+    const samlMetadata = (org?.saml_metadata as any) || {};
+    const existingTokenEncrypted = samlMetadata.scimBearerToken || samlMetadata.SCIM_BEARER_TOKEN;
+
+    let plaintextToken = '';
+    let encryptedToken = '';
+
+    if (existingTokenEncrypted) {
+      try {
+        // Try decrypting the existing token (if stored encrypted)
+        plaintextToken = decrypt(existingTokenEncrypted);
+        encryptedToken = existingTokenEncrypted;
+      } catch (err) {
+        // Legacy plaintext token: encrypt it now and preserve the plaintext value
+        plaintextToken = existingTokenEncrypted;
+        encryptedToken = encrypt(plaintextToken);
+      }
+    } else {
+      // Generate a new UUID for first-time setup
+      plaintextToken = randomUUID();
+      encryptedToken = encrypt(plaintextToken);
+    }
+
     const updatedOrg = await prisma.organizations.update({
       where: { id: organizationId },
       data: {
@@ -34,7 +62,8 @@ export const updateSsoConfig = async (req: any, res: Response, next: NextFunctio
         sso_provider: sso_provider || 'SAML',
         saml_metadata: {
           idpMetadataXml,
-          attributeMapping: attributeMapping || defaultMapping
+          attributeMapping: attributeMapping || defaultMapping,
+          scimBearerToken: encryptedToken // Encrypted at rest!
         }
       }
     });
@@ -42,7 +71,8 @@ export const updateSsoConfig = async (req: any, res: Response, next: NextFunctio
     logger.info(`[SSO-CONFIG] Updated SSO configuration for org "${organizationId}"`);
     return res.status(200).json({
       success: true,
-      data: updatedOrg
+      data: updatedOrg,
+      scimBearerToken: plaintextToken // Plaintext returned to admin!
     });
   } catch (error) {
     next(error);

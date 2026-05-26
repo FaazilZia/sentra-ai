@@ -16,6 +16,7 @@ const ShadowAIPage = lazy(() => import('./pages/ShadowAI'));
 const InventoryPage = lazy(() => import('./pages/Inventory'));
 const SettingsPage = lazy(() => import('./pages/Settings'));
 const DriftPage = lazy(() => import('./pages/Drift'));
+const ConsentManagerPage = lazy(() => import('./pages/ConsentManager'));
 
 // GRC features pages
 const AdvisorPage = lazy(() => import('./pages/Advisor'));
@@ -119,6 +120,11 @@ function AppRoutes() {
             <Route 
               path="/app/inventory" 
               element={user ? <AppLayout><InventoryPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/consent" 
+              element={user ? <AppLayout><ConsentManagerPage /></AppLayout> : <Navigate to="/login" replace />}
             />
 
             {/* Governance routes */}

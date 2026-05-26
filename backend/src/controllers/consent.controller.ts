@@ -50,8 +50,17 @@ export const getConsentHistory = asyncHandler(async (req: any, res: Response) =>
 export const grantConsent = asyncHandler(async (req: any, res: Response) => {
   const userId = req.user.id;
   const action = 'GRANT';
-  const noticeVersion = '1.0.0';
+  const noticeVersion = req.body.notice_version || req.body.noticeVersion || '1.0.0';
   
+  const latest = await prisma.consent_records.findFirst({
+    where: { user_id: userId },
+    orderBy: { created_at: 'desc' },
+  });
+
+  if (latest?.action === action) {
+    return sendSuccess(res, undefined, 200, 'Consent already granted');
+  }
+
   await createConsentRecord(userId, action, noticeVersion, req);
 
   return sendSuccess(res, undefined, 201, 'Consent granted successfully');
@@ -60,8 +69,17 @@ export const grantConsent = asyncHandler(async (req: any, res: Response) => {
 export const withdrawConsent = asyncHandler(async (req: any, res: Response) => {
   const userId = req.user.id;
   const action = 'WITHDRAW';
-  const noticeVersion = '1.0.0';
+  const noticeVersion = req.body.notice_version || req.body.noticeVersion || '1.0.0';
   
+  const latest = await prisma.consent_records.findFirst({
+    where: { user_id: userId },
+    orderBy: { created_at: 'desc' },
+  });
+
+  if (latest?.action === action) {
+    return sendSuccess(res, undefined, 200, 'Consent already withdrawn');
+  }
+
   await createConsentRecord(userId, action, noticeVersion, req, { reason: 'user_request' });
   
   return sendSuccess(res, undefined, 201, 'Consent withdrawn successfully');

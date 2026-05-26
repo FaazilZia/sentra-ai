@@ -37,7 +37,7 @@ export default function TrustPortal() {
 
   // Admin visibility toggle (only visible when authenticated user views their own portal)
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isPortalEnabled, setIsPortalEnabled] = useState(false);
+  const [isPortalEnabled, setIsPortalEnabled] = useState<boolean | null>(null);
 
   useEffect(() => {
     loadPublicData();
@@ -71,9 +71,6 @@ export default function TrustPortal() {
       const res = await apiRequest<{ user: { id: string } }>('/user/me');
       if (res.user?.id) {
         setIsAuthenticated(true);
-        // If authenticated, check if toggle is enabled
-        const settingsRes = await fetch(`${apiBaseUrl}/public/${orgSlug}/trust`);
-        setIsPortalEnabled(settingsRes.ok);
       }
     } catch {
       setIsAuthenticated(false);
@@ -176,7 +173,7 @@ export default function TrustPortal() {
           <div className="flex items-center justify-center py-40">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
           </div>
-        ) : error || !isPortalEnabled ? (
+        ) : error || isPortalEnabled === false ? (
           <div className="flex flex-col items-center justify-center py-20 bg-gradient-to-br from-[#111827]/40 to-black/40 border border-gray-800/80 rounded-3xl p-8 text-center max-w-lg mx-auto shadow-2xl">
             <div className="rounded-full bg-red-500/10 p-4 border border-red-500/20 mb-4">
               <Lock className="h-8 w-8 text-red-400" />

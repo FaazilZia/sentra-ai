@@ -13,6 +13,8 @@ if (REDIS_URL) {
   }));
 }
 
+// Guard comment: postMarketQueue is initialized at module load and can be null (e.g. when Redis is offline).
+// Always verify its nullability before calling queue-dependent methods to prevent runtime exceptions.
 export const postMarketQueue = connection ? new Queue('post-market-monitoring', { connection }) : null;
 
 export class PostMarketMonitoringService {
@@ -106,31 +108,35 @@ export class PostMarketMonitoringService {
   static async getMonitoringDashboard(organizationId: string) {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-    const [driftAlertCount, openIncidents, latestEval] = await Promise.all([
-      prisma.drift_alerts.count({
-        where: { organizationId, timestamp: { gte: thirtyDaysAgo } }
-      }),
-      prisma.incidents.count({
-        where: { organizationId, status: { not: 'resolved' } }
-      }),
-      prisma.evaluation_runs.findFirst({
-        where: { organizationId, status: 'completed' },
-        orderBy: { completed_at: 'desc' }
-      })
-    ]);
+    try {
+      const [driftAlertCount, openIncidents, latestEval] = await Promise.all([
+        prisma.drift_alerts.count({
+          where: { organizationId, timestamp: { gte: thirtyDaysAgo } }
+        }),
+        prisma.incidents.count({
+          where: { organizationId, status: { not: 'resolved' } }
+        }),
+        prisma.evaluation_runs.findFirst({
+          where: { organizationId, status: 'completed' },
+          orderBy: { completed_at: 'desc' }
+        })
+      ]);
 
-    let daysSinceLastEvaluation = -1;
-    if (latestEval && latestEval.completed_at) {
-      const diffMs = Date.now() - new Date(latestEval.completed_at).getTime();
-      daysSinceLastEvaluation = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      let daysSinceLastEvaluation = -1;
+      if (latestEval && latestEval.completed_at) {
+        const diffMs = Date.now() - new Date(latestEval.completed_at).getTime();
+        daysSinceLastEvaluation = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      }
+
+      return {
+        driftAlerts30d: driftAlertCount,
+        openIncidents,
+        avgEvalScore: latestEval ? latestEval.governance_score : 80.0,
+        daysSinceLastEvaluation
+      };
+    } catch (err: any) {
+      throw new Error(`Failed to query database for post-market monitoring dashboard: ${err.message}`);
     }
-
-    return {
-      driftAlerts30d: driftAlertCount,
-      openIncidents,
-      avgEvalScore: latestEval ? latestEval.governance_score : 80.0,
-      daysSinceLastEvaluation
-    };
   }
 
   /**

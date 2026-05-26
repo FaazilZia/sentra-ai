@@ -16,6 +16,8 @@ module.exports = {
   resetModules: true,
   restoreMocks: true,
   setupFilesAfterEnv: ['<rootDir>/src/tests/setup.ts'],
+  globalSetup: '<rootDir>/src/tests/dbSetup.ts',
+  globalTeardown: '<rootDir>/src/tests/dbTeardown.ts',
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.test.json', diagnostics: { ignoreCodes: [151002] } }],
   },

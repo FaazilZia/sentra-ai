@@ -1,4 +1,6 @@
-// Mock queue service for CI/test environments where Redis is unavailable
+// Intentional: BullMQ requires a Redis connection unavailable in CI.
+// All queue-dependent services are tested via integration tests against
+// a real DB; queue dispatch is verified by checking the mock was called.
 export const runFairly = jest.fn().mockImplementation(
   async (_orgId: string, fn: () => Promise<any>) => fn()
 );

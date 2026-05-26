@@ -32,19 +32,28 @@ export default function Drift() {
   const [generatingReport, setGeneratingReport] = useState(false);
   const [postMarketReport, setPostMarketReport] = useState<any | null>(null);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [postMarketError, setPostMarketError] = useState<string | null>(null);
+  const [reportError, setReportError] = useState<string | null>(null);
 
   const loadData = async (showToast = false) => {
     try {
       setLoading(true);
+      let pmError: string | null = null;
       const [allAlerts, allAgents, pmRes] = await Promise.all([
         fetchDriftAlerts(filter === 'all' ? undefined : filter),
         fetchAIAgents(),
-        apiRequest<any>('/post-market-monitoring/dashboard').catch(() => null)
+        apiRequest<any>('/post-market-monitoring/dashboard').catch((err: any) => {
+          pmError = err.message || 'Failed to load post-market telemetry overview.';
+          return null;
+        })
       ]);
       setAlerts(allAlerts || []);
       setAgents(allAgents || []);
+      setPostMarketError(pmError);
       if (pmRes) {
         setPostMarketDashboard(pmRes);
+      } else {
+        setPostMarketDashboard(null);
       }
       if (showToast) {
         addToast({ message: 'Drift data successfully synced.', type: 'success' });
@@ -93,6 +102,8 @@ export default function Drift() {
 
   const handleGenerateReport = async () => {
     setGeneratingReport(true);
+    setReportError(null);
+    setPostMarketReport(null);
     addToast({ message: 'Compiling Drift, Incidents, and Evaluation Telemetry...', type: 'info' });
     try {
       const res = await apiRequest<any>('/post-market-monitoring/report');
@@ -103,6 +114,8 @@ export default function Drift() {
       loadData();
     } catch (err: any) {
       console.error('Report compilation failed:', err);
+      setReportError(err.message || 'Failed to compile Article 72 compliance report.');
+      setIsReportOpen(true);
       addToast({ message: err.message || 'Report generation failed', type: 'error' });
     } finally {
       setGeneratingReport(false);
@@ -240,26 +253,36 @@ export default function Drift() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3.5 my-4 pt-3.5 border-t border-gray-850 text-xs">
-              <div>
-                <span className="text-[10px] text-gray-500 block">30d Drift Count</span>
-                <span className="text-sm font-black text-white">{postMarketDashboard?.driftAlerts30d || 0}</span>
+            {postMarketError ? (
+              <div className="my-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-[10px] flex items-start gap-2 text-left">
+                <AlertTriangle className="h-4 w-4 shrink-0 text-red-500 mt-0.5 animate-bounce" />
+                <div>
+                  <span className="font-bold block text-white uppercase text-[9px] tracking-wider">Telemetry Load Failed</span>
+                  {postMarketError}
+                </div>
               </div>
-              <div>
-                <span className="text-[10px] text-gray-500 block">Open SLA Incidents</span>
-                <span className="text-sm font-black text-white">{postMarketDashboard?.openIncidents || 0}</span>
+            ) : (
+              <div className="grid grid-cols-2 gap-3.5 my-4 pt-3.5 border-t border-gray-850 text-xs">
+                <div>
+                  <span className="text-[10px] text-gray-500 block">30d Drift Count</span>
+                  <span className="text-sm font-black text-white">{postMarketDashboard?.driftAlerts30d || 0}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-gray-500 block">Open SLA Incidents</span>
+                  <span className="text-sm font-black text-white">{postMarketDashboard?.openIncidents || 0}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-gray-500 block">Avg Eval Score</span>
+                  <span className="text-sm font-black text-indigo-400">{postMarketDashboard?.avgEvalScore || 80}%</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-gray-500 block">Days Since Eval</span>
+                  <span className="text-sm font-black text-white">
+                    {postMarketDashboard?.daysSinceLastEvaluation === -1 ? 'None run' : postMarketDashboard?.daysSinceLastEvaluation}
+                  </span>
+                </div>
               </div>
-              <div>
-                <span className="text-[10px] text-gray-500 block">Avg Eval Score</span>
-                <span className="text-sm font-black text-indigo-400">{postMarketDashboard?.avgEvalScore || 80}%</span>
-              </div>
-              <div>
-                <span className="text-[10px] text-gray-500 block">Days Since Eval</span>
-                <span className="text-sm font-black text-white">
-                  {postMarketDashboard?.daysSinceLastEvaluation === -1 ? 'None run' : postMarketDashboard?.daysSinceLastEvaluation}
-                </span>
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -438,7 +461,7 @@ export default function Drift() {
       </div>
 
       {/* Post-Market Compliance Report Drawer */}
-      {isReportOpen && postMarketReport && (
+      {isReportOpen && (postMarketReport || reportError) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
           <div className="bg-[#111827] border border-gray-800 rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl animate-scale-in flex flex-col h-[85vh]">
             
@@ -459,80 +482,92 @@ export default function Drift() {
             {/* Body */}
             <div className="p-6 flex-1 overflow-y-auto space-y-6 text-xs text-left">
               
-              {/* Summary and Timeframe */}
-              <div className="bg-purple-950/10 border border-purple-900/30 p-4 rounded-2xl flex flex-col gap-1.5 leading-relaxed text-purple-300">
-                <div className="flex items-center justify-between font-bold">
-                  <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest">Auditor Summary</span>
-                  <span className="text-[9px] uppercase tracking-wider bg-purple-950/20 px-2 py-0.5 rounded border border-purple-500/10">
-                    Timeframe: {postMarketReport.timeframeDays} days
-                  </span>
-                </div>
-                <p className="text-white text-[13px] font-bold mt-1 leading-snug">{postMarketReport.summary}</p>
-                <span className="text-[9px] text-gray-500 mt-2 font-mono">Generated: {new Date(postMarketReport.generatedAt).toLocaleString()}</span>
-              </div>
-
-              {/* Grid Metrics */}
-              <div className="grid grid-cols-3 gap-4">
-                <div className="bg-black/20 border border-gray-850 p-4 rounded-2xl text-center">
-                  <span className="text-[10px] text-gray-500 block uppercase font-bold">Drift Events</span>
-                  <span className="text-2xl font-black text-white mt-1.5 block">{postMarketReport.metrics.driftAlertsCount}</span>
-                </div>
-                <div className="bg-black/20 border border-gray-850 p-4 rounded-2xl text-center">
-                  <span className="text-[10px] text-gray-500 block uppercase font-bold">Open SLA Issues</span>
-                  <span className="text-2xl font-black text-white mt-1.5 block">{postMarketReport.metrics.openIncidents}</span>
-                </div>
-                <div className="bg-black/20 border border-gray-850 p-4 rounded-2xl text-center">
-                  <span className="text-[10px] text-gray-500 block uppercase font-bold">Avg Evaluation</span>
-                  <span className="text-2xl font-black text-indigo-400 mt-1.5 block">{postMarketReport.metrics.avgEvalScore}%</span>
-                </div>
-              </div>
-
-              {/* Incidents Breakdown */}
-              <div className="bg-black/10 border border-gray-850 p-5 rounded-2xl space-y-3">
-                <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-1.5">
-                  <ShieldAlert className="h-3.5 w-3.5 text-rose-500" /> Incidents Severity Breakdown
-                </span>
-                
-                <div className="grid grid-cols-3 gap-3 text-center text-xs">
-                  <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-xl text-red-400">
-                    <span className="text-[9px] uppercase font-bold">High Severity</span>
-                    <span className="text-lg font-black block mt-0.5">{postMarketReport.metrics.incidentsBySeverity.high}</span>
-                  </div>
-                  <div className="bg-orange-500/10 border border-orange-500/20 p-3 rounded-xl text-orange-400">
-                    <span className="text-[9px] uppercase font-bold">Medium Severity</span>
-                    <span className="text-lg font-black block mt-0.5">{postMarketReport.metrics.incidentsBySeverity.medium}</span>
-                  </div>
-                  <div className="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-xl text-emerald-400">
-                    <span className="text-[9px] uppercase font-bold">Low Severity</span>
-                    <span className="text-lg font-black block mt-0.5">{postMarketReport.metrics.incidentsBySeverity.low}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Compliance Statuses */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                
-                <div className="bg-black/20 border border-gray-850 p-4 rounded-2xl flex items-center justify-between">
+              {reportError ? (
+                <div className="p-5 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 shrink-0 text-red-500 mt-0.5 animate-bounce" />
                   <div>
-                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest block">EU AI Act Art. 15 Status</span>
-                    <span className="text-xs text-gray-400 mt-1 block">Accuracy, Cyber, and Robustness</span>
+                    <span className="font-bold text-white uppercase tracking-wider block mb-1 text-[10px]">Report Compilation Failed</span>
+                    <span>{reportError}</span>
                   </div>
-                  <span className="text-sm font-black text-indigo-400 bg-indigo-950/20 px-3 py-1 rounded-xl border border-indigo-500/15 uppercase font-mono">
-                    {postMarketReport.compliance.art15Status}
-                  </span>
                 </div>
-
-                <div className="bg-black/20 border border-gray-850 p-4 rounded-2xl flex items-center justify-between">
-                  <div>
-                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest block">EU AI Act Art. 72 Status</span>
-                    <span className="text-xs text-gray-400 mt-1 block">Post-Market Monitoring Obligations</span>
+              ) : postMarketReport ? (
+                <>
+                  {/* Summary and Timeframe */}
+                  <div className="bg-purple-950/10 border border-purple-900/30 p-4 rounded-2xl flex flex-col gap-1.5 leading-relaxed text-purple-300">
+                    <div className="flex items-center justify-between font-bold">
+                      <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest">Auditor Summary</span>
+                      <span className="text-[9px] uppercase tracking-wider bg-purple-950/20 px-2 py-0.5 rounded border border-purple-500/10">
+                        Timeframe: {postMarketReport.timeframeDays} days
+                      </span>
+                    </div>
+                    <p className="text-white text-[13px] font-bold mt-1 leading-snug">{postMarketReport.summary}</p>
+                    <span className="text-[9px] text-gray-500 mt-2 font-mono">Generated: {new Date(postMarketReport.generatedAt).toLocaleString()}</span>
                   </div>
-                  <span className="text-sm font-black text-purple-400 bg-purple-950/20 px-3 py-1 rounded-xl border border-purple-500/15 uppercase font-mono">
-                    {postMarketReport.compliance.art72Status}
-                  </span>
-                </div>
 
-              </div>
+                  {/* Grid Metrics */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="bg-black/20 border border-gray-850 p-4 rounded-2xl text-center">
+                      <span className="text-[10px] text-gray-500 block uppercase font-bold">Drift Events</span>
+                      <span className="text-2xl font-black text-white mt-1.5 block">{postMarketReport.metrics.driftAlertsCount}</span>
+                    </div>
+                    <div className="bg-black/20 border border-gray-850 p-4 rounded-2xl text-center">
+                      <span className="text-[10px] text-gray-500 block uppercase font-bold">Open SLA Issues</span>
+                      <span className="text-2xl font-black text-white mt-1.5 block">{postMarketReport.metrics.openIncidents}</span>
+                    </div>
+                    <div className="bg-black/20 border border-gray-850 p-4 rounded-2xl text-center">
+                      <span className="text-[10px] text-gray-500 block uppercase font-bold">Avg Evaluation</span>
+                      <span className="text-2xl font-black text-indigo-400 mt-1.5 block">{postMarketReport.metrics.avgEvalScore}%</span>
+                    </div>
+                  </div>
+
+                  {/* Incidents Breakdown */}
+                  <div className="bg-black/10 border border-gray-850 p-5 rounded-2xl space-y-3">
+                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-1.5">
+                      <ShieldAlert className="h-3.5 w-3.5 text-rose-500" /> Incidents Severity Breakdown
+                    </span>
+                    
+                    <div className="grid grid-cols-3 gap-3 text-center text-xs">
+                      <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-xl text-red-400">
+                        <span className="text-[9px] uppercase font-bold">High Severity</span>
+                        <span className="text-lg font-black block mt-0.5">{postMarketReport.metrics.incidentsBySeverity.high}</span>
+                      </div>
+                      <div className="bg-orange-500/10 border border-orange-500/20 p-3 rounded-xl text-orange-400">
+                        <span className="text-[9px] uppercase font-bold">Medium Severity</span>
+                        <span className="text-lg font-black block mt-0.5">{postMarketReport.metrics.incidentsBySeverity.medium}</span>
+                      </div>
+                      <div className="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-xl text-emerald-400">
+                        <span className="text-[9px] uppercase font-bold">Low Severity</span>
+                        <span className="text-lg font-black block mt-0.5">{postMarketReport.metrics.incidentsBySeverity.low}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Compliance Statuses */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    
+                    <div className="bg-black/20 border border-gray-850 p-4 rounded-2xl flex items-center justify-between">
+                      <div>
+                        <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest block">EU AI Act Art. 15 Status</span>
+                        <span className="text-xs text-gray-400 mt-1 block">Accuracy, Cyber, and Robustness</span>
+                      </div>
+                      <span className="text-sm font-black text-indigo-400 bg-indigo-950/20 px-3 py-1 rounded-xl border border-indigo-500/15 uppercase font-mono">
+                        {postMarketReport.compliance.art15Status}
+                      </span>
+                    </div>
+
+                    <div className="bg-black/20 border border-gray-850 p-4 rounded-2xl flex items-center justify-between">
+                      <div>
+                        <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest block">EU AI Act Art. 72 Status</span>
+                        <span className="text-xs text-gray-400 mt-1 block">Post-Market Monitoring Obligations</span>
+                      </div>
+                      <span className="text-sm font-black text-purple-400 bg-purple-950/20 px-3 py-1 rounded-xl border border-purple-500/15 uppercase font-mono">
+                        {postMarketReport.compliance.art72Status}
+                      </span>
+                    </div>
+
+                  </div>
+                </>
+              ) : null}
 
             </div>
 

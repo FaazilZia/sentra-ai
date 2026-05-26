@@ -89,7 +89,11 @@ export const setAuthCookiesAndTokens = async (
 ) => {
   const role = user.role || 'USER';
   const accessToken = generateAccessToken({ id: user.id, role, organizationId: user.organizationId });
-  const refreshToken = generateRefreshToken({ id: user.id, organizationId: user.organizationId });
+  const refreshToken = generateRefreshToken({ 
+    id: user.id, 
+    organizationId: user.organizationId,
+    nonce: randomUUID()
+  });
 
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 7);

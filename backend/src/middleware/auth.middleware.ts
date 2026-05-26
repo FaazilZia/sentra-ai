@@ -6,6 +6,7 @@ import logger from '../utils/logger';
 import { Redis } from 'ioredis';
 import * as Sentry from '@sentry/node';
 import { getRedisClient } from '../config/redis';
+import { decrypt } from '../utils/encryption';
 
 const API_KEY_CACHE_TTL = 300; // 5 minutes
 
@@ -141,6 +142,51 @@ export const authenticate = async (req: any, res: Response, next: NextFunction) 
   } catch (error) {
     logger.error('Authentication Error:', error);
     res.status(401).json({ success: false, message: 'Invalid or expired credentials' });
+  }
+};
+
+export const authenticateScim = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ success: false, message: 'Authentication required' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ success: false, message: 'Authentication required' });
+    }
+
+    // Retrieve all organizations with SSO enabled
+    const allSsoOrgs = await prisma.organizations.findMany({
+      where: { sso_enabled: true }
+    });
+
+    // Find the organization by decrypting and comparing SCIM tokens
+    const org = allSsoOrgs.find((o: any) => {
+      const meta = o.saml_metadata as any;
+      if (!meta) return false;
+      const storedToken = meta.scimBearerToken || meta.SCIM_BEARER_TOKEN;
+      if (!storedToken) return false;
+      try {
+        // Try decrypting the stored token (since it is encrypted at rest)
+        const decrypted = decrypt(storedToken);
+        return decrypted === token;
+      } catch (err) {
+        // Plaintext fallback (legacy setups / backward compatibility)
+        return storedToken === token;
+      }
+    });
+
+    if (!org) {
+      return res.status(401).json({ success: false, message: 'Invalid SCIM credentials' });
+    }
+
+    req.user = { organizationId: org.id };
+    return next();
+  } catch (error) {
+    logger.error('SCIM Authentication Error:', error);
+    res.status(401).json({ success: false, message: 'Invalid or expired SCIM credentials' });
   }
 };
 

@@ -86,7 +86,7 @@ import { Pool } from 'pg';
 
 // ─── Real Prisma client (no mocking) ─────────────────────────────────────────
 
-const TEST_DB_URL = process.env.TEST_DATABASE_URL;
+const TEST_DB_URL = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL_TEST || 'postgresql://postgres:postgres@localhost:5432/sentra_test';
 
 // Skip the entire suite if no test DB is configured
 const itOrSkip = TEST_DB_URL ? it : it.skip;
@@ -152,6 +152,7 @@ describe('Integration: Register → Login → Create Policy → Check Action →
         password: TEST_PASSWORD,
         fullName: `Integration Tester ${RUN_ID}`,
         organizationId: TEST_ORG_ID,
+        organizationName: `Int Test Org ${RUN_ID}`,
       });
 
     expect(res.status).toBe(201);
