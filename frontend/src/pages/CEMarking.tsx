@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { 
-  Award, FileText, CheckCircle2, Shield, Activity, 
-  Database, BookOpen, ChevronRight, X, Sparkles, 
-  AlertTriangle, HelpCircle, Save 
+  Award, FileText, Shield, Activity, 
+  Database, BookOpen, ChevronRight, Sparkles, 
+  HelpCircle, Save 
 } from 'lucide-react';
 import { apiRequest } from '@/lib/api';
 import { useStore } from '@/store/useStore';
 import { cn } from '@/lib/utils';
-import PageHeader from '@/components/ui/PageHeader';
+
 
 interface CeMarkingRecord {
   id: string;
@@ -110,7 +110,7 @@ export default function CEMarking() {
     if (!activeRecord) return;
     setSaving(true);
     try {
-      const updated = await apiRequest<{ data: CeMarkingRecord }>(`/ce-marking/${activeRecord.ai_system_id}/classification`, {
+      const updated = await apiRequest<{ data: CeMarkingRecord }>(`/ce-marking/${activeRecord.ai_system.id}/classification`, {
         method: 'PATCH',
         body: JSON.stringify({ classification, scopeNotes }),
       });
@@ -131,7 +131,7 @@ export default function CEMarking() {
     
     setSaving(true);
     try {
-      const updated = await apiRequest<{ data: CeMarkingRecord }>(`/ce-marking/${activeRecord.ai_system_id}/step`, {
+      const updated = await apiRequest<{ data: CeMarkingRecord }>(`/ce-marking/${activeRecord.ai_system.id}/step`, {
         method: 'PATCH',
         body: JSON.stringify({
           step: stepKey,
@@ -249,7 +249,7 @@ export default function CEMarking() {
 
           {/* 7 Steps checklist */}
           <div className="lg:col-span-2 flex flex-col gap-4">
-            {STEPS_CONFIG.map((s, idx) => {
+            {STEPS_CONFIG.map((s) => {
               const val = steps[s.key] || { status: 'NOT_STARTED', notes: '' };
               const isDone = val.status === 'COMPLETED';
               const isInProgress = val.status === 'IN_PROGRESS';
@@ -331,7 +331,7 @@ export default function CEMarking() {
             <p className="text-[10px] mt-1">Add AI systems to the registry first to begin tracking CE conformity certification.</p>
           </div>
         ) : aiSystems.map(sys => {
-          const record = records.find(r => r.ai_system_id === sys.id);
+          const record = records.find(r => r.ai_system.id === sys.id);
           const completedCount = record ? [
             record.step1_conformity_assessment,
             record.step2_technical_documentation,

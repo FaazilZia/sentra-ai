@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store/useStore';
-import { fetchPolicies, PolicyResponse, apiBaseUrl } from '@/lib/api';
+import { fetchPolicies, PolicyResponse, apiBaseUrl, apiRequest } from '@/lib/api';
 import { EvidenceSection } from '../components/shared/EvidenceSection';
 import { ChangeHistoryTimeline } from '../components/shared/ChangeHistoryTimeline';
 

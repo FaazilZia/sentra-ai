@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
-  ShieldCheck, FileText, CheckCircle2, AlertCircle, ChevronDown, ChevronUp,
-  Save, Search, Filter, HelpCircle, Eye, Trash2, ToggleRight, Sparkles, RefreshCw
+  ChevronDown, ChevronUp,
+  Save, Search, HelpCircle, RefreshCw
 } from 'lucide-react';
 import { apiRequest } from '@/lib/api';
 import { useStore } from '@/store/useStore';

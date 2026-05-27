@@ -5,7 +5,7 @@ import {
   Edit, X, ListTodo
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { getFrameworkLabel, getStatusBadgeColor, SEARCH_INPUT_CLASS, SELECT_FILTER_CLASS, MODAL_INPUT_CLASS } from '@/lib/governanceUtils';
+import { getFrameworkLabel, getStatusBadgeColor, SEARCH_INPUT_CLASS, SELECT_FILTER_CLASS } from '@/lib/governanceUtils';
 
 interface ControlImplementation {
   id: string;

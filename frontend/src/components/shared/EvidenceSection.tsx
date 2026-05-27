@@ -208,7 +208,7 @@ export function EvidenceSection({ entityType, entityId }: EvidenceSectionProps) 
         </div>
       ) : files.length === 0 ? (
         <div className="text-center py-6 border border-dashed border-[var(--border-default)] rounded-[var(--radius)]">
-          <File className="h-8 w-8 text-[var(--text-muted)] opacity-55 mx-auto mb-1.5" />
+          <FileText className="h-8 w-8 text-[var(--text-muted)] opacity-55 mx-auto mb-1.5" />
           <p className="text-[9px] font-black uppercase text-[var(--text-muted)] tracking-wider">No attached evidence found</p>
         </div>
       ) : (

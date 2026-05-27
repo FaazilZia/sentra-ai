@@ -19,9 +19,7 @@ import {
   Shield,
   QrCode,
   Lock,
-  Unlock,
-  Eye,
-  EyeOff
+  Unlock
 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { useAuth } from '@/lib/auth';

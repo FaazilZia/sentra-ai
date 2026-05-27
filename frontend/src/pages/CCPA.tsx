@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { 
-  ShieldCheck, FileText, CheckCircle2, AlertCircle, ChevronDown, ChevronUp,
-  Save, Search, Filter, HelpCircle, Eye, Trash2, ToggleRight, Sparkles, RefreshCw
+  ShieldCheck, ChevronDown, ChevronUp,
+  Save, Search, HelpCircle, RefreshCw
 } from 'lucide-react';
 import { apiRequest } from '@/lib/api';
 import { useStore } from '@/store/useStore';
 import { cn } from '@/lib/utils';
-import PageHeader from '@/components/ui/PageHeader';
+
 
 interface CCPAControl {
   control_code: string;
@@ -258,7 +258,6 @@ export default function CCPA() {
 
             const sectionTotal = section.controls.length;
             const sectionCompleted = section.controls.filter(c => c.implementation?.status === 'IMPLEMENTED' || c.implementation?.status === 'NOT_APPLICABLE').length;
-            const sectionPct = sectionTotal > 0 ? Math.round((sectionCompleted / sectionTotal) * 100) : 0;
 
             return (
               <div key={section.section_code} className="bg-[#111827]/40 border border-gray-800 rounded-2xl overflow-hidden backdrop-blur-md">
