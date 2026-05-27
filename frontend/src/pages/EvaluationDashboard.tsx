@@ -110,9 +110,97 @@ const EvaluationDashboard: React.FC = () => {
   const [runningBiasPreset, setRunningBiasPreset] = useState<string | null>(null);
   const [biasAuditResult, setBiasAuditResult] = useState<BiasAuditResult | null>(null);
 
+  // Live Model Evaluation States
+  const [liveEvalModalOpen, setLiveEvalModalOpen] = useState(false);
+  const [liveModel, setLiveModel] = useState('gpt-4o-mini');
+  const [liveCategory, setLiveCategory] = useState('PROMPT_INJECTION');
+  const [liveApiKey, setLiveApiKey] = useState('');
+  const [liveRunning, setLiveRunning] = useState(false);
+  const [activePollRunId, setActivePollRunId] = useState<string | null>(null);
+  const [liveRunStatus, setLiveRunStatus] = useState<string>('');
+  const [liveRunScore, setLiveRunScore] = useState<number | null>(null);
+  const [liveRunResults, setLiveRunResults] = useState<any[]>([]);
+  const [liveSummary, setLiveSummary] = useState<any>(null);
+
+
   useEffect(() => {
     fetchAll();
   }, []);
+
+  // Polling for live evaluation status
+  useEffect(() => {
+    if (!activePollRunId) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/v1/evaluation/runs/${activePollRunId}`, { credentials: 'include' });
+        const data = await res.json();
+        if (data.success) {
+          const run = data.data;
+          setLiveRunStatus(run.status);
+          if (run.status === 'completed') {
+            setLiveRunScore(run.governance_score);
+            setLiveRunResults(run.results || []);
+            
+            const metadata = run.metadata || {};
+            setLiveSummary(metadata.summary || {
+              passed: run.passed_tests,
+              failed: run.failed_tests,
+              total: run.total_tests,
+              model: metadata.model || 'gpt-4o-mini',
+              dataset: metadata.dataset || 'Prompt Injection Attacks'
+            });
+            
+            setLiveRunning(false);
+            setActivePollRunId(null);
+            fetchAll();
+            clearInterval(interval);
+          } else if (run.status === 'failed') {
+            setLiveRunStatus('failed');
+            setLiveRunning(false);
+            setActivePollRunId(null);
+            clearInterval(interval);
+            alert('Live evaluation run failed.');
+          }
+        }
+      } catch (err) {
+        console.error('Error polling run status:', err);
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [activePollRunId]);
+
+  const handleLiveEvalSubmit = async () => {
+    setLiveRunning(true);
+    setLiveRunResults([]);
+    setLiveRunScore(null);
+    setLiveSummary(null);
+    setLiveRunStatus('running');
+    try {
+      const res = await fetch('/api/v1/evaluations/live-run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          model: liveModel,
+          datasetCategory: liveCategory,
+          apiKey: liveApiKey || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setActivePollRunId(data.data.runId);
+      } else {
+        alert(data.error || 'Failed to start live evaluation');
+        setLiveRunning(false);
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || 'Network error occurred');
+      setLiveRunning(false);
+    }
+  };
 
   const fetchAll = async () => {
     setLoading(true);
@@ -199,19 +287,33 @@ const EvaluationDashboard: React.FC = () => {
         </div>
         
         {activeTab === 'safety' && (
-          <button
-            onClick={triggerEval}
-            disabled={triggering}
-            style={{
-              padding: '10px 20px', borderRadius: '10px', border: 'none',
-              background: triggering ? '#334155' : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-              color: '#fff', fontWeight: 600, cursor: triggering ? 'not-allowed' : 'pointer',
-              fontSize: '0.875rem', boxShadow: triggering ? 'none' : '0 4px 12px rgba(99,102,241,0.3)',
-              transition: 'all 0.2s',
-            }}
-          >
-            {triggering ? '⟳ Starting...' : '▶ Run Safety Evaluation'}
-          </button>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              onClick={() => setLiveEvalModalOpen(true)}
+              style={{
+                padding: '10px 20px', borderRadius: '10px', border: '1px solid rgba(99,102,241,0.4)',
+                background: 'rgba(99,102,241,0.1)',
+                color: '#a5b4fc', fontWeight: 600, cursor: 'pointer',
+                fontSize: '0.875rem',
+                transition: 'all 0.2s',
+              }}
+            >
+              ⚡ Run Live LLM Evaluation
+            </button>
+            <button
+              onClick={triggerEval}
+              disabled={triggering}
+              style={{
+                padding: '10px 20px', borderRadius: '10px', border: 'none',
+                background: triggering ? '#334155' : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                color: '#fff', fontWeight: 600, cursor: triggering ? 'not-allowed' : 'pointer',
+                fontSize: '0.875rem', boxShadow: triggering ? 'none' : '0 4px 12px rgba(99,102,241,0.3)',
+                transition: 'all 0.2s',
+              }}
+            >
+              {triggering ? '⟳ Starting...' : '▶ Run Sandbox Evaluation'}
+            </button>
+          </div>
         )}
       </div>
 
@@ -533,6 +635,267 @@ const EvaluationDashboard: React.FC = () => {
             </div>
           )}
 
+        </div>
+      )}
+
+      {/* Live Model Evaluation Modal */}
+      {liveEvalModalOpen && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(15,15,26,0.8)', backdropFilter: 'blur(8px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+        }}>
+          <div style={{
+            background: 'rgba(30,41,59,0.95)', border: '1px solid rgba(99,102,241,0.3)',
+            borderRadius: '16px', padding: '28px', width: '90%', maxWidth: '560px',
+            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: '20px',
+            color: '#e2e8f0'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: 0, color: '#f1f5f9' }}>
+                ⚡ Live Model Evaluation Setup
+              </h3>
+              <button 
+                onClick={() => setLiveEvalModalOpen(false)}
+                style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '1.1rem' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '8px' }}>
+                Select LLM Model
+              </label>
+              <select
+                value={liveModel}
+                onChange={(e) => setLiveModel(e.target.value)}
+                style={{
+                  width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #334155',
+                  background: '#1e293b', color: '#fff', fontSize: '0.85rem', outline: 'none'
+                }}
+              >
+                <option value="gpt-4o-mini">gpt-4o-mini (Recommended)</option>
+                <option value="gpt-4o">gpt-4o</option>
+                <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+              </select>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '8px' }}>
+                Select Dataset Category
+              </label>
+              <select
+                value={liveCategory}
+                onChange={(e) => setLiveCategory(e.target.value)}
+                style={{
+                  width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #334155',
+                  background: '#1e293b', color: '#fff', fontSize: '0.85rem', outline: 'none'
+                }}
+              >
+                <option value="PROMPT_INJECTION">PROMPT_INJECTION (Prompt Injection Attacks)</option>
+                <option value="PII">PII (PII Leakage Detection)</option>
+                <option value="JAILBREAK">JAILBREAK (Jailbreak Attempts)</option>
+                <option value="DATA_EXFILTRATION">DATA_EXFILTRATION (Data Exfiltration Patterns)</option>
+              </select>
+            </div>
+
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>
+                  OpenAI API Key (Optional)
+                </label>
+                <span style={{ fontSize: '0.65rem', color: '#64748b', fontStyle: 'italic' }}>
+                  Falls back to Organization Key
+                </span>
+              </div>
+              <input
+                type="password"
+                placeholder="sk-..."
+                value={liveApiKey}
+                onChange={(e) => setLiveApiKey(e.target.value)}
+                style={{
+                  width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #334155',
+                  background: '#1e293b', color: '#fff', fontSize: '0.85rem', outline: 'none'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+              <button
+                onClick={handleLiveEvalSubmit}
+                disabled={liveRunning}
+                style={{
+                  flex: 1, padding: '12px', borderRadius: '8px', border: 'none',
+                  background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                  color: '#fff', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer',
+                  transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+                }}
+              >
+                {liveRunning ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    Running live evaluation ({liveRunStatus})...
+                  </>
+                ) : (
+                  'Run Live Evaluation'
+                )}
+              </button>
+              <button
+                onClick={() => setLiveEvalModalOpen(false)}
+                disabled={liveRunning}
+                style={{
+                  padding: '12px 18px', borderRadius: '8px', border: '1px solid #334155',
+                  background: 'transparent', color: '#94a3b8', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+
+            {liveRunning && (
+              <div style={{
+                marginTop: '8px', padding: '12px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)',
+                borderRadius: '8px', textAlign: 'center', fontSize: '0.8rem', color: '#c7d2fe'
+              }}>
+                🔄 Requesting real LLM chat completions and running Sentra Governance validations...
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Live Model Evaluation Results Display Panel */}
+      {liveSummary && (
+        <div style={{
+          marginTop: '28px', background: 'rgba(30,41,59,0.3)', border: '1px solid rgba(99,102,241,0.3)',
+          borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+          animation: 'fade-in 0.4s'
+        }}>
+          <div style={{
+            padding: '20px 24px', borderBottom: '1px solid #1e293b', background: 'rgba(30,41,59,0.5)',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px'
+          }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.2rem' }}>⚡</span> Live Evaluation Results: {liveSummary.dataset}
+              </h3>
+              <p style={{ color: '#94a3b8', fontSize: '0.8rem', margin: '4px 0 0 0' }}>
+                Tested model <span style={{ color: '#fff', fontWeight: 600 }}>{liveSummary.model}</span> using real live completions.
+              </p>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '20px' }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#22c55e' }}>
+                  {liveSummary.passed}/{liveSummary.total}
+                </div>
+                <div style={{ color: '#64748b', fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: 750 }}>
+                  Passed Tests
+                </div>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#ef4444' }}>
+                  {liveSummary.failed}
+                </div>
+                <div style={{ color: '#64748b', fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: 750 }}>
+                  Failed Tests
+                </div>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{
+                  fontSize: '1.4rem', fontWeight: 800,
+                  color: liveRunScore !== null ? (liveRunScore * 100 >= 80 ? '#22c55e' : liveRunScore * 100 >= 60 ? '#f59e0b' : '#ef4444') : '#fff'
+                }}>
+                  {liveRunScore !== null ? `${Math.round(liveRunScore * 100)}%` : '0%'}
+                </div>
+                <div style={{ color: '#64748b', fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: 750 }}>
+                  Governance Score
+                </div>
+              </div>
+              <button
+                onClick={() => { setLiveSummary(null); setLiveRunResults([]); }}
+                style={{
+                  background: 'rgba(30,41,59,0.6)', border: '1px solid #334155', color: '#94a3b8',
+                  padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer', alignSelf: 'center'
+                }}
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.75rem' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid #1e293b', color: '#64748b', background: 'rgba(15,15,26,0.3)', fontWeight: 700 }}>
+                  <th style={{ padding: '16px' }}>Scenario Input</th>
+                  <th style={{ padding: '16px' }}>Type</th>
+                  <th style={{ padding: '16px' }}>Expected Option</th>
+                  <th style={{ padding: '16px' }}>Model Response (Real-time)</th>
+                  <th style={{ padding: '16px' }}>Sentra Decision</th>
+                  <th style={{ padding: '16px' }}>Latency</th>
+                  <th style={{ padding: '16px', textAlign: 'right' }}>Result</th>
+                </tr>
+              </thead>
+              <tbody>
+                {liveRunResults.map((res: any, idx: number) => {
+                  const details = res.details || {};
+                  const isPassed = res.passed;
+                  return (
+                    <tr key={idx} style={{ borderBottom: '1px solid #1e293b', background: 'rgba(30,41,59,0.1)', transition: 'background 0.15s' }}>
+                      <td style={{ padding: '16px', color: '#fff', fontWeight: 550, maxWidth: '200px', lineHeight: 1.5 }}>
+                        {res.input}
+                        <div style={{ display: 'flex', gap: '4px', marginTop: '6px' }}>
+                          {(details.tags || []).map((t: string) => (
+                            <span key={t} style={{ fontSize: '8px', color: '#64748b', background: '#1e293b', padding: '1px 6px', borderRadius: '4px' }}>
+                              #{t}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td style={{ padding: '16px', color: '#94a3b8' }}>
+                        {res.test_type}
+                      </td>
+                      <td style={{ padding: '16px', color: '#94a3b8', fontFamily: 'monospace' }}>
+                        {res.expected}
+                      </td>
+                      <td style={{ padding: '16px', color: '#cbd5e1', maxWidth: '250px', lineHeight: 1.4, fontStyle: details.error ? 'italic' : 'normal' }}>
+                        {details.error ? (
+                          <span style={{ color: '#ef4444' }}>⚠️ Error: {details.error}</span>
+                        ) : (
+                          details.model_response_preview || 'No response content'
+                        )}
+                      </td>
+                      <td style={{ padding: '16px' }}>
+                        <span style={{
+                          padding: '2px 8px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 700,
+                          background: res.actual === 'BLOCKED' ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)',
+                          color: res.actual === 'BLOCKED' ? '#ef4444' : '#22c55e'
+                        }}>
+                          {res.actual || 'ALLOWED'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '16px', color: '#64748b' }}>
+                        {details.latency_ms ? `${details.latency_ms}ms` : 'N/A'}
+                      </td>
+                      <td style={{ padding: '16px', textAlign: 'right' }}>
+                        <span style={{
+                          padding: '4px 10px', borderRadius: '8px', fontSize: '0.7rem', fontWeight: 800,
+                          background: isPassed ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
+                          color: isPassed ? '#22c55e' : '#ef4444',
+                          border: isPassed ? '1px solid rgba(34,197,94,0.2)' : '1px solid rgba(239,68,68,0.2)'
+                        }}>
+                          {isPassed ? 'PASS' : 'FAIL'}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

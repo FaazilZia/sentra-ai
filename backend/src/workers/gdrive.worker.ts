@@ -1,9 +1,75 @@
 import { google } from 'googleapis';
+import { makeDecision } from '../services/decisionEngine';
 import prisma from '../config/db';
 import logger from '../utils/logger';
 import { decrypt } from '../utils/encryption';
 import { interceptAction } from '../middleware/interceptor';
 import { updateConnectorTelemetry } from './worker.manager';
+
+export class GDriveGovernanceConnector {
+  private organizationId: string;
+  private agentName: string;
+
+  constructor(organizationId: string, agentName: string = 'gdrive-connector') {
+    this.organizationId = organizationId;
+    this.agentName = agentName;
+  }
+
+  private async governanceCheck(action: string, metadata: Record<string, any>): Promise<void> {
+    const decision = await makeDecision(this.agentName, action, this.organizationId, metadata);
+
+    await prisma.interception_logs.create({
+      data: {
+        user_id: `gdrive_${this.agentName}`,
+        organizationId: this.organizationId,
+        input_text: JSON.stringify(metadata),
+        decision: decision.status === 'blocked' ? 'BLOCK' : 'ALLOW',
+        confidence: 'High',
+        reason: decision.reason,
+        policy_triggered: decision.compliance.join(', ') || 'GDrive Baseline Policy',
+        metadata: { action, riskLevel: decision.risk, ...metadata },
+        timestamp: new Date(),
+      },
+    });
+
+    if (decision.status === 'blocked') {
+      throw new Error(`GDrive action blocked by Sentra governance: ${decision.reason}`);
+    }
+  }
+
+  private getDriveClient(accessToken: string) {
+    const auth = new google.auth.OAuth2();
+    auth.setCredentials({ access_token: accessToken });
+    return google.drive({ version: 'v3', auth });
+  }
+
+  async listFiles(accessToken: string, query?: string): Promise<any[]> {
+    await this.governanceCheck('gdrive_list_files', { query: query || 'all' });
+    const drive = this.getDriveClient(accessToken);
+    const response = await drive.files.list({
+      q: query,
+      pageSize: 20,
+      fields: 'files(id, name, mimeType, modifiedTime, size)',
+    });
+    logger.info(`[GDrive Governance] Listed ${response.data.files?.length || 0} files`);
+    return response.data.files || [];
+  }
+
+  async readFile(accessToken: string, fileId: string, fileName: string): Promise<string> {
+    await this.governanceCheck('gdrive_read_file', { fileId, fileName });
+    const drive = this.getDriveClient(accessToken);
+    const response = await drive.files.export(
+      { fileId, mimeType: 'text/plain' },
+      { responseType: 'stream' }
+    );
+    return new Promise((resolve, reject) => {
+      let content = '';
+      (response.data as any).on('data', (chunk: Buffer) => { content += chunk.toString(); });
+      (response.data as any).on('end', () => resolve(content));
+      (response.data as any).on('error', reject);
+    });
+  }
+}
 
 const MAX_DRIVE_FILES = 50;
 const COST_PER_DRIVE_API = 0.0005; // Google API cost estimate

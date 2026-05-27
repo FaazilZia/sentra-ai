@@ -7,6 +7,7 @@ import { seedEuAiActControls } from '../src/services/euAiActSeed.service';
 import { seedNistAiRmf } from '../src/services/nistAiRmfSeed.service';
 import { seedIso42001 } from '../src/services/iso42001Seed.service';
 import { seedIso27001 } from '../src/services/iso27001Seed.service';
+import { seedCcpa } from '../src/services/ccpaSeed.service';
 
 dotenv.config();
 
@@ -184,6 +185,14 @@ async function main() {
     await seedIso27001(prisma);
   } catch (e: any) {
     console.error('❌ Failed to seed ISO 27001 Controls:', e.message);
+  }
+
+  // 10. Seed CCPA Controls
+  console.log('🐻 Seeding CCPA Controls...');
+  try {
+    await seedCcpa(prisma);
+  } catch (e: any) {
+    console.error('❌ Failed to seed CCPA Controls:', e.message);
   }
 
   console.log('\n🎉 Seed completed!');

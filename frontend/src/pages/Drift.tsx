@@ -100,6 +100,17 @@ export default function Drift() {
     }
   };
 
+  const handleSeedBaselines = async () => {
+    try {
+      addToast({ message: 'Seeding behavioral baselines for all agents...', type: 'info' });
+      const result = await apiRequest<any>('/drift/baseline/backfill-all', { method: 'POST' });
+      addToast({ message: `Baselines seeded for ${result.data?.seeded || 0} agents. Running scan...`, type: 'success' });
+      await handleScan();
+    } catch (err: any) {
+      addToast({ message: err.message || 'Failed to seed baselines', type: 'error' });
+    }
+  };
+
   const handleGenerateReport = async () => {
     setGeneratingReport(true);
     setReportError(null);
@@ -180,6 +191,15 @@ export default function Drift() {
           >
             <Sparkles className="h-4 w-4" />
             {generatingReport ? 'Compiling...' : 'Compile Art. 72 Report'}
+          </button>
+
+          {/* Seed Baselines Button */}
+          <button
+            onClick={handleSeedBaselines}
+            className="flex items-center gap-2 px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-xl text-[10px] font-black text-gray-300 uppercase tracking-widest hover:bg-gray-700 transition-all active:scale-95"
+          >
+            <Activity className="h-4 w-4" />
+            Seed Baselines
           </button>
 
           {/* Trigger Scan Button */}

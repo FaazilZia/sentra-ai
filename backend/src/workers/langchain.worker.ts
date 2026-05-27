@@ -1,12 +1,9 @@
+import { ChatOpenAI } from '@langchain/openai';
+import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { makeDecision } from '../services/decisionEngine';
 import prisma from '../config/db';
 import logger from '../utils/logger';
 
-/**
- * LangChain Governance Callback Handler.
- * Intercepts tool execution starts, runs standard governance evaluation via makeDecision,
- * logs to interception_logs, and prevents execution on failure.
- */
 export class LangChainGovernanceHandler {
   private organizationId: string;
   private agentName: string;
@@ -16,20 +13,13 @@ export class LangChainGovernanceHandler {
     this.agentName = agentName;
   }
 
-  /**
-   * Called before a tool is executed.
-   */
   async handleToolStart(tool: { name: string; description?: string }, input: string, runId: string): Promise<void> {
-    logger.info(`[LangChain Governance] Intercepting tool "${tool.name}" with input: "${input.slice(0, 100)}..."`);
-
-    // 1. Evaluate safety/compliance via the decision engine
+    logger.info(`[LangChain Governance] Intercepting tool "${tool.name}"`);
     const decision = await makeDecision(this.agentName, tool.name, this.organizationId, { input, runId });
 
-    // 2. Persist audit evidence to interception_logs
     await prisma.interception_logs.create({
       data: {
-        id: undefined, // auto-generated UUID
-        user_id: 'system_langchain_agent',
+        user_id: `langchain_${this.agentName}`,
         organizationId: this.organizationId,
         input_text: input,
         decision: decision.status === 'blocked' ? 'BLOCK' : 'ALLOW',
@@ -41,12 +31,27 @@ export class LangChainGovernanceHandler {
       },
     });
 
-    // 3. Block execution in the LangChain runtime if policy dictates
     if (decision.status === 'blocked') {
-      logger.warn(`[LangChain Governance] Execution BLOCKED for tool "${tool.name}": ${decision.reason}`);
       throw new Error(`Execution Blocked by Sentra AI Governance: ${decision.reason}`);
     }
+  }
 
-    logger.info(`[LangChain Governance] Execution ALLOWED for tool "${tool.name}"`);
+  // Factory: create a governed LangChain ChatOpenAI instance
+  async createGovernedLLM(apiKey?: string): Promise<ChatOpenAI> {
+    const resolvedKey = apiKey || process.env.OPENAI_API_KEY;
+    if (!resolvedKey) throw new Error('No OpenAI API key configured');
+    return new ChatOpenAI({ openAIApiKey: resolvedKey, modelName: 'gpt-4o-mini', temperature: 0 });
+  }
+
+  async chat(userMessage: string, systemPrompt?: string, apiKey?: string): Promise<string> {
+    await this.handleToolStart({ name: 'langchain_chat' }, userMessage, `run_${Date.now()}`);
+
+    const llm = await this.createGovernedLLM(apiKey);
+    const messages = systemPrompt
+      ? [new SystemMessage(systemPrompt), new HumanMessage(userMessage)]
+      : [new HumanMessage(userMessage)];
+
+    const response = await llm.invoke(messages);
+    return typeof response.content === 'string' ? response.content : JSON.stringify(response.content);
   }
 }

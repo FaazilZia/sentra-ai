@@ -85,6 +85,8 @@ model organizations {
   iso42001_implementations     iso42001_implementations[]
   iso27001_implementations     iso27001_implementations[]
   evidence_files               evidence_files[]
+  ce_marking_records           ce_marking_records[]
+  ccpa_implementations         ccpa_implementations[]
 
   // Feature Relations
   advisor_conversations        advisor_conversations[]
@@ -976,6 +978,7 @@ model ai_systems {
   fria_assessments   fria_assessments[]
   datasets           datasets[]
   model_lifecycle_events model_lifecycle_events[]
+  ce_marking_records ce_marking_records[]
 
   @@index([organizationId])
   @@map("ai_systems")
@@ -1910,5 +1913,87 @@ model mcp_audit_logs {
   @@index([organizationId])
   @@index([created_at])
   @@map("mcp_audit_logs")
+}
+
+model ce_marking_records {
+  id              String        @id @default(uuid())
+  organizationId  String        @map("organization_id")
+  ai_system_id    String        @map("ai_system_id")
+  classification  String        @default("LIMITED_RISK") // UNACCEPTABLE | HIGH_RISK | LIMITED_RISK | MINIMAL_RISK
+  scope_notes     String?       @map("scope_notes")
+
+  // 7 conformity steps
+  step1_conformity_assessment  String @default("NOT_STARTED") // NOT_STARTED | IN_PROGRESS | COMPLETED
+  step2_technical_documentation String @default("NOT_STARTED")
+  step3_quality_management      String @default("NOT_STARTED")
+  step4_declaration_of_conformity String @default("NOT_STARTED")
+  step5_eu_database_registration String @default("NOT_STARTED")
+  step6_ce_mark_affixing        String @default("NOT_STARTED")
+  step7_post_market_monitoring  String @default("NOT_STARTED")
+
+  step1_notes   String?
+  step2_notes   String?
+  step3_notes   String?
+  step4_notes   String?
+  step5_notes   String?
+  step6_notes   String?
+  step7_notes   String?
+
+  overall_status  String        @default("NOT_STARTED") // NOT_STARTED | IN_PROGRESS | CERTIFIED
+  certified_at    DateTime?
+  created_at      DateTime      @default(now())
+  updated_at      DateTime      @updatedAt
+
+  organization  organizations @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  ai_system     ai_systems    @relation(fields: [ai_system_id], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, ai_system_id])
+  @@index([organizationId])
+  @@map("ce_marking_records")
+}
+
+model ccpa_sections {
+  id           String          @id @default(uuid())
+  section_code String          @unique
+  title        String
+  description  String
+  section_type String          @default("SECTION") // SECTION | CATEGORY
+  is_active    Boolean         @default(true)
+  created_at   DateTime        @default(now())
+  controls     ccpa_controls[]
+  @@map("ccpa_sections")
+}
+
+model ccpa_controls {
+  id               String                 @id @default(uuid())
+  section_id       String
+  control_code     String                 @unique
+  title            String
+  description      String
+  evidence_required String[]
+  checklist_items  String[]
+  is_active        Boolean                @default(true)
+  created_at       DateTime               @default(now())
+  section          ccpa_sections          @relation(fields: [section_id], references: [id])
+  implementations  ccpa_implementations[]
+  @@map("ccpa_controls")
+}
+
+model ccpa_implementations {
+  id             String        @id @default(uuid())
+  organizationId String        @map("organization_id")
+  control_id     String        @map("control_id")
+  status         String        @default("NOT_STARTED") // NOT_STARTED | IN_PROGRESS | IMPLEMENTED | NOT_APPLICABLE
+  notes          String?
+  owner_user_id  String?       @map("owner_user_id")
+  due_date       DateTime?     @map("due_date")
+  evidence_links Json          @default("[]") @map("evidence_links")
+  last_reviewed  DateTime?     @map("last_reviewed")
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+  organization   organizations @relation(fields: [organizationId], references: [id])
+  control        ccpa_controls @relation(fields: [control_id], references: [id])
+  @@unique([organizationId, control_id])
+  @@map("ccpa_implementations")
 }
 

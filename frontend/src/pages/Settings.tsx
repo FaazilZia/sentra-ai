@@ -15,7 +15,13 @@ import {
   X,
   ExternalLink,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  Shield,
+  QrCode,
+  Lock,
+  Unlock,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { useAuth } from '@/lib/auth';
@@ -33,8 +39,10 @@ import {
   createMcpAgentKey,
   revokeMcpAgentKey,
   fetchMcpAuditLogs,
-  saveSsoConfig
+  saveSsoConfig,
+  apiRequest
 } from '@/lib/api';
+
 
 export default function Settings() {
   const addToast = useStore((state) => state.addToast);
@@ -92,7 +100,29 @@ export default function Settings() {
   const [idpMetadataXml, setIdpMetadataXml] = useState('');
   const [savingSso, setSavingSso] = useState(false);
 
+  // MFA States
+  const [mfaStatus, setMfaStatus] = useState<{ enabled: boolean } | null>(null);
+  const [mfaSetupData, setMfaSetupData] = useState<{
+    qrCodeUrl: string;
+    manualKey: string;
+  } | null>(null);
+  const [mfaToken, setMfaToken] = useState('');
+  const [mfaLoading, setMfaLoading] = useState(false);
+  const [showRecoveryCodes, setShowRecoveryCodes] = useState(false);
+  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
+  const [codesCopied, setCodesCopied] = useState(false);
+
+
   // Initialize and Load Data
+  const loadMfaStatus = async () => {
+    try {
+      const res = await apiRequest<{ enabled: boolean }>('/auth/mfa/status');
+      setMfaStatus(res);
+    } catch (_) {
+      setMfaStatus({ enabled: false });
+    }
+  };
+
   useEffect(() => {
     async function loadGeneralData() {
       try {
@@ -117,6 +147,8 @@ export default function Settings() {
       } catch (err) {
         console.error('Settings load Slack config error:', err);
       }
+
+      await loadMfaStatus();
     }
     loadGeneralData();
   }, []);
@@ -264,6 +296,60 @@ export default function Settings() {
       addToast({ message: 'Slack integration disconnected', type: 'info' });
     } catch (err) {
       addToast({ message: 'Failed to disconnect Slack integration', type: 'error' });
+    }
+  };
+
+  // MFA Handlers
+  const handleMfaSetup = async () => {
+    setMfaLoading(true);
+    try {
+      const res = await apiRequest<{ qrCodeUrl: string; manualKey: string }>('/auth/mfa/setup', { method: 'POST' });
+      setMfaSetupData(res || null);
+      addToast({ message: 'Scan the QR code with your authenticator app', type: 'info' });
+    } catch (err: any) {
+      addToast({ message: err.message || 'Failed to set up MFA', type: 'error' });
+    } finally {
+      setMfaLoading(false);
+    }
+  };
+
+  const handleMfaEnable = async () => {
+    if (!mfaToken || mfaToken.length < 6) return addToast({ message: 'Enter your 6-digit TOTP code', type: 'error' });
+    setMfaLoading(true);
+    try {
+      const res = await apiRequest<{ recoveryCodes?: string[] }>('/auth/mfa/enable', {
+        method: 'POST',
+        body: JSON.stringify({ token: mfaToken }),
+      });
+      const codes = res?.recoveryCodes || [];
+      setRecoveryCodes(codes);
+      setShowRecoveryCodes(true);
+      setMfaSetupData(null);
+      setMfaToken('');
+      await loadMfaStatus();
+      addToast({ message: 'MFA enabled successfully', type: 'success' });
+    } catch (err: any) {
+      addToast({ message: err.message || 'Invalid token — try again', type: 'error' });
+    } finally {
+      setMfaLoading(false);
+    }
+  };
+
+  const handleMfaDisable = async () => {
+    if (!mfaToken || mfaToken.length < 6) return addToast({ message: 'Enter your current TOTP code to disable MFA', type: 'error' });
+    setMfaLoading(true);
+    try {
+      await apiRequest('/auth/mfa/disable', {
+        method: 'POST',
+        body: JSON.stringify({ token: mfaToken }),
+      });
+      setMfaToken('');
+      await loadMfaStatus();
+      addToast({ message: 'MFA disabled', type: 'success' });
+    } catch (err: any) {
+      addToast({ message: err.message || 'Failed to disable MFA', type: 'error' });
+    } finally {
+      setMfaLoading(false);
     }
   };
 
@@ -623,6 +709,179 @@ export default function Settings() {
                     <Save className="h-3.5 w-3.5" />
                     {slackSaving ? 'Saving...' : 'Save Settings'}
                   </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 4: Multi-Factor Authentication (MFA) */}
+            <div className="lg:col-span-12 space-y-4">
+              <div className="card-base p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-[var(--royal-indigo)]" />
+                    Multi-Factor Authentication (MFA)
+                  </h3>
+                  <span className={`text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded border ${
+                    mfaStatus?.enabled 
+                      ? 'bg-green-500/10 text-green-500 border-green-500/20' 
+                      : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
+                  }`}>
+                    {mfaStatus?.enabled ? 'Active & Enforced' : 'Disabled'}
+                  </span>
+                </div>
+
+                <div className="space-y-6">
+                  {mfaStatus?.enabled ? (
+                    <div className="space-y-6">
+                      <div className="flex items-start gap-3 bg-green-500/10 border border-green-500/20 rounded p-4 text-[var(--text-primary)]">
+                        <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-wide text-green-400">TOTP Authenticator Protection Active</p>
+                          <p className="text-[10px] text-[var(--text-secondary)] mt-1">
+                            Your account is protected by an industry-standard time-based one-time password (TOTP) authenticator. Verification will be required at login.
+                          </p>
+                        </div>
+                      </div>
+
+                      {showRecoveryCodes && recoveryCodes.length > 0 && (
+                        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded p-4 space-y-3">
+                          <div className="flex items-center gap-2">
+                            <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-yellow-500">MFA Recovery Codes Generated</span>
+                          </div>
+                          <p className="text-[10px] text-[var(--text-secondary)] leading-relaxed">
+                            Write down these recovery codes in a secure location. Each code can be used once to bypass MFA if you lose your authentication device.
+                          </p>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 font-mono text-xs text-[var(--text-primary)] bg-[var(--bg-page)] p-3 rounded border border-[var(--border-default)]">
+                            {recoveryCodes.map((code, idx) => (
+                              <div key={idx} className="flex justify-between items-center bg-black/10 px-2.5 py-1.5 rounded">
+                                <span>{code}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(recoveryCodes.join('\n'));
+                                setCodesCopied(true);
+                                addToast({ message: 'Recovery codes copied', type: 'info' });
+                                setTimeout(() => setCodesCopied(false), 2000);
+                              }}
+                              className="flex items-center gap-2 px-3 py-1.5 bg-black/5 hover:bg-black/10 border border-[var(--border-default)] rounded text-[9px] font-black uppercase tracking-widest text-[var(--text-primary)] transition-all"
+                            >
+                              <Copy className="h-3 w-3" />
+                              {codesCopied ? 'Copied!' : 'Copy Codes'}
+                            </button>
+                            <button
+                              onClick={() => setShowRecoveryCodes(false)}
+                              className="px-3 py-1.5 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all"
+                            >
+                              I Have Saved These Codes
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="border-t border-[var(--border-default)]/60 pt-4">
+                        <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-2">Disable Multi-Factor Authentication</span>
+                        <div className="flex flex-col md:flex-row md:items-center gap-3">
+                          <input 
+                            type="text" 
+                            placeholder="Enter 6-digit TOTP code to confirm" 
+                            value={mfaToken}
+                            onChange={(e) => setMfaToken(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                            className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-xs font-mono font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)] w-64"
+                          />
+                          <button 
+                            onClick={handleMfaDisable}
+                            disabled={mfaLoading || mfaToken.length < 6}
+                            className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50 flex items-center gap-2"
+                          >
+                            <Lock className="h-3.5 w-3.5" />
+                            Disable Authenticator
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
+                        Add an extra layer of security to your enterprise account by configuring a mobile authenticator app (such as Google Authenticator, Duo, or 1Password). Verification tokens will be prompted on every system dashboard login request.
+                      </p>
+
+                      {!mfaSetupData ? (
+                        <button
+                          onClick={handleMfaSetup}
+                          disabled={mfaLoading}
+                          className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                        >
+                          <Unlock className="h-3.5 w-3.5" />
+                          Enable Authenticator
+                        </button>
+                      ) : (
+                        <div className="border border-[var(--border-default)] rounded p-5 bg-[var(--bg-page)] space-y-6">
+                          <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+                            <div className="bg-white p-2 rounded-xl border border-[var(--border-default)] shrink-0 flex items-center justify-center shadow-lg animate-fade-in">
+                              <img src={mfaSetupData.qrCodeUrl} alt="MFA QR Code" className="h-32 w-32 object-contain" />
+                            </div>
+                            <div className="space-y-3 flex-1">
+                              <h4 className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wide">Configure mobile app</h4>
+                              <p className="text-[10px] text-[var(--text-secondary)] leading-relaxed">
+                                Scan the QR code using your mobile authenticator app. If your device camera is unable to scan it, enter the manual configuration key below:
+                              </p>
+                              <div className="flex items-center gap-2">
+                                <div className="bg-black/10 border border-[var(--border-default)] rounded px-3 py-1.5 font-mono text-xs text-[var(--text-primary)] flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+                                  {mfaSetupData.manualKey}
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(mfaSetupData.manualKey);
+                                    addToast({ message: 'Manual key copied', type: 'info' });
+                                  }}
+                                  className="p-1.5 text-[var(--text-muted)] hover:text-[var(--royal-indigo)] bg-black/5 hover:bg-black/10 border border-[var(--border-default)] rounded transition-colors"
+                                  title="Copy Manual Key"
+                                >
+                                  <Copy className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="border-t border-[var(--border-default)] pt-4 space-y-3">
+                            <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block">Verify Authenticator Setup</label>
+                            <p className="text-[10px] text-[var(--text-secondary)] mb-2">
+                              Enter the 6-digit verification code generated by your mobile app to finalize configuration:
+                            </p>
+                            <div className="flex flex-col md:flex-row md:items-center gap-3">
+                              <input 
+                                type="text" 
+                                placeholder="Enter 6-digit TOTP code" 
+                                value={mfaToken}
+                                onChange={(e) => setMfaToken(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-xs font-mono font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)] w-64"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={handleMfaEnable}
+                                  disabled={mfaLoading || mfaToken.length < 6}
+                                  className="px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50 flex items-center gap-2"
+                                >
+                                  <QrCode className="h-3.5 w-3.5" />
+                                  Verify & Enable MFA
+                                </button>
+                                <button
+                                  onClick={() => { setMfaSetupData(null); setMfaToken(''); }}
+                                  className="px-4 py-2 border border-[var(--border-default)] rounded text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest hover:bg-black/5 transition-all"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

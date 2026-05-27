@@ -159,4 +159,27 @@ router.post('/baseline/refresh-all', authenticate, async (req: any, res) => {
   }
 });
 
+router.post('/baseline/backfill-all', authenticate, async (req: any, res) => {
+  try {
+    const organizationId = req.user.organizationId;
+    const agents = await prisma.ai_agents.findMany({
+      where: { organizationId, baselineActions: { isEmpty: true } },
+    });
+    let count = 0;
+    for (const agent of agents) {
+      const baseline = await DriftBaselineService.computeBaseline(agent.id);
+      if (baseline.length > 0) {
+        await prisma.ai_agents.update({
+          where: { id: agent.id },
+          data: { baselineActions: baseline },
+        });
+        count++;
+      }
+    }
+    res.json({ success: true, data: { seeded: count } });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

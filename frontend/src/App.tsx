@@ -29,6 +29,8 @@ const GovernanceOSPage = lazy(() => import('./pages/GovernanceOS'));
 const AIRegistryPage = lazy(() => import('./pages/AIRegistry'));
 const RiskAssessmentPage = lazy(() => import('./pages/RiskAssessment'));
 const ImpactAssessmentsPage = lazy(() => import('./pages/ImpactAssessments'));
+const CEMarkingPage = lazy(() => import('./pages/CEMarking'));
+const CCPAPage = lazy(() => import('./pages/CCPA'));
 const ControlsPage = lazy(() => import('./pages/Controls'));
 const VendorRiskPage = lazy(() => import('./pages/VendorRisk'));
 const ObligationsPage = lazy(() => import('./pages/Obligations'));
@@ -141,6 +143,16 @@ function AppRoutes() {
             <Route 
               path="/app/impact-assessments" 
               element={user ? <AppLayout><ImpactAssessmentsPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/ce-marking" 
+              element={user ? <AppLayout><CEMarkingPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/ccpa" 
+              element={user ? <AppLayout><CCPAPage /></AppLayout> : <Navigate to="/login" replace />}
             />
 
             <Route 

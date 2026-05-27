@@ -798,6 +798,11 @@ export async function resolveDriftAlert(id: string): Promise<DriftAlert> {
   return apiRequest<DriftAlert>(`/drift/alerts/${id}/resolve`, { method: 'PATCH' });
 }
 
+export const fetchFriaAssessments = () => apiRequest<any>('/fria/assessments');
+export const fetchFriaAssessment = (id: string) => apiRequest<any>(`/fria/assessments/${id}`);
+export const createFriaAssessment = (aiSystemId: string) =>
+  apiRequest<any>('/fria/assessments', { method: 'POST', body: JSON.stringify({ aiSystemId }) });
+
 /**
  * SLACK INTEGRATION ENDPOINTS
  */

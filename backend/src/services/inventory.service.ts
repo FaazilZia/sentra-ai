@@ -39,7 +39,11 @@ export class InventoryService {
 
     // Compute baseline immediately on registration
     try {
-      await DriftBaselineService.computeBaseline(agent.id);
+      const baseline = await DriftBaselineService.computeBaseline(agent.id);
+      await prisma.ai_agents.update({
+        where: { id: agent.id },
+        data: { baselineActions: baseline },
+      });
     } catch (error) {
       console.error(`[INVENTORY] Failed to compute baseline for newly registered agent ${agent.id}:`, error);
     }

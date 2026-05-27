@@ -36,6 +36,8 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.98.0",
     "@aws-sdk/client-s3": "^3.1035.0",
+    "@langchain/core": "^1.1.48",
+    "@langchain/openai": "^1.4.7",
     "@opentelemetry/auto-instrumentations-node": "^0.76.0",
     "@opentelemetry/exporter-prometheus": "^0.218.0",
     "@opentelemetry/sdk-node": "^0.218.0",
@@ -69,6 +71,7 @@
     "ioredis": "^5.10.1",
     "json2csv": "^6.0.0-alpha.2",
     "jsonwebtoken": "^9.0.3",
+    "langchain": "^1.4.2",
     "morgan": "^1.10.1",
     "multer": "^2.1.1",
     "node-fetch": "^2.7.0",

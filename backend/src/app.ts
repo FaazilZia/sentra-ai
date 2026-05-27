@@ -36,6 +36,8 @@ import fileIngestionRoutes from './routes/fileIngestion.routes';
 import postMarketMonitoringRoutes from './routes/postMarketMonitoring.routes';
 import mcpRoutes from './routes/mcp.routes';
 import mcpAgentKeyRoutes from './routes/mcpAgentKey.routes';
+import ceMarkingRoutes from './routes/ceMarking.routes';
+import ccpaRoutes from './routes/ccpa.routes';
 
 import advisorRoutes from './routes/advisor.routes';
 import automationRoutes from './routes/automation.routes';
@@ -262,6 +264,8 @@ v1Router.use('/fria', friaRoutes);
 v1Router.use('/vendors', vendorRoutes);
 v1Router.use('/iso42001', iso42001Routes);
 v1Router.use('/iso27001', iso27001Routes);
+v1Router.use('/ce-marking', ceMarkingRoutes);
+v1Router.use('/ccpa', ccpaRoutes);
 v1Router.use('/reports/executive', executiveReportRoutes);
 
 v1Router.use('/advisor', advisorRoutes);

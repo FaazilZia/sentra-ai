@@ -146,3 +146,5 @@ export async function redisHealthCheck(): Promise<boolean> {
  * Whether Redis is configured at all.
  */
 export const isRedisConfigured = !!REDIS_URL;
+
+export const getRedisConnection = getBullMqConnection;

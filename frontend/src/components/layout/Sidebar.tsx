@@ -43,6 +43,8 @@ const governanceItems = [
   { icon: Bot, label: 'AI Registry', path: '/app/ai-registry' },
   { icon: Award, label: 'Risk Audits', path: '/app/risk-assessment' },
   { icon: Layers, label: 'Impact Boards', path: '/app/impact-assessments' },
+  { icon: Award, label: 'CE Marking', path: '/app/ce-marking' },
+  { icon: ShieldCheck, label: 'CCPA Compliance', path: '/app/ccpa' },
   { icon: ShieldCheck, label: 'Controls', path: '/app/controls' },
   { icon: Box, label: 'Dataset Registry', path: '/app/datasets' },
   { icon: Building2, label: 'Vendor Risk', path: '/app/vendor-risk' },
