@@ -8,12 +8,14 @@ import logger from '../utils/logger';
  * Optimized for serverless environments with pooled connections and fail-safe initialization.
  */
 
-let prisma: PrismaClient;
+const prismaContainer = {
+  instance: undefined as PrismaClient | undefined
+};
 
 export const dbHealth = { isHealthy: false };
 
 export const initializePrisma = async () => {
-  if (prisma) return prisma;
+  if (prismaContainer.instance) return prismaContainer.instance;
 
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
@@ -29,17 +31,17 @@ export const initializePrisma = async () => {
     });
 
     const adapter = new PrismaPg(pool);
-    prisma = new PrismaClient({ 
+    prismaContainer.instance = new PrismaClient({ 
       adapter,
       log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
     });
 
     // Test connection
-    await prisma.$connect();
+    await prismaContainer.instance.$connect();
     dbHealth.isHealthy = true;
     logger.info('Database connection established successfully.');
     
-    return prisma;
+    return prismaContainer.instance;
   } catch (error) {
     dbHealth.isHealthy = false;
     logger.error('Failed to initialize database connection:', error);
@@ -52,10 +54,10 @@ export const initializePrisma = async () => {
  * Always ensures initialization before access.
  */
 export const getPrisma = async (): Promise<PrismaClient> => {
-  if (!prisma) {
+  if (!prismaContainer.instance) {
     return await initializePrisma();
   }
-  return prisma;
+  return prismaContainer.instance;
 };
 
 // Default export for backward compatibility
@@ -63,10 +65,10 @@ export const getPrisma = async (): Promise<PrismaClient> => {
 const prismaProxy = new Proxy({} as PrismaClient, {
   get: (target, prop) => {
     if (prop === 'then' || prop === 'catch' || prop === 'finally') return undefined;
-    if (!prisma) {
+    if (!prismaContainer.instance) {
       throw new Error("Prisma accessed before initialization. Call initializePrisma() first.");
     }
-    return (prisma as any)[prop];
+    return (prismaContainer.instance as any)[prop];
   }
 });
 
