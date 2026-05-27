@@ -14,6 +14,20 @@ router.get(
   validate(policyIdVersionsParamSchema),
   getPolicyVersions
 );
+
+import { PolicyVersioningService } from '../services/policyVersioning.service';
+
+router.post('/:id/rollback', authenticate, async (req: any, res) => {
+  try {
+    const organizationId = req.user.organizationId;
+    const { version } = req.body;
+    if (!version) return res.status(400).json({ error: 'version number required' });
+    const updated = await PolicyVersioningService.rollback(req.params.id, Number(version), organizationId);
+    res.json({ success: true, data: updated });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
 router.get('/templates', authenticate, getPolicyTemplates);
 router.get('/', authenticate, getPolicies);
 router.post('/:id/duplicate', authenticate, duplicatePolicy);

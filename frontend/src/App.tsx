@@ -31,6 +31,9 @@ const RiskAssessmentPage = lazy(() => import('./pages/RiskAssessment'));
 const ImpactAssessmentsPage = lazy(() => import('./pages/ImpactAssessments'));
 const CEMarkingPage = lazy(() => import('./pages/CEMarking'));
 const CCPAPage = lazy(() => import('./pages/CCPA'));
+const DORAPage = lazy(() => import('./pages/DORA'));
+const OECDPage = lazy(() => import('./pages/OECD'));
+const FTCPage  = lazy(() => import('./pages/FTC'));
 const ControlsPage = lazy(() => import('./pages/Controls'));
 const VendorRiskPage = lazy(() => import('./pages/VendorRisk'));
 const ObligationsPage = lazy(() => import('./pages/Obligations'));
@@ -39,6 +42,7 @@ const ExecutiveReportPage = lazy(() => import('./pages/ExecutiveReport'));
 const TrustPortalPage = lazy(() => import('./pages/TrustPortal'));
 const IntakePage = lazy(() => import('./pages/Intake'));
 const SharedViewPage = lazy(() => import('./pages/SharedView'));
+const EvaluationDashboardPage = lazy(() => import('./pages/EvaluationDashboard'));
 
 import { ModalProvider } from './components/shared/ModalProvider';
 import { ToastProvider } from './components/shared/ToastProvider';
@@ -156,6 +160,21 @@ function AppRoutes() {
             />
 
             <Route 
+              path="/app/dora" 
+              element={user ? <AppLayout><DORAPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/oecd" 
+              element={user ? <AppLayout><OECDPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/ftc" 
+              element={user ? <AppLayout><FTCPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
               path="/app/controls" 
               element={user ? <AppLayout><ControlsPage /></AppLayout> : <Navigate to="/login" replace />}
             />
@@ -209,6 +228,8 @@ function AppRoutes() {
               path="/app/governance-os" 
               element={user ? <AppLayout><GovernanceOSPage /></AppLayout> : <Navigate to="/login" replace />}
             />
+
+            <Route path="/app/evaluation" element={user ? <AppLayout><EvaluationDashboardPage /></AppLayout> : <Navigate to="/login" replace />} />
 
             <Route path="/app/settings" element={user ? <AppLayout><SettingsPage /></AppLayout> : <Navigate to="/login" replace />} />
 

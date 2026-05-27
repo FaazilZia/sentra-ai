@@ -8,6 +8,9 @@ import { seedNistAiRmf } from '../src/services/nistAiRmfSeed.service';
 import { seedIso42001 } from '../src/services/iso42001Seed.service';
 import { seedIso27001 } from '../src/services/iso27001Seed.service';
 import { seedCcpa } from '../src/services/ccpaSeed.service';
+import { seedDora } from '../src/services/doraSeed.service';
+import { seedOecd } from '../src/services/oecdSeed.service';
+import { seedFtc } from '../src/services/ftcSeed.service';
 
 dotenv.config();
 
@@ -194,6 +197,18 @@ async function main() {
   } catch (e: any) {
     console.error('❌ Failed to seed CCPA Controls:', e.message);
   }
+
+  // 11. Seed DORA
+  console.log('🌍 Seeding DORA Controls...');
+  try { await seedDora(prisma); } catch (e: any) { console.error('❌ Failed to seed DORA:', e.message); }
+
+  // 12. Seed OECD
+  console.log('🌐 Seeding OECD AI Principles...');
+  try { await seedOecd(prisma); } catch (e: any) { console.error('❌ Failed to seed OECD:', e.message); }
+
+  // 13. Seed FTC
+  console.log('⚖️ Seeding FTC AI Guidelines...');
+  try { await seedFtc(prisma); } catch (e: any) { console.error('❌ Failed to seed FTC:', e.message); }
 
   console.log('\n🎉 Seed completed!');
   await prisma.$disconnect();

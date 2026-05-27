@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { EvidenceSection } from '../components/shared/EvidenceSection';
 import { ChangeHistoryTimeline } from '../components/shared/ChangeHistoryTimeline';
+import { cn } from '@/lib/utils';
 
 interface AISystem {
   id: string;
@@ -96,6 +97,26 @@ export default function RiskAssessment() {
     score: number;
     risk_level: string;
   } | null>(null);
+
+  const [view, setView] = useState<'assessment' | 'matrix'>('assessment');
+  const [portfolio, setPortfolio] = useState<any>(null);
+  const [portfolioLoading, setPortfolioLoading] = useState(false);
+
+  const loadPortfolio = async () => {
+    setPortfolioLoading(true);
+    try {
+      const res = await apiRequest<any>('/quantitative-risk/portfolio');
+      setPortfolio(res?.data || res);
+    } catch (err: any) {
+      console.error('Failed to load risk portfolio:', err);
+    } finally {
+      setPortfolioLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (view === 'matrix') loadPortfolio();
+  }, [view]);
 
   useEffect(() => {
     loadData();
@@ -194,153 +215,274 @@ export default function RiskAssessment() {
   return (
     <div className="flex flex-col gap-6 p-6 animate-fade-in text-gray-200">
       
-      {/* Header section */}
-      <div>
-        <h1 className="text-2xl font-black tracking-tight text-white flex items-center gap-3">
-          <ClipboardCheck className="h-8 w-8 text-indigo-400" />
-          STRUCTURED RISK ASSESSMENTS
-        </h1>
-        <p className="text-gray-400 text-sm mt-1">
-          Perform multi-step qualitative risk tier assessments to evaluate vulnerability, classification, and oversight protocols.
-        </p>
+      <div className="flex items-center gap-2 pb-0">
+        <button onClick={() => setView('assessment')} className={cn("px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", view === 'assessment' ? "bg-indigo-600 text-white shadow-lg" : "text-gray-400 border border-gray-800 hover:text-white hover:bg-gray-800/60")}>Risk Assessment</button>
+        <button onClick={() => setView('matrix')} className={cn("px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", view === 'matrix' ? "bg-purple-600 text-white shadow-lg" : "text-gray-400 border border-gray-800 hover:text-white hover:bg-gray-800/60")}>Risk Matrix</button>
       </div>
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left Column: Creator and Past Assessments */}
-        <div className="lg:col-span-2 flex flex-col gap-6">
-          
-          {/* New Assessment Card */}
-          <div className="bg-gradient-to-br from-[#1e1b4b]/40 to-[#311042]/20 border border-indigo-500/20 rounded-2xl p-6 shadow-xl relative overflow-hidden">
-            <div className="relative z-10 flex flex-col gap-4">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <Shield className="h-5 w-5 text-indigo-400" />
-                Initiate Risk Tier Assessment
-              </h2>
-              <p className="text-xs text-gray-400 leading-relaxed max-w-xl">
-                Run a dynamic questionnaire audit of a newly registered or updated AI System to recalculate and bind its risk classification tier.
-              </p>
-              
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-2">
-                <select
-                  value={selectedSystemId}
-                  onChange={(e) => setSelectedSystemId(e.target.value)}
-                  className="bg-black/40 border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 flex-1"
-                >
-                  <option value="">Select AI System to assess...</option>
-                  {systems.map(s => (
-                    <option key={s.id} value={s.id}>{s.name} ({s.risk_tier} Risk)</option>
-                  ))}
-                </select>
-                <button
-                  onClick={handleStartAssessment}
-                  disabled={!selectedSystemId}
-                  className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-2.5 text-xs font-semibold text-white shadow-lg disabled:opacity-40 disabled:pointer-events-none hover:from-indigo-500 hover:to-purple-500 transition-all"
-                >
-                  <Play className="h-4 w-4" />
-                  Begin Audit
-                </button>
-              </div>
-            </div>
-            {/* Decorative BG element */}
-            <div className="absolute right-0 bottom-0 h-40 w-40 rounded-full bg-indigo-500/5 blur-3xl" />
+      {view === 'assessment' && (
+        <>
+          {/* Header section */}
+          <div>
+            <h1 className="text-2xl font-black tracking-tight text-white flex items-center gap-3">
+              <ClipboardCheck className="h-8 w-8 text-indigo-400" />
+              STRUCTURED RISK ASSESSMENTS
+            </h1>
+            <p className="text-gray-400 text-sm mt-1">
+              Perform multi-step qualitative risk tier assessments to evaluate vulnerability, classification, and oversight protocols.
+            </p>
           </div>
 
-          {/* Past Assessments List */}
-          <div className="bg-[#111827]/40 border border-gray-800/80 rounded-2xl p-6 flex flex-col gap-4">
-            <h3 className="font-bold text-white text-sm uppercase tracking-wider text-gray-400">
-              Assessment Logs & Tiers
-            </h3>
-
-            {loading ? (
-              <div className="flex items-center justify-center py-10">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-500" />
+          {/* Main Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Left Column: Creator and Past Assessments */}
+            <div className="lg:col-span-2 flex flex-col gap-6">
+              
+              {/* New Assessment Card */}
+              <div className="bg-gradient-to-br from-[#1e1b4b]/40 to-[#311042]/20 border border-indigo-500/20 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+                <div className="relative z-10 flex flex-col gap-4">
+                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-indigo-400" />
+                    Initiate Risk Tier Assessment
+                  </h2>
+                  <p className="text-xs text-gray-400 leading-relaxed max-w-xl">
+                    Run a dynamic questionnaire audit of a newly registered or updated AI System to recalculate and bind its risk classification tier.
+                  </p>
+                  
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-2">
+                    <select
+                      value={selectedSystemId}
+                      onChange={(e) => setSelectedSystemId(e.target.value)}
+                      className="bg-black/40 border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 flex-1"
+                    >
+                      <option value="">Select AI System to assess...</option>
+                      {systems.map(s => (
+                        <option key={s.id} value={s.id}>{s.name} ({s.risk_tier} Risk)</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={handleStartAssessment}
+                      disabled={!selectedSystemId}
+                      className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-2.5 text-xs font-semibold text-white shadow-lg disabled:opacity-40 disabled:pointer-events-none hover:from-indigo-500 hover:to-purple-500 transition-all"
+                    >
+                      <Play className="h-4 w-4" />
+                      Begin Audit
+                    </button>
+                  </div>
+                </div>
+                {/* Decorative BG element */}
+                <div className="absolute right-0 bottom-0 h-40 w-40 rounded-full bg-indigo-500/5 blur-3xl" />
               </div>
-            ) : assessments.length === 0 ? (
-              <div className="text-center py-10 text-gray-500 text-xs">
-                No risk assessments logged yet.
-              </div>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {assessments.map((ass) => (
-                  <div
-                    key={ass.id}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setSelectedAssessment(ass)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedAssessment(ass); } }}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-gray-800/60 bg-[#0b0f19]/30 hover:border-gray-700 transition-all cursor-pointer outline-none"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="rounded-lg bg-gray-800 p-2 text-gray-400">
-                        <ClipboardCheck className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-white text-sm">{ass.ai_system?.name || 'Unknown System'}</h4>
-                        <p className="text-[10px] text-gray-500 mt-0.5">Assessed on {new Date(ass.created_at).toLocaleDateString()}</p>
-                      </div>
-                    </div>
 
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <span className="text-[10px] text-gray-500 block uppercase font-bold tracking-wider">Audit Score</span>
-                        <span className="text-sm font-black text-white">{ass.score} / 100</span>
+              {/* Past Assessments List */}
+              <div className="bg-[#111827]/40 border border-gray-800/80 rounded-2xl p-6 flex flex-col gap-4">
+                <h3 className="font-bold text-white text-sm uppercase tracking-wider text-gray-400">
+                  Assessment Logs & Tiers
+                </h3>
+
+                {loading ? (
+                  <div className="flex items-center justify-center py-10">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-500" />
+                  </div>
+                ) : assessments.length === 0 ? (
+                  <div className="text-center py-10 text-gray-500 text-xs">
+                    No risk assessments logged yet.
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {assessments.map((ass) => (
+                      <div
+                        key={ass.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => setSelectedAssessment(ass)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedAssessment(ass); } }}
+                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-gray-800/60 bg-[#0b0f19]/30 hover:border-gray-700 transition-all cursor-pointer outline-none"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="rounded-lg bg-gray-800 p-2 text-gray-400">
+                            <ClipboardCheck className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-white text-sm">{ass.ai_system?.name || 'Unknown System'}</h4>
+                            <p className="text-[10px] text-gray-500 mt-0.5">Assessed on {new Date(ass.created_at).toLocaleDateString()}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <span className="text-[10px] text-gray-500 block uppercase font-bold tracking-wider">Audit Score</span>
+                            <span className="text-sm font-black text-white">{ass.score} / 100</span>
+                          </div>
+                          <span className={`text-[10px] px-2.5 py-1 rounded-full border font-black uppercase ${getRiskLevelColor(ass.risk_level)}`}>
+                            {ass.risk_level}
+                          </span>
+                        </div>
                       </div>
-                      <span className={`text-[10px] px-2.5 py-1 rounded-full border font-black uppercase ${getRiskLevelColor(ass.risk_level)}`}>
-                        {ass.risk_level}
-                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right Column: Framework explanation / Wizard Guide */}
+            <div className="lg:col-span-1">
+              <div className="bg-[#111827]/40 border border-gray-800/80 rounded-2xl p-6 flex flex-col gap-4">
+                <h3 className="font-bold text-white text-sm flex items-center gap-2 border-b border-gray-800/80 pb-3">
+                  <HelpCircle className="h-4 w-4 text-indigo-400" />
+                  Risk Tier Methodology
+                </h3>
+                
+                <div className="flex flex-col gap-3 text-xs text-gray-400 leading-relaxed">
+                  <p>
+                    Sentra AI utilizes a standardized point-based risk scoring framework aligned with standard EU AI Act use case classifications.
+                  </p>
+                  
+                  <div className="flex flex-col gap-2 bg-black/20 p-3.5 rounded-xl border border-gray-800/60 mt-1">
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold text-emerald-400">LOW TIER</span>
+                      <span className="text-gray-500 font-mono">0 - 30 pts</span>
                     </div>
+                    <p className="text-[10px] text-gray-500">Internal utility pipelines or heavily audited sandboxes with active masking/filtering.</p>
+                    
+                    <div className="flex justify-between items-center mt-1">
+                      <span className="font-semibold text-yellow-400">MEDIUM TIER</span>
+                      <span className="text-gray-500 font-mono">31 - 60 pts</span>
+                    </div>
+                    <p className="text-[10px] text-gray-500">Standard customer interactions with active logging and human-in-the-loop review.</p>
+
+                    <div className="flex justify-between items-center mt-1">
+                      <span className="font-semibold text-orange-400">HIGH TIER</span>
+                      <span className="text-gray-500 font-mono">61 - 80 pts</span>
+                    </div>
+                    <p className="text-[10px] text-gray-500">HR, evaluation, access control or financial data pipelines. Requires rigorous auditing.</p>
+
+                    <div className="flex justify-between items-center mt-1">
+                      <span className="font-semibold text-red-400">CRITICAL TIER</span>
+                      <span className="text-gray-500 font-mono">81 - 100 pts</span>
+                    </div>
+                    <p className="text-[10px] text-gray-500">Highly autonomous systems processing sensitive health, financial or biometrics pipelines.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </>
+      )}
+
+      {view === 'matrix' && (
+        <div className="space-y-6 animate-fade-in text-left">
+          <div>
+            <h1 className="text-2xl font-black text-white uppercase tracking-tight">Risk Portfolio Matrix</h1>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">Probability × Impact — All AI Systems</p>
+          </div>
+          {portfolioLoading && <div className="text-center py-12 text-gray-500">Loading risk portfolio...</div>}
+          {portfolio && !portfolioLoading && (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { label: 'Total Systems', value: portfolio.totalAgents ?? 0, color: 'text-white' },
+                  { label: 'High Risk', value: portfolio.riskDistribution?.HIGH ?? 0, color: 'text-rose-400' },
+                  { label: 'Medium Risk', value: portfolio.riskDistribution?.MEDIUM ?? 0, color: 'text-amber-400' },
+                  { label: 'Low Risk', value: portfolio.riskDistribution?.LOW ?? 0, color: 'text-emerald-400' },
+                ].map((s) => (
+                  <div key={s.label} className="bg-[#111827]/40 border border-gray-800 rounded-2xl p-4 backdrop-blur-md">
+                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{s.label}</p>
+                    <p className={`text-2xl font-black mt-1 ${s.color}`}>{s.value}</p>
                   </div>
                 ))}
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Right Column: Framework explanation / Wizard Guide */}
-        <div className="lg:col-span-1">
-          <div className="bg-[#111827]/40 border border-gray-800/80 rounded-2xl p-6 flex flex-col gap-4">
-            <h3 className="font-bold text-white text-sm flex items-center gap-2 border-b border-gray-800/80 pb-3">
-              <HelpCircle className="h-4 w-4 text-indigo-400" />
-              Risk Tier Methodology
-            </h3>
-            
-            <div className="flex flex-col gap-3 text-xs text-gray-400 leading-relaxed">
-              <p>
-                Sentra AI utilizes a standardized point-based risk scoring framework aligned with standard EU AI Act use case classifications.
-              </p>
-              
-              <div className="flex flex-col gap-2 bg-black/20 p-3.5 rounded-xl border border-gray-800/60 mt-1">
-                <div className="flex justify-between items-center">
-                  <span className="font-semibold text-emerald-400">LOW TIER</span>
-                  <span className="text-gray-500 font-mono">0 - 30 pts</span>
+              <div className="bg-[#111827]/40 border border-gray-800 rounded-2xl p-6 backdrop-blur-md">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Probability × Impact Heatmap</p>
+                <div className="flex gap-4">
+                  <div className="flex flex-col justify-between text-[9px] text-gray-600 uppercase font-bold py-1" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+                    <span>High Probability</span><span>Low Probability</span>
+                  </div>
+                  <div className="flex-1">
+                    {[5, 4, 3, 2, 1].map((prob) => (
+                      <div key={prob} className="flex gap-1 mb-1">
+                        {[1, 2, 3, 4, 5].map((impact) => {
+                          const riskValue = prob * impact;
+                          const cellAgents = (portfolio.agents || []).filter((a: any) => {
+                            const score = a.riskScore ?? 0;
+                            const normImpact = Math.ceil((score / 100) * 5);
+                            const normProb = Math.ceil(((a.exposureScore ?? score) / 100) * 5);
+                            return normImpact === impact && normProb === prob;
+                          });
+                          const bgColor = riskValue >= 20 ? 'bg-rose-500/30 border-rose-500/40 hover:bg-rose-500/50' : riskValue >= 12 ? 'bg-orange-500/30 border-orange-500/40 hover:bg-orange-500/50' : riskValue >= 6 ? 'bg-amber-500/30 border-amber-500/40 hover:bg-amber-500/50' : 'bg-emerald-500/20 border-emerald-500/30 hover:bg-emerald-500/40';
+                          return (
+                            <div key={impact} className={`flex-1 aspect-square rounded border ${bgColor} flex flex-col items-center justify-center transition-all cursor-default group relative`}>
+                              {cellAgents.length > 0 && (
+                                <>
+                                  <span className="text-xs font-black text-white">{cellAgents.length}</span>
+                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 bg-gray-900 border border-gray-700 rounded-lg p-2 min-w-[140px] shadow-xl">
+                                    {cellAgents.slice(0, 3).map((a: any) => <p key={a.agentId} className="text-[10px] text-gray-300 truncate">{a.agentName}</p>)}
+                                    {cellAgents.length > 3 && <p className="text-[9px] text-gray-500">+{cellAgents.length - 3} more</p>}
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                    <div className="flex gap-1 mt-2">
+                      {['Very Low', 'Low', 'Medium', 'High', 'Critical'].map((l) => (
+                        <div key={l} className="flex-1 text-center text-[9px] text-gray-600 uppercase font-bold">{l}</div>
+                      ))}
+                    </div>
+                    <p className="text-center text-[9px] text-gray-600 uppercase font-bold mt-1">Impact →</p>
+                  </div>
                 </div>
-                <p className="text-[10px] text-gray-500">Internal utility pipelines or heavily audited sandboxes with active masking/filtering.</p>
-                
-                <div className="flex justify-between items-center mt-1">
-                  <span className="font-semibold text-yellow-400">MEDIUM TIER</span>
-                  <span className="text-gray-500 font-mono">31 - 60 pts</span>
-                </div>
-                <p className="text-[10px] text-gray-500">Standard customer interactions with active logging and human-in-the-loop review.</p>
-
-                <div className="flex justify-between items-center mt-1">
-                  <span className="font-semibold text-orange-400">HIGH TIER</span>
-                  <span className="text-gray-500 font-mono">61 - 80 pts</span>
-                </div>
-                <p className="text-[10px] text-gray-500">HR, evaluation, access control or financial data pipelines. Requires rigorous auditing.</p>
-
-                <div className="flex justify-between items-center mt-1">
-                  <span className="font-semibold text-red-400">CRITICAL TIER</span>
-                  <span className="text-gray-500 font-mono">81 - 100 pts</span>
-                </div>
-                <p className="text-[10px] text-gray-500">Highly autonomous systems processing sensitive health, financial or biometrics pipelines.</p>
               </div>
-            </div>
-          </div>
+              <div className="bg-[#111827]/40 border border-gray-800 rounded-2xl overflow-hidden backdrop-blur-md">
+                <div className="p-5 border-b border-gray-800">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">All Systems — Risk Register</p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-gray-800">
+                        {['Agent', 'Risk Score', 'Risk Level', 'Exposure', 'Top Risk', 'Status'].map((h) => (
+                          <th key={h} className="text-left px-4 py-3 text-[10px] font-black text-gray-500 uppercase">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(portfolio.agents || []).sort((a: any, b: any) => (b.riskScore ?? 0) - (a.riskScore ?? 0)).map((agent: any) => {
+                        const riskColor = agent.riskLevel === 'HIGH' || agent.riskLevel === 'CRITICAL' ? 'text-rose-400' : agent.riskLevel === 'MEDIUM' ? 'text-amber-400' : 'text-emerald-400';
+                        return (
+                          <tr key={agent.agentId} className="border-b border-gray-800/50 hover:bg-gray-800/20">
+                            <td className="px-4 py-3 font-bold text-white">{agent.agentName}</td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <div className="w-16 h-1.5 bg-gray-800 rounded-full">
+                                  <div className={cn("h-full rounded-full", agent.riskScore > 70 ? "bg-rose-500" : agent.riskScore > 40 ? "bg-amber-500" : "bg-emerald-500")} style={{ width: `${agent.riskScore ?? 0}%` }} />
+                                </div>
+                                <span className="text-gray-300 font-mono">{agent.riskScore ?? 0}</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3"><span className={`text-[10px] font-black uppercase ${riskColor}`}>{agent.riskLevel ?? 'LOW'}</span></td>
+                            <td className="px-4 py-3 text-gray-400 font-mono">{agent.exposureScore ?? 0}</td>
+                            <td className="px-4 py-3 text-gray-400 max-w-xs truncate">{agent.topRisks?.[0] ?? '—'}</td>
+                            <td className="px-4 py-3">
+                              <span className={cn('text-[9px] font-black uppercase px-2 py-0.5 rounded border', agent.complianceStatus === 'COMPLIANT' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-rose-400 bg-rose-500/10 border-rose-500/20')}>
+                                {agent.complianceStatus ?? 'UNKNOWN'}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
         </div>
-
-      </div>
+      )}
 
       {/* Wizard Modal */}
       {isWizardOpen && (

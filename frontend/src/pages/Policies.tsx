@@ -10,7 +10,8 @@ import {
   Clock,
   ArrowRight,
   LoaderCircle,
-  X
+  X,
+  History
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store/useStore';
@@ -25,20 +26,56 @@ export default function Policies() {
   const [loading, setLoading] = useState(true);
   const [selectedPolicy, setSelectedPolicy] = useState<PolicyResponse | null>(null);
 
-  useEffect(() => {
-    async function loadPolicies() {
-      try {
-        const data = await fetchPolicies();
-        setPolicies(data);
-      } catch (error) {
-        console.error('Failed to fetch policies:', error);
-        addToast({ message: 'Failed to load policies from governance engine', type: 'error' });
-      } finally {
-        setLoading(false);
-      }
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [versionHistoryPolicyId, setVersionHistoryPolicyId] = useState<string | null>(null);
+  const [versions, setVersions] = useState<any[]>([]);
+  const [versionsLoading, setVersionsLoading] = useState(false);
+  const [rollingBack, setRollingBack] = useState(false);
+
+  const loadPolicies = async () => {
+    try {
+      const data = await fetchPolicies();
+      setPolicies(data);
+    } catch (error) {
+      console.error('Failed to fetch policies:', error);
+      addToast({ message: 'Failed to load policies from governance engine', type: 'error' });
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     loadPolicies();
   }, [addToast]);
+
+  const openVersionHistory = async (policy: any) => {
+    setVersionHistoryPolicyId(policy.id);
+    setShowVersionHistory(true);
+    setVersionsLoading(true);
+    try {
+      const res = await apiRequest<any>(`/policies/${policy.id}/versions`);
+      setVersions(res?.data || res || []);
+    } catch {
+      addToast({ message: 'Failed to load version history', type: 'error' });
+    } finally {
+      setVersionsLoading(false);
+    }
+  };
+
+  const handleRollback = async (policyId: string, versionNumber: number) => {
+    if (!confirm(`Roll back to version ${versionNumber}? This will create a new version with the previous content.`)) return;
+    setRollingBack(true);
+    try {
+      await apiRequest(`/policies/${policyId}/rollback`, { method: 'POST', body: JSON.stringify({ version: versionNumber }) });
+      addToast({ message: `Rolled back to version ${versionNumber}`, type: 'success' });
+      setShowVersionHistory(false);
+      await loadPolicies();
+    } catch (err: any) {
+      addToast({ message: err.message || 'Rollback failed', type: 'error' });
+    } finally {
+      setRollingBack(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -122,7 +159,10 @@ export default function Policies() {
               {policy.name}
             </h3>
             <div className="flex items-center gap-3 mb-6">
-              <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">v{policy.current_version || 1}</span>
+              <button onClick={(e) => { e.stopPropagation(); openVersionHistory(policy); }} className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest hover:text-indigo-400 transition-colors flex items-center gap-1">
+                <History className="h-3 w-3" />
+                v{policy.current_version || 1}
+              </button>
               <span className="h-1 w-1 rounded-full bg-[var(--border-default)]" />
               <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{policy.effect}</span>
             </div>
@@ -219,6 +259,47 @@ export default function Policies() {
             {/* Change History Sub-section */}
             <div className="pt-4 border-t border-[var(--border-default)]/60">
               <ChangeHistoryTimeline entityType="policy" entityId={selectedPolicy.id} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showVersionHistory && (
+        <div className="fixed inset-0 z-50 flex">
+          <div className="flex-1" onClick={() => setShowVersionHistory(false)} />
+          <div className="w-[480px] bg-[#0f172a] border-l border-gray-800 flex flex-col h-full shadow-2xl">
+            <div className="flex items-center justify-between p-6 border-b border-gray-800">
+              <div>
+                <h2 className="text-sm font-black text-white uppercase tracking-tight">Version History</h2>
+                <p className="text-[10px] text-gray-500 mt-0.5">Click Restore to roll back to a previous version.</p>
+              </div>
+              <button onClick={() => setShowVersionHistory(false)} className="text-gray-500 hover:text-white transition-colors"><X className="h-5 w-5" /></button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 space-y-3">
+              {versionsLoading ? (
+                <p className="text-gray-500 text-sm text-center py-8">Loading versions...</p>
+              ) : versions.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <Clock className="h-8 w-8 mx-auto mb-3 opacity-20" />
+                  <p className="text-[11px] font-black uppercase tracking-widest">No version history yet</p>
+                  <p className="text-[10px] mt-1">Versions are captured automatically when policies are edited.</p>
+                </div>
+              ) : versions.map((v: any) => (
+                <div key={v.id || v.version} className="bg-gray-900/60 border border-gray-800 rounded-xl p-4 hover:border-indigo-500/30 transition-all text-left">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded font-mono">v{v.version}</span>
+                      <span className="text-[10px] text-gray-500">{v.captured_at ? new Date(v.captured_at).toLocaleString() : ''}</span>
+                    </div>
+                    <button onClick={() => handleRollback(versionHistoryPolicyId!, v.version)} disabled={rollingBack} className="text-[9px] font-black uppercase text-gray-500 hover:text-amber-400 border border-gray-700 hover:border-amber-500/30 px-2 py-1 rounded transition-all disabled:opacity-50">
+                      {rollingBack ? '...' : 'Restore'}
+                    </button>
+                  </div>
+                  {v.snapshot?.name && <p className="text-xs font-bold text-white mb-1">{v.snapshot.name}</p>}
+                  {v.snapshot?.description && <p className="text-[11px] text-gray-400 line-clamp-2">{v.snapshot.description}</p>}
+                  {v.snapshot?.rules && <p className="text-[10px] text-gray-600 mt-1 font-mono">{Array.isArray(v.snapshot.rules) ? `${v.snapshot.rules.length} rules` : 'Rules captured'}</p>}
+                </div>
+              ))}
             </div>
           </div>
         </div>

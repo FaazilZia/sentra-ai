@@ -87,6 +87,9 @@ model organizations {
   evidence_files               evidence_files[]
   ce_marking_records           ce_marking_records[]
   ccpa_implementations         ccpa_implementations[]
+  dora_implementations         dora_implementations[]
+  oecd_implementations         oecd_implementations[]
+  ftc_implementations          ftc_implementations[]
 
   // Feature Relations
   advisor_conversations        advisor_conversations[]
@@ -1995,5 +1998,140 @@ model ccpa_implementations {
   control        ccpa_controls @relation(fields: [control_id], references: [id])
   @@unique([organizationId, control_id])
   @@map("ccpa_implementations")
+}
+
+model dora_sections {
+  id           String           @id @default(uuid())
+  section_code String           @unique
+  title        String
+  description  String
+  section_type String           @default("SECTION")
+  is_active    Boolean          @default(true)
+  created_at   DateTime         @default(now())
+  controls     dora_controls[]
+  @@map("dora_sections")
+}
+
+model dora_controls {
+  id               String                 @id @default(uuid())
+  section_id       String
+  control_code     String                 @unique
+  title            String
+  description      String
+  evidence_required String[]
+  checklist_items  String[]
+  is_active        Boolean                @default(true)
+  created_at       DateTime               @default(now())
+  section          dora_sections          @relation(fields: [section_id], references: [id])
+  implementations  dora_implementations[]
+  @@map("dora_controls")
+}
+
+model dora_implementations {
+  id             String        @id @default(uuid())
+  organizationId String        @map("organization_id")
+  control_id     String        @map("control_id")
+  status         String        @default("NOT_STARTED")
+  notes          String?
+  owner_user_id  String?       @map("owner_user_id")
+  due_date       DateTime?     @map("due_date")
+  evidence_links Json          @default("[]") @map("evidence_links")
+  last_reviewed  DateTime?     @map("last_reviewed")
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+  organization   organizations @relation(fields: [organizationId], references: [id])
+  control        dora_controls @relation(fields: [control_id], references: [id])
+  @@unique([organizationId, control_id])
+  @@map("dora_implementations")
+}
+
+model oecd_sections {
+  id           String           @id @default(uuid())
+  section_code String           @unique
+  title        String
+  description  String
+  section_type String           @default("SECTION")
+  is_active    Boolean          @default(true)
+  created_at   DateTime         @default(now())
+  controls     oecd_controls[]
+  @@map("oecd_sections")
+}
+
+model oecd_controls {
+  id               String                 @id @default(uuid())
+  section_id       String
+  control_code     String                 @unique
+  title            String
+  description      String
+  evidence_required String[]
+  checklist_items  String[]
+  is_active        Boolean                @default(true)
+  created_at       DateTime               @default(now())
+  section          oecd_sections          @relation(fields: [section_id], references: [id])
+  implementations  oecd_implementations[]
+  @@map("oecd_controls")
+}
+
+model oecd_implementations {
+  id             String        @id @default(uuid())
+  organizationId String        @map("organization_id")
+  control_id     String        @map("control_id")
+  status         String        @default("NOT_STARTED")
+  notes          String?
+  owner_user_id  String?       @map("owner_user_id")
+  due_date       DateTime?     @map("due_date")
+  evidence_links Json          @default("[]") @map("evidence_links")
+  last_reviewed  DateTime?     @map("last_reviewed")
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+  organization   organizations @relation(fields: [organizationId], references: [id])
+  control        oecd_controls @relation(fields: [control_id], references: [id])
+  @@unique([organizationId, control_id])
+  @@map("oecd_implementations")
+}
+
+model ftc_sections {
+  id           String          @id @default(uuid())
+  section_code String          @unique
+  title        String
+  description  String
+  section_type String          @default("SECTION")
+  is_active    Boolean         @default(true)
+  created_at   DateTime        @default(now())
+  controls     ftc_controls[]
+  @@map("ftc_sections")
+}
+
+model ftc_controls {
+  id               String                @id @default(uuid())
+  section_id       String
+  control_code     String                @unique
+  title            String
+  description      String
+  evidence_required String[]
+  checklist_items  String[]
+  is_active        Boolean               @default(true)
+  created_at       DateTime              @default(now())
+  section          ftc_sections          @relation(fields: [section_id], references: [id])
+  implementations  ftc_implementations[]
+  @@map("ftc_controls")
+}
+
+model ftc_implementations {
+  id             String        @id @default(uuid())
+  organizationId String        @map("organization_id")
+  control_id     String        @map("control_id")
+  status         String        @default("NOT_STARTED")
+  notes          String?
+  owner_user_id  String?       @map("owner_user_id")
+  due_date       DateTime?     @map("due_date")
+  evidence_links Json          @default("[]") @map("evidence_links")
+  last_reviewed  DateTime?     @map("last_reviewed")
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+  organization   organizations @relation(fields: [organizationId], references: [id])
+  control        ftc_controls  @relation(fields: [control_id], references: [id])
+  @@unique([organizationId, control_id])
+  @@map("ftc_implementations")
 }
 

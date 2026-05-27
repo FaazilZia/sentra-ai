@@ -13,6 +13,8 @@ export default function LoginPage({ defaultIsSignUp = false }: { defaultIsSignUp
   const [fullName, setFullName] = useState('');
   const [organizationName, setOrganizationName] = useState('');
   const [passwordStrength, setPasswordStrength] = useState(0);
+  const [showSsoInput, setShowSsoInput] = useState(false);
+  const [orgSlug, setOrgSlug] = useState('');
 
   const calculateStrength = (pass: string) => {
     let score = 0;
@@ -32,7 +34,11 @@ export default function LoginPage({ defaultIsSignUp = false }: { defaultIsSignUp
     }
   }
 
-
+  const handleSsoLogin = () => {
+    if (!orgSlug.trim()) return;
+    const base = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
+    window.location.href = `${base}/saml/${orgSlug.trim().toLowerCase()}`;
+  };
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900 selection:bg-blue-100 selection:text-blue-900">
@@ -262,6 +268,31 @@ export default function LoginPage({ defaultIsSignUp = false }: { defaultIsSignUp
               </button>
             </div>
           </form>
+
+          <div className="relative my-5">
+            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200" /></div>
+            <div className="relative flex justify-center"><span className="bg-white/80 px-3 text-xs text-slate-400 backdrop-blur-xl">or</span></div>
+          </div>
+          {!showSsoInput ? (
+            <button type="button" onClick={() => setShowSsoInput(true)} className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-700 transition-all hover:bg-slate-100 hover:border-slate-300">
+              <ShieldCheck className="h-4 w-4 text-slate-500" />
+              Sign in with SSO
+            </button>
+          ) : (
+            <div className="space-y-3">
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-700">Organization Slug</span>
+                <input className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 font-mono text-sm text-slate-900 outline-none transition-all placeholder:text-slate-300 focus:border-blue-500/40 focus:bg-white focus:ring-4 focus:ring-blue-500/10" value={orgSlug} onChange={(e) => setOrgSlug(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSsoLogin()} type="text" placeholder="acme-corp" autoFocus />
+                <p className="mt-1.5 text-xs text-slate-400">Enter your organization's slug to be redirected to your identity provider.</p>
+              </label>
+              <div className="flex gap-2">
+                <button type="button" onClick={handleSsoLogin} disabled={!orgSlug.trim()} className="flex h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white transition-all hover:bg-slate-800 disabled:opacity-50">
+                  <ShieldCheck className="h-4 w-4" /> Continue with SSO
+                </button>
+                <button type="button" onClick={() => { setShowSsoInput(false); setOrgSlug(''); }} className="h-10 px-4 rounded-xl border border-slate-200 text-sm text-slate-500 hover:bg-slate-50 transition-all">Cancel</button>
+              </div>
+            </div>
+          )}
 
           <div className="mt-6 text-center text-sm">
             <span className="text-slate-400">

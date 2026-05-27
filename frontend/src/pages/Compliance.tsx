@@ -42,7 +42,7 @@ export default function Compliance() {
   const { addToast } = useStore();
   
   // Tab control
-  const [activeTab, setActiveTab] = useState<'eu-ai-act' | 'nist-ai-rmf' | 'iso-42001' | 'iso-27001'>('eu-ai-act');
+  const [activeTab, setActiveTab] = useState<'eu-ai-act' | 'nist-ai-rmf' | 'iso-42001' | 'iso-27001' | 'ccpa'>('eu-ai-act');
   const [isShareOpen, setIsShareOpen] = useState(false);
 
   // ==========================================
@@ -98,6 +98,23 @@ export default function Compliance() {
   const [iso27001Loading, setIso27001Loading] = useState(true);
   const [iso27001Error, setIso27001Error] = useState<string | null>(null);
   const [isSavingIso27001, setIsSavingIso27001] = useState(false);
+
+  // CCPA STATES
+  const [ccpaData, setCcpaData] = useState<any>(null);
+  const [ccpaLoading, setCcpaLoading] = useState(false);
+  const [ccpaError, setCcpaError] = useState<string | null>(null);
+
+  const loadCcpaData = useCallback(async () => {
+    setCcpaLoading(true);
+    try {
+      const res = await apiRequest<any>('/ccpa/overview');
+      setCcpaData(res?.data || res);
+    } catch (err: any) {
+      setCcpaError(err.message || 'Failed to load CCPA data');
+    } finally {
+      setCcpaLoading(false);
+    }
+  }, []);
 
   // Load NIST AI RMF Core Dashboard Data
   const loadNistData = useCallback(async (showSilence = false) => {
@@ -158,8 +175,10 @@ export default function Compliance() {
       loadIso42001Data();
     } else if (activeTab === 'iso-27001') {
       loadIso27001Data();
+    } else if (activeTab === 'ccpa') {
+      loadCcpaData();
     }
-  }, [activeTab, loadNistData, loadIso42001Data, loadIso27001Data]);
+  }, [activeTab, loadNistData, loadIso42001Data, loadIso27001Data, loadCcpaData]);
 
   // Sync EU AI Act and ISO drawers fields
   useEffect(() => {
@@ -472,6 +491,17 @@ export default function Compliance() {
           )}
         >
           🔒 ISO 27001
+        </button>
+        <button
+          onClick={() => setActiveTab('ccpa')}
+          className={cn(
+            "px-5 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all active:scale-95 flex items-center gap-2",
+            activeTab === 'ccpa'
+              ? "bg-emerald-600 text-white shadow-lg shadow-emerald-500/20"
+              : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
+          )}
+        >
+          🇺🇸 CCPA
         </button>
       </div>
 
@@ -1429,6 +1459,72 @@ export default function Compliance() {
             </>
           )}
         </>
+      )}
+
+      {activeTab === 'ccpa' && (
+        <div className="space-y-6 animate-fade-in">
+          {ccpaLoading && <div className="text-center py-12 text-gray-500 text-sm">Loading CCPA compliance data...</div>}
+          {ccpaError && <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-rose-400 text-sm">{ccpaError}</div>}
+          {ccpaData && !ccpaLoading && (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { label: 'Total Controls', value: ccpaData.summary?.total_controls ?? 0, color: 'text-white' },
+                  { label: 'Implemented', value: ccpaData.summary?.implemented ?? 0, color: 'text-emerald-400' },
+                  { label: 'In Progress', value: ccpaData.summary?.in_progress ?? 0, color: 'text-amber-400' },
+                  { label: 'Compliance Score', value: `${ccpaData.summary?.compliance_score ?? 0}%`, color: 'text-indigo-400' },
+                ].map((stat) => (
+                  <div key={stat.label} className="bg-[#111827]/40 border border-gray-800 rounded-2xl p-4 backdrop-blur-md">
+                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{stat.label}</p>
+                    <p className={`text-2xl font-black mt-1 ${stat.color}`}>{stat.value}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="bg-[#111827]/40 border border-gray-800 rounded-2xl p-5 backdrop-blur-md">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Overall CCPA Compliance</p>
+                  <p className="text-sm font-black text-white">{ccpaData.summary?.compliance_score ?? 0}%</p>
+                </div>
+                <div className="w-full h-2 bg-gray-800 rounded-full">
+                  <div className="h-full bg-emerald-500 rounded-full transition-all duration-700" style={{ width: `${ccpaData.summary?.compliance_score ?? 0}%` }} />
+                </div>
+              </div>
+              <div className="space-y-4">
+                {(ccpaData.sections || []).map((section: any) => {
+                  const sectionControls = section.controls || [];
+                  const implemented = sectionControls.filter((c: any) => c.implementation?.status === 'IMPLEMENTED').length;
+                  const total = sectionControls.length;
+                  const pct = total > 0 ? Math.round((implemented / total) * 100) : 0;
+                  return (
+                    <div key={section.section_code} className="bg-[#111827]/40 border border-gray-800 rounded-2xl p-5 backdrop-blur-md">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <span className="text-[10px] font-black text-gray-500 bg-gray-900/60 border border-gray-800 px-2 py-0.5 rounded font-mono">{section.section_code}</span>
+                          <p className="text-sm font-bold text-white">{section.title}</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-[10px] text-gray-500">{implemented}/{total} controls</span>
+                          <span className={cn('text-[10px] font-black uppercase px-2 py-0.5 rounded border', pct === 100 ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : pct > 0 ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' : 'text-gray-500 bg-gray-500/10 border-gray-500/20')}>
+                            {pct === 100 ? 'Complete' : pct > 0 ? 'In Progress' : 'Not Started'}
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-gray-500 mb-3">{section.description}</p>
+                      <div className="w-full h-1 bg-gray-800 rounded-full">
+                        <div className="h-full bg-indigo-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="text-center pt-2">
+                <a href="/app/ccpa" className="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 rounded-xl text-[10px] font-black text-white uppercase tracking-widest hover:bg-indigo-500 transition-all">
+                  Open Full CCPA Dashboard →
+                </a>
+              </div>
+            </>
+          )}
+        </div>
       )}
 
       {/* =======================================================

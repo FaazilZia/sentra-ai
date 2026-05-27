@@ -19,7 +19,10 @@ import {
   Award,
   FolderOpen,
   Layers,
-  Sparkles
+  Sparkles,
+  FlaskConical,
+  Globe,
+  Scale
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth';
@@ -45,6 +48,9 @@ const governanceItems = [
   { icon: Layers, label: 'Impact Boards', path: '/app/impact-assessments' },
   { icon: Award, label: 'CE Marking', path: '/app/ce-marking' },
   { icon: ShieldCheck, label: 'CCPA Compliance', path: '/app/ccpa' },
+  { icon: ShieldCheck, label: 'DORA', path: '/app/dora' },
+  { icon: Globe, label: 'OECD AI Principles', path: '/app/oecd' },
+  { icon: Scale, label: 'FTC AI Guidelines', path: '/app/ftc' },
   { icon: ShieldCheck, label: 'Controls', path: '/app/controls' },
   { icon: Box, label: 'Dataset Registry', path: '/app/datasets' },
   { icon: Building2, label: 'Vendor Risk', path: '/app/vendor-risk' },
@@ -53,6 +59,7 @@ const governanceItems = [
   { icon: ClipboardCheck, label: 'Intake Queue', path: '/app/intake' },
   { icon: GitPullRequestDraft, label: 'Approvals', path: '/app/workflows' },
   { icon: Activity, label: 'GovernanceOS', path: '/app/governance-os' },
+  { icon: FlaskConical, label: 'LLM Evaluation', path: '/app/evaluation' },
   { icon: BarChart3, label: 'Executive Report', path: '/app/executive-report' },
 ];
 

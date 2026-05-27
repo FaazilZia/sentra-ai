@@ -38,6 +38,9 @@ import mcpRoutes from './routes/mcp.routes';
 import mcpAgentKeyRoutes from './routes/mcpAgentKey.routes';
 import ceMarkingRoutes from './routes/ceMarking.routes';
 import ccpaRoutes from './routes/ccpa.routes';
+import doraRoutes from './routes/dora.routes';
+import oecdRoutes from './routes/oecd.routes';
+import ftcRoutes from './routes/ftc.routes';
 
 import advisorRoutes from './routes/advisor.routes';
 import automationRoutes from './routes/automation.routes';
@@ -266,6 +269,9 @@ v1Router.use('/iso42001', iso42001Routes);
 v1Router.use('/iso27001', iso27001Routes);
 v1Router.use('/ce-marking', ceMarkingRoutes);
 v1Router.use('/ccpa', ccpaRoutes);
+v1Router.use('/dora', doraRoutes);
+v1Router.use('/oecd', oecdRoutes);
+v1Router.use('/ftc', ftcRoutes);
 v1Router.use('/reports/executive', executiveReportRoutes);
 
 v1Router.use('/advisor', advisorRoutes);
