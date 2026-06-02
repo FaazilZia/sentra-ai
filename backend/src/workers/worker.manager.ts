@@ -146,7 +146,13 @@ async function updateConnectorHealth(connectorId: string, success: boolean, late
  */
 async function handleAdaptiveScheduling(connection: IORedis) {
   const connectors = await prisma.connectors.findMany({ where: { status: { notIn: ['failed', 'paused_budget'] } } });
-  const connectorQueue = new Queue('connector-scans', { connection });
+  const defaultJobOptions = {
+    attempts: 3,
+    backoff: { type: 'exponential' as const, delay: 2000 },
+    removeOnComplete: { count: 100 },
+    removeOnFail: false,
+  };
+  const connectorQueue = new Queue('connector-scans', { connection, defaultJobOptions });
 
   for (const connector of connectors) {
     const jobName = `repeat-scan-${connector.id}`;

@@ -71,7 +71,8 @@ import slackRoutes from './routes/slack.routes';
 import changeHistoryRoutes from './routes/changeHistory.routes';
 import intakeRoutes from './routes/intakeForm.routes';
 import prisma, { dbHealth } from './config/db';
-import { redisHealthCheck } from './config/redis';
+import { redisHealthCheck, getRedisClient } from './config/redis';
+import { alertQueue } from './services/queue.service';
 import { prometheusMiddleware } from './config/telemetry';
 import { auditRequest } from './middleware/audit.middleware';
 
@@ -81,11 +82,15 @@ import { securityObservability } from './middleware/security.middleware';
 import * as Sentry from '@sentry/node';
 
 import crypto from 'crypto';
+import pinoHttp from 'pino-http';
+import logger from './utils/logger';
+import { logger as rawPinoLogger } from './lib/logger';
+import { requestIdMiddleware } from './middleware/requestId.middleware';
 
 const app: Application = express();
 
-console.log('[BOOT] Express app created');
-console.log(`[BOOT] Timestamp: ${new Date().toISOString()}`);
+logger.info('[BOOT] Express app created');
+logger.info(`[BOOT] Timestamp: ${new Date().toISOString()}`);
 
 // Minimal diagnostics & health check routes (MUST be registered first to bypass all middlewares)
 app.get('/ping', (_, res) => res.status(200).send('ok'));
@@ -98,36 +103,54 @@ app.get('/startup-check', (_, res) => {
   });
 });
 
-app.get('/api/health', (req, res) => {
+const runDeepHealthCheck = async (req: any, res: any) => {
   const start = performance.now();
-  const dbStatus = dbHealth.isHealthy ? 'connected' : 'disconnected';
-  const redisStatus = getRateLimitRedisStatus();
-  
-  res.status(dbHealth.isHealthy ? 200 : 503).json({
-    status: dbHealth.isHealthy ? 'healthy' : 'unhealthy',
-    version: 'v1.5',
-    database: dbStatus,
-    redis: redisStatus,
-    rateLimitingRedis: redisStatus,
-    timestamp: new Date().toISOString()
-  });
-  
-  const duration = (performance.now() - start).toFixed(3);
-  console.log(`[HEALTH] Responded to /api/health in ${duration} ms`);
-});
+  const redis = getRedisClient();
 
-app.get('/api/v1/health', (req, res) => {
-  const start = performance.now();
-  const dbStatus = dbHealth.isHealthy ? 'connected' : 'disconnected';
-  
-  res.status(dbHealth.isHealthy ? 200 : 503).json({ 
-    status: dbHealth.isHealthy ? 'ok' : 'degraded', 
-    database: dbStatus 
-  });
-  
-  const duration = (performance.now() - start).toFixed(3);
-  console.log(`[HEALTH] Responded to /api/v1/health in ${duration} ms`);
-});
+  if (!redis || !alertQueue) {
+    const duration = (performance.now() - start).toFixed(3);
+    return res.status(503).json({
+      status: 'degraded',
+      db: 'ok',
+      redis: redis ? 'ok' : 'failed',
+      queue: alertQueue ? 'ok' : 'failed',
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  try {
+    const checks = await Promise.allSettled([
+      prisma.$queryRaw`SELECT 1`,
+      redis.ping(),
+      alertQueue.getWorkers(),
+    ]);
+
+    const dbOk = checks[0].status === 'fulfilled';
+    const redisOk = checks[1].status === 'fulfilled' && (checks[1] as any).value === 'PONG';
+    const queueOk = checks[2].status === 'fulfilled';
+
+    const allOk = dbOk && redisOk && queueOk;
+    const status = allOk ? 200 : 503;
+
+    return res.status(status).json({
+      status: allOk ? 'ok' : 'degraded',
+      db: dbOk ? 'ok' : 'failed',
+      redis: redisOk ? 'ok' : 'failed',
+      queue: queueOk ? 'ok' : 'failed',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error: any) {
+    return res.status(503).json({
+      status: 'degraded',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+
+app.get('/health', runDeepHealthCheck);
+app.get('/api/health', runDeepHealthCheck);
+app.get('/api/v1/health', runDeepHealthCheck);
 
 const handleReadyRequest = (req: any, res: any) => {
   const start = performance.now();
@@ -153,13 +176,40 @@ const handleReadyRequest = (req: any, res: any) => {
   
   const duration = (performance.now() - start).toFixed(3);
   const sanitizedUrl = String(req.originalUrl || req.url).replaceAll(/[\r\n]/g, '');
-  console.log(`[HEALTH] Responded to ${sanitizedUrl} in ${duration} ms`);
+  logger.info(`[HEALTH] Responded to ${sanitizedUrl} in ${duration} ms`);
 };
 
 app.get('/api/ready', handleReadyRequest);
 app.get('/api/v1/ready', handleReadyRequest);
 
-console.log('[BOOT] Health endpoints active');
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger';
+
+logger.info('[BOOT] Health endpoints active');
+
+// Expose Swagger OpenAPI JSON document
+app.get('/api-docs', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
+
+// Swagger UI authentication middleware (Allows non-production or authenticated users)
+const swaggerAuthMiddleware = (req: any, res: any, next: any) => {
+  if (process.env.NODE_ENV !== 'production') {
+    return next();
+  }
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return next();
+  }
+  if (req.cookies?.accessToken || req.cookies?.token) {
+    return next();
+  }
+  return res.status(401).json({ error: 'Unauthorized. Access to API Docs UI in production requires authentication.' });
+};
+
+// Mount Swagger UI
+app.use('/api-docs/ui', swaggerAuthMiddleware, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Initialize Sentry for observability
 if (process.env.SENTRY_DSN) {
@@ -171,6 +221,26 @@ if (process.env.SENTRY_DSN) {
       // Express integration is added automatically in newer versions or via integrations
     ],
   });
+}
+
+// Request ID injection (must be first so all logs carry req.id)
+app.use(requestIdMiddleware);
+
+// Structured HTTP logging via pino-http (replaces morgan for JSON production logs)
+if (process.env.NODE_ENV !== 'test') {
+  app.use(pinoHttp({
+    logger: rawPinoLogger,
+    genReqId: (req: any) => req.id || req.headers['x-request-id'],
+    customLogLevel: (_req, res) => {
+      if (res.statusCode >= 500) return 'error';
+      if (res.statusCode >= 400) return 'warn';
+      return 'info';
+    },
+    serializers: {
+      req: (req) => ({ method: req.method, url: req.url, id: req.id }),
+      res: (res) => ({ statusCode: res.statusCode }),
+    },
+  }));
 }
 
 // Nonce Middleware for CSP
@@ -202,8 +272,9 @@ app.use(helmet({
 app.use(securityObservability);
 
 const isProduction = process.env.NODE_ENV === 'production';
-const allowedOrigins = process.env.FRONTEND_URL 
-  ? process.env.FRONTEND_URL.split(',').map(o => o.trim()) 
+const corsOrigins = process.env.CORS_ALLOWED_ORIGINS || process.env.FRONTEND_URL;
+const allowedOrigins = corsOrigins 
+  ? corsOrigins.split(',').map(o => o.trim()) 
   : ['http://localhost:5173'];
 
 app.use(cors({
@@ -231,7 +302,10 @@ app.use('/metrics', metricsRoutes);
 
 app.use(express.json({ limit: '100kb' }));
 app.use(cookieParser());
-app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+// Morgan kept only for non-production development convenience; pino-http handles prod JSON logs
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+}
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 app.use(contextMiddleware);
 // Automatic audit logging for all mutating requests
@@ -324,6 +398,7 @@ v1Router.get('/', (req, res) => {
 });
 
 app.use('/api/v1', v1Router);
+app.use('/admin', adminRoutes);
 
 
 
@@ -340,6 +415,6 @@ app.get('/', (req, res) => {
 Sentry.setupExpressErrorHandler(app);
 app.use(errorHandler);
 
-console.log('[BOOT] Routes mounted');
+logger.info('[BOOT] Routes mounted');
 
 export default app;

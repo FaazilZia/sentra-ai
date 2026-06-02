@@ -8,3 +8,25 @@ export const parsePagination = (query: any, defaultLimit = 20, maxLimit = 200) =
   const limit = Math.min(rawLimit, maxLimit);
   return { page, limit };
 };
+
+export const parseCursorPagination = (query: any) => {
+  const limitQuery = query.limit;
+  const cursor = query.cursor ? String(query.cursor) : undefined;
+
+  const defaultLimit = 50;
+  const maxLimit = 200;
+
+  let limit = defaultLimit;
+  if (limitQuery !== undefined) {
+    const parsed = Number.parseInt(limitQuery as string, 10);
+    if (Number.isNaN(parsed) || parsed <= 0) {
+      limit = defaultLimit;
+    } else if (parsed > maxLimit) {
+      throw new Error('limit must be ≤ 200');
+    } else {
+      limit = parsed;
+    }
+  }
+
+  return { limit, cursor };
+};

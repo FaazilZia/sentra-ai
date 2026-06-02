@@ -5,6 +5,8 @@ import { createApiKeySchema, apiKeyIdParamSchema } from '../validations/admin.va
 import { listApiKeys, createApiKey, deleteApiKey } from '../controllers/apiKey.controller';
 import { getLogs as getActivityLogs } from '../controllers/ai.controller';
 import { authRateLimiter } from '../config/rateLimit';
+import { requireRole } from '../services/rbac.service';
+import { listQueues, listFailedJobs, retryFailedJob, flushFailedJobs } from '../controllers/adminQueue.controller';
 
 const router = Router();
 
@@ -91,5 +93,11 @@ router.delete(
 
 import { testAlert } from '../controllers/organization.controller';
 router.post('/alerts/test', authenticate, authorizeRoles('ADMIN'), testAlert);
+
+// --- Superadmin Queue Management Endpoints ---
+router.get('/queues', authenticate, requireRole('SUPERADMIN', 'SUPER_ADMIN'), listQueues);
+router.get('/queues/:name/failed', authenticate, requireRole('SUPERADMIN', 'SUPER_ADMIN'), listFailedJobs);
+router.post('/queues/:name/failed/:jobId/retry', authenticate, requireRole('SUPERADMIN', 'SUPER_ADMIN'), retryFailedJob);
+router.delete('/queues/:name/failed', authenticate, requireRole('SUPERADMIN', 'SUPER_ADMIN'), flushFailedJobs);
 
 export default router;

@@ -184,6 +184,34 @@ export function Sidebar() {
           </div>
         </div>
 
+        {/* Platform Admin Console */}
+        {user?.role === 'SUPER_ADMIN' && (
+          <div>
+            <p className="px-4 mb-2 text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400 opacity-80">Platform Admin</p>
+            <div className="space-y-1">
+              <NavLink
+                to="/superadmin"
+                className={({ isActive }) => cn(
+                  "group flex items-center justify-between px-4 py-2 rounded transition-all duration-200",
+                  isActive
+                    ? "bg-[#2563eb] text-white shadow-md shadow-black/10"
+                    : "text-[var(--lavender)] hover:bg-[#334155]/60 hover:text-white"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <ShieldCheck className={cn(
+                    "h-4 w-4 transition-transform group-hover:scale-110",
+                    "text-indigo-400"
+                  )} />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">Platform Console</span>
+                </div>
+                <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-40 transition-opacity" />
+              </NavLink>
+            </div>
+          </div>
+        )}
+
+
       </nav>
 
       {/* Footer Profile */}

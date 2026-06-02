@@ -28,12 +28,20 @@ if (REDIS_URL) {
   }
 }
 
-export const activityQueue = connection ? new Queue('activity-logs', { connection }) : null;
-export const connectorQueue = connection ? new Queue('connector-scans', { connection }) : null;
-export const driftQueue = connection ? new Queue('drift-scans', { connection }) : null;
-export const evaluationQueue = connection ? new Queue('evaluation-runs', { connection }) : null;
-export const automationsQueue = connection ? new Queue('automations', { connection }) : null;
-export const intakeLLMQueue = connection ? new Queue('intake-llm', { connection }) : null;
+export const defaultJobOptions = {
+  attempts: 3,
+  backoff: { type: 'exponential' as const, delay: 2000 },
+  removeOnComplete: { count: 100 },
+  removeOnFail: false,
+};
+
+export const activityQueue = connection ? new Queue('activity-logs', { connection, defaultJobOptions }) : null;
+export const connectorQueue = connection ? new Queue('connector-scans', { connection, defaultJobOptions }) : null;
+export const driftQueue = connection ? new Queue('drift-scans', { connection, defaultJobOptions }) : null;
+export const evaluationQueue = connection ? new Queue('evaluation-runs', { connection, defaultJobOptions }) : null;
+export const automationsQueue = connection ? new Queue('automations', { connection, defaultJobOptions }) : null;
+export const intakeLLMQueue = connection ? new Queue('intake-llm', { connection, defaultJobOptions }) : null;
+export const alertQueue = connection ? new Queue('alerts', { connection, defaultJobOptions }) : null;
 
 if (activityQueue) activityQueue.on('error', (err) => logger.warn('[BULLMQ] activityQueue connection issue:', err));
 if (connectorQueue) connectorQueue.on('error', (err) => logger.warn('[BULLMQ] connectorQueue connection issue:', err));
@@ -65,7 +73,13 @@ if (connection) {
   });
 
   activityWorker.on('failed', (job, err) => {
-    logger.error(`Log Job ${job?.id} failed:`, err);
+    logger.error({
+      jobId: job?.id,
+      queueName: 'activity-logs',
+      errorMessage: err.message,
+      errorStack: err.stack,
+      jobData: job?.data,
+    }, `Job ${job?.id} in queue 'activity-logs' failed: ${err.message}`);
   });
 }
 
@@ -94,7 +108,7 @@ export const enqueueLog = async (data: any) => {
 };
 
 // --- Scheduled Data Retention (Audit Compliance) ---
-export const retentionQueue = connection ? new Queue('data-retention', { connection }) : null;
+export const retentionQueue = connection ? new Queue('data-retention', { connection, defaultJobOptions }) : null;
 
 if (retentionQueue) retentionQueue.on('error', (err) => logger.warn('[BULLMQ] retentionQueue connection issue:', err));
 
@@ -218,8 +232,23 @@ if (connection) {
     { connection }
   );
 
-  automationsWorker.on('failed', (job, err) => logger.error(`[BULLMQ] Automation Job ${job?.id} failed:`, err));
-  intakeLLMWorker.on('failed', (job, err) => logger.error(`[BULLMQ] Intake LLM Job ${job?.id} failed:`, err));
+  const registerFailedListener = (worker: Worker, queueName: string) => {
+    worker.on('failed', (job, err) => {
+      logger.error({
+        jobId: job?.id,
+        queueName,
+        errorMessage: err.message,
+        errorStack: err.stack,
+        jobData: job?.data,
+      }, `Job ${job?.id} in queue '${queueName}' failed: ${err.message}`);
+    });
+  };
+
+  registerFailedListener(retentionWorker, 'data-retention');
+  registerFailedListener(connectorWorker, 'connector-scans');
+  registerFailedListener(postMarketWorker, 'post-market-monitoring');
+  registerFailedListener(automationsWorker, 'automations');
+  registerFailedListener(intakeLLMWorker, 'intake-llm');
 }
 
 export async function processConnectorScan(type: string, connectorId: string) {

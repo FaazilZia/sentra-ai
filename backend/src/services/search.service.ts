@@ -31,7 +31,7 @@ export const SearchService = {
     logger.info(`[Search] Querying database for "${term}" in organization ${orgId}`);
 
     try {
-      const [agents, policies, riskAssessments, incidents, controls] = await Promise.all([
+      const [agents, policies, riskAssessments, incidents, controls, dora, ccpa, oecd, ftc] = await Promise.all([
         // 1. AI Agents
         prisma.ai_agents.findMany({
           where: {
@@ -102,6 +102,54 @@ export const SearchService = {
             ]
           },
           take: limit
+        }),
+
+        // 6. DORA Controls (Global Catalog)
+        prisma.dora_controls.findMany({
+          where: {
+            OR: [
+              { control_code: { contains: term, mode: 'insensitive' } },
+              { title: { contains: term, mode: 'insensitive' } },
+              { description: { contains: term, mode: 'insensitive' } }
+            ]
+          },
+          take: limit
+        }),
+
+        // 7. CCPA Controls (Global Catalog)
+        prisma.ccpa_controls.findMany({
+          where: {
+            OR: [
+              { control_code: { contains: term, mode: 'insensitive' } },
+              { title: { contains: term, mode: 'insensitive' } },
+              { description: { contains: term, mode: 'insensitive' } }
+            ]
+          },
+          take: limit
+        }),
+
+        // 8. OECD Controls (Global Catalog)
+        prisma.oecd_controls.findMany({
+          where: {
+            OR: [
+              { control_code: { contains: term, mode: 'insensitive' } },
+              { title: { contains: term, mode: 'insensitive' } },
+              { description: { contains: term, mode: 'insensitive' } }
+            ]
+          },
+          take: limit
+        }),
+
+        // 9. FTC Controls (Global Catalog)
+        prisma.ftc_controls.findMany({
+          where: {
+            OR: [
+              { control_code: { contains: term, mode: 'insensitive' } },
+              { title: { contains: term, mode: 'insensitive' } },
+              { description: { contains: term, mode: 'insensitive' } }
+            ]
+          },
+          take: limit
         })
       ]);
 
@@ -162,7 +210,51 @@ export const SearchService = {
         });
       });
 
-      // 6. Search static guardrails in memory
+      // Map DORA
+      dora.forEach(ctrl => {
+        results.push({
+          id: ctrl.id,
+          type: 'compliance',
+          title: `${ctrl.control_code}: ${ctrl.title}`,
+          subtitle: `Framework: DORA • ${ctrl.description}`,
+          url: '/app/dora'
+        });
+      });
+
+      // Map CCPA
+      ccpa.forEach(ctrl => {
+        results.push({
+          id: ctrl.id,
+          type: 'compliance',
+          title: `${ctrl.control_code}: ${ctrl.title}`,
+          subtitle: `Framework: CCPA Compliance • ${ctrl.description}`,
+          url: '/app/ccpa'
+        });
+      });
+
+      // Map OECD
+      oecd.forEach(ctrl => {
+        results.push({
+          id: ctrl.id,
+          type: 'compliance',
+          title: `${ctrl.control_code}: ${ctrl.title}`,
+          subtitle: `Framework: OECD AI Principles • ${ctrl.description}`,
+          url: '/app/oecd'
+        });
+      });
+
+      // Map FTC
+      ftc.forEach(ctrl => {
+        results.push({
+          id: ctrl.id,
+          type: 'compliance',
+          title: `${ctrl.control_code}: ${ctrl.title}`,
+          subtitle: `Framework: FTC AI Guidelines • ${ctrl.description}`,
+          url: '/app/ftc'
+        });
+      });
+
+      // 10. Search static guardrails in memory
       STATIC_GUARDRAILS.forEach(gr => {
         const matchesName = gr.name.toLowerCase().includes(term.toLowerCase());
         const matchesDesc = gr.description.toLowerCase().includes(term.toLowerCase());
@@ -187,4 +279,5 @@ export const SearchService = {
       return [];
     }
   }
+
 };

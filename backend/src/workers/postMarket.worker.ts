@@ -11,7 +11,13 @@ export function startPostMarketWorker() {
     return null;
   }
 
-  const queue = new Queue('post-market-monitoring', { connection });
+  const defaultJobOptions = {
+    attempts: 3,
+    backoff: { type: 'exponential' as const, delay: 2000 },
+    removeOnComplete: { count: 100 },
+    removeOnFail: false,
+  };
+  const queue = new Queue('post-market-monitoring', { connection, defaultJobOptions });
 
   queue.add('monthly-report-refresh', {}, {
     repeat: { pattern: '0 8 1 * *' }, // 8am on the 1st of every month
@@ -32,7 +38,14 @@ export function startPostMarketWorker() {
     }
   }, { connection });
 
-  worker.on('completed', (job) => logger.info(`[PostMarketWorker] Job ${job.id} completed`));
-  worker.on('failed', (job, err) => logger.error(`[PostMarketWorker] Job ${job?.id} failed:`, err));
+  worker.on('failed', (job, err) => {
+    logger.error({
+      jobId: job?.id,
+      queueName: 'post-market-monitoring',
+      errorMessage: err.message,
+      errorStack: err.stack,
+      jobData: job?.data,
+    }, `Job ${job?.id} in queue 'post-market-monitoring' failed: ${err.message}`);
+  });
   return worker;
 }

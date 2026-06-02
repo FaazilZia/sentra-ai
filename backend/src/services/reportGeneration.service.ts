@@ -285,7 +285,7 @@ export class ReportGenerationService {
       return;
     }
 
-    const doc = new PDFDocument({ margin: 50, size: 'A4' });
+    const doc = new PDFDocument({ margin: 50, size: 'A4', bufferPages: true });
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=SentraAI_Policy_${policy.name.replace(/\s+/g, '_')}.pdf`);
     doc.pipe(res);
@@ -297,6 +297,35 @@ export class ReportGenerationService {
     doc.fillColor('#0f172a').fontSize(14).font('Helvetica-Bold').text('Policy Description', 50, 180);
     doc.rect(50, 200, 495, 1).fill('#cbd5e1');
     doc.fillColor('#334155').fontSize(10).font('Helvetica').text(policy.description || 'No description supplied', 50, 215, { width: 495 });
+
+    // Global Header/Footer & Page Numbering across all pages
+    const range = doc.bufferedPageRange();
+    for (let i = 0; i < range.count; i++) {
+      doc.switchToPage(i);
+      
+      // Header on every page
+      doc.fillColor('#94a3b8').fontSize(8).font('Helvetica').text(
+        'SENTRA AI GOVERNANCE SYSTEM',
+        50,
+        25,
+        { align: 'left' }
+      );
+      doc.rect(50, 38, doc.page.width - 100, 0.5).fill('#cbd5e1');
+
+      // Footer with page number
+      doc.fillColor('#94a3b8').fontSize(8).font('Helvetica').text(
+        `Page ${i + 1} of ${range.count}`,
+        50,
+        doc.page.height - 40,
+        { align: 'right', width: doc.page.width - 100 }
+      );
+      doc.text(
+        'Branded Security Governance Policy Export',
+        50,
+        doc.page.height - 40,
+        { align: 'left' }
+      );
+    }
 
     doc.end();
   }

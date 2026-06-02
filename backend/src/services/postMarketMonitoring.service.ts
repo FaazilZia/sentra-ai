@@ -2,6 +2,7 @@ import prisma from '../config/db';
 import { Queue } from 'bullmq';
 import { getRedisUrl, buildRedisOptions } from '../config/redis';
 import * as IORedisModule from 'ioredis';
+import logger from '../utils/logger';
 const IORedis = (IORedisModule.default || IORedisModule) as any;
 
 const REDIS_URL = getRedisUrl();
@@ -13,9 +14,16 @@ if (REDIS_URL) {
   }));
 }
 
+const defaultJobOptions = {
+  attempts: 3,
+  backoff: { type: 'exponential' as const, delay: 2000 },
+  removeOnComplete: { count: 100 },
+  removeOnFail: false,
+};
+
 // Guard comment: postMarketQueue is initialized at module load and can be null (e.g. when Redis is offline).
 // Always verify its nullability before calling queue-dependent methods to prevent runtime exceptions.
-export const postMarketQueue = connection ? new Queue('post-market-monitoring', { connection }) : null;
+export const postMarketQueue = connection ? new Queue('post-market-monitoring', { connection, defaultJobOptions }) : null;
 
 export class PostMarketMonitoringService {
   /**
@@ -144,7 +152,7 @@ export class PostMarketMonitoringService {
    */
   static async scheduleMonitoringCheck(organizationId: string) {
     if (!postMarketQueue) {
-      console.warn(`[PostMarketMonitoring] BullMQ offline, skipped scheduling for org: ${organizationId}`);
+      logger.warn(`[PostMarketMonitoring] BullMQ offline, skipped scheduling for org: ${organizationId}`);
       return;
     }
 
@@ -201,7 +209,7 @@ export class PostMarketMonitoringService {
         });
       }
     } catch (err: any) {
-      console.warn(`[PostMarketMonitoring] Failed to update Art. 72 compliance row status:`, err.message);
+      logger.warn(`[PostMarketMonitoring] Failed to update Art. 72 compliance row status:`, err.message);
     }
   }
 }

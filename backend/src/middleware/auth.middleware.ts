@@ -108,6 +108,15 @@ export const authenticate = async (req: any, res: Response, next: NextFunction) 
           include: { organizations: true },
         });
         if (user && user.is_active && user.organizations.is_active) {
+          // Invalidate access tokens issued before passwordChangedAt
+          if (user.passwordChangedAt && payload.iat) {
+            const tokenIssuedAt = payload.iat; // standard iat in seconds
+            const passwordChangedSecs = Math.floor(user.passwordChangedAt.getTime() / 1000);
+            if (tokenIssuedAt < passwordChangedSecs) {
+              return res.status(401).json({ success: false, message: 'Session expired due to password change' });
+            }
+          }
+
           // Block default organization in production
           if (user.organizationId === '00000000-0000-0000-0000-000000000001' && process.env.NODE_ENV === 'production') {
             return res.status(403).json({ success: false, message: 'Organization setup incomplete.' });

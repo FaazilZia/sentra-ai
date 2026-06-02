@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import prisma from '../config/db';
+import logger from '../utils/logger';
 
 export class FileIngestionService {
   /**
@@ -72,7 +73,7 @@ export class FileIngestionService {
         fs.unlinkSync(record.storage_path);
       }
     } catch (err: any) {
-      console.warn(`[FileIngestionService] Failed to delete file on disk at ${record.storage_path}:`, err.message);
+      logger.warn(`[FileIngestionService] Failed to delete file on disk at ${record.storage_path}:`, err.message);
     }
 
     // Delete DB record

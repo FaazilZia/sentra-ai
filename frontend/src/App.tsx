@@ -43,6 +43,9 @@ const TrustPortalPage = lazy(() => import('./pages/TrustPortal'));
 const IntakePage = lazy(() => import('./pages/Intake'));
 const SharedViewPage = lazy(() => import('./pages/SharedView'));
 const EvaluationDashboardPage = lazy(() => import('./pages/EvaluationDashboard'));
+const SuperadminPage = lazy(() => import('./pages/Superadmin'));
+const NotFoundPage = lazy(() => import('./pages/NotFound'));
+
 
 import { ModalProvider } from './components/shared/ModalProvider';
 import { ToastProvider } from './components/shared/ToastProvider';
@@ -233,7 +236,13 @@ function AppRoutes() {
 
             <Route path="/app/settings" element={user ? <AppLayout><SettingsPage /></AppLayout> : <Navigate to="/login" replace />} />
 
-            <Route path="*" element={<Navigate to={user ? "/app" : "/login"} replace />} />
+            <Route 
+              path="/superadmin" 
+              element={user && user.role === 'SUPER_ADMIN' ? <AppLayout><SuperadminPage /></AppLayout> : <Navigate to="/app" replace />} 
+            />
+
+            <Route path="*" element={<Suspense fallback={<RouteFallback />}><NotFoundPage /></Suspense>} />
+
           </Routes>
           
           <ModalProvider />

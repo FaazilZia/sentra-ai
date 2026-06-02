@@ -2,6 +2,7 @@ import prisma from '../config/db';
 import { randomUUID } from 'crypto';
 import { buildTenantQuery } from '../utils/queryHelpers';
 import { QuantitativeRiskService } from './quantitativeRisk.service';
+import logger from '../utils/logger';
 
 export const GovernanceService = {
   // ==========================================
@@ -149,7 +150,7 @@ export const GovernanceService = {
         'system'
       );
     } catch (error) {
-      console.error('[GOVERNANCE] Failed to update quantitative risk score on assessment submission:', error);
+      logger.error('[GOVERNANCE] Failed to update quantitative risk score on assessment submission:', error);
     }
 
     return updatedAssessment;

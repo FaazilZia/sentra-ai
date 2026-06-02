@@ -270,16 +270,26 @@ export const getScimUsers = async (req: any, res: Response, next: NextFunction) 
   try {
     const organizationId = req.user?.organizationId;
     if (!organizationId) {
-      return res.status(401).json({ success: false, message: 'Invalid SCIM Bearer credentials' });
+      return res.status(401).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '401', detail: 'Invalid SCIM Bearer credentials' });
     }
 
     const org = await prisma.organizations.findUnique({ where: { id: organizationId } });
     if (!org || !org.sso_enabled) {
-      return res.status(501).json({ success: false, message: 'SSO is not enabled for this organization' });
+      return res.status(501).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '501', detail: 'SSO is not enabled for this organization' });
+    }
+
+    let whereClause: any = { organizationId };
+
+    // Support filter ?filter=userName eq "..."
+    if (req.query.filter && typeof req.query.filter === 'string') {
+      const match = req.query.filter.match(/userName\s+eq\s+["']([^"']+)["']/i);
+      if (match && match[1]) {
+        whereClause.email = match[1];
+      }
     }
 
     const usersList = await prisma.users.findMany({
-      where: { organizationId },
+      where: whereClause,
       orderBy: { created_at: 'asc' },
     });
 
@@ -451,4 +461,424 @@ export const deleteScimUser = async (req: any, res: Response, next: NextFunction
   } catch (error) {
     next(error);
   }
+};
+
+export const getScimUserById = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const organizationId = req.user?.organizationId;
+    if (!organizationId) {
+      return res.status(401).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '401', detail: 'Invalid SCIM Bearer credentials' });
+    }
+    const { id } = req.params;
+    const user = await prisma.users.findFirst({ where: { id, organizationId } });
+    if (!user) {
+      return res.status(404).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '404', detail: 'User not found' });
+    }
+    return res.status(200).json({
+      schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
+      id: user.id,
+      userName: user.email,
+      emails: [{ value: user.email, primary: true }],
+      name: { formatted: user.full_name, givenName: user.full_name.split(' ')[0] || '', familyName: user.full_name.split(' ')[1] || '' },
+      active: user.is_active,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const patchScimUser = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const organizationId = req.user?.organizationId;
+    if (!organizationId) {
+      return res.status(401).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '401', detail: 'Invalid SCIM Bearer credentials' });
+    }
+    const { id } = req.params;
+    const user = await prisma.users.findFirst({ where: { id, organizationId } });
+    if (!user) {
+      return res.status(404).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '404', detail: 'User not found' });
+    }
+
+    const { Operations } = req.body;
+    if (!Operations || !Array.isArray(Operations)) {
+      return res.status(400).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '400', detail: 'Invalid operations format' });
+    }
+
+    const updateData: any = {};
+    for (const op of Operations) {
+      const path = op.path;
+      const value = op.value;
+      const opType = String(op.op).toLowerCase();
+
+      if (opType === 'replace' || opType === 'add') {
+        if (path === 'active' || value?.active !== undefined) {
+          updateData.is_active = path === 'active' ? (value === true || value === 'true') : value.active;
+        }
+        if (path === 'name.formatted') {
+          updateData.full_name = value;
+        }
+      }
+    }
+
+    const updatedUser = await prisma.users.update({
+      where: { id },
+      data: updateData,
+    });
+
+    return res.status(200).json({
+      schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
+      id: updatedUser.id,
+      userName: updatedUser.email,
+      emails: [{ value: updatedUser.email, primary: true }],
+      name: { formatted: updatedUser.full_name },
+      active: updatedUser.is_active,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getScimGroups = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const organizationId = req.user?.organizationId;
+    if (!organizationId) {
+      return res.status(401).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '401', detail: 'Invalid SCIM Bearer credentials' });
+    }
+
+    const rolesList = ['ADMIN', 'MEMBER', 'VIEWER', 'AUDITOR', 'ENGINEER'];
+    const resources: any[] = [];
+
+    for (const roleName of rolesList) {
+      const roleUsers = await prisma.users.findMany({
+        where: { organizationId, role: roleName },
+        select: { id: true, full_name: true }
+      });
+
+      resources.push({
+        schemas: ['urn:ietf:params:scim:schemas:core:2.0:Group'],
+        id: roleName.toLowerCase(),
+        displayName: roleName,
+        members: roleUsers.map((u) => ({
+          value: u.id,
+          display: u.full_name
+        }))
+      });
+    }
+
+    return res.status(200).json({
+      schemas: ['urn:ietf:params:scim:api:messages:2.0:ListResponse'],
+      totalResults: resources.length,
+      itemsPerPage: resources.length,
+      startIndex: 1,
+      Resources: resources,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getScimGroupById = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const organizationId = req.user?.organizationId;
+    if (!organizationId) {
+      return res.status(401).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '401', detail: 'Invalid SCIM Bearer credentials' });
+    }
+
+    const { id } = req.params;
+    const roleName = String(id).toUpperCase();
+    const rolesList = ['ADMIN', 'MEMBER', 'VIEWER', 'AUDITOR', 'ENGINEER'];
+
+    if (!rolesList.includes(roleName)) {
+      return res.status(404).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '404', detail: 'Group not found' });
+    }
+
+    const roleUsers = await prisma.users.findMany({
+      where: { organizationId, role: roleName },
+      select: { id: true, full_name: true }
+    });
+
+    return res.status(200).json({
+      schemas: ['urn:ietf:params:scim:schemas:core:2.0:Group'],
+      id: roleName.toLowerCase(),
+      displayName: roleName,
+      members: roleUsers.map((u) => ({
+        value: u.id,
+        display: u.full_name
+      }))
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createScimGroup = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const organizationId = req.user?.organizationId;
+    if (!organizationId) {
+      return res.status(401).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '401', detail: 'Invalid SCIM Bearer credentials' });
+    }
+
+    const { displayName, members } = req.body;
+    const targetRole = String(displayName || '').toUpperCase();
+    const rolesList = ['ADMIN', 'MEMBER', 'VIEWER', 'AUDITOR', 'ENGINEER'];
+
+    if (!rolesList.includes(targetRole)) {
+      return res.status(400).json({
+        schemas: ["urn:ietf:params:scim:api:messages:2.0:Error"],
+        status: "400",
+        detail: `Group '${displayName}' does not map to a known system role. Valid groups are: ADMIN, MEMBER, VIEWER, AUDITOR, ENGINEER.`
+      });
+    }
+
+    if (members && Array.isArray(members)) {
+      const userIds = members.map((m: any) => m.value);
+      await prisma.users.updateMany({
+        where: { id: { in: userIds }, organizationId },
+        data: { role: targetRole }
+      });
+    }
+
+    return res.status(201).json({
+      schemas: ['urn:ietf:params:scim:schemas:core:2.0:Group'],
+      id: targetRole.toLowerCase(),
+      displayName: targetRole,
+      members: members || []
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateScimGroup = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const organizationId = req.user?.organizationId;
+    if (!organizationId) {
+      return res.status(401).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '401', detail: 'Invalid SCIM Bearer credentials' });
+    }
+
+    const { id } = req.params;
+    const { displayName, members } = req.body;
+    const targetRole = String(displayName || '').toUpperCase();
+    const rolesList = ['ADMIN', 'MEMBER', 'VIEWER', 'AUDITOR', 'ENGINEER'];
+
+    if (!rolesList.includes(targetRole)) {
+      return res.status(400).json({
+        schemas: ["urn:ietf:params:scim:api:messages:2.0:Error"],
+        status: "400",
+        detail: `Group '${displayName}' does not map to a known system role. Valid groups are: ADMIN, MEMBER, VIEWER, AUDITOR, ENGINEER.`
+      });
+    }
+
+    await prisma.users.updateMany({
+      where: { organizationId, role: targetRole },
+      data: { role: 'VIEWER' }
+    });
+
+    if (members && Array.isArray(members)) {
+      const userIds = members.map((m: any) => m.value);
+      await prisma.users.updateMany({
+        where: { id: { in: userIds }, organizationId },
+        data: { role: targetRole }
+      });
+    }
+
+    return res.status(200).json({
+      schemas: ['urn:ietf:params:scim:schemas:core:2.0:Group'],
+      id: targetRole.toLowerCase(),
+      displayName: targetRole,
+      members: members || []
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const patchScimGroup = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const organizationId = req.user?.organizationId;
+    if (!organizationId) {
+      return res.status(401).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '401', detail: 'Invalid SCIM Bearer credentials' });
+    }
+
+    const { id } = req.params;
+    const targetRole = String(id).toUpperCase();
+    const rolesList = ['ADMIN', 'MEMBER', 'VIEWER', 'AUDITOR', 'ENGINEER'];
+
+    if (!rolesList.includes(targetRole)) {
+      return res.status(400).json({
+        schemas: ["urn:ietf:params:scim:api:messages:2.0:Error"],
+        status: "400",
+        detail: `Group '${id}' does not map to a known system role. Valid groups are: ADMIN, MEMBER, VIEWER, AUDITOR, ENGINEER.`
+      });
+    }
+
+    const { Operations } = req.body;
+    if (!Operations || !Array.isArray(Operations)) {
+      return res.status(400).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '400', detail: 'Invalid operations format' });
+    }
+
+    for (const op of Operations) {
+      const opType = String(op.op).toLowerCase();
+      const value = op.value;
+
+      if (opType === 'add') {
+        if (value && Array.isArray(value)) {
+          const userIds = value.map((m: any) => m.value);
+          await prisma.users.updateMany({
+            where: { id: { in: userIds }, organizationId },
+            data: { role: targetRole }
+          });
+        }
+      } else if (opType === 'remove') {
+        if (!value) {
+          await prisma.users.updateMany({
+            where: { organizationId, role: targetRole },
+            data: { role: 'VIEWER' }
+          });
+        } else if (Array.isArray(value)) {
+          const userIds = value.map((m: any) => m.value);
+          await prisma.users.updateMany({
+            where: { id: { in: userIds }, organizationId, role: targetRole },
+            data: { role: 'VIEWER' }
+          });
+        }
+      } else if (opType === 'replace') {
+        if (value && Array.isArray(value)) {
+          await prisma.users.updateMany({
+            where: { organizationId, role: targetRole },
+            data: { role: 'VIEWER' }
+          });
+          const userIds = value.map((m: any) => m.value);
+          await prisma.users.updateMany({
+            where: { id: { in: userIds }, organizationId },
+            data: { role: targetRole }
+          });
+        }
+      }
+    }
+
+    const roleUsers = await prisma.users.findMany({
+      where: { organizationId, role: targetRole },
+      select: { id: true, full_name: true }
+    });
+
+    return res.status(200).json({
+      schemas: ['urn:ietf:params:scim:schemas:core:2.0:Group'],
+      id: targetRole.toLowerCase(),
+      displayName: targetRole,
+      members: roleUsers.map((u) => ({
+        value: u.id,
+        display: u.full_name
+      }))
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteScimGroup = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const organizationId = req.user?.organizationId;
+    if (!organizationId) {
+      return res.status(401).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '401', detail: 'Invalid SCIM Bearer credentials' });
+    }
+
+    const { id } = req.params;
+    const targetRole = String(id).toUpperCase();
+    const rolesList = ['ADMIN', 'MEMBER', 'VIEWER', 'AUDITOR', 'ENGINEER'];
+
+    if (!rolesList.includes(targetRole)) {
+      return res.status(404).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '404', detail: 'Group not found' });
+    }
+
+    await prisma.users.updateMany({
+      where: { organizationId, role: targetRole },
+      data: { role: 'VIEWER' }
+    });
+
+    return res.status(204).end();
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getServiceProviderConfig = async (req: Request, res: Response, next: NextFunction) => {
+  return res.status(200).json({
+    schemas: ['urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig'],
+    patch: { supported: true },
+    bulk: { supported: false, maxOperations: 0, maxPayloadSize: 0 },
+    filter: { supported: true, maxResults: 200 },
+    changePassword: { supported: false },
+    sort: { supported: false },
+    etag: { supported: false },
+    authenticationSchemes: [
+      {
+        name: 'OAuth Bearer Token',
+        description: 'SaaS tenant-specific SCIM Bearer Token authorization.',
+        specUri: 'http://tools.ietf.org/html/rfc6750',
+        type: 'oauthbearertoken',
+        primary: true,
+      },
+    ],
+  });
+};
+
+export const getResourceTypes = async (req: Request, res: Response, next: NextFunction) => {
+  return res.status(200).json({
+    schemas: ['urn:ietf:params:scim:api:messages:2.0:ListResponse'],
+    totalResults: 2,
+    itemsPerPage: 2,
+    startIndex: 1,
+    Resources: [
+      {
+        schemas: ['urn:ietf:params:scim:schemas:core:2.0:ResourceType'],
+        id: 'User',
+        name: 'User',
+        endpoint: '/Users',
+        description: 'User Account Schema',
+        schema: 'urn:ietf:params:scim:schemas:core:2.0:User',
+      },
+      {
+        schemas: ['urn:ietf:params:scim:schemas:core:2.0:ResourceType'],
+        id: 'Group',
+        name: 'Group',
+        endpoint: '/Groups',
+        description: 'System Group mapped to Application Role Schema',
+        schema: 'urn:ietf:params:scim:schemas:core:2.0:Group',
+      },
+    ],
+  });
+};
+
+export const getSchemas = async (req: Request, res: Response, next: NextFunction) => {
+  return res.status(200).json({
+    schemas: ['urn:ietf:params:scim:api:messages:2.0:ListResponse'],
+    totalResults: 2,
+    itemsPerPage: 2,
+    startIndex: 1,
+    Resources: [
+      {
+        id: 'urn:ietf:params:scim:schemas:core:2.0:User',
+        name: 'User',
+        description: 'Core User Schema',
+        attributes: [
+          { name: 'id', type: 'string', multiValued: false, required: true, caseExact: false, mutability: 'readOnly', returned: 'always', uniqueness: 'global' },
+          { name: 'userName', type: 'string', multiValued: false, required: true, caseExact: false, mutability: 'readWrite', returned: 'always', uniqueness: 'server' },
+          { name: 'emails', type: 'complex', multiValued: true, required: true, subAttributes: [{ name: 'value', type: 'string' }, { name: 'primary', type: 'boolean' }] },
+          { name: 'name', type: 'complex', multiValued: false, subAttributes: [{ name: 'formatted', type: 'string' }] },
+          { name: 'active', type: 'boolean', multiValued: false, required: false }
+        ]
+      },
+      {
+        id: 'urn:ietf:params:scim:schemas:core:2.0:Group',
+        name: 'Group',
+        description: 'Core Group Schema',
+        attributes: [
+          { name: 'id', type: 'string', multiValued: false, required: true, caseExact: false, mutability: 'readOnly', returned: 'always' },
+          { name: 'displayName', type: 'string', multiValued: false, required: true, caseExact: false },
+          { name: 'members', type: 'complex', multiValued: true, subAttributes: [{ name: 'value', type: 'string' }, { name: 'display', type: 'string' }] }
+        ]
+      }
+    ],
+  });
 };

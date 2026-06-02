@@ -17,6 +17,7 @@
 
 import rateLimit, { MemoryStore } from 'express-rate-limit';
 import * as IORedis from 'ioredis';
+import logger from '../utils/logger';
 
 const Redis = (IORedis.default || IORedis) as any;
 
@@ -57,7 +58,7 @@ export const withTimeout = <T>(promise: Promise<T>, ms: number, errorMessage = '
   // Shield against unhandled promise rejections if the slower promise rejects post-timeout
   promise.catch((err) => {
     // Silently capture post-timeout failures to preserve application stability
-    console.debug(`[RateLimit:TimeoutGuard] Redis call rejected post-timeout:`, err?.message || err);
+    logger.debug(`[RateLimit:TimeoutGuard] Redis call rejected post-timeout:`, err?.message || err);
   });
 
   return Promise.race([
@@ -135,7 +136,7 @@ export class ResilientRedisStore {
 
     if (this.client && this.client.status === 'ready') {
       try {
-        console.log(`[RateLimitStore:${this.prefix}] Client is active. Initializing RedisStore dynamically...`);
+        logger.info(`[RateLimitStore:${this.prefix}] Client is active. Initializing RedisStore dynamically...`);
         this.redisStore = new this.RedisStoreClass({
           sendCommand: (command: string, ...args: string[]) => {
             return withTimeout(this.client.call(command, ...args), 1000, `Command execution timed out on Redis`);
@@ -147,7 +148,7 @@ export class ResilientRedisStore {
           this.redisStore.init(this.lastOptions || {});
         }
       } catch (err: any) {
-        console.error(`[RateLimitStore:${this.prefix}] Failed to dynamically instantiate RedisStore:`, err?.message || err);
+        logger.error(`[RateLimitStore:${this.prefix}] Failed to dynamically instantiate RedisStore:`, err?.message || err);
         this.redisStore = null;
       }
     }
@@ -156,7 +157,7 @@ export class ResilientRedisStore {
 
   private handleStoreError(method: string, error: any) {
     rateLimiterMetrics.redisFailures++;
-    console.error(`[RateLimitStore:${this.prefix}] Redis store ${method} execution error:`, error?.message || error);
+    logger.error(`[RateLimitStore:${this.prefix}] Redis store ${method} execution error:`, error?.message || error);
     
     this.consecutiveFailures++;
     this.lastFailureTime = Date.now();
@@ -164,7 +165,7 @@ export class ResilientRedisStore {
     // Settle circuit state changes synchronously to prevent middleware concurrent race anomalies
     if (this.consecutiveFailures >= this.FAILURE_THRESHOLD) {
       if (this.circuitState !== 'OPEN') {
-        console.warn(`[RateLimitStore:${this.prefix}] Circuit broken! Tripping to OPEN state. Cooldown backoff initiated for ${this.COOLDOWN_MS}ms.`);
+        logger.warn(`[RateLimitStore:${this.prefix}] Circuit broken! Tripping to OPEN state. Cooldown backoff initiated for ${this.COOLDOWN_MS}ms.`);
         this.circuitState = 'OPEN';
         rateLimiterMetrics.fallbackActivations++;
         this.setStatusState(false);
@@ -187,7 +188,7 @@ export class ResilientRedisStore {
     if (this.circuitState === 'OPEN') {
       // Allow probe attempt if cooldown window has expired
       if (Date.now() - this.lastFailureTime > this.COOLDOWN_MS) {
-        console.log(`[RateLimitStore:${this.prefix}] Cooldown elapsed. Transitioning circuit to HALF_OPEN to probe connection...`);
+        logger.info(`[RateLimitStore:${this.prefix}] Cooldown elapsed. Transitioning circuit to HALF_OPEN to probe connection...`);
         this.circuitState = 'HALF_OPEN';
         return true;
       }
@@ -200,7 +201,7 @@ export class ResilientRedisStore {
 
   private recordSuccess() {
     if (this.circuitState !== 'CLOSED') {
-      console.log(`[RateLimitStore:${this.prefix}] Success observed! Closing circuit. Distributed rate limiting fully restored.`);
+      logger.info(`[RateLimitStore:${this.prefix}] Success observed! Closing circuit. Distributed rate limiting fully restored.`);
       this.circuitState = 'CLOSED';
       this.consecutiveFailures = 0;
       this.setStatusState(true);
@@ -284,10 +285,10 @@ export const createSafeRateLimiter = (prefix: string, options: any) => {
   };
 
   if (!process.env.REDIS_URL) {
-    console.log(`[RateLimit:${prefix}] Resilient Rate Limiter Initialized Successfully`);
-    console.log(`[RateLimit:${prefix}] Mode: In-Memory (Local per-instance)`);
-    console.log(`[RateLimit:${prefix}] Safe Fallback: Active`);
-    console.log(`[RateLimit:${prefix}] Redis Auto-Recovery: Disabled (REDIS_URL not set)`);
+    logger.info(`[RateLimit:${prefix}] Resilient Rate Limiter Initialized Successfully`);
+    logger.info(`[RateLimit:${prefix}] Mode: In-Memory (Local per-instance)`);
+    logger.info(`[RateLimit:${prefix}] Safe Fallback: Active`);
+    logger.info(`[RateLimit:${prefix}] Redis Auto-Recovery: Disabled (REDIS_URL not set)`);
     return rateLimit(safeOptions);
   }
 
@@ -304,7 +305,7 @@ export const createSafeRateLimiter = (prefix: string, options: any) => {
       connectTimeout: 3000, // Terminate connection attempts after 3 seconds
       retryStrategy: (times: number) => {
         if (times > 5) {
-          console.warn(`[RateLimit:${prefix}] Redis retry threshold reached. Restricting connection attempts.`);
+          logger.warn(`[RateLimit:${prefix}] Redis retry threshold reached. Restricting connection attempts.`);
           isRedisReady = false;
           globalRedisHealthy = false;
           return null; // Halt automatic reconnection loops
@@ -322,34 +323,34 @@ export const createSafeRateLimiter = (prefix: string, options: any) => {
 
     // Redis Health Event Listeners
     client.on('connect', () => {
-      console.log(`[RateLimit:${prefix}] Redis client connecting...`);
+      logger.info(`[RateLimit:${prefix}] Redis client connecting...`);
     });
 
     client.on('ready', () => {
-      console.log(`[RateLimit:${prefix}] Redis connection established. Restoring telemetry storage.`);
+      logger.info(`[RateLimit:${prefix}] Redis connection established. Restoring telemetry storage.`);
       isRedisReady = true;
       globalRedisHealthy = true;
       globalRedisMode = 'Redis (Distributed)';
     });
 
     client.on('error', (err: any) => {
-      console.error(`[RateLimit:${prefix}] Redis connection exception:`, err?.message || err);
+      logger.error(`[RateLimit:${prefix}] Redis connection exception:`, err?.message || err);
       if (isRedisReady) {
-        console.warn(`[RateLimit:${prefix}] Connection broken. Falling back to local per-instance rate limiting.`);
+        logger.warn(`[RateLimit:${prefix}] Connection broken. Falling back to local per-instance rate limiting.`);
       }
       isRedisReady = false;
       globalRedisHealthy = false;
     });
 
     client.on('reconnecting', () => {
-      console.warn(`[RateLimit:${prefix}] Connection dropped. Attempting to reconnect...`);
+      logger.warn(`[RateLimit:${prefix}] Connection dropped. Attempting to reconnect...`);
       isRedisReady = false;
       globalRedisHealthy = false;
     });
 
     // Connect asynchronously to keep main thread active
     client.connect().catch((err: any) => {
-      console.error(`[RateLimit:${prefix}] Redis connection failed at startup:`, err?.message || err);
+      logger.error(`[RateLimit:${prefix}] Redis connection failed at startup:`, err?.message || err);
       isRedisReady = false;
       globalRedisHealthy = false;
     });
@@ -365,17 +366,17 @@ export const createSafeRateLimiter = (prefix: string, options: any) => {
       (status: boolean) => { isRedisReady = status; }
     );
 
-    console.log(`[RateLimit:${prefix}] Resilient Rate Limiter Initialized Successfully`);
-    console.log(`[RateLimit:${prefix}] Mode: Redis (Distributed fallback active)`);
-    console.log(`[RateLimit:${prefix}] Safe Fallback: Enabled (Local MemoryStore)`);
-    console.log(`[RateLimit:${prefix}] Redis Auto-Recovery: Enabled`);
+    logger.info(`[RateLimit:${prefix}] Resilient Rate Limiter Initialized Successfully`);
+    logger.info(`[RateLimit:${prefix}] Mode: Redis (Distributed fallback active)`);
+    logger.info(`[RateLimit:${prefix}] Safe Fallback: Enabled (Local MemoryStore)`);
+    logger.info(`[RateLimit:${prefix}] Redis Auto-Recovery: Enabled`);
 
     return rateLimit({
       ...safeOptions,
       store: resilientStore as any,
     });
   } catch (e: any) {
-    console.error(`[RateLimit] Critical Redis initialization error for ${prefix}. Safeguarding with memory store:`, e?.message || e);
+    logger.error(`[RateLimit] Critical Redis initialization error for ${prefix}. Safeguarding with memory store:`, e?.message || e);
     return rateLimit(safeOptions);
   }
 };
@@ -425,3 +426,40 @@ export const aiDailyRateLimiter = createSafeRateLimiter('rl:ai:day:', {
     return (req.headers['x-api-key'] as string) || (req.user?.organizationId) || req.ip || 'global';
   }
 });
+
+export const loginLimiter = createSafeRateLimiter('rl:login:', {
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'Too many attempts', retryAfter: 'See Retry-After header' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req: any) => req.ip || '127.0.0.1',
+});
+
+export const registerLimiter = createSafeRateLimiter('rl:register:', {
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  message: { error: 'Too many attempts', retryAfter: 'See Retry-After header' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req: any) => req.ip || '127.0.0.1',
+});
+
+export const resetLimiter = createSafeRateLimiter('rl:reset:', {
+  windowMs: 60 * 60 * 1000,
+  max: 3,
+  message: { error: 'Too many attempts', retryAfter: 'See Retry-After header' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req: any) => req.ip || '127.0.0.1',
+});
+
+export const verifyLimiter = createSafeRateLimiter('rl:verify:', {
+  windowMs: 60 * 60 * 1000,
+  max: 2,
+  message: { error: 'Too many attempts', retryAfter: 'See Retry-After header' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req: any) => req.ip || '127.0.0.1',
+});
+

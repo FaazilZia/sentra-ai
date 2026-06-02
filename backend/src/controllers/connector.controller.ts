@@ -5,18 +5,42 @@ import { resolveOrganizationId } from '../utils/company';
 import { enqueueConnectorScan } from '../services/queue.service';
 import { asyncHandler, sendSuccess, sendError } from '../utils/controllerHelpers';
 
+import { parseCursorPagination } from '../utils/pagination';
+
 export const listConnectors = asyncHandler(async (req: any, res: Response) => {
-  const organizationId = await resolveOrganizationId(req);
-  if (!organizationId) {
-    return sendSuccess(res, { items: [] });
+  let limit: number;
+  let cursor: string | undefined;
+
+  try {
+    const parsed = parseCursorPagination(req.query);
+    limit = parsed.limit;
+    cursor = parsed.cursor;
+  } catch (err: any) {
+    return sendError(res, 400, err.message);
   }
 
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) {
+    return sendSuccess(res, { data: [], items: [], nextCursor: null, total: 0 });
+  }
+
+  const total = await prisma.connectors.count({
+    where: { organizationId },
+  });
+
   const rows = await prisma.connectors.findMany({
+    take: limit + 1,
+    cursor: cursor ? { id: cursor } : undefined,
+    skip: cursor ? 1 : 0,
     where: { organizationId },
     orderBy: { created_at: 'desc' },
   });
 
-  return sendSuccess(res, { items: rows });
+  const hasMore = rows.length > limit;
+  const data = hasMore ? rows.slice(0, -1) : rows;
+  const nextCursor = hasMore ? data[data.length - 1].id : null;
+
+  return sendSuccess(res, { data, items: data, nextCursor, total });
 });
 
 export const getExecutiveOverview = asyncHandler(async (req: any, res: Response) => {

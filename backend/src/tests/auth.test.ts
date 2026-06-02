@@ -55,6 +55,7 @@ describe('Auth Endpoints (Integration)', () => {
         role: 'ADMIN',
         is_active: true,
         organizationId: TEST_ORG_ID,
+        email_verified: true,
       }
     });
   });

@@ -3,8 +3,20 @@ import prisma from '../config/db';
 import { resolveOrganizationId } from '../utils/company';
 import { asyncHandler, sendSuccess, sendError } from '../utils/controllerHelpers';
 import { ChangeHistoryService } from '../services/changeHistory.service';
+import { parseCursorPagination } from '../utils/pagination';
 
 export const getPolicies = asyncHandler(async (req: any, res: Response) => {
+  let limit: number;
+  let cursor: string | undefined;
+
+  try {
+    const parsed = parseCursorPagination(req.query);
+    limit = parsed.limit;
+    cursor = parsed.cursor;
+  } catch (err: any) {
+    return sendError(res, 400, err.message);
+  }
+
   const organizationId = req.user.organizationId;
 
   // If organizationId is missing from token (e.g. fresh register), find it from user
@@ -18,12 +30,23 @@ export const getPolicies = asyncHandler(async (req: any, res: Response) => {
     return sendError(res, 401, 'Unauthorized');
   }
 
-  const policies = await prisma.policies.findMany({
+  const total = await prisma.policies.count({
     where: { organizationId: actualOrganizationId as string },
-    orderBy: { priority: 'asc' },
   });
 
-  return sendSuccess(res, policies);
+  const policies = await prisma.policies.findMany({
+    take: limit + 1,
+    cursor: cursor ? { id: cursor } : undefined,
+    skip: cursor ? 1 : 0,
+    where: { organizationId: actualOrganizationId as string },
+    orderBy: { created_at: 'desc' },
+  });
+
+  const hasMore = policies.length > limit;
+  const data = hasMore ? policies.slice(0, -1) : policies;
+  const nextCursor = hasMore ? data[data.length - 1].id : null;
+
+  return sendSuccess(res, { data, nextCursor, total });
 });
 
 export const getPolicyHealth = asyncHandler(async (req: any, res: Response) => {

@@ -28,3 +28,22 @@ export const googleLoginSchema = z.object({
     organizationName: z.string().optional(),
   }),
 });
+
+export const forgotPasswordSchema = z.object({
+  body: z.object({
+    email: z.string().email(),
+  }),
+});
+
+export const resetPasswordSchema = z.object({
+  body: z.object({
+    token: z.string().min(1, 'Token is required'),
+    newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+  }),
+});
+
+export const resendVerificationSchema = z.object({
+  body: z.object({
+    email: z.string().email(),
+  }),
+});

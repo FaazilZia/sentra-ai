@@ -26,7 +26,13 @@ const startWorker = async () => {
     // Schedule recurring scan every 15 minutes for all orgs
     const connection = getRedisConnection();
     if (connection) {
-      const driftQueue = new Queue('drift-scan', { connection });
+      const defaultJobOptions = {
+        attempts: 3,
+        backoff: { type: 'exponential' as const, delay: 2000 },
+        removeOnComplete: { count: 100 },
+        removeOnFail: false,
+      };
+      const driftQueue = new Queue('drift-scan', { connection, defaultJobOptions });
       await driftQueue.add('scan-all-orgs', {}, {
         repeat: { every: 15 * 60 * 1000 },
         removeOnComplete: 10,

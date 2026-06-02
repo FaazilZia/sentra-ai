@@ -4,7 +4,8 @@ import { requireSuperAdmin } from '../services/rbac.service';
 import {
   getAllOrganizations, getOrgDetail, suspendOrganization, reactivateOrganization,
   getQueueStats, getFeatureFlags, setFeatureFlag, setOrgFeatureFlag,
-  getPlatformEvents, getGlobalStats, getAllUsers, banUser,
+  getPlatformEvents, getGlobalStats, getAllUsers, banUser, impersonateUser,
+  updateUserRole, reactivateUser, deleteUser, deleteOrganization,
 } from '../controllers/superadmin.controller';
 
 const router = Router();
@@ -18,13 +19,18 @@ router.get('/stats', getGlobalStats);
 // ── Tenant Management ─────────────────────────
 router.get('/organizations', getAllOrganizations);
 router.get('/organizations/:orgId', getOrgDetail);
+router.delete('/organizations/:orgId', deleteOrganization);
 router.patch('/organizations/:orgId/suspend', suspendOrganization);
 router.patch('/organizations/:orgId/reactivate', reactivateOrganization);
 router.patch('/organizations/:orgId/flags/:key', setOrgFeatureFlag);
 
 // ── User Management ───────────────────────────
 router.get('/users', getAllUsers);
+router.patch('/users/:userId/role', updateUserRole);
 router.patch('/users/:userId/ban', banUser);
+router.patch('/users/:userId/reactivate', reactivateUser);
+router.delete('/users/:userId', deleteUser);
+router.post('/impersonate/:userId', impersonateUser);
 
 // ── Infrastructure ────────────────────────────
 router.get('/queues', getQueueStats);
@@ -37,3 +43,4 @@ router.patch('/flags/:key', setFeatureFlag);
 router.get('/events', getPlatformEvents);
 
 export default router;
+

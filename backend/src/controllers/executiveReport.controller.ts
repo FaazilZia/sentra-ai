@@ -3,6 +3,7 @@ import { ExecutiveReportService } from '../services/executiveReport.service';
 import { ReportGenerationService } from '../services/reportGeneration.service';
 import { resolveOrganizationId } from '../utils/company';
 import { asyncHandler, sendSuccess, sendError } from '../utils/controllerHelpers';
+import logger from '../utils/logger';
 
 export const getExecutiveStats = asyncHandler(async (req: any, res: Response) => {
   const organizationId = await resolveOrganizationId(req);
@@ -23,7 +24,7 @@ export const getExecutivePdf = asyncHandler(async (req: any, res: Response) => {
   try {
     await ReportGenerationService.generateComplianceReportPDF(organizationId, res);
   } catch (error: any) {
-    console.error('Failed to generate compliance report PDF:', error);
+    logger.error('Failed to generate compliance report PDF:', error);
     if (!res.headersSent) {
       return sendError(res, 500, 'Failed to generate report PDF');
     }
@@ -39,7 +40,7 @@ export const getExecutiveDocx = asyncHandler(async (req: any, res: Response) => 
   try {
     await ReportGenerationService.generateComplianceReportDOCX(organizationId, res);
   } catch (error: any) {
-    console.error('Failed to generate compliance report DOCX:', error);
+    logger.error('Failed to generate compliance report DOCX:', error);
     if (!res.headersSent) {
       return sendError(res, 500, 'Failed to generate report DOCX');
     }
@@ -56,7 +57,7 @@ export const getPolicyPdf = asyncHandler(async (req: any, res: Response) => {
   try {
     await ReportGenerationService.generatePolicyExportPDF(organizationId, policyId, res);
   } catch (error: any) {
-    console.error('Failed to generate policy PDF:', error);
+    logger.error('Failed to generate policy PDF:', error);
     if (!res.headersSent) {
       return sendError(res, 500, 'Failed to generate policy PDF');
     }
@@ -73,7 +74,7 @@ export const getPolicyDocx = asyncHandler(async (req: any, res: Response) => {
   try {
     await ReportGenerationService.generatePolicyExportDOCX(organizationId, policyId, res);
   } catch (error: any) {
-    console.error('Failed to generate policy DOCX:', error);
+    logger.error('Failed to generate policy DOCX:', error);
     if (!res.headersSent) {
       return sendError(res, 500, 'Failed to generate policy DOCX');
     }
