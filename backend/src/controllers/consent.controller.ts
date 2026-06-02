@@ -1,7 +1,8 @@
 import { Response } from 'express';
 import { randomUUID, createHash } from 'crypto';
 import prisma from '../config/db';
-import { asyncHandler, sendSuccess } from '../utils/controllerHelpers';
+import { asyncHandler, sendSuccess, sendError } from '../utils/controllerHelpers';
+import { parseCursorPagination } from '../utils/pagination';
 
 const createConsentRecord = async (
   userId: string,
@@ -31,12 +32,34 @@ const createConsentRecord = async (
 };
 
 export const getConsentHistory = asyncHandler(async (req: any, res: Response) => {
+  let limit: number;
+  let cursor: string | undefined;
+
+  try {
+    const parsed = parseCursorPagination(req.query);
+    limit = parsed.limit;
+    cursor = parsed.cursor;
+  } catch (err: any) {
+    return sendError(res, 400, err.message);
+  }
+
+  const total = await prisma.consent_records.count({
+    where: { user_id: req.user.id },
+  });
+
   const history = await prisma.consent_records.findMany({
+    take: limit + 1,
+    cursor: cursor ? { id: cursor } : undefined,
+    skip: cursor ? 1 : 0,
     where: { user_id: req.user.id },
     orderBy: { created_at: 'desc' },
   });
 
-  const formattedHistory = history.map(record => ({
+  const hasMore = history.length > limit;
+  const data = hasMore ? history.slice(0, -1) : history;
+  const nextCursor = hasMore ? data[data.length - 1].id : null;
+
+  const formattedHistory = data.map(record => ({
     id: record.id,
     action: record.action,
     timestamp: record.created_at,
@@ -44,7 +67,7 @@ export const getConsentHistory = asyncHandler(async (req: any, res: Response) =>
     hash: record.hashing_chain,
   }));
 
-  return sendSuccess(res, formattedHistory);
+  return sendSuccess(res, { data: formattedHistory, nextCursor, total });
 });
 
 export const grantConsent = asyncHandler(async (req: any, res: Response) => {

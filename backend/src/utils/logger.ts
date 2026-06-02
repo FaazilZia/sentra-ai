@@ -1,43 +1,36 @@
-import winston from 'winston';
+import { logger as pinoLogger } from '../lib/logger';
 
-const { combine, timestamp, json, colorize, printf, errors } = winston.format;
+const wrapMethod = (level: 'info' | 'error' | 'warn' | 'debug') => {
+  return (msgOrObj: any, ...args: any[]) => {
+    if (typeof msgOrObj === 'string') {
+      // Winston format: logger.info("message", metaOrError)
+      const firstArg = args[0];
+      if (firstArg instanceof Error) {
+        pinoLogger[level]({ err: firstArg }, msgOrObj);
+      } else if (firstArg && typeof firstArg === 'object') {
+        pinoLogger[level](firstArg, msgOrObj);
+      } else {
+        pinoLogger[level](msgOrObj);
+      }
+    } else {
+      // Pino format: logger.info(obj, "message")
+      pinoLogger[level](msgOrObj, ...args);
+    }
+  };
+};
 
-const devFormat = combine(
-  colorize(),
-  timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-  errors({ stack: true }),
-  printf(({ level, message, timestamp, stack, ...meta }) => {
-    // Safe serializer to prevent circular JSON crashes in dev
-    const safeStringify = (obj: any) => {
-      const cache = new Set();
-      return JSON.stringify(obj, (key, value) => {
-        if (typeof value === 'object' && value !== null) {
-          if (cache.has(value)) return '[Circular]';
-          cache.add(value);
-        }
-        return value;
-      }, 2);
-    };
+export const logger = {
+  info: wrapMethod('info'),
+  error: wrapMethod('error'),
+  warn: wrapMethod('warn'),
+  debug: wrapMethod('debug'),
+  log: (level: string, msg: any, ...args: any[]) => {
+    const pinoLevel = level === 'warn' ? 'warn' : level === 'error' ? 'error' : level === 'debug' ? 'debug' : 'info';
+    wrapMethod(pinoLevel)(msg, ...args);
+  }
+};
 
-    const metaStr = Object.keys(meta).length ? `\n${safeStringify(meta)}` : '';
-    return `${timestamp} ${level}: ${stack || message}${metaStr}`;
-  })
-);
-
-const prodFormat = combine(
-  timestamp(),
-  errors({ stack: true }),
-  json()
-);
-
-const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
-  defaultMeta: { service: 'sentra-backend' },
-  format: process.env.NODE_ENV === 'production' ? prodFormat : devFormat,
-  transports: [
-    new winston.transports.Console(),
-  ],
-});
+export default logger;
 
 export const logRequest = (data: {
   requestId: string;
@@ -53,15 +46,13 @@ export const logRequest = (data: {
 
   if (isError || isSlow || data.message) {
     const level = isError ? 'error' : 'info';
-    logger.log(level, data.message || (isError ? 'Request processed' : 'Slow request detected'), {
+    logger[level]({
       requestId: data.requestId,
       orgId: data.orgId,
       endpoint: data.endpoint,
       status: data.status,
       latency: `${data.latency}ms`,
       error: data.error
-    });
+    }, data.message || (isError ? 'Request processed' : 'Slow request detected'));
   }
 };
-
-export default logger;

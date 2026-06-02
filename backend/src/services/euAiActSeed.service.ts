@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import logger from '../utils/logger';
 
 export const EU_AI_ACT_SEED_DATA = [
   {
@@ -356,5 +357,5 @@ export async function seedEuAiActControls(prisma: any) {
     }
   }
 
-  console.log(`✅ EU AI Act: seeded ${articleCount} articles, ${controlCount} controls`);
+  logger.info(`✅ EU AI Act: seeded ${articleCount} articles, ${controlCount} controls`);
 }

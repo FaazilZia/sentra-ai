@@ -105,6 +105,7 @@ describe('SCIM Bearer Token Authentication (Integration)', () => {
           role: 'ADMIN',
           is_active: true,
           organizationId: TEST_ORG_ID,
+          email_verified: true,
         }
       });
 
@@ -162,4 +163,61 @@ describe('SCIM Bearer Token Authentication (Integration)', () => {
       expect((orgInDb2?.saml_metadata as any)?.scimBearerToken).toBe(storedToken);
     });
   });
+
+  describe('SCIM Groups Unknown Role Validation', () => {
+    const scimErrorSchema = 'urn:ietf:params:scim:api:messages:2.0:Error';
+
+    it('should reject POST /scim/v2/Groups with unknown role', async () => {
+      const response = await request(app)
+        .post('/api/v1/scim/v2/Groups')
+        .set('Authorization', `Bearer ${TEST_SCIM_TOKEN}`)
+        .send({
+          displayName: 'GHOST_ROLE',
+          members: []
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty('schemas');
+      expect(response.body.schemas).toContain(scimErrorSchema);
+      expect(response.body.status).toBe('400');
+      expect(response.body.detail).toContain("Group 'GHOST_ROLE' does not map to a known system role. Valid groups are: ADMIN, MEMBER, VIEWER, AUDITOR, ENGINEER.");
+    });
+
+    it('should reject PUT /scim/v2/Groups/:id with unknown role', async () => {
+      const response = await request(app)
+        .put('/api/v1/scim/v2/Groups/admin')
+        .set('Authorization', `Bearer ${TEST_SCIM_TOKEN}`)
+        .send({
+          displayName: 'GHOST_ROLE',
+          members: []
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty('schemas');
+      expect(response.body.schemas).toContain(scimErrorSchema);
+      expect(response.body.status).toBe('400');
+      expect(response.body.detail).toContain("Group 'GHOST_ROLE' does not map to a known system role. Valid groups are: ADMIN, MEMBER, VIEWER, AUDITOR, ENGINEER.");
+    });
+
+    it('should reject PATCH /scim/v2/Groups/:id with unknown role in ID', async () => {
+      const response = await request(app)
+        .patch('/api/v1/scim/v2/Groups/ghost_role')
+        .set('Authorization', `Bearer ${TEST_SCIM_TOKEN}`)
+        .send({
+          Operations: [
+            {
+              op: 'add',
+              value: []
+            }
+          ]
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty('schemas');
+      expect(response.body.schemas).toContain(scimErrorSchema);
+      expect(response.body.status).toBe('400');
+      expect(response.body.detail).toContain("Group 'ghost_role' does not map to a known system role. Valid groups are: ADMIN, MEMBER, VIEWER, AUDITOR, ENGINEER.");
+    });
+  });
 });
+

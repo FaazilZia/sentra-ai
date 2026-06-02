@@ -4,7 +4,7 @@ import prisma from '../config/db';
 import { resolveOrganizationId } from '../utils/company';
 import { serializeIncident } from '../utils/incidentSerialize';
 import logger from '../utils/logger';
-import { parsePagination } from '../utils/pagination';
+import { parsePagination, parseCursorPagination } from '../utils/pagination';
 import { asyncHandler, sendSuccess, sendError } from '../utils/controllerHelpers';
 import { NotificationService } from '../services/notification.service';
 import { SlackService } from '../services/slack.service';
@@ -80,25 +80,52 @@ async function finalizeScanJob(organizationId: string, jobId: string, incidentsD
 }
 
 export const getIncidents = asyncHandler(async (req: any, res: Response) => {
-  const { limit: take } = parsePagination(req.query, 50, 200);
+  let limit: number;
+  let cursor: string | undefined;
+
+  try {
+    const parsed = parseCursorPagination(req.query);
+    limit = parsed.limit;
+    cursor = parsed.cursor;
+  } catch (err: any) {
+    return sendError(res, 400, err.message);
+  }
+
   const statusParam = req.query['status'];
   const status = statusParam ? String(statusParam) : undefined;
 
   const organizationId = await resolveOrganizationId(req);
   if (!organizationId) {
-    return sendSuccess(res, []);
+    return sendSuccess(res, { data: [], nextCursor: null, total: 0 });
   }
 
+  const total = await prisma.incidents.count({
+    where: {
+      organizationId: organizationId,
+      ...(status ? { status } : {}),
+    },
+  });
+
   const incidents = await prisma.incidents.findMany({
+    take: limit + 1,
+    cursor: cursor ? { id: cursor } : undefined,
+    skip: cursor ? 1 : 0,
     where: {
       organizationId: organizationId,
       ...(status ? { status } : {}),
     },
     orderBy: { created_at: 'desc' },
-    take,
   });
 
-  return sendSuccess(res, incidents.map(serializeIncident));
+  const hasMore = incidents.length > limit;
+  const data = hasMore ? incidents.slice(0, -1) : incidents;
+  const nextCursor = hasMore ? data[data.length - 1].id : null;
+
+  return sendSuccess(res, {
+    data: data.map(serializeIncident),
+    nextCursor,
+    total,
+  });
 });
 
 export const getIncidentById = asyncHandler(async (req: any, res: Response) => {

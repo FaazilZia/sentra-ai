@@ -8,6 +8,8 @@
   },
   "include": [
     "src/**/*.ts",
+    "src/**/*.json",
+    "src/__tests__/**/*.ts",
     "src/__mocks__/**/*.ts",
     "prisma/**/*.ts",
     "prisma.config.ts",

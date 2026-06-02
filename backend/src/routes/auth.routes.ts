@@ -1,21 +1,105 @@
 import { Router } from 'express';
-import { register, login, refreshToken, getMe, googleLogin, googleCallback, logout } from '../controllers/auth.controller';
+import { register, login, refreshToken, getMe, googleLogin, googleCallback, logout, forgotPassword, resetPassword, verifyEmail, resendVerification } from '../controllers/auth.controller';
 import { authenticate } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validate.middleware';
-import { registerSchema, loginSchema, refreshTokenSchema, googleLoginSchema } from '../validations/auth.validation';
-import { authRateLimiter } from '../config/rateLimit';
+import { registerSchema, loginSchema, refreshTokenSchema, googleLoginSchema, forgotPasswordSchema, resetPasswordSchema, resendVerificationSchema } from '../validations/auth.validation';
+import { registerLimiter, loginLimiter, resetLimiter, verifyLimiter } from '../config/rateLimit';
 import { MFAService } from '../services/mfa.service';
 import prisma from '../config/db';
 
 const router = Router();
 
-router.post('/register', authRateLimiter, validate(registerSchema), register);
-router.post('/login', authRateLimiter, validate(loginSchema), login);
-router.post('/google', authRateLimiter, validate(googleLoginSchema), googleLogin);
+/**
+ * @openapi
+ * /auth/register:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Register a new user account
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password, name]
+ *             properties:
+ *               email: { type: string, format: email }
+ *               password: { type: string, format: password, minLength: 8 }
+ *               name: { type: string }
+ *     responses:
+ *       201: { description: Account created — verification email sent }
+ *       400: { description: Validation error }
+ *       409: { description: Email already in use }
+ *       429: { description: Rate limit exceeded }
+ */
+router.post('/register', registerLimiter, validate(registerSchema), register);
+
+/**
+ * @openapi
+ * /auth/login:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Login with email and password
+ *     description: Returns JWT access token and rotating refresh token. Rate-limited to 10 requests / 15 min per IP.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password]
+ *             properties:
+ *               email: { type: string, format: email, example: admin@sentra.ai }
+ *               password: { type: string, format: password }
+ *     responses:
+ *       200:
+ *         description: Authenticated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 accessToken: { type: string }
+ *                 refreshToken: { type: string }
+ *       401: { description: Invalid credentials }
+ *       429: { description: Rate limit exceeded }
+ */
+router.post('/login', loginLimiter, validate(loginSchema), login);
+
+/**
+ * @openapi
+ * /auth/me:
+ *   get:
+ *     tags: [Authentication]
+ *     summary: Get the currently authenticated user profile
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Current user profile
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id: { type: string }
+ *                 email: { type: string }
+ *                 name: { type: string }
+ *                 role: { type: string }
+ *                 organizationId: { type: string }
+ *       401: { description: Not authenticated }
+ */
+
+router.post('/google', loginLimiter, validate(googleLoginSchema), googleLogin);
 router.get('/google/callback', googleCallback);
-router.post('/refresh-token', authRateLimiter, validate(refreshTokenSchema), refreshToken);
-router.post('/refresh', authRateLimiter, validate(refreshTokenSchema), refreshToken); // alias
+router.post('/refresh-token', loginLimiter, validate(refreshTokenSchema), refreshToken);
+router.post('/refresh', loginLimiter, validate(refreshTokenSchema), refreshToken); // alias
 router.get('/me', authenticate, getMe);
+
+router.post('/forgot-password', resetLimiter, validate(forgotPasswordSchema), forgotPassword);
+router.post('/reset-password', resetLimiter, validate(resetPasswordSchema), resetPassword);
+router.get('/verify-email', verifyEmail);
+router.post('/resend-verification', verifyLimiter, validate(resendVerificationSchema), resendVerification);
 
 router.post('/mfa/setup', authenticate, async (req: any, res) => {
   try {

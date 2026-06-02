@@ -5,13 +5,33 @@ import prisma from '../config/db';
 import { resolveOrganizationId } from '../utils/company';
 import { asyncHandler, sendSuccess, sendError } from '../utils/controllerHelpers';
 
+import { parseCursorPagination } from '../utils/pagination';
+
 export const listApiKeys = asyncHandler(async (req: any, res: Response) => {
-  const organizationId = await resolveOrganizationId(req);
-  if (!organizationId) {
-    return sendSuccess(res, []);
+  let limit: number;
+  let cursor: string | undefined;
+
+  try {
+    const parsed = parseCursorPagination(req.query);
+    limit = parsed.limit;
+    cursor = parsed.cursor;
+  } catch (err: any) {
+    return sendError(res, 400, err.message);
   }
 
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) {
+    return sendSuccess(res, { data: [], nextCursor: null, total: 0 });
+  }
+
+  const total = await prisma.api_keys.count({
+    where: { organizationId, is_active: true },
+  });
+
   const keys = await prisma.api_keys.findMany({
+    take: limit + 1,
+    cursor: cursor ? { id: cursor } : undefined,
+    skip: cursor ? 1 : 0,
     where: { organizationId, is_active: true },
     orderBy: { created_at: 'desc' },
     select: {
@@ -22,7 +42,11 @@ export const listApiKeys = asyncHandler(async (req: any, res: Response) => {
     },
   });
 
-  return sendSuccess(res, keys);
+  const hasMore = keys.length > limit;
+  const data = hasMore ? keys.slice(0, -1) : keys;
+  const nextCursor = hasMore ? data[data.length - 1].id : null;
+
+  return sendSuccess(res, { data, nextCursor, total });
 });
 
 export const createApiKey = asyncHandler(async (req: any, res: Response) => {

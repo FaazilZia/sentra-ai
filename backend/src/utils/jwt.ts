@@ -36,3 +36,16 @@ export const verifyAccessToken = (token: string): jwt.JwtPayload | string => {
 export const verifyRefreshToken = (token: string): jwt.JwtPayload | string => {
   return jwt.verify(token, FINAL_REFRESH_SECRET);
 };
+
+export const generateCustomToken = (payload: object, expiresIn: string): string => {
+  const options: SignOptions = { expiresIn: expiresIn as any };
+  return jwt.sign(payload, FINAL_JWT_SECRET, options);
+};
+
+export const verifyCustomToken = (token: string): jwt.JwtPayload => {
+  const decoded = jwt.verify(token, FINAL_JWT_SECRET);
+  if (typeof decoded === 'string') {
+    throw new Error('Invalid token format');
+  }
+  return decoded;
+};

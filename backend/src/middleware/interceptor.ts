@@ -3,6 +3,7 @@ import { enqueueLog } from '../services/queue.service';
 import { alertService } from '../services/alert.service';
 import { WorkflowService } from '../services/workflow.service';
 import { PIIScannerService } from '../services/piiScanner.service';
+import logger from '../utils/logger';
 
 /**
  * Recursively redacts PII from any metadata structure.
@@ -108,7 +109,7 @@ export async function interceptAction(input: any, callback: () => Promise<any>) 
 
     if (decision.isPendingApproval) {
       await WorkflowService.createPendingWorkflowTask(organizationId, agent, piiResult.redactedText, decision, redactMetadata(metadata)).catch(err => {
-        console.error('[Interceptor] Failed to create pending workflow task:', err);
+        logger.error('[Interceptor] Failed to create pending workflow task:', err);
       });
     }
 

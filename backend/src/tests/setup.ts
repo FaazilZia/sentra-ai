@@ -1,24 +1,37 @@
 console.log('--- TEST SETUP LOADED ---');
+process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgresql://mohammadfaazilzia@localhost:5432/sentra_jest_test';
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'mock_jwt_secret_1234567890';
+process.env.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'mock_jwt_refresh_secret_1234567890';
 jest.mock('ioredis', () => {
-  return jest.fn().mockImplementation(() => {
-    return {
-      get: jest.fn().mockResolvedValue(null),
-      set: jest.fn().mockResolvedValue('OK'),
-      del: jest.fn().mockResolvedValue(1),
-      on: jest.fn(),
-      ping: jest.fn().mockResolvedValue('PONG'),
-      disconnect: jest.fn(),
-    };
-  });
+  const { EventEmitter } = require('events');
+  class MockRedis extends EventEmitter {
+    get = jest.fn().mockResolvedValue(null);
+    set = jest.fn().mockResolvedValue('OK');
+    del = jest.fn().mockResolvedValue(1);
+    ping = jest.fn().mockResolvedValue('PONG');
+    disconnect = jest.fn();
+    quit = jest.fn().mockResolvedValue(undefined);
+  }
+  const mockRedisFn: any = jest.fn().mockImplementation(() => new MockRedis());
+  mockRedisFn.default = mockRedisFn;
+  return mockRedisFn;
 });
 
-jest.mock('../utils/logger', () => ({
-  info: jest.fn(),
-  error: jest.fn(),
-  warn: jest.fn(),
-  debug: jest.fn(),
-  logRequest: jest.fn(),
-}));
+jest.mock('../utils/logger', () => {
+  const mockLogger = {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+    log: jest.fn(),
+    logRequest: jest.fn(),
+  };
+  return {
+    __esModule: true,
+    default: mockLogger,
+    ...mockLogger,
+  };
+});
 
 jest.mock('../services/alert.service', () => ({
   alertService: {

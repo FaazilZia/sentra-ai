@@ -56,6 +56,10 @@ COPY --chown=sentra:sentra --chmod=644 --from=builder /app/package*.json ./
 COPY --chown=sentra:sentra --chmod=755 --from=builder /app/dist ./dist
 COPY --chown=sentra:sentra --chmod=755 --from=builder /app/prisma ./prisma
 COPY --chown=sentra:sentra --chmod=755 --from=builder /app/node_modules ./node_modules
+COPY --chown=sentra:sentra --chmod=755 --from=builder /app/prisma.config.ts ./
+
+COPY docker-entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 USER sentra
 
@@ -65,8 +69,9 @@ ENV NODE_ENV=production
 ENV PORT=3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/ping', r => process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
+  CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 3000) + '/ping', r => process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
 
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["node", "dist/src/server.js"]
 
 # ─────────────────────────────────────────────────────────────

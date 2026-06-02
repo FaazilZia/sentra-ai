@@ -18,6 +18,14 @@ export function startDriftWorker() {
   }, { connection: getRedisConnection()! });
 
   worker.on('completed', (job) => logger.info(`[DriftWorker] Job ${job.id} completed`));
-  worker.on('failed', (job, err) => logger.error(`[DriftWorker] Job ${job?.id} failed:`, err));
+  worker.on('failed', (job, err) => {
+    logger.error({
+      jobId: job?.id,
+      queueName: 'drift-scan',
+      errorMessage: err.message,
+      errorStack: err.stack,
+      jobData: job?.data,
+    }, `Job ${job?.id} in queue 'drift-scan' failed: ${err.message}`);
+  });
   return worker;
 }

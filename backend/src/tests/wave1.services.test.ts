@@ -55,6 +55,18 @@ jest.mock('../config/db', () => ({
     controls: {
       findMany: jest.fn(),
     },
+    ccpa_controls: {
+      findMany: jest.fn(),
+    },
+    dora_controls: {
+      findMany: jest.fn(),
+    },
+    oecd_controls: {
+      findMany: jest.fn(),
+    },
+    ftc_controls: {
+      findMany: jest.fn(),
+    },
   },
 }));
 
@@ -291,6 +303,10 @@ describe('Wave 1 Services', () => {
         }]);
         db.incidents.findMany.mockResolvedValue([{ id: 'i1', agent_id: 'chat-agent', action: 'write_db', details: 'Unauthorized db access write details' }]);
         db.controls.findMany.mockResolvedValue([{ id: 'c1', control_id: 'AC-1', title: 'Access Control', framework: 'NIST', category: 'Security' }]);
+        db.ccpa_controls.findMany.mockResolvedValue([{ id: 'ccpa-1', control_code: 'CCPA-1.1', title: 'Data Privacy Right', description: 'Consumer rights under CCPA' }]);
+        db.dora_controls.findMany.mockResolvedValue([{ id: 'dora-1', control_code: 'DORA-1.1', title: 'Risk Governance', description: 'Financial resilience risk mapping' }]);
+        db.oecd_controls.findMany.mockResolvedValue([{ id: 'oecd-1', control_code: 'OECD-1', title: 'Fairness Principle', description: 'Fairness and safety in AI models' }]);
+        db.ftc_controls.findMany.mockResolvedValue([{ id: 'ftc-1', control_code: 'FTC-1', title: 'Deceptive AI Claims', description: 'Prevention of unfair practices' }]);
 
         const results = await SearchService.searchAll(ORG_ID, 'injection');
 
@@ -302,6 +318,14 @@ describe('Wave 1 Services', () => {
 
         const grMatch = results.find(r => r.type === 'guardrail' && r.title.includes('Injection'));
         expect(grMatch).toBeDefined();
+
+        const ccpaMatch = results.find(r => r.type === 'compliance' && r.title.includes('CCPA-1.1'));
+        expect(ccpaMatch).toBeDefined();
+        expect(ccpaMatch?.url).toBe('/app/ccpa');
+
+        const doraMatch = results.find(r => r.type === 'compliance' && r.title.includes('DORA-1.1'));
+        expect(doraMatch).toBeDefined();
+        expect(doraMatch?.url).toBe('/app/dora');
       });
 
       it('should return empty array for very short query', async () => {

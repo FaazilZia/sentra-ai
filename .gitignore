@@ -44,6 +44,7 @@ backend/dev.db
 backend/results.txt
 backend/scratch/
 *.sh
+!backend/docker-entrypoint.sh
 
 # Playwright test artifacts
 frontend/test-results/

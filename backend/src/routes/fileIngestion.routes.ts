@@ -3,6 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { authenticate } from '../middleware/auth.middleware';
+import { validateFileUpload } from '../middleware/fileUpload.middleware';
 import {
   uploadEvidenceFile,
   listEvidenceFiles,
@@ -40,7 +41,7 @@ const upload = multer({
 
 router.use(authenticate);
 
-router.post('/upload', upload.single('file'), uploadEvidenceFile);
+router.post('/upload', upload.single('file'), validateFileUpload(), uploadEvidenceFile);
 router.get('/:controlType/:controlId', listEvidenceFiles);
 router.delete('/:id', deleteEvidenceFile);
 

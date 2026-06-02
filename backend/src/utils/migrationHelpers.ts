@@ -1,4 +1,5 @@
 import { Client } from 'pg';
+import logger from './logger';
 
 /**
  * Shared RLS migration helpers used by both run-migration.ts and run-migration-rbac.ts.
@@ -60,23 +61,23 @@ export async function runMigrationWithCleanup(
   label: string,
   applyPolicies: (client: Client, tables: string[]) => Promise<void>
 ): Promise<void> {
-  console.log('Connecting to database...');
+  logger.info('Connecting to database...');
   const client = await createMigrationClient();
 
   try {
-    console.log('Fetching all public tables...');
+    logger.info('Fetching all public tables...');
     const tables = await fetchPublicTables(client);
 
     for (const table of tables) {
-      console.log(`Securing table: ${table}`);
+      logger.info(`Securing table: ${table}`);
       await dropExistingPolicies(client, table);
       await enableRLS(client, table);
     }
 
     await applyPolicies(client, tables);
-    console.log(`${label} Migration executed successfully!`);
+    logger.info(`${label} Migration executed successfully!`);
   } catch (error) {
-    console.error('Migration failed:', error);
+    logger.error('Migration failed:', error);
   } finally {
     await client.end();
   }

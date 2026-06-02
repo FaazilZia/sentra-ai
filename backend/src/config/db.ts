@@ -25,9 +25,9 @@ export const initializePrisma = async () => {
   try {
     const pool = new Pool({ 
       connectionString: databaseUrl,
-      max: 20, // Limit pool size for serverless efficiency
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 10000,
+      max: Number(process.env.DB_POOL_MAX ?? 20),
+      idleTimeoutMillis: Number(process.env.DB_POOL_IDLE_TIMEOUT_MS ?? 30_000),
+      connectionTimeoutMillis: Number(process.env.DB_POOL_CONNECT_TIMEOUT_MS ?? 10_000),
     });
 
     const adapter = new PrismaPg(pool);

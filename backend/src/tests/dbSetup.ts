@@ -5,7 +5,7 @@ export default async function dbSetup(): Promise<void> {
   console.log('\n[dbSetup] Starting Test Database Setup...');
   
   // 1. Point to DATABASE_URL_TEST env var or fall back to default PG test DB
-  const testDbUrl = process.env.DATABASE_URL_TEST || 'postgresql://mohammadfaazilzia@localhost:5432/sentra_test';
+  const testDbUrl = process.env.DATABASE_URL_TEST || 'postgresql://mohammadfaazilzia@localhost:5432/sentra_jest_test';
   
   // Set DATABASE_URL, DIRECT_URL, and TEST_DATABASE_URL to DATABASE_URL_TEST so migrations and prisma use the test DB
   process.env.DATABASE_URL = testDbUrl;
@@ -14,10 +14,10 @@ export default async function dbSetup(): Promise<void> {
 
   console.log(`[dbSetup] Target Test Database: ${testDbUrl}`);
 
-  // 2. Run prisma migrate deploy against the test DB
+  // 2. Run prisma db push against the test DB
   try {
-    console.log('[dbSetup] Deploying Prisma migrations on test database...');
-    execSync('npx prisma migrate deploy', {
+    console.log('[dbSetup] Synchronizing schema via Prisma db push on test database...');
+    execSync('npx prisma db push --accept-data-loss', {
       cwd: path.resolve(__dirname, '../../'),
       env: { 
         ...process.env, 
@@ -27,7 +27,7 @@ export default async function dbSetup(): Promise<void> {
       stdio: 'inherit'
     });
   } catch (err: any) {
-    console.error('[dbSetup] ❌ Prisma migrate deploy failed:', err.message);
+    console.error('[dbSetup] ❌ Prisma db push failed:', err.message);
     throw err;
   }
 

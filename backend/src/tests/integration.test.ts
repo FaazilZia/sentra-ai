@@ -165,6 +165,12 @@ describe('Integration: Register → Login → Create Policy → Check Action →
     expect(dbUser).not.toBeNull();
     expect(dbUser!.email).toBe(TEST_EMAIL);
     organizationId = dbUser!.organizationId!;
+
+    // Manually mark the email as verified so login succeeds
+    await testPrisma.users.update({
+      where: { email: TEST_EMAIL },
+      data: { email_verified: true }
+    });
   });
 
   // ─── Step 2: Login ─────────────────────────────────────────────────────────

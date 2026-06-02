@@ -1,4 +1,5 @@
 import prisma from '../config/db';
+import logger from '../utils/logger';
 
 export const FRIA_QUESTIONS = [
   { code: 'FRIA-1', text: 'Define the intended purpose, scope of deployment, and specific use-cases for the AI system.' },
@@ -184,7 +185,7 @@ export class FriaService {
         message: `Fundamental Rights Impact Assessment completed for AI System.`
       });
     } catch (autoErr) {
-      console.error('Failed to trigger automations for FRIA completed:', autoErr);
+      logger.error('Failed to trigger automations for FRIA completed:', autoErr);
     }
 
     // Auto-update EU AI Act Art. 27 to IMPLEMENTED
@@ -243,7 +244,7 @@ export class FriaService {
       }
     } catch (err: any) {
       // Gracefully log error (in case seed hasn't run yet)
-      console.warn(`[FriaService] Could not auto-update EU AI Act Art. 27 control status:`, err.message);
+      logger.warn(`[FriaService] Could not auto-update EU AI Act Art. 27 control status:`, err.message);
     }
   }
 }

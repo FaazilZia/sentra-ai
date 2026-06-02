@@ -3,6 +3,7 @@ import nodemailer from 'nodemailer';
 import { TenantService } from '../services/tenant.service';
 import { auditLogger } from '../utils/auditLogger';
 import { asyncHandler, sendSuccess, sendError, getOrgId } from '../utils/controllerHelpers';
+import logger from '../utils/logger';
 
 // ─────────────────────────────────────────────
 // Workspace Controllers
@@ -140,12 +141,12 @@ export const inviteUser = asyncHandler(async (req: any, res: Response) => {
             </div>
           `
         });
-        console.log(`[TenantController] Invitation email sent to ${String(email).substring(0, 50).replaceAll(/[^\w@.+-]/g, '')}`);
+        logger.info(`[TenantController] Invitation email sent to ${String(email).substring(0, 50).replaceAll(/[^\w@.+-]/g, '')}`);
       } else {
-        console.warn('[TenantController] SMTP_HOST not provided. Email invitation was not sent.');
+        logger.warn('[TenantController] SMTP_HOST not provided. Email invitation was not sent.');
       }
     } catch (emailError: any) {
-      console.error('[TenantController] Failed to send invitation email:', emailError.message || emailError);
+      logger.error('[TenantController] Failed to send invitation email:', emailError.message || emailError);
     }
 
     return sendSuccess(res, {

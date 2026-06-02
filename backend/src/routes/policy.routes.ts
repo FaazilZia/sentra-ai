@@ -28,8 +28,58 @@ router.post('/:id/rollback', authenticate, async (req: any, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-router.get('/templates', authenticate, getPolicyTemplates);
+
+/**
+ * @openapi
+ * /policies:
+ *   get:
+ *     tags: [Policies]
+ *     summary: List all policies for the current organization
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Array of policies
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id: { type: string }
+ *                       name: { type: string }
+ *                       status: { type: string, enum: [draft, active, archived] }
+ *                       priority: { type: string, enum: [low, medium, high, critical] }
+ *   post:
+ *     tags: [Policies]
+ *     summary: Create a new policy
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name, status]
+ *             properties:
+ *               name: { type: string }
+ *               description: { type: string }
+ *               status: { type: string, enum: [draft, active, archived] }
+ *               priority: { type: string, enum: [low, medium, high, critical] }
+ *               category: { type: string }
+ *     responses:
+ *       201: { description: Policy created }
+ *       400: { description: Validation error }
+ *       402: { description: Plan policy limit reached }
+ */
 router.get('/', authenticate, getPolicies);
+
 router.post('/:id/duplicate', authenticate, duplicatePolicy);
 router.post('/', authenticate, enforcePolicyLimit, validate(createPolicySchema), createPolicy);
 router.patch('/:id', authenticate, updatePolicy);

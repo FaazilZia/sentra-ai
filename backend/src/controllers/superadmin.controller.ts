@@ -6,6 +6,7 @@ import { FeatureFlagService } from '../services/featureFlag.service';
 import { activityQueue, connectorQueue, driftQueue, retentionQueue } from '../services/queue.service';
 import { parsePagination } from '../utils/pagination';
 import { asyncHandler, sendSuccess, sendError } from '../utils/controllerHelpers';
+import { generateAccessToken } from '../utils/jwt';
 
 // ── Tenant Management ─────────────────────────
 
@@ -258,4 +259,176 @@ export const banUser = asyncHandler(async (req: any, res: Response) => {
   logger.warn(`[SuperAdmin] User ${userId} banned by ${req.user.id}`);
   return sendSuccess(res, undefined, 200, 'User banned');
 });
+
+export const impersonateUser = asyncHandler(async (req: any, res: Response) => {
+  const { userId } = req.params;
+  const targetUser = await prisma.users.findUnique({
+    where: { id: userId },
+    select: { id: true, email: true, role: true, organizationId: true, full_name: true }
+  });
+
+  if (!targetUser) {
+    return sendError(res, 404, 'User not found');
+  }
+
+  // Generate a short-lived token (15 mins) for impersonation
+  const token = generateAccessToken({
+    id: targetUser.id,
+    email: targetUser.email,
+    role: targetUser.role,
+    organizationId: targetUser.organizationId,
+  });
+
+  await auditLogger.log({
+    organizationId: targetUser.organizationId || 'platform',
+    userId: req.user.id,
+    action: 'USER_IMPERSONATED',
+    eventType: 'SECURITY',
+    severity: 'high',
+    metadata: { targetUserId: userId, targetUserEmail: targetUser.email },
+  });
+
+  logger.warn(`[SuperAdmin] Admin ${req.user.id} initiated impersonation of User ${userId}`);
+
+  return sendSuccess(res, {
+    token,
+    user: {
+      id: targetUser.id,
+      email: targetUser.email,
+      fullName: targetUser.full_name,
+      role: targetUser.role,
+      organizationId: targetUser.organizationId
+    }
+  });
+});
+
+export const updateUserRole = asyncHandler(async (req: any, res: Response) => {
+  const { userId } = req.params;
+  const { role } = req.body;
+
+  if (!['ADMIN', 'MEMBER', 'VIEWER', 'AUDITOR', 'ENGINEER', 'SUPER_ADMIN'].includes(role)) {
+    return sendError(res, 400, 'Invalid system role');
+  }
+
+  const user = await prisma.users.update({
+    where: { id: userId },
+    data: { role },
+  });
+
+  await auditLogger.log({
+    organizationId: user.organizationId || 'platform',
+    userId: req.user.id,
+    action: 'USER_ROLE_UPDATED',
+    resourceType: 'user',
+    resourceId: userId,
+    eventType: 'SECURITY',
+    severity: 'high',
+    metadata: { role },
+  });
+
+  logger.warn(`[SuperAdmin] User ${userId} role updated to ${role} by ${req.user.id}`);
+  return sendSuccess(res, undefined, 200, 'User role updated successfully');
+});
+
+export const reactivateUser = asyncHandler(async (req: any, res: Response) => {
+  const { userId } = req.params;
+
+  const user = await prisma.users.update({
+    where: { id: userId },
+    data: { is_active: true },
+    select: { organizationId: true },
+  });
+
+  await prisma.platform_events.create({
+    data: {
+      organizationId: user.organizationId,
+      actor_id: req.user.id,
+      event_type: 'USER_REACTIVATED',
+      payload: { userId },
+    },
+  });
+
+  logger.warn(`[SuperAdmin] User ${userId} reactivated by ${req.user.id}`);
+  return sendSuccess(res, undefined, 200, 'User reactivated');
+});
+
+export const deleteUser = asyncHandler(async (req: any, res: Response) => {
+  const { userId } = req.params;
+
+  const user = await prisma.users.findUnique({ where: { id: userId } });
+  if (!user) return sendError(res, 404, 'User not found');
+
+  // To prevent constraint violations, we soft-delete the user by disabling active status and wiping sensitive elements or renaming
+  await prisma.users.update({
+    where: { id: userId },
+    data: {
+      is_active: false,
+      full_name: `${user.full_name} (DELETED)`,
+      email: `deleted-${userId}-${user.email}`
+    }
+  });
+
+  await prisma.platform_events.create({
+    data: {
+      organizationId: user.organizationId,
+      actor_id: req.user.id,
+      event_type: 'USER_DELETED',
+      payload: { userId, deletedAt: new Date().toISOString() },
+    },
+  });
+
+  await auditLogger.log({
+    organizationId: user.organizationId || 'platform',
+    userId: req.user.id,
+    action: 'USER_DELETED',
+    resourceType: 'user',
+    resourceId: userId,
+    eventType: 'SECURITY',
+    severity: 'critical',
+    metadata: { deletedUserEmail: user.email },
+  });
+
+  logger.warn(`[SuperAdmin] User ${userId} soft-deleted by ${req.user.id}`);
+  return sendSuccess(res, undefined, 200, 'User deleted successfully');
+});
+
+export const deleteOrganization = asyncHandler(async (req: any, res: Response) => {
+  const { orgId } = req.params;
+
+  const org = await prisma.organizations.findUnique({ where: { id: orgId } });
+  if (!org) return sendError(res, 404, 'Organization not found');
+
+  await prisma.organizations.update({
+    where: { id: orgId },
+    data: {
+      is_active: false,
+      name: `${org.name} (DELETED)`,
+      slug: `${org.slug}-deleted-${Date.now()}`
+    }
+  });
+
+  await prisma.platform_events.create({
+    data: {
+      organizationId: orgId,
+      actor_id: req.user.id,
+      event_type: 'TENANT_DELETED',
+      payload: { deletedAt: new Date().toISOString() },
+    },
+  });
+
+  await auditLogger.log({
+    organizationId: orgId,
+    userId: req.user.id,
+    action: 'TENANT_DELETED',
+    eventType: 'SECURITY',
+    severity: 'critical',
+    resourceType: 'organization',
+    resourceId: orgId,
+  });
+
+  logger.warn(`[SuperAdmin] Org ${orgId} deleted/soft-deleted by ${req.user.id}`);
+  return sendSuccess(res, undefined, 200, 'Organization deleted successfully');
+});
+
+
 

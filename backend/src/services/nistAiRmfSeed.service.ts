@@ -6,6 +6,8 @@
  * - Framework version: 1.0
  */
 
+import logger from '../utils/logger';
+
 export const NIST_AI_RMF_SEED_DATA = {
   functions: [
     {
@@ -606,7 +608,7 @@ export const NIST_AI_RMF_SEED_DATA = {
  * Utilizes upserts to ensure safety during concurrent starts (such as multi-instance Kubernetes deployments).
  */
 export async function seedNistAiRmf(prisma: any) {
-  console.log("🌱 NIST AI RMF 1.0: Seeding started...");
+  logger.info("🌱 NIST AI RMF 1.0: Seeding started...");
 
   let functionCount = 0;
   let categoryCount = 0;
@@ -708,5 +710,5 @@ export async function seedNistAiRmf(prisma: any) {
     mappingCount++;
   }
 
-  console.log(`✅ NIST AI RMF 1.0 Seeding Completed: seeded ${functionCount} functions, ${categoryCount} categories, ${subcategoryCount} subcategories, and ${mappingCount} cross-framework mappings.`);
+  logger.info(`✅ NIST AI RMF 1.0 Seeding Completed: seeded ${functionCount} functions, ${categoryCount} categories, ${subcategoryCount} subcategories, and ${mappingCount} cross-framework mappings.`);
 }

@@ -3,6 +3,7 @@ import { makeDecision, Decision } from './decisionEngine';
 import { io } from '../server';
 import { NotificationService } from './notification.service';
 import { SlackService } from './slack.service';
+import logger from '../utils/logger';
 
 export type CheckPermissionResult = Decision;
 
@@ -101,7 +102,7 @@ export const logActivity = async (data: LogActivityData) => {
         severity: 85
       });
     } catch (autoErr) {
-      console.error('Failed to trigger automations for incident:', autoErr);
+      logger.error('Failed to trigger automations for incident:', autoErr);
     }
 
     await NotificationService.notifyIncidentCreated(

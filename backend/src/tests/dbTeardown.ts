@@ -3,7 +3,7 @@ import path from 'path';
 
 export default async function dbTeardown(): Promise<void> {
   console.log('\n[dbTeardown] Tearing down Test Database...');
-  const testDbUrl = process.env.DATABASE_URL_TEST || 'postgresql://mohammadfaazilzia@localhost:5432/sentra_test';
+  const testDbUrl = process.env.DATABASE_URL_TEST || 'postgresql://mohammadfaazilzia@localhost:5432/sentra_jest_test';
 
   try {
     console.log('[dbTeardown] Running prisma migrate reset --force...');

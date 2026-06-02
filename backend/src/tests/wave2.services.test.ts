@@ -166,7 +166,7 @@ describe('Wave 2 Services', () => {
     describe('Risk Auto-Scoring Engine', () => {
       it('should score HIGH risk if high risk keywords are detected', async () => {
         db.intake_forms.findFirst.mockResolvedValue({ id: 'form-1' });
-        db.intake_submissions.create.mockImplementation((args) => Promise.resolve({ ...args.data, submitter: REGULAR_USER }));
+        db.intake_submissions.create.mockImplementation((args: any) => Promise.resolve({ ...args.data, submitter: REGULAR_USER }));
         db.users.findMany.mockResolvedValue([ADMIN_USER]);
 
         const submission = await IntakeFormService.createSubmission(
@@ -184,7 +184,7 @@ describe('Wave 2 Services', () => {
 
       it('should score LOW risk if low-risk words are found and no high-risk trigger is present', async () => {
         db.intake_forms.findFirst.mockResolvedValue({ id: 'form-1' });
-        db.intake_submissions.create.mockImplementation((args) => Promise.resolve({ ...args.data, submitter: REGULAR_USER }));
+        db.intake_submissions.create.mockImplementation((args: any) => Promise.resolve({ ...args.data, submitter: REGULAR_USER }));
         db.users.findMany.mockResolvedValue([ADMIN_USER]);
 
         const submission = await IntakeFormService.createSubmission(
@@ -201,7 +201,7 @@ describe('Wave 2 Services', () => {
 
       it('should default to MEDIUM risk for neutral submissions', async () => {
         db.intake_forms.findFirst.mockResolvedValue({ id: 'form-1' });
-        db.intake_submissions.create.mockImplementation((args) => Promise.resolve({ ...args.data, submitter: REGULAR_USER }));
+        db.intake_submissions.create.mockImplementation((args: any) => Promise.resolve({ ...args.data, submitter: REGULAR_USER }));
         db.users.findMany.mockResolvedValue([ADMIN_USER]);
 
         const submission = await IntakeFormService.createSubmission(
@@ -234,8 +234,8 @@ describe('Wave 2 Services', () => {
 
         db.users.findFirst.mockResolvedValue(REGULAR_USER);
         db.intake_submissions.findUnique.mockResolvedValue(mockSubmission);
-        db.intake_submissions.update.mockImplementation((args) => Promise.resolve({ ...mockSubmission, ...args.data }));
-        db.ai_systems.create.mockImplementation((args) => Promise.resolve(args.data));
+        db.intake_submissions.update.mockImplementation((args: any) => Promise.resolve({ ...mockSubmission, ...args.data }));
+        db.ai_systems.create.mockImplementation((args: any) => Promise.resolve(args.data));
         db.change_history.create.mockResolvedValue({ id: 'h-123' });
         db.notifications.create.mockResolvedValue({ id: 'n-123' });
 
@@ -273,7 +273,7 @@ describe('Wave 2 Services', () => {
 
         db.users.findFirst.mockResolvedValue(REGULAR_USER);
         db.intake_submissions.findUnique.mockResolvedValue(mockSubmission);
-        db.intake_submissions.update.mockImplementation((args) => Promise.resolve({ ...mockSubmission, ...args.data }));
+        db.intake_submissions.update.mockImplementation((args: any) => Promise.resolve({ ...mockSubmission, ...args.data }));
         db.change_history.create.mockResolvedValue({ id: 'h-123' });
         db.notifications.create.mockResolvedValue({ id: 'n-123' });
 

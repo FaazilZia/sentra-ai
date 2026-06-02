@@ -1,4 +1,10 @@
+console.log('[BOOT] server.ts process starting, PORT:', process.env.PORT, 'NODE_ENV:', process.env.NODE_ENV);
 import 'dotenv/config';
+import logger from './utils/logger';
+import { validateEnv } from './config/validateEnv';
+
+// Fail-fast environment variable validation
+validateEnv();
 
 // Hard-required: server cannot function without these
 const REQUIRED_ENV_VARS = [
@@ -13,51 +19,50 @@ const missing = REQUIRED_ENV_VARS.filter((v) => !process.env[v]);
 if (!dbUrl) missing.push('DATABASE_URL');
 
 if (missing.length > 0) {
-  console.error('\n' + '='.repeat(50));
-  console.error('[STARTUP FATAL] Missing required environment variables:');
-  missing.forEach(v => console.error(` - ${v}`));
-  console.error('Please ensure these are set in your Render dashboard or .env file.');
-  console.error('='.repeat(50) + '\n');
+  logger.error('\n' + '='.repeat(50));
+  logger.error('[STARTUP FATAL] Missing required environment variables:');
+  missing.forEach(v => logger.error(` - ${v}`));
+  logger.error('Please ensure these are set in your Render dashboard or .env file.');
+  logger.error('='.repeat(50) + '\n');
   process.exit(1);
 }
 
 // Soft warnings: system runs in degraded mode without these
 if (!process.env.REDIS_URL) {
-  console.warn('[STARTUP WARNING] REDIS_URL not set. Rate limiting and caching will use in-memory fallbacks.');
+  logger.warn('[STARTUP WARNING] REDIS_URL not set. Rate limiting and caching will use in-memory fallbacks.');
 }
 if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.length < 10) {
-  console.warn('[STARTUP WARNING] OPENAI_API_KEY not set. Semantic risk analysis will be disabled — pattern-based engines will enforce governance.');
+  logger.warn('[STARTUP WARNING] OPENAI_API_KEY not set. Semantic risk analysis will be disabled — pattern-based engines will enforce governance.');
 }
 if (!process.env.ENCRYPTION_KEY || process.env.ENCRYPTION_KEY.length < 32) {
-  console.warn('[STARTUP WARNING] ENCRYPTION_KEY not set or too short. Connector credential encryption and connector workers may fail until this is configured.');
+  logger.warn('[STARTUP WARNING] ENCRYPTION_KEY not set or too short. Connector credential encryption and connector workers may fail until this is configured.');
 }
 
 
 // Production-specific hardening
 if (process.env.NODE_ENV === 'production') {
   if (!process.env.FRONTEND_URL) {
-    console.error('\n' + '!'.repeat(50));
-    console.error('[STARTUP FATAL] FRONTEND_URL is required in production.');
-    console.error('This is used for CORS and Secure Cookie configuration.');
-    console.error('!'.repeat(50) + '\n');
+    logger.error('\n' + '!'.repeat(50));
+    logger.error('[STARTUP FATAL] FRONTEND_URL is required in production.');
+    logger.error('This is used for CORS and Secure Cookie configuration.');
+    logger.error('!'.repeat(50) + '\n');
     process.exit(1);
   }
 
   // Guard against demo mode in production
   if (process.env.VITE_DEMO_MODE === 'true') {
-    console.warn('[STARTUP WARNING] Demo mode (VITE_DEMO_MODE=true) is active in production. This should only be used for testing.');
+    logger.warn('[STARTUP WARNING] Demo mode (VITE_DEMO_MODE=true) is active in production. This should only be used for testing.');
   }
 
   // Check secret strength
   if ((process.env.JWT_SECRET?.length ?? 0) < 32) {
-    console.warn('[STARTUP WARNING] JWT_SECRET is shorter than 32 characters. Consider using a stronger secret for production.');
+    logger.warn('[STARTUP WARNING] JWT_SECRET is shorter than 32 characters. Consider using a stronger secret for production.');
   }
 }
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import app from './app';
-import logger from './utils/logger';
 import prisma, { initializePrisma } from './config/db';
 import { IntakeFormService } from './services/intakeForm.service';
 import { setupScheduledJobs } from './services/queue.service';
@@ -68,8 +73,41 @@ import { alertService } from './services/alert.service';
 import { verifyAccessToken } from './utils/jwt';
 import { redisHealthCheck } from './config/redis';
 
+import { createHttpTerminator } from 'http-terminator';
+import { getRedisClient } from './config/redis';
+
 const PORT = Number.parseInt(process.env.PORT || '10000', 10);
 const httpServer = createServer(app);
+const httpTerminator = createHttpTerminator({ server: httpServer });
+const workers: any[] = [];
+
+export const shutdown = async (signal: string) => {
+  logger.info({ signal }, 'Shutdown signal received');
+
+  const forceExitTimer = setTimeout(() => {
+    logger.error('Graceful shutdown timed out after 30s — forcing exit');
+    process.exit(1);
+  }, 30_000);
+
+  try {
+    await httpTerminator.terminate();
+    await Promise.all(workers.filter(Boolean).map(w => w.close()));
+    await prisma.$disconnect();
+    const redis = getRedisClient();
+    if (redis) {
+      await redis.quit();
+    }
+    clearTimeout(forceExitTimer);
+    logger.info('Graceful shutdown complete');
+    process.exit(0);
+  } catch (err) {
+    logger.error({ err }, 'Error during shutdown');
+    process.exit(1);
+  }
+};
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
 
 // Use the same CORS origins as Express — never wildcard in production
 const allowedOrigins = process.env.FRONTEND_URL
@@ -167,11 +205,16 @@ io.on('connection', (socket) => {
 export { io };
 
 const startServer = async () => {
-  console.log('[BOOT] About to bind server');
+  logger.info('[BOOT] About to bind server');
+
+  httpServer.on('error', (err) => {
+    logger.error({ err }, 'Server failed to start');
+    process.exit(1);
+  });
 
   // Start listening FIRST so Render's health check passes immediately
   httpServer.listen(PORT, '0.0.0.0', () => {
-    console.log(`[BOOT] Server listening on 0.0.0.0:${PORT}`);
+    logger.info(`[BOOT] Server listening on 0.0.0.0:${PORT}`);
     logger.info(`Server is running on port ${PORT}`);
   });
 
@@ -194,12 +237,15 @@ const startServer = async () => {
         logger.error('Redis health check exception at boot:', err?.message || err);
       });
 
-    console.log('[BOOT] Redis lifecycle continuing asynchronously');
+    logger.info('[BOOT] Redis lifecycle continuing asynchronously');
 
     // Initialize Background Workers & Schedules (Non-blocking)
-    setupConnectorWorkers();
-    setupDriftWorker();
-    setupEvaluationWorker();
+    const connWorker = setupConnectorWorkers();
+    const driftWorker = setupDriftWorker();
+    const evalWorker = setupEvaluationWorker();
+    if (connWorker) workers.push(connWorker);
+    if (driftWorker) workers.push(driftWorker);
+    if (evalWorker) workers.push(evalWorker);
     setupScheduledJobs()
       .then(() => {
         // Backfill baselines for any existing agents with empty baselines

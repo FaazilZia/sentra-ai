@@ -201,6 +201,7 @@ model users {
   login_count           Int      @default(0)
   google_id             String?  @unique
   github_id             String?  @unique
+  passwordChangedAt     DateTime? @map("password_changed_at")
 
   consent_records           consent_records[]
   incidents_resolved        incidents[]               @relation("IncidentResolver")
