@@ -57,6 +57,7 @@ COPY --chown=sentra:sentra --chmod=755 --from=builder /app/dist ./dist
 COPY --chown=sentra:sentra --chmod=755 --from=builder /app/prisma ./prisma
 COPY --chown=sentra:sentra --chmod=755 --from=builder /app/node_modules ./node_modules
 COPY --chown=sentra:sentra --chmod=755 --from=builder /app/prisma.config.ts ./
+COPY --chown=sentra:sentra --chmod=755 --from=builder /app/scripts ./scripts
 
 COPY docker-entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
