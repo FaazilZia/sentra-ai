@@ -1,4 +1,5 @@
 #!/bin/sh
+# cache-bust: 2026-06-03-v2
 echo "[ENTRYPOINT] Starting entrypoint script..."
 echo "[ENTRYPOINT] PORT=$PORT NODE_ENV=$NODE_ENV"
 
@@ -13,21 +14,19 @@ if [ $MIGRATION_EXIT -ne 0 ]; then
 fi
 
 echo "[ENTRYPOINT] Checking dist output..."
-ls -la /app/dist/src/ || echo "dist/src missing!"
-ls /app/dist/src/server.js || { echo "ERROR: dist/src/server.js not found!"; exit 1; }
+ls /app/dist/src/server.js && echo "[ENTRYPOINT] server.js found" || { echo "[ENTRYPOINT] ERROR: server.js not found"; exit 1; }
 
-echo "[ENTRYPOINT] Testing server module load..."
-NODE_ENV=test node -e "
-  try {
-    require('./dist/src/server.js');
-    console.log('[ENTRYPOINT] Module load successful');
-  } catch(e) {
-    console.error('MODULE LOAD FAILED:', e.message);
-    console.error(e.stack);
-    process.exit(1);
-  }
-"
-echo "[ENTRYPOINT] Module test done"
+echo "[ENTRYPOINT] Testing module load..."
+NODE_ENV=test node dist/src/server.js &
+SERVER_PID=$!
+sleep 5
+if kill -0 $SERVER_PID 2>/dev/null; then
+  echo "[ENTRYPOINT] Module load OK — process is running"
+  kill $SERVER_PID
+else
+  echo "[ENTRYPOINT] ERROR: server.js exited immediately"
+  exit 1
+fi
 
-echo "[ENTRYPOINT] Starting server..."
+echo "[ENTRYPOINT] Starting server for real..."
 exec "$@"
