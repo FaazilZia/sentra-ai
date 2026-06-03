@@ -3,59 +3,7 @@ import 'dotenv/config';
 import logger from './utils/logger';
 import { validateEnv } from './config/validateEnv';
 
-// Hard-required: server cannot function without these
-const REQUIRED_ENV_VARS = [
-  'JWT_SECRET',
-  'REFRESH_SECRET',
-];
 
-// Database URL check with DIRECT_URL fallback
-const dbUrl = process.env.DATABASE_URL || process.env.DIRECT_URL;
-const missing = REQUIRED_ENV_VARS.filter((v) => !process.env[v]);
-
-if (!dbUrl) missing.push('DATABASE_URL');
-
-if (missing.length > 0) {
-  logger.error('\n' + '='.repeat(50));
-  logger.error('[STARTUP FATAL] Missing required environment variables:');
-  missing.forEach(v => logger.error(` - ${v}`));
-  logger.error('Please ensure these are set in your Render dashboard or .env file.');
-  logger.error('='.repeat(50) + '\n');
-  process.exit(1);
-}
-
-// Soft warnings: system runs in degraded mode without these
-if (!process.env.REDIS_URL) {
-  logger.warn('[STARTUP WARNING] REDIS_URL not set. Rate limiting and caching will use in-memory fallbacks.');
-}
-if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.length < 10) {
-  logger.warn('[STARTUP WARNING] OPENAI_API_KEY not set. Semantic risk analysis will be disabled — pattern-based engines will enforce governance.');
-}
-if (!process.env.ENCRYPTION_KEY || process.env.ENCRYPTION_KEY.length < 32) {
-  logger.warn('[STARTUP WARNING] ENCRYPTION_KEY not set or too short. Connector credential encryption and connector workers may fail until this is configured.');
-}
-
-
-// Production-specific hardening
-if (process.env.NODE_ENV === 'production') {
-  if (!process.env.FRONTEND_URL) {
-    logger.error('\n' + '!'.repeat(50));
-    logger.error('[STARTUP FATAL] FRONTEND_URL is required in production.');
-    logger.error('This is used for CORS and Secure Cookie configuration.');
-    logger.error('!'.repeat(50) + '\n');
-    process.exit(1);
-  }
-
-  // Guard against demo mode in production
-  if (process.env.VITE_DEMO_MODE === 'true') {
-    logger.warn('[STARTUP WARNING] Demo mode (VITE_DEMO_MODE=true) is active in production. This should only be used for testing.');
-  }
-
-  // Check secret strength
-  if ((process.env.JWT_SECRET?.length ?? 0) < 32) {
-    logger.warn('[STARTUP WARNING] JWT_SECRET is shorter than 32 characters. Consider using a stronger secret for production.');
-  }
-}
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -202,8 +150,65 @@ io.on('connection', (socket) => {
 export { io };
 
 const startServer = async () => {
-  // Validate env FIRST — this is async and must be awaited
-  await validateEnv();
+  try {
+    await validateEnv();
+  } catch (err: any) {
+    logger.error('validateEnv failed:', err?.message || err);
+    process.exit(1);
+  }
+
+  // Hard-required: server cannot function without these
+  const REQUIRED_ENV_VARS = [
+    'JWT_SECRET',
+    'REFRESH_SECRET',
+  ];
+
+  // Database URL check with DIRECT_URL fallback
+  const dbUrl = process.env.DATABASE_URL || process.env.DIRECT_URL;
+  const missing = REQUIRED_ENV_VARS.filter((v) => !process.env[v]);
+
+  if (!dbUrl) missing.push('DATABASE_URL');
+
+  if (missing.length > 0) {
+    logger.error('\n' + '='.repeat(50));
+    logger.error('[STARTUP FATAL] Missing required environment variables:');
+    missing.forEach(v => logger.error(` - ${v}`));
+    logger.error('Please ensure these are set in your Render dashboard or .env file.');
+    logger.error('='.repeat(50) + '\n');
+    process.exit(1);
+  }
+
+  // Soft warnings: system runs in degraded mode without these
+  if (!process.env.REDIS_URL) {
+    logger.warn('[STARTUP WARNING] REDIS_URL not set. Rate limiting and caching will use in-memory fallbacks.');
+  }
+  if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.length < 10) {
+    logger.warn('[STARTUP WARNING] OPENAI_API_KEY not set. Semantic risk analysis will be disabled — pattern-based engines will enforce governance.');
+  }
+  if (!process.env.ENCRYPTION_KEY || process.env.ENCRYPTION_KEY.length < 32) {
+    logger.warn('[STARTUP WARNING] ENCRYPTION_KEY not set or too short. Connector credential encryption and connector workers may fail until this is configured.');
+  }
+
+  // Production-specific hardening
+  if (process.env.NODE_ENV === 'production') {
+    if (!process.env.FRONTEND_URL) {
+      logger.error('\n' + '!'.repeat(50));
+      logger.error('[STARTUP FATAL] FRONTEND_URL is required in production.');
+      logger.error('This is used for CORS and Secure Cookie configuration.');
+      logger.error('!'.repeat(50) + '\n');
+      process.exit(1);
+    }
+
+    // Guard against demo mode in production
+    if (process.env.VITE_DEMO_MODE === 'true') {
+      logger.warn('[STARTUP WARNING] Demo mode (VITE_DEMO_MODE=true) is active in production. This should only be used for testing.');
+    }
+
+    // Check secret strength
+    if ((process.env.JWT_SECRET?.length ?? 0) < 32) {
+      logger.warn('[STARTUP WARNING] JWT_SECRET is shorter than 32 characters. Consider using a stronger secret for production.');
+    }
+  }
 
   logger.info('[BOOT] About to bind server');
 

@@ -39,13 +39,12 @@ export const validateEnv = async () => {
         await transporter.verify();
         logger.info('SMTP connection verified successfully on startup');
       } catch (err: any) {
-        logger.error('CRITICAL SMTP Connection Verification Failed:', err);
-        process.exit(1);
+        throw new Error(`CRITICAL SMTP Connection Verification Failed: ${err.message || err}`);
       }
     }
   } catch (error: any) {
-    logger.error('CRITICAL Configuration Validation Failed:', error.message || error);
-    process.exit(1);
+    throw new Error(`Config validation failed: ${error.message || error}`);
   }
 };
+
 export default validateEnv;
