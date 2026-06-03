@@ -63,13 +63,13 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 
 USER sentra
 
-EXPOSE 3000
+EXPOSE 10000
 
 ENV NODE_ENV=production
-ENV PORT=3000
+ENV PORT=10000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 3000) + '/ping', r => process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
+  CMD node -e "require('http').get('http://localhost:10000/ping', r => process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["node", "dist/src/server.js"]

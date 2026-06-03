@@ -3,9 +3,6 @@ import 'dotenv/config';
 import logger from './utils/logger';
 import { validateEnv } from './config/validateEnv';
 
-// Fail-fast environment variable validation
-validateEnv();
-
 // Hard-required: server cannot function without these
 const REQUIRED_ENV_VARS = [
   'JWT_SECRET',
@@ -205,6 +202,9 @@ io.on('connection', (socket) => {
 export { io };
 
 const startServer = async () => {
+  // Validate env FIRST — this is async and must be awaited
+  await validateEnv();
+
   logger.info('[BOOT] About to bind server');
 
   httpServer.on('error', (err) => {
