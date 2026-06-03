@@ -71,6 +71,8 @@ ENV PORT=10000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD node -e "require('http').get('http://localhost:10000/ping', r => process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
 
+RUN ls -la /app/dist/src/ && echo "Build output verified"
+
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["node", "dist/src/server.js"]
 
