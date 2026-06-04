@@ -381,7 +381,7 @@ v1Router.use('/evaluations', evaluationsRoutes);
 v1Router.use('/superadmin', superadminRoutes);
 
 // Conditionally load demo routes (Strictly non-production)
-if (process.env.NODE_ENV !== 'production' && process.env.VITE_DEMO_MODE !== 'false') {
+if (process.env.NODE_ENV !== 'production') {
   v1Router.use('/demo', demoRoutes);
 }
 
