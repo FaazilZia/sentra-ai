@@ -20,6 +20,7 @@ import { redisHealthCheck } from './config/redis';
 
 import { createHttpTerminator } from 'http-terminator';
 import { getRedisClient } from './config/redis';
+import { exec } from 'child_process';
 
 const PORT = Number.parseInt(process.env.PORT || '10000', 10);
 const httpServer = createServer(app);
@@ -217,70 +218,98 @@ const startServer = async () => {
     process.exit(1);
   });
 
+  const runMigrations = () => {
+    return new Promise<void>((resolve, reject) => {
+      logger.info('Starting database migrations in the background...');
+      exec('npx prisma migrate deploy', (error, stdout, stderr) => {
+        if (error) {
+          logger.error(`Migration command failed: ${error.message}`);
+          return reject(error);
+        }
+        if (stderr) {
+          logger.warn(`Migration stderr: ${stderr}`);
+        }
+        logger.info(`Migration stdout: ${stdout}`);
+        logger.info('Database migrations completed successfully.');
+        resolve();
+      });
+    });
+  };
+
+  const runBackgroundInit = async () => {
+    try {
+      if (process.env.NODE_ENV === 'production') {
+        await runMigrations();
+      }
+    } catch (migrationError) {
+      logger.error('Background migration failed, keeping server alive:', migrationError);
+    }
+
+    try {
+      await initializePrisma();
+      logger.info('Database layer initialized');
+
+      // Seed default intake forms for all existing organizations safely (check-and-upsert)
+      await IntakeFormService.seedAllExistingOrganizations().catch(err => {
+        logger.error('IntakeForm seeding failed:', err);
+      });
+
+      // Run Redis connection checks asynchronously to prevent startup deadlocks
+      redisHealthCheck()
+        .then((redisReady) => {
+          logger.info(`Redis health at startup check resolved: ${redisReady ? 'connected' : 'degraded'}`);
+        })
+        .catch((err) => {
+          logger.error('Redis health check exception at boot:', err?.message || err);
+        });
+
+      logger.info('[BOOT] Redis lifecycle continuing asynchronously');
+
+      // Initialize Background Workers & Schedules (Non-blocking)
+      const connWorker = setupConnectorWorkers();
+      const driftWorker = setupDriftWorker();
+      const evalWorker = setupEvaluationWorker();
+      if (connWorker) workers.push(connWorker);
+      if (driftWorker) workers.push(driftWorker);
+      if (evalWorker) workers.push(evalWorker);
+      setupScheduledJobs()
+        .then(() => {
+          // Backfill baselines for any existing agents with empty baselines
+          prisma.ai_agents.findMany({
+            where: { baselineSampledAt: null },
+          }).then(async (agentsWithNoBaseline) => {
+            if (agentsWithNoBaseline.length === 0) return;
+            logger.info(`[STARTUP] Backfilling baselines for ${agentsWithNoBaseline.length} agents with no baseline...`);
+            for (const agent of agentsWithNoBaseline) {
+              try {
+                await DriftBaselineService.computeBaseline(agent.id);
+              } catch (err) {
+                logger.error(`[STARTUP] Failed to backfill baseline for agent ${agent.id}:`, err);
+              }
+            }
+            logger.info('[STARTUP] Baseline backfill complete.');
+          }).catch(err => logger.error('[STARTUP] Baseline backfill query failed:', err));
+        })
+        .catch(err => logger.error('Failed to setup scheduled jobs:', err));
+
+      // SMTP Validation
+      alertService.verifyConnection().catch(err => logger.error('SMTP Verification failed:', err));
+
+      // Supabase Keep-Alive (Prevents auto-pausing on Free Tier)
+      startDatabaseKeepAlive();
+    } catch (error) {
+      logger.error('Failed to initialize database during background init:', error);
+    }
+  };
+
   // Start listening FIRST so Render's health check passes immediately
   httpServer.listen(PORT, '0.0.0.0', () => {
     logger.info(`[BOOT] Server listening on 0.0.0.0:${PORT}`);
     logger.info(`Server is running on port ${PORT}`);
+
+    // Run database migrations and initialization in background
+    runBackgroundInit();
   });
-
-  // Migrations are handled by the start:render script before this process starts.
-  // No need to run them again here.
-
-  try {
-    await initializePrisma();
-    logger.info('Database layer initialized');
-
-    // Seed default intake forms for all existing organizations safely (check-and-upsert)
-    await IntakeFormService.seedAllExistingOrganizations();
-
-    // Run Redis connection checks asynchronously to prevent startup deadlocks
-    redisHealthCheck()
-      .then((redisReady) => {
-        logger.info(`Redis health at startup check resolved: ${redisReady ? 'connected' : 'degraded'}`);
-      })
-      .catch((err) => {
-        logger.error('Redis health check exception at boot:', err?.message || err);
-      });
-
-    logger.info('[BOOT] Redis lifecycle continuing asynchronously');
-
-    // Initialize Background Workers & Schedules (Non-blocking)
-    const connWorker = setupConnectorWorkers();
-    const driftWorker = setupDriftWorker();
-    const evalWorker = setupEvaluationWorker();
-    if (connWorker) workers.push(connWorker);
-    if (driftWorker) workers.push(driftWorker);
-    if (evalWorker) workers.push(evalWorker);
-    setupScheduledJobs()
-      .then(() => {
-        // Backfill baselines for any existing agents with empty baselines
-        prisma.ai_agents.findMany({
-          where: { baselineSampledAt: null },
-        }).then(async (agentsWithNoBaseline) => {
-          if (agentsWithNoBaseline.length === 0) return;
-          logger.info(`[STARTUP] Backfilling baselines for ${agentsWithNoBaseline.length} agents with no baseline...`);
-          for (const agent of agentsWithNoBaseline) {
-            try {
-              await DriftBaselineService.computeBaseline(agent.id);
-            } catch (err) {
-              logger.error(`[STARTUP] Failed to backfill baseline for agent ${agent.id}:`, err);
-            }
-          }
-          logger.info('[STARTUP] Baseline backfill complete.');
-        }).catch(err => logger.error('[STARTUP] Baseline backfill query failed:', err));
-      })
-      .catch(err => logger.error('Failed to setup scheduled jobs:', err));
-
-
-    // SMTP Validation
-    alertService.verifyConnection().catch(err => logger.error('SMTP Verification failed:', err));
-
-    // Supabase Keep-Alive (Prevents auto-pausing on Free Tier)
-    startDatabaseKeepAlive();
-  } catch (error) {
-    logger.error('Failed to initialize database — server will continue in degraded mode:', error);
-    // Do NOT exit — the server is already listening and health/ready endpoints will report degraded
-  }
 };
 
 /**

@@ -7,7 +7,7 @@
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "prisma generate && rm -rf dist && tsc",
     "start": "node dist/src/server.js",
-    "start:render": "node scripts/resolve-failed-migration.js && npx prisma migrate deploy && node dist/src/server.js",
+    "start:render": "node scripts/resolve-failed-migration.js && node dist/src/server.js",
     "seed": "ts-node prisma/seed.ts",
     "seed:enterprise": "ts-node --project tsconfig.json src/scripts/seed-enterprise.ts",
     "verify:seed": "ts-node --project tsconfig.json src/scripts/verify-seed.ts",
