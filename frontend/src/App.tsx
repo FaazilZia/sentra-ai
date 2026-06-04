@@ -9,6 +9,8 @@ const DashboardPage = lazy(() => import('./pages/Dashboard'));
 const PoliciesPage = lazy(() => import('./pages/Policies'));
 const GuardrailsPage = lazy(() => import('./pages/Guardrails'));
 const LoginPage = lazy(() => import('./pages/Login'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPassword'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPassword'));
 const RiskCenterPage = lazy(() => import('./pages/RiskCenter'));
 const CompliancePage = lazy(() => import('./pages/Compliance'));
 const EvidencePage = lazy(() => import('./pages/Evidence'));
@@ -83,6 +85,8 @@ function AppRoutes() {
             {/* Standalone completely public trust portal bypasses app shell */}
             <Route path="/public/:orgSlug/trust" element={<TrustPortalPage />} />
             <Route path="/share/:token" element={<SharedViewPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
 
             <Route path="/login" element={!user ? <LoginPage /> : <Navigate to="/app" replace />} />
 

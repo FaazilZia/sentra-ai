@@ -1,4 +1,5 @@
 import { FormEvent, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import { Activity, Database, LoaderCircle, LockKeyhole, Server, ShieldCheck, AlertCircle } from 'lucide-react';
 import { useAuth } from '../lib/auth';
@@ -181,7 +182,14 @@ export default function LoginPage({ defaultIsSignUp = false }: { defaultIsSignUp
             </label>
 
             <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-700">Password</span>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-slate-700">Password</span>
+                {!isSignUp && (
+                  <Link to="/forgot-password" className="text-xs font-semibold text-blue-600 hover:underline">
+                    Forgot password?
+                  </Link>
+                )}
+              </div>
               <input
                 className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-300 focus:border-blue-500/40 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
                 value={password}
