@@ -42,6 +42,7 @@ const VendorRiskPage = lazy(() => import('./pages/VendorRisk'));
 const ObligationsPage = lazy(() => import('./pages/Obligations'));
 const WorkflowsPage = lazy(() => import('./pages/Workflows'));
 const TasksPage = lazy(() => import('./pages/Tasks'));
+const FileManagerPage = lazy(() => import('./pages/FileManager'));
 const ExecutiveReportPage = lazy(() => import('./pages/ExecutiveReport'));
 const TrustPortalPage = lazy(() => import('./pages/TrustPortal'));
 const IntakePage = lazy(() => import('./pages/Intake'));
@@ -207,6 +208,11 @@ function AppRoutes() {
             <Route 
               path="/app/tasks" 
               element={user ? <AppLayout><TasksPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/files" 
+              element={user ? <AppLayout><FileManagerPage /></AppLayout> : <Navigate to="/login" replace />}
             />
 
             <Route 

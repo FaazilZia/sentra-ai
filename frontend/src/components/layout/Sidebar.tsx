@@ -18,6 +18,7 @@ import {
   BarChart3,
   Award,
   FolderOpen,
+  Folder,
   Layers,
   Sparkles,
   FlaskConical,
@@ -39,6 +40,7 @@ const operationsItems = [
   { icon: Box, label: 'Inventory', path: '/app/inventory' },
   { icon: ShieldCheck, label: 'Consent', path: '/app/consent' },
   { icon: ListTodo, label: 'Tasks', path: '/app/tasks' },
+  { icon: Folder, label: 'Files', path: '/app/files' },
   { icon: GitPullRequestDraft, label: 'Automations', path: '/app/automations' },
 ];
 
