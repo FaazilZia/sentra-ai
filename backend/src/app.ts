@@ -96,7 +96,7 @@ logger.info(`[BOOT] Timestamp: ${new Date().toISOString()}`);
 // Minimal diagnostics & health check routes (MUST be registered first to bypass all middlewares)
 app.get('/ping', (_, res) => res.status(200).send('ok'));
 
-app.get('/startup-check', (_, res) => {
+app.get('/startup-check', async (_, res) => {
   let migrationStatus = null;
   try {
     const migrationFile = path.join(process.cwd(), 'migration.json');
@@ -107,11 +107,20 @@ app.get('/startup-check', (_, res) => {
     migrationStatus = { error: err.message };
   }
 
+  let dbCheck = null;
+  try {
+    const userCount = await prisma.users.count();
+    dbCheck = { status: 'ok', userCount };
+  } catch (err: any) {
+    dbCheck = { status: 'error', message: err.message, code: err.code, stack: err.stack };
+  }
+
   return res.json({
     status: 'alive',
     port: process.env.PORT,
     uptime: process.uptime(),
-    migration: migrationStatus
+    migration: migrationStatus,
+    dbCheck: dbCheck
   });
 });
 
