@@ -3,6 +3,7 @@ import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { SocketProvider } from './SocketProvider';
 import { useAuth } from '@/lib/auth';
+import OnboardingWizard from '../shared/OnboardingWizard';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -13,6 +14,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <div className="flex h-screen bg-[var(--bg-page)] text-[var(--text-primary)] overflow-hidden">
+      <OnboardingWizard />
       {/* Sidebar - Fixed Width */}
       <Sidebar />
 
