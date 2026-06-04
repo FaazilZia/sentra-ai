@@ -237,18 +237,23 @@ const startServer = async () => {
   };
 
   const runBackgroundInit = async () => {
-    try {
-      if (process.env.NODE_ENV === 'production') {
-        await runMigrations();
-      }
-    } catch (migrationError) {
-      logger.error('Background migration failed, keeping server alive:', migrationError);
-    }
-
+    // 1. Initialize Prisma first so the app works immediately
     try {
       await initializePrisma();
       logger.info('Database layer initialized');
+    } catch (error) {
+      logger.error('Failed to initialize database during background init:', error);
+      return;
+    }
 
+    // 2. Run migrations asynchronously in the background in production without blocking
+    if (process.env.NODE_ENV === 'production') {
+      runMigrations().catch(migrationError => {
+        logger.error('Background migration failed, keeping server alive:', migrationError);
+      });
+    }
+
+    try {
       // Seed default intake forms for all existing organizations safely (check-and-upsert)
       await IntakeFormService.seedAllExistingOrganizations().catch(err => {
         logger.error('IntakeForm seeding failed:', err);
