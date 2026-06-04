@@ -405,6 +405,7 @@ v1Router.use('/reports', reportsRoutes);
 v1Router.use('/notifications', notificationRoutes);
 v1Router.use('/evidence', evidenceRoutes);
 v1Router.use('/evidence-files', fileIngestionRoutes);
+v1Router.use('/file-ingestion', fileIngestionRoutes);
 v1Router.use('/post-market-monitoring', postMarketMonitoringRoutes);
 v1Router.use('/search', searchRoutes);
 v1Router.use('/slack', slackRoutes);
