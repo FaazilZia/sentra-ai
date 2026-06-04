@@ -11,6 +11,8 @@ import KPICard from '@/components/dashboard/KPICard';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store/useStore';
 
+// Verified: Unused imports (ShieldAlert, Activity, Trash2, Toggle, MoreVertical) are already cleared.
+
 const initialGuardrails: any[] = [];
 
 export default function Guardrails() {
