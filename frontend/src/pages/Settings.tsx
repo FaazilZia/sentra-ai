@@ -19,7 +19,8 @@ import {
   Shield,
   QrCode,
   Lock,
-  Unlock
+  Unlock,
+  Users
 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { useAuth } from '@/lib/auth';
@@ -46,8 +47,8 @@ export default function Settings() {
   const addToast = useStore((state) => state.addToast);
   const { user } = useAuth();
   
-  // Tab State: 'general' | 'mcp' | 'sso'
-  const [activeTab, setActiveTab] = useState<'general' | 'mcp' | 'sso'>('general');
+  // Tab State: 'general' | 'mcp' | 'sso' | 'team'
+  const [activeTab, setActiveTab] = useState<'general' | 'mcp' | 'sso' | 'team'>('general');
 
   // Company Details
   const [company, setCompany] = useState<any>(null);
@@ -209,6 +210,63 @@ export default function Settings() {
   useEffect(() => {
     loadMcpLogs();
   }, [activeTab, logsPage, logsFilterDecision]);
+
+  // Team management states and handlers
+  const [invitations, setInvitations] = useState<any[]>([]);
+  const [loadingInvitations, setLoadingInvitations] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState('VIEWER');
+  const [inviting, setInviting] = useState(false);
+
+  const loadInvitations = async () => {
+    if (activeTab !== 'team') return;
+    try {
+      setLoadingInvitations(true);
+      const data = await apiRequest<any[]>('/tenant/invitations');
+      setInvitations(data);
+    } catch (err) {
+      console.error('Failed to load invitations:', err);
+    } finally {
+      setLoadingInvitations(false);
+    }
+  };
+
+  useEffect(() => {
+    loadInvitations();
+  }, [activeTab]);
+
+  const handleInviteUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteEmail.trim()) return;
+    try {
+      setInviting(true);
+      await apiRequest('/tenant/invitations', {
+        method: 'POST',
+        body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
+      });
+      addToast({ message: `Invite sent to ${inviteEmail}`, type: 'success' });
+      setInviteEmail('');
+      loadInvitations();
+    } catch (err: any) {
+      console.error('Failed to invite user:', err);
+      addToast({ message: err.message || 'Failed to send invitation', type: 'error' });
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  const handleRevokeInvitation = async (id: string) => {
+    try {
+      await apiRequest(`/tenant/invitations/${id}`, {
+        method: 'DELETE',
+      });
+      addToast({ message: 'Invitation revoked', type: 'success' });
+      loadInvitations();
+    } catch (err: any) {
+      console.error('Failed to revoke invitation:', err);
+      addToast({ message: err.message || 'Failed to revoke invitation', type: 'error' });
+    }
+  };
 
   // General tab actions
   const handleRotateKey = async () => {
@@ -481,6 +539,17 @@ export default function Settings() {
         >
           <Globe className="h-3.5 w-3.5" />
           SAML SSO
+        </button>
+        <button
+          onClick={() => setActiveTab('team')}
+          className={`px-5 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 ${
+            activeTab === 'team'
+              ? 'border-[var(--royal-indigo)] text-[var(--text-primary)]'
+              : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+          }`}
+        >
+          <Users className="h-3.5 w-3.5" />
+          Team Management
         </button>
       </div>
 
@@ -1266,6 +1335,134 @@ export default function Settings() {
                         </a>
                       </div>
                     )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* TAB 4: TEAM MANAGEMENT */}
+        {/* ============================================================== */}
+        {activeTab === 'team' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Invite Form */}
+            <div className="lg:col-span-5 space-y-4">
+              <div className="card-base p-6">
+                <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 flex items-center gap-2">
+                  <Users className="h-4 w-4 text-[var(--royal-indigo)]" />
+                  Invite New Member
+                </h3>
+
+                <form onSubmit={handleInviteUser} className="space-y-4">
+                  <div>
+                    <label htmlFor="invite-email" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+                      Email Address
+                    </label>
+                    <input
+                      id="invite-email"
+                      type="email"
+                      required
+                      placeholder="colleague@company.com"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="invite-role" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+                      Organization Role
+                    </label>
+                    <select
+                      id="invite-role"
+                      value={inviteRole}
+                      onChange={(e) => setInviteRole(e.target.value)}
+                      className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
+                    >
+                      <option value="VIEWER">Viewer (Read-only access)</option>
+                      <option value="AUDITOR">Auditor (Audit logs & policies read)</option>
+                      <option value="SECURITY_ANALYST">Security Analyst (Monitor & resolve incidents)</option>
+                      <option value="COMPLIANCE_MANAGER">Compliance Manager (Workflows & evidence)</option>
+                      <option value="ADMIN">Admin (Full tenant control)</option>
+                    </select>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={inviting || !inviteEmail.trim()}
+                    className="flex items-center justify-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50 w-full"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    {inviting ? 'Sending Invite...' : 'Send Invitation'}
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            {/* Pending Invitations list */}
+            <div className="lg:col-span-7 space-y-4">
+              <div className="card-base p-6">
+                <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-[var(--royal-indigo)]" />
+                  Sent Invitations
+                </h3>
+
+                {loadingInvitations ? (
+                  <div className="flex items-center justify-center py-10">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--royal-indigo)]" />
+                  </div>
+                ) : invitations.length === 0 ? (
+                  <div className="text-center py-10 text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-wider">
+                    No active invitations found
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-[var(--border-default)] text-[9px] font-black uppercase tracking-widest text-[var(--text-secondary)]">
+                          <th className="pb-3 font-bold">Email</th>
+                          <th className="pb-3 font-bold">Role</th>
+                          <th className="pb-3 font-bold">Expires</th>
+                          <th className="pb-3 font-bold text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[var(--border-default)]/40">
+                        {invitations.map((inv) => {
+                          const isExpired = new Date(inv.expires_at) < new Date();
+                          const isAccepted = !!inv.accepted_at;
+                          return (
+                            <tr key={inv.id} className="text-[11px] text-[var(--text-primary)]">
+                              <td className="py-3.5 font-mono">{inv.email}</td>
+                              <td className="py-3.5">
+                                <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-zinc-500/10 text-zinc-400 border border-zinc-500/20 uppercase">
+                                  {inv.role}
+                                </span>
+                              </td>
+                              <td className="py-3.5 text-[var(--text-muted)]">
+                                {new Date(inv.expires_at).toLocaleDateString()}
+                              </td>
+                              <td className="py-3.5 text-right">
+                                {isAccepted ? (
+                                  <span className="text-green-500 font-bold uppercase text-[9px]">Accepted</span>
+                                ) : isExpired ? (
+                                  <span className="text-red-500 font-bold uppercase text-[9px]">Expired</span>
+                                ) : (
+                                  <button
+                                    onClick={() => handleRevokeInvitation(inv.id)}
+                                    className="p-1 hover:text-red-500 text-[var(--text-muted)] transition-colors"
+                                    title="Revoke invitation"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </div>

@@ -1,3 +1,6 @@
+import bcrypt from 'bcrypt';
+import prisma from '../config/db';
+import { randomUUID } from 'crypto';
 import { Response } from 'express';
 import nodemailer from 'nodemailer';
 import { TenantService } from '../services/tenant.service';
@@ -234,4 +237,109 @@ export const updateOrgSettings = asyncHandler(async (req: any, res: Response) =>
   });
 
   return sendSuccess(res, settings);
+});
+
+export const getInviteVerify = asyncHandler(async (req: any, res: Response) => {
+  const token = req.query.token as string;
+  if (!token) {
+    return sendError(res, 400, 'Token query parameter is required');
+  }
+
+  const invitation = await TenantService.getInvitation(token);
+  if (!invitation) {
+    return sendError(res, 404, 'Invitation not found');
+  }
+
+  if (invitation.accepted_at) {
+    return sendError(res, 410, 'Invitation already used');
+  }
+
+  if (invitation.expires_at < new Date()) {
+    return sendError(res, 410, 'Invitation expired');
+  }
+
+  return sendSuccess(res, {
+    email: invitation.email,
+    role: invitation.role,
+    organizationName: invitation.organization.name,
+    expires_at: invitation.expires_at,
+  });
+});
+
+export const acceptInviteAndRegister = asyncHandler(async (req: any, res: Response) => {
+  const { token, name, password } = req.body;
+  if (!token || !name || !password) {
+    return sendError(res, 400, 'Token, name, and password are required');
+  }
+
+  const invitation = await TenantService.getInvitation(token);
+  if (!invitation) {
+    return sendError(res, 404, 'Invitation not found');
+  }
+
+  if (invitation.accepted_at) {
+    return sendError(res, 410, 'Invitation already used');
+  }
+
+  if (invitation.expires_at < new Date()) {
+    return sendError(res, 410, 'Invitation expired');
+  }
+
+  // Check if user already exists
+  const userExists = await prisma.users.findUnique({
+    where: { email: invitation.email }
+  });
+  if (userExists) {
+    return sendError(res, 409, 'A user with this email already exists');
+  }
+
+  const password_hash = await bcrypt.hash(password, 10);
+  const userId = randomUUID();
+
+  await prisma.$transaction(async (tx) => {
+    // Create new user
+    await tx.users.create({
+      data: {
+        id: userId,
+        organizationId: invitation.organizationId,
+        email: invitation.email,
+        full_name: name,
+        password_hash,
+        role: invitation.role,
+        is_active: true,
+      }
+    });
+
+    // Mark invitation accepted
+    await tx.org_invitations.update({
+      where: { token },
+      data: { accepted_at: new Date() },
+    });
+
+    // Add to default workspace
+    const defaultWs = await tx.workspaces.findFirst({
+      where: { organizationId: invitation.organizationId, is_default: true },
+    });
+    if (defaultWs) {
+      await tx.workspace_memberships.create({
+        data: {
+          id: randomUUID(),
+          workspaceId: defaultWs.id,
+          userId,
+          role: invitation.role,
+        }
+      });
+    }
+  });
+
+  await auditLogger.log({
+    organizationId: invitation.organizationId,
+    userId,
+    action: 'USER_REGISTERED_INVITE',
+    resourceType: 'user',
+    resourceId: userId,
+    eventType: 'USER_ACTION',
+  });
+
+  return sendSuccess(res, { success: true, message: 'Account created successfully' }, 201);
 });

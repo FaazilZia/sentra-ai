@@ -11,6 +11,7 @@ const GuardrailsPage = lazy(() => import('./pages/Guardrails'));
 const LoginPage = lazy(() => import('./pages/Login'));
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPassword'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPassword'));
+const AcceptInvitePage = lazy(() => import('./pages/AcceptInvite'));
 const RiskCenterPage = lazy(() => import('./pages/RiskCenter'));
 const CompliancePage = lazy(() => import('./pages/Compliance'));
 const EvidencePage = lazy(() => import('./pages/Evidence'));
@@ -87,6 +88,7 @@ function AppRoutes() {
             <Route path="/share/:token" element={<SharedViewPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/accept-invite" element={<AcceptInvitePage />} />
 
             <Route path="/login" element={!user ? <LoginPage /> : <Navigate to="/app" replace />} />
 

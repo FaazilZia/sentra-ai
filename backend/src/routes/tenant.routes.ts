@@ -6,9 +6,14 @@ import {
   listWorkspaces, createWorkspace, updateWorkspace, deleteWorkspace,
   inviteUser, listInvitations, acceptInvitation, revokeInvitation, getInvitationInfo,
   getOrgSettings, updateOrgSettings,
+  getInviteVerify, acceptInviteAndRegister,
 } from '../controllers/tenant.controller';
 
 const router = Router();
+
+// Public invitation acceptance endpoints (no auth required)
+router.get('/invite/verify', getInviteVerify);
+router.post('/invite/accept', acceptInviteAndRegister);
 
 // All routes require authentication + valid tenant
 router.use(authenticate, requireTenant);
