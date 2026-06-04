@@ -1,5 +1,7 @@
 console.log('[BOOT] server.ts process starting, PORT:', process.env.PORT, 'NODE_ENV:', process.env.NODE_ENV);
 import 'dotenv/config';
+import fs from 'fs';
+import path from 'path';
 import logger from './utils/logger';
 import { validateEnv } from './config/validateEnv';
 
@@ -222,6 +224,19 @@ const startServer = async () => {
     return new Promise<void>((resolve, reject) => {
       logger.info('Starting database migrations in the background...');
       exec('npx prisma migrate deploy', (error, stdout, stderr) => {
+        try {
+          const logContent = {
+            timestamp: new Date().toISOString(),
+            success: !error,
+            error: error ? { message: error.message, stack: error.stack } : null,
+            stdout,
+            stderr
+          };
+          fs.writeFileSync(path.join(process.cwd(), 'migration.json'), JSON.stringify(logContent, null, 2));
+        } catch (writeErr: any) {
+          logger.error(`Failed to write migration.json: ${writeErr.message}`);
+        }
+
         if (error) {
           logger.error(`Migration command failed: ${error.message}`);
           return reject(error);

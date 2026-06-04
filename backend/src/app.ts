@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import path from 'path';
+import fs from 'fs';
 import { errorHandler } from './middleware/error.middleware';
 import { contextMiddleware } from './middleware/context.middleware';
 import authRoutes from './routes/auth.routes';
@@ -96,10 +97,21 @@ logger.info(`[BOOT] Timestamp: ${new Date().toISOString()}`);
 app.get('/ping', (_, res) => res.status(200).send('ok'));
 
 app.get('/startup-check', (_, res) => {
+  let migrationStatus = null;
+  try {
+    const migrationFile = path.join(process.cwd(), 'migration.json');
+    if (fs.existsSync(migrationFile)) {
+      migrationStatus = JSON.parse(fs.readFileSync(migrationFile, 'utf8'));
+    }
+  } catch (err: any) {
+    migrationStatus = { error: err.message };
+  }
+
   return res.json({
     status: 'alive',
     port: process.env.PORT,
-    uptime: process.uptime()
+    uptime: process.uptime(),
+    migration: migrationStatus
   });
 });
 
