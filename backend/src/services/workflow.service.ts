@@ -441,6 +441,12 @@ export const WorkflowService = {
 
     return task;
   },
+
+  async deleteTask(taskId: string, organizationId: string) {
+    return prisma.workflow_tasks.deleteMany({
+      where: { id: taskId, organizationId },
+    });
+  },
 };
 
 

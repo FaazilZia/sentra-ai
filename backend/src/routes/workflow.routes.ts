@@ -6,7 +6,7 @@ import {
   createTask, listTasks, getTask,
   submitForReview, approveTask, rejectTask,
   assignTask, getTaskHistory,
-  listPendingWorkflows, resolveWorkflow
+  listPendingWorkflows, resolveWorkflow, deleteTask
 } from '../controllers/workflow.controller';
 
 const router = Router();
@@ -21,6 +21,7 @@ router.post('/:id/resolve', requirePermission('compliance', 'update'), resolveWo
 router.get('/', requirePermission('compliance', 'read'), listTasks);
 router.post('/', requirePermission('compliance', 'update'), createTask);
 router.get('/:id', requirePermission('compliance', 'read'), getTask);
+router.delete('/:id', requirePermission('compliance', 'update'), deleteTask);
 
 // ── Workflow Transitions ──────────────────────
 router.post('/:id/submit', requirePermission('compliance', 'update'), submitForReview);

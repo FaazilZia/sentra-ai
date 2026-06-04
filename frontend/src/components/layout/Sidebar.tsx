@@ -38,6 +38,7 @@ const operationsItems = [
   { icon: EyeOff, label: 'Shadow AI', path: '/app/shadow' },
   { icon: Box, label: 'Inventory', path: '/app/inventory' },
   { icon: ShieldCheck, label: 'Consent', path: '/app/consent' },
+  { icon: ListTodo, label: 'Tasks', path: '/app/tasks' },
   { icon: GitPullRequestDraft, label: 'Automations', path: '/app/automations' },
 ];
 

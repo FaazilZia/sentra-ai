@@ -195,3 +195,26 @@ export const resolveWorkflow = asyncHandler(async (req: any, res: Response) => {
   }
 });
 
+export const deleteTask = asyncHandler(async (req: any, res: Response) => {
+  const orgId = getOrgId(req);
+  const existing = await prisma.workflow_tasks.findFirst({
+    where: { id: req.params.id, organizationId: orgId },
+  });
+  if (!existing) return sendError(res, 404, 'Task not found');
+
+  await WorkflowService.deleteTask(req.params.id, orgId);
+
+  await ChangeHistoryService.logChange(
+    orgId,
+    'workflow',
+    req.params.id,
+    req.user.id,
+    'deleted',
+    existing,
+    null,
+    'Workflow task deleted'
+  );
+
+  return sendSuccess(res, undefined, 200, 'Task deleted');
+});
+
