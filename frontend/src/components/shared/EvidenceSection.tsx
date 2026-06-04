@@ -68,8 +68,18 @@ export function EvidenceSection({ entityType, entityId }: EvidenceSectionProps) 
       formData.append('entityId', entityId);
       formData.append('tags', tags);
 
+      const impersonationToken = localStorage.getItem('sentra_impersonation_token');
+      const accessToken = localStorage.getItem('sentra_access_token');
+      const headers: Record<string, string> = {};
+      if (impersonationToken) {
+        headers['Authorization'] = `Bearer ${impersonationToken}`;
+      } else if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`;
+      }
+
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:10000/api/v1'}/evidence`, {
         method: 'POST',
+        headers,
         body: formData,
         credentials: 'include',
       });

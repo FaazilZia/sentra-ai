@@ -186,8 +186,11 @@ export async function apiRequest<T>(
   headers.set('Content-Type', 'application/json');
 
   const impersonationToken = localStorage.getItem('sentra_impersonation_token');
+  const accessToken = localStorage.getItem('sentra_access_token');
   if (impersonationToken) {
     headers.set('Authorization', `Bearer ${impersonationToken}`);
+  } else if (accessToken) {
+    headers.set('Authorization', `Bearer ${accessToken}`);
   }
 
   const response = await fetch(`${apiBaseUrl}${path}`, {

@@ -111,9 +111,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoginError(null);
 
     try {
-      const { user: loggedInUser } = await loginRequest(email, password);
-      setAccessToken('session-valid');
-      setUser(loggedInUser);
+      const result = await loginRequest(email, password);
+      localStorage.setItem('sentra_access_token', result.accessToken);
+      setAccessToken(result.accessToken);
+      setUser(result.user);
       setOriginalUser(null);
       localStorage.removeItem('sentra_original_user');
       localStorage.removeItem('sentra_impersonation_token');
@@ -161,6 +162,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Logout request failed:', error);
     }
+    localStorage.removeItem('sentra_access_token');
     localStorage.removeItem('sentra_original_user');
     localStorage.removeItem('sentra_impersonation_token');
     localStorage.removeItem('sentra_impersonated_user');
