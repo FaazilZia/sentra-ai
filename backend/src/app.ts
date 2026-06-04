@@ -110,7 +110,32 @@ app.get('/startup-check', async (_, res) => {
   let dbCheck = null;
   try {
     const userCount = await prisma.users.count();
-    dbCheck = { status: 'ok', userCount };
+    const adminUser = await prisma.users.findUnique({ where: { email: 'admin@sentra.ai' } });
+    
+    let refreshTokenTest: any = 'not_run';
+    if (adminUser) {
+      try {
+        const testToken = `test-token-${Date.now()}`;
+        const createdToken = await prisma.refreshToken.create({
+          data: {
+            token: testToken,
+            userId: adminUser.id,
+            expiresAt: new Date(Date.now() + 10000)
+          }
+        });
+        await prisma.refreshToken.delete({ where: { token: testToken } });
+        refreshTokenTest = 'success';
+      } catch (tokenErr: any) {
+        refreshTokenTest = { error: tokenErr.message, code: tokenErr.code, stack: tokenErr.stack };
+      }
+    }
+    dbCheck = { 
+      status: 'ok', 
+      userCount, 
+      adminExists: !!adminUser, 
+      adminId: adminUser?.id, 
+      refreshTokenTest 
+    };
   } catch (err: any) {
     dbCheck = { status: 'error', message: err.message, code: err.code, stack: err.stack };
   }
