@@ -23,7 +23,12 @@ import {
   Sparkles,
   FlaskConical,
   Globe,
-  Scale
+  Scale,
+  AlertTriangle,
+  Network,
+  Cpu,
+  Search,
+  Compass
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth';
@@ -33,15 +38,20 @@ const operationsItems = [
   { icon: FileText, label: 'Policies', path: '/app/policies' },
   { icon: ShieldCheck, label: 'Guardrails', path: '/app/guardrails' },
   { icon: ShieldAlert, label: 'Risk Center', path: '/app/risk' },
+  { icon: Network, label: 'Entity Graph', path: '/app/entity-graph' },
   { icon: ClipboardCheck, label: 'Compliance', path: '/app/compliance' },
+  { icon: Cpu, label: 'Readiness', path: '/app/readiness' },
   { icon: FolderOpen, label: 'Evidence Hub', path: '/app/evidence' },
   { icon: Activity, label: 'Drift Detection', path: '/app/drift' },
   { icon: EyeOff, label: 'Shadow AI', path: '/app/shadow' },
   { icon: Box, label: 'Inventory', path: '/app/inventory' },
   { icon: ShieldCheck, label: 'Consent', path: '/app/consent' },
   { icon: ListTodo, label: 'Tasks', path: '/app/tasks' },
-  { icon: Folder, label: 'Files', path: '/app/files' },
+  {icon: Folder, label: 'Files', path: '/app/files' },
   { icon: GitPullRequestDraft, label: 'Automations', path: '/app/automations' },
+  { icon: AlertTriangle, label: 'Incidents', path: '/app/incidents' },
+  { icon: Compass, label: 'Agent Discovery', path: '/app/agent-discovery' },
+  { icon: Search, label: 'Audit Log', path: '/app/audit' },
 ];
 
 const governanceItems = [

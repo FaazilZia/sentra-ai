@@ -32,6 +32,37 @@ export const getNistAiRmfOverview = asyncHandler(async (req: any, res: Response)
   }
 });
 
+export const getNistAiRmfControls = asyncHandler(async (req: any, res: Response) => {
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) return sendError(res, 401, 'Unauthorized');
+
+  try {
+    const overview = await NistAiRmfService.getFrameworkOverview(organizationId);
+    const controls: any[] = [];
+    for (const f of overview.functions) {
+      for (const c of f.categories) {
+        for (const sub of c.subcategories) {
+          controls.push({
+            code: sub.code,
+            title: sub.title,
+            status: sub.status,
+            maturityLevel: sub.maturityLevel,
+            score: sub.score,
+            telemetryLinked: sub.telemetryLinked,
+            lastEvidenceAt: sub.lastEvidenceAt,
+            function: f.title,
+            category: c.title,
+            createdAt: sub.createdAt || null
+          });
+        }
+      }
+    }
+    return sendSuccess(res, controls);
+  } catch (err) {
+    return handleServiceError(res, err);
+  }
+});
+
 export const updateNistAiRmfImplementation = asyncHandler(async (req: any, res: Response) => {
   const { subcategoryCode } = req.params;
   const { status, maturity_level, risk_escalation_level, notes } = req.body;

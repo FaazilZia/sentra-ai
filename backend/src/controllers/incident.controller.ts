@@ -364,3 +364,13 @@ export const getScanStatus = asyncHandler(async (req: any, res: Response) => {
     } : null,
   });
 });
+
+export const getIncidentHistoryTimeline = asyncHandler(async (req: any, res: Response) => {
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) {
+    return sendError(res, 401, 'Unauthorized');
+  }
+  const id = String(req.params.id || '');
+  const history = await ChangeHistoryService.getChangeHistory('incident', id, organizationId);
+  return sendSuccess(res, history);
+});

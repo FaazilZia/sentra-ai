@@ -80,7 +80,8 @@ export class EuAiActService {
                 owner_user_id: impl.owner_user_id,
                 due_date: impl.due_date,
                 evidence_links: Array.isArray(impl.evidence_links) ? impl.evidence_links : [],
-                last_reviewed: impl.last_reviewed
+                last_reviewed: impl.last_reviewed,
+                created_at: impl.created_at
               }
             : null
         };

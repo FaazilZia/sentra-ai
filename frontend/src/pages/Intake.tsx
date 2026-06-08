@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   ClipboardCheck, Send, CheckCircle2, AlertTriangle, XCircle, 
   LoaderCircle, ChevronRight, User, 
@@ -17,6 +18,7 @@ import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 
 export default function Intake() {
+  const navigate = useNavigate();
   const addToast = useStore(state => state.addToast);
   const { user } = useAuth();
   
@@ -276,6 +278,17 @@ export default function Intake() {
       <PageHeader 
         title="AI Agent Intake & Scoring"
         description="Register new AI Agents, evaluate automated risk tier scoring, and queue pipelines for safety audits."
+        action={
+          isAdmin && (
+            <button
+              onClick={() => navigate('/app/intake/builder')}
+              className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-md shadow-indigo-500/10"
+            >
+              <ClipboardList className="h-4 w-4" />
+              Manage Forms
+            </button>
+          )
+        }
       />
 
       {/* Tabs */}

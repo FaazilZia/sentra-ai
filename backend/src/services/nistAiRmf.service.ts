@@ -192,6 +192,7 @@ export class NistAiRmfService {
           owner_user_id: impl.owner_user_id,
           due_date: impl.due_date,
           last_reviewed: impl.last_reviewed,
+          created_at: impl.created_at
         },
         evidence_count: subEvidence.length,
         last_evidence_at: subEvidence.length > 0 ? subEvidence[0].created_at : null,
@@ -287,6 +288,7 @@ export class NistAiRmfService {
             score: Math.round(sub.scoreFinal * 10) / 10,
             telemetryLinked: sub.evidence_count,
             lastEvidenceAt: sub.last_evidence_at,
+            createdAt: sub.implementation.created_at
           })),
         };
       });

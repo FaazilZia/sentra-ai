@@ -104,3 +104,60 @@ export const deleteAISystem = asyncHandler(async (req: any, res: Response) => {
 
   return sendSuccess(res, { success: true });
 });
+
+export const syncConnectorAgents = asyncHandler(async (req: any, res: Response) => {
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) {
+    return sendError(res, 400, 'Company context required');
+  }
+
+  const mockDiscovered = [
+    {
+      id: "disc-1",
+      name: "Customer Support Auto-Responder",
+      description: "Unregistered GPT-4o integration scanning client support channels on Slack.",
+      source: "Slack Connector",
+      risk_level: "HIGH",
+      risk_score: 78,
+      found_at: new Date(Date.now() - 3600000 * 2).toISOString(),
+      status: "DISCOVERED",
+      reviewStatus: null
+    },
+    {
+      id: "disc-2",
+      name: "Shadow Finance Model",
+      description: "Replicate-hosted Llama-3 instance used by finance team to analyze quarterly earnings sheets.",
+      source: "AWS VPC Flow Logs",
+      risk_level: "CRITICAL",
+      risk_score: 92,
+      found_at: new Date(Date.now() - 3600000 * 6).toISOString(),
+      status: "DISCOVERED",
+      reviewStatus: "confirmed"
+    },
+    {
+      id: "disc-3",
+      name: "Developer Code Assistant",
+      description: "Ollama local server running Codellama accessed across dev subnets without authorization.",
+      source: "GitHub Audit Logs",
+      risk_level: "MEDIUM",
+      risk_score: 45,
+      found_at: new Date(Date.now() - 3600000 * 24).toISOString(),
+      status: "DISCOVERED",
+      reviewStatus: null
+    },
+    {
+      id: "disc-4",
+      name: "HR Talent screener",
+      description: "Anthropic Claude Claude-3-haiku powered resumes parser script.",
+      source: "Google Workspace Sync",
+      risk_level: "LOW",
+      risk_score: 25,
+      found_at: new Date(Date.now() - 3600000 * 48).toISOString(),
+      status: "DISCOVERED",
+      reviewStatus: "rejected"
+    }
+  ];
+
+  return sendSuccess(res, mockDiscovered);
+});
+

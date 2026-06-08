@@ -7,6 +7,7 @@ import {
   triggerScan, 
   getScanStatus,
   getIncidentHistory,
+  getIncidentHistoryTimeline,
 } from '../controllers/incident.controller';
 import { authenticate, authorizeRoles } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validate.middleware';
@@ -27,6 +28,8 @@ router.get('/', authenticate, getIncidents);
 router.get('/history', authenticate, getIncidentHistory);
 router.get('/:id', authenticate, validate(getIncidentByIdSchema), getIncidentById);
 router.patch('/:id', authenticate, authorizeRoles('ADMIN'), validate(updateIncidentStatusSchema), updateIncidentStatus);
+router.patch('/:id/status', authenticate, validate(updateIncidentStatusSchema), updateIncidentStatus);
+router.get('/:id/history', authenticate, validate(getIncidentByIdSchema), getIncidentHistoryTimeline);
 
 // Deep Scan Engine
 router.post(

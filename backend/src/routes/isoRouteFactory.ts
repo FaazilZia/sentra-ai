@@ -9,10 +9,12 @@ export function createIsoFrameworkRouter(controller: {
   getFrameworkOverview: any;
   updateImplementation: any;
   getComplianceScore: any;
+  getFrameworkControls: any;
 }) {
   const router = Router();
   router.use(authenticate);
   router.get('/overview', controller.getFrameworkOverview);
+  router.get('/controls', controller.getFrameworkControls);
   router.patch('/controls/:controlCode/implementation', authorizeRoles('ADMIN', 'ENGINEER'), controller.updateImplementation);
   router.get('/score', controller.getComplianceScore);
   return router;

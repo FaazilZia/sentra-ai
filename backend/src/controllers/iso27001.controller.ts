@@ -6,3 +6,5 @@ const ctrl = createIsoFrameworkController(Iso27001Service);
 export const getFrameworkOverview = ctrl.getFrameworkOverview;
 export const updateImplementation = ctrl.updateImplementation;
 export const getComplianceScore = ctrl.getComplianceScore;
+export const getFrameworkControls = ctrl.getFrameworkControls;
+

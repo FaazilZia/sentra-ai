@@ -20,7 +20,9 @@ import {
   QrCode,
   Lock,
   Unlock,
-  Users
+  Users,
+  User,
+  Sliders
 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { useAuth } from '@/lib/auth';
@@ -47,11 +49,35 @@ export default function Settings() {
   const addToast = useStore((state) => state.addToast);
   const { user } = useAuth();
   
-  // Tab State: 'general' | 'mcp' | 'sso' | 'team'
-  const [activeTab, setActiveTab] = useState<'general' | 'mcp' | 'sso' | 'team'>('general');
+  // Tab State
+  const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'llmkeys' | 'features' | 'general' | 'mcp' | 'sso' | 'team'>('profile');
 
   // Company Details
   const [company, setCompany] = useState<any>(null);
+
+  // Profile Settings States
+  const [profileName, setProfileName] = useState(user?.fullName || '');
+  const [profileJobTitle, setProfileJobTitle] = useState('');
+  const [profileAvatarUrl, setProfileAvatarUrl] = useState('');
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  // Password Settings States
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
+
+  // LLM API Keys States
+  const [llmKeysList, setLlmKeysList] = useState<any[]>([]);
+  const [loadingLlmKeys, setLoadingLlmKeys] = useState(false);
+  const [llmProvider, setLlmProvider] = useState('openai');
+  const [llmApiKey, setLlmApiKey] = useState('');
+  const [addingLlmKey, setAddingLlmKey] = useState(false);
+
+  // Feature Flags States
+  const [featureFlagsList, setFeatureFlagsList] = useState<any[]>([]);
+  const [loadingFeatureFlags, setLoadingFeatureFlags] = useState(false);
 
   // General Settings States
   const [apiKey, setApiKey] = useState('sk-sentra-••••••••••••••••');
@@ -170,6 +196,174 @@ export default function Settings() {
         .catch((err) => console.error('Settings load company details error:', err));
     }
   }, [user]);
+
+  // Profile, Password, LLM Keys and Features Helpers
+  const fetchUserProfile = async () => {
+    try {
+      const res = await apiRequest<{ data: any }>('/user/me');
+      if (res?.data) {
+        setProfileName(res.data.fullName || '');
+        setProfileJobTitle(res.data.jobTitle || '');
+        setProfileAvatarUrl(res.data.avatarUrl || '');
+      }
+    } catch (err) {
+      console.error('Failed to load user profile:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingProfile(true);
+    try {
+      const res = await apiRequest<any>('/user/me', {
+        method: 'PATCH',
+        body: JSON.stringify({ fullName: profileName, jobTitle: profileJobTitle }),
+      });
+      addToast({ message: 'Profile updated successfully. Refresh to apply all layout updates.', type: 'success' });
+      if (res?.data) {
+        setProfileName(res.data.fullName || '');
+        setProfileJobTitle(res.data.jobTitle || '');
+      }
+    } catch (err: any) {
+      addToast({ message: err.message || 'Failed to update profile', type: 'error' });
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    setUploadingAvatar(true);
+    try {
+      const token = localStorage.getItem('sentra_access_token');
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:10000/api/v1'}/user/me/avatar`, {
+        method: 'PUT',
+        headers: {
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+        },
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || 'Avatar upload failed');
+
+      setProfileAvatarUrl(data?.data?.avatarUrl || '');
+      addToast({ message: 'Avatar uploaded successfully. Refresh to apply all layout updates.', type: 'success' });
+    } catch (err: any) {
+      console.error(err);
+      addToast({ message: err.message || 'Failed to upload avatar', type: 'error' });
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleChangePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      addToast({ message: 'Passwords do not match', type: 'warning' });
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      await apiRequest('/auth/change-password', {
+        method: 'POST',
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      addToast({ message: 'Password changed successfully', type: 'success' });
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: any) {
+      addToast({ message: err.message || 'Failed to change password', type: 'error' });
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  const fetchLlmKeys = async () => {
+    setLoadingLlmKeys(true);
+    try {
+      const res = await apiRequest<{ data: any[] }>('/settings/llm-keys');
+      setLlmKeysList(res?.data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingLlmKeys(false);
+    }
+  };
+
+  const handleAddLlmKey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!llmApiKey.trim()) return;
+    setAddingLlmKey(true);
+    try {
+      await apiRequest('/settings/llm-keys', {
+        method: 'POST',
+        body: JSON.stringify({ provider: llmProvider, apiKey: llmApiKey.trim() }),
+      });
+      addToast({ message: 'LLM Key added successfully', type: 'success' });
+      setLlmApiKey('');
+      fetchLlmKeys();
+    } catch (err: any) {
+      addToast({ message: err.message || 'Failed to add LLM key', type: 'error' });
+    } finally {
+      setAddingLlmKey(false);
+    }
+  };
+
+  const handleDeleteLlmKey = async (id: string) => {
+    try {
+      await apiRequest(`/settings/llm-keys/${id}`, {
+        method: 'DELETE',
+      });
+      addToast({ message: 'LLM Key deleted successfully', type: 'success' });
+      fetchLlmKeys();
+    } catch (err: any) {
+      addToast({ message: err.message || 'Failed to delete key', type: 'error' });
+    }
+  };
+
+  const fetchFeatureFlags = async () => {
+    setLoadingFeatureFlags(true);
+    try {
+      const res = await apiRequest<{ data: any[] }>('/settings/features');
+      setFeatureFlagsList(res?.data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingFeatureFlags(false);
+    }
+  };
+
+  const handleToggleFeatureFlag = async (key: string, currentStatus: boolean) => {
+    try {
+      await apiRequest('/settings/features', {
+        method: 'PATCH',
+        body: JSON.stringify({ key, enabled: !currentStatus }),
+      });
+      addToast({ message: `Feature updated successfully`, type: 'success' });
+      fetchFeatureFlags();
+    } catch (err: any) {
+      addToast({ message: err.message || 'Failed to update feature', type: 'error' });
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'llmkeys') {
+      fetchLlmKeys();
+    } else if (activeTab === 'features') {
+      fetchFeatureFlags();
+    }
+  }, [activeTab]);
 
   // Load MCP Tab Data (Keys and Logs)
   const loadMcpData = async () => {
@@ -506,10 +700,54 @@ export default function Settings() {
       </div>
 
       {/* Sleek Custom Tab Switcher */}
-      <div className="flex border-b border-[var(--border-default)] mb-4 gap-2">
+      <div className="flex border-b border-[var(--border-default)] mb-4 gap-2 overflow-x-auto custom-scrollbar">
+        <button
+          onClick={() => setActiveTab('profile')}
+          className={`px-5 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 shrink-0 ${
+            activeTab === 'profile'
+              ? 'border-[var(--royal-indigo)] text-[var(--text-primary)]'
+              : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+          }`}
+        >
+          <User className="h-3.5 w-3.5" />
+          Profile Settings
+        </button>
+        <button
+          onClick={() => setActiveTab('password')}
+          className={`px-5 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 shrink-0 ${
+            activeTab === 'password'
+              ? 'border-[var(--royal-indigo)] text-[var(--text-primary)]'
+              : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+          }`}
+        >
+          <Lock className="h-3.5 w-3.5" />
+          Password
+        </button>
+        <button
+          onClick={() => setActiveTab('llmkeys')}
+          className={`px-5 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 shrink-0 ${
+            activeTab === 'llmkeys'
+              ? 'border-[var(--royal-indigo)] text-[var(--text-primary)]'
+              : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+          }`}
+        >
+          <Key className="h-3.5 w-3.5" />
+          LLM Keys
+        </button>
+        <button
+          onClick={() => setActiveTab('features')}
+          className={`px-5 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 shrink-0 ${
+            activeTab === 'features'
+              ? 'border-[var(--royal-indigo)] text-[var(--text-primary)]'
+              : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+          }`}
+        >
+          <Sliders className="h-3.5 w-3.5" />
+          Features
+        </button>
         <button
           onClick={() => setActiveTab('general')}
-          className={`px-5 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 ${
+          className={`px-5 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 shrink-0 ${
             activeTab === 'general'
               ? 'border-[var(--royal-indigo)] text-[var(--text-primary)]'
               : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
@@ -520,7 +758,7 @@ export default function Settings() {
         </button>
         <button
           onClick={() => setActiveTab('mcp')}
-          className={`px-5 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 ${
+          className={`px-5 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 shrink-0 ${
             activeTab === 'mcp'
               ? 'border-[var(--royal-indigo)] text-[var(--text-primary)]'
               : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
@@ -531,7 +769,7 @@ export default function Settings() {
         </button>
         <button
           onClick={() => setActiveTab('sso')}
-          className={`px-5 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 ${
+          className={`px-5 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 shrink-0 ${
             activeTab === 'sso'
               ? 'border-[var(--royal-indigo)] text-[var(--text-primary)]'
               : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
@@ -542,7 +780,7 @@ export default function Settings() {
         </button>
         <button
           onClick={() => setActiveTab('team')}
-          className={`px-5 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 ${
+          className={`px-5 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 shrink-0 ${
             activeTab === 'team'
               ? 'border-[var(--royal-indigo)] text-[var(--text-primary)]'
               : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
@@ -555,6 +793,350 @@ export default function Settings() {
 
       {/* Tab Panels */}
       <div className="mt-2">
+        {/* ============================================================== */}
+        {/* TAB: PROFILE SETTINGS */}
+        {/* ============================================================== */}
+        {activeTab === 'profile' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-8 space-y-4">
+              <div className="card-base p-6">
+                <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 flex items-center gap-2">
+                  <User className="h-4 w-4 text-[var(--royal-indigo)]" />
+                  User Profile Details
+                </h3>
+
+                <form onSubmit={handleSaveProfile} className="space-y-6">
+                  <div>
+                    <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+                      Email Address (Read-only)
+                    </label>
+                    <input
+                      type="text"
+                      value={user?.email || ''}
+                      disabled
+                      className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2.5 text-[11px] font-bold text-[var(--text-muted)] cursor-not-allowed opacity-60"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      value={profileName}
+                      onChange={(e) => setProfileName(e.target.value)}
+                      className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2.5 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+                      Job Title
+                    </label>
+                    <input
+                      type="text"
+                      value={profileJobTitle}
+                      onChange={(e) => setProfileJobTitle(e.target.value)}
+                      placeholder="e.g. Director of Compliance / AI Security Engineer"
+                      className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2.5 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
+                    />
+                  </div>
+
+                  <div className="flex justify-end pt-2">
+                    <button
+                      type="submit"
+                      disabled={savingProfile}
+                      className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                    >
+                      <Save className="h-3.5 w-3.5" />
+                      {savingProfile ? 'Saving...' : 'Save Profile'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <div className="lg:col-span-4 space-y-4">
+              <div className="card-base p-6 flex flex-col items-center text-center">
+                <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 w-full text-left">
+                  Profile Avatar
+                </h3>
+
+                <div className="relative group mb-6">
+                  {profileAvatarUrl ? (
+                    <img
+                      src={profileAvatarUrl}
+                      alt="Avatar"
+                      className="h-28 w-28 rounded-full object-cover border-2 border-[var(--border-default)] bg-zinc-900"
+                    />
+                  ) : (
+                    <div className="h-28 w-28 rounded-full bg-indigo-600 border border-white/10 flex items-center justify-center text-3xl font-black text-white">
+                      {(profileName || user?.fullName || 'AD')
+                        .split(' ')
+                        .map((n) => n[0])
+                        .join('')
+                        .toUpperCase()
+                        .slice(0, 2)}
+                    </div>
+                  )}
+                  {uploadingAvatar && (
+                    <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center text-xs text-white font-bold uppercase">
+                      Uploading...
+                    </div>
+                  )}
+                </div>
+
+                <label className="px-4 py-2 bg-zinc-800 border border-[var(--border-default)] hover:bg-zinc-700 text-white rounded text-[9px] font-black uppercase tracking-widest cursor-pointer transition-all active:scale-95">
+                  Choose New Avatar
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                  />
+                </label>
+                <p className="text-[9px] text-[var(--text-muted)] mt-2 uppercase tracking-wider font-bold">
+                  PNG, JPG or GIF up to 5MB
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* TAB: PASSWORD SETTINGS */}
+        {/* ============================================================== */}
+        {activeTab === 'password' && (
+          <div className="max-w-xl">
+            <div className="card-base p-6">
+              <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 flex items-center gap-2">
+                <Lock className="h-4 w-4 text-[var(--royal-indigo)]" />
+                Change Password
+              </h3>
+
+              <form onSubmit={handleChangePasswordSubmit} className="space-y-6">
+                <div>
+                  <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+                    Current Password
+                  </label>
+                  <input
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="••••••••••••"
+                    className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2.5 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+                    New Password
+                  </label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="••••••••••••"
+                    className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2.5 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+                    Confirm New Password
+                  </label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••••••"
+                    className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2.5 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
+                    required
+                  />
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="submit"
+                    disabled={changingPassword}
+                    className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                  >
+                    <Save className="h-3.5 w-3.5" />
+                    {changingPassword ? 'Updating...' : 'Update Password'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* TAB: LLM KEYS SETTINGS */}
+        {/* ============================================================== */}
+        {activeTab === 'llmkeys' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-5 space-y-4">
+              <div className="card-base p-6">
+                <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 flex items-center gap-2">
+                  <Plus className="h-4 w-4 text-[var(--royal-indigo)]" />
+                  Add Provider Key
+                </h3>
+
+                <form onSubmit={handleAddLlmKey} className="space-y-6">
+                  <div>
+                    <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+                      LLM Provider
+                    </label>
+                    <select
+                      value={llmProvider}
+                      onChange={(e) => setLlmProvider(e.target.value)}
+                      className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2.5 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
+                    >
+                      <option value="openai">OpenAI (GPT-4o, etc.)</option>
+                      <option value="anthropic">Anthropic (Claude 3.5, etc.)</option>
+                      <option value="google">Google Gemini</option>
+                      <option value="cohere">Cohere</option>
+                      <option value="meta">Meta Llama (Replicate/Ollama)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+                      API Key
+                    </label>
+                    <input
+                      type="password"
+                      placeholder="sk-..."
+                      value={llmApiKey}
+                      onChange={(e) => setLlmApiKey(e.target.value)}
+                      className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2.5 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)] font-mono"
+                      required
+                    />
+                  </div>
+
+                  <div className="flex justify-end pt-2">
+                    <button
+                      type="submit"
+                      disabled={addingLlmKey || !llmApiKey.trim()}
+                      className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      {addingLlmKey ? 'Adding...' : 'Add Key'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <div className="lg:col-span-7 space-y-4">
+              <div className="card-base p-6">
+                <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6">
+                  Configured API Keys
+                </h3>
+
+                {loadingLlmKeys ? (
+                  <div className="py-12 flex justify-center items-center text-xs text-gray-500 font-bold uppercase tracking-widest">
+                    <RefreshCw className="h-5 w-5 animate-spin mr-2 text-indigo-500" />
+                    Loading provider keys...
+                  </div>
+                ) : llmKeysList.length === 0 ? (
+                  <div className="py-12 text-center text-gray-500 text-xs italic">
+                    No API keys configured yet. Set up a provider key to power AI features.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-[var(--border-default)] text-[9px] font-black text-gray-500 uppercase tracking-widest bg-zinc-950/20">
+                          <th className="py-3 px-4">Provider</th>
+                          <th className="py-3 px-4">Masked Key</th>
+                          <th className="py-3 px-4">Configured By</th>
+                          <th className="py-3 px-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[var(--border-default)]">
+                        {llmKeysList.map((k) => (
+                          <tr key={k.id} className="hover:bg-white/5 transition-colors">
+                            <td className="py-3.5 px-4 font-bold text-white uppercase tracking-wider">
+                              {k.provider}
+                            </td>
+                            <td className="py-3.5 px-4 font-mono text-[11px] text-gray-400">
+                              {k.maskedKey}
+                            </td>
+                            <td className="py-3.5 px-4 text-gray-400">
+                              {k.users?.full_name || k.users?.email || 'Unknown'}
+                            </td>
+                            <td className="py-3.5 px-4 text-right">
+                              <button
+                                onClick={() => handleDeleteLlmKey(k.id)}
+                                className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded border border-transparent hover:border-red-500/20 transition-all active:scale-95"
+                                title="Delete key"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* TAB: FEATURE TOGGLES */}
+        {/* ============================================================== */}
+        {activeTab === 'features' && (
+          <div className="card-base p-6">
+            <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 flex items-center gap-2">
+              <Sliders className="h-4 w-4 text-[var(--royal-indigo)]" />
+              Feature Flags & System Overrides
+            </h3>
+
+            {loadingFeatureFlags ? (
+              <div className="py-12 flex justify-center items-center text-xs text-gray-500 font-bold uppercase tracking-widest">
+                <RefreshCw className="h-5 w-5 animate-spin mr-2 text-indigo-500" />
+                Loading feature states...
+              </div>
+            ) : featureFlagsList.length === 0 ? (
+              <div className="py-12 text-center text-gray-500 text-xs italic">
+                No system feature flags registered.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {featureFlagsList.map((flag) => (
+                  <div
+                    key={flag.key}
+                    className="flex items-center justify-between p-4 bg-[var(--bg-page)] border border-[var(--border-default)] rounded-xl hover:border-zinc-800 transition-all"
+                  >
+                    <div>
+                      <p className="text-xs font-bold text-white tracking-wide">{flag.name}</p>
+                      <p className="text-[9px] font-mono text-[var(--text-muted)] uppercase mt-0.5">{flag.key}</p>
+                    </div>
+
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={flag.enabled}
+                        onChange={() => handleToggleFeatureFlag(flag.key, flag.enabled)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-9 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-400 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600 peer-checked:after:bg-white"></div>
+                    </label>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ============================================================== */}
         {/* TAB 1: GENERAL SETTINGS */}
         {/* ============================================================== */}

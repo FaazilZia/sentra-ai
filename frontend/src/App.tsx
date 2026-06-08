@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './lib/auth';
 import { SidebarProvider } from './context/SidebarContext';
 
 const DashboardPage = lazy(() => import('./pages/Dashboard'));
+const IncidentManagementPage = lazy(() => import('./pages/IncidentManagement'));
 const PoliciesPage = lazy(() => import('./pages/Policies'));
 const GuardrailsPage = lazy(() => import('./pages/Guardrails'));
 const LoginPage = lazy(() => import('./pages/Login'));
@@ -50,6 +51,13 @@ const SharedViewPage = lazy(() => import('./pages/SharedView'));
 const EvaluationDashboardPage = lazy(() => import('./pages/EvaluationDashboard'));
 const SuperadminPage = lazy(() => import('./pages/Superadmin'));
 const NotFoundPage = lazy(() => import('./pages/NotFound'));
+
+// Discovered & Readiness Pages
+const ReadinessDashboardPage = lazy(() => import('./pages/ReadinessDashboard'));
+const EntityGraphPage = lazy(() => import('./pages/EntityGraph'));
+const IntakeFormBuilderPage = lazy(() => import('./pages/IntakeFormBuilder'));
+const AgentDiscoveryPage = lazy(() => import('./pages/AgentDiscovery'));
+const AuditExplorerPage = lazy(() => import('./pages/AuditExplorer'));
 
 
 import { ModalProvider } from './components/shared/ModalProvider';
@@ -102,6 +110,11 @@ function AppRoutes() {
             <Route 
               path="/app/policies" 
               element={user ? <AppLayout><PoliciesPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/incidents" 
+              element={user ? <AppLayout><IncidentManagementPage /></AppLayout> : <Navigate to="/login" replace />}
             />
 
             <Route 
@@ -253,6 +266,36 @@ function AppRoutes() {
             <Route path="/app/evaluation" element={user ? <AppLayout><EvaluationDashboardPage /></AppLayout> : <Navigate to="/login" replace />} />
 
             <Route path="/app/settings" element={user ? <AppLayout><SettingsPage /></AppLayout> : <Navigate to="/login" replace />} />
+
+            <Route 
+              path="/app/readiness" 
+              element={user ? <AppLayout><ReadinessDashboardPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/entity-graph" 
+              element={user ? <AppLayout><EntityGraphPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/intake/builder" 
+              element={user ? <AppLayout><IntakeFormBuilderPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/intake/builder/:formId" 
+              element={user ? <AppLayout><IntakeFormBuilderPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/agent-discovery" 
+              element={user ? <AppLayout><AgentDiscoveryPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/audit" 
+              element={user ? <AppLayout><AuditExplorerPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
 
             <Route 
               path="/superadmin" 

@@ -442,8 +442,43 @@ export const getMe = async (req: any, res: Response, next: NextFunction) => {
         role: user.role || 'USER',
         organizationId: user.organizationId,
         is_active: user.is_active,
+        avatarUrl: user.avatarUrl,
+        jobTitle: user.jobTitle,
       },
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const changePassword = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Current and new passwords are required' });
+    }
+
+    const user = await prisma.users.findUnique({ where: { id: req.user.id } });
+    if (!user || !user.password_hash) {
+      return res.status(404).json({ success: false, message: 'User not found or password not set' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: 'Incorrect current password' });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+
+    await prisma.users.update({
+      where: { id: user.id },
+      data: {
+        password_hash: passwordHash,
+        passwordChangedAt: new Date(),
+      },
+    });
+
+    res.status(200).json({ success: true, message: 'Password changed successfully' });
   } catch (error) {
     next(error);
   }

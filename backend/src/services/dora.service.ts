@@ -35,7 +35,8 @@ export class DoraService {
                   status: impl.status,
                   notes: impl.notes,
                   due_date: impl.due_date,
-                  last_reviewed: impl.last_reviewed
+                  last_reviewed: impl.last_reviewed,
+                  created_at: impl.created_at
                 }
               : null
           };

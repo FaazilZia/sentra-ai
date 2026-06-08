@@ -15,9 +15,10 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store/useStore';
-import { fetchPolicies, PolicyResponse, apiBaseUrl, apiRequest } from '@/lib/api';
+import { fetchPolicies, PolicyResponse, apiBaseUrl, apiRequest, patchPolicy } from '@/lib/api';
 import { EvidenceSection } from '../components/shared/EvidenceSection';
 import { ChangeHistoryTimeline } from '../components/shared/ChangeHistoryTimeline';
+import RichPolicyEditor from '../components/shared/RichPolicyEditor';
 
 
 export default function Policies() {
@@ -27,6 +28,9 @@ export default function Policies() {
   const [selectedPolicy, setSelectedPolicy] = useState<PolicyResponse | null>(null);
 
   const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editDesc, setEditDesc] = useState('');
+  const [savingPolicy, setSavingPolicy] = useState(false);
   const [versionHistoryPolicyId, setVersionHistoryPolicyId] = useState<string | null>(null);
   const [versions, setVersions] = useState<any[]>([]);
   const [versionsLoading, setVersionsLoading] = useState(false);
@@ -47,6 +51,32 @@ export default function Policies() {
   useEffect(() => {
     loadPolicies();
   }, [addToast]);
+
+  useEffect(() => {
+    if (selectedPolicy) {
+      setEditDesc(selectedPolicy.description || '');
+      setIsEditing(false);
+    } else {
+      setEditDesc('');
+      setIsEditing(false);
+    }
+  }, [selectedPolicy]);
+
+  const handleSavePolicy = async () => {
+    if (!selectedPolicy) return;
+    setSavingPolicy(true);
+    try {
+      const updated = await patchPolicy(selectedPolicy.id, { description: editDesc });
+      addToast({ message: 'Policy updated successfully', type: 'success' });
+      setSelectedPolicy(updated);
+      setIsEditing(false);
+      await loadPolicies();
+    } catch (err: any) {
+      addToast({ message: err.message || 'Failed to save policy', type: 'error' });
+    } finally {
+      setSavingPolicy(false);
+    }
+  };
 
   const openVersionHistory = async (policy: any) => {
     setVersionHistoryPolicyId(policy.id);
@@ -246,9 +276,46 @@ export default function Policies() {
               </div>
             </div>
 
-            <div className="space-y-1 text-left">
-              <h4 className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Description</h4>
-              <p className="text-[var(--text-xs)] text-[var(--text-secondary)] leading-relaxed">{selectedPolicy.description || 'No description provided.'}</p>
+            <div className="space-y-3 text-left">
+              <div className="flex justify-between items-center pb-1 border-b border-[var(--border-default)]/40">
+                <h4 className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Description & Content</h4>
+                {!isEditing ? (
+                  <button 
+                    onClick={() => setIsEditing(true)}
+                    className="text-[9px] font-black uppercase text-indigo-500 hover:text-indigo-400 font-bold"
+                  >
+                    Edit
+                  </button>
+                ) : (
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={handleSavePolicy}
+                      disabled={savingPolicy}
+                      className="text-[9px] font-black uppercase text-green-500 hover:text-green-400 font-bold disabled:opacity-40"
+                    >
+                      {savingPolicy ? '...' : 'Save'}
+                    </button>
+                    <button 
+                      onClick={() => setIsEditing(false)}
+                      className="text-[9px] font-black uppercase text-rose-500 hover:text-rose-400 font-bold"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
+              
+              {isEditing ? (
+                <RichPolicyEditor 
+                  content={editDesc} 
+                  onChange={setEditDesc} 
+                />
+              ) : (
+                <div 
+                  className="text-[var(--text-xs)] text-[var(--text-secondary)] leading-relaxed prose prose-invert max-w-none break-words"
+                  dangerouslySetInnerHTML={{ __html: selectedPolicy.description || 'No description provided.' }}
+                />
+              )}
             </div>
 
             {/* Evidence Sub-section */}

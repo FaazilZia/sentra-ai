@@ -40,5 +40,25 @@ export function createIsoFrameworkController(service: {
     return sendSuccess(res, { compliance_score: overview.summary.compliance_score });
   });
 
-  return { getFrameworkOverview, updateImplementation, getComplianceScore };
+  const getFrameworkControls = asyncHandler(async (req: any, res: Response) => {
+    const organizationId = getOrgId(req);
+    const overview = await service.getFrameworkOverview(organizationId);
+    const groups = overview.clauses || overview.sections || [];
+    const controls = groups.flatMap((cls: any) => 
+      cls.controls.map((c: any) => ({
+        code: c.control_code,
+        title: c.title,
+        description: c.description,
+        status: c.implementation?.status || 'NOT_STARTED',
+        notes: c.implementation?.notes || '',
+        dueDate: c.implementation?.due_date || null,
+        lastReviewed: c.implementation?.last_reviewed || null,
+        clause: cls.title,
+        createdAt: c.implementation?.created_at || null
+      }))
+    );
+    return sendSuccess(res, controls);
+  });
+
+  return { getFrameworkOverview, updateImplementation, getComplianceScore, getFrameworkControls };
 }

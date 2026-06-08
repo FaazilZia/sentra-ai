@@ -22,6 +22,7 @@ import {
 } from '../controllers/euAiAct.controller';
 import {
   getNistAiRmfOverview,
+  getNistAiRmfControls,
   updateNistAiRmfImplementation,
   getNistAiRmfCrossFrameworkImpact,
   exportNistAiRmfSignedConformity,
@@ -52,6 +53,7 @@ router.post('/eu-ai-act/evidence/:controlCode', authenticate, authorizeRoles('AD
 
 // NIST AI RMF 1.0 Routes
 router.get('/nist-ai-rmf/overview', authenticate, getNistAiRmfOverview);
+router.get('/nist-ai-rmf/controls', authenticate, getNistAiRmfControls);
 router.patch('/nist-ai-rmf/implementation/:subcategoryCode', authenticate, authorizeRoles('ADMIN', 'ENGINEER'), updateNistAiRmfImplementation);
 router.get('/nist-ai-rmf/cross-framework-impact/:subcategoryCode', authenticate, getNistAiRmfCrossFrameworkImpact);
 router.get('/nist-ai-rmf/export', authenticate, authorizeRoles('ADMIN', 'AUDITOR'), exportNistAiRmfSignedConformity);

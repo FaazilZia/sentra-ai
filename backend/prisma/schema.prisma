@@ -100,6 +100,7 @@ model organizations {
   training_completions         training_completions[]
   mcp_agent_keys               mcp_agent_keys[]
   mcp_audit_logs               mcp_audit_logs[]
+  llm_keys                     llm_keys[]
 
   @@map("companies")
 }
@@ -202,6 +203,8 @@ model users {
   google_id             String?  @unique
   github_id             String?  @unique
   passwordChangedAt     DateTime? @map("password_changed_at")
+  avatarUrl             String?   @map("avatar_url")
+  jobTitle              String?   @map("job_title")
 
   consent_records           consent_records[]
   incidents_resolved        incidents[]               @relation("IncidentResolver")
@@ -224,6 +227,7 @@ model users {
   intake_submissions_reviewed  intake_submissions[] @relation("IntakeReviewer")
   share_links               share_links[]
   training_completions      training_completions[]
+  llm_keys                  llm_keys[]
 
   @@map("users")
 }
@@ -2134,5 +2138,19 @@ model ftc_implementations {
   control        ftc_controls  @relation(fields: [control_id], references: [id])
   @@unique([organizationId, control_id])
   @@map("ftc_implementations")
+}
+
+model llm_keys {
+  id             String        @id @default(uuid())
+  organizationId String        @map("organization_id")
+  provider       String
+  maskedKey      String        @map("masked_key")
+  encryptedKey   String        @map("encrypted_key")
+  addedBy        String        @map("added_by")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  organizations  organizations @relation(fields: [organizationId], references: [id])
+  users          users         @relation(fields: [addedBy], references: [id])
+
+  @@map("llm_keys")
 }
 

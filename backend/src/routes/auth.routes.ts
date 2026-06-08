@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, refreshToken, getMe, googleLogin, googleCallback, logout, forgotPassword, resetPassword, verifyEmail, resendVerification } from '../controllers/auth.controller';
+import { register, login, refreshToken, getMe, googleLogin, googleCallback, logout, forgotPassword, resetPassword, verifyEmail, resendVerification, changePassword } from '../controllers/auth.controller';
 import { authenticate } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validate.middleware';
 import { registerSchema, loginSchema, refreshTokenSchema, googleLoginSchema, forgotPasswordSchema, resetPasswordSchema, resendVerificationSchema } from '../validations/auth.validation';
@@ -95,6 +95,7 @@ router.get('/google/callback', googleCallback);
 router.post('/refresh-token', loginLimiter, validate(refreshTokenSchema), refreshToken);
 router.post('/refresh', loginLimiter, validate(refreshTokenSchema), refreshToken); // alias
 router.get('/me', authenticate, getMe);
+router.post('/change-password', authenticate, changePassword);
 
 router.post('/forgot-password', resetLimiter, validate(forgotPasswordSchema), forgotPassword);
 router.post('/reset-password', resetLimiter, validate(resetPasswordSchema), resetPassword);
