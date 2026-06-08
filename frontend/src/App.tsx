@@ -60,6 +60,10 @@ const AgentDiscoveryPage = lazy(() => import('./pages/AgentDiscovery'));
 const AuditExplorerPage = lazy(() => import('./pages/AuditExplorer'));
 const LiveBlockFeedPage = lazy(() => import('./pages/LiveBlockFeed'));
 const GDPRPage = lazy(() => import('./pages/GDPR'));
+const HIPAAPage = lazy(() => import('./pages/HIPAA'));
+const SOC2Page = lazy(() => import('./pages/SOC2'));
+const PCIDSSPage = lazy(() => import('./pages/PCIDSS'));
+const DPDPPage = lazy(() => import('./pages/DPDP'));
 
 
 
@@ -283,6 +287,26 @@ function AppRoutes() {
             <Route 
               path="/app/gdpr" 
               element={user ? <AppLayout><GDPRPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/hipaa" 
+              element={user ? <AppLayout><HIPAAPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/soc2" 
+              element={user ? <AppLayout><SOC2Page /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/pci" 
+              element={user ? <AppLayout><PCIDSSPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/dpdp" 
+              element={user ? <AppLayout><DPDPPage /></AppLayout> : <Navigate to="/login" replace />}
             />
 
             <Route 

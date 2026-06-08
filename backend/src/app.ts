@@ -43,6 +43,10 @@ import doraRoutes from './routes/dora.routes';
 import oecdRoutes from './routes/oecd.routes';
 import ftcRoutes from './routes/ftc.routes';
 import gdprRoutes from './routes/gdpr.routes';
+import hipaaRoutes from './routes/hipaa.routes';
+import soc2Routes from './routes/soc2.routes';
+import pciRoutes from './routes/pci.routes';
+import dpdpRoutes from './routes/dpdp.routes';
 
 
 import advisorRoutes from './routes/advisor.routes';
@@ -401,6 +405,10 @@ v1Router.use('/dora', doraRoutes);
 v1Router.use('/oecd', oecdRoutes);
 v1Router.use('/ftc', ftcRoutes);
 v1Router.use('/gdpr', gdprRoutes);
+v1Router.use('/hipaa', hipaaRoutes);
+v1Router.use('/soc2', soc2Routes);
+v1Router.use('/pci', pciRoutes);
+v1Router.use('/dpdp', dpdpRoutes);
 
 v1Router.use('/reports/executive', executiveReportRoutes);
 

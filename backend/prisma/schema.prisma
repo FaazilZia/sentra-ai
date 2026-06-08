@@ -92,6 +92,15 @@ model organizations {
   ftc_implementations          ftc_implementations[]
   gdpr_chapters                gdpr_chapters[]
   gdpr_controls                gdpr_controls[]
+  hipaa_chapters               HipaaChapter[]
+  hipaa_controls               HipaaControl[]
+  soc2_chapters                Soc2Chapter[]
+  soc2_controls                Soc2Control[]
+  pci_chapters                 PciChapter[]
+  pci_controls                 PciControl[]
+  dpdp_chapters                DpdpChapter[]
+  dpdp_controls                DpdpControl[]
+
 
   // Feature Relations
   advisor_conversations        advisor_conversations[]
@@ -2197,5 +2206,170 @@ model gdpr_implementations {
   control     gdpr_controls @relation(fields: [controlId], references: [id])
   @@map("gdpr_implementations")
 }
+model HipaaChapter {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  chapterNumber  String   @map("chapter_number")
+  title          String
+  description    String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  organizations  organizations @relation(fields: [organizationId], references: [id])
+  controls       HipaaControl[]
+  @@map("hipaa_chapters")
+}
 
+model HipaaControl {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  chapterId      String   @map("chapter_id")
+  articleNumber  String   @map("article_number")
+  title          String
+  description    String?
+  requirement    String?
+  status         String   @default("NOT_STARTED")
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  organizations  organizations @relation(fields: [organizationId], references: [id])
+  chapter        HipaaChapter @relation(fields: [chapterId], references: [id])
+  implementations HipaaImplementation[]
+  @@map("hipaa_controls")
+}
 
+model HipaaImplementation {
+  id          String   @id @default(uuid())
+  controlId   String   @map("control_id")
+  title       String
+  description String?
+  status      String   @default("NOT_STARTED")
+  dueDate     DateTime? @map("due_date")
+  createdAt   DateTime @default(now()) @map("created_at")
+  control     HipaaControl @relation(fields: [controlId], references: [id])
+  @@map("hipaa_implementations")
+}
+
+model Soc2Chapter {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  chapterNumber  String   @map("chapter_number")
+  title          String
+  description    String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  organizations  organizations @relation(fields: [organizationId], references: [id])
+  controls       Soc2Control[]
+  @@map("soc2_chapters")
+}
+
+model Soc2Control {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  chapterId      String   @map("chapter_id")
+  articleNumber  String   @map("article_number")
+  title          String
+  description    String?
+  requirement    String?
+  status         String   @default("NOT_STARTED")
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  organizations  organizations @relation(fields: [organizationId], references: [id])
+  chapter        Soc2Chapter @relation(fields: [chapterId], references: [id])
+  implementations Soc2Implementation[]
+  @@map("soc2_controls")
+}
+
+model Soc2Implementation {
+  id          String   @id @default(uuid())
+  controlId   String   @map("control_id")
+  title       String
+  description String?
+  status      String   @default("NOT_STARTED")
+  dueDate     DateTime? @map("due_date")
+  createdAt   DateTime @default(now()) @map("created_at")
+  control     Soc2Control @relation(fields: [controlId], references: [id])
+  @@map("soc2_implementations")
+}
+
+model PciChapter {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  chapterNumber  String   @map("chapter_number")
+  title          String
+  description    String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  organizations  organizations @relation(fields: [organizationId], references: [id])
+  controls       PciControl[]
+  @@map("pci_chapters")
+}
+
+model PciControl {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  chapterId      String   @map("chapter_id")
+  articleNumber  String   @map("article_number")
+  title          String
+  description    String?
+  requirement    String?
+  status         String   @default("NOT_STARTED")
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  organizations  organizations @relation(fields: [organizationId], references: [id])
+  chapter        PciChapter @relation(fields: [chapterId], references: [id])
+  implementations PciImplementation[]
+  @@map("pci_controls")
+}
+
+model PciImplementation {
+  id          String   @id @default(uuid())
+  controlId   String   @map("control_id")
+  title       String
+  description String?
+  status      String   @default("NOT_STARTED")
+  dueDate     DateTime? @map("due_date")
+  createdAt   DateTime @default(now()) @map("created_at")
+  control     PciControl @relation(fields: [controlId], references: [id])
+  @@map("pci_implementations")
+}
+
+model DpdpChapter {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  chapterNumber  String   @map("chapter_number")
+  title          String
+  description    String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  organizations  organizations @relation(fields: [organizationId], references: [id])
+  controls       DpdpControl[]
+  @@map("dpdp_chapters")
+}
+
+model DpdpControl {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  chapterId      String   @map("chapter_id")
+  articleNumber  String   @map("article_number")
+  title          String
+  description    String?
+  requirement    String?
+  status         String   @default("NOT_STARTED")
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  organizations  organizations @relation(fields: [organizationId], references: [id])
+  chapter        DpdpChapter @relation(fields: [chapterId], references: [id])
+  implementations DpdpImplementation[]
+  @@map("dpdp_controls")
+}
+
+model DpdpImplementation {
+  id          String   @id @default(uuid())
+  controlId   String   @map("control_id")
+  title       String
+  description String?
+  status      String   @default("NOT_STARTED")
+  dueDate     DateTime? @map("due_date")
+  createdAt   DateTime @default(now()) @map("created_at")
+  control     DpdpControl @relation(fields: [controlId], references: [id])
+  @@map("dpdp_implementations")
+}
