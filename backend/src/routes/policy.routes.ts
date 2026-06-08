@@ -78,10 +78,12 @@ router.post('/:id/rollback', authenticate, async (req: any, res) => {
  *       400: { description: Validation error }
  *       402: { description: Plan policy limit reached }
  */
+router.get('/templates', authenticate, getPolicyTemplates);
 router.get('/', authenticate, getPolicies);
 
 router.post('/:id/duplicate', authenticate, duplicatePolicy);
 router.post('/', authenticate, enforcePolicyLimit, validate(createPolicySchema), createPolicy);
+router.put('/:id', authenticate, updatePolicy);
 router.patch('/:id', authenticate, updatePolicy);
 router.delete('/:id', authenticate, deletePolicy);
 

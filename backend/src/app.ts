@@ -42,6 +42,8 @@ import ccpaRoutes from './routes/ccpa.routes';
 import doraRoutes from './routes/dora.routes';
 import oecdRoutes from './routes/oecd.routes';
 import ftcRoutes from './routes/ftc.routes';
+import gdprRoutes from './routes/gdpr.routes';
+
 
 import advisorRoutes from './routes/advisor.routes';
 import automationRoutes from './routes/automation.routes';
@@ -97,7 +99,7 @@ logger.info('[BOOT] Express app created');
 logger.info(`[BOOT] Timestamp: ${new Date().toISOString()}`);
 
 // Minimal diagnostics & health check routes (MUST be registered first to bypass all middlewares)
-app.get('/ping', (_, res) => res.status(200).send('ok'));
+app.get('/ping', (req, res) => res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() }));
 
 app.get('/startup-check', async (_, res) => {
   let migrationStatus = null;
@@ -398,6 +400,8 @@ v1Router.use('/ccpa', ccpaRoutes);
 v1Router.use('/dora', doraRoutes);
 v1Router.use('/oecd', oecdRoutes);
 v1Router.use('/ftc', ftcRoutes);
+v1Router.use('/gdpr', gdprRoutes);
+
 v1Router.use('/reports/executive', executiveReportRoutes);
 
 v1Router.use('/advisor', advisorRoutes);
@@ -434,10 +438,8 @@ v1Router.use('/evaluations', evaluationsRoutes);
 
 v1Router.use('/superadmin', superadminRoutes);
 
-// Conditionally load demo routes (Strictly non-production)
-if (process.env.NODE_ENV !== 'production') {
-  v1Router.use('/demo', demoRoutes);
-}
+// Mount demo routes unconditionally to enable attack simulations
+v1Router.use('/demo', demoRoutes);
 
 
 // Note: /api/v1/health and /api/v1/ready are mounted directly on the app instance above for non-blocking execution.

@@ -28,52 +28,100 @@ import {
   Network,
   Cpu,
   Search,
-  Compass
+  Compass,
+  Shield
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth';
 
-const operationsItems = [
-  { icon: LayoutDashboard, label: 'Overview', path: '/app' },
-  { icon: FileText, label: 'Policies', path: '/app/policies' },
-  { icon: ShieldCheck, label: 'Guardrails', path: '/app/guardrails' },
-  { icon: ShieldAlert, label: 'Risk Center', path: '/app/risk' },
-  { icon: Network, label: 'Entity Graph', path: '/app/entity-graph' },
-  { icon: ClipboardCheck, label: 'Compliance', path: '/app/compliance' },
-  { icon: Cpu, label: 'Readiness', path: '/app/readiness' },
-  { icon: FolderOpen, label: 'Evidence Hub', path: '/app/evidence' },
-  { icon: Activity, label: 'Drift Detection', path: '/app/drift' },
-  { icon: EyeOff, label: 'Shadow AI', path: '/app/shadow' },
-  { icon: Box, label: 'Inventory', path: '/app/inventory' },
-  { icon: ShieldCheck, label: 'Consent', path: '/app/consent' },
-  { icon: ListTodo, label: 'Tasks', path: '/app/tasks' },
-  {icon: Folder, label: 'Files', path: '/app/files' },
-  { icon: GitPullRequestDraft, label: 'Automations', path: '/app/automations' },
-  { icon: AlertTriangle, label: 'Incidents', path: '/app/incidents' },
-  { icon: Compass, label: 'Agent Discovery', path: '/app/agent-discovery' },
-  { icon: Search, label: 'Audit Log', path: '/app/audit' },
-];
+interface SidebarItem {
+  icon: any;
+  label: string;
+  path: string;
+}
 
-const governanceItems = [
-  { icon: Sparkles, label: 'AI Advisor', path: '/app/advisor' },
-  { icon: Bot, label: 'AI Registry', path: '/app/ai-registry' },
-  { icon: Award, label: 'Risk Audits', path: '/app/risk-assessment' },
-  { icon: Layers, label: 'Impact Boards', path: '/app/impact-assessments' },
-  { icon: Award, label: 'CE Marking', path: '/app/ce-marking' },
-  { icon: ShieldCheck, label: 'CCPA Compliance', path: '/app/ccpa' },
-  { icon: ShieldCheck, label: 'DORA', path: '/app/dora' },
-  { icon: Globe, label: 'OECD AI Principles', path: '/app/oecd' },
-  { icon: Scale, label: 'FTC AI Guidelines', path: '/app/ftc' },
-  { icon: ShieldCheck, label: 'Controls', path: '/app/controls' },
-  { icon: Box, label: 'Dataset Registry', path: '/app/datasets' },
-  { icon: Building2, label: 'Vendor Risk', path: '/app/vendor-risk' },
-  { icon: ListTodo, label: 'Obligations', path: '/app/obligations' },
-  { icon: ListTodo, label: 'Training Register', path: '/app/training' },
-  { icon: ClipboardCheck, label: 'Intake Queue', path: '/app/intake' },
-  { icon: GitPullRequestDraft, label: 'Approvals', path: '/app/workflows' },
-  { icon: Activity, label: 'GovernanceOS', path: '/app/governance-os' },
-  { icon: FlaskConical, label: 'LLM Evaluation', path: '/app/evaluation' },
-  { icon: BarChart3, label: 'Executive Report', path: '/app/executive-report' },
+interface SidebarGroup {
+  name: string;
+  items: SidebarItem[];
+}
+
+const SIDEBAR_GROUPS: SidebarGroup[] = [
+  {
+    name: 'CORE',
+    items: [
+      { icon: LayoutDashboard, label: 'Overview', path: '/app' },
+      { icon: FileText, label: 'Policies', path: '/app/policies' },
+      { icon: ShieldCheck, label: 'Guardrails', path: '/app/guardrails' },
+      { icon: Activity, label: 'Live Block Feed', path: '/app/live-feed' },
+      { icon: Activity, label: 'Drift Detection', path: '/app/drift' },
+      { icon: ShieldAlert, label: 'Risk Center', path: '/app/risk' },
+      { icon: Network, label: 'Entity Graph', path: '/app/entity-graph' },
+    ]
+  },
+  {
+    name: 'COMPLIANCE',
+    items: [
+      { icon: ClipboardCheck, label: 'Compliance Hub', path: '/app/compliance' },
+      { icon: Cpu, label: 'Readiness', path: '/app/readiness' },
+      { icon: FolderOpen, label: 'Evidence Hub', path: '/app/evidence' },
+      { icon: ShieldCheck, label: 'CCPA Compliance', path: '/app/ccpa' },
+      { icon: Shield, label: 'GDPR Compliance', path: '/app/gdpr' },
+      { icon: ShieldCheck, label: 'DORA', path: '/app/dora' },
+      { icon: Globe, label: 'OECD AI Principles', path: '/app/oecd' },
+      { icon: Scale, label: 'FTC AI Guidelines', path: '/app/ftc' },
+      { icon: Award, label: 'CE Marking', path: '/app/ce-marking' },
+      { icon: ShieldCheck, label: 'Consent', path: '/app/consent' },
+    ]
+  },
+  {
+    name: 'GOVERNANCE',
+    items: [
+      { icon: Activity, label: 'GovernanceOS', path: '/app/governance-os' },
+      { icon: ShieldCheck, label: 'Controls', path: '/app/controls' },
+      { icon: ListTodo, label: 'Obligations', path: '/app/obligations' },
+      { icon: Award, label: 'Risk Audits', path: '/app/risk-assessment' },
+      { icon: Layers, label: 'Impact Boards', path: '/app/impact-assessments' },
+    ]
+  },
+  {
+    name: 'AI SYSTEMS',
+    items: [
+      { icon: Bot, label: 'AI Registry', path: '/app/ai-registry' },
+      { icon: EyeOff, label: 'Shadow AI', path: '/app/shadow' },
+      { icon: Box, label: 'Inventory', path: '/app/inventory' },
+      { icon: Box, label: 'Dataset Registry', path: '/app/datasets' },
+      { icon: FlaskConical, label: 'LLM Evaluation', path: '/app/evaluation' },
+    ]
+  },
+  {
+    name: 'OPERATIONS',
+    items: [
+      { icon: ClipboardCheck, label: 'Intake Queue', path: '/app/intake' },
+      { icon: FileText, label: 'Intake Builder', path: '/app/intake/builder' },
+      { icon: GitPullRequestDraft, label: 'Approvals', path: '/app/workflows' },
+      { icon: ListTodo, label: 'Tasks', path: '/app/tasks' },
+      { icon: Folder, label: 'Files', path: '/app/files' },
+      { icon: GitPullRequestDraft, label: 'Automations', path: '/app/automations' },
+      { icon: AlertTriangle, label: 'Incidents', path: '/app/incidents' },
+    ]
+  },
+  {
+    name: 'INTELLIGENCE',
+    items: [
+      { icon: Sparkles, label: 'AI Advisor', path: '/app/advisor' },
+      { icon: Compass, label: 'Agent Discovery', path: '/app/agent-discovery' },
+      { icon: Search, label: 'Audit Log', path: '/app/audit' },
+      { icon: BarChart3, label: 'Executive Report', path: '/app/executive-report' },
+    ]
+  },
+  {
+    name: 'SETTINGS',
+    items: [
+      { icon: Settings2, label: 'Settings', path: '/app/settings' },
+      { icon: Building2, label: 'Vendor Risk', path: '/app/vendor-risk' },
+      { icon: ListTodo, label: 'Training Register', path: '/app/training' },
+    ]
+  }
 ];
 
 export function Sidebar() {
@@ -114,88 +162,37 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 space-y-6 px-3 pt-6 overflow-y-auto custom-scrollbar pb-6">
-
-        {/* Operations Section */}
-        <div>
-          <p className="px-4 mb-2 text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400 opacity-80">Security Operations</p>
-          <div className="space-y-1">
-            {operationsItems.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                end={item.path === '/app'}
-                className={({ isActive }) => cn(
-                  "group flex items-center justify-between px-4 py-2 rounded transition-all duration-200",
-                  isActive
-                    ? "bg-[#2563eb] text-white shadow-md shadow-black/10"
-                    : "text-[var(--lavender)] hover:bg-[#334155]/60 hover:text-white"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <item.icon className={cn(
-                    "h-4 w-4 transition-transform group-hover:scale-110",
-                    "text-current"
-                  )} />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">{item.label}</span>
-                </div>
-                <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-40 transition-opacity" />
-              </NavLink>
-            ))}
+        {SIDEBAR_GROUPS.map((group) => (
+          <div key={group.name}>
+            <p className="px-4 mb-2 text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400 opacity-80">
+              {group.name}
+            </p>
+            <div className="space-y-1">
+              {group.items.map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  end={item.path === '/app'}
+                  className={({ isActive }) => cn(
+                    "group flex items-center justify-between px-4 py-2 rounded transition-all duration-200",
+                    isActive
+                      ? "bg-[var(--royal-indigo)] text-white shadow-md shadow-black/10"
+                      : "text-[var(--lavender)] hover:bg-[#334155]/60 hover:text-white"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <item.icon className={cn(
+                      "h-4 w-4 transition-transform group-hover:scale-110",
+                      "text-current"
+                    )} />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">{item.label}</span>
+                  </div>
+                  <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-40 transition-opacity" />
+                </NavLink>
+              ))}
+            </div>
           </div>
-        </div>
-
-        {/* Governance Section */}
-        <div>
-          <p className="px-4 mb-2 text-[9px] font-black uppercase tracking-[0.2em] text-purple-400 opacity-80">AI Governance</p>
-          <div className="space-y-1">
-            {governanceItems.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                className={({ isActive }) => cn(
-                  "group flex items-center justify-between px-4 py-2 rounded transition-all duration-200",
-                  isActive
-                    ? "bg-[#8b5cf6] text-white shadow-md shadow-black/10"
-                    : "text-[var(--lavender)] hover:bg-[#334155]/60 hover:text-white"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <item.icon className={cn(
-                    "h-4 w-4 transition-transform group-hover:scale-110",
-                    "text-current"
-                  )} />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">{item.label}</span>
-                </div>
-                <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-40 transition-opacity" />
-              </NavLink>
-            ))}
-          </div>
-        </div>
-
-        {/* System Settings Section */}
-        <div>
-          <p className="px-4 mb-2 text-[9px] font-black uppercase tracking-[0.2em] text-gray-500 opacity-80">System Config</p>
-          <div className="space-y-1">
-            <NavLink
-              to="/app/settings"
-              className={({ isActive }) => cn(
-                "group flex items-center justify-between px-4 py-2 rounded transition-all duration-200",
-                isActive
-                  ? "bg-[#64748b] text-white shadow-md shadow-black/10"
-                  : "text-[var(--lavender)] hover:bg-[#334155]/60 hover:text-white"
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <Settings2 className={cn(
-                  "h-4 w-4 transition-transform group-hover:scale-110",
-                  "text-current"
-                )} />
-                <span className="text-[10px] font-bold uppercase tracking-widest">Settings</span>
-              </div>
-              <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-40 transition-opacity" />
-            </NavLink>
-          </div>
-        </div>
+        ))}
 
         {/* Platform Admin Console */}
         {user?.role === 'SUPER_ADMIN' && (
@@ -207,7 +204,7 @@ export function Sidebar() {
                 className={({ isActive }) => cn(
                   "group flex items-center justify-between px-4 py-2 rounded transition-all duration-200",
                   isActive
-                    ? "bg-[#2563eb] text-white shadow-md shadow-black/10"
+                    ? "bg-[var(--royal-indigo)] text-white shadow-md shadow-black/10"
                     : "text-[var(--lavender)] hover:bg-[#334155]/60 hover:text-white"
                 )}
               >
@@ -223,8 +220,6 @@ export function Sidebar() {
             </div>
           </div>
         )}
-
-
       </nav>
 
       {/* Footer Profile */}
@@ -249,4 +244,3 @@ export function Sidebar() {
     </aside>
   );
 }
-

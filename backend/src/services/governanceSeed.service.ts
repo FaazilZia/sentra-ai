@@ -1,6 +1,7 @@
 import prisma from '../config/db';
 import { randomUUID } from 'crypto';
 import logger from '../utils/logger';
+import { seedGdpr } from './gdprSeed.service';
 
 export interface ControlSeedInput {
   framework: string;
@@ -126,9 +127,11 @@ export async function seedOrganizationGovernance(organizationId: string, txClien
 
     if (txClient) {
       await runSeeding(txClient);
+      await seedGdpr(organizationId, txClient);
     } else {
       await prisma.$transaction(async (tx) => {
         await runSeeding(tx);
+        await seedGdpr(organizationId, tx);
       }, { timeout: 120000 });
     }
 

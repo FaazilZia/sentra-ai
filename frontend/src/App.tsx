@@ -58,6 +58,9 @@ const EntityGraphPage = lazy(() => import('./pages/EntityGraph'));
 const IntakeFormBuilderPage = lazy(() => import('./pages/IntakeFormBuilder'));
 const AgentDiscoveryPage = lazy(() => import('./pages/AgentDiscovery'));
 const AuditExplorerPage = lazy(() => import('./pages/AuditExplorer'));
+const LiveBlockFeedPage = lazy(() => import('./pages/LiveBlockFeed'));
+const GDPRPage = lazy(() => import('./pages/GDPR'));
+
 
 
 import { ModalProvider } from './components/shared/ModalProvider';
@@ -270,6 +273,16 @@ function AppRoutes() {
             <Route 
               path="/app/readiness" 
               element={user ? <AppLayout><ReadinessDashboardPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/live-feed" 
+              element={user ? <AppLayout><LiveBlockFeedPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/gdpr" 
+              element={user ? <AppLayout><GDPRPage /></AppLayout> : <Navigate to="/login" replace />}
             />
 
             <Route 

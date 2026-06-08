@@ -9,7 +9,7 @@ export const createPolicySchema = z.object({
   body: z.object({
     name: z.string().min(3),
     description: z.string().optional(),
-    effect: z.enum(['allow', 'deny']),
+    effect: z.enum(['allow', 'deny', 'ALLOW', 'BLOCK', 'MODIFY']),
     enabled: z.boolean().default(true),
     priority: z.number().int().min(1).default(1),
     conditions: z.record(z.string(), z.any()).default({}),

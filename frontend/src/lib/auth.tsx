@@ -15,8 +15,10 @@ export interface AppUser {
   full_name?: string; // Legacy alias for compatibility
   role: string;
   organizationId?: string;
+  organizationName?: string;
   is_active?: boolean;
   created_at?: string;
+  createdAt?: string;
   updated_at?: string;
 }
 

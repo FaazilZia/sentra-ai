@@ -29,6 +29,9 @@ export interface RiskEvent {
   time: string;
   status: 'Blocked' | 'Flagged' | 'Allowed';
   aiSummary?: string;
+  reason?: string;
+  frameworks?: string[];
+  decision?: 'BLOCK' | 'MODIFY' | 'ALLOW';
 }
 
 interface SocketState {
@@ -100,7 +103,11 @@ export const useSocketStore = create<SocketState>((set) => ({
       time,
       status: decision === 'BLOCK' ? 'Blocked' : decision === 'MODIFY' ? 'Flagged' : 'Allowed',
       aiSummary,
+      reason: payload.reason || 'None',
+      frameworks: payload.compliance || [],
+      decision
     };
+
 
     // 3. Create Alert if it's a BLOCK
     let newAlerts = [...state.alerts];

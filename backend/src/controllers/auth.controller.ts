@@ -430,7 +430,10 @@ export const refreshToken = async (req: Request, res: Response, next: NextFuncti
 
 export const getMe = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const user = await prisma.users.findUnique({ where: { id: req.user.id } });
+    const user = await prisma.users.findUnique({ 
+      where: { id: req.user.id },
+      include: { organizations: true }
+    });
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
     res.status(200).json({
@@ -441,9 +444,11 @@ export const getMe = async (req: any, res: Response, next: NextFunction) => {
         fullName: user.full_name,
         role: user.role || 'USER',
         organizationId: user.organizationId,
+        organizationName: user.organizations?.name || null,
         is_active: user.is_active,
         avatarUrl: user.avatarUrl,
         jobTitle: user.jobTitle,
+        createdAt: user.created_at,
       },
     });
   } catch (error) {

@@ -8,6 +8,8 @@ import { validateEnv } from './config/validateEnv';
 
 import express from 'express';
 import { createServer } from 'http';
+import http from 'http';
+import https from 'https';
 import { Server } from 'socket.io';
 import app from './app';
 import prisma, { initializePrisma } from './config/db';
@@ -317,6 +319,11 @@ const startServer = async () => {
 
       // Supabase Keep-Alive (Prevents auto-pausing on Free Tier)
       startDatabaseKeepAlive();
+
+      // Render Keep-Alive (Self-ping every 14 minutes in production)
+      if (process.env.NODE_ENV === 'production') {
+        startRenderKeepAlive();
+      }
     } catch (error) {
       logger.error('Failed to initialize database during background init:', error);
     }
@@ -350,6 +357,34 @@ const startDatabaseKeepAlive = () => {
       logger.error('Database Keep-Alive: Ping failed', error);
     }
   }, TWENTY_FOUR_HOURS);
+};
+
+/**
+ * Periodically pings the `/ping` route to prevent Render free-tier instance from sleeping.
+ */
+const startRenderKeepAlive = () => {
+  const url = process.env.RENDER_EXTERNAL_URL || process.env.BACKEND_URL;
+  if (!url) {
+    logger.warn('Render Keep-Alive: No external URL defined. Self-ping disabled.');
+    return;
+  }
+
+  const FOURTEEN_MINUTES = 14 * 60 * 1000;
+  const target = `${url.replace(/\/$/, '')}/ping`;
+  logger.info(`Render Keep-Alive: Self-ping service started targeting ${target} (Interval: 14m)`);
+
+  setInterval(() => {
+    try {
+      const lib = target.startsWith('https') ? https : http;
+      lib.get(target, (res) => {
+        logger.info(`Render Keep-Alive: Self-ping status ${res.statusCode}`);
+      }).on('error', (err) => {
+        logger.error('Render Keep-Alive: Self-ping request error:', err?.message || err);
+      });
+    } catch (error: any) {
+      logger.error('Render Keep-Alive: Self-ping failed:', error?.message || error);
+    }
+  }, FOURTEEN_MINUTES);
 };
 
 

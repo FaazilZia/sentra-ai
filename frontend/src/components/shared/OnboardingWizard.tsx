@@ -4,18 +4,27 @@ import {
   Terminal, ShieldCheck, Settings, Play, Copy
 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
+import { useAuth } from '@/lib/auth';
 
 export default function OnboardingWizard() {
   const addToast = useStore((state) => state.addToast);
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState(1);
 
+  const { user } = useAuth();
+
   useEffect(() => {
     const onboarded = localStorage.getItem('sentra_onboarded');
-    if (!onboarded) {
-      setIsOpen(true);
+    const userCreated = user?.createdAt || user?.created_at;
+    if (!onboarded && userCreated) {
+      const createdDate = new Date(userCreated);
+      const diffMs = Date.now() - createdDate.getTime();
+      const diffHours = diffMs / (1000 * 60 * 60);
+      if (diffHours < 24) {
+        setIsOpen(true);
+      }
     }
-  }, []);
+  }, [user]);
 
   const handleClose = () => {
     localStorage.setItem('sentra_onboarded', 'true');
@@ -37,7 +46,7 @@ export default function OnboardingWizard() {
   };
 
   const handleCopyCode = () => {
-    const code = `import { SentraClient } from '@sentra-ai/node';
+    const code = `import { SentraClient } from '@sentra-ai/sdk';
 
 const sentra = new SentraClient({
   apiKey: process.env.SENTRA_API_KEY || 'sk-sentra-...'
@@ -137,7 +146,7 @@ if (decision.status === 'BLOCK') {
               </p>
               
               <div className="bg-[#0b0f19] border border-gray-800/80 rounded-xl p-4 font-mono text-[10px] text-gray-400 overflow-x-auto max-h-[180px] scrollbar-thin">
-                <pre>{`import { SentraClient } from '@sentra-ai/node';
+                <pre>{`import { SentraClient } from '@sentra-ai/sdk';
 
 const sentra = new SentraClient({
   apiKey: process.env.SENTRA_API_KEY || 'sk-sentra-...'

@@ -61,6 +61,17 @@ export const logActivity = async (data: LogActivityData) => {
 
   // Real-time Update: Emit to the specific organization room
   if (io && data.emitRealtime !== false) {
+    let complianceArray: string[] = [];
+    if (Array.isArray(data.compliance)) {
+      complianceArray = data.compliance;
+    } else if (data.compliance && typeof data.compliance === 'object') {
+      if (Array.isArray(data.compliance.frameworks)) {
+        complianceArray = data.compliance.frameworks;
+      } else {
+        complianceArray = Object.keys(data.compliance);
+      }
+    }
+
     io.to(`company_${data.organizationId}`).emit('activity_log', {
       id: data.requestId || log.id,
       organizationId: data.organizationId,
@@ -68,6 +79,8 @@ export const logActivity = async (data: LogActivityData) => {
       decision: data.status === 'blocked' ? 'BLOCK' : (data.isPendingApproval ? 'MODIFY' : 'ALLOW'),
       risk: data.risk,
       reason: data.reason || undefined,
+      compliance: complianceArray,
+      ai_summary: data.explanation || data.impact || undefined,
       metadata: {
         agent: data.agent,
         action: data.action
