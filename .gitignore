@@ -44,6 +44,7 @@ __pycache__/
 backend/dev.db
 backend/results.txt
 backend/scratch/
+update-render-env.sh
 *.sh
 !backend/docker-entrypoint.sh
 
