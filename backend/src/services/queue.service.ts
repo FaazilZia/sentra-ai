@@ -251,6 +251,146 @@ if (connection) {
   registerFailedListener(intakeLLMWorker, 'intake-llm');
 }
 
+async function scanS3Source(connector: any, creds: any): Promise<{ violations: number; apiCalls: number; bytesScanned: number }> {
+  let violations = 0;
+  let apiCalls = 0;
+  let bytesScanned = 0;
+
+  const { accessKeyId, secretAccessKey, region, bucketName } = creds;
+  const s3 = new S3Client({
+    region: region || 'us-east-1',
+    credentials: { accessKeyId, secretAccessKey }
+  });
+
+  const listCommand = new ListObjectsV2Command({ Bucket: bucketName, MaxKeys: 20 });
+  const { Contents } = await s3.send(listCommand);
+  apiCalls++;
+
+  if (Contents) {
+    for (const obj of Contents) {
+      if (!obj.Key) continue;
+      const getCommand = new GetObjectCommand({
+        Bucket: bucketName,
+        Key: obj.Key,
+        Range: 'bytes=0-10240' // Limit to first 10KB
+      });
+      const response = await s3.send(getCommand);
+      apiCalls++;
+      const content = await response.Body?.transformToString();
+      
+      if (content) {
+        bytesScanned += Buffer.byteLength(content);
+        const found = await performPIIScan(content, { 
+          connectorId: connector.id, 
+          type: 's3', 
+          fileKey: obj.Key, 
+          organizationId: connector.organizationId 
+        });
+        violations += found;
+      }
+    }
+  }
+
+  return { violations, apiCalls, bytesScanned };
+}
+
+async function scanGDriveSource(connector: any, creds: any): Promise<{ violations: number; apiCalls: number; bytesScanned: number }> {
+  let violations = 0;
+  let apiCalls = 0;
+  let bytesScanned = 0;
+
+  const { client_email, private_key, driveScope } = creds;
+  const auth = new (google.auth.JWT as any)(
+    client_email,
+    null,
+    (private_key as string || '').replaceAll(/\\n/g, '\n'),
+    [driveScope || 'https://www.googleapis.com/auth/drive.readonly']
+  );
+  const drive = google.drive({ version: 'v3', auth });
+
+  const res = await drive.files.list({
+    pageSize: 20,
+    fields: 'files(id, name, mimeType)'
+  });
+  apiCalls++;
+
+  if (res.data.files) {
+    for (const file of res.data.files) {
+      if (!file.id) continue;
+      let content = '';
+      try {
+        if (file.mimeType === 'application/vnd.google-apps.document') {
+          const exportRes = await drive.files.export({
+            fileId: file.id,
+            mimeType: 'text/plain'
+          });
+          content = typeof exportRes.data === 'string' ? exportRes.data : JSON.stringify(exportRes.data);
+        } else {
+          const getRes = await drive.files.get({
+            fileId: file.id,
+            alt: 'media'
+          });
+          content = typeof getRes.data === 'string' ? getRes.data : JSON.stringify(getRes.data);
+        }
+        apiCalls++;
+      } catch (e) {
+        logger.warn(`Failed to download GDrive file ${file.name}:`, e);
+        continue;
+      }
+
+      if (content) {
+        bytesScanned += Buffer.byteLength(content);
+        const found = await performPIIScan(content.slice(0, 10240), {
+          connectorId: connector.id,
+          type: 'gdrive',
+          fileKey: file.name || file.id,
+          organizationId: connector.organizationId
+        });
+        violations += found;
+      }
+    }
+  }
+
+  return { violations, apiCalls, bytesScanned };
+}
+
+async function scanSqlSource(connector: any, creds: any): Promise<{ violations: number; apiCalls: number; bytesScanned: number }> {
+  let violations = 0;
+  let apiCalls = 0;
+  let bytesScanned = 0;
+
+  const { host, port, user, password, database } = creds;
+  const client = new PgClient({ host, port, user, password, database, ssl: { rejectUnauthorized: false } });
+  
+  await client.connect();
+  apiCalls++;
+
+  try {
+    const tablesRes = await client.query(`SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' LIMIT 10`);
+    apiCalls++;
+
+    for (const table of tablesRes.rows) {
+      const tableName = table.table_name;
+      const dataRes = await client.query(`SELECT * FROM "${tableName}" LIMIT 100`);
+      apiCalls++;
+
+      const rowData = JSON.stringify(dataRes.rows);
+      bytesScanned += Buffer.byteLength(rowData);
+      const found = await performPIIScan(rowData, {
+        connectorId: connector.id,
+        type: 'sql',
+        fileKey: `table:${tableName}`,
+        organizationId: connector.organizationId
+      });
+      violations += found;
+    }
+  } finally {
+    await client.end();
+  }
+
+  return { violations, apiCalls, bytesScanned };
+}
+
 export async function processConnectorScan(type: string, connectorId: string) {
   try {
     const connector = await prisma.connectors.findUnique({ where: { id: connectorId } });
@@ -283,134 +423,17 @@ export async function processConnectorScan(type: string, connectorId: string) {
     }
 
     logger.info(`Worker: Starting real scan for ${connector.name} (${type})`);
-    let violations = 0;
-    let apiCalls = 0;
-    let bytesScanned = 0;
+    let result = { violations: 0, apiCalls: 0, bytesScanned: 0 };
 
-    // --- S3 SCAN LOGIC ---
     if (type === 's3') {
-      const { accessKeyId, secretAccessKey, region, bucketName } = creds;
-      const s3 = new S3Client({
-        region: region || 'us-east-1',
-        credentials: { accessKeyId, secretAccessKey }
-      });
-
-      const listCommand = new ListObjectsV2Command({ Bucket: bucketName, MaxKeys: 20 });
-      const { Contents } = await s3.send(listCommand);
-      apiCalls++;
-
-      if (Contents) {
-        for (const obj of Contents) {
-          if (!obj.Key) continue;
-          const getCommand = new GetObjectCommand({
-            Bucket: bucketName,
-            Key: obj.Key,
-            Range: 'bytes=0-10240' // Limit to first 10KB
-          });
-          const response = await s3.send(getCommand);
-          apiCalls++;
-          const content = await response.Body?.transformToString();
-          
-          if (content) {
-            bytesScanned += Buffer.byteLength(content);
-            const found = await performPIIScan(content, { 
-              connectorId, 
-              type: 's3', 
-              fileKey: obj.Key, 
-              organizationId: connector.organizationId 
-            });
-            violations += found;
-          }
-        }
-      }
+      result = await scanS3Source(connector, creds);
+    } else if (type === 'gdrive') {
+      result = await scanGDriveSource(connector, creds);
+    } else if (type === 'sql') {
+      result = await scanSqlSource(connector, creds);
     }
 
-    // --- GDRIVE SCAN LOGIC ---
-    else if (type === 'gdrive') {
-      const { client_email, private_key, driveScope } = creds;
-      const auth = new (google.auth.JWT as any)(
-        client_email,
-        null,
-        (private_key as string || '').replaceAll(/\\n/g, '\n'),
-        [driveScope || 'https://www.googleapis.com/auth/drive.readonly']
-      );
-      const drive = google.drive({ version: 'v3', auth });
-
-      const res = await drive.files.list({
-        pageSize: 20,
-        fields: 'files(id, name, mimeType)'
-      });
-      apiCalls++;
-
-      if (res.data.files) {
-        for (const file of res.data.files) {
-          if (!file.id) continue;
-          let content = '';
-          try {
-            if (file.mimeType === 'application/vnd.google-apps.document') {
-              const exportRes = await drive.files.export({
-                fileId: file.id,
-                mimeType: 'text/plain'
-              });
-              content = typeof exportRes.data === 'string' ? exportRes.data : JSON.stringify(exportRes.data);
-            } else {
-              const getRes = await drive.files.get({
-                fileId: file.id,
-                alt: 'media'
-              });
-              content = typeof getRes.data === 'string' ? getRes.data : JSON.stringify(getRes.data);
-            }
-            apiCalls++;
-          } catch (e) {
-            logger.warn(`Failed to download GDrive file ${file.name}:`, e);
-            continue;
-          }
-
-          if (content) {
-            bytesScanned += Buffer.byteLength(content);
-            const found = await performPIIScan(content.slice(0, 10240), {
-              connectorId,
-              type: 'gdrive',
-              fileKey: file.name || file.id,
-              organizationId: connector.organizationId
-            });
-            violations += found;
-          }
-        }
-      }
-    }
-
-    // --- SQL SCAN LOGIC ---
-    else if (type === 'sql') {
-      const { host, port, user, password, database } = creds;
-      const client = new PgClient({ host, port, user, password, database, ssl: { rejectUnauthorized: false } });
-      
-      await client.connect();
-      apiCalls++;
-
-      try {
-        const tablesRes = await client.query(`SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' LIMIT 10`);
-        apiCalls++;
-
-        for (const table of tablesRes.rows) {
-          const tableName = table.table_name;
-          const dataRes = await client.query(`SELECT * FROM "${tableName}" LIMIT 100`);
-          apiCalls++;
-
-          const rowData = JSON.stringify(dataRes.rows);
-          bytesScanned += Buffer.byteLength(rowData);
-          const found = await performPIIScan(rowData, {
-            connectorId,
-            type: 'sql',
-            fileKey: `table:${tableName}`,
-            organizationId: connector.organizationId
-          });
-          violations += found;
-        }
-      } finally {
-        await client.end();
-      }
-    }
+    const { violations, apiCalls, bytesScanned } = result;
 
     // 3. Final Updates
     const scanCost = apiCalls * 0.001; // Base cost estimate per API call

@@ -6,6 +6,63 @@ export class DriftBaselineService {
    * Computes and saves the behavioral baseline for a given AI agent.
    * Merges declared permissions with historical unique action types.
    */
+  private static extractActionsFromPermissions(perms: any): Set<string> {
+    const actionSet = new Set<string>();
+    if (Array.isArray(perms)) {
+      for (const p of perms) {
+        if (typeof p === 'string' && p.trim()) actionSet.add(p.trim());
+      }
+    } else if (perms && typeof perms === 'object') {
+      for (const [key, value] of Object.entries(perms as Record<string, any>)) {
+        if (value && typeof key === 'string' && key.trim()) {
+          actionSet.add(key.trim());
+        }
+      }
+    }
+    return actionSet;
+  }
+
+  private static seedActionsFromName(agentName: string): Set<string> {
+    const actionSet = new Set<string>();
+    const nameLower = agentName.toLowerCase();
+    if (nameLower.includes('data') || nameLower.includes('analyst')) {
+      actionSet.add('read_data'); actionSet.add('query_database'); actionSet.add('export_report');
+    }
+    if (nameLower.includes('customer') || nameLower.includes('support')) {
+      actionSet.add('read_ticket'); actionSet.add('respond_ticket'); actionSet.add('escalate_ticket');
+    }
+    if (nameLower.includes('finance') || nameLower.includes('billing')) {
+      actionSet.add('read_invoice'); actionSet.add('generate_report'); actionSet.add('query_finance');
+    }
+    if (nameLower.includes('code') || nameLower.includes('dev') || nameLower.includes('engineer')) {
+      actionSet.add('read_code'); actionSet.add('write_code'); actionSet.add('run_tests');
+    }
+    actionSet.add('read_context');
+    actionSet.add('generate_response');
+    actionSet.add('log_action');
+    return actionSet;
+  }
+
+  private static deriveDataScopes(baselineActions: string[]): Set<string> {
+    const scopes = new Set<string>();
+    for (const act of baselineActions) {
+      const lower = act.toLowerCase();
+      if (lower.includes('finance') || lower.includes('budget') || lower.includes('invoice') || lower.includes('pay')) {
+        scopes.add('finance-data');
+      } else if (lower.includes('faq') || lower.includes('ticket') || lower.includes('support') || lower.includes('customer')) {
+        scopes.add('support-data');
+      } else if (lower.includes('resume') || lower.includes('interview') || lower.includes('hr') || lower.includes('employee')) {
+        scopes.add('hr-data');
+      } else if (lower.includes('code') || lower.includes('test') || lower.includes('deploy')) {
+        scopes.add('engineering-data');
+      } else {
+        scopes.add('general-data');
+      }
+    }
+    if (scopes.size === 0) scopes.add('general-data');
+    return scopes;
+  }
+
   static async computeBaseline(agentId: string): Promise<string[]> {
     try {
       const agent = await prisma.ai_agents.findUnique({ where: { id: agentId } });
@@ -14,47 +71,10 @@ export class DriftBaselineService {
         return [];
       }
 
-      const actionSet = new Set<string>();
+      let actionSet = DriftBaselineService.extractActionsFromPermissions(agent.permissions);
 
-      // --- Extract actions from permissions (handle all JSON shapes) ---
-      const perms = agent.permissions;
-      
-      if (Array.isArray(perms)) {
-        // Shape: ["read_data", "write_logs", "call_api"]
-        for (const p of perms) {
-          if (typeof p === 'string' && p.trim()) actionSet.add(p.trim());
-        }
-      } else if (perms && typeof perms === 'object') {
-        // Shape: { "read_data": true, "write_logs": false, "call_api": true }
-        // Only add keys where value is truthy
-        for (const [key, value] of Object.entries(perms as Record<string, any>)) {
-          if (value && typeof key === 'string' && key.trim()) {
-            actionSet.add(key.trim());
-          }
-        }
-      }
-
-      // --- If permissions yielded nothing, seed from agent name + model patterns ---
-      // This ensures new agents always have a non-empty baseline so drift detection works
       if (actionSet.size === 0) {
-        const nameLower = agent.name.toLowerCase();
-        // Infer likely actions from agent name
-        if (nameLower.includes('data') || nameLower.includes('analyst')) {
-          actionSet.add('read_data'); actionSet.add('query_database'); actionSet.add('export_report');
-        }
-        if (nameLower.includes('customer') || nameLower.includes('support')) {
-          actionSet.add('read_ticket'); actionSet.add('respond_ticket'); actionSet.add('escalate_ticket');
-        }
-        if (nameLower.includes('finance') || nameLower.includes('billing')) {
-          actionSet.add('read_invoice'); actionSet.add('generate_report'); actionSet.add('query_finance');
-        }
-        if (nameLower.includes('code') || nameLower.includes('dev') || nameLower.includes('engineer')) {
-          actionSet.add('read_code'); actionSet.add('write_code'); actionSet.add('run_tests');
-        }
-        // Universal fallback — every agent gets at least these
-        actionSet.add('read_context');
-        actionSet.add('generate_response');
-        actionSet.add('log_action');
+        actionSet = DriftBaselineService.seedActionsFromName(agent.name);
       }
 
       // --- Merge real historical logs if any exist ---
@@ -85,24 +105,7 @@ export class DriftBaselineService {
       }
 
       const baselineActions = Array.from(actionSet);
-
-      // --- Derive data scopes from baseline actions ---
-      const scopes = new Set<string>();
-      for (const act of baselineActions) {
-        const lower = act.toLowerCase();
-        if (lower.includes('finance') || lower.includes('budget') || lower.includes('invoice') || lower.includes('pay')) {
-          scopes.add('finance-data');
-        } else if (lower.includes('faq') || lower.includes('ticket') || lower.includes('support') || lower.includes('customer')) {
-          scopes.add('support-data');
-        } else if (lower.includes('resume') || lower.includes('interview') || lower.includes('hr') || lower.includes('employee')) {
-          scopes.add('hr-data');
-        } else if (lower.includes('code') || lower.includes('test') || lower.includes('deploy')) {
-          scopes.add('engineering-data');
-        } else {
-          scopes.add('general-data');
-        }
-      }
-      if (scopes.size === 0) scopes.add('general-data');
+      const scopes = DriftBaselineService.deriveDataScopes(baselineActions);
 
       // --- Persist baseline ---
       await prisma.ai_agents.update({

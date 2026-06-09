@@ -57,6 +57,98 @@ async function resolveApiKey(token: string): Promise<{ organizationId: string; s
   return result;
 }
 
+async function handleSdkToken(token: string, req: any, res: Response): Promise<{ handled: boolean; errorResponse?: { status: number; body: any } }> {
+  const resolved = await resolveApiKey(token);
+  if (!resolved) {
+    return { handled: false };
+  }
+
+  // Block default organization in production
+  const DEFAULT_DEMO_ORG = process.env.DEFAULT_ORGANIZATION_ID || '00000000-0000-0000-0000-000000000001';
+  if (process.env.NODE_ENV === 'production' && resolved.organizationId === DEFAULT_DEMO_ORG) {
+    return {
+      handled: true,
+      errorResponse: {
+        status: 403,
+        body: { success: false, message: 'Organization setup incomplete. Please contact support.' }
+      }
+    };
+  }
+
+  req.user = {
+    id: token,
+    organizationId: resolved.organizationId,
+    role: 'SERVICE_AGENT',
+    email: `sdk@${resolved.slug}.com`,
+  };
+  Sentry.setUser({ id: req.user.id, email: req.user.email, organizationId: req.user.organizationId });
+  Sentry.setTag('organizationId', req.user.organizationId);
+  updateApiKeyLastUsed(resolved.id);
+  return { handled: true };
+}
+
+async function handleJwtToken(token: string, req: any, res: Response): Promise<{ handled: boolean; errorResponse?: { status: number; body: any } }> {
+  try {
+    const payload: any = verifyAccessToken(token);
+    const user = await prisma.users.findUnique({
+      where: { id: payload.id },
+      include: { organizations: true },
+    });
+    if (user && user.is_active && user.organizations.is_active) {
+      // Invalidate access tokens issued before passwordChangedAt
+      if (user.passwordChangedAt && payload.iat) {
+        const tokenIssuedAt = payload.iat; // standard iat in seconds
+        const passwordChangedSecs = Math.floor(user.passwordChangedAt.getTime() / 1000);
+        if (tokenIssuedAt < passwordChangedSecs) {
+          return {
+            handled: true,
+            errorResponse: {
+              status: 401,
+              body: { success: false, message: 'Session expired due to password change' }
+            }
+          };
+        }
+      }
+
+      // Block default organization in production
+      if (user.organizationId === '00000000-0000-0000-0000-000000000001' && process.env.NODE_ENV === 'production') {
+        return {
+          handled: true,
+          errorResponse: {
+            status: 403,
+            body: { success: false, message: 'Organization setup incomplete.' }
+          }
+        };
+      }
+
+      req.user = { id: user.id, role: user.role, organizationId: user.organizationId, email: user.email };
+      Sentry.setUser({ id: req.user.id, email: req.user.email, organizationId: req.user.organizationId });
+      Sentry.setTag('organizationId', req.user.organizationId);
+      return { handled: true };
+    }
+  } catch {
+    // invalid JWT
+  }
+  return { handled: false };
+}
+
+async function handleXApiKey(xApiKey: string, req: any, res: Response): Promise<{ handled: boolean }> {
+  const resolved = await resolveApiKey(xApiKey);
+  if (resolved) {
+    req.user = {
+      id: xApiKey,
+      organizationId: resolved.organizationId,
+      role: 'SERVICE_AGENT',
+      email: `sdk@${resolved.slug}.com`,
+    };
+    Sentry.setUser({ id: req.user.id, email: req.user.email, organizationId: req.user.organizationId });
+    Sentry.setTag('organizationId', req.user.organizationId);
+    updateApiKeyLastUsed(resolved.id);
+    return { handled: true };
+  }
+  return { handled: false };
+}
+
 export const authenticate = async (req: any, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
@@ -74,75 +166,29 @@ export const authenticate = async (req: any, res: Response, next: NextFunction) 
 
     // 1. Bearer or Cookie token
     if (token) {
-      // SDK key path
       if (token.startsWith('sentra_')) {
-        const resolved = await resolveApiKey(token);
-        if (resolved) {
-          // Block default organization in production
-          const DEFAULT_DEMO_ORG = process.env.DEFAULT_ORGANIZATION_ID || '00000000-0000-0000-0000-000000000001';
-          if (process.env.NODE_ENV === 'production' && resolved.organizationId === DEFAULT_DEMO_ORG) {
-            return res.status(403).json({
-              success: false,
-              message: 'Organization setup incomplete. Please contact support.'
-            });
+        const result = await handleSdkToken(token, req, res);
+        if (result.handled) {
+          if (result.errorResponse) {
+            return res.status(result.errorResponse.status).json(result.errorResponse.body);
           }
-
-          req.user = {
-            id: token,
-            organizationId: resolved.organizationId,
-            role: 'SERVICE_AGENT',
-            email: `sdk@${resolved.slug}.com`,
-          };
-          Sentry.setUser({ id: req.user.id, email: req.user.email, organizationId: req.user.organizationId });
-          Sentry.setTag('organizationId', req.user.organizationId);
-          updateApiKeyLastUsed(resolved.id);
+          return next();
+        }
+      } else {
+        const result = await handleJwtToken(token, req, res);
+        if (result.handled) {
+          if (result.errorResponse) {
+            return res.status(result.errorResponse.status).json(result.errorResponse.body);
+          }
           return next();
         }
       }
-
-      // JWT path
-      try {
-        const payload: any = verifyAccessToken(token);
-        const user = await prisma.users.findUnique({
-          where: { id: payload.id },
-          include: { organizations: true },
-        });
-        if (user && user.is_active && user.organizations.is_active) {
-          // Invalidate access tokens issued before passwordChangedAt
-          if (user.passwordChangedAt && payload.iat) {
-            const tokenIssuedAt = payload.iat; // standard iat in seconds
-            const passwordChangedSecs = Math.floor(user.passwordChangedAt.getTime() / 1000);
-            if (tokenIssuedAt < passwordChangedSecs) {
-              return res.status(401).json({ success: false, message: 'Session expired due to password change' });
-            }
-          }
-
-          // Block default organization in production
-          if (user.organizationId === '00000000-0000-0000-0000-000000000001' && process.env.NODE_ENV === 'production') {
-            return res.status(403).json({ success: false, message: 'Organization setup incomplete.' });
-          }
-
-          req.user = { id: user.id, role: user.role, organizationId: user.organizationId, email: user.email };
-          Sentry.setUser({ id: req.user.id, email: req.user.email, organizationId: req.user.organizationId });
-          Sentry.setTag('organizationId', req.user.organizationId);
-          return next();
-        }
-      } catch { /* invalid JWT */ }
     }
 
     // 2. x-api-key header
     if (xApiKey) {
-      const resolved = await resolveApiKey(String(xApiKey).trim());
-      if (resolved) {
-        req.user = {
-          id: String(xApiKey),
-          organizationId: resolved.organizationId,
-          role: 'SERVICE_AGENT',
-          email: `sdk@${resolved.slug}.com`,
-        };
-        Sentry.setUser({ id: req.user.id, email: req.user.email, organizationId: req.user.organizationId });
-        Sentry.setTag('organizationId', req.user.organizationId);
-        updateApiKeyLastUsed(resolved.id);
+      const result = await handleXApiKey(String(xApiKey).trim(), req, res);
+      if (result.handled) {
         return next();
       }
     }

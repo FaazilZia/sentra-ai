@@ -793,1263 +793,147 @@ export default function Settings() {
 
       {/* Tab Panels */}
       <div className="mt-2">
-        {/* ============================================================== */}
-        {/* TAB: PROFILE SETTINGS */}
-        {/* ============================================================== */}
         {activeTab === 'profile' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-8 space-y-4">
-              <div className="card-base p-6">
-                <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 flex items-center gap-2">
-                  <User className="h-4 w-4 text-[var(--royal-indigo)]" />
-                  User Profile Details
-                </h3>
-
-                <form onSubmit={handleSaveProfile} className="space-y-6">
-                  <div>
-                    <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
-                      Email Address (Read-only)
-                    </label>
-                    <input
-                      type="text"
-                      value={user?.email || ''}
-                      disabled
-                      className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2.5 text-[11px] font-bold text-[var(--text-muted)] cursor-not-allowed opacity-60"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
-                      Full Name
-                    </label>
-                    <input
-                      type="text"
-                      value={profileName}
-                      onChange={(e) => setProfileName(e.target.value)}
-                      className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2.5 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
-                      Job Title
-                    </label>
-                    <input
-                      type="text"
-                      value={profileJobTitle}
-                      onChange={(e) => setProfileJobTitle(e.target.value)}
-                      placeholder="e.g. Director of Compliance / AI Security Engineer"
-                      className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2.5 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
-                    />
-                  </div>
-
-                  <div className="flex justify-end pt-2">
-                    <button
-                      type="submit"
-                      disabled={savingProfile}
-                      className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
-                    >
-                      <Save className="h-3.5 w-3.5" />
-                      {savingProfile ? 'Saving...' : 'Save Profile'}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-
-            <div className="lg:col-span-4 space-y-4">
-              <div className="card-base p-6 flex flex-col items-center text-center">
-                <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 w-full text-left">
-                  Profile Avatar
-                </h3>
-
-                <div className="relative group mb-6">
-                  {profileAvatarUrl ? (
-                    <img
-                      src={profileAvatarUrl}
-                      alt="Avatar"
-                      className="h-28 w-28 rounded-full object-cover border-2 border-[var(--border-default)] bg-zinc-900"
-                    />
-                  ) : (
-                    <div className="h-28 w-28 rounded-full bg-indigo-600 border border-white/10 flex items-center justify-center text-3xl font-black text-white">
-                      {(profileName || user?.fullName || 'AD')
-                        .split(' ')
-                        .map((n) => n[0])
-                        .join('')
-                        .toUpperCase()
-                        .slice(0, 2)}
-                    </div>
-                  )}
-                  {uploadingAvatar && (
-                    <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center text-xs text-white font-bold uppercase">
-                      Uploading...
-                    </div>
-                  )}
-                </div>
-
-                <label className="px-4 py-2 bg-zinc-800 border border-[var(--border-default)] hover:bg-zinc-700 text-white rounded text-[9px] font-black uppercase tracking-widest cursor-pointer transition-all active:scale-95">
-                  Choose New Avatar
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarUpload}
-                    className="hidden"
-                  />
-                </label>
-                <p className="text-[9px] text-[var(--text-muted)] mt-2 uppercase tracking-wider font-bold">
-                  PNG, JPG or GIF up to 5MB
-                </p>
-              </div>
-            </div>
-          </div>
+          <ProfileTab
+            user={user}
+            profileName={profileName}
+            setProfileName={setProfileName}
+            profileJobTitle={profileJobTitle}
+            setProfileJobTitle={setProfileJobTitle}
+            savingProfile={savingProfile}
+            handleSaveProfile={handleSaveProfile}
+            profileAvatarUrl={profileAvatarUrl}
+            uploadingAvatar={uploadingAvatar}
+            handleAvatarUpload={handleAvatarUpload}
+          />
         )}
 
-        {/* ============================================================== */}
-        {/* TAB: PASSWORD SETTINGS */}
-        {/* ============================================================== */}
         {activeTab === 'password' && (
-          <div className="max-w-xl">
-            <div className="card-base p-6">
-              <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 flex items-center gap-2">
-                <Lock className="h-4 w-4 text-[var(--royal-indigo)]" />
-                Change Password
-              </h3>
-
-              <form onSubmit={handleChangePasswordSubmit} className="space-y-6">
-                <div>
-                  <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
-                    Current Password
-                  </label>
-                  <input
-                    type="password"
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    placeholder="••••••••••••"
-                    className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2.5 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
-                    New Password
-                  </label>
-                  <input
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="••••••••••••"
-                    className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2.5 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
-                    Confirm New Password
-                  </label>
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="••••••••••••"
-                    className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2.5 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
-                    required
-                  />
-                </div>
-
-                <div className="flex justify-end pt-2">
-                  <button
-                    type="submit"
-                    disabled={changingPassword}
-                    className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
-                  >
-                    <Save className="h-3.5 w-3.5" />
-                    {changingPassword ? 'Updating...' : 'Update Password'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
+          <PasswordTab
+            currentPassword={currentPassword}
+            setCurrentPassword={setCurrentPassword}
+            newPassword={newPassword}
+            setNewPassword={setNewPassword}
+            confirmPassword={confirmPassword}
+            setConfirmPassword={setConfirmPassword}
+            changingPassword={changingPassword}
+            handleChangePasswordSubmit={handleChangePasswordSubmit}
+          />
         )}
 
-        {/* ============================================================== */}
-        {/* TAB: LLM KEYS SETTINGS */}
-        {/* ============================================================== */}
         {activeTab === 'llmkeys' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-5 space-y-4">
-              <div className="card-base p-6">
-                <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 flex items-center gap-2">
-                  <Plus className="h-4 w-4 text-[var(--royal-indigo)]" />
-                  Add Provider Key
-                </h3>
-
-                <form onSubmit={handleAddLlmKey} className="space-y-6">
-                  <div>
-                    <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
-                      LLM Provider
-                    </label>
-                    <select
-                      value={llmProvider}
-                      onChange={(e) => setLlmProvider(e.target.value)}
-                      className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2.5 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
-                    >
-                      <option value="openai">OpenAI (GPT-4o, etc.)</option>
-                      <option value="anthropic">Anthropic (Claude 3.5, etc.)</option>
-                      <option value="google">Google Gemini</option>
-                      <option value="cohere">Cohere</option>
-                      <option value="meta">Meta Llama (Replicate/Ollama)</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
-                      API Key
-                    </label>
-                    <input
-                      type="password"
-                      placeholder="sk-..."
-                      value={llmApiKey}
-                      onChange={(e) => setLlmApiKey(e.target.value)}
-                      className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2.5 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)] font-mono"
-                      required
-                    />
-                  </div>
-
-                  <div className="flex justify-end pt-2">
-                    <button
-                      type="submit"
-                      disabled={addingLlmKey || !llmApiKey.trim()}
-                      className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                      {addingLlmKey ? 'Adding...' : 'Add Key'}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-
-            <div className="lg:col-span-7 space-y-4">
-              <div className="card-base p-6">
-                <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6">
-                  Configured API Keys
-                </h3>
-
-                {loadingLlmKeys ? (
-                  <div className="py-12 flex justify-center items-center text-xs text-gray-500 font-bold uppercase tracking-widest">
-                    <RefreshCw className="h-5 w-5 animate-spin mr-2 text-indigo-500" />
-                    Loading provider keys...
-                  </div>
-                ) : llmKeysList.length === 0 ? (
-                  <div className="py-12 text-center text-gray-500 text-xs italic">
-                    No API keys configured yet. Set up a provider key to power AI features.
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs border-collapse">
-                      <thead>
-                        <tr className="border-b border-[var(--border-default)] text-[9px] font-black text-gray-500 uppercase tracking-widest bg-zinc-950/20">
-                          <th className="py-3 px-4">Provider</th>
-                          <th className="py-3 px-4">Masked Key</th>
-                          <th className="py-3 px-4">Configured By</th>
-                          <th className="py-3 px-4 text-right">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[var(--border-default)]">
-                        {llmKeysList.map((k) => (
-                          <tr key={k.id} className="hover:bg-white/5 transition-colors">
-                            <td className="py-3.5 px-4 font-bold text-white uppercase tracking-wider">
-                              {k.provider}
-                            </td>
-                            <td className="py-3.5 px-4 font-mono text-[11px] text-gray-400">
-                              {k.maskedKey}
-                            </td>
-                            <td className="py-3.5 px-4 text-gray-400">
-                              {k.users?.full_name || k.users?.email || 'Unknown'}
-                            </td>
-                            <td className="py-3.5 px-4 text-right">
-                              <button
-                                onClick={() => handleDeleteLlmKey(k.id)}
-                                className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded border border-transparent hover:border-red-500/20 transition-all active:scale-95"
-                                title="Delete key"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+          <LlmKeysTab
+            llmProvider={llmProvider}
+            setLlmProvider={setLlmProvider}
+            llmApiKey={llmApiKey}
+            setLlmApiKey={setLlmApiKey}
+            addingLlmKey={addingLlmKey}
+            handleAddLlmKey={handleAddLlmKey}
+            loadingLlmKeys={loadingLlmKeys}
+            llmKeysList={llmKeysList}
+            handleDeleteLlmKey={handleDeleteLlmKey}
+          />
         )}
 
-        {/* ============================================================== */}
-        {/* TAB: FEATURE TOGGLES */}
-        {/* ============================================================== */}
         {activeTab === 'features' && (
-          <div className="card-base p-6">
-            <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 flex items-center gap-2">
-              <Sliders className="h-4 w-4 text-[var(--royal-indigo)]" />
-              Feature Flags & System Overrides
-            </h3>
-
-            {loadingFeatureFlags ? (
-              <div className="py-12 flex justify-center items-center text-xs text-gray-500 font-bold uppercase tracking-widest">
-                <RefreshCw className="h-5 w-5 animate-spin mr-2 text-indigo-500" />
-                Loading feature states...
-              </div>
-            ) : featureFlagsList.length === 0 ? (
-              <div className="py-12 text-center text-gray-500 text-xs italic">
-                No system feature flags registered.
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {featureFlagsList.map((flag) => (
-                  <div
-                    key={flag.key}
-                    className="flex items-center justify-between p-4 bg-[var(--bg-page)] border border-[var(--border-default)] rounded-xl hover:border-zinc-800 transition-all"
-                  >
-                    <div>
-                      <p className="text-xs font-bold text-white tracking-wide">{flag.name}</p>
-                      <p className="text-[9px] font-mono text-[var(--text-muted)] uppercase mt-0.5">{flag.key}</p>
-                    </div>
-
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={flag.enabled}
-                        onChange={() => handleToggleFeatureFlag(flag.key, flag.enabled)}
-                        className="sr-only peer"
-                      />
-                      <div className="w-9 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-400 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600 peer-checked:after:bg-white"></div>
-                    </label>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <FeaturesTab
+            loadingFeatureFlags={loadingFeatureFlags}
+            featureFlagsList={featureFlagsList}
+            handleToggleFeatureFlag={handleToggleFeatureFlag}
+          />
         )}
 
-        {/* ============================================================== */}
-        {/* TAB 1: GENERAL SETTINGS */}
-        {/* ============================================================== */}
         {activeTab === 'general' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Section 1: API Keys */}
-            <div className="lg:col-span-6 space-y-4">
-              <div className="card-base p-6">
-                <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 flex items-center gap-2">
-                  <Key className="h-4 w-4 text-[var(--royal-indigo)]" />
-                  API Authentication
-                </h3>
-                
-                <div className="space-y-6">
-                  <div>
-                    <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Active API Key</span>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2.5 font-mono text-[11px] text-[var(--text-primary)] overflow-hidden text-ellipsis">
-                        {apiKey}
-                      </div>
-                      <button 
-                        onClick={handleCopyKey}
-                        className="p-2.5 text-[var(--text-muted)] hover:text-[var(--royal-indigo)] bg-[var(--bg-page)] border border-[var(--border-default)] rounded transition-colors"
-                        title="Copy to clipboard"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </button>
-                    </div>
-                    <p className="text-[10px] text-[var(--text-muted)] mt-2 italic">
-                      Use this key to authenticate your SDK calls to Sentra AI.
-                    </p>
-                  </div>
-
-                  <div className="pt-2">
-                    <button 
-                      onClick={handleRotateKey}
-                      disabled={loading}
-                      className="flex items-center gap-2 px-4 py-2 bg-black/5 border border-[var(--border-default)] rounded text-[10px] font-black text-[var(--text-primary)] uppercase tracking-widest hover:bg-black/10 transition-all disabled:opacity-50"
-                    >
-                      <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-                      Regenerate Key
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Section 2: Alert Configuration */}
-            <div className="lg:col-span-6 space-y-4">
-              <div className="card-base p-6">
-                <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 flex items-center gap-2">
-                  <Bell className="h-4 w-4 text-[var(--royal-indigo)]" />
-                  Alert Configuration
-                </h3>
-
-                <div className="space-y-8">
-                  <form onSubmit={handleSaveEmail}>
-                    <div className="flex flex-col gap-3">
-                      <div>
-                        <label htmlFor="alert-email" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Alert Email</label>
-                        <input 
-                          id="alert-email"
-                          type="email" 
-                          placeholder="alerts@company.com" 
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]" 
-                        />
-                      </div>
-                      <button 
-                        type="submit"
-                        className="flex items-center justify-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] rounded text-[9px] font-black text-white uppercase tracking-widest hover:bg-[var(--royal-indigo)] transition-all w-fit self-end"
-                      >
-                        <Save className="h-3.5 w-3.5" />
-                        Save Email
-                      </button>
-                    </div>
-                  </form>
-
-                  <div className="h-px bg-[var(--border-default)] opacity-50" />
-
-                  <form onSubmit={handleSaveWebhook}>
-                    <div className="flex flex-col gap-3">
-                      <div>
-                        <label htmlFor="webhook-url" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Webhook URL</label>
-                        <input 
-                          id="webhook-url"
-                          type="url" 
-                          placeholder="https://hooks.slack.com/services/..." 
-                          value={webhookUrl}
-                          onChange={(e) => setWebhookUrl(e.target.value)}
-                          className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]" 
-                        />
-                      </div>
-                      <button 
-                        type="submit"
-                        className="flex items-center justify-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] rounded text-[9px] font-black text-white uppercase tracking-widest hover:bg-[var(--royal-indigo)] transition-all w-fit self-end"
-                      >
-                        <Save className="h-3.5 w-3.5" />
-                        Save Webhook
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            </div>
-
-            {/* Section 3: Slack Integration */}
-            <div className="lg:col-span-12 space-y-4">
-              <div className="card-base p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight flex items-center gap-2">
-                    <Slack className="h-4 w-4 text-[#4A154B]" />
-                    Slack Integration
-                  </h3>
-                  <span className={`text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded border ${
-                    slackStatus === 'connected' 
-                      ? 'bg-green-500/10 text-green-500 border-green-500/20' 
-                      : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
-                  }`}>
-                    {slackStatus === 'connected' ? 'Connected' : 'Not Configured'}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div>
-                      <label htmlFor="slack-webhook" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Slack Webhook URL</label>
-                      <input 
-                        id="slack-webhook"
-                        type="password" 
-                        placeholder="https://hooks.slack.com/services/..." 
-                        value={slackUrl}
-                        onChange={(e) => setSlackUrl(e.target.value)}
-                        className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]" 
-                      />
-                    </div>
-
-                    <div>
-                      <label htmlFor="slack-channel" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Slack Channel</label>
-                      <input 
-                        id="slack-channel"
-                        type="text" 
-                        placeholder="#alerts-compliance" 
-                        value={slackChannel}
-                        onChange={(e) => setSlackChannel(e.target.value)}
-                        className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]" 
-                      />
-                    </div>
-
-                    <div className="flex items-center gap-2 mt-2">
-                      <input 
-                        id="slack-enabled"
-                        type="checkbox"
-                        checked={slackEnabled}
-                        onChange={(e) => setSlackEnabled(e.target.checked)}
-                        className="h-4 w-4 accent-[var(--royal-indigo)] rounded border-[var(--border-default)] cursor-pointer"
-                      />
-                      <label htmlFor="slack-enabled" className="text-[10px] font-black text-[var(--text-primary)] uppercase tracking-wider cursor-pointer">
-                        Enable Slack Notifications
-                      </label>
-                    </div>
-                  </div>
-
-                  <div>
-                    <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-2.5">Alert Triggers</span>
-                    <div className="space-y-2.5 bg-[var(--bg-page)] border border-[var(--border-default)] rounded p-4">
-                      {[
-                        { id: 'guardrail_block', label: 'Guardrail Blocks' },
-                        { id: 'drift_detected', label: 'Behavioral Drift Detected' },
-                        { id: 'incident_created', label: 'Security Incidents' },
-                        { id: 'policy_violation', label: 'Policy Violations' },
-                        { id: 'workflow_change', label: 'Workflow Phase Transitions' }
-                      ].map((trigger) => (
-                        <div key={trigger.id} className="flex items-center gap-2">
-                          <input 
-                            id={`trigger-${trigger.id}`}
-                            type="checkbox"
-                            checked={slackNotifyOn.includes(trigger.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSlackNotifyOn([...slackNotifyOn, trigger.id]);
-                              } else {
-                                setSlackNotifyOn(slackNotifyOn.filter(x => x !== trigger.id));
-                              }
-                            }}
-                            className="h-3.5 w-3.5 accent-[var(--royal-indigo)] rounded cursor-pointer"
-                          />
-                          <label htmlFor={`trigger-${trigger.id}`} className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer">
-                            {trigger.label}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-3 mt-6 border-t border-[var(--border-default)] pt-4">
-                  {slackStatus === 'connected' && (
-                    <button 
-                      onClick={handleDeleteSlack}
-                      className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded text-[9px] font-black uppercase tracking-widest transition-all"
-                    >
-                      Disconnect Slack
-                    </button>
-                  )}
-                  <button 
-                    onClick={handleTestSlack}
-                    disabled={slackTesting || !slackUrl || !slackChannel}
-                    className="px-4 py-2 bg-black/5 hover:bg-black/10 text-[var(--text-primary)] border border-[var(--border-default)] rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
-                  >
-                    {slackTesting ? 'Testing...' : 'Test Connection'}
-                  </button>
-                  <button 
-                    onClick={handleSaveSlack}
-                    disabled={slackSaving || !slackUrl || !slackChannel}
-                    className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
-                  >
-                    <Save className="h-3.5 w-3.5" />
-                    {slackSaving ? 'Saving...' : 'Save Settings'}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Section 4: Multi-Factor Authentication (MFA) */}
-            <div className="lg:col-span-12 space-y-4">
-              <div className="card-base p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight flex items-center gap-2">
-                    <Shield className="h-4 w-4 text-[var(--royal-indigo)]" />
-                    Multi-Factor Authentication (MFA)
-                  </h3>
-                  <span className={`text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded border ${
-                    mfaStatus?.enabled 
-                      ? 'bg-green-500/10 text-green-500 border-green-500/20' 
-                      : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
-                  }`}>
-                    {mfaStatus?.enabled ? 'Active & Enforced' : 'Disabled'}
-                  </span>
-                </div>
-
-                <div className="space-y-6">
-                  {mfaStatus?.enabled ? (
-                    <div className="space-y-6">
-                      <div className="flex items-start gap-3 bg-green-500/10 border border-green-500/20 rounded p-4 text-[var(--text-primary)]">
-                        <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-                        <div>
-                          <p className="text-xs font-bold uppercase tracking-wide text-green-400">TOTP Authenticator Protection Active</p>
-                          <p className="text-[10px] text-[var(--text-secondary)] mt-1">
-                            Your account is protected by an industry-standard time-based one-time password (TOTP) authenticator. Verification will be required at login.
-                          </p>
-                        </div>
-                      </div>
-
-                      {showRecoveryCodes && recoveryCodes.length > 0 && (
-                        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded p-4 space-y-3">
-                          <div className="flex items-center gap-2">
-                            <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-yellow-500">MFA Recovery Codes Generated</span>
-                          </div>
-                          <p className="text-[10px] text-[var(--text-secondary)] leading-relaxed">
-                            Write down these recovery codes in a secure location. Each code can be used once to bypass MFA if you lose your authentication device.
-                          </p>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 font-mono text-xs text-[var(--text-primary)] bg-[var(--bg-page)] p-3 rounded border border-[var(--border-default)]">
-                            {recoveryCodes.map((code, idx) => (
-                              <div key={idx} className="flex justify-between items-center bg-black/10 px-2.5 py-1.5 rounded">
-                                <span>{code}</span>
-                              </div>
-                            ))}
-                          </div>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => {
-                                navigator.clipboard.writeText(recoveryCodes.join('\n'));
-                                setCodesCopied(true);
-                                addToast({ message: 'Recovery codes copied', type: 'info' });
-                                setTimeout(() => setCodesCopied(false), 2000);
-                              }}
-                              className="flex items-center gap-2 px-3 py-1.5 bg-black/5 hover:bg-black/10 border border-[var(--border-default)] rounded text-[9px] font-black uppercase tracking-widest text-[var(--text-primary)] transition-all"
-                            >
-                              <Copy className="h-3 w-3" />
-                              {codesCopied ? 'Copied!' : 'Copy Codes'}
-                            </button>
-                            <button
-                              onClick={() => setShowRecoveryCodes(false)}
-                              className="px-3 py-1.5 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all"
-                            >
-                              I Have Saved These Codes
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="border-t border-[var(--border-default)]/60 pt-4">
-                        <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-2">Disable Multi-Factor Authentication</span>
-                        <div className="flex flex-col md:flex-row md:items-center gap-3">
-                          <input 
-                            type="text" 
-                            placeholder="Enter 6-digit TOTP code to confirm" 
-                            value={mfaToken}
-                            onChange={(e) => setMfaToken(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                            className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-xs font-mono font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)] w-64"
-                          />
-                          <button 
-                            onClick={handleMfaDisable}
-                            disabled={mfaLoading || mfaToken.length < 6}
-                            className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50 flex items-center gap-2"
-                          >
-                            <Lock className="h-3.5 w-3.5" />
-                            Disable Authenticator
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
-                        Add an extra layer of security to your enterprise account by configuring a mobile authenticator app (such as Google Authenticator, Duo, or 1Password). Verification tokens will be prompted on every system dashboard login request.
-                      </p>
-
-                      {!mfaSetupData ? (
-                        <button
-                          onClick={handleMfaSetup}
-                          disabled={mfaLoading}
-                          className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
-                        >
-                          <Unlock className="h-3.5 w-3.5" />
-                          Enable Authenticator
-                        </button>
-                      ) : (
-                        <div className="border border-[var(--border-default)] rounded p-5 bg-[var(--bg-page)] space-y-6">
-                          <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-                            <div className="bg-white p-2 rounded-xl border border-[var(--border-default)] shrink-0 flex items-center justify-center shadow-lg animate-fade-in">
-                              <img src={mfaSetupData.qrCodeUrl} alt="MFA QR Code" className="h-32 w-32 object-contain" />
-                            </div>
-                            <div className="space-y-3 flex-1">
-                              <h4 className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wide">Configure mobile app</h4>
-                              <p className="text-[10px] text-[var(--text-secondary)] leading-relaxed">
-                                Scan the QR code using your mobile authenticator app. If your device camera is unable to scan it, enter the manual configuration key below:
-                              </p>
-                              <div className="flex items-center gap-2">
-                                <div className="bg-black/10 border border-[var(--border-default)] rounded px-3 py-1.5 font-mono text-xs text-[var(--text-primary)] flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
-                                  {mfaSetupData.manualKey}
-                                </div>
-                                <button
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(mfaSetupData.manualKey);
-                                    addToast({ message: 'Manual key copied', type: 'info' });
-                                  }}
-                                  className="p-1.5 text-[var(--text-muted)] hover:text-[var(--royal-indigo)] bg-black/5 hover:bg-black/10 border border-[var(--border-default)] rounded transition-colors"
-                                  title="Copy Manual Key"
-                                >
-                                  <Copy className="h-4 w-4" />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="border-t border-[var(--border-default)] pt-4 space-y-3">
-                            <label htmlFor="mfa-totp-enable" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block">Verify Authenticator Setup</label>
-                            <p className="text-[10px] text-[var(--text-secondary)] mb-2">
-                              Enter the 6-digit verification code generated by your mobile app to finalize configuration:
-                            </p>
-                            <div className="flex flex-col md:flex-row md:items-center gap-3">
-                              <input 
-                                id="mfa-totp-enable"
-                                type="text" 
-                                placeholder="Enter 6-digit TOTP code" 
-                                value={mfaToken}
-                                onChange={(e) => setMfaToken(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                                className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-xs font-mono font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)] w-64"
-                              />
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={handleMfaEnable}
-                                  disabled={mfaLoading || mfaToken.length < 6}
-                                  className="px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50 flex items-center gap-2"
-                                >
-                                  <QrCode className="h-3.5 w-3.5" />
-                                  Verify & Enable MFA
-                                </button>
-                                <button
-                                  onClick={() => { setMfaSetupData(null); setMfaToken(''); }}
-                                  className="px-4 py-2 border border-[var(--border-default)] rounded text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest hover:bg-black/5 transition-all"
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+          <GeneralTab
+            apiKey={apiKey}
+            handleCopyKey={handleCopyKey}
+            handleRotateKey={handleRotateKey}
+            loading={loading}
+            email={email}
+            setEmail={setEmail}
+            handleSaveEmail={handleSaveEmail}
+            webhookUrl={webhookUrl}
+            setWebhookUrl={setWebhookUrl}
+            handleSaveWebhook={handleSaveWebhook}
+            slackStatus={slackStatus}
+            slackUrl={slackUrl}
+            setSlackUrl={setSlackUrl}
+            slackChannel={slackChannel}
+            setSlackChannel={setSlackChannel}
+            slackEnabled={slackEnabled}
+            setSlackEnabled={setSlackEnabled}
+            slackNotifyOn={slackNotifyOn}
+            setSlackNotifyOn={setSlackNotifyOn}
+            handleDeleteSlack={handleDeleteSlack}
+            slackTesting={slackTesting}
+            handleTestSlack={handleTestSlack}
+            slackSaving={slackSaving}
+            handleSaveSlack={handleSaveSlack}
+            mfaStatus={mfaStatus}
+            showRecoveryCodes={showRecoveryCodes}
+            setShowRecoveryCodes={setShowRecoveryCodes}
+            recoveryCodes={recoveryCodes}
+            codesCopied={codesCopied}
+            setCodesCopied={setCodesCopied}
+            mfaToken={mfaToken}
+            setMfaToken={setMfaToken}
+            mfaLoading={mfaLoading}
+            handleMfaDisable={handleMfaDisable}
+            mfaSetupData={mfaSetupData}
+            setMfaSetupData={setMfaSetupData}
+            handleMfaSetup={handleMfaSetup}
+            handleMfaEnable={handleMfaEnable}
+            addToast={addToast}
+          />
         )}
 
-        {/* ============================================================== */}
-        {/* TAB 2: MCP GATEWAY */}
-        {/* ============================================================== */}
         {activeTab === 'mcp' && (
-          <div className="space-y-6">
-            {/* API Keys Table */}
-            <div className="card-base p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight flex items-center gap-2">
-                    <Key className="h-4 w-4 text-[var(--royal-indigo)]" />
-                    MCP Agent Keys
-                  </h3>
-                  <p className="text-[10px] text-[var(--text-muted)] mt-1 max-w-xl">
-                    SAML-authenticated API access credentials for dynamic, real-time agent governance over Model Context Protocol (MCP) integrations.
-                  </p>
-                </div>
-                
-                {user?.role === 'ADMIN' && (
-                  <button
-                    onClick={() => setCreateKeyModalOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    Create Agent Key
-                  </button>
-                )}
-              </div>
-
-              {mcpKeysLoading ? (
-                <div className="py-12 flex justify-center items-center gap-2 text-[var(--text-muted)]">
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                  <span className="text-xs uppercase tracking-wider font-bold">Loading agent credentials...</span>
-                </div>
-              ) : mcpKeys.length === 0 ? (
-                <div className="py-12 text-center bg-black/5 rounded border border-dashed border-[var(--border-default)]">
-                  <AlertTriangle className="h-8 w-8 text-[var(--text-muted)] mx-auto mb-2" />
-                  <p className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">No Agent Keys Registered</p>
-                  <p className="text-[10px] text-[var(--text-muted)] mt-1">Generate a key to grant your external AI agents access to Sentra's governance pipeline.</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="border-b border-[var(--border-default)] text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-wider">
-                        <th className="pb-3 font-black">Key Name</th>
-                        <th className="pb-3 font-black">Prefix</th>
-                        <th className="pb-3 font-black">Created At</th>
-                        <th className="pb-3 font-black">Last Used</th>
-                        <th className="pb-3 font-black text-center">Allowed Tools</th>
-                        <th className="pb-3 font-black text-center">Status</th>
-                        <th className="pb-3 font-black text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {mcpKeys.map((key) => (
-                        <tr key={key.id} className="border-b border-[var(--border-default)]/30 hover:bg-white/5 transition-colors">
-                          <td className="py-3.5 font-bold text-[var(--text-primary)]">{key.name}</td>
-                          <td className="py-3.5 font-mono text-[var(--text-secondary)] text-[10px]">{key.key_prefix}••••</td>
-                          <td className="py-3.5 text-[var(--text-muted)]">{new Date(key.created_at).toLocaleDateString()}</td>
-                          <td className="py-3.5 text-[var(--text-muted)]">
-                            {key.last_used_at ? new Date(key.last_used_at).toLocaleDateString() + ' ' + new Date(key.last_used_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : <span className="italic">Never</span>}
-                          </td>
-                          <td className="py-3.5 text-center">
-                            {key.allowed_tools && key.allowed_tools.length > 0 ? (
-                              <span className="bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded text-[10px] font-bold border border-blue-500/20">
-                                {key.allowed_tools.length} Limit
-                              </span>
-                            ) : (
-                              <span className="text-[var(--text-muted)] italic">All Tools</span>
-                            )}
-                          </td>
-                          <td className="py-3.5">
-                            <div className="flex justify-center">
-                              <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${
-                                key.is_active 
-                                  ? 'bg-green-500/10 text-green-500 border-green-500/20' 
-                                  : 'bg-red-500/10 text-red-500 border-red-500/20'
-                              }`}>
-                                {key.is_active ? 'Active' : 'Revoked'}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="py-3.5 text-right">
-                            {key.is_active && user?.role === 'ADMIN' ? (
-                              <button
-                                onClick={() => {
-                                  setKeyToRevoke(key);
-                                  setRevokeModalOpen(true);
-                                }}
-                                className="p-2 text-red-400 hover:text-red-500 hover:bg-red-500/10 rounded transition-colors"
-                                title="Revoke Key"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            ) : (
-                              <span className="text-[var(--text-muted)] text-[10px] italic">No actions</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-
-            {/* Audit Logs Table */}
-            <div className="card-base p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight flex items-center gap-2">
-                    <Database className="h-4 w-4 text-[var(--royal-indigo)]" />
-                    MCP Gateway Audit Logs
-                  </h3>
-                  <p className="text-[10px] text-[var(--text-muted)] mt-1">
-                    Immutable governance evaluation logs intercepting external model execution attempts.
-                  </p>
-                </div>
-
-                {/* Filter Selector */}
-                <div className="flex items-center gap-2 bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-1.5">
-                  <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-wider">Decision:</span>
-                  <select
-                    value={logsFilterDecision}
-                    onChange={(e) => {
-                      setLogsFilterDecision(e.target.value as any);
-                      setLogsPage(1);
-                    }}
-                    className="bg-transparent text-xs text-[var(--text-primary)] font-bold border-none outline-none cursor-pointer"
-                  >
-                    <option value="all">All Logs</option>
-                    <option value="allowed">Allowed Only</option>
-                    <option value="blocked">Blocked Only</option>
-                  </select>
-                </div>
-              </div>
-
-              {mcpLogsLoading ? (
-                <div className="py-12 flex justify-center items-center gap-2 text-[var(--text-muted)]">
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                  <span className="text-xs uppercase tracking-wider font-bold">Loading audit trails...</span>
-                </div>
-              ) : mcpLogs.length === 0 ? (
-                <div className="py-8 text-center text-[var(--text-muted)]">
-                  <CheckCircle2 className="h-8 w-8 text-green-500/20 mx-auto mb-2" />
-                  <p className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">No Evaluation Logs Recorded</p>
-                  <p className="text-[10px] text-[var(--text-muted)] mt-1">Logs will appear as soon as external agents trigger registered MCP tools.</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs border-collapse">
-                      <thead>
-                        <tr className="border-b border-[var(--border-default)] text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-wider">
-                          <th className="pb-3 font-black">Timestamp</th>
-                          <th className="pb-3 font-black">Tool Name</th>
-                          <th className="pb-3 font-black">Args Summary</th>
-                          <th className="pb-3 font-black text-center">Decision</th>
-                          <th className="pb-3 font-black text-center">Risk</th>
-                          <th className="pb-3 font-black">Reason</th>
-                          <th className="pb-3 font-black text-right">Latency</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {mcpLogs.map((log) => (
-                          <tr key={log.id} className="border-b border-[var(--border-default)]/30 hover:bg-white/5 transition-colors">
-                            <td className="py-3 text-[var(--text-muted)] whitespace-nowrap">
-                              {new Date(log.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
-                            </td>
-                            <td className="py-3 font-bold font-mono text-[var(--text-primary)]">{log.tool_name}</td>
-                            <td className="py-3 max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap text-[var(--text-secondary)] font-mono text-[10px]">
-                              {log.input_summary || '{}'}
-                            </td>
-                            <td className="py-3">
-                              <div className="flex justify-center">
-                                <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${
-                                  log.decision === 'allowed'
-                                    ? 'bg-green-500/10 text-green-500 border-green-500/20'
-                                    : 'bg-red-500/10 text-red-500 border-red-500/20'
-                                }`}>
-                                  {log.decision}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="py-3">
-                              <div className="flex justify-center">
-                                <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${
-                                  log.risk_level === 'high' 
-                                    ? 'bg-red-500/10 text-red-500 border-red-500/20' 
-                                    : log.risk_level === 'medium'
-                                      ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
-                                      : 'bg-green-500/10 text-green-500 border-green-500/20'
-                                }`}>
-                                  {log.risk_level}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="py-3 text-[var(--text-secondary)] max-w-xs overflow-hidden text-ellipsis whitespace-nowrap" title={log.reason}>
-                              {log.reason || 'None provided'}
-                            </td>
-                            <td className="py-3 text-right font-mono text-[10px] text-[var(--text-muted)]">
-                              {log.duration_ms ? `${log.duration_ms}ms` : '—'}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Simple Pagination Controls */}
-                  {logsPages > 1 && (
-                    <div className="flex items-center justify-between border-t border-[var(--border-default)]/30 pt-4 text-xs">
-                      <span className="text-[var(--text-muted)]">
-                        Showing page <span className="font-bold text-[var(--text-secondary)]">{logsPage}</span> of <span className="font-bold text-[var(--text-secondary)]">{logsPages}</span> ({logsTotal} logs)
-                      </span>
-                      
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setLogsPage(prev => Math.max(1, prev - 1))}
-                          disabled={logsPage === 1}
-                          className="px-3 py-1 bg-black/5 hover:bg-black/10 border border-[var(--border-default)] rounded text-[9px] font-black uppercase tracking-wider disabled:opacity-50 text-[var(--text-primary)]"
-                        >
-                          Previous
-                        </button>
-                        <button
-                          onClick={() => setLogsPage(prev => Math.min(logsPages, prev + 1))}
-                          disabled={logsPage === logsPages}
-                          className="px-3 py-1 bg-black/5 hover:bg-black/10 border border-[var(--border-default)] rounded text-[9px] font-black uppercase tracking-wider disabled:opacity-50 text-[var(--text-primary)]"
-                        >
-                          Next
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
+          <McpTab
+            mcpKeysLoading={mcpKeysLoading}
+            mcpKeys={mcpKeys}
+            setCreateKeyModalOpen={setCreateKeyModalOpen}
+            setKeyToRevoke={setKeyToRevoke}
+            setRevokeModalOpen={setRevokeModalOpen}
+            user={user}
+            logsFilterDecision={logsFilterDecision}
+            setLogsFilterDecision={setLogsFilterDecision}
+            setLogsPage={setLogsPage}
+            mcpLogsLoading={mcpLogsLoading}
+            mcpLogs={mcpLogs}
+            logsPage={logsPage}
+            logsPages={logsPages}
+            logsTotal={logsTotal}
+          />
         )}
 
-        {/* ============================================================== */}
-        {/* TAB 3: SAML SSO */}
-        {/* ============================================================== */}
         {activeTab === 'sso' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Form configuration */}
-            <div className="lg:col-span-7 space-y-4">
-              <div className="card-base p-6">
-                <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 flex items-center gap-2">
-                  <Globe className="h-4 w-4 text-[var(--royal-indigo)]" />
-                  SAML 2.0 Identity Provider Config
-                </h3>
-
-                <form onSubmit={handleSaveSso} className="space-y-6">
-                  <div>
-                    <label htmlFor="sso-provider" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
-                      SSO Provider Name
-                    </label>
-                    <input
-                      id="sso-provider"
-                      type="text"
-                      placeholder="e.g. Okta, Azure Active Directory, Google Workspace"
-                      value={ssoProviderName}
-                      onChange={(e) => setSsoProviderName(e.target.value)}
-                      className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="idp-xml" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
-                      IdP Metadata XML
-                    </label>
-                    <textarea
-                      id="idp-xml"
-                      rows={12}
-                      placeholder="Paste the full IdP XML metadata string provided by your Identity Provider..."
-                      value={idpMetadataXml}
-                      onChange={(e) => setIdpMetadataXml(e.target.value)}
-                      className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[10px] font-mono text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)] resize-y"
-                    />
-                  </div>
-
-                  <div className="flex justify-end pt-2">
-                    <button
-                      type="submit"
-                      disabled={savingSso || !idpMetadataXml.trim()}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
-                    >
-                      <Save className="h-3.5 w-3.5" />
-                      {savingSso ? 'Configuring SSO...' : 'Save & Enable SSO'}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-
-            {/* Read-only details */}
-            <div className="lg:col-span-5 space-y-4">
-              <div className="card-base p-6">
-                <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4 text-[var(--royal-indigo)]" />
-                  Service Provider (SP) Credentials
-                </h3>
-
-                {!company ? (
-                  <div className="py-6 text-center text-xs text-[var(--text-muted)] uppercase tracking-wider font-bold">
-                    Resolving tenant workspace slug...
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    <div>
-                      <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1">
-                        SAML Status
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <span className={`inline-block h-2 w-2 rounded-full ${company.sso_enabled ? 'bg-green-500' : 'bg-zinc-500'}`} />
-                        <span className="text-[11px] font-black uppercase tracking-wider text-[var(--text-primary)]">
-                          {company.sso_enabled ? `SAML SSO Enabled (${company.sso_provider || 'SAML'})` : 'Inactive (Mock SSO Active)'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="h-px bg-[var(--border-default)]/40" />
-
-                    <div>
-                      <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1">
-                        Your SP Entity ID
-                      </span>
-                      <div className="flex items-center gap-2 bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 font-mono text-[10px] text-[var(--text-secondary)] overflow-hidden text-ellipsis whitespace-nowrap">
-                        {spEntityId}
-                      </div>
-                    </div>
-
-                    <div>
-                      <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1">
-                        Your ACS URL (Assertion Consumer Service)
-                      </span>
-                      <div className="flex items-center gap-2 bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 font-mono text-[10px] text-[var(--text-secondary)] overflow-hidden text-ellipsis whitespace-nowrap">
-                        {spAcsUrl}
-                      </div>
-                    </div>
-
-                    <div className="h-px bg-[var(--border-default)]/40" />
-
-                    <div>
-                      <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1">
-                        SSO Login URL
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 font-mono text-[10px] text-[var(--text-secondary)] overflow-hidden text-ellipsis whitespace-nowrap">
-                          {ssoLoginUrl}
-                        </div>
-                        <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(ssoLoginUrl);
-                            addToast({ message: 'SSO Login URL copied!', type: 'info' });
-                          }}
-                          className="p-2 border border-[var(--border-default)] rounded hover:text-[var(--royal-indigo)] bg-[var(--bg-page)]"
-                          title="Copy Link"
-                        >
-                          <Copy className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {company.sso_enabled && (
-                      <div className="pt-2">
-                        <a
-                          href={spEntityId}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-center gap-2 px-4 py-2 border border-[var(--border-default)] rounded text-[9px] font-black uppercase tracking-widest text-[var(--text-primary)] hover:bg-black/10 transition-colors w-full"
-                        >
-                          <ExternalLink className="h-3.5 w-3.5" />
-                          Download SP Metadata XML
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+          <SsoTab
+            company={company}
+            ssoProviderName={ssoProviderName}
+            setSsoProviderName={setSsoProviderName}
+            idpMetadataXml={idpMetadataXml}
+            setIdpMetadataXml={setIdpMetadataXml}
+            savingSso={savingSso}
+            handleSaveSso={handleSaveSso}
+            spEntityId={spEntityId}
+            spAcsUrl={spAcsUrl}
+            ssoLoginUrl={ssoLoginUrl}
+            addToast={addToast}
+          />
         )}
 
-        {/* ============================================================== */}
-        {/* TAB 4: TEAM MANAGEMENT */}
-        {/* ============================================================== */}
         {activeTab === 'team' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Invite Form */}
-            <div className="lg:col-span-5 space-y-4">
-              <div className="card-base p-6">
-                <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 flex items-center gap-2">
-                  <Users className="h-4 w-4 text-[var(--royal-indigo)]" />
-                  Invite New Member
-                </h3>
-
-                <form onSubmit={handleInviteUser} className="space-y-4">
-                  <div>
-                    <label htmlFor="invite-email" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
-                      Email Address
-                    </label>
-                    <input
-                      id="invite-email"
-                      type="email"
-                      required
-                      placeholder="colleague@company.com"
-                      value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                      className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="invite-role" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
-                      Organization Role
-                    </label>
-                    <select
-                      id="invite-role"
-                      value={inviteRole}
-                      onChange={(e) => setInviteRole(e.target.value)}
-                      className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
-                    >
-                      <option value="VIEWER">Viewer (Read-only access)</option>
-                      <option value="AUDITOR">Auditor (Audit logs & policies read)</option>
-                      <option value="SECURITY_ANALYST">Security Analyst (Monitor & resolve incidents)</option>
-                      <option value="COMPLIANCE_MANAGER">Compliance Manager (Workflows & evidence)</option>
-                      <option value="ADMIN">Admin (Full tenant control)</option>
-                    </select>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={inviting || !inviteEmail.trim()}
-                    className="flex items-center justify-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50 w-full"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    {inviting ? 'Sending Invite...' : 'Send Invitation'}
-                  </button>
-                </form>
-              </div>
-            </div>
-
-            {/* Pending Invitations list */}
-            <div className="lg:col-span-7 space-y-4">
-              <div className="card-base p-6">
-                <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 flex items-center gap-2">
-                  <Globe className="h-4 w-4 text-[var(--royal-indigo)]" />
-                  Sent Invitations
-                </h3>
-
-                {loadingInvitations ? (
-                  <div className="flex items-center justify-center py-10">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--royal-indigo)]" />
-                  </div>
-                ) : invitations.length === 0 ? (
-                  <div className="text-center py-10 text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-wider">
-                    No active invitations found
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs border-collapse">
-                      <thead>
-                        <tr className="border-b border-[var(--border-default)] text-[9px] font-black uppercase tracking-widest text-[var(--text-secondary)]">
-                          <th className="pb-3 font-bold">Email</th>
-                          <th className="pb-3 font-bold">Role</th>
-                          <th className="pb-3 font-bold">Expires</th>
-                          <th className="pb-3 font-bold text-right">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[var(--border-default)]/40">
-                        {invitations.map((inv) => {
-                          const isExpired = new Date(inv.expires_at) < new Date();
-                          const isAccepted = !!inv.accepted_at;
-                          return (
-                            <tr key={inv.id} className="text-[11px] text-[var(--text-primary)]">
-                              <td className="py-3.5 font-mono">{inv.email}</td>
-                              <td className="py-3.5">
-                                <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-zinc-500/10 text-zinc-400 border border-zinc-500/20 uppercase">
-                                  {inv.role}
-                                </span>
-                              </td>
-                              <td className="py-3.5 text-[var(--text-muted)]">
-                                {new Date(inv.expires_at).toLocaleDateString()}
-                              </td>
-                              <td className="py-3.5 text-right">
-                                {isAccepted ? (
-                                  <span className="text-green-500 font-bold uppercase text-[9px]">Accepted</span>
-                                ) : isExpired ? (
-                                  <span className="text-red-500 font-bold uppercase text-[9px]">Expired</span>
-                                ) : (
-                                  <button
-                                    onClick={() => handleRevokeInvitation(inv.id)}
-                                    className="p-1 hover:text-red-500 text-[var(--text-muted)] transition-colors"
-                                    title="Revoke invitation"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </button>
-                                )}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+          <TeamTab
+            inviteEmail={inviteEmail}
+            setInviteEmail={setInviteEmail}
+            inviteRole={inviteRole}
+            setInviteRole={setInviteRole}
+            inviting={inviting}
+            handleInviteUser={handleInviteUser}
+            loadingInvitations={loadingInvitations}
+            invitations={invitations}
+            handleRevokeInvitation={handleRevokeInvitation}
+          />
         )}
       </div>
 
@@ -2209,7 +1093,7 @@ export default function Settings() {
             </h3>
             
             <p className="text-[10px] text-[var(--text-secondary)] font-bold mb-6">
-              Are you sure you want to revoke <span className="text-[var(--text-primary)] font-black">"{keyToRevoke.name}"</span>? 
+              Are you sure you want to revoke "{keyToRevoke.name}"? 
               Any external AI agent running on this token will immediately be blocked from verifying tools or executing actions. This operation is permanent.
             </p>
 
@@ -2236,6 +1120,1518 @@ export default function Settings() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ==============================================================
+// SUBCOMPONENTS
+// ==============================================================
+
+interface ProfileTabProps {
+  user: any;
+  profileName: string;
+  setProfileName: (val: string) => void;
+  profileJobTitle: string;
+  setProfileJobTitle: (val: string) => void;
+  savingProfile: boolean;
+  handleSaveProfile: (e: React.FormEvent) => void;
+  profileAvatarUrl: string;
+  uploadingAvatar: boolean;
+  handleAvatarUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}
+
+function ProfileTab({
+  user,
+  profileName,
+  setProfileName,
+  profileJobTitle,
+  setProfileJobTitle,
+  savingProfile,
+  handleSaveProfile,
+  profileAvatarUrl,
+  uploadingAvatar,
+  handleAvatarUpload,
+}: ProfileTabProps) {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="lg:col-span-8 space-y-4">
+        <div className="card-base p-6">
+          <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 flex items-center gap-2">
+            <User className="h-4 w-4 text-[var(--royal-indigo)]" />
+            User Profile Details
+          </h3>
+
+          <form onSubmit={handleSaveProfile} className="space-y-6">
+            <div>
+              <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+                Email Address (Read-only)
+              </label>
+              <input
+                type="text"
+                value={user?.email || ''}
+                disabled
+                className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2.5 text-[11px] font-bold text-[var(--text-muted)] cursor-not-allowed opacity-60"
+              />
+            </div>
+
+            <div>
+              <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+                Full Name
+              </label>
+              <input
+                type="text"
+                value={profileName}
+                onChange={(e) => setProfileName(e.target.value)}
+                className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2.5 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+                Job Title
+              </label>
+              <input
+                type="text"
+                value={profileJobTitle}
+                onChange={(e) => setProfileJobTitle(e.target.value)}
+                placeholder="e.g. Director of Compliance / AI Security Engineer"
+                className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2.5 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
+              />
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="submit"
+                disabled={savingProfile}
+                className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+              >
+                <Save className="h-3.5 w-3.5" />
+                {savingProfile ? 'Saving...' : 'Save Profile'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div className="lg:col-span-4 space-y-4">
+        <div className="card-base p-6 flex flex-col items-center text-center">
+          <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 w-full text-left">
+            Profile Avatar
+          </h3>
+
+          <div className="relative group mb-6">
+            {profileAvatarUrl ? (
+              <img
+                src={profileAvatarUrl}
+                alt="Avatar"
+                className="h-28 w-28 rounded-full object-cover border-2 border-[var(--border-default)] bg-zinc-900"
+              />
+            ) : (
+              <div className="h-28 w-28 rounded-full bg-indigo-600 border border-white/10 flex items-center justify-center text-3xl font-black text-white">
+                {(profileName || user?.fullName || 'AD')
+                  .split(' ')
+                  .map((n: string) => n[0])
+                  .join('')
+                  .toUpperCase()
+                  .slice(0, 2)}
+              </div>
+            )}
+            {uploadingAvatar && (
+              <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center text-xs text-white font-bold uppercase">
+                Uploading...
+              </div>
+            )}
+          </div>
+
+          <label className="px-4 py-2 bg-zinc-800 border border-[var(--border-default)] hover:bg-zinc-700 text-white rounded text-[9px] font-black uppercase tracking-widest cursor-pointer transition-all active:scale-95">
+            Choose New Avatar
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarUpload}
+              className="hidden"
+            />
+          </label>
+          <p className="text-[9px] text-[var(--text-muted)] mt-2 uppercase tracking-wider font-bold">
+            PNG, JPG or GIF up to 5MB
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface PasswordTabProps {
+  currentPassword: string;
+  setCurrentPassword: (val: string) => void;
+  newPassword: string;
+  setNewPassword: (val: string) => void;
+  confirmPassword: string;
+  setConfirmPassword: (val: string) => void;
+  changingPassword: boolean;
+  handleChangePasswordSubmit: (e: React.FormEvent) => void;
+}
+
+function PasswordTab({
+  currentPassword,
+  setCurrentPassword,
+  newPassword,
+  setNewPassword,
+  confirmPassword,
+  setConfirmPassword,
+  changingPassword,
+  handleChangePasswordSubmit,
+}: PasswordTabProps) {
+  return (
+    <div className="max-w-xl">
+      <div className="card-base p-6">
+        <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 flex items-center gap-2">
+          <Lock className="h-4 w-4 text-[var(--royal-indigo)]" />
+          Change Password
+        </h3>
+
+        <form onSubmit={handleChangePasswordSubmit} className="space-y-6">
+          <div>
+            <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+              Current Password
+            </label>
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="••••••••••••"
+              className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2.5 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+              New Password
+            </label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="••••••••••••"
+              className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2.5 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+              Confirm New Password
+            </label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="••••••••••••"
+              className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2.5 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
+              required
+            />
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <button
+              type="submit"
+              disabled={changingPassword}
+              className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+            >
+              <Save className="h-3.5 w-3.5" />
+              {changingPassword ? 'Updating...' : 'Update Password'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+interface LlmKeysTabProps {
+  llmProvider: string;
+  setLlmProvider: (val: string) => void;
+  llmApiKey: string;
+  setLlmApiKey: (val: string) => void;
+  addingLlmKey: boolean;
+  handleAddLlmKey: (e: React.FormEvent) => void;
+  loadingLlmKeys: boolean;
+  llmKeysList: any[];
+  handleDeleteLlmKey: (id: string) => void;
+}
+
+function LlmKeysTab({
+  llmProvider,
+  setLlmProvider,
+  llmApiKey,
+  setLlmApiKey,
+  addingLlmKey,
+  handleAddLlmKey,
+  loadingLlmKeys,
+  llmKeysList,
+  handleDeleteLlmKey,
+}: LlmKeysTabProps) {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="lg:col-span-5 space-y-4">
+        <div className="card-base p-6">
+          <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 flex items-center gap-2">
+            <Plus className="h-4 w-4 text-[var(--royal-indigo)]" />
+            Add Provider Key
+          </h3>
+
+          <form onSubmit={handleAddLlmKey} className="space-y-6">
+            <div>
+              <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+                LLM Provider
+              </label>
+              <select
+                value={llmProvider}
+                onChange={(e) => setLlmProvider(e.target.value)}
+                className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2.5 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
+              >
+                <option value="openai">OpenAI (GPT-4o, etc.)</option>
+                <option value="anthropic">Anthropic (Claude 3.5, etc.)</option>
+                <option value="google">Google Gemini</option>
+                <option value="cohere">Cohere</option>
+                <option value="meta">Meta Llama (Replicate/Ollama)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+                API Key
+              </label>
+              <input
+                type="password"
+                placeholder="sk-..."
+                value={llmApiKey}
+                onChange={(e) => setLlmApiKey(e.target.value)}
+                className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2.5 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)] font-mono"
+                required
+              />
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="submit"
+                disabled={addingLlmKey || !llmApiKey.trim()}
+                className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                {addingLlmKey ? 'Adding...' : 'Add Key'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div className="lg:col-span-7 space-y-4">
+        <div className="card-base p-6">
+          <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6">
+            Configured API Keys
+          </h3>
+
+          {loadingLlmKeys ? (
+            <div className="py-12 flex justify-center items-center text-xs text-gray-500 font-bold uppercase tracking-widest">
+              <RefreshCw className="h-5 w-5 animate-spin mr-2 text-indigo-500" />
+              Loading provider keys...
+            </div>
+          ) : llmKeysList.length === 0 ? (
+            <div className="py-12 text-center text-gray-500 text-xs italic">
+              No API keys configured yet. Set up a provider key to power AI features.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-[var(--border-default)] text-[9px] font-black text-gray-500 uppercase tracking-widest bg-zinc-950/20">
+                    <th className="py-3 px-4">Provider</th>
+                    <th className="py-3 px-4">Masked Key</th>
+                    <th className="py-3 px-4">Configured By</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--border-default)]">
+                  {llmKeysList.map((k) => (
+                    <tr key={k.id} className="hover:bg-white/5 transition-colors">
+                      <td className="py-3.5 px-4 font-bold text-white uppercase tracking-wider">
+                        {k.provider}
+                      </td>
+                      <td className="py-3.5 px-4 font-mono text-[11px] text-gray-400">
+                        {k.maskedKey}
+                      </td>
+                      <td className="py-3.5 px-4 text-gray-400">
+                        {k.users?.full_name || k.users?.email || 'Unknown'}
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <button
+                          onClick={() => handleDeleteLlmKey(k.id)}
+                          type="button"
+                          className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded border border-transparent hover:border-red-500/20 transition-all active:scale-95"
+                          title="Delete key"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface FeaturesTabProps {
+  loadingFeatureFlags: boolean;
+  featureFlagsList: any[];
+  handleToggleFeatureFlag: (key: string, enabled: boolean) => void;
+}
+
+function FeaturesTab({
+  loadingFeatureFlags,
+  featureFlagsList,
+  handleToggleFeatureFlag,
+}: FeaturesTabProps) {
+  return (
+    <div className="card-base p-6">
+      <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 flex items-center gap-2">
+        <Sliders className="h-4 w-4 text-[var(--royal-indigo)]" />
+        Feature Flags & System Overrides
+      </h3>
+
+      {loadingFeatureFlags ? (
+        <div className="py-12 flex justify-center items-center text-xs text-gray-500 font-bold uppercase tracking-widest">
+          <RefreshCw className="h-5 w-5 animate-spin mr-2 text-indigo-500" />
+          Loading feature states...
+        </div>
+      ) : featureFlagsList.length === 0 ? (
+        <div className="py-12 text-center text-gray-500 text-xs italic">
+          No system feature flags registered.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {featureFlagsList.map((flag) => (
+            <div
+              key={flag.key}
+              className="flex items-center justify-between p-4 bg-[var(--bg-page)] border border-[var(--border-default)] rounded-xl hover:border-zinc-800 transition-all"
+            >
+              <div>
+                <p className="text-xs font-bold text-white tracking-wide">{flag.name}</p>
+                <p className="text-[9px] font-mono text-[var(--text-muted)] uppercase mt-0.5">{flag.key}</p>
+              </div>
+
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={flag.enabled}
+                  onChange={() => handleToggleFeatureFlag(flag.key, flag.enabled)}
+                  className="sr-only peer"
+                />
+                <div className="w-9 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-400 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600 peer-checked:after:bg-white"></div>
+              </label>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface GeneralTabProps {
+  apiKey: string;
+  handleCopyKey: () => void;
+  handleRotateKey: () => void;
+  loading: boolean;
+  email: string;
+  setEmail: (val: string) => void;
+  handleSaveEmail: (e: React.FormEvent) => void;
+  webhookUrl: string;
+  setWebhookUrl: (val: string) => void;
+  handleSaveWebhook: (e: React.FormEvent) => void;
+  slackStatus: string;
+  slackUrl: string;
+  setSlackUrl: (val: string) => void;
+  slackChannel: string;
+  setSlackChannel: (val: string) => void;
+  slackEnabled: boolean;
+  setSlackEnabled: (val: boolean) => void;
+  slackNotifyOn: string[];
+  setSlackNotifyOn: (val: string[]) => void;
+  handleDeleteSlack: () => void;
+  slackTesting: boolean;
+  handleTestSlack: () => void;
+  slackSaving: boolean;
+  handleSaveSlack: () => void;
+  mfaStatus: { enabled: boolean } | null;
+  showRecoveryCodes: boolean;
+  setShowRecoveryCodes: (val: boolean) => void;
+  recoveryCodes: string[];
+  codesCopied: boolean;
+  setCodesCopied: (val: boolean) => void;
+  mfaToken: string;
+  setMfaToken: (val: string) => void;
+  mfaLoading: boolean;
+  handleMfaDisable: () => void;
+  mfaSetupData: { qrCodeUrl: string; manualKey: string } | null;
+  setMfaSetupData: (val: { qrCodeUrl: string; manualKey: string } | null) => void;
+  handleMfaSetup: () => void;
+  handleMfaEnable: () => void;
+  addToast: any;
+}
+
+function GeneralTab({
+  apiKey,
+  handleCopyKey,
+  handleRotateKey,
+  loading,
+  email,
+  setEmail,
+  handleSaveEmail,
+  webhookUrl,
+  setWebhookUrl,
+  handleSaveWebhook,
+  slackStatus,
+  slackUrl,
+  setSlackUrl,
+  slackChannel,
+  setSlackChannel,
+  slackEnabled,
+  setSlackEnabled,
+  slackNotifyOn,
+  setSlackNotifyOn,
+  handleDeleteSlack,
+  slackTesting,
+  handleTestSlack,
+  slackSaving,
+  handleSaveSlack,
+  mfaStatus,
+  showRecoveryCodes,
+  setShowRecoveryCodes,
+  recoveryCodes,
+  codesCopied,
+  setCodesCopied,
+  mfaToken,
+  setMfaToken,
+  mfaLoading,
+  handleMfaDisable,
+  mfaSetupData,
+  setMfaSetupData,
+  handleMfaSetup,
+  handleMfaEnable,
+  addToast,
+}: GeneralTabProps) {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* Section 1: API Keys */}
+      <div className="lg:col-span-6 space-y-4">
+        <div className="card-base p-6">
+          <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 flex items-center gap-2">
+            <Key className="h-4 w-4 text-[var(--royal-indigo)]" />
+            API Authentication
+          </h3>
+          
+          <div className="space-y-6">
+            <div>
+              <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Active API Key</span>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2.5 font-mono text-[11px] text-[var(--text-primary)] overflow-hidden text-ellipsis">
+                  {apiKey}
+                </div>
+                <button 
+                  onClick={handleCopyKey}
+                  type="button"
+                  className="p-2.5 text-[var(--text-muted)] hover:text-[var(--royal-indigo)] bg-[var(--bg-page)] border border-[var(--border-default)] rounded transition-colors"
+                  title="Copy to clipboard"
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
+              </div>
+              <p className="text-[10px] text-[var(--text-muted)] mt-2 italic">
+                Use this key to authenticate your SDK calls to Sentra AI.
+              </p>
+            </div>
+
+            <div className="pt-2">
+              <button 
+                onClick={handleRotateKey}
+                disabled={loading}
+                type="button"
+                className="flex items-center gap-2 px-4 py-2 bg-black/5 border border-[var(--border-default)] rounded text-[10px] font-black text-[var(--text-primary)] uppercase tracking-widest hover:bg-black/10 transition-all disabled:opacity-50"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+                Regenerate Key
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Section 2: Alert Configuration */}
+      <div className="lg:col-span-6 space-y-4">
+        <div className="card-base p-6">
+          <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 flex items-center gap-2">
+            <Bell className="h-4 w-4 text-[var(--royal-indigo)]" />
+            Alert Configuration
+          </h3>
+
+          <div className="space-y-8">
+            <form onSubmit={handleSaveEmail}>
+              <div className="flex flex-col gap-3">
+                <div>
+                  <label htmlFor="alert-email" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Alert Email</label>
+                  <input 
+                    id="alert-email"
+                    type="email" 
+                    placeholder="alerts@company.com" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]" 
+                  />
+                </div>
+                <button 
+                  type="submit"
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] rounded text-[9px] font-black text-white uppercase tracking-widest hover:bg-[var(--royal-indigo)] transition-all w-fit self-end"
+                >
+                  <Save className="h-3.5 w-3.5" />
+                  Save Email
+                </button>
+              </div>
+            </form>
+
+            <div className="h-px bg-[var(--border-default)] opacity-50" />
+
+            <form onSubmit={handleSaveWebhook}>
+              <div className="flex flex-col gap-3">
+                <div>
+                  <label htmlFor="webhook-url" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Webhook URL</label>
+                  <input 
+                    id="webhook-url"
+                    type="url" 
+                    placeholder="https://hooks.slack.com/services/..." 
+                    value={webhookUrl}
+                    onChange={(e) => setWebhookUrl(e.target.value)}
+                    className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]" 
+                  />
+                </div>
+                <button 
+                  type="submit"
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] rounded text-[9px] font-black text-white uppercase tracking-widest hover:bg-[var(--royal-indigo)] transition-all w-fit self-end"
+                >
+                  <Save className="h-3.5 w-3.5" />
+                  Save Webhook
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      {/* Section 3: Slack Integration */}
+      <div className="lg:col-span-12 space-y-4">
+        <div className="card-base p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight flex items-center gap-2">
+              <Slack className="h-4 w-4 text-[#4A154B]" />
+              Slack Integration
+            </h3>
+            <span className={`text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded border ${
+              slackStatus === 'connected' 
+                ? 'bg-green-500/10 text-green-500 border-green-500/20' 
+                : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
+            }`}>
+              {slackStatus === 'connected' ? 'Connected' : 'Not Configured'}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="slack-webhook" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Slack Webhook URL</label>
+                <input 
+                  id="slack-webhook"
+                  type="password" 
+                  placeholder="https://hooks.slack.com/services/..." 
+                  value={slackUrl}
+                  onChange={(e) => setSlackUrl(e.target.value)}
+                  className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]" 
+                />
+              </div>
+
+              <div>
+                <label htmlFor="slack-channel" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Slack Channel</label>
+                <input 
+                  id="slack-channel"
+                  type="text" 
+                  placeholder="#alerts-compliance" 
+                  value={slackChannel}
+                  onChange={(e) => setSlackChannel(e.target.value)}
+                  className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]" 
+                />
+              </div>
+
+              <div className="flex items-center gap-2 mt-2">
+                <input 
+                  id="slack-enabled"
+                  type="checkbox"
+                  checked={slackEnabled}
+                  onChange={(e) => setSlackEnabled(e.target.checked)}
+                  className="h-4 w-4 accent-[var(--royal-indigo)] rounded border-[var(--border-default)] cursor-pointer"
+                />
+                <label htmlFor="slack-enabled" className="text-[10px] font-black text-[var(--text-primary)] uppercase tracking-wider cursor-pointer">
+                  Enable Slack Notifications
+                </label>
+              </div>
+            </div>
+
+            <div>
+              <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-2.5">Alert Triggers</span>
+              <div className="space-y-2.5 bg-[var(--bg-page)] border border-[var(--border-default)] rounded p-4">
+                {[
+                  { id: 'guardrail_block', label: 'Guardrail Blocks' },
+                  { id: 'drift_detected', label: 'Behavioral Drift Detected' },
+                  { id: 'incident_created', label: 'Security Incidents' },
+                  { id: 'policy_violation', label: 'Policy Violations' },
+                  { id: 'workflow_change', label: 'Workflow Phase Transitions' }
+                ].map((trigger) => (
+                  <div key={trigger.id} className="flex items-center gap-2">
+                    <input 
+                      id={`trigger-${trigger.id}`}
+                      type="checkbox"
+                      checked={slackNotifyOn.includes(trigger.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSlackNotifyOn([...slackNotifyOn, trigger.id]);
+                        } else {
+                          setSlackNotifyOn(slackNotifyOn.filter(x => x !== trigger.id));
+                        }
+                      }}
+                      className="h-3.5 w-3.5 accent-[var(--royal-indigo)] rounded cursor-pointer"
+                    />
+                    <label htmlFor={`trigger-${trigger.id}`} className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer">
+                      {trigger.label}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 mt-6 border-t border-[var(--border-default)] pt-4">
+            {slackStatus === 'connected' && (
+              <button 
+                onClick={handleDeleteSlack}
+                type="button"
+                className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded text-[9px] font-black uppercase tracking-widest transition-all"
+              >
+                Disconnect Slack
+              </button>
+            )}
+            <button 
+              onClick={handleTestSlack}
+              disabled={slackTesting || !slackUrl || !slackChannel}
+              type="button"
+              className="px-4 py-2 bg-black/5 hover:bg-black/10 text-[var(--text-primary)] border border-[var(--border-default)] rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+            >
+              {slackTesting ? 'Testing...' : 'Test Connection'}
+            </button>
+            <button 
+              onClick={handleSaveSlack}
+              disabled={slackSaving || !slackUrl || !slackChannel}
+              type="button"
+              className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+            >
+              <Save className="h-3.5 w-3.5" />
+              {slackSaving ? 'Saving...' : 'Save Settings'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Section 4: Multi-Factor Authentication (MFA) */}
+      <div className="lg:col-span-12 space-y-4">
+        <div className="card-base p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight flex items-center gap-2">
+              <Shield className="h-4 w-4 text-[var(--royal-indigo)]" />
+              Multi-Factor Authentication (MFA)
+            </h3>
+            <span className={`text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded border ${
+              mfaStatus?.enabled 
+                ? 'bg-green-500/10 text-green-500 border-green-500/20' 
+                : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
+            }`}>
+              {mfaStatus?.enabled ? 'Active & Enforced' : 'Disabled'}
+            </span>
+          </div>
+
+          <div className="space-y-6">
+            {mfaStatus?.enabled ? (
+              <div className="space-y-6">
+                <div className="flex items-start gap-3 bg-green-500/10 border border-green-500/20 rounded p-4 text-[var(--text-primary)]">
+                  <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wide text-green-400">TOTP Authenticator Protection Active</p>
+                    <p className="text-[10px] text-[var(--text-secondary)] mt-1">
+                      Your account is protected by an industry-standard time-based one-time password (TOTP) authenticator. Verification will be required at login.
+                    </p>
+                  </div>
+                </div>
+
+                {showRecoveryCodes && recoveryCodes.length > 0 && (
+                  <div className="bg-yellow-500/10 border border-yellow-500/20 rounded p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-yellow-500">MFA Recovery Codes Generated</span>
+                    </div>
+                    <p className="text-[10px] text-[var(--text-secondary)] leading-relaxed">
+                      Write down these recovery codes in a secure location. Each code can be used once to bypass MFA if you lose your authentication device.
+                    </p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 font-mono text-xs text-[var(--text-primary)] bg-[var(--bg-page)] p-3 rounded border border-[var(--border-default)]">
+                      {recoveryCodes.map((code, idx) => (
+                        <div key={idx} className="flex justify-between items-center bg-black/10 px-2.5 py-1.5 rounded">
+                          <span>{code}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(recoveryCodes.join('\n'));
+                          setCodesCopied(true);
+                          addToast({ message: 'Recovery codes copied', type: 'info' });
+                          setTimeout(() => setCodesCopied(false), 2000);
+                        }}
+                        type="button"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-black/5 hover:bg-black/10 border border-[var(--border-default)] rounded text-[9px] font-black uppercase tracking-widest text-[var(--text-primary)] transition-all"
+                      >
+                        <Copy className="h-3 w-3" />
+                        {codesCopied ? 'Copied!' : 'Copy Codes'}
+                      </button>
+                      <button
+                        onClick={() => setShowRecoveryCodes(false)}
+                        type="button"
+                        className="px-3 py-1.5 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all"
+                      >
+                        I Have Saved These Codes
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="border-t border-[var(--border-default)]/60 pt-4">
+                  <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-2">Disable Multi-Factor Authentication</span>
+                  <div className="flex flex-col md:flex-row md:items-center gap-3">
+                    <input 
+                      type="text" 
+                      placeholder="Enter 6-digit TOTP code to confirm" 
+                      value={mfaToken}
+                      onChange={(e) => setMfaToken(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-xs font-mono font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)] w-64"
+                    />
+                    <button 
+                      onClick={handleMfaDisable}
+                      disabled={mfaLoading || mfaToken.length < 6}
+                      type="button"
+                      className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50 flex items-center gap-2"
+                    >
+                      <Lock className="h-3.5 w-3.5" />
+                      Disable Authenticator
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
+                  Add an extra layer of security to your enterprise account by configuring a mobile authenticator app (such as Google Authenticator, Duo, or 1Password). Verification tokens will be prompted on every system dashboard login request.
+                </p>
+
+                {!mfaSetupData ? (
+                  <button
+                    onClick={handleMfaSetup}
+                    disabled={mfaLoading}
+                    type="button"
+                    className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                  >
+                    <Unlock className="h-3.5 w-3.5" />
+                    Enable Authenticator
+                  </button>
+                ) : (
+                  <div className="border border-[var(--border-default)] rounded p-5 bg-[var(--bg-page)] space-y-6">
+                    <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+                      <div className="bg-white p-2 rounded-xl border border-[var(--border-default)] shrink-0 flex items-center justify-center shadow-lg animate-fade-in">
+                        <img src={mfaSetupData.qrCodeUrl} alt="MFA QR Code" className="h-32 w-32 object-contain" />
+                      </div>
+                      <div className="space-y-3 flex-1">
+                        <h4 className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wide">Configure mobile app</h4>
+                        <p className="text-[10px] text-[var(--text-secondary)] leading-relaxed">
+                          Scan the QR code using your mobile authenticator app. If your device camera is unable to scan it, enter the manual configuration key below:
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <div className="bg-black/10 border border-[var(--border-default)] rounded px-3 py-1.5 font-mono text-xs text-[var(--text-primary)] flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+                            {mfaSetupData.manualKey}
+                          </div>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(mfaSetupData.manualKey);
+                              addToast({ message: 'Manual key copied', type: 'info' });
+                            }}
+                            type="button"
+                            className="p-1.5 text-[var(--text-muted)] hover:text-[var(--royal-indigo)] bg-black/5 hover:bg-black/10 border border-[var(--border-default)] rounded transition-colors"
+                            title="Copy Manual Key"
+                          >
+                            <Copy className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-[var(--border-default)] pt-4 space-y-3">
+                      <label htmlFor="mfa-totp-enable" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block">Verify Authenticator Setup</label>
+                      <p className="text-[10px] text-[var(--text-secondary)] mb-2">
+                        Enter the 6-digit verification code generated by your mobile app to finalize configuration:
+                      </p>
+                      <div className="flex flex-col md:flex-row md:items-center gap-3">
+                        <input 
+                          id="mfa-totp-enable"
+                          type="text" 
+                          placeholder="Enter 6-digit TOTP code" 
+                          value={mfaToken}
+                          onChange={(e) => setMfaToken(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                          className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-xs font-mono font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)] w-64"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleMfaEnable}
+                            disabled={mfaLoading || mfaToken.length < 6}
+                            type="button"
+                            className="px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50 flex items-center gap-2"
+                          >
+                            <QrCode className="h-3.5 w-3.5" />
+                            Verify & Enable MFA
+                          </button>
+                          <button
+                            onClick={() => { setMfaSetupData(null); setMfaToken(''); }}
+                            type="button"
+                            className="px-4 py-2 border border-[var(--border-default)] rounded text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest hover:bg-black/5 transition-all"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface McpTabProps {
+  mcpKeysLoading: boolean;
+  mcpKeys: any[];
+  setCreateKeyModalOpen: (val: boolean) => void;
+  setKeyToRevoke: (val: any) => void;
+  setRevokeModalOpen: (val: boolean) => void;
+  user: any;
+  logsFilterDecision: 'all' | 'allowed' | 'blocked';
+  setLogsFilterDecision: (val: 'all' | 'allowed' | 'blocked') => void;
+  setLogsPage: (val: number | ((prev: number) => number)) => void;
+  mcpLogsLoading: boolean;
+  mcpLogs: any[];
+  logsPage: number;
+  logsPages: number;
+  logsTotal: number;
+}
+
+function McpTab({
+  mcpKeysLoading,
+  mcpKeys,
+  setCreateKeyModalOpen,
+  setKeyToRevoke,
+  setRevokeModalOpen,
+  user,
+  logsFilterDecision,
+  setLogsFilterDecision,
+  setLogsPage,
+  mcpLogsLoading,
+  mcpLogs,
+  logsPage,
+  logsPages,
+  logsTotal,
+}: McpTabProps) {
+  return (
+    <div className="space-y-6">
+      {/* API Keys Table */}
+      <div className="card-base p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight flex items-center gap-2">
+              <Key className="h-4 w-4 text-[var(--royal-indigo)]" />
+              MCP Agent Keys
+            </h3>
+            <p className="text-[10px] text-[var(--text-muted)] mt-1 max-w-xl">
+              SAML-authenticated API access credentials for dynamic, real-time agent governance over Model Context Protocol (MCP) integrations.
+            </p>
+          </div>
+          
+          {user?.role === 'ADMIN' && (
+            <button
+              onClick={() => setCreateKeyModalOpen(true)}
+              type="button"
+              className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Create Agent Key
+            </button>
+          )}
+        </div>
+
+        {mcpKeysLoading ? (
+          <div className="py-12 flex justify-center items-center gap-2 text-[var(--text-muted)]">
+            <RefreshCw className="h-4 w-4 animate-spin" />
+            <span className="text-xs uppercase tracking-wider font-bold">Loading agent credentials...</span>
+          </div>
+        ) : mcpKeys.length === 0 ? (
+          <div className="py-12 text-center bg-black/5 rounded border border-dashed border-[var(--border-default)]">
+            <AlertTriangle className="h-8 w-8 text-[var(--text-muted)] mx-auto mb-2" />
+            <p className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">No Agent Keys Registered</p>
+            <p className="text-[10px] text-[var(--text-muted)] mt-1">Generate a key to grant your external AI agents access to Sentra's governance pipeline.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-[var(--border-default)] text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="pb-3 font-black">Key Name</th>
+                  <th className="pb-3 font-black">Prefix</th>
+                  <th className="pb-3 font-black">Created At</th>
+                  <th className="pb-3 font-black">Last Used</th>
+                  <th className="pb-3 font-black text-center">Allowed Tools</th>
+                  <th className="pb-3 font-black text-center">Status</th>
+                  <th className="pb-3 font-black text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {mcpKeys.map((key) => (
+                  <tr key={key.id} className="border-b border-[var(--border-default)]/30 hover:bg-white/5 transition-colors">
+                    <td className="py-3.5 font-bold text-[var(--text-primary)]">{key.name}</td>
+                    <td className="py-3.5 font-mono text-[var(--text-secondary)] text-[10px]">{key.key_prefix}••••</td>
+                    <td className="py-3.5 text-[var(--text-muted)]">{new Date(key.created_at).toLocaleDateString()}</td>
+                    <td className="py-3.5 text-[var(--text-muted)]">
+                      {key.last_used_at ? new Date(key.last_used_at).toLocaleDateString() + ' ' + new Date(key.last_used_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : <span className="italic">Never</span>}
+                    </td>
+                    <td className="py-3.5 text-center">
+                      {key.allowed_tools && key.allowed_tools.length > 0 ? (
+                        <span className="bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded text-[10px] font-bold border border-blue-500/20">
+                          {key.allowed_tools.length} Limit
+                        </span>
+                      ) : (
+                        <span className="text-[var(--text-muted)] italic">All Tools</span>
+                      )}
+                    </td>
+                    <td className="py-3.5">
+                      <div className="flex justify-center">
+                        <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${
+                          key.is_active 
+                            ? 'bg-green-500/10 text-green-500 border-green-500/20' 
+                            : 'bg-red-500/10 text-red-500 border-red-500/20'
+                        }`}>
+                          {key.is_active ? 'Active' : 'Revoked'}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-3.5 text-right">
+                      {key.is_active && user?.role === 'ADMIN' ? (
+                        <button
+                          onClick={() => {
+                            setKeyToRevoke(key);
+                            setRevokeModalOpen(true);
+                          }}
+                          type="button"
+                          className="p-2 text-red-400 hover:text-red-500 hover:bg-red-500/10 rounded transition-colors"
+                          title="Revoke Key"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      ) : (
+                        <span className="text-[var(--text-muted)] text-[10px] italic">No actions</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Audit Logs Table */}
+      <div className="card-base p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight flex items-center gap-2">
+              <Database className="h-4 w-4 text-[var(--royal-indigo)]" />
+              MCP Gateway Audit Logs
+            </h3>
+            <p className="text-[10px] text-[var(--text-muted)] mt-1">
+              Immutable governance evaluation logs intercepting external model execution attempts.
+            </p>
+          </div>
+
+          {/* Filter Selector */}
+          <div className="flex items-center gap-2 bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-1.5">
+            <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-wider">Decision:</span>
+            <select
+              value={logsFilterDecision}
+              onChange={(e) => {
+                setLogsFilterDecision(e.target.value as any);
+                setLogsPage(1);
+              }}
+              className="bg-transparent text-xs text-[var(--text-primary)] font-bold border-none outline-none cursor-pointer"
+            >
+              <option value="all">All Logs</option>
+              <option value="allowed">Allowed Only</option>
+              <option value="blocked">Blocked Only</option>
+            </select>
+          </div>
+        </div>
+
+        {mcpLogsLoading ? (
+          <div className="py-12 flex justify-center items-center gap-2 text-[var(--text-muted)]">
+            <RefreshCw className="h-4 w-4 animate-spin" />
+            <span className="text-xs uppercase tracking-wider font-bold">Loading audit trails...</span>
+          </div>
+        ) : mcpLogs.length === 0 ? (
+          <div className="py-8 text-center text-[var(--text-muted)]">
+            <CheckCircle2 className="h-8 w-8 text-green-500/20 mx-auto mb-2" />
+            <p className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">No Evaluation Logs Recorded</p>
+            <p className="text-[10px] text-[var(--text-muted)] mt-1">Logs will appear as soon as external agents trigger registered MCP tools.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-[var(--border-default)] text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-wider">
+                    <th className="pb-3 font-black">Timestamp</th>
+                    <th className="pb-3 font-black">Tool Name</th>
+                    <th className="pb-3 font-black">Args Summary</th>
+                    <th className="pb-3 font-black text-center">Decision</th>
+                    <th className="pb-3 font-black text-center">Risk</th>
+                    <th className="pb-3 font-black">Reason</th>
+                    <th className="pb-3 font-black text-right">Latency</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mcpLogs.map((log) => (
+                    <tr key={log.id} className="border-b border-[var(--border-default)]/30 hover:bg-white/5 transition-colors">
+                      <td className="py-3 text-[var(--text-muted)] whitespace-nowrap">
+                        {new Date(log.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                      </td>
+                      <td className="py-3 font-bold font-mono text-[var(--text-primary)]">{log.tool_name}</td>
+                      <td className="py-3 max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap text-[var(--text-secondary)] font-mono text-[10px]">
+                        {log.input_summary || '{}'}
+                      </td>
+                      <td className="py-3">
+                        <div className="flex justify-center">
+                          <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${
+                            log.decision === 'allowed'
+                              ? 'bg-green-500/10 text-green-500 border-green-500/20'
+                              : 'bg-red-500/10 text-red-500 border-red-500/20'
+                          }`}>
+                            {log.decision}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-3">
+                        <div className="flex justify-center">
+                          <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${
+                            log.risk_level === 'high' 
+                              ? 'bg-red-500/10 text-red-500 border-red-500/20' 
+                              : log.risk_level === 'medium'
+                                ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
+                                : 'bg-green-500/10 text-green-500 border-green-500/20'
+                          }`}>
+                            {log.risk_level}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-3 text-[var(--text-secondary)] max-w-xs overflow-hidden text-ellipsis whitespace-nowrap" title={log.reason}>
+                        {log.reason || 'None provided'}
+                      </td>
+                      <td className="py-3 text-right font-mono text-[10px] text-[var(--text-muted)]">
+                        {log.duration_ms ? `${log.duration_ms}ms` : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Simple Pagination Controls */}
+            {logsPages > 1 && (
+              <div className="flex items-center justify-between border-t border-[var(--border-default)]/30 pt-4 text-xs">
+                <span className="text-[var(--text-muted)]">
+                  Showing page <span className="font-bold text-[var(--text-secondary)]">{logsPage}</span> of <span className="font-bold text-[var(--text-secondary)]">{logsPages}</span> ({logsTotal} logs)
+                </span>
+                
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setLogsPage(prev => Math.max(1, prev - 1))}
+                    disabled={logsPage === 1}
+                    type="button"
+                    className="px-3 py-1 bg-black/5 hover:bg-black/10 border border-[var(--border-default)] rounded text-[9px] font-black uppercase tracking-wider disabled:opacity-50 text-[var(--text-primary)]"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => setLogsPage(prev => Math.min(logsPages, prev + 1))}
+                    disabled={logsPage === logsPages}
+                    type="button"
+                    className="px-3 py-1 bg-black/5 hover:bg-black/10 border border-[var(--border-default)] rounded text-[9px] font-black uppercase tracking-wider disabled:opacity-50 text-[var(--text-primary)]"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+interface SsoTabProps {
+  company: any;
+  ssoProviderName: string;
+  setSsoProviderName: (val: string) => void;
+  idpMetadataXml: string;
+  setIdpMetadataXml: (val: string) => void;
+  savingSso: boolean;
+  handleSaveSso: (e: React.FormEvent) => void;
+  spEntityId: string;
+  spAcsUrl: string;
+  ssoLoginUrl: string;
+  addToast: any;
+}
+
+function SsoTab({
+  company,
+  ssoProviderName,
+  setSsoProviderName,
+  idpMetadataXml,
+  setIdpMetadataXml,
+  savingSso,
+  handleSaveSso,
+  spEntityId,
+  spAcsUrl,
+  ssoLoginUrl,
+  addToast,
+}: SsoTabProps) {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* Form configuration */}
+      <div className="lg:col-span-7 space-y-4">
+        <div className="card-base p-6">
+          <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 flex items-center gap-2">
+            <Globe className="h-4 w-4 text-[var(--royal-indigo)]" />
+            SAML 2.0 Identity Provider Config
+          </h3>
+
+          <form onSubmit={handleSaveSso} className="space-y-6">
+            <div>
+              <label htmlFor="sso-provider" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+                SSO Provider Name
+              </label>
+              <input
+                id="sso-provider"
+                type="text"
+                placeholder="e.g. Okta, Azure Active Directory, Google Workspace"
+                value={ssoProviderName}
+                onChange={(e) => setSsoProviderName(e.target.value)}
+                className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="idp-xml" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+                IdP Metadata XML
+              </label>
+              <textarea
+                id="idp-xml"
+                rows={12}
+                placeholder="Paste the full IdP XML metadata string provided by your Identity Provider..."
+                value={idpMetadataXml}
+                onChange={(e) => setIdpMetadataXml(e.target.value)}
+                className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[10px] font-mono text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)] resize-y"
+              />
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="submit"
+                disabled={savingSso || !idpMetadataXml.trim()}
+                className="flex items-center gap-2 px-5 py-2.5 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+              >
+                <Save className="h-3.5 w-3.5" />
+                {savingSso ? 'Configuring SSO...' : 'Save & Enable SSO'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {/* Read-only details */}
+      <div className="lg:col-span-5 space-y-4">
+        <div className="card-base p-6">
+          <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-[var(--royal-indigo)]" />
+            Service Provider (SP) Credentials
+          </h3>
+
+          {!company ? (
+            <div className="py-6 text-center text-xs text-[var(--text-muted)] uppercase tracking-wider font-bold">
+              Resolving tenant workspace slug...
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <div>
+                <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1">
+                  SAML Status
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className={`inline-block h-2 w-2 rounded-full ${company.sso_enabled ? 'bg-green-500' : 'bg-zinc-500'}`} />
+                  <span className="text-[11px] font-black uppercase tracking-wider text-[var(--text-primary)]">
+                    {company.sso_enabled ? `SAML SSO Enabled (${company.sso_provider || 'SAML'})` : 'Inactive (Mock SSO Active)'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="h-px bg-[var(--border-default)]/40" />
+
+              <div>
+                <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1">
+                  Your SP Entity ID
+                </span>
+                <div className="flex items-center gap-2 bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 font-mono text-[10px] text-[var(--text-secondary)] overflow-hidden text-ellipsis whitespace-nowrap">
+                  {spEntityId}
+                </div>
+              </div>
+
+              <div>
+                <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1">
+                  Your ACS URL (Assertion Consumer Service)
+                </span>
+                <div className="flex items-center gap-2 bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 font-mono text-[10px] text-[var(--text-secondary)] overflow-hidden text-ellipsis whitespace-nowrap">
+                  {spAcsUrl}
+                </div>
+              </div>
+
+              <div className="h-px bg-[var(--border-default)]/40" />
+
+              <div>
+                <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1">
+                  SSO Login URL
+                </span>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 font-mono text-[10px] text-[var(--text-secondary)] overflow-hidden text-ellipsis whitespace-nowrap">
+                    {ssoLoginUrl}
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(ssoLoginUrl);
+                      addToast({ message: 'SSO Login URL copied!', type: 'info' });
+                    }}
+                    type="button"
+                    className="p-2 border border-[var(--border-default)] rounded hover:text-[var(--royal-indigo)] bg-[var(--bg-page)]"
+                    title="Copy Link"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {company.sso_enabled && (
+                <div className="pt-2">
+                  <a
+                    href={spEntityId}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 px-4 py-2 border border-[var(--border-default)] rounded text-[9px] font-black uppercase tracking-widest text-[var(--text-primary)] hover:bg-black/10 transition-colors w-full"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    Download SP Metadata XML
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface TeamTabProps {
+  inviteEmail: string;
+  setInviteEmail: (val: string) => void;
+  inviteRole: string;
+  setInviteRole: (val: string) => void;
+  inviting: boolean;
+  handleInviteUser: (e: React.FormEvent) => void;
+  loadingInvitations: boolean;
+  invitations: any[];
+  handleRevokeInvitation: (id: string) => void;
+}
+
+function TeamTab({
+  inviteEmail,
+  setInviteEmail,
+  inviteRole,
+  setInviteRole,
+  inviting,
+  handleInviteUser,
+  loadingInvitations,
+  invitations,
+  handleRevokeInvitation,
+}: TeamTabProps) {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* Invite Form */}
+      <div className="lg:col-span-5 space-y-4">
+        <div className="card-base p-6">
+          <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 flex items-center gap-2">
+            <Users className="h-4 w-4 text-[var(--royal-indigo)]" />
+            Invite New Member
+          </h3>
+
+          <form onSubmit={handleInviteUser} className="space-y-4">
+            <div>
+              <label htmlFor="invite-email" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+                Email Address
+              </label>
+              <input
+                id="invite-email"
+                type="email"
+                required
+                placeholder="colleague@company.com"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="invite-role" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+                Organization Role
+              </label>
+              <select
+                id="invite-role"
+                value={inviteRole}
+                onChange={(e) => setInviteRole(e.target.value)}
+                className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
+              >
+                <option value="VIEWER">Viewer (Read-only access)</option>
+                <option value="AUDITOR">Auditor (Audit logs & policies read)</option>
+                <option value="SECURITY_ANALYST">Security Analyst (Monitor & resolve incidents)</option>
+                <option value="COMPLIANCE_MANAGER">Compliance Manager (Workflows & evidence)</option>
+                <option value="ADMIN">Admin (Full tenant control)</option>
+              </select>
+            </div>
+
+            <button
+              type="submit"
+              disabled={inviting || !inviteEmail.trim()}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50 w-full"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              {inviting ? 'Sending Invite...' : 'Send Invitation'}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {/* Pending Invitations list */}
+      <div className="lg:col-span-7 space-y-4">
+        <div className="card-base p-6">
+          <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 flex items-center gap-2">
+            <Globe className="h-4 w-4 text-[var(--royal-indigo)]" />
+            Sent Invitations
+          </h3>
+
+          {loadingInvitations ? (
+            <div className="flex items-center justify-center py-10">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--royal-indigo)]" />
+            </div>
+          ) : invitations.length === 0 ? (
+            <div className="text-center py-10 text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-wider">
+              No active invitations found
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-[var(--border-default)] text-[9px] font-black uppercase tracking-widest text-[var(--text-secondary)]">
+                    <th className="pb-3 font-bold">Email</th>
+                    <th className="pb-3 font-bold">Role</th>
+                    <th className="pb-3 font-bold">Expires</th>
+                    <th className="pb-3 font-bold text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--border-default)]/40">
+                  {invitations.map((inv) => {
+                    const isExpired = new Date(inv.expires_at) < new Date();
+                    const isAccepted = !!inv.accepted_at;
+                    return (
+                      <tr key={inv.id} className="text-[11px] text-[var(--text-primary)]">
+                        <td className="py-3.5 font-mono">{inv.email}</td>
+                        <td className="py-3.5">
+                          <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-zinc-500/10 text-zinc-400 border border-zinc-500/20 uppercase">
+                            {inv.role}
+                          </span>
+                        </td>
+                        <td className="py-3.5 text-[var(--text-muted)]">
+                          {new Date(inv.expires_at).toLocaleDateString()}
+                        </td>
+                        <td className="py-3.5 text-right">
+                          {isAccepted ? (
+                            <span className="text-green-500 font-bold uppercase text-[9px]">Accepted</span>
+                          ) : isExpired ? (
+                            <span className="text-red-500 font-bold uppercase text-[9px]">Expired</span>
+                          ) : (
+                            <button
+                              onClick={() => handleRevokeInvitation(inv.id)}
+                              type="button"
+                              className="p-1 hover:text-red-500 text-[var(--text-muted)] transition-colors"
+                              title="Revoke invitation"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

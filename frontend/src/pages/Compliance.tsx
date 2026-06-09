@@ -347,35 +347,6 @@ export default function Compliance() {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'IMPLEMENTED':
-        return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-      case 'IN_PROGRESS':
-        return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
-      case 'NOT_APPLICABLE':
-        return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
-      case 'NOT_STARTED':
-      default:
-        return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
-    }
-  };
-
-  const getNistReasonIcon = (type: string) => {
-    switch (type) {
-      case 'decay':
-        return <Clock className="h-4.5 w-4.5 text-amber-400" />;
-      case 'improvement':
-        return <TrendingUp className="h-4.5 w-4.5 text-emerald-400" />;
-      case 'incident_breach':
-        return <ShieldAlert className="h-4.5 w-4.5 text-rose-500" />;
-      case 'health_penalty':
-        return <AlertTriangle className="h-4.5 w-4.5 text-red-400" />;
-      default:
-        return <Info className="h-4.5 w-4.5 text-indigo-400" />;
-    }
-  };
-
   // ==========================================
   // RENDER BLOCKS
   // ==========================================
@@ -509,1022 +480,73 @@ export default function Compliance() {
           TAB 1: EU AI ACT
           ======================================================= */}
       {activeTab === 'eu-ai-act' && (
-        <>
-          {/* KPI Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-            <KPICard 
-              label="EU Compliance Score" 
-              value={`${summary.compliance_score}%`} 
-              icon="compliance" 
-              status={summary.compliance_score >= 80 ? 'success' : summary.compliance_score >= 50 ? 'warning' : 'danger'} 
-            />
-            <KPICard 
-              label="Implemented Articles" 
-              value={summary.implemented} 
-              icon="systems" 
-              status="success" 
-            />
-            <KPICard 
-              label="In Progress Items" 
-              value={summary.in_progress} 
-              icon="compliance" 
-              status="warning" 
-            />
-            <KPICard 
-              label="Not Started Controls" 
-              value={summary.not_started} 
-              icon="risks" 
-              status="primary" 
-            />
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Accordion list */}
-            <div className="lg:col-span-8 flex flex-col gap-4">
-              <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10 backdrop-blur-md">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Active Standard</span>
-                    <h2 className="text-lg font-black text-white uppercase tracking-tight">EU AI Act (Control Hierarchy)</h2>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-bold text-gray-400">Total Controls: {summary.total_controls}</span>
-                    <div className="h-1.5 w-24 bg-zinc-800 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-indigo-500 rounded-full transition-all duration-500" 
-                        style={{ width: `${summary.compliance_score}%` }} 
-                      />
-                    </div>
-                  </div>
-                </div>
-                <p className="text-xs text-gray-400 leading-relaxed">
-                  Maintain regulatory compliance mapping to the European Union Artificial Intelligence Act. Drill down into specific articles, review operational expectations, assign ownership, and submit evidentiary proofs.
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                {articles.map((art) => {
-                  const isOpen = openArticle === art.article_number;
-                  const completedInArticle = art.controls.filter(c => c.implementation?.status === 'IMPLEMENTED').length;
-                  const totalInArticle = art.controls.length;
-
-                  return (
-                    <div 
-                      key={art.article_number} 
-                      className={cn(
-                        "card-base overflow-hidden border transition-all duration-300",
-                        isOpen ? "border-indigo-500/30 shadow-indigo-950/10 shadow-md bg-zinc-900/40" : "border-[var(--border-default)] hover:border-zinc-700 bg-zinc-950/20"
-                      )}
-                    >
-                      <button
-                        onClick={() => setOpenArticle(isOpen ? null : art.article_number)}
-                        className="w-full flex items-center justify-between p-5 text-left outline-none"
-                      >
-                        <div className="flex items-start gap-4 flex-1">
-                          <div className={cn(
-                            "h-8 w-8 rounded-lg flex items-center justify-center border font-bold text-xs uppercase tracking-tight",
-                            art.risk_tier === 'PROHIBITED' ? "bg-rose-500/10 text-rose-400 border-rose-500/20" :
-                            art.risk_tier === 'HIGH_RISK' ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
-                            "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"
-                          )}>
-                            {art.article_number.replace('Art. ', '')}
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <h4 className="text-[12px] font-black text-white uppercase tracking-tight">{art.title}</h4>
-                              <span className={cn(
-                                "text-[8px] font-bold tracking-widest px-1.5 py-0.5 rounded border uppercase",
-                                art.risk_tier === 'PROHIBITED' ? "bg-rose-950/20 text-rose-400 border-rose-500/10" :
-                                art.risk_tier === 'HIGH_RISK' ? "bg-amber-950/20 text-amber-400 border-amber-500/10" :
-                                "bg-indigo-950/20 text-indigo-400 border-indigo-500/10"
-                              )}>
-                                {art.risk_tier.replace('_', ' ')}
-                              </span>
-                            </div>
-                            <p className="text-[9px] font-bold text-gray-500 uppercase tracking-wide leading-tight">{art.chapter}</p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center gap-4">
-                          <span className="text-[10px] font-black text-gray-400 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded uppercase tracking-tighter">
-                            {completedInArticle} / {totalInArticle} Done
-                          </span>
-                          {isOpen ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
-                        </div>
-                      </button>
-
-                      {isOpen && (
-                        <div className="border-t border-[var(--border-default)] bg-black/10 divide-y divide-zinc-900 animate-slide-in">
-                          {art.controls.map((c) => {
-                            const status = c.implementation?.status || 'NOT_STARTED';
-                            const evidenceCount = c.implementation?.evidence_links?.length || 0;
-
-                            return (
-                              <div 
-                                key={c.control_code}
-                                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-3 hover:bg-white/5 transition"
-                              >
-                                <div className="flex-1 text-left min-w-0 pr-4">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-[10px] font-black text-indigo-400 tracking-tight">{c.control_code}</span>
-                                    <h5 className="text-[12px] font-bold text-white uppercase tracking-tight truncate">{c.title}</h5>
-                                  </div>
-                                  <p className="text-xs text-gray-400 leading-relaxed truncate">{c.description}</p>
-                                </div>
-                                
-                                <div className="flex items-center gap-3 self-end sm:self-auto">
-                                  {evidenceCount > 0 && (
-                                    <span className="flex items-center gap-1 text-[9px] font-black uppercase text-indigo-300 bg-indigo-950/20 border border-indigo-500/10 px-2 py-0.5 rounded">
-                                      <Paperclip className="h-3 w-3" />
-                                      {evidenceCount} Evidence
-                                    </span>
-                                  )}
-                                  
-                                  <span className={cn(
-                                    "text-[9px] font-black px-2 py-0.5 rounded border uppercase tracking-tight",
-                                    getStatusColor(status)
-                                  )}>
-                                    {status.replace('_', ' ')}
-                                  </span>
-
-                                  <button
-                                    onClick={() => setSelectedControl(c)}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-indigo-500/30 rounded text-[9px] font-black text-white uppercase hover:bg-zinc-800 transition active:scale-95"
-                                  >
-                                    <Edit2 className="h-2.5 w-2.5 text-indigo-400" />
-                                    Update
-                                  </button>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="lg:col-span-4 flex flex-col gap-6">
-              {/* Backlog Distribution */}
-              <div className="card-base p-6 backdrop-blur-md">
-                <h3 className="text-sm font-black text-white uppercase tracking-tight mb-4">Active Backlog</h3>
-                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-6">Cross-Framework Violations</p>
-                
-                {violationData.length > 0 ? (
-                  <>
-                    <div className="h-[180px] w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={violationData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={55}
-                            outerRadius={75}
-                            paddingAngle={4}
-                            dataKey="value"
-                          >
-                            {violationData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip 
-                            contentStyle={{ 
-                              backgroundColor: '#09090b', 
-                              border: '1px solid #27272a',
-                              borderRadius: '8px',
-                              fontSize: '10px',
-                              color: '#fff'
-                            }}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <div className="mt-4 space-y-2">
-                      {violationData.map((item) => (
-                        <div key={item.name} className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
-                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">{item.name}</span>
-                          </div>
-                          <span className="text-[10px] font-black text-white">{item.value} Incident{item.value > 1 ? 's' : ''}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-10 text-center opacity-40">
-                    <CheckCircle2 className="h-10 w-10 text-emerald-400 mb-2 animate-bounce" />
-                    <p className="text-[10px] font-black text-white uppercase tracking-widest">Backlog Clean</p>
-                    <p className="text-[9px] text-gray-400 mt-1">No active compliance violations recorded.</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Integrations Scope */}
-              <div className="card-base p-6 bg-gradient-to-br from-zinc-950 to-indigo-950/10 backdrop-blur-md">
-                <h3 className="text-sm font-black text-white uppercase tracking-tight mb-4">Integrations Scope</h3>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
-                    <span className="text-xs text-gray-400">Total Violations</span>
-                    <span className="text-xs font-black text-white">{totalViolations}</span>
-                  </div>
-                  <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
-                    <span className="text-xs text-gray-400">Not Applicable Controls</span>
-                    <span className="text-xs font-black text-blue-400">{summary.not_applicable}</span>
-                  </div>
-                  <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
-                    <span className="text-xs text-gray-400">In Progress Audits</span>
-                    <span className="text-xs font-black text-amber-400">{summary.in_progress}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-400">System Mode</span>
-                    <span className="text-[9px] font-black uppercase text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
-                      Autonomous
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* PII Compliance Scan */}
-              <div className="card-base p-6 border border-red-500/20 bg-gradient-to-br from-zinc-950 to-red-950/10 backdrop-blur-md">
-                <h3 className="text-sm font-black text-white uppercase tracking-tight mb-2">PII Compliance Scan</h3>
-                <p className="text-[9px] font-black text-red-400 uppercase tracking-widest mb-4">Realtime Interceptor Violations</p>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
-                    <span className="text-xs text-gray-400">GDPR Violations</span>
-                    <span className={`text-xs font-black ${piiBreakdown.GDPR > 0 ? 'text-red-400' : 'text-gray-400'}`}>{piiBreakdown.GDPR}</span>
-                  </div>
-                  <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
-                    <span className="text-xs text-gray-400">HIPAA Violations</span>
-                    <span className={`text-xs font-black ${piiBreakdown.HIPAA > 0 ? 'text-red-400' : 'text-gray-400'}`}>{piiBreakdown.HIPAA}</span>
-                  </div>
-                  <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
-                    <span className="text-xs text-gray-400">DPDP Violations</span>
-                    <span className={`text-xs font-black ${piiBreakdown.DPDP > 0 ? 'text-red-400' : 'text-gray-400'}`}>{piiBreakdown.DPDP}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-400">Total Blocked/Flagged</span>
-                    <span className={`text-xs font-black ${totalPii > 0 ? 'text-red-400' : 'text-emerald-400'}`}>{totalPii}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
+        <EuAiActTab
+          summary={summary}
+          articles={articles}
+          openArticle={openArticle}
+          setOpenArticle={setOpenArticle}
+          setSelectedControl={setSelectedControl}
+          violationData={violationData}
+          totalViolations={totalViolations}
+          piiBreakdown={piiBreakdown}
+          totalPii={totalPii}
+        />
       )}
 
       {/* =======================================================
           TAB 2: NIST AI RMF
           ======================================================= */}
       {activeTab === 'nist-ai-rmf' && (
-        <>
-          {nistIsSeeding ? (
-            <div className="card-base p-10 flex flex-col items-center justify-center text-center gap-6 border-indigo-500/20 bg-gradient-to-br from-indigo-950/10 to-zinc-950 backdrop-blur-md">
-              <RefreshCw className="h-12 w-12 text-indigo-400 animate-spin" />
-              <div>
-                <h3 className="text-lg font-black text-white uppercase tracking-wider">Framework Data Seeding in Progress</h3>
-                <p className="text-xs text-gray-400 mt-2 max-w-md">
-                  NIST AI RMF 1.0 standard policies, severity weights, and cross-framework mappings are currently initializing in the secure database ledger.
-                </p>
-              </div>
-              <div className="w-full max-w-xs h-1.5 bg-zinc-900 rounded-full overflow-hidden">
-                <div className="h-full w-2/3 bg-indigo-500 rounded-full animate-pulse" />
-              </div>
-              <button 
-                onClick={() => loadNistData()}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-xs font-bold text-white uppercase rounded-lg tracking-widest active:scale-95 transition shadow-lg"
-              >
-                Check Seeder Status
-              </button>
-            </div>
-          ) : nistIsLoading ? (
-            <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Compiling NIST Governance telemetry data...</p>
-            </div>
-          ) : nistError ? (
-            <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 p-6 border border-zinc-900 rounded-xl bg-zinc-950/10 backdrop-blur-md">
-              <ShieldAlert className="h-10 w-10 text-rose-500 animate-pulse" />
-              <h3 className="text-sm font-black text-white uppercase tracking-wider">NIST Scoring Engine Disconnected</h3>
-              <p className="text-xs text-gray-400">{nistError}</p>
-              <button 
-                onClick={() => loadNistData()}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-xs font-bold text-white uppercase rounded-lg tracking-widest transition shadow-lg"
-              >
-                Reconnect scoring
-              </button>
-            </div>
-          ) : (
-            <>
-              {/* NIST KPI Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                <KPICard 
-                  label="Unified RMF Score" 
-                  value={`${nistOverview?.score}%`} 
-                  icon="compliance" 
-                  status={nistOverview?.score >= 80 ? 'success' : nistOverview?.score >= 50 ? 'warning' : 'danger'} 
-                />
-                <KPICard 
-                  label="Controls Implemented" 
-                  value={nistOverview?.summary?.implemented || 0} 
-                  icon="systems" 
-                  status="success" 
-                />
-                <KPICard 
-                  label="In Progress Subcategories" 
-                  value={nistOverview?.summary?.in_progress || 0} 
-                  icon="compliance" 
-                  status="warning" 
-                />
-                <KPICard 
-                  label="Freshness Status" 
-                  value={nistOverview?.data_freshness_status || 'CURRENT'} 
-                  icon="risks" 
-                  status={nistOverview?.data_freshness_status === 'CURRENT' ? 'success' : nistOverview?.data_freshness_status === 'STALE' ? 'warning' : 'danger'} 
-                />
-              </div>
-
-              {/* Grid content */}
-              <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-                
-                {/* Score explainability change ledger */}
-                <div className="xl:col-span-5 flex flex-col gap-6">
-                  <div className="card-base p-6 flex flex-col gap-5 bg-gradient-to-b from-zinc-950 to-indigo-950/5 backdrop-blur-md">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-sm font-black text-white uppercase tracking-tight">Governance Posture</h3>
-                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Continuous AI RMF Assurance</p>
-                      </div>
-                      
-                      <button 
-                        onClick={handleExportConformity}
-                        disabled={isExportingConformity}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600/10 border border-indigo-500/20 hover:border-indigo-500/50 rounded-lg text-[9px] font-black text-indigo-400 hover:text-white uppercase transition active:scale-95 disabled:opacity-50 shadow-md"
-                      >
-                        <Download className="h-3 w-3" />
-                        {isExportingConformity ? 'Signing...' : 'Conformity Package'}
-                      </button>
-                    </div>
-
-                    <div className="flex flex-col items-center justify-center py-6 border border-zinc-900 rounded-xl bg-black/15">
-                      <div className="relative h-32 w-32 flex items-center justify-center">
-                        <svg className="absolute inset-0 h-full w-full transform -rotate-90">
-                          <circle cx="64" cy="64" r="54" className="stroke-zinc-800" strokeWidth="6" fill="transparent" />
-                          <circle 
-                            cx="64" 
-                            cy="64" 
-                            r="54" 
-                            className={cn(
-                              "transition-all duration-1000 ease-out",
-                              (nistOverview?.score || 0) >= 80 ? "stroke-emerald-500" : (nistOverview?.score || 0) >= 50 ? "stroke-amber-500" : "stroke-rose-500"
-                            )} 
-                            strokeWidth="8" 
-                            fill="transparent" 
-                            strokeDasharray={2 * Math.PI * 54}
-                            strokeDashoffset={2 * Math.PI * 54 * (1 - (nistOverview?.score || 0) / 100)}
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                        <div className="text-center">
-                          <span className="text-3xl font-black text-white">{nistOverview?.score || 0}</span>
-                          <span className="text-zinc-500 text-xs block uppercase font-black">Score</span>
-                        </div>
-                      </div>
-
-                      {nistOverview?.score === 0 && (
-                        <div className="mt-4 text-rose-400 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 animate-pulse">
-                          <ShieldAlert className="h-3.5 w-3.5" />
-                          No governance evidence ingested
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-3">Score Explainability Ledger</h4>
-                      <div className="space-y-2">
-                        {(nistOverview?.reasons || []).length > 0 ? (
-                          (nistOverview?.reasons || []).map((reason: any, idx: number) => (
-                            <div key={idx} className="p-3 text-xs bg-zinc-900/40 border border-zinc-900 rounded-xl flex items-start gap-3 hover:border-zinc-800 transition">
-                              <span className="mt-0.5 flex-shrink-0">{getNistReasonIcon(reason.type)}</span>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-white font-bold leading-tight uppercase text-[10px]">
-                                  {reason.type.replace('_', ' ')} ({reason.value > 0 ? `+${reason.value}` : reason.value})
-                                </p>
-                                <p className="text-[11px] text-gray-400 mt-0.5 leading-relaxed">{reason.msg}</p>
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="p-3 text-xs border border-dashed border-zinc-900 text-zinc-500 rounded-xl text-center uppercase tracking-tighter">
-                            No posture modifications registered.
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Self-monitoring diagnostics & incident logs */}
-                <div className="xl:col-span-7 flex flex-col gap-6">
-                  
-                  {/* self-monitoring diagnostics */}
-                  <div className="card-base p-6 flex flex-col gap-4 backdrop-blur-md">
-                    <div>
-                      <h3 className="text-sm font-black text-white uppercase tracking-tight">Self-Monitoring Diagnostics</h3>
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Worker Health & Reliability</p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {nistHealth?.workers?.length > 0 ? (
-                        nistHealth.workers.map((w: any) => (
-                          <div key={w.id} className="p-4 bg-zinc-950/40 border border-zinc-900 rounded-xl flex items-center justify-between hover:border-zinc-800 transition">
-                            <div className="flex items-center gap-3">
-                              <div className="relative flex h-3 w-3">
-                                <span className={cn(
-                                  "animate-ping absolute inline-flex h-full w-full rounded-full opacity-75",
-                                  w.health_status === 'HEALTHY' ? "bg-emerald-400" : w.health_status === 'DEGRADED' ? "bg-amber-400" : "bg-rose-400"
-                                )} />
-                                <span className={cn(
-                                  "relative inline-flex rounded-full h-3 w-3",
-                                  w.health_status === 'HEALTHY' ? "bg-emerald-500" : w.health_status === 'DEGRADED' ? "bg-amber-500" : "bg-rose-500"
-                                )} />
-                              </div>
-                              
-                              <div>
-                                <h4 className="text-xs font-black text-white uppercase tracking-tight">{w.worker_name.replace('_', ' ')}</h4>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                  <span className="text-[9px] font-bold text-gray-500 flex items-center gap-1 uppercase">
-                                    <Clock className="h-2.5 w-2.5" />
-                                    {w.processing_latency_ms}ms latency
-                                  </span>
-                                  <span className="text-[9px] font-bold text-gray-500 flex items-center gap-1 uppercase">
-                                    <Server className="h-2.5 w-2.5" />
-                                    Depth: {w.queue_depth}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-
-                            <span className={cn(
-                              "text-[8px] font-black px-1.5 py-0.5 rounded border uppercase tracking-widest",
-                              w.health_status === 'HEALTHY' ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
-                              w.health_status === 'DEGRADED' ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
-                              "bg-rose-500/10 text-rose-400 border-rose-500/20"
-                            )}>
-                              {w.health_status}
-                            </span>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="p-4 border border-dashed border-zinc-900 rounded-xl text-center text-zinc-500 text-xs uppercase tracking-tighter col-span-2 py-6">
-                          No workers currently registered. Uptime checks will boot on active BullMQ queues.
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Incidents */}
-                  <div className="card-base p-6 flex flex-col gap-4 backdrop-blur-md">
-                    <div>
-                      <h3 className="text-sm font-black text-white uppercase tracking-tight">Governance SOC Incidents Hub</h3>
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Active Violations & SLAs</p>
-                    </div>
-
-                    <div className="space-y-3 max-h-[220px] overflow-y-auto custom-scrollbar">
-                      {nistOverview?.incidents?.length > 0 ? (
-                        nistOverview.incidents.map((inc: any) => (
-                          <div key={inc.id} className="p-3 bg-zinc-950/40 border border-zinc-900 hover:border-zinc-800 rounded-xl flex items-center justify-between gap-4 transition shadow-sm">
-                            <div className="flex items-start gap-3 min-w-0 flex-1">
-                              <span className={cn(
-                                "h-2 w-2 rounded-full mt-1.5 flex-shrink-0",
-                                inc.severity === 'CRITICAL' || inc.severity === 'HIGH' ? "bg-rose-500 shadow" : "bg-amber-500"
-                              )} />
-                              <div className="min-w-0 flex-1">
-                                <h4 className="text-xs font-bold text-white truncate uppercase tracking-tight">{inc.title}</h4>
-                                <div className="flex items-center gap-2.5 mt-0.5">
-                                  <span className="text-[9px] font-bold text-gray-500 flex items-center gap-1 uppercase">
-                                    <Clock className="h-2.5 w-2.5" />
-                                    SLA: {new Date(inc.sla_deadline).toLocaleDateString()}
-                                  </span>
-                                  {inc.sla_breach && (
-                                    <span className="text-[8px] font-black uppercase text-rose-400 bg-rose-950/20 px-1 border border-rose-500/10 rounded">
-                                      SLA Breached
-                                    </span>
-                                  )}
-                                  <span className="text-[8px] font-bold text-zinc-600 uppercase bg-zinc-900 px-1.5 py-0.5 rounded">
-                                    {inc.incident_type}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-
-                            <span className={cn(
-                              "text-[8px] font-black px-1.5 py-0.5 rounded border uppercase tracking-widest",
-                              inc.status === 'OPEN' ? "bg-rose-500/10 text-rose-400 border-rose-500/20" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                            )}>
-                              {inc.status}
-                            </span>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="flex flex-col items-center justify-center py-8 text-center opacity-40">
-                          <CheckCircle2 className="h-8 w-8 text-emerald-400 mb-2" />
-                          <p className="text-[10px] font-black text-white uppercase tracking-widest">No active incidents cataloged</p>
-                          <p className="text-[9px] text-gray-500 mt-1">All telemetry events are within healthy SLA parameters.</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* NIST AI RMF Maturity Accordion */}
-              <div className="flex flex-col gap-4">
-                <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10 backdrop-blur-md">
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Operational Maturity Matrix</span>
-                      <h2 className="text-lg font-black text-white uppercase tracking-tight">NIST RMF 1.0 Subcategory Status</h2>
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-400 leading-relaxed">
-                    Continuous operational verification mapped directly to live system telemetry (interceptor, drift scans, evaluation). Click subcategories to patch compliance settings, notes, and view cross-framework GDPR/EU impact analyses.
-                  </p>
-                </div>
-
-                <div className="flex flex-col gap-4">
-                  {(nistOverview?.functions || []).map((fn: any) => {
-                    const totalSub = fn.categories.flatMap((c: any) => c.subcategories).length;
-                    const compSub = fn.categories.flatMap((c: any) => c.subcategories).filter((s: any) => s.status === 'IMPLEMENTED').length;
-
-                    return (
-                      <div key={fn.function_code} className="card-base p-5 border border-zinc-950 bg-zinc-950/40">
-                        <div className="flex items-center justify-between border-b border-zinc-900 pb-3 mb-4">
-                          <div>
-                            <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Function Group</span>
-                            <h3 className="text-sm font-black text-white uppercase tracking-tight flex items-center gap-2">
-                              {fn.title}
-                              <span className="text-[10px] font-bold text-gray-400">({fn.score}%)</span>
-                            </h3>
-                          </div>
-                          
-                          <span className="text-[9px] font-black text-zinc-500 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded uppercase tracking-widest">
-                            {compSub} / {totalSub} Mapped
-                          </span>
-                        </div>
-
-                        <div className="space-y-4">
-                          {fn.categories.map((cat: any) => (
-                            <div key={cat.category_code} className="bg-black/15 rounded-xl border border-zinc-900 p-4 space-y-3">
-                              <div>
-                                <h4 className="text-xs font-black text-white uppercase tracking-tight flex items-center gap-2">
-                                  <span className="text-[10px] text-indigo-400">{cat.category_code}</span>
-                                  {cat.title}
-                                </h4>
-                                <p className="text-[10px] text-zinc-500 leading-relaxed mt-0.5">{cat.description}</p>
-                              </div>
-
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-zinc-900/50">
-                                {cat.subcategories.map((sub: any) => (
-                                  <div key={sub.code} className="bg-zinc-900/30 border border-zinc-900 hover:border-zinc-800 p-3 rounded-lg flex items-center justify-between gap-4 group transition shadow-sm">
-                                    <div className="min-w-0 flex-1">
-                                      <div className="flex items-center gap-2 mb-0.5">
-                                        <span className="text-[9px] font-black text-indigo-400">{sub.code}</span>
-                                        <h5 className="text-[11px] font-bold text-white truncate max-w-[200px] uppercase tracking-tight">{sub.title}</h5>
-                                      </div>
-                                      
-                                      <div className="flex items-center gap-2 mt-1">
-                                        <div className="h-1 w-12 bg-zinc-800 rounded-full overflow-hidden">
-                                          <div 
-                                            className={cn(
-                                              "h-full rounded-full transition-all duration-300",
-                                              sub.status === 'IMPLEMENTED' ? "bg-emerald-500 w-full" : sub.status === 'IN_PROGRESS' ? "bg-amber-500 w-1/2" : "w-0 bg-slate-700"
-                                            )}
-                                          />
-                                        </div>
-                                        <span className="text-[8px] font-semibold text-zinc-500 uppercase">
-                                          Mat: {sub.maturityLevel}/5
-                                        </span>
-                                        {sub.telemetryLinked > 0 && (
-                                          <span className="text-[8px] font-black uppercase text-indigo-400 bg-indigo-950/20 px-1 rounded flex items-center gap-0.5 animate-pulse">
-                                            <Activity className="h-2 w-2" />
-                                            {sub.telemetryLinked}
-                                          </span>
-                                        )}
-                                      </div>
-                                    </div>
-
-                                    <button
-                                      onClick={() => {
-                                        setSelectedNistSub({
-                                          subcategory_code: sub.code,
-                                          title: sub.title,
-                                          description: sub.description || '',
-                                          severity_weight: 5,
-                                          depends_on_control: '',
-                                          implementation_examples: [],
-                                          suggested_evidence: [],
-                                          implementation: {
-                                            status: sub.status,
-                                            maturity_level: sub.maturityLevel,
-                                            risk_escalation_level: 'NORMAL',
-                                            notes: '',
-                                            owner_user_id: '',
-                                            due_date: '',
-                                            last_reviewed: sub.lastEvidenceAt
-                                          }
-                                        });
-                                      }}
-                                      className="flex items-center justify-center p-2 bg-zinc-900 border border-zinc-800 group-hover:border-indigo-500/30 rounded-lg text-gray-400 group-hover:text-white transition active:scale-95"
-                                    >
-                                      <Edit2 className="h-3 w-3" />
-                                    </button>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </>
-          )}
-        </>
+        <NistAiRmfTab
+          nistIsSeeding={nistIsSeeding}
+          nistIsLoading={nistIsLoading}
+          nistError={nistError}
+          nistOverview={nistOverview}
+          nistHealth={nistHealth}
+          loadNistData={loadNistData}
+          handleExportConformity={handleExportConformity}
+          isExportingConformity={isExportingConformity}
+          setSelectedNistSub={setSelectedNistSub}
+        />
       )}
 
       {/* =======================================================
           TAB 3: ISO 42001 (AI MANAGEMENT SYSTEM)
           ======================================================= */}
       {activeTab === 'iso-42001' && (
-        <>
-          {iso42001Loading ? (
-            <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Loading ISO 42001 Compliance Matrix...</p>
-            </div>
-          ) : iso42001Error ? (
-            <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 p-6 border border-zinc-900 rounded-xl bg-zinc-950/10 backdrop-blur-md">
-              <ShieldAlert className="h-10 w-10 text-rose-500 animate-pulse" />
-              <h3 className="text-sm font-black text-white uppercase tracking-wider">ISO 42001 Scoring Error</h3>
-              <p className="text-xs text-gray-400">{iso42001Error}</p>
-            </div>
-          ) : (
-            <>
-              {/* KPI Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                <KPICard 
-                  label="ISO 42001 Score" 
-                  value={`${iso42001Overview?.summary?.compliance_score}%`} 
-                  icon="compliance" 
-                  status={iso42001Overview?.summary?.compliance_score >= 80 ? 'success' : iso42001Overview?.summary?.compliance_score >= 50 ? 'warning' : 'danger'} 
-                />
-                <KPICard 
-                  label="Implemented Controls" 
-                  value={iso42001Overview?.summary?.implemented || 0} 
-                  icon="systems" 
-                  status="success" 
-                />
-                <KPICard 
-                  label="In Progress Items" 
-                  value={iso42001Overview?.summary?.in_progress || 0} 
-                  icon="compliance" 
-                  status="warning" 
-                />
-                <KPICard 
-                  label="Not Started Controls" 
-                  value={iso42001Overview?.summary?.not_started || 0} 
-                  icon="risks" 
-                  status="primary" 
-                />
-              </div>
-
-              {/* Clause Trees */}
-              <div className="flex flex-col gap-4">
-                <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10 backdrop-blur-md">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Active Standard</span>
-                      <h2 className="text-lg font-black text-white uppercase tracking-tight">ISO/IEC 42001:2023 Artificial Intelligence Management</h2>
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-400 leading-relaxed">
-                    Verify compliance with international standards for establishing, implementing, maintaining, and continually improving an Artificial Intelligence Management System (AIMS). Manage organizational controls and evidence logs.
-                  </p>
-                </div>
-
-                <div className="flex flex-col gap-3">
-                  {(iso42001Overview?.clauses || []).map((cls: any) => {
-                    const isClauseOpen = openArticle === cls.clause_code;
-                    const completedInClause = cls.controls.filter((c: any) => c.implementation?.status === 'IMPLEMENTED').length;
-                    const totalInClause = cls.controls.length;
-
-                    return (
-                      <div 
-                        key={cls.clause_code} 
-                        className={cn(
-                          "card-base overflow-hidden border transition-all duration-300",
-                          isClauseOpen ? "border-indigo-500/30 shadow-indigo-950/10 bg-zinc-900/40" : "border-[var(--border-default)] hover:border-zinc-700 bg-zinc-950/20"
-                        )}
-                      >
-                        <button
-                          onClick={() => setOpenArticle(isClauseOpen ? null : cls.clause_code)}
-                          className="w-full flex items-center justify-between p-5 text-left outline-none"
-                        >
-                          <div className="flex items-start gap-4 flex-1">
-                            <div className="h-8 w-8 rounded-lg flex items-center justify-center border border-indigo-500/20 bg-indigo-500/10 font-bold text-xs uppercase text-indigo-400 tracking-tight">
-                              {cls.clause_code.replace('Clause ', '').replace('Annex ', 'A')}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-0.5">
-                                <h4 className="text-[12px] font-black text-white uppercase tracking-tight">{cls.title}</h4>
-                                <span className="text-[8px] font-bold tracking-widest px-1.5 py-0.5 rounded border uppercase bg-indigo-950/20 text-indigo-400 border-indigo-500/10">
-                                  {cls.clause_type}
-                                </span>
-                              </div>
-                              <p className="text-[10px] text-gray-400 font-medium leading-relaxed max-w-xl">{cls.description}</p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center gap-4">
-                            <span className="text-[10px] font-black text-gray-400 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded uppercase tracking-tighter">
-                              {completedInClause} / {totalInClause} Done
-                            </span>
-                            {isClauseOpen ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
-                          </div>
-                        </button>
-
-                        {isClauseOpen && (
-                          <div className="border-t border-[var(--border-default)] bg-black/10 divide-y divide-zinc-900 animate-slide-in">
-                            {cls.controls.map((c: any) => {
-                              const status = c.implementation?.status || 'NOT_STARTED';
-
-                              return (
-                                <div 
-                                  key={c.control_code}
-                                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-3 hover:bg-white/5 transition animate-fade-in"
-                                >
-                                  <div className="flex-1 text-left min-w-0 pr-4">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <span className="text-[10px] font-black text-indigo-400 tracking-tight">{c.control_code}</span>
-                                      <h5 className="text-[12px] font-bold text-white uppercase tracking-tight truncate">{c.title}</h5>
-                                    </div>
-                                    <p className="text-xs text-gray-400 leading-relaxed">{c.description}</p>
-                                  </div>
-                                  
-                                  <div className="flex items-center gap-3 self-end sm:self-auto">
-                                    <span className={cn(
-                                      "text-[9px] font-black px-2 py-0.5 rounded border uppercase tracking-tight",
-                                      getStatusColor(status)
-                                    )}>
-                                      {status.replace('_', ' ')}
-                                    </span>
-
-                                    <button
-                                      onClick={() => setSelectedControl({
-                                        ...c,
-                                        framework: 'iso-42001'
-                                      })}
-                                      className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-indigo-500/30 rounded text-[9px] font-black text-white uppercase hover:bg-zinc-800 transition active:scale-95"
-                                    >
-                                      <Edit2 className="h-2.5 w-2.5 text-indigo-400" />
-                                      Update
-                                    </button>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </>
-          )}
-        </>
+        <Iso42001Tab
+          iso42001Loading={iso42001Loading}
+          iso42001Error={iso42001Error}
+          iso42001Overview={iso42001Overview}
+          openArticle={openArticle}
+          setOpenArticle={setOpenArticle}
+          setSelectedControl={setSelectedControl}
+        />
       )}
 
       {/* =======================================================
           TAB 4: ISO 27001 (INFORMATION SECURITY)
           ======================================================= */}
       {activeTab === 'iso-27001' && (
-        <>
-          {iso27001Loading ? (
-            <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Loading ISO 27001 Compliance Matrix...</p>
-            </div>
-          ) : iso27001Error ? (
-            <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 p-6 border border-zinc-900 rounded-xl bg-zinc-950/10 backdrop-blur-md">
-              <ShieldAlert className="h-10 w-10 text-rose-500 animate-pulse" />
-              <h3 className="text-sm font-black text-white uppercase tracking-wider">ISO 27001 Scoring Error</h3>
-              <p className="text-xs text-gray-400">{iso27001Error}</p>
-            </div>
-          ) : (
-            <>
-              {/* KPI Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                <KPICard 
-                  label="ISO 27001 Score" 
-                  value={`${iso27001Overview?.summary?.compliance_score}%`} 
-                  icon="compliance" 
-                  status={iso27001Overview?.summary?.compliance_score >= 80 ? 'success' : iso27001Overview?.summary?.compliance_score >= 50 ? 'warning' : 'danger'} 
-                />
-                <KPICard 
-                  label="Implemented Controls" 
-                  value={iso27001Overview?.summary?.implemented || 0} 
-                  icon="systems" 
-                  status="success" 
-                />
-                <KPICard 
-                  label="In Progress Items" 
-                  value={iso27001Overview?.summary?.in_progress || 0} 
-                  icon="compliance" 
-                  status="warning" 
-                />
-                <KPICard 
-                  label="Not Started Controls" 
-                  value={iso27001Overview?.summary?.not_started || 0} 
-                  icon="risks" 
-                  status="primary" 
-                />
-              </div>
-
-              {/* Clause Trees */}
-              <div className="flex flex-col gap-4">
-                <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10 backdrop-blur-md">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Active Standard</span>
-                      <h2 className="text-lg font-black text-white uppercase tracking-tight">ISO/IEC 27001:2022 Information Security Management</h2>
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-400 leading-relaxed">
-                    Verify compliance with international standards for establishing, implementing, maintaining, and continually improving an Information Security Management System (ISMS). Review Clauses 4–10 and Annex controls.
-                  </p>
-                </div>
-
-                <div className="flex flex-col gap-3">
-                  {(iso27001Overview?.clauses || []).map((cls: any) => {
-                    const isClauseOpen = openArticle === cls.clause_code;
-                    const completedInClause = cls.controls.filter((c: any) => c.implementation?.status === 'IMPLEMENTED').length;
-                    const totalInClause = cls.controls.length;
-
-                    return (
-                      <div 
-                        key={cls.clause_code} 
-                        className={cn(
-                          "card-base overflow-hidden border transition-all duration-300",
-                          isClauseOpen ? "border-indigo-500/30 shadow-indigo-950/10 bg-zinc-900/40" : "border-[var(--border-default)] hover:border-zinc-700 bg-zinc-950/20"
-                        )}
-                      >
-                        <button
-                          onClick={() => setOpenArticle(isClauseOpen ? null : cls.clause_code)}
-                          className="w-full flex items-center justify-between p-5 text-left outline-none"
-                        >
-                          <div className="flex items-start gap-4 flex-1">
-                            <div className="h-8 w-8 rounded-lg flex items-center justify-center border border-indigo-500/20 bg-indigo-500/10 font-bold text-xs uppercase text-indigo-400 tracking-tight">
-                              {cls.clause_code.replace('Clause ', '').replace('Annex ', 'A')}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-0.5">
-                                <h4 className="text-[12px] font-black text-white uppercase tracking-tight">{cls.title}</h4>
-                              </div>
-                              <p className="text-[10px] text-gray-400 font-medium leading-relaxed max-w-xl">{cls.description}</p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center gap-4">
-                            <span className="text-[10px] font-black text-gray-400 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded uppercase tracking-tighter">
-                              {completedInClause} / {totalInClause} Done
-                            </span>
-                            {isClauseOpen ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
-                          </div>
-                        </button>
-
-                        {isClauseOpen && (
-                          <div className="border-t border-[var(--border-default)] bg-black/10 divide-y divide-zinc-900 animate-slide-in">
-                            {cls.controls.map((c: any) => {
-                              const status = c.implementation?.status || 'NOT_STARTED';
-
-                              return (
-                                <div 
-                                  key={c.control_code}
-                                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-3 hover:bg-white/5 transition animate-fade-in"
-                                >
-                                  <div className="flex-1 text-left min-w-0 pr-4">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <span className="text-[10px] font-black text-indigo-400 tracking-tight">{c.control_code}</span>
-                                      <h5 className="text-[12px] font-bold text-white uppercase tracking-tight truncate">{c.title}</h5>
-                                    </div>
-                                    <p className="text-xs text-gray-400 leading-relaxed">{c.description}</p>
-                                  </div>
-                                  
-                                  <div className="flex items-center gap-3 self-end sm:self-auto">
-                                    <span className={cn(
-                                      "text-[9px] font-black px-2 py-0.5 rounded border uppercase tracking-tight",
-                                      getStatusColor(status)
-                                    )}>
-                                      {status.replace('_', ' ')}
-                                    </span>
-
-                                    <button
-                                      onClick={() => setSelectedControl({
-                                        ...c,
-                                        framework: 'iso-27001'
-                                      })}
-                                      className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-indigo-500/30 rounded text-[9px] font-black text-white uppercase hover:bg-zinc-800 transition active:scale-95"
-                                    >
-                                      <Edit2 className="h-2.5 w-2.5 text-indigo-400" />
-                                      Update
-                                    </button>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </>
-          )}
-        </>
+        <Iso27001Tab
+          iso27001Loading={iso27001Loading}
+          iso27001Error={iso27001Error}
+          iso27001Overview={iso27001Overview}
+          openArticle={openArticle}
+          setOpenArticle={setOpenArticle}
+          setSelectedControl={setSelectedControl}
+        />
       )}
 
+      {/* =======================================================
+          TAB 5: CCPA
+          ======================================================= */}
       {activeTab === 'ccpa' && (
-        <div className="space-y-6 animate-fade-in">
-          {ccpaLoading && <div className="text-center py-12 text-gray-500 text-sm">Loading CCPA compliance data...</div>}
-          {ccpaError && <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-rose-400 text-sm">{ccpaError}</div>}
-          {ccpaData && !ccpaLoading && (
-            <>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                  { label: 'Total Controls', value: ccpaData.summary?.total_controls ?? 0, color: 'text-white' },
-                  { label: 'Implemented', value: ccpaData.summary?.implemented ?? 0, color: 'text-emerald-400' },
-                  { label: 'In Progress', value: ccpaData.summary?.in_progress ?? 0, color: 'text-amber-400' },
-                  { label: 'Compliance Score', value: `${ccpaData.summary?.compliance_score ?? 0}%`, color: 'text-indigo-400' },
-                ].map((stat) => (
-                  <div key={stat.label} className="bg-[#111827]/40 border border-gray-800 rounded-2xl p-4 backdrop-blur-md">
-                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{stat.label}</p>
-                    <p className={`text-2xl font-black mt-1 ${stat.color}`}>{stat.value}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="bg-[#111827]/40 border border-gray-800 rounded-2xl p-5 backdrop-blur-md">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Overall CCPA Compliance</p>
-                  <p className="text-sm font-black text-white">{ccpaData.summary?.compliance_score ?? 0}%</p>
-                </div>
-                <div className="w-full h-2 bg-gray-800 rounded-full">
-                  <div className="h-full bg-emerald-500 rounded-full transition-all duration-700" style={{ width: `${ccpaData.summary?.compliance_score ?? 0}%` }} />
-                </div>
-              </div>
-              <div className="space-y-4">
-                {(ccpaData.sections || []).map((section: any) => {
-                  const sectionControls = section.controls || [];
-                  const implemented = sectionControls.filter((c: any) => c.implementation?.status === 'IMPLEMENTED').length;
-                  const total = sectionControls.length;
-                  const pct = total > 0 ? Math.round((implemented / total) * 100) : 0;
-                  return (
-                    <div key={section.section_code} className="bg-[#111827]/40 border border-gray-800 rounded-2xl p-5 backdrop-blur-md">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <span className="text-[10px] font-black text-gray-500 bg-gray-900/60 border border-gray-800 px-2 py-0.5 rounded font-mono">{section.section_code}</span>
-                          <p className="text-sm font-bold text-white">{section.title}</p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-[10px] text-gray-500">{implemented}/{total} controls</span>
-                          <span className={cn('text-[10px] font-black uppercase px-2 py-0.5 rounded border', pct === 100 ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : pct > 0 ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' : 'text-gray-500 bg-gray-500/10 border-gray-500/20')}>
-                            {pct === 100 ? 'Complete' : pct > 0 ? 'In Progress' : 'Not Started'}
-                          </span>
-                        </div>
-                      </div>
-                      <p className="text-[11px] text-gray-500 mb-3">{section.description}</p>
-                      <div className="w-full h-1 bg-gray-800 rounded-full">
-                        <div className="h-full bg-indigo-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="text-center pt-2">
-                <a href="/app/ccpa" className="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 rounded-xl text-[10px] font-black text-white uppercase tracking-widest hover:bg-indigo-500 transition-all">
-                  Open Full CCPA Dashboard →
-                </a>
-              </div>
-            </>
-          )}
-        </div>
+        <CcpaTab
+          ccpaLoading={ccpaLoading}
+          ccpaError={ccpaError}
+          ccpaData={ccpaData}
+        />
       )}
 
       {/* =======================================================
@@ -1791,5 +813,1187 @@ export default function Compliance() {
         onClose={() => setIsShareOpen(false)}
       />
     </div>
+  );
+}
+
+// ==========================================
+// MODULE-LEVEL HELPER FUNCTIONS
+// ==========================================
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'IMPLEMENTED':
+      return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+    case 'IN_PROGRESS':
+      return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+    case 'NOT_APPLICABLE':
+      return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+    case 'NOT_STARTED':
+    default:
+      return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+  }
+};
+
+const getNistReasonIcon = (type: string) => {
+  switch (type) {
+    case 'decay':
+      return <Clock className="h-4.5 w-4.5 text-amber-400" />;
+    case 'improvement':
+      return <TrendingUp className="h-4.5 w-4.5 text-emerald-400" />;
+    case 'incident_breach':
+      return <ShieldAlert className="h-4.5 w-4.5 text-rose-500" />;
+    case 'health_penalty':
+      return <AlertTriangle className="h-4.5 w-4.5 text-red-400" />;
+    default:
+      return <Info className="h-4.5 w-4.5 text-indigo-400" />;
+  }
+};
+
+// ==========================================
+// TAB SUB-COMPONENTS
+// ==========================================
+
+interface EuAiActTabProps {
+  summary: {
+    total_controls: number;
+    implemented: number;
+    in_progress: number;
+    not_started: number;
+    compliance_score: number;
+    not_applicable: number;
+  };
+  articles: any[];
+  openArticle: string | null;
+  setOpenArticle: (val: string | null) => void;
+  setSelectedControl: (control: any) => void;
+  violationData: any[];
+  totalViolations: number;
+  piiBreakdown: any;
+  totalPii: number;
+}
+
+function EuAiActTab({
+  summary,
+  articles,
+  openArticle,
+  setOpenArticle,
+  setSelectedControl,
+  violationData,
+  totalViolations,
+  piiBreakdown,
+  totalPii
+}: EuAiActTabProps) {
+  return (
+    <>
+      {/* KPI Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <KPICard 
+          label="EU Compliance Score" 
+          value={`${summary.compliance_score}%`} 
+          icon="compliance" 
+          status={summary.compliance_score >= 80 ? 'success' : summary.compliance_score >= 50 ? 'warning' : 'danger'} 
+        />
+        <KPICard 
+          label="Implemented Articles" 
+          value={summary.implemented} 
+          icon="systems" 
+          status="success" 
+        />
+        <KPICard 
+          label="In Progress Items" 
+          value={summary.in_progress} 
+          icon="compliance" 
+          status="warning" 
+        />
+        <KPICard 
+          label="Not Started Controls" 
+          value={summary.not_started} 
+          icon="risks" 
+          status="primary" 
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Accordion list */}
+        <div className="lg:col-span-8 flex flex-col gap-4">
+          <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10 backdrop-blur-md">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Active Standard</span>
+                <h2 className="text-lg font-black text-white uppercase tracking-tight">EU AI Act (Control Hierarchy)</h2>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-bold text-gray-400">Total Controls: {summary.total_controls}</span>
+                <div className="h-1.5 w-24 bg-zinc-800 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-indigo-500 rounded-full transition-all duration-500" 
+                    style={{ width: `${summary.compliance_score}%` }} 
+                  />
+                </div>
+              </div>
+            </div>
+            <p className="text-xs text-gray-400 leading-relaxed">
+              Maintain regulatory compliance mapping to the European Union Artificial Intelligence Act. Drill down into specific articles, review operational expectations, assign ownership, and submit evidentiary proofs.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            {articles.map((art) => {
+              const isOpen = openArticle === art.article_number;
+              const completedInArticle = art.controls.filter((c: any) => c.implementation?.status === 'IMPLEMENTED').length;
+              const totalInArticle = art.controls.length;
+
+              return (
+                <div 
+                  key={art.article_number} 
+                  className={cn(
+                    "card-base overflow-hidden border transition-all duration-300",
+                    isOpen ? "border-indigo-500/30 shadow-indigo-950/10 shadow-md bg-zinc-900/40" : "border-[var(--border-default)] hover:border-zinc-700 bg-zinc-950/20"
+                  )}
+                >
+                  <button
+                    onClick={() => setOpenArticle(isOpen ? null : art.article_number)}
+                    className="w-full flex items-center justify-between p-5 text-left outline-none"
+                  >
+                    <div className="flex items-start gap-4 flex-1">
+                      <div className={cn(
+                        "h-8 w-8 rounded-lg flex items-center justify-center border font-bold text-xs uppercase tracking-tight",
+                        art.risk_tier === 'PROHIBITED' ? "bg-rose-500/10 text-rose-400 border-rose-500/20" :
+                        art.risk_tier === 'HIGH_RISK' ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
+                        "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"
+                      )}>
+                        {art.article_number.replace('Art. ', '')}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <h4 className="text-[12px] font-black text-white uppercase tracking-tight">{art.title}</h4>
+                          <span className={cn(
+                            "text-[8px] font-bold tracking-widest px-1.5 py-0.5 rounded border uppercase",
+                            art.risk_tier === 'PROHIBITED' ? "bg-rose-950/20 text-rose-400 border-rose-500/10" :
+                            art.risk_tier === 'HIGH_RISK' ? "bg-amber-950/20 text-amber-400 border-amber-500/10" :
+                            "bg-indigo-950/20 text-indigo-400 border-indigo-500/10"
+                          )}>
+                            {art.risk_tier.replace('_', ' ')}
+                          </span>
+                        </div>
+                        <p className="text-[9px] font-bold text-gray-500 uppercase tracking-wide leading-tight">{art.chapter}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                      <span className="text-[10px] font-black text-gray-400 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded uppercase tracking-tighter">
+                        {completedInArticle} / {totalInArticle} Done
+                      </span>
+                      {isOpen ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
+                    </div>
+                  </button>
+
+                  {isOpen && (
+                    <div className="border-t border-[var(--border-default)] bg-black/10 divide-y divide-zinc-900 animate-slide-in">
+                      {art.controls.map((c: any) => {
+                        const status = c.implementation?.status || 'NOT_STARTED';
+                        const evidenceCount = c.implementation?.evidence_links?.length || 0;
+
+                        return (
+                          <div 
+                            key={c.control_code}
+                            className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-3 hover:bg-white/5 transition"
+                          >
+                            <div className="flex-1 text-left min-w-0 pr-4">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-[10px] font-black text-indigo-400 tracking-tight">{c.control_code}</span>
+                                <h5 className="text-[12px] font-bold text-white uppercase tracking-tight truncate">{c.title}</h5>
+                              </div>
+                              <p className="text-xs text-gray-400 leading-relaxed truncate">{c.description}</p>
+                            </div>
+                            
+                            <div className="flex items-center gap-3 self-end sm:self-auto">
+                              {evidenceCount > 0 && (
+                                <span className="flex items-center gap-1 text-[9px] font-black uppercase text-indigo-300 bg-indigo-950/20 border border-indigo-500/10 px-2 py-0.5 rounded">
+                                  <Paperclip className="h-3 w-3" />
+                                  {evidenceCount} Evidence
+                                </span>
+                              )}
+                              
+                              <span className={cn(
+                                "text-[9px] font-black px-2 py-0.5 rounded border uppercase tracking-tight",
+                                getStatusColor(status)
+                              )}>
+                                {status.replace('_', ' ')}
+                              </span>
+
+                              <button
+                                onClick={() => setSelectedControl(c)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-indigo-500/30 rounded text-[9px] font-black text-white uppercase hover:bg-zinc-800 transition active:scale-95"
+                              >
+                                <Edit2 className="h-2.5 w-2.5 text-indigo-400" />
+                                Update
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="lg:col-span-4 flex flex-col gap-6">
+          {/* Backlog Distribution */}
+          <div className="card-base p-6 backdrop-blur-md">
+            <h3 className="text-sm font-black text-white uppercase tracking-tight mb-4">Active Backlog</h3>
+            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-6">Cross-Framework Violations</p>
+            
+            {violationData.length > 0 ? (
+              <>
+                <div className="h-[180px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={violationData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={55}
+                        outerRadius={75}
+                        paddingAngle={4}
+                        dataKey="value"
+                      >
+                        {violationData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#09090b', 
+                          border: '1px solid #27272a',
+                          borderRadius: '8px',
+                          fontSize: '10px',
+                          color: '#fff'
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="mt-4 space-y-2">
+                  {violationData.map((item) => (
+                    <div key={item.name} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">{item.name}</span>
+                      </div>
+                      <span className="text-[10px] font-black text-white">{item.value} Incident{item.value > 1 ? 's' : ''}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-10 text-center opacity-40">
+                <CheckCircle2 className="h-10 w-10 text-emerald-400 mb-2 animate-bounce" />
+                <p className="text-[10px] font-black text-white uppercase tracking-widest">Backlog Clean</p>
+                <p className="text-[9px] text-gray-400 mt-1">No active compliance violations recorded.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Integrations Scope */}
+          <div className="card-base p-6 bg-gradient-to-br from-zinc-950 to-indigo-950/10 backdrop-blur-md">
+            <h3 className="text-sm font-black text-white uppercase tracking-tight mb-4">Integrations Scope</h3>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
+                <span className="text-xs text-gray-400">Total Violations</span>
+                <span className="text-xs font-black text-white">{totalViolations}</span>
+              </div>
+              <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
+                <span className="text-xs text-gray-400">Not Applicable Controls</span>
+                <span className="text-xs font-black text-blue-400">{summary.not_applicable}</span>
+              </div>
+              <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
+                <span className="text-xs text-gray-400">In Progress Audits</span>
+                <span className="text-xs font-black text-amber-400">{summary.in_progress}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-gray-400">System Mode</span>
+                <span className="text-[9px] font-black uppercase text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
+                  Autonomous
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* PII Compliance Scan */}
+          <div className="card-base p-6 border border-red-500/20 bg-gradient-to-br from-zinc-950 to-red-950/10 backdrop-blur-md">
+            <h3 className="text-sm font-black text-white uppercase tracking-tight mb-2">PII Compliance Scan</h3>
+            <p className="text-[9px] font-black text-red-400 uppercase tracking-widest mb-4">Realtime Interceptor Violations</p>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
+                <span className="text-xs text-gray-400">GDPR Violations</span>
+                <span className={`text-xs font-black ${piiBreakdown.GDPR > 0 ? 'text-red-400' : 'text-gray-400'}`}>{piiBreakdown.GDPR}</span>
+              </div>
+              <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
+                <span className="text-xs text-gray-400">HIPAA Violations</span>
+                <span className={`text-xs font-black ${piiBreakdown.HIPAA > 0 ? 'text-red-400' : 'text-gray-400'}`}>{piiBreakdown.HIPAA}</span>
+              </div>
+              <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
+                <span className="text-xs text-gray-400">DPDP Violations</span>
+                <span className={`text-xs font-black ${piiBreakdown.DPDP > 0 ? 'text-red-400' : 'text-gray-400'}`}>{piiBreakdown.DPDP}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-gray-400">Total Blocked/Flagged</span>
+                <span className={`text-xs font-black ${totalPii > 0 ? 'text-red-400' : 'text-emerald-400'}`}>{totalPii}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+interface NistAiRmfTabProps {
+  nistIsSeeding: boolean;
+  nistIsLoading: boolean;
+  nistError: string | null;
+  nistOverview: any;
+  nistHealth: any;
+  loadNistData: (showSilence?: boolean) => Promise<void>;
+  handleExportConformity: () => Promise<void>;
+  isExportingConformity: boolean;
+  setSelectedNistSub: (sub: any) => void;
+}
+
+function NistAiRmfTab({
+  nistIsSeeding,
+  nistIsLoading,
+  nistError,
+  nistOverview,
+  nistHealth,
+  loadNistData,
+  handleExportConformity,
+  isExportingConformity,
+  setSelectedNistSub
+}: NistAiRmfTabProps) {
+  if (nistIsSeeding) {
+    return (
+      <div className="card-base p-10 flex flex-col items-center justify-center text-center gap-6 border-indigo-500/20 bg-gradient-to-br from-indigo-950/10 to-zinc-950 backdrop-blur-md">
+        <RefreshCw className="h-12 w-12 text-indigo-400 animate-spin" />
+        <div>
+          <h3 className="text-lg font-black text-white uppercase tracking-wider">Framework Data Seeding in Progress</h3>
+          <p className="text-xs text-gray-400 mt-2 max-w-md">
+            NIST AI RMF 1.0 standard policies, severity weights, and cross-framework mappings are currently initializing in the secure database ledger.
+          </p>
+        </div>
+        <div className="w-full max-w-xs h-1.5 bg-zinc-900 rounded-full overflow-hidden">
+          <div className="h-full w-2/3 bg-indigo-500 rounded-full animate-pulse" />
+        </div>
+        <button 
+          onClick={() => loadNistData()}
+          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-xs font-bold text-white uppercase rounded-lg tracking-widest active:scale-95 transition shadow-lg"
+        >
+          Check Seeder Status
+        </button>
+      </div>
+    );
+  }
+
+  if (nistIsLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Compiling NIST Governance telemetry data...</p>
+      </div>
+    );
+  }
+
+  if (nistError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 p-6 border border-zinc-900 rounded-xl bg-zinc-950/10 backdrop-blur-md">
+        <ShieldAlert className="h-10 w-10 text-rose-500 animate-pulse" />
+        <h3 className="text-sm font-black text-white uppercase tracking-wider">NIST Scoring Engine Disconnected</h3>
+        <p className="text-xs text-gray-400">{nistError}</p>
+        <button 
+          onClick={() => loadNistData()}
+          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-xs font-bold text-white uppercase rounded-lg tracking-widest transition shadow-lg"
+        >
+          Reconnect scoring
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {/* NIST KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <KPICard 
+          label="Unified RMF Score" 
+          value={`${nistOverview?.score}%`} 
+          icon="compliance" 
+          status={nistOverview?.score >= 80 ? 'success' : nistOverview?.score >= 50 ? 'warning' : 'danger'} 
+        />
+        <KPICard 
+          label="Controls Implemented" 
+          value={nistOverview?.summary?.implemented || 0} 
+          icon="systems" 
+          status="success" 
+        />
+        <KPICard 
+          label="In Progress Subcategories" 
+          value={nistOverview?.summary?.in_progress || 0} 
+          icon="compliance" 
+          status="warning" 
+        />
+        <KPICard 
+          label="Freshness Status" 
+          value={nistOverview?.data_freshness_status || 'CURRENT'} 
+          icon="risks" 
+          status={nistOverview?.data_freshness_status === 'CURRENT' ? 'success' : nistOverview?.data_freshness_status === 'STALE' ? 'warning' : 'danger'} 
+        />
+      </div>
+
+      {/* Grid content */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        
+        {/* Score explainability change ledger */}
+        <div className="xl:col-span-5 flex flex-col gap-6">
+          <div className="card-base p-6 flex flex-col gap-5 bg-gradient-to-b from-zinc-950 to-indigo-950/5 backdrop-blur-md">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-black text-white uppercase tracking-tight">Governance Posture</h3>
+                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Continuous AI RMF Assurance</p>
+              </div>
+              
+              <button 
+                onClick={handleExportConformity}
+                disabled={isExportingConformity}
+                className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600/10 border border-indigo-500/20 hover:border-indigo-500/50 rounded-lg text-[9px] font-black text-indigo-400 hover:text-white uppercase transition active:scale-95 disabled:opacity-50 shadow-md"
+              >
+                <Download className="h-3 w-3" />
+                {isExportingConformity ? 'Signing...' : 'Conformity Package'}
+              </button>
+            </div>
+
+            <div className="flex flex-col items-center justify-center py-6 border border-zinc-900 rounded-xl bg-black/15">
+              <div className="relative h-32 w-32 flex items-center justify-center">
+                <svg className="absolute inset-0 h-full w-full transform -rotate-90">
+                  <circle cx="64" cy="64" r="54" className="stroke-zinc-800" strokeWidth="6" fill="transparent" />
+                  <circle 
+                    cx="64" 
+                    cy="64" 
+                    r="54" 
+                    className={cn(
+                      "transition-all duration-1000 ease-out",
+                      (nistOverview?.score || 0) >= 80 ? "stroke-emerald-500" : (nistOverview?.score || 0) >= 50 ? "stroke-amber-500" : "stroke-rose-500"
+                    )} 
+                    strokeWidth="8" 
+                    fill="transparent" 
+                    strokeDasharray={2 * Math.PI * 54}
+                    strokeDashoffset={2 * Math.PI * 54 * (1 - (nistOverview?.score || 0) / 100)}
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <div className="text-center">
+                  <span className="text-3xl font-black text-white">{nistOverview?.score || 0}</span>
+                  <span className="text-zinc-500 text-xs block uppercase font-black">Score</span>
+                </div>
+              </div>
+
+              {nistOverview?.score === 0 && (
+                <div className="mt-4 text-rose-400 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 animate-pulse">
+                  <ShieldAlert className="h-3.5 w-3.5" />
+                  No governance evidence ingested
+                </div>
+              )}
+            </div>
+
+            <div>
+              <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-3">Score Explainability Ledger</h4>
+              <div className="space-y-2">
+                {(nistOverview?.reasons || []).length > 0 ? (
+                  (nistOverview?.reasons || []).map((reason: any, idx: number) => (
+                    <div key={idx} className="p-3 text-xs bg-zinc-900/40 border border-zinc-900 rounded-xl flex items-start gap-3 hover:border-zinc-800 transition">
+                      <span className="mt-0.5 flex-shrink-0">{getNistReasonIcon(reason.type)}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-white font-bold leading-tight uppercase text-[10px]">
+                          {reason.type.replace('_', ' ')} ({reason.value > 0 ? `+${reason.value}` : reason.value})
+                        </p>
+                        <p className="text-[11px] text-gray-400 mt-0.5 leading-relaxed">{reason.msg}</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-3 text-xs border border-dashed border-zinc-900 text-zinc-500 rounded-xl text-center uppercase tracking-tighter">
+                    No posture modifications registered.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Self-monitoring diagnostics & incident logs */}
+        <div className="xl:col-span-7 flex flex-col gap-6">
+          
+          {/* self-monitoring diagnostics */}
+          <div className="card-base p-6 flex flex-col gap-4 backdrop-blur-md">
+            <div>
+              <h3 className="text-sm font-black text-white uppercase tracking-tight">Self-Monitoring Diagnostics</h3>
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Worker Health & Reliability</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {nistHealth?.workers?.length > 0 ? (
+                nistHealth.workers.map((w: any) => (
+                  <div key={w.id} className="p-4 bg-zinc-950/40 border border-zinc-900 rounded-xl flex items-center justify-between hover:border-zinc-800 transition">
+                    <div className="flex items-center gap-3">
+                      <div className="relative flex h-3 w-3">
+                        <span className={cn(
+                          "animate-ping absolute inline-flex h-full w-full rounded-full opacity-75",
+                          w.health_status === 'HEALTHY' ? "bg-emerald-400" : w.health_status === 'DEGRADED' ? "bg-amber-400" : "bg-rose-400"
+                        )} />
+                        <span className={cn(
+                          "relative inline-flex rounded-full h-3 w-3",
+                          w.health_status === 'HEALTHY' ? "bg-emerald-500" : w.health_status === 'DEGRADED' ? "bg-amber-500" : "bg-rose-500"
+                        )} />
+                      </div>
+                      
+                      <div>
+                        <h4 className="text-xs font-black text-white uppercase tracking-tight">{w.worker_name.replace('_', ' ')}</h4>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[9px] font-bold text-gray-500 flex items-center gap-1 uppercase">
+                            <Clock className="h-2.5 w-2.5" />
+                            {w.processing_latency_ms}ms latency
+                          </span>
+                          <span className="text-[9px] font-bold text-gray-500 flex items-center gap-1 uppercase">
+                            <Server className="h-2.5 w-2.5" />
+                            Depth: {w.queue_depth}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <span className={cn(
+                      "text-[8px] font-black px-1.5 py-0.5 rounded border uppercase tracking-widest",
+                      w.health_status === 'HEALTHY' ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+                      w.health_status === 'DEGRADED' ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
+                      "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                    )}>
+                      {w.health_status}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div className="p-4 border border-dashed border-zinc-900 rounded-xl text-center text-zinc-500 text-xs uppercase tracking-tighter col-span-2 py-6">
+                  No workers currently registered. Uptime checks will boot on active BullMQ queues.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Incidents */}
+          <div className="card-base p-6 flex flex-col gap-4 backdrop-blur-md">
+            <div>
+              <h3 className="text-sm font-black text-white uppercase tracking-tight">Governance SOC Incidents Hub</h3>
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Active Violations & SLAs</p>
+            </div>
+
+            <div className="space-y-3 max-h-[220px] overflow-y-auto custom-scrollbar">
+              {nistOverview?.incidents?.length > 0 ? (
+                nistOverview.incidents.map((inc: any) => (
+                  <div key={inc.id} className="p-3 bg-zinc-950/40 border border-zinc-900 hover:border-zinc-800 rounded-xl flex items-center justify-between gap-4 transition shadow-sm">
+                    <div className="flex items-start gap-3 min-w-0 flex-1">
+                      <span className={cn(
+                        "h-2 w-2 rounded-full mt-1.5 flex-shrink-0",
+                        inc.severity === 'CRITICAL' || inc.severity === 'HIGH' ? "bg-rose-500 shadow" : "bg-amber-500"
+                      )} />
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-xs font-bold text-white truncate uppercase tracking-tight">{inc.title}</h4>
+                        <div className="flex items-center gap-2.5 mt-0.5">
+                          <span className="text-[9px] font-bold text-gray-500 flex items-center gap-1 uppercase">
+                            <Clock className="h-2.5 w-2.5" />
+                            SLA: {new Date(inc.sla_deadline).toLocaleDateString()}
+                          </span>
+                          {inc.sla_breach && (
+                            <span className="text-[8px] font-black uppercase text-rose-400 bg-rose-950/20 px-1 border border-rose-500/10 rounded">
+                              SLA Breached
+                            </span>
+                          )}
+                          <span className="text-[8px] font-bold text-zinc-600 uppercase bg-zinc-900 px-1.5 py-0.5 rounded">
+                            {inc.incident_type}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <span className={cn(
+                      "text-[8px] font-black px-1.5 py-0.5 rounded border uppercase tracking-widest",
+                      inc.status === 'OPEN' ? "bg-rose-500/10 text-rose-400 border-rose-500/20" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                    )}>
+                      {inc.status}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 text-center opacity-40">
+                  <CheckCircle2 className="h-8 w-8 text-emerald-400 mb-2" />
+                  <p className="text-[10px] font-black text-white uppercase tracking-widest">No active incidents cataloged</p>
+                  <p className="text-[9px] text-gray-500 mt-1">All telemetry events are within healthy SLA parameters.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* NIST AI RMF Maturity Accordion */}
+      <div className="flex flex-col gap-4">
+        <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10 backdrop-blur-md">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Operational Maturity Matrix</span>
+              <h2 className="text-lg font-black text-white uppercase tracking-tight">NIST RMF 1.0 Subcategory Status</h2>
+            </div>
+          </div>
+          <p className="text-xs text-gray-400 leading-relaxed">
+            Continuous operational verification mapped directly to live system telemetry (interceptor, drift scans, evaluation). Click subcategories to patch compliance settings, notes, and view cross-framework GDPR/EU impact analyses.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          {(nistOverview?.functions || []).map((fn: any) => (
+            <NistFunctionBlock key={fn.function_code} fn={fn} setSelectedNistSub={setSelectedNistSub} />
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function NistFunctionBlock({ fn, setSelectedNistSub }: { fn: any; setSelectedNistSub: (sub: any) => void }) {
+  const totalSub = fn.categories.flatMap((c: any) => c.subcategories).length;
+  const compSub = fn.categories.flatMap((c: any) => c.subcategories).filter((s: any) => s.status === 'IMPLEMENTED').length;
+
+  return (
+    <div className="card-base p-5 border border-zinc-950 bg-zinc-950/40">
+      <div className="flex items-center justify-between border-b border-zinc-900 pb-3 mb-4">
+        <div>
+          <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Function Group</span>
+          <h3 className="text-sm font-black text-white uppercase tracking-tight flex items-center gap-2">
+            {fn.title}
+            <span className="text-[10px] font-bold text-gray-400">({fn.score}%)</span>
+          </h3>
+        </div>
+        
+        <span className="text-[9px] font-black text-zinc-500 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded uppercase tracking-widest">
+          {compSub} / {totalSub} Mapped
+        </span>
+      </div>
+
+      <div className="space-y-4">
+        {fn.categories.map((cat: any) => (
+          <NistCategoryBlock key={cat.category_code} cat={cat} setSelectedNistSub={setSelectedNistSub} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function NistCategoryBlock({ cat, setSelectedNistSub }: { cat: any; setSelectedNistSub: (sub: any) => void }) {
+  return (
+    <div className="bg-black/15 rounded-xl border border-zinc-900 p-4 space-y-3">
+      <div>
+        <h4 className="text-xs font-black text-white uppercase tracking-tight flex items-center gap-2">
+          <span className="text-[10px] text-indigo-400">{cat.category_code}</span>
+          {cat.title}
+        </h4>
+        <p className="text-[10px] text-zinc-500 leading-relaxed mt-0.5">{cat.description}</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-zinc-900/50">
+        {cat.subcategories.map((sub: any) => (
+          <div key={sub.code} className="bg-zinc-900/30 border border-zinc-900 hover:border-zinc-800 p-3 rounded-lg flex items-center justify-between gap-4 group transition shadow-sm animate-fade-in">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="text-[9px] font-black text-indigo-400">{sub.code}</span>
+                <h5 className="text-[11px] font-bold text-white truncate max-w-[200px] uppercase tracking-tight">{sub.title}</h5>
+              </div>
+              
+              <div className="flex items-center gap-2 mt-1">
+                <div className="h-1 w-12 bg-zinc-800 rounded-full overflow-hidden">
+                  <div 
+                    className={cn(
+                      "h-full rounded-full transition-all duration-300",
+                      sub.status === 'IMPLEMENTED' ? "bg-emerald-500 w-full" : sub.status === 'IN_PROGRESS' ? "bg-amber-500 w-1/2" : "w-0 bg-slate-700"
+                    )}
+                  />
+                </div>
+                <span className="text-[8px] font-semibold text-zinc-500 uppercase">
+                  Mat: {sub.maturityLevel}/5
+                </span>
+                {sub.telemetryLinked > 0 && (
+                  <span className="text-[8px] font-black uppercase text-indigo-400 bg-indigo-950/20 px-1 rounded flex items-center gap-0.5 animate-pulse">
+                    <Activity className="h-2 w-2" />
+                    {sub.telemetryLinked}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                setSelectedNistSub({
+                  subcategory_code: sub.code,
+                  title: sub.title,
+                  description: sub.description || '',
+                  severity_weight: 5,
+                  depends_on_control: '',
+                  implementation_examples: [],
+                  suggested_evidence: [],
+                  implementation: {
+                    status: sub.status,
+                    maturity_level: sub.maturityLevel,
+                    risk_escalation_level: 'NORMAL',
+                    notes: '',
+                    owner_user_id: '',
+                    due_date: '',
+                    last_reviewed: sub.lastEvidenceAt
+                  }
+                });
+              }}
+              className="flex items-center justify-center p-2 bg-zinc-900 border border-zinc-800 group-hover:border-indigo-500/30 rounded-lg text-gray-400 group-hover:text-white transition active:scale-95"
+            >
+              <Edit2 className="h-3 w-3" />
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+interface Iso42001TabProps {
+  iso42001Loading: boolean;
+  iso42001Error: string | null;
+  iso42001Overview: any;
+  openArticle: string | null;
+  setOpenArticle: (val: string | null) => void;
+  setSelectedControl: (control: any) => void;
+}
+
+function Iso42001Tab({
+  iso42001Loading,
+  iso42001Error,
+  iso42001Overview,
+  openArticle,
+  setOpenArticle,
+  setSelectedControl
+}: Iso42001TabProps) {
+  if (iso42001Loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Loading ISO 42001 Compliance Matrix...</p>
+      </div>
+    );
+  }
+
+  if (iso42001Error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 p-6 border border-zinc-900 rounded-xl bg-zinc-950/10 backdrop-blur-md">
+        <ShieldAlert className="h-10 w-10 text-rose-500 animate-pulse" />
+        <h3 className="text-sm font-black text-white uppercase tracking-wider">ISO 42001 Scoring Error</h3>
+        <p className="text-xs text-gray-400">{iso42001Error}</p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <KPICard 
+          label="ISO 42001 Score" 
+          value={`${iso42001Overview?.summary?.compliance_score}%`} 
+          icon="compliance" 
+          status={iso42001Overview?.summary?.compliance_score >= 80 ? 'success' : iso42001Overview?.summary?.compliance_score >= 50 ? 'warning' : 'danger'} 
+        />
+        <KPICard 
+          label="Implemented Controls" 
+          value={iso42001Overview?.summary?.implemented || 0} 
+          icon="systems" 
+          status="success" 
+        />
+        <KPICard 
+          label="In Progress Items" 
+          value={iso42001Overview?.summary?.in_progress || 0} 
+          icon="compliance" 
+          status="warning" 
+        />
+        <KPICard 
+          label="Not Started Controls" 
+          value={iso42001Overview?.summary?.not_started || 0} 
+          icon="risks" 
+          status="primary" 
+        />
+      </div>
+
+      {/* Clause Trees */}
+      <div className="flex flex-col gap-4">
+        <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10 backdrop-blur-md">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Active Standard</span>
+              <h2 className="text-lg font-black text-white uppercase tracking-tight">ISO/IEC 42001:2023 Artificial Intelligence Management</h2>
+            </div>
+          </div>
+          <p className="text-xs text-gray-400 leading-relaxed">
+            Verify compliance with international standards for establishing, implementing, maintaining, and continually improving an Artificial Intelligence Management System (AIMS). Manage organizational controls and evidence logs.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          {(iso42001Overview?.clauses || []).map((cls: any) => {
+            const isClauseOpen = openArticle === cls.clause_code;
+            const completedInClause = cls.controls.filter((c: any) => c.implementation?.status === 'IMPLEMENTED').length;
+            const totalInClause = cls.controls.length;
+
+            return (
+              <div 
+                key={cls.clause_code} 
+                className={cn(
+                  "card-base overflow-hidden border transition-all duration-300",
+                  isClauseOpen ? "border-indigo-500/30 shadow-indigo-950/10 bg-zinc-900/40" : "border-[var(--border-default)] hover:border-zinc-700 bg-zinc-950/20"
+                )}
+              >
+                <button
+                  onClick={() => setOpenArticle(isClauseOpen ? null : cls.clause_code)}
+                  className="w-full flex items-center justify-between p-5 text-left outline-none"
+                >
+                  <div className="flex items-start gap-4 flex-1">
+                    <div className="h-8 w-8 rounded-lg flex items-center justify-center border border-indigo-500/20 bg-indigo-500/10 font-bold text-xs uppercase text-indigo-400 tracking-tight">
+                      {cls.clause_code.replace('Clause ', '').replace('Annex ', 'A')}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <h4 className="text-[12px] font-black text-white uppercase tracking-tight">{cls.title}</h4>
+                        <span className="text-[8px] font-bold tracking-widest px-1.5 py-0.5 rounded border uppercase bg-indigo-950/20 text-indigo-400 border-indigo-500/10">
+                          {cls.clause_type}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-gray-400 font-medium leading-relaxed max-w-xl">{cls.description}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-4">
+                    <span className="text-[10px] font-black text-gray-400 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded uppercase tracking-tighter">
+                      {completedInClause} / {totalInClause} Done
+                    </span>
+                    {isClauseOpen ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
+                  </div>
+                </button>
+
+                {isClauseOpen && (
+                  <div className="border-t border-[var(--border-default)] bg-black/10 divide-y divide-zinc-900 animate-slide-in">
+                    {cls.controls.map((c: any) => {
+                      const status = c.implementation?.status || 'NOT_STARTED';
+
+                      return (
+                        <div 
+                          key={c.control_code}
+                          className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-3 hover:bg-white/5 transition animate-fade-in"
+                        >
+                          <div className="flex-1 text-left min-w-0 pr-4">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-[10px] font-black text-indigo-400 tracking-tight">{c.control_code}</span>
+                              <h5 className="text-[12px] font-bold text-white uppercase tracking-tight truncate">{c.title}</h5>
+                            </div>
+                            <p className="text-xs text-gray-400 leading-relaxed">{c.description}</p>
+                          </div>
+                          
+                          <div className="flex items-center gap-3 self-end sm:self-auto">
+                            <span className={cn(
+                              "text-[9px] font-black px-2 py-0.5 rounded border uppercase tracking-tight",
+                              getStatusColor(status)
+                            )}>
+                              {status.replace('_', ' ')}
+                            </span>
+
+                            <button
+                              onClick={() => setSelectedControl({
+                                ...c,
+                                framework: 'iso-42001'
+                              })}
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-indigo-500/30 rounded text-[9px] font-black text-white uppercase hover:bg-zinc-800 transition active:scale-95"
+                            >
+                              <Edit2 className="h-2.5 w-2.5 text-indigo-400" />
+                              Update
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </>
+  );
+}
+
+interface Iso27001TabProps {
+  iso27001Loading: boolean;
+  iso27001Error: string | null;
+  iso27001Overview: any;
+  openArticle: string | null;
+  setOpenArticle: (val: string | null) => void;
+  setSelectedControl: (control: any) => void;
+}
+
+function Iso27001Tab({
+  iso27001Loading,
+  iso27001Error,
+  iso27001Overview,
+  openArticle,
+  setOpenArticle,
+  setSelectedControl
+}: Iso27001TabProps) {
+  if (iso27001Loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Loading ISO 27001 Compliance Matrix...</p>
+      </div>
+    );
+  }
+
+  if (iso27001Error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 p-6 border border-zinc-900 rounded-xl bg-zinc-950/10 backdrop-blur-md">
+        <ShieldAlert className="h-10 w-10 text-rose-500 animate-pulse" />
+        <h3 className="text-sm font-black text-white uppercase tracking-wider">ISO 27001 Scoring Error</h3>
+        <p className="text-xs text-gray-400">{iso27001Error}</p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <KPICard 
+          label="ISO 27001 Score" 
+          value={`${iso27001Overview?.summary?.compliance_score}%`} 
+          icon="compliance" 
+          status={iso27001Overview?.summary?.compliance_score >= 80 ? 'success' : iso27001Overview?.summary?.compliance_score >= 50 ? 'warning' : 'danger'} 
+        />
+        <KPICard 
+          label="Implemented Controls" 
+          value={iso27001Overview?.summary?.implemented || 0} 
+          icon="systems" 
+          status="success" 
+        />
+        <KPICard 
+          label="In Progress Items" 
+          value={iso27001Overview?.summary?.in_progress || 0} 
+          icon="compliance" 
+          status="warning" 
+        />
+        <KPICard 
+          label="Not Started Controls" 
+          value={iso27001Overview?.summary?.not_started || 0} 
+          icon="risks" 
+          status="primary" 
+        />
+      </div>
+
+      {/* Clause Trees */}
+      <div className="flex flex-col gap-4">
+        <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10 backdrop-blur-md">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Active Standard</span>
+              <h2 className="text-lg font-black text-white uppercase tracking-tight">ISO/IEC 27001:2022 Information Security Management</h2>
+            </div>
+          </div>
+          <p className="text-xs text-gray-400 leading-relaxed">
+            Verify compliance with international standards for establishing, implementing, maintaining, and continually improving an Information Security Management System (ISMS). Review Clauses 4–10 and Annex controls.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          {(iso27001Overview?.clauses || []).map((cls: any) => {
+            const isClauseOpen = openArticle === cls.clause_code;
+            const completedInClause = cls.controls.filter((c: any) => c.implementation?.status === 'IMPLEMENTED').length;
+            const totalInClause = cls.controls.length;
+
+            return (
+              <div 
+                key={cls.clause_code} 
+                className={cn(
+                  "card-base overflow-hidden border transition-all duration-300",
+                  isClauseOpen ? "border-indigo-500/30 shadow-indigo-950/10 bg-zinc-900/40" : "border-[var(--border-default)] hover:border-zinc-700 bg-zinc-950/20"
+                )}
+              >
+                <button
+                  onClick={() => setOpenArticle(isClauseOpen ? null : cls.clause_code)}
+                  className="w-full flex items-center justify-between p-5 text-left outline-none"
+                >
+                  <div className="flex items-start gap-4 flex-1">
+                    <div className="h-8 w-8 rounded-lg flex items-center justify-center border border-indigo-500/20 bg-indigo-500/10 font-bold text-xs uppercase text-indigo-400 tracking-tight">
+                      {cls.clause_code.replace('Clause ', '').replace('Annex ', 'A')}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <h4 className="text-[12px] font-black text-white uppercase tracking-tight">{cls.title}</h4>
+                      </div>
+                      <p className="text-[10px] text-gray-400 font-medium leading-relaxed max-w-xl">{cls.description}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-4">
+                    <span className="text-[10px] font-black text-gray-400 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded uppercase tracking-tighter">
+                      {completedInClause} / {totalInClause} Done
+                    </span>
+                    {isClauseOpen ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
+                  </div>
+                </button>
+
+                {isClauseOpen && (
+                  <div className="border-t border-[var(--border-default)] bg-black/10 divide-y divide-zinc-900 animate-slide-in">
+                    {cls.controls.map((c: any) => {
+                      const status = c.implementation?.status || 'NOT_STARTED';
+
+                      return (
+                        <div 
+                          key={c.control_code}
+                          className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-3 hover:bg-white/5 transition animate-fade-in"
+                        >
+                          <div className="flex-1 text-left min-w-0 pr-4">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-[10px] font-black text-indigo-400 tracking-tight">{c.control_code}</span>
+                              <h5 className="text-[12px] font-bold text-white uppercase tracking-tight truncate">{c.title}</h5>
+                            </div>
+                            <p className="text-xs text-gray-400 leading-relaxed">{c.description}</p>
+                          </div>
+                          
+                          <div className="flex items-center gap-3 self-end sm:self-auto">
+                            <span className={cn(
+                              "text-[9px] font-black px-2 py-0.5 rounded border uppercase tracking-tight",
+                              getStatusColor(status)
+                            )}>
+                              {status.replace('_', ' ')}
+                            </span>
+
+                            <button
+                              onClick={() => setSelectedControl({
+                                ...c,
+                                framework: 'iso-27001'
+                              })}
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-indigo-500/30 rounded text-[9px] font-black text-white uppercase hover:bg-zinc-800 transition active:scale-95"
+                            >
+                              <Edit2 className="h-2.5 w-2.5 text-indigo-400" />
+                              Update
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </>
+  );
+}
+
+interface CcpaTabProps {
+  ccpaLoading: boolean;
+  ccpaError: string | null;
+  ccpaData: any;
+}
+
+function CcpaTab({
+  ccpaLoading,
+  ccpaError,
+  ccpaData
+}: CcpaTabProps) {
+  if (ccpaLoading) {
+    return <div className="text-center py-12 text-gray-500 text-sm">Loading CCPA compliance data...</div>;
+  }
+
+  if (ccpaError) {
+    return <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-rose-400 text-sm">{ccpaError}</div>;
+  }
+
+  if (!ccpaData) {
+    return null;
+  }
+
+  return (
+    <>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: 'Total Controls', value: ccpaData.summary?.total_controls ?? 0, color: 'text-white' },
+          { label: 'Implemented', value: ccpaData.summary?.implemented ?? 0, color: 'text-emerald-400' },
+          { label: 'In Progress', value: ccpaData.summary?.in_progress ?? 0, color: 'text-amber-400' },
+          { label: 'Compliance Score', value: `${ccpaData.summary?.compliance_score ?? 0}%`, color: 'text-indigo-400' },
+        ].map((stat) => (
+          <div key={stat.label} className="bg-[#111827]/40 border border-gray-800 rounded-2xl p-4 backdrop-blur-md">
+            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{stat.label}</p>
+            <p className={`text-2xl font-black mt-1 ${stat.color}`}>{stat.value}</p>
+          </div>
+        ))}
+      </div>
+      <div className="bg-[#111827]/40 border border-gray-800 rounded-2xl p-5 backdrop-blur-md">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Overall CCPA Compliance</p>
+          <p className="text-sm font-black text-white">{ccpaData.summary?.compliance_score ?? 0}%</p>
+        </div>
+        <div className="w-full h-2 bg-gray-800 rounded-full">
+          <div className="h-full bg-emerald-500 rounded-full transition-all duration-700" style={{ width: `${ccpaData.summary?.compliance_score ?? 0}%` }} />
+        </div>
+      </div>
+      <div className="space-y-4">
+        {(ccpaData.sections || []).map((section: any) => {
+          const sectionControls = section.controls || [];
+          const implemented = sectionControls.filter((c: any) => c.implementation?.status === 'IMPLEMENTED').length;
+          const total = sectionControls.length;
+          const pct = total > 0 ? Math.round((implemented / total) * 100) : 0;
+          return (
+            <div key={section.section_code} className="bg-[#111827]/40 border border-gray-800 rounded-2xl p-5 backdrop-blur-md">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] font-black text-gray-500 bg-gray-900/60 border border-gray-800 px-2 py-0.5 rounded font-mono">{section.section_code}</span>
+                  <p className="text-sm font-bold text-white">{section.title}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] text-gray-500">{implemented}/{total} controls</span>
+                  <span className={cn('text-[10px] font-black uppercase px-2 py-0.5 rounded border', pct === 100 ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : pct > 0 ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' : 'text-gray-500 bg-gray-500/10 border-gray-500/20')}>
+                    {pct === 100 ? 'Complete' : pct > 0 ? 'In Progress' : 'Not Started'}
+                  </span>
+                </div>
+              </div>
+              <p className="text-[11px] text-gray-500 mb-3">{section.description}</p>
+              <div className="w-full h-1 bg-gray-800 rounded-full">
+                <div className="h-full bg-indigo-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="text-center pt-2">
+        <a href="/app/ccpa" className="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 rounded-xl text-[10px] font-black text-white uppercase tracking-widest hover:bg-indigo-500 transition-all">
+          Open Full CCPA Dashboard →
+        </a>
+      </div>
+    </>
   );
 }

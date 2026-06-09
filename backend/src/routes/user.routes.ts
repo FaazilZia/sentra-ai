@@ -77,9 +77,10 @@ router.put('/me/avatar', authenticate, upload.single('avatar'), async (req: any,
     }
 
     // Create unique file name
-    const ext = path.extname(req.file.originalname) || '.png';
+    const rawExt = path.extname(req.file.originalname).toLowerCase();
+    const ext = ['.png', '.jpg', '.jpeg', '.gif', '.webp'].includes(rawExt) ? rawExt : '.png';
     const filename = `avatar-${req.user.id}-${Date.now()}${ext}`;
-    const filePath = path.join(uploadDir, filename);
+    const filePath = path.join(uploadDir, path.basename(filename));
 
     // Save file
     fs.writeFileSync(filePath, req.file.buffer);

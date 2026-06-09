@@ -7,8 +7,7 @@ import { validateEnv } from './config/validateEnv';
 
 
 import express from 'express';
-import { createServer } from 'http';
-import http from 'http';
+import http, { createServer } from 'http';
 import https from 'https';
 import { Server } from 'socket.io';
 import app from './app';
@@ -20,10 +19,9 @@ import { DriftBaselineService } from './services/driftBaseline.service';
 
 import { alertService } from './services/alert.service';
 import { verifyAccessToken } from './utils/jwt';
-import { redisHealthCheck } from './config/redis';
+import { redisHealthCheck, getRedisClient } from './config/redis';
 
 import { createHttpTerminator } from 'http-terminator';
-import { getRedisClient } from './config/redis';
 import { exec } from 'child_process';
 
 const PORT = Number.parseInt(process.env.PORT || '10000', 10);
