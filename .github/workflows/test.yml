@@ -37,7 +37,7 @@ jobs:
         run: npm ci
 
       - name: Run TypeScript compile checks (backend)
-        run: npx tsc --noEmit
+        run: node --max-old-space-size=4096 node_modules/.bin/tsc --noEmit
 
       - name: Validate OpenAPI spec
         run: node -e "require('./src/config/swagger')"
@@ -133,7 +133,7 @@ jobs:
         run: npm ci
 
       - name: Run TypeScript compile checks (frontend)
-        run: npx tsc --noEmit
+        run: node --max-old-space-size=4096 node_modules/.bin/tsc --noEmit
 
       - name: Install Playwright + Chromium
         run: npx playwright install chromium --with-deps
