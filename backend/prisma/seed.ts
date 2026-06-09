@@ -11,6 +11,11 @@ import { seedCcpa } from '../src/services/ccpaSeed.service';
 import { seedDora } from '../src/services/doraSeed.service';
 import { seedOecd } from '../src/services/oecdSeed.service';
 import { seedFtc } from '../src/services/ftcSeed.service';
+import { seedGdpr } from '../src/services/gdprSeed.service';
+import { seedHipaa } from '../src/services/hipaaSeed.service';
+import { seedSoc2 } from '../src/services/soc2Seed.service';
+import { seedPci } from '../src/services/pciSeed.service';
+import { seedDpdp } from '../src/services/dpdpSeed.service';
 
 dotenv.config();
 
@@ -209,6 +214,26 @@ async function main() {
   // 13. Seed FTC
   console.log('⚖️ Seeding FTC AI Guidelines...');
   try { await seedFtc(prisma); } catch (e: any) { console.error('❌ Failed to seed FTC:', e.message); }
+
+  // 14. Seed GDPR
+  console.log('🇪🇺 Seeding GDPR Controls...');
+  try { await seedGdpr(DEFAULT_ORGANIZATION_ID, prisma); } catch (e: any) { console.error('❌ Failed to seed GDPR:', e.message); }
+
+  // 15. Seed HIPAA
+  console.log('🏥 Seeding HIPAA Controls...');
+  try { await seedHipaa(DEFAULT_ORGANIZATION_ID, prisma); } catch (e: any) { console.error('❌ Failed to seed HIPAA:', e.message); }
+
+  // 16. Seed SOC2
+  console.log('🔐 Seeding SOC2 Controls...');
+  try { await seedSoc2(DEFAULT_ORGANIZATION_ID, prisma); } catch (e: any) { console.error('❌ Failed to seed SOC2:', e.message); }
+
+  // 17. Seed PCI-DSS
+  console.log('💳 Seeding PCI-DSS Controls...');
+  try { await seedPci(DEFAULT_ORGANIZATION_ID, prisma); } catch (e: any) { console.error('❌ Failed to seed PCI:', e.message); }
+
+  // 18. Seed DPDP
+  console.log('🇮🇳 Seeding DPDP Controls...');
+  try { await seedDpdp(DEFAULT_ORGANIZATION_ID, prisma); } catch (e: any) { console.error('❌ Failed to seed DPDP:', e.message); }
 
   console.log('\n🎉 Seed completed!');
   await prisma.$disconnect();

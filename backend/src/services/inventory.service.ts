@@ -23,15 +23,16 @@ export class InventoryService {
   }
 
   static async createAgent(organizationId: string, data: any) {
-    const { name, model, permissions, status, dependencies } = data;
+    const { name, model, permissions, status, dependencies, metadata } = data;
     
     const agent = await prisma.ai_agents.create({
       data: {
         organizationId,
         name,
         model,
-        permissions,
-        status,
+        permissions: permissions || [],
+        status: status || 'Active',
+        metadata: metadata || {},
         dependencies: {
           create: dependencies || [],
         },
