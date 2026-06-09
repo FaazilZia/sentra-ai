@@ -4,7 +4,7 @@ const FRONTEND_URL = 'http://localhost:5173';
 const BACKEND_URL = 'https://sentra-backend-node.onrender.com';
 
 const ADMIN_EMAIL = 'admin@sentra.ai';
-const ADMIN_PASSWORD = process.env.SMOKE_TEST_PASSWORD || 'test-placeholder';
+const ADMIN_PASSWORD = process.env.SMOKE_TEST_PASSWORD;
 
 const results = [];
 
