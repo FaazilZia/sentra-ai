@@ -6,7 +6,7 @@ const KEY_HEX = process.env.ENCRYPTION_KEY || '';
 function getKey(): Buffer {
   if (KEY_HEX.length === 64) return Buffer.from(KEY_HEX, 'hex');
   // Fallback: derive key from JWT_SECRET (not ideal for prod — set ENCRYPTION_KEY in env)
-  const secret = process.env.JWT_SECRET || 'sentra-fallback-secret-32-chars!!';
+  const secret = process.env.JWT_SECRET || process.env.JWT_SECRET_FALLBACK || '';
   return crypto.createHash('sha256').update(secret).digest();
 }
 

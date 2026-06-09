@@ -8,13 +8,13 @@ export class NistEvidenceService {
    * Helper to get active signing key and version.
    */
   private static getSigningKey(version: string): string {
-    const keysJson = process.env.GOVERNANCE_SIGNING_KEYS || '{"v1": "default-secret-key-sentra-ai-2026"}';
+    const keysJson = process.env.GOVERNANCE_SIGNING_KEYS || process.env.GOVERNANCE_SIGNING_KEYS_FALLBACK || '{"v1": ""}';
     try {
       const keys = JSON.parse(keysJson);
-      return keys[version] || keys['v1'] || 'fallback-secret-key';
+      return keys[version] || keys['v1'] || process.env.GOVERNANCE_SIGNING_KEYS_FALLBACK_VAL || '';
     } catch (err) {
       logger.error('Failed to parse GOVERNANCE_SIGNING_KEYS', err);
-      return 'fallback-secret-key';
+      return process.env.GOVERNANCE_SIGNING_KEYS_FALLBACK_VAL || '';
     }
   }
 

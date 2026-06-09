@@ -16,7 +16,7 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter: (req, file, cb) => {
     const filetypes = /jpeg|jpg|png|gif|webp/;
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const extname = filetypes.test(path.extname(path.basename(file.originalname)).toLowerCase());
     const mimetype = filetypes.test(file.mimetype);
     if (mimetype && extname) {
       return cb(null, true);
@@ -77,7 +77,8 @@ router.put('/me/avatar', authenticate, upload.single('avatar'), async (req: any,
     }
 
     // Create unique file name
-    const rawExt = path.extname(req.file.originalname).toLowerCase();
+    const safeOriginalName = path.basename(req.file.originalname);
+    const rawExt = path.extname(safeOriginalName).toLowerCase();
     const ext = ['.png', '.jpg', '.jpeg', '.gif', '.webp'].includes(rawExt) ? rawExt : '.png';
     const filename = `avatar-${req.user.id}-${Date.now()}${ext}`;
     const filePath = path.join(uploadDir, path.basename(filename));
