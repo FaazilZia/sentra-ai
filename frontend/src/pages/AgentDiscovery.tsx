@@ -384,7 +384,13 @@ export default function AgentDiscovery() {
 
         {/* Discovery List / Registered List */}
         {activeTab === 'SHADOW' ? (
-          filteredAgents.length === 0 ? (
+          agents.length === 0 ? (
+            <div className="bg-[#111827]/20 border border-zinc-800 border-dashed rounded-2xl p-12 text-center text-gray-500 max-w-md mx-auto my-6">
+              <Radio className="h-8 w-8 mx-auto mb-3 text-indigo-500/60 animate-pulse" />
+              <h4 className="text-xs font-black uppercase text-gray-400">No Agents Discovered</h4>
+              <p className="text-[10px] text-gray-500 mt-1">Agents detected by Shadow AI scanner will appear here.</p>
+            </div>
+          ) : filteredAgents.length === 0 ? (
             <div className="py-16 text-center text-zinc-500 text-xs italic">
               No unregistered shadow AI agent discoveries match current query parameters.
             </div>

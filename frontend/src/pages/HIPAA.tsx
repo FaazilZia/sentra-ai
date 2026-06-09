@@ -140,6 +140,34 @@ export default function HIPAA() {
     );
   }
 
+  if (!loading && controls.length === 0) {
+    return (
+      <div className="flex flex-col gap-6 p-6 animate-fade-in text-gray-200">
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-2">
+            <Shield className="h-6 w-6 text-cyan-400" />
+            HIPAA Framework Compliance
+          </h1>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">
+            Health Insurance Portability and Accountability Act (HIPAA) Security & Privacy Safeguards
+          </p>
+        </div>
+        <div className="flex-1 flex items-center justify-center min-h-[400px]">
+          <div className="bg-[#111827]/40 border border-gray-800 rounded-2xl p-12 max-w-md w-full text-center backdrop-blur-md">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-400 mx-auto mb-4 animate-pulse">
+              <Shield className="h-6 w-6" />
+            </div>
+            <h3 className="text-lg font-black text-white uppercase tracking-widest mb-2">No HIPAA Controls Seeded</h3>
+            <p className="text-xs text-gray-450 leading-relaxed">
+              Contact your administrator to initialise the HIPAA framework for your organisation.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const summary = stats || {
     total_controls: 0,
     implemented: 0,

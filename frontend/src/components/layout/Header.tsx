@@ -216,7 +216,7 @@ export function Header() {
     <header className="fixed top-0 right-0 z-40 h-[var(--topbar-height)] w-full lg:w-[calc(100%-var(--sidebar-width))] bg-[var(--bg-topbar)] border-b border-[var(--border-default)] px-6 flex items-center justify-between shadow-sm">
       <div className="flex items-center gap-4">
         {/* Breadcrumbs */}
-        <nav className="flex items-center gap-2 text-[var(--text-xs)] font-medium text-[var(--text-secondary)]">
+        <nav className="flex items-center gap-2 text-[var(--text-xs)] font-medium text-[var(--text-secondary)] pl-12 lg:pl-0">
           <Link to="/app" className="hover:text-[var(--royal-indigo)] transition-colors">Governance Workspace</Link>
           {pathnames.map((name, index) => {
             const isLast = index === pathnames.length - 1;

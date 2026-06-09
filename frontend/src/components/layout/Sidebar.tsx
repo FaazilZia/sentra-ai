@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate, NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -29,7 +30,9 @@ import {
   Cpu,
   Search,
   Compass,
-  Shield
+  Shield,
+  Menu,
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth';
@@ -131,6 +134,7 @@ const SIDEBAR_GROUPS: SidebarGroup[] = [
 export function Sidebar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -150,33 +154,96 @@ export function Sidebar() {
     : 'AD';
 
   return (
-    <aside className="fixed left-0 top-0 z-50 h-screen w-[var(--sidebar-width)] bg-[#1e293b] backdrop-blur-xl border-r border-white/5 flex flex-col transition-all duration-300 hidden lg:flex shadow-2xl shadow-black/5">
-      {/* Brand Logo */}
-      <div className="flex h-[var(--topbar-height)] items-center px-6 border-b border-white/5 bg-[#0f172a]/20">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded bg-[var(--mid-indigo)] text-white shadow-lg shadow-indigo-500/20">
-            <ShieldCheck className="h-5 w-5" />
-          </div>
-          <div>
-            <span className="text-sm font-black uppercase tracking-widest text-white">Sentra</span>
-            <span className="text-[10px] block font-bold text-[var(--lavender)] uppercase -mt-1 tracking-tighter opacity-70">Governance</span>
-          </div>
-        </div>
-      </div>
+    <>
+      {/* Mobile Hamburger Menu Button */}
+      <button
+        onClick={() => setIsOpen(true)}
+        className="lg:hidden fixed top-3.5 left-4 z-50 p-2 rounded-lg bg-[#1e293b]/90 backdrop-blur-md border border-white/10 text-white hover:bg-[#334155] focus:outline-none transition-colors shadow-lg"
+        aria-label="Open sidebar menu"
+      >
+        <Menu className="h-4.5 w-4.5" />
+      </button>
 
-      {/* Navigation */}
-      <nav className="flex-1 space-y-6 px-3 pt-6 overflow-y-auto custom-scrollbar pb-6">
-        {SIDEBAR_GROUPS.map((group) => (
-          <div key={group.name}>
-            <p className="px-4 mb-2 text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400 opacity-80">
-              {group.name}
-            </p>
-            <div className="space-y-1">
-              {group.items.map((item) => (
+      {/* Backdrop overlay behind open mobile drawer */}
+      {isOpen && (
+        <div 
+          onClick={() => setIsOpen(false)}
+          className="lg:hidden fixed inset-0 z-45 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+        />
+      )}
+
+      {/* Sidebar navigation drawer */}
+      <aside 
+        className={cn(
+          "fixed left-0 top-0 z-50 h-screen w-[var(--sidebar-width)] bg-[#1e293b] backdrop-blur-xl border-r border-white/5 flex flex-col transition-transform duration-300 ease-in-out shadow-2xl shadow-black/5 transform lg:translate-x-0",
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        {/* Brand Logo & Mobile Close Button */}
+        <div className="flex h-[var(--topbar-height)] items-center justify-between px-6 border-b border-white/5 bg-[#0f172a]/20">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded bg-[var(--mid-indigo)] text-white shadow-lg shadow-indigo-500/20">
+              <ShieldCheck className="h-5 w-5" />
+            </div>
+            <div>
+              <span className="text-sm font-black uppercase tracking-widest text-white">Sentra</span>
+              <span className="text-[10px] block font-bold text-[var(--lavender)] uppercase -mt-1 tracking-tighter opacity-70">Governance</span>
+            </div>
+          </div>
+
+          {/* Close button inside mobile drawer */}
+          <button
+            onClick={() => setIsOpen(false)}
+            className="lg:hidden p-1.5 rounded-lg text-[var(--lavender)] hover:text-white hover:bg-white/5 focus:outline-none transition-colors"
+            aria-label="Close sidebar menu"
+          >
+            <X className="h-4.5 w-4.5" />
+          </button>
+        </div>
+
+        {/* Navigation links */}
+        <nav className="flex-1 space-y-6 px-3 pt-6 overflow-y-auto custom-scrollbar pb-6">
+          {SIDEBAR_GROUPS.map((group) => (
+            <div key={group.name}>
+              <p className="px-4 mb-2 text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400 opacity-80">
+                {group.name}
+              </p>
+              <div className="space-y-1">
+                {group.items.map((item) => (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    end={item.path === '/app'}
+                    onClick={() => setIsOpen(false)}
+                    className={({ isActive }) => cn(
+                      "group flex items-center justify-between px-4 py-2 rounded transition-all duration-200",
+                      isActive
+                        ? "bg-[var(--royal-indigo)] text-white shadow-md shadow-black/10"
+                        : "text-[var(--lavender)] hover:bg-[#334155]/60 hover:text-white"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <item.icon className={cn(
+                        "h-4 w-4 transition-transform group-hover:scale-110",
+                        "text-current"
+                      )} />
+                      <span className="text-[10px] font-bold uppercase tracking-widest">{item.label}</span>
+                    </div>
+                    <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-40 transition-opacity" />
+                  </NavLink>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {/* Platform Admin Console */}
+          {user?.role === 'SUPER_ADMIN' && (
+            <div>
+              <p className="px-4 mb-2 text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400 opacity-80">Platform Admin</p>
+              <div className="space-y-1">
                 <NavLink
-                  key={item.path}
-                  to={item.path}
-                  end={item.path === '/app'}
+                  to="/superadmin"
+                  onClick={() => setIsOpen(false)}
                   className={({ isActive }) => cn(
                     "group flex items-center justify-between px-4 py-2 rounded transition-all duration-200",
                     isActive
@@ -185,66 +252,48 @@ export function Sidebar() {
                   )}
                 >
                   <div className="flex items-center gap-3">
-                    <item.icon className={cn(
+                    <ShieldCheck className={cn(
                       "h-4 w-4 transition-transform group-hover:scale-110",
-                      "text-current"
+                      "text-indigo-400"
                     )} />
-                    <span className="text-[10px] font-bold uppercase tracking-widest">{item.label}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Platform Console</span>
                   </div>
                   <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-40 transition-opacity" />
                 </NavLink>
-              ))}
+              </div>
             </div>
-          </div>
-        ))}
+          )}
+        </nav>
 
-        {/* Platform Admin Console */}
-        {user?.role === 'SUPER_ADMIN' && (
-          <div>
-            <p className="px-4 mb-2 text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400 opacity-80">Platform Admin</p>
-            <div className="space-y-1">
-              <NavLink
-                to="/superadmin"
-                className={({ isActive }) => cn(
-                  "group flex items-center justify-between px-4 py-2 rounded transition-all duration-200",
-                  isActive
-                    ? "bg-[var(--royal-indigo)] text-white shadow-md shadow-black/10"
-                    : "text-[var(--lavender)] hover:bg-[#334155]/60 hover:text-white"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <ShieldCheck className={cn(
-                    "h-4 w-4 transition-transform group-hover:scale-110",
-                    "text-indigo-400"
-                  )} />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">Platform Console</span>
-                </div>
-                <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-40 transition-opacity" />
-              </NavLink>
+        {/* Footer Profile */}
+        <div className="p-4 border-t border-white/5 bg-[#0f172a]/20">
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => {
+              setIsOpen(false);
+              handleLogout();
+            }}
+            onKeyDown={(e) => { 
+              if (e.key === 'Enter' || e.key === ' ') { 
+                e.preventDefault(); 
+                setIsOpen(false);
+                handleLogout(); 
+              } 
+            }}
+            className="flex items-center gap-3 p-2 rounded hover:bg-white/5 transition-colors cursor-pointer group"
+          >
+            <div className="h-8 w-8 rounded bg-[#4f46e5] border border-white/10 flex items-center justify-center text-[10px] font-black text-white">
+              {userInitials}
             </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-black text-white uppercase tracking-tight truncate">{user?.fullName || 'Admin User'}</p>
+              <p className="text-[9px] font-bold text-[var(--lavender)] uppercase opacity-50 truncate">{user?.role || 'Governance Admin'}</p>
+            </div>
+            <LogOut className="h-3.5 w-3.5 text-[var(--lavender)] opacity-40 group-hover:opacity-100 group-hover:text-rose-400 transition-all" />
           </div>
-        )}
-      </nav>
-
-      {/* Footer Profile */}
-      <div className="p-4 border-t border-white/5 bg-[#0f172a]/20">
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={handleLogout}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleLogout(); } }}
-          className="flex items-center gap-3 p-2 rounded hover:bg-white/5 transition-colors cursor-pointer group"
-        >
-          <div className="h-8 w-8 rounded bg-[#4f46e5] border border-white/10 flex items-center justify-center text-[10px] font-black text-white">
-            {userInitials}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-black text-white uppercase tracking-tight truncate">{user?.fullName || 'Admin User'}</p>
-            <p className="text-[9px] font-bold text-[var(--lavender)] uppercase opacity-50 truncate">{user?.role || 'Governance Admin'}</p>
-          </div>
-          <LogOut className="h-3.5 w-3.5 text-[var(--lavender)] opacity-40 group-hover:opacity-100 group-hover:text-rose-400 transition-all" />
         </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }
