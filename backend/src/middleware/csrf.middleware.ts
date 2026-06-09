@@ -22,6 +22,7 @@ export const csrfProtection = (req: CsrfRequest, res: Response, next: NextFuncti
   }
   
   req.csrfToken = csrfToken;
+  res.setHeader('x-csrf-token', csrfToken);
 
   // 2. Validate on mutating HTTP methods for auth routes
   const mutatingMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];

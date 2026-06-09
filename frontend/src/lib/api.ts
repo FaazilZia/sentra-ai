@@ -174,7 +174,18 @@ export class ApiError extends Error {
   }
 }
 
+let memoryCsrfToken: string | null = null;
+
 export function getCsrfToken(): string | null {
+  if (memoryCsrfToken) return memoryCsrfToken;
+  try {
+    const sessionToken = sessionStorage.getItem('sentra_csrf_token');
+    if (sessionToken) {
+      memoryCsrfToken = sessionToken;
+      return sessionToken;
+    }
+  } catch (e) {}
+
   const name = 'sentra_csrf_token=';
   const decodedCookie = decodeURIComponent(document.cookie);
   const ca = decodedCookie.split(';');
@@ -223,6 +234,15 @@ export async function apiRequest<T>(
     headers,
     credentials: 'include',
   });
+
+  // Extract CSRF token from response headers if present
+  const responseCsrf = response.headers.get('x-csrf-token');
+  if (responseCsrf) {
+    memoryCsrfToken = responseCsrf;
+    try {
+      sessionStorage.setItem('sentra_csrf_token', responseCsrf);
+    } catch (e) {}
+  }
 
   // Handle Token Refresh on 401
   if (response.status === 401 && retry) {
