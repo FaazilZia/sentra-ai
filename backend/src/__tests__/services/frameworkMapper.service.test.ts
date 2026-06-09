@@ -34,22 +34,28 @@ jest.mock('@prisma/client', () => {
     PrismaClient: jest.fn(() => mPrisma),
   };
 });
+const mockDbMethods = {
+  create: jest.fn().mockResolvedValue({ id: 'mock-id' }),
+  findMany: jest.fn().mockResolvedValue([]),
+  findFirst: jest.fn().mockResolvedValue(null),
+  findUnique: jest.fn().mockResolvedValue(null),
+  update: jest.fn().mockResolvedValue({ id: 'mock-id' }),
+  updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+  delete: jest.fn().mockResolvedValue({ id: 'mock-id' }),
+  deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+  count: jest.fn().mockResolvedValue(0),
+  upsert: jest.fn().mockResolvedValue({ id: 'mock-id' }),
+};
 
 jest.mock('../../config/db', () => ({
   __esModule: true,
   default: new Proxy({}, {
-    get: () => jest.fn().mockImplementation(() => ({
-      create: jest.fn().mockResolvedValue({ id: 'mock-id' }),
-      findMany: jest.fn().mockResolvedValue([]),
-      findFirst: jest.fn().mockResolvedValue(null),
-      findUnique: jest.fn().mockResolvedValue(null),
-      update: jest.fn().mockResolvedValue({ id: 'mock-id' }),
-      updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-      delete: jest.fn().mockResolvedValue({ id: 'mock-id' }),
-      deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
-      count: jest.fn().mockResolvedValue(0),
-      upsert: jest.fn().mockResolvedValue({ id: 'mock-id' }),
-    }))
+    get: (target, prop) => {
+      if (prop === '$connect' || prop === '$disconnect' || prop === '$queryRaw') {
+        return jest.fn().mockResolvedValue([]);
+      }
+      return mockDbMethods;
+    }
   })
 }));
 

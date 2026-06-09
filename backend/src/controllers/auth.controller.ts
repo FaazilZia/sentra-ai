@@ -274,7 +274,11 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 
     // Require email verification on login
     if (user.email_verified === false) {
-      return res.status(403).json({ error: 'Email not verified', code: 'EMAIL_NOT_VERIFIED' });
+      return res.status(403).json({ 
+        success: false,
+        error: 'EMAIL_NOT_VERIFIED', 
+        message: 'Please verify your email before logging in.'
+      });
     }
 
     const role = user.role || 'USER';

@@ -1,7 +1,7 @@
 import { FormEvent, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LoaderCircle, LockKeyhole, ArrowLeft, Mail } from 'lucide-react';
-import { apiBaseUrl } from '../lib/api';
+import { apiRequest } from '../lib/api';
 import { motion } from 'framer-motion';
 import { useStore } from '../store/useStore';
 
@@ -19,23 +19,16 @@ export default function ForgotPassword() {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(`${apiBaseUrl}/auth/forgot-password`, {
+      const data = await apiRequest<any>('/auth/forgot-password', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      const data = await response.json();
 
-      if (response.ok && data.success) {
-        setSuccess(true);
-        addToast({ message: 'Password reset request submitted', type: 'success' });
-      } else {
-        setError(data.message || 'Failed to send password reset email.');
-        addToast({ message: data.message || 'Password reset request failed', type: 'error' });
-      }
+      setSuccess(true);
+      addToast({ message: 'Password reset request submitted', type: 'success' });
     } catch (err: any) {
-      setError('A network error occurred. Please try again.');
-      addToast({ message: 'A network error occurred. Please try again.', type: 'error' });
+      setError(err.message || 'A network error occurred. Please try again.');
+      addToast({ message: err.message || 'A network error occurred. Please try again.', type: 'error' });
     } finally {
       setLoading(false);
     }

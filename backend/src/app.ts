@@ -88,6 +88,7 @@ import { auditRequest } from './middleware/audit.middleware';
 
 import { apiRateLimiter, getRateLimitRedisStatus } from './config/rateLimit';
 import { securityObservability } from './middleware/security.middleware';
+import { csrfProtection } from './middleware/csrf.middleware';
 
 import * as Sentry from '@sentry/node';
 
@@ -346,7 +347,7 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-API-Key', 'X-Workspace-Id', 'X-Idempotency-Key']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-API-Key', 'X-Workspace-Id', 'X-Idempotency-Key', 'X-CSRF-Token']
 }));
 
 // Prometheus HTTP instrumentation
@@ -357,6 +358,7 @@ app.use('/metrics', metricsRoutes);
 
 app.use(express.json({ limit: '100kb' }));
 app.use(cookieParser());
+app.use(csrfProtection);
 // Morgan kept only for non-production development convenience; pino-http handles prod JSON logs
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import { Activity, Database, LoaderCircle, LockKeyhole, Server, ShieldCheck, AlertCircle } from 'lucide-react';
 import { useAuth } from '../lib/auth';
-import { apiBaseUrl } from '../lib/api';
+import { apiBaseUrl, apiRequest } from '../lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function LoginPage({ defaultIsSignUp = false }: { defaultIsSignUp?: boolean }) {
@@ -17,6 +17,10 @@ export default function LoginPage({ defaultIsSignUp = false }: { defaultIsSignUp
   const [showSsoInput, setShowSsoInput] = useState(false);
   const [orgSlug, setOrgSlug] = useState('');
 
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
+  const [resendStatus, setResendStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [resendCooldown, setResendCooldown] = useState(0);
+
   const calculateStrength = (pass: string) => {
     let score = 0;
     if (pass.length > 8) score += 25;
@@ -28,12 +32,45 @@ export default function LoginPage({ defaultIsSignUp = false }: { defaultIsSignUp
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (isSignUp) {
-      await signUp(email, password, fullName, organizationName);
-    } else {
-      await login(email, password);
+    setUnverifiedEmail(null);
+    setResendStatus('idle');
+    try {
+      if (isSignUp) {
+        await signUp(email, password, fullName, organizationName);
+      } else {
+        await login(email, password);
+      }
+    } catch (error: any) {
+      if (error.status === 403 && (error.data?.error === 'EMAIL_NOT_VERIFIED' || error.message?.includes('verify'))) {
+        setUnverifiedEmail(email);
+      }
     }
   }
+
+  const handleResendVerification = async () => {
+    if (!unverifiedEmail) return;
+    setResendStatus('loading');
+    try {
+      await apiRequest('/auth/resend-verification', {
+        method: 'POST',
+        body: JSON.stringify({ email: unverifiedEmail })
+      });
+      setResendStatus('success');
+      setResendCooldown(30);
+      
+      const interval = setInterval(() => {
+        setResendCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch (err) {
+      setResendStatus('error');
+    }
+  };
 
   const handleSsoLogin = () => {
     if (!orgSlug.trim()) return;
@@ -248,7 +285,32 @@ export default function LoginPage({ defaultIsSignUp = false }: { defaultIsSignUp
             )}
 
             <AnimatePresence>
-              {loginError && (
+              {unverifiedEmail ? (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="flex flex-col gap-2 rounded-xl border border-amber-200/60 bg-amber-50/80 px-4 py-3 text-xs text-amber-800 backdrop-blur-sm"
+                >
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-amber-950">Your email isn't verified yet.</p>
+                      <p className="text-amber-700 mt-0.5">Please check your inbox for a verification link or trigger a new one below.</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleResendVerification}
+                    disabled={resendStatus === 'loading' || resendCooldown > 0}
+                    className="mt-1 text-left font-bold text-amber-900 underline hover:text-amber-950 disabled:opacity-50 disabled:no-underline text-xs"
+                  >
+                    {resendStatus === 'loading' ? 'Sending...' : 
+                     resendStatus === 'success' ? `Verification email sent! Re-send in ${resendCooldown}s` :
+                     resendStatus === 'error' ? 'Failed to send. Try again.' : 
+                     resendCooldown > 0 ? `Re-send in ${resendCooldown}s` : 'Resend Verification Email'}
+                  </button>
+                </motion.div>
+              ) : loginError ? (
                 <motion.div 
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
@@ -258,7 +320,7 @@ export default function LoginPage({ defaultIsSignUp = false }: { defaultIsSignUp
                   <AlertCircle className="h-4 w-4 shrink-0" />
                   <p>{loginError}</p>
                 </motion.div>
-              )}
+              ) : null}
             </AnimatePresence>
 
             <div className="pt-2">

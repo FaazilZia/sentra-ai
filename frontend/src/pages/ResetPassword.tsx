@@ -1,7 +1,7 @@
 import { FormEvent, useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { LoaderCircle, LockKeyhole, ShieldAlert, CheckCircle2 } from 'lucide-react';
-import { apiBaseUrl } from '../lib/api';
+import { apiRequest } from '../lib/api';
 import { motion } from 'framer-motion';
 import { useStore } from '../store/useStore';
 
@@ -43,26 +43,19 @@ export default function ResetPassword() {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(`${apiBaseUrl}/auth/reset-password`, {
+      const data = await apiRequest<any>('/auth/reset-password', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, newPassword: password }),
       });
-      const data = await response.json();
 
-      if (response.ok && data.success) {
-        setSuccess(true);
-        addToast({ message: 'Password has been reset successfully', type: 'success' });
-        setTimeout(() => {
-          navigate('/login');
-        }, 2000);
-      } else {
-        setError(data.message || 'Failed to reset password.');
-        addToast({ message: data.message || 'Password reset failed', type: 'error' });
-      }
-    } catch (err) {
-      setError('A network error occurred. Please try again.');
-      addToast({ message: 'A network error occurred. Please try again.', type: 'error' });
+      setSuccess(true);
+      addToast({ message: 'Password has been reset successfully', type: 'success' });
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
+    } catch (err: any) {
+      setError(err.message || 'Failed to reset password.');
+      addToast({ message: err.message || 'Password reset failed', type: 'error' });
     } finally {
       setLoading(false);
     }

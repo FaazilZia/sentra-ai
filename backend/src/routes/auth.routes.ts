@@ -95,6 +95,7 @@ router.get('/google/callback', googleCallback);
 router.post('/refresh-token', loginLimiter, validate(refreshTokenSchema), refreshToken);
 router.post('/refresh', loginLimiter, validate(refreshTokenSchema), refreshToken); // alias
 router.get('/me', authenticate, getMe);
+router.post('/logout', logout);
 router.post('/change-password', authenticate, changePassword);
 
 router.post('/forgot-password', resetLimiter, validate(forgotPasswordSchema), forgotPassword);

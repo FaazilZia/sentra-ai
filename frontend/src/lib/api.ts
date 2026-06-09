@@ -174,6 +174,22 @@ export class ApiError extends Error {
   }
 }
 
+export function getCsrfToken(): string | null {
+  const name = 'sentra_csrf_token=';
+  const decodedCookie = decodeURIComponent(document.cookie);
+  const ca = decodedCookie.split(';');
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) === ' ') {
+      c = c.substring(1);
+    }
+    if (c.indexOf(name) === 0) {
+      return c.substring(name.length, c.length);
+    }
+  }
+  return null;
+}
+
 /**
  * Enhanced API Request wrapper with automatic token refresh
  */
@@ -184,6 +200,15 @@ export async function apiRequest<T>(
 ): Promise<T> {
   const headers = new Headers(init.headers);
   headers.set('Content-Type', 'application/json');
+
+  const method = (init.method || 'GET').toUpperCase();
+  const mutatingMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
+  if (mutatingMethods.includes(method)) {
+    const csrfToken = getCsrfToken();
+    if (csrfToken) {
+      headers.set('x-csrf-token', csrfToken);
+    }
+  }
 
   const impersonationToken = localStorage.getItem('sentra_impersonation_token');
   const accessToken = localStorage.getItem('sentra_access_token');
