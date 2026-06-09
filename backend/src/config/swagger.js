@@ -6,6 +6,6 @@ try {
     }
   });
 } catch (e) {
-  // Safe fallback if ts-node is not loaded
+  console.warn('ts-node register failed (falling back to default require):', e?.message || e);
 }
 module.exports = require('./swagger.ts');

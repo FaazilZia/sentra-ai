@@ -28,8 +28,8 @@ export const getRecentHistory = asyncHandler(async (req: any, res: Response) => 
   const orgId = await resolveOrganizationId(req);
   if (!orgId) return sendError(res, 401, 'Unauthorized');
 
-  const limitParam = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
-  const limit = isNaN(limitParam) ? 10 : limitParam;
+  const limitParam = req.query.limit ? Number.parseInt(req.query.limit as string, 10) : 10;
+  const limit = Number.isNaN(limitParam) ? 10 : limitParam;
 
   const history = await ChangeHistoryService.getRecentChanges(orgId, limit);
   return sendSuccess(res, history);

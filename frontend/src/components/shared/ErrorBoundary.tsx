@@ -152,7 +152,9 @@ export class ErrorBoundary extends Component<Props, State> {
                 transition: 'opacity 0.15s',
               }}
               onMouseOver={e => (e.currentTarget.style.opacity = '0.85')}
+              onFocus={e => (e.currentTarget.style.opacity = '0.85')}
               onMouseOut={e => (e.currentTarget.style.opacity = '1')}
+              onBlur={e => (e.currentTarget.style.opacity = '1')}
             >
               ↩ Return to Dashboard
             </button>

@@ -92,7 +92,9 @@ export function NotFoundPage() {
               transition: 'background 0.15s',
             }}
             onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')}
+            onFocus={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')}
             onMouseOut={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+            onBlur={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
           >
             ← Go Back
           </button>
@@ -113,7 +115,9 @@ export function NotFoundPage() {
               transition: 'opacity 0.15s',
             }}
             onMouseOver={e => (e.currentTarget.style.opacity = '0.85')}
+            onFocus={e => (e.currentTarget.style.opacity = '0.85')}
             onMouseOut={e => (e.currentTarget.style.opacity = '1')}
+            onBlur={e => (e.currentTarget.style.opacity = '1')}
           >
             → Dashboard
           </button>

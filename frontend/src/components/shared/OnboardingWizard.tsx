@@ -226,6 +226,10 @@ if (decision.status === 'BLOCK') {
               <div 
                 key={s} 
                 onClick={() => setStep(s)}
+                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), setStep(s))}
+                role="button"
+                tabIndex={0}
+                aria-label={`Go to step ${s}`}
                 className={`h-2 rounded-full cursor-pointer transition-all duration-300 ${
                   s === step ? 'w-6 bg-indigo-500' : 'w-2 bg-gray-800 hover:bg-gray-700'
                 }`}

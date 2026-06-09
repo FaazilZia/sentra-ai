@@ -456,6 +456,10 @@ export default function IncidentManagement() {
           {/* Backdrop */}
           <div 
             onClick={() => setSelectedIncident(null)}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), setSelectedIncident(null))}
+            role="button"
+            tabIndex={0}
+            aria-label="Close details panel"
             className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
           />
           {/* Panel */}
@@ -577,6 +581,10 @@ export default function IncidentManagement() {
           {/* Backdrop */}
           <div 
             onClick={() => setIsLogModalOpen(false)}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), setIsLogModalOpen(false))}
+            role="button"
+            tabIndex={0}
+            aria-label="Close modal"
             className="fixed inset-0 bg-black/60 backdrop-blur-md"
           />
           {/* Content */}

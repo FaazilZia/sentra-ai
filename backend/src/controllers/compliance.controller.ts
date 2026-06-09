@@ -3,7 +3,6 @@ import { ComplianceService } from '../services/compliance.service';
 import { ReportService } from '../services/report.service';
 import { EuAiActService } from '../services/euAiAct.service';
 import { resolveOrganizationId } from '../utils/company';
-import logger from '../utils/logger';
 import prisma from '../config/db';
 import { asyncHandler, sendSuccess, sendError } from '../utils/controllerHelpers';
 

@@ -333,7 +333,14 @@ export default function Policies() {
 
       {showVersionHistory && (
         <div className="fixed inset-0 z-50 flex">
-          <div className="flex-1" onClick={() => setShowVersionHistory(false)} />
+          <div 
+            className="flex-1" 
+            onClick={() => setShowVersionHistory(false)} 
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), setShowVersionHistory(false))}
+            role="button"
+            tabIndex={0}
+            aria-label="Close version history"
+          />
           <div className="w-[480px] bg-[#0f172a] border-l border-gray-800 flex flex-col h-full shadow-2xl">
             <div className="flex items-center justify-between p-6 border-b border-gray-800">
               <div>

@@ -168,6 +168,10 @@ export function Sidebar() {
       {isOpen && (
         <div 
           onClick={() => setIsOpen(false)}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), setIsOpen(false))}
+          role="button"
+          tabIndex={0}
+          aria-label="Close sidebar"
           className="lg:hidden fixed inset-0 z-45 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
         />
       )}

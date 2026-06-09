@@ -423,7 +423,7 @@ export default function AgentDiscovery() {
                     </p>
                     
                     <p className="text-[9px] text-zinc-600 font-mono">
-                      Scanned at: {new Date(agent.found_at).toLocaleString()} // Risk Score: {agent.risk_score}/100
+                      Scanned at: {new Date(agent.found_at).toLocaleString()} {" // "} Risk Score: {agent.risk_score}/100
                     </p>
                   </div>
 
@@ -477,7 +477,7 @@ export default function AgentDiscovery() {
                     </p>
                     
                     <p className="text-[9px] text-zinc-600 font-mono">
-                      Model: {agent.model_name} v{agent.model_version} // Use Case: {agent.use_case} // Created at: {new Date(agent.created_at).toLocaleString()}
+                      Model: {agent.model_name} v{agent.model_version} {" // "} Use Case: {agent.use_case} {" // "} Created at: {new Date(agent.created_at).toLocaleString()}
                     </p>
                   </div>
 

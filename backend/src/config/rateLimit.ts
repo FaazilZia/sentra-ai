@@ -124,7 +124,7 @@ export class ResilientRedisStore {
     try {
       this.setRedisStatus(healthy);
     } catch (err) {
-      // Safely catch caller callback errors
+      logger.error('Failed to set Redis status in callback:', err);
     }
   }
 

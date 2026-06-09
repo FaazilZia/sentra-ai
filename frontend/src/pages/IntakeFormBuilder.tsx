@@ -62,6 +62,9 @@ function DraggablePaletteItem({ type, label, description, icon, onAdd }: Draggab
       {...listeners}
       {...attributes}
       onClick={() => onAdd(type)}
+      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onAdd(type))}
+      role="button"
+      tabIndex={0}
       className={cn(
         "flex items-center gap-3 p-3 bg-zinc-900/30 border border-zinc-850 hover:border-zinc-700 hover:bg-white/5 rounded-xl transition text-left cursor-grab active:cursor-grabbing select-none",
         isDragging && "opacity-50 border-[var(--royal-indigo)] z-50"
@@ -608,6 +611,10 @@ export default function IntakeFormBuilder() {
                         <div
                           key={field.id}
                           onClick={() => setSelectedFieldId(field.id)}
+                          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), setSelectedFieldId(field.id))}
+                          role="button"
+                          tabIndex={0}
+                          aria-label={`Select field ${field.label}`}
                           className={cn(
                             "p-4 rounded-xl border transition-all text-left flex justify-between items-start cursor-pointer select-none",
                             isSelected 
@@ -633,23 +640,23 @@ export default function IntakeFormBuilder() {
                             )}
                           </div>
 
-                          <div className="flex gap-1 items-center shrink-0" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex gap-1 items-center shrink-0">
                             <button
-                              onClick={() => moveField(index, 'up')}
+                              onClick={(e) => { e.stopPropagation(); moveField(index, 'up'); }}
                               disabled={index === 0}
                               className="p-1 hover:bg-zinc-800 disabled:opacity-20 text-zinc-400 rounded"
                             >
                               <ArrowUp className="h-3.5 w-3.5" />
                             </button>
                             <button
-                              onClick={() => moveField(index, 'down')}
+                              onClick={(e) => { e.stopPropagation(); moveField(index, 'down'); }}
                               disabled={index === formConfig.fields.length - 1}
                               className="p-1 hover:bg-zinc-800 disabled:opacity-20 text-zinc-400 rounded"
                             >
                               <ArrowDown className="h-3.5 w-3.5" />
                             </button>
                             <button
-                              onClick={() => deleteField(field.id)}
+                              onClick={(e) => { e.stopPropagation(); deleteField(field.id); }}
                               className="p-1 hover:bg-red-500/10 text-zinc-500 hover:text-red-400 rounded"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
