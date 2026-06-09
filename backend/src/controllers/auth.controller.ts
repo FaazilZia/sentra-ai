@@ -346,6 +346,7 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
             role: 'ADMIN',
             is_active: true,
             organizationId: org.id,
+            email_verified: true,
           },
         });
         await seedDefaultPolicy(tx, org.id);

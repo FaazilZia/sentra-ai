@@ -3,7 +3,7 @@ import { apiRequest } from '@/lib/api';
 import { 
   Bot, Plus, Search, ChevronRight, ShieldAlert, Cpu, 
   Layers, User, CheckCircle2, AlertCircle, X, Edit, Save, 
-  Sparkles, FileText, Info
+  Sparkles, FileText, Info, Trash2
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -174,6 +174,22 @@ export default function AIRegistry() {
       console.error('Failed to load AI systems:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteSystem = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this AI system? This action cannot be undone.')) {
+      return;
+    }
+    try {
+      await apiRequest(`/ai-systems/${id}`, {
+        method: 'DELETE'
+      });
+      setSelectedSystem(null);
+      loadSystems();
+    } catch (err) {
+      console.error('Failed to delete AI system:', err);
+      alert('Failed to delete AI system');
     }
   };
 
@@ -439,6 +455,14 @@ export default function AIRegistry() {
                       </button>
                     </>
                   )}
+                  
+                  <button
+                    onClick={() => handleDeleteSystem(selectedSystem.id)}
+                    className="flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-400 hover:bg-red-500/20 transition-all active:scale-95"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Delete System
+                  </button>
                 </div>
               </div>
 

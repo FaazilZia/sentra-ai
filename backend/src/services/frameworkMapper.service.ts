@@ -135,7 +135,7 @@ export class FrameworkMapperService {
     }
   ];
 
-  static async getCrossFrameworkMap(organizationId: string) {
+  private static async getRawCrossFrameworkMap(organizationId: string) {
     // Fetch all control implementation statuses across frameworks
     const [euImpl, nistImpl, iso42Impl, iso27Impl] = await Promise.all([
       prisma.eu_ai_act_implementations.findMany({ where: { organizationId }, include: { control: true } }),
@@ -166,40 +166,109 @@ export class FrameworkMapperService {
     });
   }
 
-  static async getGapAnalysis(organizationId: string) {
-    const fullMap = await this.getCrossFrameworkMap(organizationId);
-    
-    // Gap = Concern area where at least one framework is IMPLEMENTED but others are NOT_STARTED
-    return fullMap.filter(m => {
-      const statuses = [m.euAiAct.status, m.nist.status, m.iso42001.status, m.iso27001.status];
-      const hasImplemented = statuses.includes('IMPLEMENTED');
-      const hasNotStarted = statuses.includes('NOT_STARTED');
-      return hasImplemented && hasNotStarted;
-    }).map(m => {
-      const lagging: string[] = [];
-      const implemented: string[] = [];
+  static async getCrossFrameworkMap(organizationId: string) {
+    const [rawMap, euControls, nistSubcategories, iso42Controls, iso27Controls] = await Promise.all([
+      this.getRawCrossFrameworkMap(organizationId),
+      prisma.eu_ai_act_controls.findMany({ select: { control_code: true, title: true } }),
+      prisma.nist_ai_rmf_subcategories.findMany({ select: { subcategory_code: true, title: true } }),
+      prisma.iso42001_controls.findMany({ select: { control_code: true, title: true } }),
+      prisma.iso27001_controls.findMany({ select: { control_code: true, title: true } })
+    ]);
 
-      if (m.euAiAct.status === 'NOT_STARTED') lagging.push('EU AI Act');
-      if (m.nist.status === 'NOT_STARTED') lagging.push('NIST AI RMF');
-      if (m.iso42001.status === 'NOT_STARTED') lagging.push('ISO 42001');
-      if (m.iso27001.status === 'NOT_STARTED') lagging.push('ISO 27001');
+    const euTitleMap = new Map(euControls.map(c => [c.control_code, c.title]));
+    const nistTitleMap = new Map(nistSubcategories.map(s => [s.subcategory_code, s.title]));
+    const iso42TitleMap = new Map(iso42Controls.map(c => [c.control_code, c.title]));
+    const iso27TitleMap = new Map(iso27Controls.map(c => [c.control_code, c.title]));
 
-      if (m.euAiAct.status === 'IMPLEMENTED') implemented.push('EU AI Act');
-      if (m.nist.status === 'IMPLEMENTED') implemented.push('NIST AI RMF');
-      if (m.iso42001.status === 'IMPLEMENTED') implemented.push('ISO 42001');
-      if (m.iso27001.status === 'IMPLEMENTED') implemented.push('ISO 27001');
+    return rawMap.map(m => {
+      const euStatus = m.euAiAct.status;
+      const nistStatus = m.nist.status;
+      const iso42Status = m.iso42001.status;
+      const iso27Status = m.iso27001.status;
+
+      const statuses = [euStatus, nistStatus, iso42Status, iso27Status];
+      const implementedCount = statuses.filter(s => s === 'IMPLEMENTED').length;
+      const progressCount = statuses.filter(s => s === 'IN_PROGRESS').length;
+
+      let finalStatus: 'implemented' | 'in_progress' | 'not_started' | 'not_applicable' = 'not_started';
+      if (implementedCount === 4) {
+        finalStatus = 'implemented';
+      } else if (implementedCount > 0 || progressCount > 0) {
+        finalStatus = 'in_progress';
+      }
+
+      const orig = this.MAPPINGS.find(x => x.concern === m.concern)!;
 
       return {
-        concern: m.concern,
-        domain: m.domain,
-        laggingFrameworks: lagging,
-        implementedFrameworks: implemented
+        id: `${m.domain}-${orig.nistCode}-${orig.euAiActCode}`,
+        concernArea: m.concern,
+        nistCode: orig.nistCode,
+        nistTitle: nistTitleMap.get(orig.nistCode) || "NIST Control",
+        euArticle: orig.euAiActCode,
+        euTitle: euTitleMap.get(orig.euAiActCode) || "EU AI Act Article",
+        iso42001Control: orig.iso42001Code,
+        iso42001Title: iso42TitleMap.get(orig.iso42001Code) || "ISO 42001 Control",
+        iso27001Control: orig.iso27001Code,
+        iso27001Title: iso27TitleMap.get(orig.iso27001Code) || "ISO 27001 Control",
+        status: finalStatus
       };
     });
   }
 
+  static async getGapAnalysis(organizationId: string) {
+    const [rawMap, euControls, nistSubcategories, iso42Controls, iso27Controls] = await Promise.all([
+      this.getRawCrossFrameworkMap(organizationId),
+      prisma.eu_ai_act_controls.findMany({ select: { control_code: true, title: true } }),
+      prisma.nist_ai_rmf_subcategories.findMany({ select: { subcategory_code: true, title: true } }),
+      prisma.iso42001_controls.findMany({ select: { control_code: true, title: true } }),
+      prisma.iso27001_controls.findMany({ select: { control_code: true, title: true } })
+    ]);
+
+    const euTitleMap = new Map(euControls.map(c => [c.control_code, c.title]));
+    const nistTitleMap = new Map(nistSubcategories.map(s => [s.subcategory_code, s.title]));
+    const iso42TitleMap = new Map(iso42Controls.map(c => [c.control_code, c.title]));
+    const iso27TitleMap = new Map(iso27Controls.map(c => [c.control_code, c.title]));
+
+    const gaps: any[] = [];
+
+    for (const m of rawMap) {
+      const euStatus = m.euAiAct.status;
+      const nistStatus = m.nist.status;
+      const iso42Status = m.iso42001.status;
+      const iso27Status = m.iso27001.status;
+
+      const orig = this.MAPPINGS.find(x => x.concern === m.concern)!;
+
+      const frameworks = [
+        { name: 'EU AI Act', code: orig.euAiActCode, status: euStatus, title: euTitleMap.get(orig.euAiActCode) || "EU AI Act Article" },
+        { name: 'NIST AI RMF', code: orig.nistCode, status: nistStatus, title: nistTitleMap.get(orig.nistCode) || "NIST Control" },
+        { name: 'ISO 42001', code: orig.iso42001Code, status: iso42Status, title: iso42TitleMap.get(orig.iso42001Code) || "ISO 42001 Control" },
+        { name: 'ISO 27001', code: orig.iso27001Code, status: iso27Status, title: iso27TitleMap.get(orig.iso27001Code) || "ISO 27001 Control" }
+      ];
+
+      const implemented = frameworks.filter(f => f.status === 'IMPLEMENTED');
+      const lagging = frameworks.filter(f => f.status === 'NOT_STARTED');
+
+      if (implemented.length > 0 && lagging.length > 0) {
+        for (const lag of lagging) {
+          gaps.push({
+            framework: lag.name,
+            controlCode: lag.code,
+            controlTitle: lag.title,
+            mappedFrom: implemented[0].name,
+            mappedControl: implemented[0].code,
+            gapType: 'missing_implementation',
+            severity: lagging.length > 2 ? 'high' : 'medium'
+          });
+        }
+      }
+    }
+
+    return gaps;
+  }
+
   static async getOverlapScore(organizationId: string) {
-    const fullMap = await this.getCrossFrameworkMap(organizationId);
+    const fullMap = await this.getRawCrossFrameworkMap(organizationId);
     let totalConsistency = 0;
     const domainScores: Record<string, { total: number; consistent: number }> = {
       risk: { total: 0, consistent: 0 },
@@ -213,7 +282,6 @@ export class FrameworkMapperService {
       const statuses = [m.euAiAct.status, m.nist.status, m.iso42001.status, m.iso27001.status];
       
       // Calculate how consistent the implementation is across all 4 frameworks
-      // (100% if all statuses are equal, 0% if heavily skewed)
       const implementedCount = statuses.filter(s => s === 'IMPLEMENTED').length;
       const progressCount = statuses.filter(s => s === 'IN_PROGRESS').length;
       const notStartedCount = statuses.filter(s => s === 'NOT_STARTED').length;
