@@ -90,6 +90,22 @@ async function handleSdkToken(token: string, req: any, res: Response): Promise<{
 async function handleJwtToken(token: string, req: any, res: Response): Promise<{ handled: boolean; errorResponse?: { status: number; body: any } }> {
   try {
     const payload: any = verifyAccessToken(token);
+
+    // Check Redis blacklist
+    const redis = getRedisClient();
+    if (redis) {
+      const isBlacklisted = await redis.get(`blacklist:${token}`);
+      if (isBlacklisted) {
+        return {
+          handled: true,
+          errorResponse: {
+            status: 401,
+            body: { success: false, message: 'Invalid or expired credentials' }
+          }
+        };
+      }
+    }
+
     const user = await prisma.users.findUnique({
       where: { id: payload.id },
       include: { organizations: true },

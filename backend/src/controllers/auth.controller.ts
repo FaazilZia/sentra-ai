@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express'; // Refreshing TS Server Context
 import bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
+import jwt from 'jsonwebtoken';
 import prisma from '../config/db';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken, generateCustomToken, verifyCustomToken } from '../utils/jwt';
 import logger from '../utils/logger';
@@ -502,6 +503,30 @@ export const logout = async (req: Request, res: Response, next: NextFunction) =>
         where: { token: refreshToken },
         data: { revoked: true }
       });
+    }
+
+    // Server-side JWT Access Token Invalidation on Logout
+    let token = req.cookies?.sentra_access_token;
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    }
+
+    if (token) {
+      try {
+        const decoded = jwt.decode(token) as jwt.JwtPayload;
+        if (decoded && decoded.exp) {
+          const ttl = decoded.exp - Math.floor(Date.now() / 1000);
+          if (ttl > 0) {
+            const redis = getRedisClient();
+            if (redis) {
+              await redis.set(`blacklist:${token}`, '1', 'EX', ttl);
+            }
+          }
+        }
+      } catch (err) {
+        logger.error('Failed to blacklist token on logout:', err);
+      }
     }
 
     // Clear HTTP-only cookies
