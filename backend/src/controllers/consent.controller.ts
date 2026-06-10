@@ -67,6 +67,10 @@ export const getConsentHistory = asyncHandler(async (req: any, res: Response) =>
     hash: record.hashing_chain,
   }));
 
+  if (!req.query.limit && !req.query.cursor) {
+    return sendSuccess(res, formattedHistory);
+  }
+
   return sendSuccess(res, { data: formattedHistory, nextCursor, total });
 });
 
