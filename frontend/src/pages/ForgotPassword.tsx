@@ -19,7 +19,7 @@ export default function ForgotPassword() {
     setLoading(true);
     setError('');
     try {
-      const data = await apiRequest<any>('/auth/forgot-password', {
+      await apiRequest<any>('/auth/forgot-password', {
         method: 'POST',
         body: JSON.stringify({ email }),
       });
