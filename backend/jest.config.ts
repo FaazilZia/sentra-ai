@@ -20,6 +20,9 @@ module.exports = {
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.test.json', diagnostics: { ignoreCodes: [151002] } }],
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!(uuid)/)'
+  ],
   moduleNameMapper: {
     // Mock the queue module in CI where Redis/p-queue timers cause worker leaks
     '^../config/queue$': '<rootDir>/src/__mocks__/config/queue.ts',

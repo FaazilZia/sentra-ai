@@ -1,9 +1,9 @@
 import { Response } from 'express';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { asyncHandler } from '../utils/controllerHelpers';
 
 export const generateReport = asyncHandler(async (req: any, res: Response) => {
-  const jobId = uuidv4();
+  const jobId = randomUUID();
   const reportUrl = `${req.protocol}://${req.get('host')}/api/v1/reports/${jobId}/download`;
 
   return res.status(202).json({
