@@ -36,6 +36,46 @@ export default function Policies() {
   const [versionsLoading, setVersionsLoading] = useState(false);
   const [rollingBack, setRollingBack] = useState(false);
 
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newDesc, setNewDesc] = useState('');
+  const [newEffect, setNewEffect] = useState<'allow' | 'deny'>('deny');
+  const [creating, setCreating] = useState(false);
+
+  const handleCreatePolicy = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newName.length < 3) {
+      addToast({ message: 'Policy name must be at least 3 characters', type: 'warning' });
+      return;
+    }
+    setCreating(true);
+    try {
+      await apiRequest('/policies', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: newName,
+          description: newDesc,
+          effect: newEffect,
+          enabled: true,
+          priority: 1,
+          scope: {},
+          conditions: {},
+          obligations: {}
+        })
+      });
+      addToast({ message: 'Policy created successfully!', type: 'success' });
+      setIsCreateOpen(false);
+      setNewName('');
+      setNewDesc('');
+      setNewEffect('deny');
+      await loadPolicies();
+    } catch (err: any) {
+      addToast({ message: err.message || 'Failed to create policy', type: 'error' });
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const loadPolicies = async () => {
     try {
       const data = await fetchPolicies();
@@ -126,7 +166,7 @@ export default function Policies() {
           </p>
         </div>
         <button 
-          onClick={() => addToast({ message: 'Policy creation wizard initializing...', type: 'info' })}
+          onClick={() => { setNewName(''); setNewDesc(''); setNewEffect('deny'); setIsCreateOpen(true); }}
           className="flex items-center gap-2 px-4 py-2.5 bg-[var(--mid-indigo)] rounded-lg text-[10px] font-black text-white uppercase tracking-widest hover:bg-[var(--royal-indigo)] transition-all shadow-lg shadow-indigo-500/20 active:scale-95"
         >
           <Plus className="h-4 w-4" />
@@ -375,6 +415,82 @@ export default function Policies() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {isCreateOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="w-full max-w-md bg-[#111827] border border-gray-850 rounded-2xl p-6 shadow-2xl relative text-left">
+            <button 
+              onClick={() => setIsCreateOpen(false)}
+              className="absolute right-4 top-4 text-gray-500 hover:text-white hover:bg-gray-850 p-1 rounded-lg transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            <h3 className="text-sm font-black uppercase tracking-widest text-white mb-6 flex items-center gap-2">
+              <FileText className="h-5 w-5 text-indigo-400" />
+              Create Governance Policy
+            </h3>
+
+            <form onSubmit={handleCreatePolicy} className="space-y-4">
+              <div>
+                <label htmlFor="policy-name-input" className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-1">Policy Name</label>
+                <input 
+                  id="policy-name-input"
+                  type="text" 
+                  value={newName}
+                  onChange={e => setNewName(e.target.value)}
+                  placeholder="Policy Name" 
+                  className="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-xs text-gray-200 focus:outline-none focus:border-indigo-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="policy-desc-input" className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-1">Description</label>
+                <textarea 
+                  id="policy-desc-input"
+                  value={newDesc}
+                  onChange={e => setNewDesc(e.target.value)}
+                  placeholder="Description" 
+                  rows={3}
+                  className="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-xs text-gray-200 focus:outline-none focus:border-indigo-500 resize-none"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="policy-effect-select" className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-1">Policy Effect</label>
+                <select 
+                  id="policy-effect-select"
+                  value={newEffect}
+                  onChange={e => setNewEffect(e.target.value as any)}
+                  className="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-xs text-gray-200 focus:outline-none focus:border-indigo-500"
+                >
+                  <option value="deny">deny</option>
+                  <option value="allow">allow</option>
+                </select>
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-gray-850/60">
+                <button 
+                  type="button"
+                  onClick={() => setIsCreateOpen(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-gray-800 hover:bg-gray-900 text-[10px] font-black text-gray-500 hover:text-white uppercase tracking-widest transition-all"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  disabled={creating}
+                  id="submit-create-policy-btn"
+                  className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-[10px] font-black text-white uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/10"
+                >
+                  {creating ? 'Creating...' : 'Create Policy'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
