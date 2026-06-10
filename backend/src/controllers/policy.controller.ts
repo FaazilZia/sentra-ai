@@ -46,6 +46,10 @@ export const getPolicies = asyncHandler(async (req: any, res: Response) => {
   const data = hasMore ? policies.slice(0, -1) : policies;
   const nextCursor = hasMore ? data[data.length - 1].id : null;
 
+  if (req.query.limit === undefined && req.query.cursor === undefined) {
+    return sendSuccess(res, data);
+  }
+
   return sendSuccess(res, { data, nextCursor, total });
 });
 
