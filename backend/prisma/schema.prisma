@@ -2373,3 +2373,47 @@ model DpdpImplementation {
   control     DpdpControl @relation(fields: [controlId], references: [id])
   @@map("dpdp_implementations")
 }
+
+model Guardrail {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  type        String
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("guardrails")
+}
+
+model BlockEvent {
+  id        String   @id @default(uuid())
+  agentId   String   @map("agent_id")
+  action    String
+  resource  String
+  status    String   @default("BLOCKED")
+  timestamp DateTime @default(now())
+
+  @@map("block_events")
+}
+
+model ComplianceControl {
+  id          String   @id @default(uuid())
+  framework   String
+  name        String
+  description String
+  status      String   @default("NOT_STARTED")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("compliance_controls")
+}
+
+model Agent {
+  id           String   @id @default(uuid())
+  name         String
+  type         String
+  status       String   @default("active")
+  discoveredAt DateTime @default(now()) @map("discovered_at")
+
+  @@map("agents")
+}

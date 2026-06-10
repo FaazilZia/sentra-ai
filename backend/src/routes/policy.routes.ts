@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validate.middleware';
-import { getPolicies, getPolicyHealth, getPolicyVersions, createPolicy, getPolicyTemplates, duplicatePolicy, updatePolicy, deletePolicy } from '../controllers/policy.controller';
+import { getPolicies, getPolicyHealth, getPolicyVersions, createPolicy, getPolicyTemplates, duplicatePolicy, updatePolicy, deletePolicy, getPolicy } from '../controllers/policy.controller';
 import { policyIdVersionsParamSchema, createPolicySchema } from '../validations/policy.validation';
 import { enforcePolicyLimit } from '../middleware/plan.middleware';
 
@@ -80,6 +80,7 @@ router.post('/:id/rollback', authenticate, async (req: any, res) => {
  */
 router.get('/templates', authenticate, getPolicyTemplates);
 router.get('/', authenticate, getPolicies);
+router.get('/:id', authenticate, getPolicy);
 
 router.post('/:id/duplicate', authenticate, duplicatePolicy);
 router.post('/', authenticate, enforcePolicyLimit, validate(createPolicySchema), createPolicy);

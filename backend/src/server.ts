@@ -13,6 +13,7 @@ import { Server } from 'socket.io';
 import app from './app';
 import prisma, { initializePrisma } from './config/db';
 import { IntakeFormService } from './services/intakeForm.service';
+import { ComplianceSeedingService } from './services/complianceSeeding.service';
 import { setupScheduledJobs } from './services/queue.service';
 import { setupConnectorWorkers, setupDriftWorker, setupEvaluationWorker } from './workers/worker.manager';
 import { DriftBaselineService } from './services/driftBaseline.service';
@@ -272,6 +273,11 @@ const startServer = async () => {
       // Seed default intake forms for all existing organizations safely (check-and-upsert)
       await IntakeFormService.seedAllExistingOrganizations().catch(err => {
         logger.error('IntakeForm seeding failed:', err);
+      });
+
+      // Seed default compliance controls
+      await ComplianceSeedingService.seedGDPRControls().catch(err => {
+        logger.error('Compliance controls seeding failed:', err);
       });
 
       // Run Redis connection checks asynchronously to prevent startup deadlocks

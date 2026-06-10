@@ -304,3 +304,29 @@ export const deletePolicy = asyncHandler(async (req: any, res: Response) => {
   return res.status(204).send();
 });
 
+export const getPolicy = asyncHandler(async (req: any, res: Response) => {
+  const { id } = req.params;
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) {
+    return sendError(res, 401, 'Unauthorized');
+  }
+
+  const policy = await prisma.policies.findFirst({
+    where: { id, organizationId }
+  });
+
+  if (!policy) {
+    return res.status(404).json({ error: 'Policy not found' });
+  }
+
+  return res.status(200).json({
+    id: policy.id,
+    name: policy.name,
+    description: policy.description,
+    effect: policy.effect,
+    priority: policy.priority,
+    createdAt: policy.created_at,
+    updatedAt: policy.updated_at
+  });
+});
+

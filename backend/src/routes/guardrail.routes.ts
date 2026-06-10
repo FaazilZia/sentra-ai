@@ -11,6 +11,13 @@ import {
   getMetrics,
   checkAction
 } from '../controllers/guardrail.controller';
+import {
+  createGuardrail,
+  getGuardrails,
+  getGuardrailById,
+  updateGuardrail,
+  deleteGuardrail
+} from '../controllers/guardrailCRUD.controller';
 
 const router = Router();
 
@@ -103,6 +110,13 @@ router.get('/metrics', authenticate, authorizeRoles('ADMIN', 'AUDITOR'), getMetr
 router.get('/overrides', authenticate, authorizeRoles('ADMIN', 'AUDITOR'), getOverrides);
 router.post('/override/request', authenticate, postRequestOverride);
 router.post('/override/approve', authenticate, authorizeRoles('ADMIN'), postApproveOverride);
+
+// CRUD routes for Guardrail
+router.post('/', authenticate, createGuardrail);
+router.get('/', authenticate, getGuardrails);
+router.get('/:id', authenticate, getGuardrailById);
+router.patch('/:id', authenticate, updateGuardrail);
+router.delete('/:id', authenticate, deleteGuardrail);
 
 export default router;
 
