@@ -1472,8 +1472,8 @@ function NistAiRmfTab({
 }
 
 function NistFunctionBlock({ fn, setSelectedNistSub }: { fn: any; setSelectedNistSub: (sub: any) => void }) {
-  const totalSub = fn.categories.flatMap((c: any) => c.subcategories).length;
-  const compSub = fn.categories.flatMap((c: any) => c.subcategories).filter((s: any) => s.status === 'IMPLEMENTED').length;
+  const totalSub = (fn.categories || []).flatMap((c: any) => c.subcategories || []).length;
+  const compSub = (fn.categories || []).flatMap((c: any) => c.subcategories || []).filter((s: any) => s.status === 'IMPLEMENTED').length;
 
   return (
     <div className="card-base p-5 border border-zinc-950 bg-zinc-950/40">
@@ -1492,7 +1492,7 @@ function NistFunctionBlock({ fn, setSelectedNistSub }: { fn: any; setSelectedNis
       </div>
 
       <div className="space-y-4">
-        {fn.categories.map((cat: any) => (
+        {(fn.categories || []).map((cat: any) => (
           <NistCategoryBlock key={cat.category_code} cat={cat} setSelectedNistSub={setSelectedNistSub} />
         ))}
       </div>
@@ -1512,7 +1512,7 @@ function NistCategoryBlock({ cat, setSelectedNistSub }: { cat: any; setSelectedN
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-zinc-900/50">
-        {cat.subcategories.map((sub: any) => (
+        {(cat.subcategories || []).map((sub: any) => (
           <div key={sub.code} className="bg-zinc-900/30 border border-zinc-900 hover:border-zinc-800 p-3 rounded-lg flex items-center justify-between gap-4 group transition shadow-sm animate-fade-in">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 mb-0.5">
@@ -1696,7 +1696,7 @@ function Iso42001Tab({
 
                 {isClauseOpen && (
                   <div className="border-t border-[var(--border-default)] bg-black/10 divide-y divide-zinc-900 animate-slide-in">
-                    {cls.controls.map((c: any) => {
+                    {(cls.controls || []).map((c: any) => {
                       const status = c.implementation?.status || 'NOT_STARTED';
 
                       return (
@@ -1865,7 +1865,7 @@ function Iso27001Tab({
 
                 {isClauseOpen && (
                   <div className="border-t border-[var(--border-default)] bg-black/10 divide-y divide-zinc-900 animate-slide-in">
-                    {cls.controls.map((c: any) => {
+                    {(cls.controls || []).map((c: any) => {
                       const status = c.implementation?.status || 'NOT_STARTED';
 
                       return (

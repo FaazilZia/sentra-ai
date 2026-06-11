@@ -51,6 +51,7 @@ export default function FileManager() {
     } catch (err) {
       console.error('Failed to load files:', err);
       addToast({ message: 'Failed to load evidence files', type: 'error' });
+      setFiles([]);
     } finally {
       setLoading(false);
     }

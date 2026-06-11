@@ -64,15 +64,18 @@ export default function RiskCenter() {
   const fetchData = async () => {
     try {
       const [metricsRes, portfolioRes, trendRes] = await Promise.all([
-        fetchGuardrailMetrics(),
-        fetchRiskPortfolio(),
-        fetchOrgRiskTrend(30)
+        fetchGuardrailMetrics().catch(() => null),
+        fetchRiskPortfolio().catch(() => null),
+        fetchOrgRiskTrend(30).catch(() => [])
       ]);
       setMetrics(metricsRes);
       setPortfolio(portfolioRes);
-      setTrendData(trendRes.map(t => ({ name: t.date, score: t.score })));
+      setTrendData((trendRes || []).map(t => ({ name: t?.date || '', score: t?.score || 0 })));
     } catch (err) {
       console.error('Failed to fetch risk center metrics:', err);
+      setMetrics(null);
+      setPortfolio(null);
+      setTrendData([]);
     } finally {
       setLoading(false);
     }

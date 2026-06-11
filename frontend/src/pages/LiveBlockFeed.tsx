@@ -28,10 +28,10 @@ export default function LiveBlockFeed() {
   const isLive = connectionStatus === 'connected';
 
   // Stats derived in real-time
-  const totalIntercepted = riskEvents.length;
-  const blockedCount = riskEvents.filter(e => e.status === 'Blocked').length;
-  const flaggedCount = riskEvents.filter(e => e.status === 'Flagged').length;
-  const allowedCount = riskEvents.filter(e => e.status === 'Allowed').length;
+  const totalIntercepted = (riskEvents || []).length;
+  const blockedCount = (riskEvents || []).filter(e => e.status === 'Blocked').length;
+  const flaggedCount = (riskEvents || []).filter(e => e.status === 'Flagged').length;
+  const allowedCount = (riskEvents || []).filter(e => e.status === 'Allowed').length;
 
   const simulateAttack = async () => {
     setSimulating(true);
@@ -58,7 +58,7 @@ export default function LiveBlockFeed() {
   };
 
   const getTier = (reason: string) => {
-    const lower = reason.toLowerCase();
+    const lower = (reason || '').toLowerCase();
     if (lower.includes('pii')) return 'PII Scanner';
     if (lower.includes('policy')) return 'L1 Policy';
     if (lower.includes('semantic')) return 'L3 Semantic';
@@ -70,7 +70,7 @@ export default function LiveBlockFeed() {
   };
 
   // Filter events
-  const filteredEvents = riskEvents.filter(event => {
+  const filteredEvents = (riskEvents || []).filter(event => {
     if (activeTab === 'All') return true;
     return event.status === activeTab;
   });

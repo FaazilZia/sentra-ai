@@ -50,9 +50,21 @@ export default function ShadowAI() {
           setSecurityInterceptionsCount(json.securityInterceptionsCount || 0);
         } else {
           console.error('[ShadowAI] API responded with failure:', json.error);
+          setTimelineData([]);
+          setDeptData([]);
+          setIncidents([]);
+          setUnauthorizedToolsCount(0);
+          setUniqueUsersCount(0);
+          setSecurityInterceptionsCount(0);
         }
       } catch (err) {
         console.error('[ShadowAI] Failed to load data:', err);
+        setTimelineData([]);
+        setDeptData([]);
+        setIncidents([]);
+        setUnauthorizedToolsCount(0);
+        setUniqueUsersCount(0);
+        setSecurityInterceptionsCount(0);
       } finally {
         setLoading(false);
       }
@@ -61,9 +73,10 @@ export default function ShadowAI() {
   }, []);
 
   const getDataLeakageRisk = () => {
-    if (unauthorizedToolsCount === 0) return 'NONE';
-    if (unauthorizedToolsCount > 5) return 'CRITICAL';
-    if (unauthorizedToolsCount > 2) return 'HIGH';
+    const count = unauthorizedToolsCount || 0;
+    if (count === 0) return 'NONE';
+    if (count > 5) return 'CRITICAL';
+    if (count > 2) return 'HIGH';
     return 'MEDIUM';
   };
 

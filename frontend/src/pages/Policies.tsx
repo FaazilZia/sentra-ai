@@ -11,7 +11,8 @@ import {
   ArrowRight,
   LoaderCircle,
   X,
-  History
+  History,
+  ShieldOff
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store/useStore';
@@ -202,78 +203,95 @@ export default function Policies() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {policies.map((policy) => (
-          <div 
-            key={policy.id}
+      {policies.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {policies.map((policy) => (
+            <div 
+              key={policy.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => setSelectedPolicy(policy)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedPolicy(policy); } }}
+              className="card-base p-6 group hover:border-[var(--royal-indigo)] transition-all cursor-pointer relative overflow-hidden"
+            >
+              <div className="flex items-start justify-between mb-6">
+                <div className="h-10 w-10 rounded-lg bg-[var(--bg-page)] flex items-center justify-center text-[var(--royal-indigo)]">
+                  <FileText className="h-5 w-5" />
+                </div>
+                <span className={cn(
+                  "text-[9px] font-black uppercase px-2 py-0.5 rounded flex items-center gap-1",
+                  policy.enabled ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"
+                )}>
+                  {policy.enabled ? <CheckCircle2 className="h-2.5 w-2.5" /> : <Clock className="h-2.5 w-2.5" />}
+                  {policy.enabled ? 'Enabled' : 'Disabled'}
+                </span>
+              </div>
+              
+              <h3 className="text-[var(--text-md)] font-black text-[var(--text-primary)] uppercase tracking-tight mb-2 group-hover:text-[var(--royal-indigo)] transition-colors">
+                {policy.name}
+              </h3>
+              <div className="flex items-center gap-3 mb-6">
+                <button onClick={(e) => { e.stopPropagation(); openVersionHistory(policy); }} className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest hover:text-indigo-400 transition-colors flex items-center gap-1">
+                  <History className="h-3 w-3" />
+                  v{policy.current_version || 1}
+                </button>
+                <span className="h-1 w-1 rounded-full bg-[var(--border-default)]" />
+                <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{policy.effect}</span>
+              </div>
+              
+              <p className="text-[var(--text-xs)] text-[var(--text-secondary)] line-clamp-2 mb-6 min-h-[32px]">
+                {policy.description || 'No description provided.'}
+              </p>
+              
+              <div className="pt-6 border-t border-[var(--border-default)] flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="h-6 w-6 rounded-full bg-white/5 flex items-center justify-center">
+                    <User className="h-3 w-3 text-[var(--text-muted)]" />
+                  </div>
+                  <span className="text-[10px] font-bold text-[var(--text-secondary)]">Governance Admin</span>
+                </div>
+                <div className="flex items-center gap-2 text-[var(--text-muted)]">
+                  <Calendar className="h-3 w-3" />
+                  <span className="text-[9px] font-bold">{new Date(policy.created_at || '').toLocaleDateString()}</span>
+                </div>
+              </div>
+
+              <div className="absolute bottom-4 right-4 translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all">
+                <ArrowRight className="h-4 w-4 text-[var(--royal-indigo)]" />
+              </div>
+            </div>
+          ))}
+
+          {/* Create Placeholder */}
+          <div
             role="button"
             tabIndex={0}
-            onClick={() => setSelectedPolicy(policy)}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedPolicy(policy); } }}
-            className="card-base p-6 group hover:border-[var(--royal-indigo)] transition-all cursor-pointer relative overflow-hidden"
+            onClick={() => { setNewName(''); setNewDesc(''); setNewEffect('deny'); setIsCreateOpen(true); }}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setNewName(''); setNewDesc(''); setNewEffect('deny'); setIsCreateOpen(true); } }}
+            className="border-2 border-dashed border-[var(--border-default)] rounded-2xl flex flex-col items-center justify-center p-8 hover:bg-white/5 transition-all cursor-pointer group"
           >
-            <div className="flex items-start justify-between mb-6">
-              <div className="h-10 w-10 rounded-lg bg-[var(--bg-page)] flex items-center justify-center text-[var(--royal-indigo)]">
-                <FileText className="h-5 w-5" />
-              </div>
-              <span className={cn(
-                "text-[9px] font-black uppercase px-2 py-0.5 rounded flex items-center gap-1",
-                policy.enabled ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"
-              )}>
-                {policy.enabled ? <CheckCircle2 className="h-2.5 w-2.5" /> : <Clock className="h-2.5 w-2.5" />}
-                {policy.enabled ? 'Enabled' : 'Disabled'}
-              </span>
+            <div className="h-12 w-12 rounded-full bg-white/5 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <Plus className="h-6 w-6 text-[var(--text-muted)]" />
             </div>
-            
-            <h3 className="text-[var(--text-md)] font-black text-[var(--text-primary)] uppercase tracking-tight mb-2 group-hover:text-[var(--royal-indigo)] transition-colors">
-              {policy.name}
-            </h3>
-            <div className="flex items-center gap-3 mb-6">
-              <button onClick={(e) => { e.stopPropagation(); openVersionHistory(policy); }} className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest hover:text-indigo-400 transition-colors flex items-center gap-1">
-                <History className="h-3 w-3" />
-                v{policy.current_version || 1}
-              </button>
-              <span className="h-1 w-1 rounded-full bg-[var(--border-default)]" />
-              <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{policy.effect}</span>
-            </div>
-            
-            <p className="text-[var(--text-xs)] text-[var(--text-secondary)] line-clamp-2 mb-6 min-h-[32px]">
-              {policy.description || 'No description provided.'}
-            </p>
-            
-            <div className="pt-6 border-t border-[var(--border-default)] flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="h-6 w-6 rounded-full bg-white/5 flex items-center justify-center">
-                  <User className="h-3 w-3 text-[var(--text-muted)]" />
-                </div>
-                <span className="text-[10px] font-bold text-[var(--text-secondary)]">Governance Admin</span>
-              </div>
-              <div className="flex items-center gap-2 text-[var(--text-muted)]">
-                <Calendar className="h-3 w-3" />
-                <span className="text-[9px] font-bold">{new Date(policy.created_at || '').toLocaleDateString()}</span>
-              </div>
-            </div>
-
-            <div className="absolute bottom-4 right-4 translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all">
-              <ArrowRight className="h-4 w-4 text-[var(--royal-indigo)]" />
-            </div>
+            <p className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em]">New Policy Document</p>
           </div>
-        ))}
-
-        {/* Create Placeholder */}
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={() => addToast({ message: 'Policy creation wizard initializing...', type: 'info' })}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); addToast({ message: 'Policy creation wizard initializing...', type: 'info' }); } }}
-          className="border-2 border-dashed border-[var(--border-default)] rounded-2xl flex flex-col items-center justify-center p-8 hover:bg-white/5 transition-all cursor-pointer group"
-        >
-          <div className="h-12 w-12 rounded-full bg-white/5 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-            <Plus className="h-6 w-6 text-[var(--text-muted)]" />
-          </div>
-          <p className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em]">New Policy Document</p>
         </div>
-      </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-16 px-4 text-center max-w-sm mx-auto bg-[#111827]/40 border border-gray-800 rounded-2xl backdrop-blur-md w-full">
+          <ShieldOff className="h-12 w-12 text-gray-600 mb-4 animate-pulse" />
+          <h3 className="text-sm font-black text-white uppercase tracking-widest">No policies yet</h3>
+          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mt-1.5 leading-relaxed">
+            Create your first governance policy to protect your AI pipeline.
+          </p>
+          <button 
+            onClick={() => { setNewName(''); setNewDesc(''); setNewEffect('deny'); setIsCreateOpen(true); }}
+            className="mt-6 flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all duration-200 hover:scale-105 active:scale-95"
+          >
+            <Plus className="h-4 w-4" />
+            Create Policy
+          </button>
+        </div>
+      )}
 
       {selectedPolicy && (
         <div className="fixed inset-y-0 right-0 z-50 w-[440px] bg-white border-l border-[var(--border-default)] shadow-2xl p-6 flex flex-col justify-between animate-fade-in text-left">

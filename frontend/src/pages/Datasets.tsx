@@ -26,13 +26,15 @@ export default function Datasets() {
     setIsLoading(true);
     try {
       const [datasetList, systemList] = await Promise.all([
-        fetchDatasets(),
-        fetchAISystems()
+        fetchDatasets().catch(() => []),
+        fetchAISystems().catch(() => [])
       ]);
-      setDatasets(datasetList);
-      setAiSystems(systemList);
+      setDatasets(datasetList || []);
+      setAiSystems(systemList || []);
     } catch (err) {
       console.error('Failed to load datasets/systems', err);
+      setDatasets([]);
+      setAiSystems([]);
     } finally {
       setIsLoading(false);
     }

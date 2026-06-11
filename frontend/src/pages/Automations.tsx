@@ -26,14 +26,21 @@ export default function Automations() {
     setIsLoading(true);
     try {
       const data = await fetchAutomations();
-      setAutomations(data);
+      const verifiedData = Array.isArray(data) ? data : [];
+      setAutomations(verifiedData);
       // Auto select the first automation's logs if present
-      if (data.length > 0) {
-        setSelectedLogs(data[0].execution_logs || []);
-        setSelectedAutoName(data[0].name);
+      if (verifiedData.length > 0) {
+        setSelectedLogs(verifiedData[0].execution_logs || []);
+        setSelectedAutoName(verifiedData[0].name);
+      } else {
+        setSelectedLogs([]);
+        setSelectedAutoName('');
       }
     } catch (err) {
       console.error('Failed to load automations', err);
+      setAutomations([]);
+      setSelectedLogs([]);
+      setSelectedAutoName('');
     } finally {
       setIsLoading(false);
     }
@@ -113,10 +120,10 @@ export default function Automations() {
   };
 
   // Compute metrics
-  const totalAutomations = automations.length;
-  const activeCount = automations.filter(a => a.is_active).length;
-  const totalLogsCount = automations.reduce((sum, a) => sum + (a.execution_logs?.length || 0), 0);
-  const successCount = automations.reduce((sum, a) => sum + (a.execution_logs?.filter(l => l.status === 'SUCCESS').length || 0), 0);
+  const totalAutomations = (automations || []).length;
+  const activeCount = (automations || []).filter(a => a ? a.is_active : false).length;
+  const totalLogsCount = (automations || []).reduce((sum, a) => sum + (Array.isArray(a?.execution_logs) ? a.execution_logs.length : 0), 0);
+  const successCount = (automations || []).reduce((sum, a) => sum + (Array.isArray(a?.execution_logs) ? a.execution_logs.filter(l => l?.status === 'SUCCESS').length : 0), 0);
 
   return (
     <div className="flex flex-col gap-6 p-6 animate-fade-in">

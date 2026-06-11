@@ -94,7 +94,11 @@ export default function ReadinessDashboard() {
         }
       }
 
-      const rawControls = controlsRes?.data || controlsRes || [];
+      const rawControls = Array.isArray(controlsRes?.data) 
+        ? controlsRes.data 
+        : Array.isArray(controlsRes) 
+          ? controlsRes 
+          : [];
       const normalizedControls = rawControls.map((c: any) => ({
         code: c.code || c.control_code || c.id || '',
         title: c.title || c.name || 'Untitled Control',

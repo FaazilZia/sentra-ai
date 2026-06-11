@@ -32,7 +32,18 @@ export default function Advisor() {
   useEffect(() => {
     // Fetch dynamic smart suggestion chips
     fetchAdvisorSuggestions()
-      .then(setSuggestions)
+      .then(res => {
+        if (Array.isArray(res)) {
+          setSuggestions(res);
+        } else {
+          setSuggestions([
+            "How do we resolve our active drift incidents?",
+            "How can we improve our ISO 42001 score?",
+            "Summarize my open compliance gaps.",
+            "List all third-party AI vendors under review."
+          ]);
+        }
+      })
       .catch(() => setSuggestions([
         "How do we resolve our active drift incidents?",
         "How can we improve our ISO 42001 score?",
@@ -270,7 +281,7 @@ export default function Advisor() {
             </h3>
             <p className="text-[10px] text-[var(--text-secondary)] font-medium">Click one of the chips below to query the advisor with real-time org context:</p>
             <div className="flex flex-col gap-2">
-              {suggestions.map((sug, i) => (
+              {(suggestions || []).map((sug, i) => (
                 <button
                   key={i}
                   disabled={isLoading}

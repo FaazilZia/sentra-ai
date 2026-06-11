@@ -51,6 +51,7 @@ export default function Inventory() {
       setInventory(data || []);
     } catch (err: any) {
       addToast({ message: err.message || 'Failed to load inventory assets', type: 'error' });
+      setInventory([]);
     } finally {
       setLoading(false);
     }

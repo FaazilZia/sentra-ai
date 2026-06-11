@@ -99,11 +99,11 @@ export default function EntityGraph() {
         apiRequest<any>('/vendors').catch(() => [])
       ]);
 
-      const loadedSystems = sysRes?.items || sysRes || [];
-      const loadedDatasets = dsRes?.data || dsRes || [];
-      const loadedRisks = riskRes?.data || riskRes || [];
-      const loadedPolicies = polRes?.data || polRes || [];
-      const loadedVendors = venRes?.data || venRes || [];
+      const loadedSystems = Array.isArray(sysRes?.items) ? sysRes.items : (Array.isArray(sysRes) ? sysRes : []);
+      const loadedDatasets = Array.isArray(dsRes?.data) ? dsRes.data : (Array.isArray(dsRes) ? dsRes : []);
+      const loadedRisks = Array.isArray(riskRes?.data) ? riskRes.data : (Array.isArray(riskRes) ? riskRes : []);
+      const loadedPolicies = Array.isArray(polRes?.data) ? polRes.data : (Array.isArray(polRes) ? polRes : []);
+      const loadedVendors = Array.isArray(venRes?.data) ? venRes.data : (Array.isArray(venRes) ? venRes : []);
 
       setSystems(loadedSystems);
       setDatasets(loadedDatasets);

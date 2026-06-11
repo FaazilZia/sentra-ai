@@ -15,12 +15,16 @@ export default function OnboardingWizard() {
 
   useEffect(() => {
     const onboarded = localStorage.getItem('sentra_onboarded');
-    const userCreated = user?.createdAt || user?.created_at;
-    if (!onboarded && userCreated) {
-      const createdDate = new Date(userCreated);
-      const diffMs = Date.now() - createdDate.getTime();
-      const diffHours = diffMs / (1000 * 60 * 60);
-      if (diffHours < 24) {
+    if (!onboarded) {
+      const userCreated = user?.createdAt || user?.created_at;
+      if (userCreated) {
+        const createdDate = new Date(userCreated);
+        const diffMs = Date.now() - createdDate.getTime();
+        const diffHours = diffMs / (1000 * 60 * 60);
+        if (diffHours < 24) {
+          setIsOpen(true);
+        }
+      } else {
         setIsOpen(true);
       }
     }

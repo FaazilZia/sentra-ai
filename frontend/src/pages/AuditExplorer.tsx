@@ -63,7 +63,17 @@ const AuditExplorer: React.FC = () => {
 
       const res = await fetch(`/api/v1/audit?${params}`, { credentials: 'include' });
       const data = await res.json();
-      if (data.success) { setLogs(data.logs); setTotal(data.total); }
+      if (data && data.success) { 
+        setLogs(data.logs || []); 
+        setTotal(data.total || 0); 
+      } else {
+        setLogs([]);
+        setTotal(0);
+      }
+    } catch (err) {
+      console.error('Failed to load audit logs:', err);
+      setLogs([]);
+      setTotal(0);
     } finally { setLoading(false); }
   }, [page, filters]);
 

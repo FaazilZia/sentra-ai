@@ -40,15 +40,15 @@ export default function Drift() {
       setLoading(true);
       let pmError: string | null = null;
       const [allAlerts, allAgents, pmRes] = await Promise.all([
-        fetchDriftAlerts(filter === 'all' ? undefined : filter),
-        fetchAIAgents(),
+        fetchDriftAlerts(filter === 'all' ? undefined : filter).catch(() => []),
+        fetchAIAgents().catch(() => []),
         apiRequest<any>('/post-market-monitoring/dashboard').catch((err: any) => {
           pmError = err.message || 'Failed to load post-market telemetry overview.';
           return null;
         })
       ]);
-      setAlerts(allAlerts || []);
-      setAgents(allAgents || []);
+      setAlerts(Array.isArray(allAlerts) ? allAlerts : []);
+      setAgents(Array.isArray(allAgents) ? allAgents : []);
       setPostMarketError(pmError);
       if (pmRes) {
         setPostMarketDashboard(pmRes);
@@ -62,6 +62,7 @@ export default function Drift() {
       console.error('Drift load error:', err);
       setAlerts([]);
       setAgents([]);
+      setPostMarketDashboard(null);
     } finally {
       setLoading(false);
     }
@@ -382,7 +383,7 @@ export default function Drift() {
                       {/* Unexpected Actions list */}
                       <td className="px-6 py-4 max-w-md">
                         <div className="flex flex-wrap gap-1.5">
-                          {alert.unexpectedActions.map((act) => (
+                          {(alert.unexpectedActions || []).map((act) => (
                             <span 
                               key={act} 
                               className={cn(

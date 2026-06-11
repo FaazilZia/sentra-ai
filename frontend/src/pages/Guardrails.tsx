@@ -56,10 +56,11 @@ export default function Guardrails() {
     try {
       const pols = await apiRequest<any>('/policies');
       // Node backend wraps response, let's look at list structure
-      const list = pols.data || pols || [];
+      const list = pols?.data || pols || [];
       setPolicies(list);
     } catch (err: any) {
       addToast({ message: err.message || 'Failed to fetch guardrails', type: 'error' });
+      setPolicies([]);
     } finally {
       setLoading(false);
     }

@@ -94,7 +94,7 @@ export default function IncidentManagement() {
       const res = await apiRequest<any>('/incidents/scan/status');
       if (res?.status === 'PROCESSING') {
         setScanStatus('PROCESSING');
-        setScanProgress(res.progress);
+        setScanProgress(res?.progress ?? 0);
         startPollingScan();
       } else {
         setScanStatus(res?.status || 'IDLE');
@@ -110,13 +110,13 @@ export default function IncidentManagement() {
     pollIntervalRef.current = setInterval(async () => {
       try {
         const res = await apiRequest<any>('/incidents/scan/status');
-        setScanProgress(res.progress);
-        setScanStatus(res.status);
-        if (res.status !== 'PROCESSING') {
+        setScanProgress(res?.progress ?? 0);
+        setScanStatus(res?.status || 'IDLE');
+        if (res?.status !== 'PROCESSING') {
           if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
           setScanProgress(null);
           addToast({ 
-            message: `Deep scan completed. Detected ${res.result?.incidents_detected || 0} incidents.`, 
+            message: `Deep scan completed. Detected ${res?.result?.incidents_detected || 0} incidents.`, 
             type: 'success' 
           });
           fetchIncidents();

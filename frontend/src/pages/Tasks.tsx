@@ -71,10 +71,11 @@ export default function Tasks() {
     setLoading(true);
     try {
       const res = await apiRequest<{ tasks: Task[] }>('/workflows');
-      setTasks(res.tasks || []);
+      setTasks(res?.tasks || []);
     } catch (err) {
       console.error('Failed to load tasks:', err);
       addToast({ message: 'Failed to load tasks', type: 'error' });
+      setTasks([]);
     } finally {
       setLoading(false);
     }
@@ -86,6 +87,7 @@ export default function Tasks() {
       setUsers(res || []);
     } catch (err) {
       console.error('Failed to load organization users:', err);
+      setUsers([]);
     }
   };
 

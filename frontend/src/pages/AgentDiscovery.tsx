@@ -81,6 +81,7 @@ export default function AgentDiscovery() {
         message: err.message || 'Scans connection failed.',
         type: 'error'
       });
+      setAgents([]);
     } finally {
       setSyncing(false);
     }
@@ -91,12 +92,13 @@ export default function AgentDiscovery() {
     setLoadingRegistered(true);
     try {
       const res = await apiRequest<{ items: RegisteredAgent[] }>('/ai-systems');
-      setRegisteredAgents(res.items || []);
+      setRegisteredAgents(res?.items || []);
     } catch (err: any) {
       addToast({
         message: err.message || 'Failed to fetch registered agents.',
         type: 'error'
       });
+      setRegisteredAgents([]);
     } finally {
       setLoadingRegistered(false);
     }
@@ -219,7 +221,7 @@ export default function AgentDiscovery() {
     return matchesSearch;
   });
 
-  const uniqueSources = Array.from(new Set(agents.map(a => a.source)));
+  const uniqueSources = Array.from(new Set((agents || []).map(a => a?.source || 'Unknown')));
 
   const getRiskBadge = (level: string) => {
     switch (level) {

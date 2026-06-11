@@ -36,7 +36,7 @@ export default function Evidence() {
 
   // Reset control selection when framework changes
   useEffect(() => {
-    setSelectedControlId(FRAMEWORK_CONTROLS[selectedFramework][0]);
+    setSelectedControlId(FRAMEWORK_CONTROLS[selectedFramework]?.[0] || '');
   }, [selectedFramework]);
 
   // Fetch all evidence records
@@ -48,6 +48,7 @@ export default function Evidence() {
     } catch (err) {
       console.error('Failed to load evidence records:', err);
       addToast({ message: 'FAILED TO LOAD EVIDENCE RECORDS', type: 'error' });
+      setEvidenceList([]);
     } finally {
       setIsLoading(false);
     }
