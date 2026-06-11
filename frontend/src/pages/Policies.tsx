@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store/useStore';
-import { fetchPolicies, PolicyResponse, apiBaseUrl, apiRequest, patchPolicy } from '@/lib/api';
+import { fetchPolicies, PolicyResponse, apiBaseUrl, apiRequest, patchPolicy, deletePolicy } from '@/lib/api';
 import { EvidenceSection } from '../components/shared/EvidenceSection';
 import { ChangeHistoryTimeline } from '../components/shared/ChangeHistoryTimeline';
 import RichPolicyEditor from '../components/shared/RichPolicyEditor';
@@ -86,6 +86,20 @@ export default function Policies() {
       addToast({ message: 'Failed to load policies from governance engine', type: 'error' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeletePolicy = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this policy? This action cannot be undone.')) {
+      return;
+    }
+    try {
+      await deletePolicy(id);
+      addToast({ message: 'Policy deleted successfully', type: 'success' });
+      setSelectedPolicy(null);
+      await loadPolicies();
+    } catch (err: any) {
+      addToast({ message: err.message || 'Failed to delete policy', type: 'error' });
     }
   };
 
@@ -329,6 +343,13 @@ export default function Policies() {
                     className="px-2 py-1 text-[8px] font-black bg-teal-50 border border-teal-100 text-teal-700 rounded hover:bg-teal-100 transition-all uppercase tracking-widest"
                   >
                     Export Word
+                  </button>
+                  <button
+                    onClick={() => handleDeletePolicy(selectedPolicy.id)}
+                    className="px-2 py-1 text-[8px] font-black bg-rose-50 border border-rose-100 text-rose-700 rounded hover:bg-rose-100 transition-all uppercase tracking-widest"
+                    id="delete-policy-btn"
+                  >
+                    Delete
                   </button>
                 </div>
               </div>

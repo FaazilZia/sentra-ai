@@ -397,7 +397,7 @@ export default function Guardrails() {
                           <button 
                             onClick={() => handleDelete(p.id)}
                             className="p-1.5 rounded border border-gray-850 hover:bg-rose-950/25 text-gray-500 hover:text-rose-400 hover:border-rose-900/30 transition-all active:scale-95"
-                            title="Delete rule"
+                            title="Delete guardrail"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
