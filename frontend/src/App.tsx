@@ -339,6 +339,7 @@ function AppRoutes() {
               element={user && user.role === 'SUPER_ADMIN' ? <AppLayout><SuperadminPage /></AppLayout> : <Navigate to="/app" replace />} 
             />
 
+            <Route path="/" element={<Navigate to={user ? "/app" : "/login"} replace />} />
             <Route path="*" element={<Suspense fallback={<RouteFallback />}><NotFoundPage /></Suspense>} />
 
           </Routes>
