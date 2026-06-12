@@ -93,7 +93,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fetchCurrentUser()
       .then((currentUser) => {
         setUser(currentUser);
-        setAccessToken('session-valid');
+        const storedToken = localStorage.getItem('sentra_access_token');
+        setAccessToken(storedToken || 'session-valid');
       })
       .catch(() => {
         setUser(null);
@@ -202,7 +203,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (originalUser) {
       setUser(originalUser);
-      setAccessToken('session-valid');
+      const storedToken = localStorage.getItem('sentra_access_token');
+      setAccessToken(storedToken || 'session-valid');
       setOriginalUser(null);
     }
     window.location.href = '/app';

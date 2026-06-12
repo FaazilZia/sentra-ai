@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "dev:e2e": "IS_E2E_TEST=true ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "prisma generate && rm -rf dist && tsc",
     "start": "node dist/src/server.js",
     "start:render": "node dist/src/server.js",

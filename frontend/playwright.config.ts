@@ -22,6 +22,22 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+    },
+    {
+      name: 'edge',
+      use: { ...devices['Desktop Chrome'], channel: 'msedge' },
+    },
+    {
+      name: 'mobile-safari',
+      use: { ...devices['iPhone 13'] },
+    },
   ],
   webServer: {
     command: 'npm run dev',
@@ -30,5 +46,11 @@ export default defineConfig({
     timeout: 120_000,
     stdout: 'pipe',
     stderr: 'pipe',
+    env: {
+      // Propagation flag for frontend. NOTE: The backend runs in a separate process,
+      // and must be started locally using the "npm run dev:e2e" command to inherit
+      // this rate limiter exception.
+      IS_E2E_TEST: 'true',
+    },
   },
 });

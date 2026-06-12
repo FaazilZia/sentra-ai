@@ -429,7 +429,7 @@ export const aiDailyRateLimiter = createSafeRateLimiter('rl:ai:day:', {
 
 export const loginLimiter = createSafeRateLimiter('rl:login:', {
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: process.env.IS_E2E_TEST === 'true' ? 100 : 10,
   message: { error: 'Too many attempts', retryAfter: 'See Retry-After header' },
   standardHeaders: true,
   legacyHeaders: false,

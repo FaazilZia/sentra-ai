@@ -73,7 +73,9 @@ const io = new Server(httpServer, {
   cors: {
     origin: socketOrigins,
     methods: ['GET', 'POST']
-  }
+  },
+  pingInterval: process.env.IS_E2E_TEST === 'true' ? 2000 : 25000,
+  pingTimeout: process.env.IS_E2E_TEST === 'true' ? 2000 : 20000,
 });
 
 io.use(async (socket, next) => {
