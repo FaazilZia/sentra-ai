@@ -517,12 +517,27 @@ export const logout = async (req: Request, res: Response, next: NextFunction) =>
         const decoded = jwt.decode(token) as jwt.JwtPayload;
         if (decoded && decoded.exp) {
           const ttl = decoded.exp - Math.floor(Date.now() / 1000);
-          if (ttl > 0) {
             const redis = getRedisClient();
+            let redisSuccess = false;
             if (redis) {
-              await redis.set(`blacklist:${token}`, '1', 'EX', ttl);
+              try {
+                await redis.set(`blacklist:${token}`, '1', 'EX', ttl);
+                redisSuccess = true;
+              } catch (redisErr) {
+                logger.warn('Failed to write blacklisted token to Redis, writing to database:', redisErr);
+              }
             }
-          }
+            if (!redisSuccess) {
+              const expiresAt = new Date(decoded.exp * 1000);
+              await prisma.jwt_blacklist.create({
+                data: {
+                  token,
+                  expires_at: expiresAt
+                }
+              }).catch((dbErr) => {
+                logger.error('Failed to write blacklisted token to database:', dbErr);
+              });
+            }
         }
       } catch (err) {
         logger.error('Failed to blacklist token on logout:', err);

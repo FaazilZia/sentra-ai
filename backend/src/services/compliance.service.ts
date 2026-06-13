@@ -126,9 +126,9 @@ export class ComplianceService {
     return createdTasks;
   }
 
-  static async getFixTasks(featureId: string) {
+  static async getFixTasks(featureId: string, organizationId: string) {
     return await prisma.compliance_fix_tasks.findMany({
-      where: { featureId },
+      where: { featureId, organizationId },
       include: { evidence: true },
       orderBy: [{ priority: 'asc' }, { created_at: 'desc' }]
     });
@@ -187,9 +187,9 @@ export class ComplianceService {
     });
   }
 
-  static async getAlerts() {
+  static async getAlerts(organizationId: string) {
     return await prisma.alerts.findMany({
-      where: { is_read: false },
+      where: { is_read: false, organizationId },
       orderBy: { created_at: 'desc' }
     });
   }
@@ -224,9 +224,9 @@ export class ComplianceService {
     });
   }
 
-  static async getHistory(featureId: string) {
+  static async getHistory(featureId: string, organizationId: string) {
     return await prisma.compliance_snapshots.findMany({
-      where: { featureId },
+      where: { featureId, organizationId },
       orderBy: { created_at: 'asc' }
     });
   }
@@ -234,7 +234,7 @@ export class ComplianceService {
   static async reEvaluate(featureId: string, userId: string, organizationId: string) {
     const originalProof = await this.getAuditProof(organizationId);
     const targetFeature = originalProof.find(f => f.feature_name === "User Authentication & Data Handling");
-    const tasks = await this.getFixTasks(featureId);
+    const tasks = await this.getFixTasks(featureId, organizationId);
     const evidenceList = tasks.flatMap((t: any) => t.evidence);
     
     const mergedEvidence = {

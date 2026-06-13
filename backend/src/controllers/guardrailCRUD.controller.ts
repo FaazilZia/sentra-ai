@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import prisma from '../config/db';
 import { asyncHandler, sendError } from '../utils/controllerHelpers';
+import { resolveOrganizationId } from '../utils/company';
 
 export const createGuardrail = asyncHandler(async (req: any, res: Response) => {
   const { name, description, type, enabled } = req.body;
@@ -9,8 +10,14 @@ export const createGuardrail = asyncHandler(async (req: any, res: Response) => {
     return sendError(res, 400, 'Name and type are required');
   }
 
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) {
+    return sendError(res, 401, 'Unauthorized');
+  }
+
   const guardrail = await prisma.guardrail.create({
     data: {
+      organizationId,
       name,
       description: description || '',
       type,
@@ -22,14 +29,26 @@ export const createGuardrail = asyncHandler(async (req: any, res: Response) => {
 });
 
 export const getGuardrails = asyncHandler(async (req: any, res: Response) => {
-  const guardrails = await prisma.guardrail.findMany();
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) {
+    return sendError(res, 401, 'Unauthorized');
+  }
+
+  const guardrails = await prisma.guardrail.findMany({
+    where: { organizationId }
+  });
   return res.status(200).json(guardrails);
 });
 
 export const getGuardrailById = asyncHandler(async (req: any, res: Response) => {
   const { id } = req.params;
-  const guardrail = await prisma.guardrail.findUnique({
-    where: { id },
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) {
+    return sendError(res, 401, 'Unauthorized');
+  }
+
+  const guardrail = await prisma.guardrail.findFirst({
+    where: { id, organizationId },
   });
 
   if (!guardrail) {
@@ -43,8 +62,13 @@ export const updateGuardrail = asyncHandler(async (req: any, res: Response) => {
   const { id } = req.params;
   const { name, description, type, enabled } = req.body;
 
-  const existing = await prisma.guardrail.findUnique({
-    where: { id },
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) {
+    return sendError(res, 401, 'Unauthorized');
+  }
+
+  const existing = await prisma.guardrail.findFirst({
+    where: { id, organizationId },
   });
 
   if (!existing) {
@@ -67,8 +91,13 @@ export const updateGuardrail = asyncHandler(async (req: any, res: Response) => {
 export const deleteGuardrail = asyncHandler(async (req: any, res: Response) => {
   const { id } = req.params;
 
-  const existing = await prisma.guardrail.findUnique({
-    where: { id },
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) {
+    return sendError(res, 401, 'Unauthorized');
+  }
+
+  const existing = await prisma.guardrail.findFirst({
+    where: { id, organizationId },
   });
 
   if (!existing) {

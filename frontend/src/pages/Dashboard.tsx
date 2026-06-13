@@ -22,8 +22,29 @@ export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [simulating, setSimulating] = useState(false);
 
+  const [dashboardStats, setDashboardStats] = useState<any>(null);
+  const [systems, setSystems] = useState<any[]>([]);
+  const [systemsCount, setSystemsCount] = useState<number | null>(null);
+  const [shadowCount, setShadowCount] = useState<number | null>(null);
+  const [complianceStats, setComplianceStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
+    setLoading(true);
     fetchPolicies().then(policies => setPoliciesCount(policies.length)).catch(() => setPoliciesCount(0));
+
+    Promise.all([
+      apiRequest<any>('/ai/dashboard-stats').then(setDashboardStats).catch((err) => console.error('Dashboard Stats Error:', err)),
+      apiRequest<any>('/ai-systems').then(data => {
+        const items = data?.items || [];
+        setSystems(items);
+        setSystemsCount(items.length);
+      }).catch((err) => console.error('Systems Error:', err)),
+      apiRequest<any>('/shadow-ai/detections').then(data => setShadowCount(data?.unauthorizedToolsCount || 0)).catch((err) => console.error('Shadow AI Error:', err)),
+      apiRequest<any>('/compliance/stats').then(setComplianceStats).catch((err) => console.error('Compliance Stats Error:', err))
+    ]).finally(() => {
+      setLoading(false);
+    });
   }, []);
 
   const isDemoOrg = user?.organizationName?.toLowerCase().includes('demo');
@@ -50,6 +71,25 @@ export default function Dashboard() {
     } finally {
       setSimulating(false);
     }
+  };
+
+  const getRiskDistribution = () => {
+    const counts = { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0 };
+    systems.forEach((sys: any) => {
+      const tier = (sys.risk_tier || 'LOW').toUpperCase();
+      if (tier in counts) {
+        counts[tier as keyof typeof counts]++;
+      } else {
+        counts['LOW']++;
+      }
+    });
+
+    return [
+      { label: 'Critical', count: counts.CRITICAL, color: '#f43f5e', text: '#ffffff' },
+      { label: 'High', count: counts.HIGH, color: '#f97316', text: '#ffffff' },
+      { label: 'Medium', count: counts.MEDIUM, color: '#eab308', text: '#000000' },
+      { label: 'Low', count: counts.LOW, color: '#10b981', text: '#ffffff' }
+    ].filter(c => c.count > 0);
   };
 
   return (
@@ -101,25 +141,25 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <KPICard 
           label="Total AI Systems" 
-          value="--" 
+          value={systemsCount !== null ? systemsCount.toString() : "0"} 
           icon="systems" 
           status="primary" 
         />
         <KPICard 
           label="Open Risk Findings" 
-          value="--" 
+          value={dashboardStats?.kpis?.criticalViolations?.value !== undefined ? dashboardStats.kpis.criticalViolations.value.toString() : "0"} 
           icon="risks" 
           status="warning" 
         />
         <KPICard 
           label="Compliance Coverage" 
-          value="--" 
+          value={dashboardStats?.kpis?.complianceScore?.value !== undefined ? `${dashboardStats.kpis.complianceScore.value}%` : "100%"} 
           icon="compliance" 
           status="success" 
         />
         <KPICard 
           label="Shadow AI Detected" 
-          value="--" 
+          value={shadowCount !== null ? shadowCount.toString() : "0"} 
           icon="shadow" 
           status="danger" 
         />
@@ -128,23 +168,40 @@ export default function Dashboard() {
       {/* Row 2: Registry & Alerts */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-8">
-           <AIRegistryTable data={[]} isLoading={false} />
+           <AIRegistryTable 
+             data={systems.map((item: any) => ({
+               id: item.id,
+               name: item.name,
+               type: item.vendor || 'Custom',
+               owner: item.owner?.full_name || 'Unassigned',
+               riskScore: item.risk_tier === 'CRITICAL' ? 95 : item.risk_tier === 'HIGH' ? 75 : item.risk_tier === 'MEDIUM' ? 50 : 25,
+               status: item.status === 'ACTIVE' ? 'ACTIVE' : item.status === 'UNDER_REVIEW' ? 'PENDING' : 'BLOCKED'
+             }))} 
+             isLoading={loading} 
+           />
         </div>
         <div className="lg:col-span-4">
-           <ActiveAlertsPanel data={alerts} isLoading={false} />
+           <ActiveAlertsPanel data={alerts} isLoading={loading} />
         </div>
       </div>
 
       {/* Row 3: Compliance, Activity & Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-4">
-           <ComplianceTracker data={[]} isLoading={false} />
+           <ComplianceTracker 
+             data={(complianceStats?.frameworks || []).map((fw: any) => ({
+               name: fw.name,
+               progress: fw.score || 0,
+               status: (fw.score || 0) >= 90 ? 'Compliant' : 'Needs Review'
+             }))} 
+             isLoading={loading} 
+           />
         </div>
         <div className="lg:col-span-4">
-           <RecentActivityFeed isLoading={false} />
+           <RecentActivityFeed isLoading={loading} />
         </div>
         <div className="lg:col-span-4">
-           <RiskDistributionCard data={[]} isLoading={false} />
+           <RiskDistributionCard data={getRiskDistribution()} isLoading={loading} />
         </div>
       </div>
 

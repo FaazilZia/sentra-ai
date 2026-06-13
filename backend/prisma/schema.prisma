@@ -112,6 +112,10 @@ model organizations {
   mcp_agent_keys               mcp_agent_keys[]
   mcp_audit_logs               mcp_audit_logs[]
   llm_keys                     llm_keys[]
+  guardrails                   Guardrail[]
+  block_events                 BlockEvent[]
+  compliance_controls          ComplianceControl[]
+  agents                       Agent[]
 
   @@map("companies")
 }
@@ -2375,45 +2379,71 @@ model DpdpImplementation {
 }
 
 model Guardrail {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  type        String
-  enabled     Boolean  @default(true)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id             String   @id @default(uuid())
+  organizationId String   @default("00000000-0000-0000-0000-000000000001") @map("organization_id")
+  name           String
+  description    String?
+  type           String
+  enabled        Boolean  @default(true)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
+  organization organizations @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
   @@map("guardrails")
 }
 
 model BlockEvent {
-  id        String   @id @default(uuid())
-  agentId   String   @map("agent_id")
-  action    String
-  resource  String
-  status    String   @default("BLOCKED")
-  timestamp DateTime @default(now())
+  id             String   @id @default(uuid())
+  organizationId String   @default("00000000-0000-0000-0000-000000000001") @map("organization_id")
+  agentId        String   @map("agent_id")
+  action         String
+  resource       String
+  status         String   @default("BLOCKED")
+  timestamp      DateTime @default(now())
 
+  organization organizations @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
   @@map("block_events")
 }
 
 model ComplianceControl {
-  id          String   @id @default(uuid())
-  framework   String
-  name        String
-  description String
-  status      String   @default("NOT_STARTED")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id             String   @id @default(uuid())
+  organizationId String   @default("00000000-0000-0000-0000-000000000001") @map("organization_id")
+  framework      String
+  name           String
+  description    String
+  status         String   @default("NOT_STARTED")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
+  organization organizations @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
   @@map("compliance_controls")
 }
 
 model Agent {
-  id           String   @id @default(uuid())
-  name         String
-  type         String
-  status       String   @default("active")
-  discoveredAt DateTime @default(now()) @map("discovered_at")
+  id             String   @id @default(uuid())
+  organizationId String   @default("00000000-0000-0000-0000-000000000001") @map("organization_id")
+  name           String
+  type           String
+  status         String   @default("active")
+  discoveredAt   DateTime @default(now()) @map("discovered_at")
 
+  organization organizations @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
   @@map("agents")
+}
+
+model jwt_blacklist {
+  id         String   @id @default(uuid())
+  token      String   @unique
+  expires_at DateTime @map("expires_at")
+  created_at DateTime @default(now()) @map("created_at")
+
+  @@index([token])
+  @@map("jwt_blacklist")
 }

@@ -28,11 +28,11 @@ router.get('/security-metrics', authenticate, authorizeRoles('ADMIN'), async (re
     const last7d = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
     const blockedAttempts = await prisma.alerts.count({
-      where: { type: 'POLICY_VIOLATION' }
+      where: { organizationId, type: 'POLICY_VIOLATION' }
     });
 
     const rateLimitTriggers = await prisma.alerts.count({
-      where: { type: 'RATE_LIMIT_EXCEEDED' }
+      where: { organizationId, type: 'RATE_LIMIT_EXCEEDED' }
     });
 
     const policyEnforcements = await prisma.interception_logs.count({
@@ -47,11 +47,11 @@ router.get('/security-metrics', authenticate, authorizeRoles('ADMIN'), async (re
 
     // Time-based trends
     const violations24h = await prisma.alerts.count({
-      where: { type: 'POLICY_VIOLATION', created_at: { gte: last24h } }
+      where: { organizationId, type: 'POLICY_VIOLATION', created_at: { gte: last24h } }
     });
 
     const violations7d = await prisma.alerts.count({
-      where: { type: 'POLICY_VIOLATION', created_at: { gte: last7d } }
+      where: { organizationId, type: 'POLICY_VIOLATION', created_at: { gte: last7d } }
     });
 
     // RLS Coverage calculation (Audit Evidence)

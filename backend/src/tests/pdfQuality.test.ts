@@ -183,7 +183,7 @@ describe('PDF Report Quality & Integration Smoke Test', () => {
   // ── 4. Feature Compliance Report PDF ─────────────────────────────────────
   it('ReportService.generateFeatureReport — starts with %PDF and size > 3 KB', async () => {
     const { res, getBuffer } = buildMockRes();
-    await ReportService.generateFeatureReport('smoke-feature-id', res);
+    await ReportService.generateFeatureReport('smoke-feature-id', organizationId, res);
     const buf = await getBuffer();
     expect(buf.slice(0, 4).toString()).toBe('%PDF');
     expect(buf.length).toBeGreaterThan(2_000); // single-page doc with no real audit data

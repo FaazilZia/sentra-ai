@@ -7,6 +7,7 @@ import logger from '../utils/logger';
 import { parsePagination } from '../utils/pagination';
 import { asyncHandler, sendSuccess, sendError, getOrgId } from '../utils/controllerHelpers';
 import { ChangeHistoryService } from '../services/changeHistory.service';
+import { encrypt } from '../utils/encryption';
 
 export const processAIRequest = asyncHandler(async (req: any, res: Response) => {
   const { prompt, model = 'gpt-4o' } = req.body;
@@ -73,7 +74,10 @@ export const processAIRequest = asyncHandler(async (req: any, res: Response) => 
     confidence: outputResult.confidence,
     reason: outputResult.reason,
     policy_triggered: outputResult.policy_triggered,
-    metadata: { original_prompt: prompt, original_output: aiResponse }
+    metadata: { 
+      original_prompt: encrypt(prompt), 
+      original_output: encrypt(aiResponse) 
+    }
   });
 
   return sendSuccess(res, {
@@ -208,10 +212,11 @@ export const exportGuardrailLogs = asyncHandler(async (req: any, res: Response) 
 export const postRequestOverride = asyncHandler(async (req: any, res: Response) => {
   const { logId, reason } = req.body;
   const userId = req.user.id;
-  const override = await GuardrailService.requestOverride(logId, userId, reason);
+  const organizationId = getOrgId(req);
+  const override = await GuardrailService.requestOverride(logId, userId, reason, organizationId);
 
   await ChangeHistoryService.logChange(
-    getOrgId(req),
+    organizationId,
     'guardrail',
     logId,
     req.user.id,
@@ -227,10 +232,11 @@ export const postRequestOverride = asyncHandler(async (req: any, res: Response) 
 export const postApproveOverride = asyncHandler(async (req: any, res: Response) => {
   const { overrideId, status } = req.body;
   const userId = req.user.id;
-  const override = await GuardrailService.approveOverride(overrideId, userId, status);
+  const organizationId = getOrgId(req);
+  const override = await GuardrailService.approveOverride(overrideId, userId, status, organizationId);
 
   await ChangeHistoryService.logChange(
-    getOrgId(req),
+    organizationId,
     'guardrail',
     override.log_id || overrideId,
     req.user.id,

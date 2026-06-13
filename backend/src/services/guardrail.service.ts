@@ -312,7 +312,16 @@ export class GuardrailService {
     }
   }
 
-  static async requestOverride(logId: string, userId: string, reason: string) {
+  static async requestOverride(logId: string, userId: string, reason: string, organizationId?: string) {
+    if (organizationId) {
+      const log = await prisma.interception_logs.findFirst({
+        where: { id: logId, organizationId }
+      });
+      if (!log) {
+        throw new Error('Unauthorized or not found');
+      }
+    }
+
     await prisma.interception_logs.update({
       where: { id: logId },
       data: { override_status: 'pending' }
@@ -323,7 +332,17 @@ export class GuardrailService {
     });
   }
 
-  static async approveOverride(overrideId: string, adminId: string, status: 'approved' | 'rejected') {
+  static async approveOverride(overrideId: string, adminId: string, status: 'approved' | 'rejected', organizationId?: string) {
+    if (organizationId) {
+      const override = await prisma.guardrail_overrides.findFirst({
+        where: { id: overrideId },
+        include: { interception_log: true }
+      });
+      if (!override || override.interception_log?.organizationId !== organizationId) {
+        throw new Error('Unauthorized or not found');
+      }
+    }
+
     const override = await prisma.guardrail_overrides.update({
       where: { id: overrideId },
       data: { status, approved_by: adminId }

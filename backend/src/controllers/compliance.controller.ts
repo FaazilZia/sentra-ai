@@ -28,7 +28,10 @@ export const postFixTasks = asyncHandler(async (req: any, res: Response) => {
 
 export const getFixTasks = asyncHandler(async (req: any, res: Response) => {
   const { featureId } = req.params;
-  const tasks = await ComplianceService.getFixTasks(featureId);
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) return sendError(res, 401, 'Unauthorized');
+
+  const tasks = await ComplianceService.getFixTasks(featureId, organizationId);
   return sendSuccess(res, tasks);
 });
 
@@ -55,22 +58,48 @@ export const postReEvaluate = asyncHandler(async (req: any, res: Response) => {
 
 export const getHistory = asyncHandler(async (req: any, res: Response) => {
   const { featureId } = req.params;
-  const history = await ComplianceService.getHistory(featureId);
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) return sendError(res, 401, 'Unauthorized');
+
+  const history = await ComplianceService.getHistory(featureId, organizationId);
   return sendSuccess(res, history);
 });
 
 export const getExportReport = asyncHandler(async (req: any, res: Response) => {
   const { featureId } = req.params;
-  await ReportService.generateFeatureReport(featureId, res);
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) return sendError(res, 401, 'Unauthorized');
+
+  const hasAccess = await prisma.compliance_snapshots.findFirst({
+    where: { featureId, organizationId }
+  });
+  if (!hasAccess) {
+    return sendError(res, 404, 'Compliance feature data not found or unauthorized');
+  }
+
+  await ReportService.generateFeatureReport(featureId, organizationId, res);
 });
 
 export const getAlerts = asyncHandler(async (req: any, res: Response) => {
-  const alerts = await ComplianceService.getAlerts();
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) return sendError(res, 401, 'Unauthorized');
+
+  const alerts = await ComplianceService.getAlerts(organizationId);
   return sendSuccess(res, alerts);
 });
 
 export const postMarkAlertRead = asyncHandler(async (req: any, res: Response) => {
   const { alertId } = req.body;
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) return sendError(res, 401, 'Unauthorized');
+
+  const alert = await prisma.alerts.findFirst({
+    where: { id: alertId, organizationId }
+  });
+  if (!alert) {
+    return sendError(res, 404, 'Alert not found or unauthorized');
+  }
+
   await ComplianceService.markAlertRead(alertId);
   return sendSuccess(res, undefined);
 });

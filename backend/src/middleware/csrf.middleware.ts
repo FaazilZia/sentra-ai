@@ -24,13 +24,29 @@ export const csrfProtection = (req: CsrfRequest, res: Response, next: NextFuncti
   req.csrfToken = csrfToken;
   res.setHeader('x-csrf-token', csrfToken);
 
-  // 2. Validate on mutating HTTP methods for auth routes
+  // 2. Validate on mutating HTTP methods
   const mutatingMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
-  if (mutatingMethods.includes(req.method) && req.path.startsWith('/api/v1/auth/')) {
+  if (mutatingMethods.includes(req.method)) {
     // Skip verification in test environment to avoid breaking integration/unit tests
     if (process.env.NODE_ENV === 'test') {
       return next();
     }
+    
+    // Token-based / Bearer requests must bypass CSRF
+    const authHeader = req.headers.authorization;
+    const xApiKey = req.headers['x-api-key'];
+    const isTokenAuth = (authHeader && authHeader.startsWith('Bearer ')) || !!xApiKey;
+
+    // Public/webhook routes bypass: SAML callbacks, SCIM, and guardrails demo
+    const isBypassRoute = 
+      req.path.includes('/saml/') || 
+      req.path.includes('/scim/v2/') || 
+      req.path.includes('/guardrails/demo');
+
+    if (isTokenAuth || isBypassRoute) {
+      return next();
+    }
+
     const headerToken = req.headers['x-csrf-token'];
     
     if (!headerToken || headerToken !== csrfToken) {

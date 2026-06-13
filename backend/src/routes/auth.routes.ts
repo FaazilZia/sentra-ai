@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { register, login, refreshToken, getMe, googleLogin, googleCallback, logout, forgotPassword, resetPassword, verifyEmail, resendVerification, changePassword } from '../controllers/auth.controller';
 import { authenticate } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validate.middleware';
-import { registerSchema, loginSchema, refreshTokenSchema, googleLoginSchema, forgotPasswordSchema, resetPasswordSchema, resendVerificationSchema } from '../validations/auth.validation';
+import { registerSchema, loginSchema, refreshTokenSchema, googleLoginSchema, forgotPasswordSchema, resetPasswordSchema, changePasswordSchema, resendVerificationSchema } from '../validations/auth.validation';
 import { registerLimiter, loginLimiter, resetLimiter, verifyLimiter } from '../config/rateLimit';
 import { MFAService } from '../services/mfa.service';
 import prisma from '../config/db';
@@ -96,11 +96,11 @@ router.post('/refresh-token', loginLimiter, validate(refreshTokenSchema), refres
 router.post('/refresh', loginLimiter, validate(refreshTokenSchema), refreshToken); // alias
 router.get('/me', authenticate, getMe);
 router.post('/logout', logout);
-router.post('/change-password', authenticate, changePassword);
+router.post('/change-password', authenticate, loginLimiter, validate(changePasswordSchema), changePassword);
 
 router.post('/forgot-password', resetLimiter, validate(forgotPasswordSchema), forgotPassword);
 router.post('/reset-password', resetLimiter, validate(resetPasswordSchema), resetPassword);
-router.get('/verify-email', verifyEmail);
+router.get('/verify-email', verifyLimiter, verifyEmail);
 router.post('/resend-verification', verifyLimiter, validate(resendVerificationSchema), resendVerification);
 
 router.post('/mfa/setup', authenticate, async (req: any, res) => {

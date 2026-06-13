@@ -91,19 +91,40 @@ async function handleJwtToken(token: string, req: any, res: Response): Promise<{
   try {
     const payload: any = verifyAccessToken(token);
 
-    // Check Redis blacklist
+    // Check Redis blacklist with DB fallback
     const redis = getRedisClient();
+    let isBlacklisted = false;
+    let redisSuccess = false;
+
     if (redis) {
-      const isBlacklisted = await redis.get(`blacklist:${token}`);
-      if (isBlacklisted) {
-        return {
-          handled: true,
-          errorResponse: {
-            status: 401,
-            body: { success: false, message: 'Invalid or expired credentials' }
-          }
-        };
+      try {
+        const cached = await redis.get(`blacklist:${token}`);
+        isBlacklisted = !!cached;
+        redisSuccess = true;
+      } catch (err) {
+        logger.warn('Redis error during blacklist check, falling back to database:', err);
       }
+    }
+
+    if (!redisSuccess) {
+      try {
+        const dbBlacklisted = await prisma.jwt_blacklist.findUnique({
+          where: { token }
+        });
+        isBlacklisted = !!dbBlacklisted;
+      } catch (dbErr) {
+        logger.error('Database error during blacklist fallback check:', dbErr);
+      }
+    }
+
+    if (isBlacklisted) {
+      return {
+        handled: true,
+        errorResponse: {
+          status: 401,
+          body: { success: false, message: 'Invalid or expired credentials' }
+        }
+      };
     }
 
     const user = await prisma.users.findUnique({

@@ -3,10 +3,10 @@ import { ComplianceService } from './compliance.service';
 import { Response } from 'express';
 
 export class ReportService {
-  static async generateFeatureReport(featureId: string, res: Response) {
-    const history = await ComplianceService.getHistory(featureId);
-    const tasks = await ComplianceService.getFixTasks(featureId);
-    const logs = await ComplianceService.getAuditLogs(featureId);
+  static async generateFeatureReport(featureId: string, organizationId: string, res: Response) {
+    const history = await ComplianceService.getHistory(featureId, organizationId);
+    const tasks = await ComplianceService.getFixTasks(featureId, organizationId);
+    const logs = await ComplianceService.getAuditLogs(organizationId, featureId);
     const latestSnapshot = history[history.length - 1];
 
     const doc = new PDFDocument({ margin: 50, bufferPages: true });

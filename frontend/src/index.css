@@ -8,7 +8,6 @@
     @apply bg-[var(--bg-page)] text-[var(--text-secondary)] font-sans antialiased;
     margin: 0;
     padding: 0;
-    overflow: hidden;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -17,6 +16,10 @@
 
   * {
     @apply border-[var(--border-default)];
+  }
+
+  /* Optimize layout performance: Apply transitions only to interactive elements */
+  .btn, .card-base, .link, a, button, input, select, textarea {
     transition: background-color var(--transition-speed) var(--transition-ease), 
                 border-color var(--transition-speed) var(--transition-ease),
                 color var(--transition-speed) var(--transition-ease),

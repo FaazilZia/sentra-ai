@@ -342,7 +342,6 @@ app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
     const isAllowed = allowedOrigins.includes(origin) || 
-                      origin.endsWith('.vercel.app') || 
                       (!isProduction && origin.includes('localhost'));
     if (isAllowed) {
       callback(null, true);
@@ -459,8 +458,10 @@ v1Router.use('/evaluations', evaluationsRoutes);
 
 v1Router.use('/superadmin', superadminRoutes);
 
-// Mount demo routes unconditionally to enable attack simulations
-v1Router.use('/demo', demoRoutes);
+// Mount demo routes conditionally to enable attack simulations
+if (process.env.NODE_ENV !== 'production') {
+  v1Router.use('/demo', demoRoutes);
+}
 
 
 // Note: /api/v1/health and /api/v1/ready are mounted directly on the app instance above for non-blocking execution.
