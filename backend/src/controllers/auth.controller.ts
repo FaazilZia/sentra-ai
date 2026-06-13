@@ -571,7 +571,7 @@ export const forgotPassword = async (req: Request, res: Response, next: NextFunc
       await redis.set(`password-reset:last-jti:${user.id}`, jti, 'EX', 3600);
     }
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').split(',')[0];
     const resetLink = `${frontendUrl}/reset-password?token=${token}`;
 
     try {
@@ -685,7 +685,7 @@ export const verifyEmail = async (req: Request, res: Response, next: NextFunctio
       await redis.set(`jti:used:${decoded.jti}`, '1', 'EX', 86400);
     }
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').split(',')[0];
     res.redirect(`${frontendUrl}/login?verified=true`);
   } catch (error) {
     res.status(400).json({ success: false, message: 'Invalid or expired verification token' });

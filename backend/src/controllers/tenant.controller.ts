@@ -120,7 +120,7 @@ export const inviteUser = asyncHandler(async (req: any, res: Response) => {
 
         const org = await TenantService.getOrganization(orgId);
         const orgName = org?.name || 'Sentra AI';
-        const joinLink = `${process.env.FRONTEND_URL}/accept-invite?token=${invitation.token}`;
+        const joinLink = `${(process.env.FRONTEND_URL || 'http://localhost:5173').split(',')[0]}/accept-invite?token=${invitation.token}`;
 
         await transporter.sendMail({
           from: process.env.SMTP_FROM || '"Sentra AI" <noreply@sentra.ai>',

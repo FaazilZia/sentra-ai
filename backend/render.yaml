@@ -19,6 +19,8 @@ services:
         value: production
       - key: FRONTEND_URL
         value: https://sentra-ai-tau.vercel.app,https://sentra-ai.vercel.app,http://localhost:5173
+      - key: BACKEND_URL
+        value: https://sentra-backend-node.onrender.com
       - key: PORT
         value: 10000
       - key: HUGGINGFACE_API_KEY

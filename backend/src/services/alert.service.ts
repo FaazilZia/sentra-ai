@@ -65,7 +65,7 @@ class AlertService {
         return;
       }
 
-      const dashboardUrl = process.env.FRONTEND_URL || 'https://app.sentra.ai';
+      const dashboardUrl = (process.env.FRONTEND_URL || 'https://app.sentra.ai').split(',')[0];
       
       const mailOptions = {
         from: process.env.SMTP_FROM || '"Sentra AI Alerts" <alerts@sentra.ai>',
@@ -128,7 +128,7 @@ class AlertService {
 
       if (!org?.slackWebhookUrl) return;
 
-      const dashboardUrl = process.env.FRONTEND_URL || 'https://app.sentra.ai';
+      const dashboardUrl = (process.env.FRONTEND_URL || 'https://app.sentra.ai').split(',')[0];
 
       const slackMessage = {
         blocks: [
