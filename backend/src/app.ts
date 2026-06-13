@@ -109,7 +109,6 @@ logger.info('[BOOT] Express app created');
 logger.info(`[BOOT] Timestamp: ${new Date().toISOString()}`);
 
 // Minimal diagnostics & health check routes (MUST be registered first to bypass all middlewares)
-app.get('/ping', (req, res) => res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() }));
 
 app.get('/startup-check', async (_, res) => {
   let migrationStatus = null;
@@ -175,6 +174,7 @@ const runDeepHealthCheck = async (req: any, res: any) => {
       db: 'ok',
       redis: redis ? 'ok' : 'failed',
       queue: alertQueue ? 'ok' : 'failed',
+      version: '2.0.0',
       timestamp: new Date().toISOString()
     });
   }
@@ -198,12 +198,14 @@ const runDeepHealthCheck = async (req: any, res: any) => {
       db: dbOk ? 'ok' : 'failed',
       redis: redisOk ? 'ok' : 'failed',
       queue: queueOk ? 'ok' : 'failed',
+      version: '2.0.0',
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {
     return res.status(503).json({
       status: 'degraded',
       error: error.message,
+      version: '2.0.0',
       timestamp: new Date().toISOString()
     });
   }
@@ -354,6 +356,9 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-API-Key', 'X-Workspace-Id', 'X-Idempotency-Key', 'X-CSRF-Token'],
   exposedHeaders: ['x-csrf-token']
 }));
+
+// Minimal diagnostics & health check routes (mounted after Helmet/CORS to inherit security/CORS headers)
+app.get('/ping', (req, res) => res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() }));
 
 // Prometheus HTTP instrumentation
 app.use(prometheusMiddleware);

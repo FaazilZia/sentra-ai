@@ -50,7 +50,7 @@ async function main() {
   await test('GET /api/health → database connected', async () => {
     const r = await req('/api/health');
     if (r.status !== 200) throw new Error(`Got ${r.status}`);
-    if (r.body.database !== 'connected') throw new Error('DB not connected');
+    if (r.body.db !== 'ok') throw new Error('DB not connected');
   });
   await test('GET /api/v1/ready → ready or degraded', async () => {
     const r = await req('/api/v1/ready');
