@@ -56,3 +56,5 @@ export const logRequest = (data: {
     }, data.message || (isError ? 'Request processed' : 'Slow request detected'));
   }
 };
+
+export { pinoLogger as rawPinoLogger };

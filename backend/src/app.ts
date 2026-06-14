@@ -98,8 +98,7 @@ import * as Sentry from '@sentry/node';
 
 import crypto from 'crypto';
 import pinoHttp from 'pino-http';
-import logger from './utils/logger';
-import { logger as rawPinoLogger } from './lib/logger';
+import logger, { rawPinoLogger } from './utils/logger';
 import { requestIdMiddleware } from './middleware/requestId.middleware';
 
 const app: Application = express();
