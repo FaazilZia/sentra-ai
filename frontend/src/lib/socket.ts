@@ -1,7 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 
 export const getBaseSocketUrl = () => {
-  const envUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:10000';
+  const envUrl = import.meta.env.VITE_API_BASE_URL || 'https://sentra-backend-node.onrender.com/api/v1';
   let trimmed = envUrl.trim().replace(/\/$/, '');
   
   if (trimmed.endsWith('/api/v1')) {
@@ -10,11 +10,11 @@ export const getBaseSocketUrl = () => {
     trimmed = trimmed.replace('/api', '');
   }
   
-  return trimmed || 'http://localhost:10000';
+  return trimmed || 'https://sentra-backend-node.onrender.com';
 };
 
 export const socket: Socket = io(getBaseSocketUrl(), {
-  transports: ['websocket'],
+  transports: ['polling', 'websocket'],
   reconnection: true,
   reconnectionAttempts: Infinity,
   reconnectionDelay: 1000,
