@@ -249,14 +249,6 @@ const startServer = async () => {
   };
 
   const runBackgroundInit = async () => {
-    // Validate environment variables asynchronously
-    try {
-      await validateEnv();
-      logger.info('Environment variables validated successfully');
-    } catch (err: any) {
-      logger.error('validateEnv failed during background init:', err?.message || err);
-    }
-
     // 1. Initialize Prisma first so the app works immediately
     try {
       await initializePrisma();
@@ -265,6 +257,11 @@ const startServer = async () => {
       logger.error('Failed to initialize database during background init:', error);
       return;
     }
+
+    // Validate environment variables asynchronously in the background
+    validateEnv()
+      .then(() => logger.info('Environment variables validated successfully'))
+      .catch((err: any) => logger.error('validateEnv failed during background init:', err?.message || err));
 
     // 2. Run migrations asynchronously in the background in production without blocking
     if (process.env.NODE_ENV === 'production') {
