@@ -1,6 +1,9 @@
 import { Router, Request, Response } from 'express';
 import { metricsRegistry } from '../config/telemetry';
 
+// REQUIRED: Set METRICS_SECRET_TOKEN in production env vars.
+// If unset, this endpoint is publicly accessible.
+
 const router = Router();
 
 const METRICS_TOKEN = process.env.METRICS_SECRET_TOKEN;

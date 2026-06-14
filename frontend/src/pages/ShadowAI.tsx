@@ -36,7 +36,7 @@ export default function ShadowAI() {
       try {
         const token = localStorage.getItem('sentra_access_token') || localStorage.getItem('accessToken');
         const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-        const base = import.meta.env.VITE_API_URL || 'https://sentra-backend-node.onrender.com/api/v1';
+        const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:10000/api/v1';
 
         const res = await fetch(`${base}/shadow-ai/detections`, { headers });
         const json = await res.json();

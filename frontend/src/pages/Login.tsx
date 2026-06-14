@@ -74,7 +74,7 @@ export default function LoginPage({ defaultIsSignUp = false }: { defaultIsSignUp
 
   const handleSsoLogin = () => {
     if (!orgSlug.trim()) return;
-    const base = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
+    const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:10000/api/v1';
     window.location.href = `${base}/saml/${orgSlug.trim().toLowerCase()}`;
   };
 

@@ -68,7 +68,6 @@ import rbacRoutes from './routes/rbac.routes';
 import auditRoutes from './routes/audit.routes';
 import workflowRoutes from './routes/workflow.routes';
 import evaluationRoutes from './routes/evaluation.routes';
-import evaluationsRoutes from './routes/evaluations.routes';
 
 import superadminRoutes from './routes/superadmin.routes';
 import metricsRoutes from './routes/metrics.routes';
@@ -459,8 +458,8 @@ v1Router.use('/tenant', tenantRoutes);
 v1Router.use('/rbac', rbacRoutes);
 v1Router.use('/audit', auditRoutes);
 v1Router.use('/workflows', workflowRoutes);
+// /evaluation → all evaluation routes (score, runs, datasets, bias audit, live-run)
 v1Router.use('/evaluation', evaluationRoutes);
-v1Router.use('/evaluations', evaluationsRoutes);
 
 v1Router.use('/superadmin', superadminRoutes);
 
@@ -482,7 +481,6 @@ v1Router.get('/', (req, res) => {
 });
 
 app.use('/api/v1', v1Router);
-app.use('/admin', adminRoutes);
 
 
 
