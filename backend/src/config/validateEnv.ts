@@ -23,7 +23,9 @@ export const validateEnv = async () => {
       const smtpVars = ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASS'];
       for (const key of smtpVars) {
         const val = process.env[key] || '';
-        if (!val || /example|placeholder|changeme|your_/i.test(val)) {
+        const isPlaceholder = /example|placeholder|changeme|your_/i.test(val);
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+        if (!val || (isPlaceholder && !isUuid)) {
           throw new Error(`${key} appears to be a placeholder value. Set real SMTP credentials in production.`);
         }
       }
