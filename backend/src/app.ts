@@ -104,6 +104,7 @@ import { logger as rawPinoLogger } from './lib/logger';
 import { requestIdMiddleware } from './middleware/requestId.middleware';
 
 const app: Application = express();
+app.set('trust proxy', 1);
 
 logger.info('[BOOT] Express app created');
 logger.info(`[BOOT] Timestamp: ${new Date().toISOString()}`);

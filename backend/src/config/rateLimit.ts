@@ -438,7 +438,7 @@ export const loginLimiter = createSafeRateLimiter('rl:login:', {
 
 export const registerLimiter = createSafeRateLimiter('rl:register:', {
   windowMs: 60 * 60 * 1000,
-  max: 5,
+  max: process.env.IS_E2E_TEST === 'true' ? 100 : 5,
   message: { error: 'Too many attempts', retryAfter: 'See Retry-After header' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -447,7 +447,7 @@ export const registerLimiter = createSafeRateLimiter('rl:register:', {
 
 export const resetLimiter = createSafeRateLimiter('rl:reset:', {
   windowMs: 60 * 60 * 1000,
-  max: 3,
+  max: process.env.IS_E2E_TEST === 'true' ? 100 : 3,
   message: { error: 'Too many attempts', retryAfter: 'See Retry-After header' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -456,7 +456,7 @@ export const resetLimiter = createSafeRateLimiter('rl:reset:', {
 
 export const verifyLimiter = createSafeRateLimiter('rl:verify:', {
   windowMs: 60 * 60 * 1000,
-  max: 2,
+  max: process.env.IS_E2E_TEST === 'true' ? 100 : 2,
   message: { error: 'Too many attempts', retryAfter: 'See Retry-After header' },
   standardHeaders: true,
   legacyHeaders: false,
