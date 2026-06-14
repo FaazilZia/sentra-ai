@@ -156,12 +156,6 @@ io.on('connection', (socket) => {
 export { io };
 
 const startServer = async () => {
-  try {
-    await validateEnv();
-  } catch (err: any) {
-    logger.error('validateEnv failed:', err?.message || err);
-    process.exit(1);
-  }
 
   // Hard-required: server cannot function without these
   const REQUIRED_ENV_VARS = [
@@ -255,6 +249,14 @@ const startServer = async () => {
   };
 
   const runBackgroundInit = async () => {
+    // Validate environment variables asynchronously
+    try {
+      await validateEnv();
+      logger.info('Environment variables validated successfully');
+    } catch (err: any) {
+      logger.error('validateEnv failed during background init:', err?.message || err);
+    }
+
     // 1. Initialize Prisma first so the app works immediately
     try {
       await initializePrisma();
