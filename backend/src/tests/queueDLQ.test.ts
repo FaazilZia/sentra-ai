@@ -107,21 +107,21 @@ describe('BullMQ DLQ Configuration & Superadmin APIs', () => {
       normalUserToken = generateAccessToken({ id: normalUser.id });
     });
 
-    it('should reject unauthenticated request for /admin/queues', async () => {
-      const res = await request(app).get('/admin/queues');
+    it('should reject unauthenticated request for /api/v1/admin/queues', async () => {
+      const res = await request(app).get('/api/v1/admin/queues');
       expect(res.status).toBe(401);
     });
 
-    it('should reject non-superadmin request for /admin/queues', async () => {
+    it('should reject non-superadmin request for /api/v1/admin/queues', async () => {
       const res = await request(app)
-        .get('/admin/queues')
+        .get('/api/v1/admin/queues')
         .set('Authorization', `Bearer ${normalUserToken}`);
       expect(res.status).toBe(403);
     });
 
-    it('should allow superadmin request for /admin/queues and return stats', async () => {
+    it('should allow superadmin request for /api/v1/admin/queues and return stats', async () => {
       const res = await request(app)
-        .get('/admin/queues')
+        .get('/api/v1/admin/queues')
         .set('Authorization', `Bearer ${superAdminToken}`);
       
       expect(res.status).toBe(200);
@@ -134,7 +134,7 @@ describe('BullMQ DLQ Configuration & Superadmin APIs', () => {
 
     it('should allow listing failed jobs for a queue', async () => {
       const res = await request(app)
-        .get('/admin/queues/activity-logs/failed')
+        .get('/api/v1/admin/queues/activity-logs/failed')
         .set('Authorization', `Bearer ${superAdminToken}`);
 
       expect(res.status).toBe(200);
@@ -147,7 +147,7 @@ describe('BullMQ DLQ Configuration & Superadmin APIs', () => {
 
     it('should allow retrying a failed job', async () => {
       const res = await request(app)
-        .post('/admin/queues/activity-logs/failed/test-job-1/retry')
+        .post('/api/v1/admin/queues/activity-logs/failed/test-job-1/retry')
         .set('Authorization', `Bearer ${superAdminToken}`);
 
       expect(res.status).toBe(200);
@@ -157,7 +157,7 @@ describe('BullMQ DLQ Configuration & Superadmin APIs', () => {
 
     it('should return 404 retrying a non-existent job', async () => {
       const res = await request(app)
-        .post('/admin/queues/activity-logs/failed/non-existent/retry')
+        .post('/api/v1/admin/queues/activity-logs/failed/non-existent/retry')
         .set('Authorization', `Bearer ${superAdminToken}`);
 
       expect(res.status).toBe(404);
@@ -166,7 +166,7 @@ describe('BullMQ DLQ Configuration & Superadmin APIs', () => {
 
     it('should allow flushing failed jobs in a queue', async () => {
       const res = await request(app)
-        .delete('/admin/queues/activity-logs/failed')
+        .delete('/api/v1/admin/queues/activity-logs/failed')
         .set('Authorization', `Bearer ${superAdminToken}`);
 
       expect(res.status).toBe(200);
