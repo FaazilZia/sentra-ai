@@ -39,7 +39,7 @@ const POLICIES = [
       /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g, // Phone (simple)
       /\b\d{3}-\d{2}-\d{4}\b/g, // SSN
     ],
-    action: 'MODIFY', // Redact by default, can be BLOCK
+    action: 'BLOCK', // Redact by default, can be BLOCK
     description: 'Masks or blocks personal identifiable information'
   },
   {

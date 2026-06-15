@@ -73,11 +73,12 @@ export class SentraClient {
         const decision = (json.decision || json.data?.decision || 'ALLOWED').toUpperCase();
         const reason = json.reason || json.data?.reason || 'Processed by Sentra AI';
         // Backend returns { success, decision, reason } or wrapped in data
+        const isAllowed = decision === 'ALLOW' || decision === 'ALLOWED';
         return {
-          status: decision.toLowerCase() as 'allowed' | 'blocked',
-          risk: decision === 'BLOCK' ? 'high' : 'low',
+          status: isAllowed ? 'allowed' : 'blocked',
+          risk: isAllowed ? 'low' : 'high',
           reason: reason,
-          impact: decision === 'BLOCK' ? 'Action prevented' : 'None',
+          impact: isAllowed ? 'None' : 'Action prevented',
           compliance: []
         };
       } catch (error: any) {
