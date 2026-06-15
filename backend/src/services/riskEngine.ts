@@ -49,7 +49,7 @@ const JAILBREAK_PATTERNS = [
 ];
 
 const SHELL_INJECTION_PATTERNS = [
-  /&&/, /\|\|/, /;/, /\|/, /\$\(/, /`/,
+  /&&/, /\|\|/, /;/, /\|\s*(?:[a-zA-Z_\$\(`])/, /\$\(/, /`/,
   /bash\s+-c/i, /sh\s+-c/i, /cmd\.exe/i, /powershell/i,
   /rm\s+-rf/i, /curl\s+[^|]{1,200}\|/i, /wget\s+[^|]{1,200}\|/i, /nc\s+-e/i,
   /chmod\s+777/i, /\bsudo\b/i

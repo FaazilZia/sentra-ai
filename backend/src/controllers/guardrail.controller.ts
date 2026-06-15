@@ -271,7 +271,7 @@ export const checkAction = asyncHandler(async (req: any, res: Response) => {
   }
 
   // Basic context string for evaluation
-  const context = `Agent: ${agent} | Action: ${action} | Metadata: ${JSON.stringify(metadata)}`;
+  const context = `Agent: ${agent} - Action: ${action} - Metadata: ${JSON.stringify(metadata)}`;
   const result = await GuardrailService.evaluateInput(context);
 
   await GuardrailService.logInterception({
