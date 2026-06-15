@@ -1,5 +1,6 @@
 import prisma from '../config/db';
 import logger from '../utils/logger';
+import { PIIScannerService } from './piiScanner.service';
 import { evaluateRisk } from './riskEngine';
 import { evaluateSemanticRisk } from './semanticRiskEngine';
 import { DriftService } from './drift.service';
@@ -165,6 +166,21 @@ export class GuardrailService {
     return await this.evaluateInput(text);
   }
 
+  private static redactActionStringFields(metadata?: Record<string, any>): Record<string, any> | undefined {
+    if (!metadata) return undefined;
+
+    const redacted = { ...metadata };
+    const actionFieldKeys = ['action', 'prompt', 'content', 'message', 'input', 'text'];
+
+    for (const key of actionFieldKeys) {
+      if (typeof redacted[key] === 'string') {
+        redacted[key] = PIIScannerService.scan(redacted[key]).redactedText;
+      }
+    }
+
+    return redacted;
+  }
+
   static async logInterception(data: {
     user_id: string;
     organizationId: string;
@@ -177,19 +193,25 @@ export class GuardrailService {
     metadata?: any;
   }) {
     try {
+      const redactedInputText = PIIScannerService.scan(data.input_text).redactedText;
+      const redactedOutputText = data.output_text
+        ? PIIScannerService.scan(data.output_text).redactedText
+        : undefined;
+      const redactedMetadata = this.redactActionStringFields(data.metadata);
+
       const log = await prisma.interception_logs.create({
         data: {
           user_id: data.user_id,
           organizationId: data.organizationId,
-          input_text: data.input_text,
-          output_text: data.output_text,
+          input_text: redactedInputText,
+          output_text: redactedOutputText,
           decision: data.decision,
           confidence: data.confidence || 'High',
           reason: data.reason,
           policy_triggered: data.policy_triggered,
           metadata: { 
-            ...data.metadata,
-            categories: data.policy_triggered ? [data.policy_triggered] : (data.metadata?.categories || [])
+            ...redactedMetadata,
+            categories: data.policy_triggered ? [data.policy_triggered] : (redactedMetadata?.categories || data.metadata?.categories || [])
           }
         }
       });
