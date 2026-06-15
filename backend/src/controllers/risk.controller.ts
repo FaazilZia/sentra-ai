@@ -61,3 +61,41 @@ export const getRiskAssessment = asyncHandler(async (req: any, res: Response) =>
   });
 });
 
+export const getRiskPortfolio = asyncHandler(async (req: any, res: Response) => {
+  return sendSuccess(res, {
+    averageScore: 72,
+    highRiskCount: 4,
+    mediumRiskCount: 9,
+    lowRiskCount: 11,
+    trend: "up",
+    scoresByAgent: []
+  });
+});
+
+export const getRiskTrend = asyncHandler(async (req: any, res: Response) => {
+  return sendSuccess(res, [
+    { "date": "2026-05-01", "score": 68 },
+    { "date": "2026-05-02", "score": 71 }
+  ]);
+});
+
+export const getAgentRiskScore = asyncHandler(async (req: any, res: Response) => {
+  const { agentId } = req.params;
+  return sendSuccess(res, {
+    agentId: agentId || "abc123",
+    likelihood: 6,
+    impact: 8,
+    composite: 72
+  });
+});
+
+export const updateAgentRiskScore = asyncHandler(async (req: any, res: Response) => {
+  const { likelihood, impact } = req.body;
+  const composite = Math.round(((likelihood * impact) / 100) * 10) / 10;
+  return sendSuccess(res, {
+    likelihood: Number(likelihood),
+    impact: Number(impact),
+    composite
+  });
+});
+
