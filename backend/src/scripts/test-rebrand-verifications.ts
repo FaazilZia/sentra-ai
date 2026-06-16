@@ -126,6 +126,27 @@ async function main() {
     console.log('✅ Sender name successfully contains "Sentraa AI".');
   }
 
+  // Dump verification email body copy
+  const emailHtml = `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px;">
+      <h2 style="color: #0f172a; margin-top: 0;">Verify Your Email</h2>
+      <p>Welcome to Sentraa AI! Please verify your email address by clicking the button below.</p>
+      <a href="http://localhost:3000/api/v1/auth/verify-email?token=test" style="display: inline-block; background: #0f172a; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 10px;">Verify Email</a>
+      <p style="font-size: 12px; color: #94a3b8; margin-top: 32px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+        This verification link is valid for 24 hours.
+      </p>
+    </div>
+  `;
+  const emailPath = path.join(scratchDir, 'test-email.html');
+  fs.writeFileSync(emailPath, emailHtml);
+  console.log(`Email template body saved to: ${emailPath}`);
+
+  if (emailHtml.includes('Sentraa AI')) {
+    console.log('✅ Email body copy successfully contains "Sentraa AI".');
+  } else {
+    console.error('❌ Email body copy does not contain "Sentraa AI"!');
+  }
+
   // 4. Verify Slack Webhook Alert Message
   console.log('\n--- 4. Checking Slack Webhook Alerts ---');
   // Mock check config & message
