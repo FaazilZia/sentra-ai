@@ -64,7 +64,7 @@ export class ReportService {
       
       // Header on every page
       doc.fillColor('#94a3b8').fontSize(8).font('Helvetica').text(
-        'SENTRA AI COMPLIANCE PLATFORM',
+        'SENTRAA AI COMPLIANCE PLATFORM',
         50,
         25,
         { align: 'left' }

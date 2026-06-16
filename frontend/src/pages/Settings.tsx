@@ -1655,7 +1655,7 @@ function GeneralTab({
                 </button>
               </div>
               <p className="text-[10px] text-[var(--text-muted)] mt-2 italic">
-                Use this key to authenticate your SDK calls to Sentra AI.
+                Use this key to authenticate your SDK calls to Sentraa AI.
               </p>
             </div>
 
@@ -2108,7 +2108,7 @@ function McpTab({
           <div className="py-12 text-center bg-black/5 rounded border border-dashed border-[var(--border-default)]">
             <AlertTriangle className="h-8 w-8 text-[var(--text-muted)] mx-auto mb-2" />
             <p className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">No Agent Keys Registered</p>
-            <p className="text-[10px] text-[var(--text-muted)] mt-1">Generate a key to grant your external AI agents access to Sentra's governance pipeline.</p>
+            <p className="text-[10px] text-[var(--text-muted)] mt-1">Generate a key to grant your external AI agents access to Sentraa's governance pipeline.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">

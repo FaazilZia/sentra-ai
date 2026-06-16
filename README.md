@@ -7,9 +7,9 @@
 <br/>
 
 <div align="center">
-  <h1>🛡️ Sentra AI</h1>
+  <h1>🛡️ Sentraa AI</h1>
   <p><strong>Real-time AI Governance & Security Platform — a bouncer for AI agents.</strong></p>
-  <p>Sentra AI intercepts, evaluates, and enforces governance on every AI agent action <em>before</em> it executes. Unlike monitoring tools that react after the damage is done, Sentra blocks risks at the gate.</p>
+  <p>Sentraa AI intercepts, evaluates, and enforces governance on every AI agent action <em>before</em> it executes. Unlike monitoring tools that react after the damage is done, Sentraa blocks risks at the gate.</p>
 
   <br/>
 
@@ -25,7 +25,7 @@
 
 ## Quick links
 
-- [🚀 Live Dashboard](https://sentra-ai-tau.vercel.app) — Try Sentra AI without signing up
+- [🚀 Live Dashboard](https://sentra-ai-tau.vercel.app) — Try Sentraa AI without signing up
 - [📦 SDK on npm](https://www.npmjs.com/package/@sentra-ai/sdk) — `npm install @sentra-ai/sdk`
 - [📁 Project Structure](#-project-structure) — Full file tree
 - [🔌 API Reference](#-api-reference) — All 55 route modules
@@ -47,9 +47,9 @@
 
 ---
 
-## What Sentra AI Does
+## What Sentraa AI Does
 
-Traditional security tools monitor and report *after* an AI agent misbehaves. **Sentra AI acts before execution** — every agent action passes through a multi-tier decision engine that evaluates it against your policies, detects PII and prompt injections, and optionally runs semantic AI risk analysis, all before execution is permitted.
+Traditional security tools monitor and report *after* an AI agent misbehaves. **Sentraa AI acts before execution** — every agent action passes through a multi-tier decision engine that evaluates it against your policies, detects PII and prompt injections, and optionally runs semantic AI risk analysis, all before execution is permitted.
 
 Think of it as a **security checkpoint** for every `agent.run()` call in your stack.
 
@@ -135,7 +135,7 @@ Think of it as a **security checkpoint** for every `agent.run()` call in your st
 
 ```
 ┌──────────────┐     ┌─────────────────────────────────────────────┐     ┌──────────────┐
-│   AI Agent   │────▶│              Sentra Engine                  │────▶│  Execution   │
+│   AI Agent   │────▶│              Sentraa Engine                 │────▶│  Execution   │
 │  (SDK/API)   │     │                                             │     │ (if allowed) │
 └──────────────┘     │  ┌──────────┐ ┌──────────┐ ┌───────────┐   │     └──────────────┘
                      │  │Allowlist │→│  Policy  │→│ Semantic  │   │
@@ -507,9 +507,9 @@ sentra-ai/
 
 ---
 
-## How Sentra AI is Different
+## How Sentraa AI is Different
 
-| Capability | Traditional SIEM/SOC | Other AI Guardrails | Sentra AI |
+| Capability | Traditional SIEM/SOC | Other AI Guardrails | Sentraa AI |
 |---|---|---|---|
 | Post-incident monitoring | ✅ | ✅ | ✅ |
 | Threat detection | ✅ | ✅ | ✅ |
@@ -521,7 +521,7 @@ sentra-ai/
 | **Compliance framework mapping** | Manual | ❌ | ✅ |
 | **Shadow AI detection** | ❌ | ❌ | ✅ |
 | **LangChain/OpenAI native wrappers** | ❌ | ❌ | ✅ |
-| **Full multi-tenancy + RLS** | ❌ | ❌ | ✅ |
+| **Full multi-tenancy + RLS** | ❌ | ❌ | Sentraa AI |
 
 ---
 

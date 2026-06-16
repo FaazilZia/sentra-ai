@@ -13,7 +13,7 @@ import { randomUUID } from 'crypto';
 async function main() {
   await initializePrisma();
   console.log('\n============================================================');
-  console.log('  SENTRA AI v2.0.0 — GOVERNANCE SMOKE TESTS & VERIFICATION');
+  console.log('  SENTRAA AI v2.0.0 — GOVERNANCE SMOKE TESTS & VERIFICATION');
   console.log('============================================================\n');
 
   let passed = 0;

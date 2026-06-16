@@ -32,7 +32,7 @@ export class LangChainGovernanceHandler {
     });
 
     if (decision.status === 'blocked') {
-      throw new Error(`Execution Blocked by Sentra AI Governance: ${decision.reason}`);
+      throw new Error(`Execution Blocked by Sentraa AI Governance: ${decision.reason}`);
     }
   }
 

@@ -69,7 +69,7 @@ export class IntakeLLMService {
             : ['Standard automation parameters mapped to model logic'],
           recommended_controls: [
             'Enforce zero-data-retention parameters on LLM gateway',
-            'Route all outputs through real-time Sentra PII scanner'
+            'Route all outputs through real-time Sentraa PII scanner'
           ],
           eu_ai_act_classification: containsHighRiskKeywords ? 'HIGH_RISK' : 'NOT_HIGH_RISK',
           suggested_review_notes: 'Automated governance overlay review is suggested before deploying this model to production environments.'

@@ -33,7 +33,7 @@ export class GDriveGovernanceConnector {
     });
 
     if (decision.status === 'blocked') {
-      throw new Error(`GDrive action blocked by Sentra governance: ${decision.reason}`);
+      throw new Error(`GDrive action blocked by Sentraa governance: ${decision.reason}`);
     }
   }
 

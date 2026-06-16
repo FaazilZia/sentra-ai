@@ -759,7 +759,7 @@ const EvaluationDashboard: React.FC = () => {
                 marginTop: '8px', padding: '12px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)',
                 borderRadius: '8px', textAlign: 'center', fontSize: '0.8rem', color: '#c7d2fe'
               }}>
-                🔄 Requesting real LLM chat completions and running Sentra Governance validations...
+                🔄 Requesting real LLM chat completions and running Sentraa Governance validations...
               </div>
             )}
           </div>
@@ -834,7 +834,7 @@ const EvaluationDashboard: React.FC = () => {
                   <th style={{ padding: '16px' }}>Type</th>
                   <th style={{ padding: '16px' }}>Expected Option</th>
                   <th style={{ padding: '16px' }}>Model Response (Real-time)</th>
-                  <th style={{ padding: '16px' }}>Sentra Decision</th>
+                  <th style={{ padding: '16px' }}>Sentraa Decision</th>
                   <th style={{ padding: '16px' }}>Latency</th>
                   <th style={{ padding: '16px', textAlign: 'right' }}>Result</th>
                 </tr>

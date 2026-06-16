@@ -441,7 +441,7 @@ export const postChat = async (req: any, res: Response, next: NextFunction) => {
             [
               {
                 role: 'system',
-                content: `You are Sentra Copilot, an AI governance assistant. 
+                content: `You are Sentraa Copilot, an AI governance assistant. 
                 Use this REAL-TIME CONTEXT to answer the user's questions:
                 ${contextSummary}
                 Answer clearly and concisely based on this data.`

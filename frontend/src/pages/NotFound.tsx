@@ -102,7 +102,7 @@ export function NotFoundPage() {
           <button
             id="not-found-home-btn"
             onClick={() => navigate('/app', { replace: true })}
-            aria-label="Return to the Sentra AI dashboard"
+            aria-label="Return to the Sentraa AI dashboard"
             style={{
               padding: '0.65rem 1.5rem',
               background: 'var(--royal-indigo, #4f46e5)',

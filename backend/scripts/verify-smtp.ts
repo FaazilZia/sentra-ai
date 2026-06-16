@@ -20,7 +20,7 @@ const maskString = (val?: string) => {
 };
 
 async function run() {
-  console.log('📬 [Sentra SMTP E2E Verification]');
+  console.log('📬 [Sentraa SMTP E2E Verification]');
   console.log('------------------------------------');
 
   // 2. Resolve configurations
@@ -28,7 +28,7 @@ async function run() {
   const port = process.env.SMTP_PORT || '587';
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
-  const from = process.env.SMTP_FROM || '"Sentra AI Alerts" <alerts@sentra.ai>';
+  const from = process.env.SMTP_FROM || '"Sentraa AI Alerts" <alerts@sentra.ai>';
 
   console.log(`Configuration found:`);
   console.log(`  SMTP Host: ${host || 'NOT_CONFIGURED'}`);
@@ -74,14 +74,14 @@ async function run() {
   const mailOptions = {
     from,
     to: recipient,
-    subject: '[Sentra SMTP Test] Delivery verification',
+    subject: '[Sentraa SMTP Test] Delivery verification',
     html: `
       <div style="font-family: sans-serif; max-width: 500px; margin: 24px auto; border: 1px solid #e2e8f0; border-radius: 12px; padding: 32px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
         <div style="font-size: 24px; font-weight: bold; color: #10b981; margin-bottom: 12px;">
           ✓ SMTP is working
         </div>
         <p style="color: #475569; font-size: 14px; line-height: 1.5;">
-          This email confirms that your Sentra AI SMTP transmission pipelines are correctly configured and capable of sending E2E notifications.
+          This email confirms that your Sentraa AI SMTP transmission pipelines are correctly configured and capable of sending E2E notifications.
         </p>
         <div style="margin-top: 24px; padding-top: 16px; border-t: 1px solid #f1f5f9; font-size: 11px; color: #94a3b8;">
           <table style="width: 100%; border-collapse: collapse;">
@@ -112,7 +112,7 @@ async function run() {
   }
 
   // 5. Verify the AlertService test email pathway
-  console.log('\n3. Verifying Sentra AlertService internal pipeline...');
+  console.log('\n3. Verifying Sentraa AlertService internal pipeline...');
   try {
     const { alertService } = require('../src/services/alert.service');
     const alertInfo = await alertService.sendTestEmail(recipient, 'Test Org');

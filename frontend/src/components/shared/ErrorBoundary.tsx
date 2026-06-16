@@ -119,7 +119,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 margin: '0 0 0.5rem',
               }}
             >
-              An unexpected error occurred in the Sentra AI application. The
+              An unexpected error occurred in the Sentraa AI application. The
               engineering team has been notified automatically.
             </p>
 

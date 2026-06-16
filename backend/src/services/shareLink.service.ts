@@ -82,7 +82,7 @@ export const ShareLinkService = {
     // Fetch corresponding resource data
     const data = await this.getResourceData(link.resourceType, link.resourceId, link.orgId);
 
-    // Fetch organization info to display Sentra AI branding
+    // Fetch organization info to display Sentraa AI branding
     const organization = await prisma.organizations.findUnique({
       where: { id: link.orgId },
       select: { name: true, slug: true }

@@ -225,7 +225,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px;">
           <h2 style="color: #0f172a; margin-top: 0;">Verify Your Email</h2>
-          <p>Welcome to Sentra AI! Please verify your email address by clicking the button below.</p>
+          <p>Welcome to Sentraa AI! Please verify your email address by clicking the button below.</p>
           <a href="${verifyLink}" style="display: inline-block; background: #0f172a; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 10px;">Verify Email</a>
           <p style="font-size: 12px; color: #94a3b8; margin-top: 32px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
             This verification link is valid for 24 hours.
@@ -578,7 +578,7 @@ export const forgotPassword = async (req: Request, res: Response, next: NextFunc
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px;">
           <h2 style="color: #0f172a; margin-top: 0;">Password Reset Request</h2>
-          <p>You requested a password reset for your Sentra AI account.</p>
+          <p>You requested a password reset for your Sentraa AI account.</p>
           <p>Click the button below to reset your password. This link is valid for 1 hour.</p>
           <a href="${resetLink}" style="display: inline-block; background: #0f172a; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 10px;">Reset Password</a>
           <p style="font-size: 12px; color: #94a3b8; margin-top: 32px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
@@ -725,7 +725,7 @@ export const resendVerification = async (req: Request, res: Response, next: Next
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px;">
           <h2 style="color: #0f172a; margin-top: 0;">Verify Your Email</h2>
-          <p>Welcome to Sentra AI! Please verify your email address by clicking the button below.</p>
+          <p>Welcome to Sentraa AI! Please verify your email address by clicking the button below.</p>
           <a href="${verifyLink}" style="display: inline-block; background: #0f172a; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 10px;">Verify Email</a>
           <p style="font-size: 12px; color: #94a3b8; margin-top: 32px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
             This verification link is valid for 24 hours.

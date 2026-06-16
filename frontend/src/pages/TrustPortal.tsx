@@ -214,7 +214,7 @@ export default function TrustPortal() {
             {/* Certificate description */}
             <div className="text-xs text-gray-400 leading-relaxed max-w-2xl relative z-10">
               This registry provides a transparent catalog of AI models and tools utilized by <span className="text-white font-bold">{data?.organizationName}</span>. 
-              Every catalog item represents an audited integration verified in real-time against privacy, security, and human oversight standards by <span className="text-indigo-400 font-bold">Sentra AI Governance</span>.
+              Every catalog item represents an audited integration verified in real-time against privacy, security, and human oversight standards by <span className="text-indigo-400 font-bold">Sentraa AI Governance</span>.
             </div>
 
             {/* Verified Compliance Badges */}
@@ -302,7 +302,7 @@ export default function TrustPortal() {
               <span>Security Audited and Cryptographically Verified</span>
               <span className="flex items-center gap-1.5 font-bold uppercase text-indigo-400">
                 <Sparkles className="h-4 w-4" />
-                Sentra AI Blueprint Registry
+                Sentraa AI Blueprint Registry
               </span>
             </div>
 

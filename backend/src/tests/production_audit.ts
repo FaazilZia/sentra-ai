@@ -85,7 +85,7 @@ async function executeFullAudit() {
   }
   
   console.log('═══════════════════════════════════════════════');
-  console.log('   SENTRA AI PRODUCTION RESILIENCE AUDIT');
+  console.log('   SENTRAA AI PRODUCTION RESILIENCE AUDIT');
   console.log('═══════════════════════════════════════════════');
 
   await runLoadTest(10, 5); // Start small

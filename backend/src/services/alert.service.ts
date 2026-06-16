@@ -68,7 +68,7 @@ class AlertService {
       const dashboardUrl = (process.env.FRONTEND_URL || 'https://app.sentra.ai').split(',')[0];
       
       const mailOptions = {
-        from: process.env.SMTP_FROM || '"Sentra AI Alerts" <alerts@sentra.ai>',
+        from: process.env.SMTP_FROM || '"Sentraa AI Alerts" <alerts@sentra.ai>',
         to: org.alertEmail,
         subject: `🚨 [BLOCK] AI Security Violation: ${violation.action}`,
         html: `
@@ -106,7 +106,7 @@ class AlertService {
             <a href="${dashboardUrl}/app/incidents" style="display: inline-block; background: #0f172a; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 10px;">View in Dashboard</a>
             
             <p style="font-size: 12px; color: #94a3b8; margin-top: 32px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
-              This is an automated security alert from Sentra AI Governance Platform.
+              This is an automated security alert from Sentraa AI Governance Platform.
             </p>
           </div>
         `
@@ -136,7 +136,7 @@ class AlertService {
             type: "header",
             text: {
               type: "plain_text",
-              text: "🚨 Sentra AI: Action Blocked",
+              text: "🚨 Sentraa AI: Action Blocked",
               emoji: true
             }
           },
@@ -214,16 +214,16 @@ class AlertService {
     if (!this.transporter) throw new Error('SMTP transporter not initialized');
 
     const mailOptions = {
-      from: process.env.SMTP_FROM || '"Sentra AI Alerts" <alerts@sentra.ai>',
+      from: process.env.SMTP_FROM || '"Sentraa AI Alerts" <alerts@sentra.ai>',
       to: email,
-      subject: `🧪 Sentra AI: Test Alert for ${orgName}`,
+      subject: `🧪 Sentraa AI: Test Alert for ${orgName}`,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px;">
           <h2 style="color: #0f172a; margin-top: 0;">SMTP Configuration Success</h2>
-          <p>This is a test alert from <strong>Sentra AI</strong> for organization: <strong>${orgName}</strong></p>
+          <p>This is a test alert from <strong>Sentraa AI</strong> for organization: <strong>${orgName}</strong></p>
           <p>Your alerting system is now correctly configured to receive security violations and policy enforcement notifications.</p>
           <p style="font-size: 12px; color: #94a3b8; margin-top: 32px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
-            Sentra AI Governance Platform | Test Environment
+            Sentraa AI Governance Platform | Test Environment
           </p>
         </div>
       `

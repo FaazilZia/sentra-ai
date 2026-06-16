@@ -89,7 +89,7 @@ export class McpController {
           },
         },
         serverInfo: {
-          name: 'Sentra MCP Gateway',
+          name: 'Sentraa MCP Gateway',
           version: '1.0.0',
         },
       },
@@ -143,7 +143,7 @@ export class McpController {
       const SENTRA_TOOLS = [
         {
           name: 'sentra.checkAction',
-          description: 'Evaluate any AI agent action through Sentra governance before execution. Returns allowed or blocked with risk level and reason.',
+          description: 'Evaluate any AI agent action through Sentraa governance before execution. Returns allowed or blocked with risk level and reason.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -178,7 +178,7 @@ export class McpController {
         },
         {
           name: 'sentra.logAuditEvent',
-          description: 'Log a custom audit event to the Sentra governance audit trail. Use this to record significant agent decisions or actions for compliance evidence.',
+          description: 'Log a custom audit event to the Sentraa governance audit trail. Use this to record significant agent decisions or actions for compliance evidence.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -296,7 +296,7 @@ export class McpController {
           return McpController.sendJsonRpcError(
             res,
             -32002,
-            'Action blocked by Sentra governance',
+            'Action blocked by Sentraa governance',
             id,
             { reason: decision.reason }
           );
@@ -323,7 +323,7 @@ export class McpController {
           return McpController.sendJsonRpcError(
             res,
             -32002,
-            'Action blocked by Sentra governance',
+            'Action blocked by Sentraa governance',
             id,
             { reason: policyResult.reason }
           );
@@ -397,7 +397,7 @@ export class McpController {
       return McpController.sendJsonRpcError(
         res,
         -32002,
-        'Action blocked by Sentra governance',
+        'Action blocked by Sentraa governance',
         id,
         { reason: 'Internal governance system error (fail-closed)' }
       );

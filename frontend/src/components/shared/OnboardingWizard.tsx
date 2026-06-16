@@ -102,9 +102,9 @@ if (decision.status === 'BLOCK') {
         <div className="flex-1 p-6 overflow-y-auto">
           {step === 1 && (
             <div className="space-y-4 animate-slide-in">
-              <h4 className="text-base font-black text-white uppercase tracking-tight">Welcome to Sentra AI GRC</h4>
+              <h4 className="text-base font-black text-white uppercase tracking-tight">Welcome to Sentraa AI GRC</h4>
               <p className="text-gray-400 text-xs leading-relaxed">
-                Sentra AI is a pre-execution governance platform designed to monitor, intercept, and govern high-risk operations initiated by autonomous AI agents in real-time.
+                Sentraa AI is a pre-execution governance platform designed to monitor, intercept, and govern high-risk operations initiated by autonomous AI agents in real-time.
               </p>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">

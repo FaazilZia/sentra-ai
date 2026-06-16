@@ -24,8 +24,8 @@ async function main() {
     const newOrg = await prisma.organizations.create({
       data: {
         id: DEFAULT_ORG_ID,
-        name: 'Sentra AI Default',
-        slug: 'sentra-ai-default',
+        name: 'Sentraa AI Default',
+        slug: 'sentraa-ai-default',
         is_active: true,
       }
     });
