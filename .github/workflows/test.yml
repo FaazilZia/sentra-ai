@@ -72,7 +72,7 @@ jobs:
       - name: Build and Start Backend Server
         run: |
           npm run build
-          npm start > backend.log 2>&1 &
+          setsid npm start > backend.log 2>&1 &
         env:
           PORT: 10000
           NODE_OPTIONS: "--max-old-space-size=4096"
@@ -229,7 +229,7 @@ jobs:
         working-directory: backend
         run: |
           npm run build
-          npm start > backend.log 2>&1 &
+          setsid npm start > backend.log 2>&1 &
         env:
           PORT: 10000
           NODE_OPTIONS: "--max-old-space-size=4096"
