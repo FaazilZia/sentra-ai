@@ -75,6 +75,7 @@ jobs:
           npm start > backend.log 2>&1 &
         env:
           PORT: 10000
+          NODE_OPTIONS: "--max-old-space-size=4096"
           NODE_ENV: test
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sentra_test
           JWT_SECRET: test-secret-for-ci
@@ -231,6 +232,7 @@ jobs:
           npm start > backend.log 2>&1 &
         env:
           PORT: 10000
+          NODE_OPTIONS: "--max-old-space-size=4096"
           NODE_ENV: test
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sentra_test
           JWT_SECRET: test-secret-for-ci
