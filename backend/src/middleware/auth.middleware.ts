@@ -63,9 +63,9 @@ async function handleSdkToken(token: string, req: any, res: Response): Promise<{
     return { handled: false };
   }
 
-  // Block default organization in production
-  const DEFAULT_DEMO_ORG = process.env.DEFAULT_ORGANIZATION_ID || '00000000-0000-0000-0000-000000000001';
-  if (process.env.NODE_ENV === 'production' && resolved.organizationId === DEFAULT_DEMO_ORG) {
+  // Reject API keys belonging to the demo/seed organization when running in production
+  const BLOCKED_DEMO_ORG_ID = process.env.DEFAULT_ORGANIZATION_ID || '00000000-0000-0000-0000-000000000001';
+  if (process.env.NODE_ENV === 'production' && resolved.organizationId === BLOCKED_DEMO_ORG_ID) {
     return {
       handled: true,
       errorResponse: {
