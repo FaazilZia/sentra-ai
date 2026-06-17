@@ -29,6 +29,9 @@ frontend/vite.config.d.ts
 # Environment & Security
 .env
 *.env
+.env.*
+.env.test
+*.env.test
 *.backup
 .venv/
 venv/
