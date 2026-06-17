@@ -1,7 +1,7 @@
 import { test, expect, Page } from '@playwright/test';
 
 const ADMIN_EMAIL = 'admin@sentra.ai';
-const ADMIN_PASS  = 'Sentra@Admin123';
+const ADMIN_PASS  = process.env.TEST_ADMIN_PASSWORD || 'Sentra@Admin123';
 const API_BASE    = 'http://localhost:3000/api/v1';
 
 async function loginAsAdmin(page: Page) {
