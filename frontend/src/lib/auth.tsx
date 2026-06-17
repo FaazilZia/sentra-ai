@@ -158,10 +158,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function logout() {
     try {
-      await fetch(`${apiBaseUrl}/auth/logout`, {
+      await apiRequest('/auth/logout', {
         method: 'POST',
-        credentials: 'include',
-      });
+      }, false);
     } catch (error) {
       console.error('Logout request failed:', error);
     }
