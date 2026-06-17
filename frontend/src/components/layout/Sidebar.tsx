@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate, NavLink } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   ShieldAlert,
@@ -40,12 +40,14 @@ import { useAuth } from '@/lib/auth';
 interface SidebarItem {
   icon: any;
   label: string;
-  path: string;
+  path?: string;
+  items?: SidebarItem[];
 }
 
 interface SidebarGroup {
   name: string;
   items: SidebarItem[];
+  requiredRole?: string;
 }
 
 const SIDEBAR_GROUPS: SidebarGroup[] = [
@@ -67,17 +69,23 @@ const SIDEBAR_GROUPS: SidebarGroup[] = [
       { icon: ClipboardCheck, label: 'Compliance Hub', path: '/app/compliance' },
       { icon: Cpu, label: 'Readiness', path: '/app/readiness' },
       { icon: FolderOpen, label: 'Evidence Hub', path: '/app/evidence' },
-      { icon: ShieldCheck, label: 'CCPA Compliance', path: '/app/ccpa' },
-      { icon: Shield, label: 'DPDP Compliance', path: '/app/dpdp' },
-      { icon: ShieldCheck, label: 'DORA', path: '/app/dora' },
-      { icon: Scale, label: 'FTC AI Guidelines', path: '/app/ftc' },
-      { icon: Shield, label: 'GDPR Compliance', path: '/app/gdpr' },
-      { icon: Shield, label: 'HIPAA Compliance', path: '/app/hipaa' },
-      { icon: Globe, label: 'OECD AI Principles', path: '/app/oecd' },
-      { icon: ShieldCheck, label: 'PCI-DSS Compliance', path: '/app/pci' },
-      { icon: ShieldCheck, label: 'SOC2 Compliance', path: '/app/soc2' },
-      { icon: Award, label: 'CE Marking', path: '/app/ce-marking' },
-      { icon: ShieldCheck, label: 'Consent', path: '/app/consent' },
+      {
+        icon: ShieldCheck,
+        label: 'Frameworks',
+        items: [
+          { icon: ShieldCheck, label: 'CCPA Compliance', path: '/app/ccpa' },
+          { icon: Shield, label: 'DPDP Compliance', path: '/app/dpdp' },
+          { icon: ShieldCheck, label: 'DORA', path: '/app/dora' },
+          { icon: Scale, label: 'FTC AI Guidelines', path: '/app/ftc' },
+          { icon: Shield, label: 'GDPR Compliance', path: '/app/gdpr' },
+          { icon: Shield, label: 'HIPAA Compliance', path: '/app/hipaa' },
+          { icon: Globe, label: 'OECD AI Principles', path: '/app/oecd' },
+          { icon: ShieldCheck, label: 'PCI-DSS Compliance', path: '/app/pci' },
+          { icon: ShieldCheck, label: 'SOC2 Compliance', path: '/app/soc2' },
+          { icon: Award, label: 'CE Marking', path: '/app/ce-marking' },
+          { icon: ShieldCheck, label: 'Consent', path: '/app/consent' },
+        ]
+      }
     ]
   },
   {
@@ -128,13 +136,114 @@ const SIDEBAR_GROUPS: SidebarGroup[] = [
       { icon: Building2, label: 'Vendor Risk', path: '/app/vendor-risk' },
       { icon: ListTodo, label: 'Training Register', path: '/app/training' },
     ]
+  },
+  {
+    name: 'PLATFORM ADMIN',
+    requiredRole: 'SUPER_ADMIN',
+    items: [
+      { icon: ShieldCheck, label: 'Platform Console', path: '/superadmin' }
+    ]
   }
 ];
+
+const getLeafCount = (group: SidebarGroup): number => {
+  let count = 0;
+  for (const item of group.items) {
+    if (item.path) count++;
+    if (item.items) {
+      for (const subItem of item.items) {
+        if (subItem.path) count++;
+      }
+    }
+  }
+  return count;
+};
+
 
 export function Sidebar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const { pathname } = useLocation();
+
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() => {
+    try {
+      const stored = localStorage.getItem('sentra_sidebar_expanded');
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (e) {
+      console.error('Failed to parse expanded sections', e);
+    }
+    return { CORE: true };
+  });
+
+  const [frameworksExpanded, setFrameworksExpanded] = useState<boolean>(() => {
+    return localStorage.getItem('sentra_sidebar_frameworks_expanded') === 'true';
+  });
+
+  const toggleSection = (sectionName: string) => {
+    setExpandedSections((prev) => {
+      const next = { ...prev, [sectionName]: !prev[sectionName] };
+      localStorage.setItem('sentra_sidebar_expanded', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const toggleFrameworks = () => {
+    setFrameworksExpanded((prev) => {
+      const next = !prev;
+      localStorage.setItem('sentra_sidebar_frameworks_expanded', String(next));
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    let sectionToExpand: string | null = null;
+    let expandFrameworks = false;
+
+    for (const group of SIDEBAR_GROUPS) {
+      if (group.requiredRole === 'SUPER_ADMIN' && user?.role !== 'SUPER_ADMIN') {
+        continue;
+      }
+      for (const item of group.items) {
+        if (item.path && pathname === item.path) {
+          sectionToExpand = group.name;
+        }
+        if (item.items) {
+          for (const subItem of item.items) {
+            if (subItem.path && pathname === subItem.path) {
+              sectionToExpand = group.name;
+              if (item.label === 'Frameworks') {
+                expandFrameworks = true;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (sectionToExpand) {
+      setExpandedSections((prev) => {
+        if (!prev[sectionToExpand!]) {
+          const next = { ...prev, [sectionToExpand!]: true };
+          localStorage.setItem('sentra_sidebar_expanded', JSON.stringify(next));
+          return next;
+        }
+        return prev;
+      });
+    }
+
+    if (expandFrameworks) {
+      setFrameworksExpanded((prev) => {
+        if (!prev) {
+          localStorage.setItem('sentra_sidebar_frameworks_expanded', 'true');
+          return true;
+        }
+        return prev;
+      });
+    }
+  }, [pathname, user?.role]);
 
   const handleLogout = async () => {
     try {
@@ -241,66 +350,121 @@ export function Sidebar() {
 
         {/* Navigation links */}
         <nav className="flex-1 space-y-6 px-3 pt-6 overflow-y-auto custom-scrollbar pb-6">
-          {SIDEBAR_GROUPS.map((group) => (
-            <div key={group.name}>
-              <p className="px-4 mb-2 text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400 opacity-80">
-                {group.name}
-              </p>
-              <div className="space-y-1">
-                {group.items.map((item) => (
-                  <NavLink
-                    key={item.path}
-                    to={item.path}
-                    end={item.path === '/app'}
-                    onClick={() => setIsOpen(false)}
-                    className={({ isActive }) => cn(
-                      "group flex items-center justify-between px-4 py-2 rounded transition-all duration-200",
-                      isActive
-                        ? "bg-[var(--royal-indigo)] text-white shadow-md shadow-black/10"
-                        : "text-[var(--lavender)] hover:bg-[#334155]/60 hover:text-white"
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <item.icon className={cn(
-                        "h-4 w-4 transition-transform group-hover:scale-110",
-                        "text-current"
-                      )} />
-                      <span className="text-[10px] font-bold uppercase tracking-widest">{item.label}</span>
-                    </div>
-                    <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-40 transition-opacity" />
-                  </NavLink>
-                ))}
-              </div>
-            </div>
-          ))}
+          {SIDEBAR_GROUPS.map((group) => {
+            if (group.requiredRole === 'SUPER_ADMIN' && user?.role !== 'SUPER_ADMIN') {
+              return null;
+            }
 
-          {/* Platform Admin Console */}
-          {user?.role === 'SUPER_ADMIN' && (
-            <div>
-              <p className="px-4 mb-2 text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400 opacity-80">Platform Admin</p>
-              <div className="space-y-1">
-                <NavLink
-                  to="/superadmin"
-                  onClick={() => setIsOpen(false)}
-                  className={({ isActive }) => cn(
-                    "group flex items-center justify-between px-4 py-2 rounded transition-all duration-200",
-                    isActive
-                      ? "bg-[var(--royal-indigo)] text-white shadow-md shadow-black/10"
-                      : "text-[var(--lavender)] hover:bg-[#334155]/60 hover:text-white"
-                  )}
+            const isExpanded = !!expandedSections[group.name];
+
+            return (
+              <div key={group.name} className="space-y-1.5">
+                <button
+                  onClick={() => toggleSection(group.name)}
+                  className="w-full flex items-center justify-between px-4 py-2 text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400 hover:text-white transition-colors focus:outline-none"
+                  aria-expanded={isExpanded ? 'true' : 'false'}
                 >
-                  <div className="flex items-center gap-3">
-                    <ShieldCheck className={cn(
-                      "h-4 w-4 transition-transform group-hover:scale-110",
-                      "text-indigo-400"
-                    )} />
-                    <span className="text-[10px] font-bold uppercase tracking-widest">Platform Console</span>
+                  <div className="flex items-center gap-2">
+                    <ChevronRight
+                      className={cn(
+                        "h-3 w-3 transition-transform duration-200 text-indigo-400/60",
+                        isExpanded && "transform rotate-90 text-indigo-400"
+                      )}
+                    />
+                    <span>{group.name}</span>
                   </div>
-                  <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-40 transition-opacity" />
-                </NavLink>
+                  {!isExpanded && (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-indigo-300">
+                      {getLeafCount(group)}
+                    </span>
+                  )}
+                </button>
+
+                {isExpanded && (
+                  <div className="space-y-1">
+                    {group.items.map((item) => {
+                      if (item.items) {
+                        return (
+                          <div key={item.label} className="space-y-1">
+                            <button
+                              onClick={toggleFrameworks}
+                              className="w-full group flex items-center justify-between px-4 py-2 rounded transition-all duration-200 text-[var(--lavender)] hover:bg-[#334155]/60 hover:text-white focus:outline-none"
+                              aria-expanded={frameworksExpanded ? 'true' : 'false'}
+                            >
+                              <div className="flex items-center gap-3">
+                                <item.icon className="h-4 w-4 transition-transform group-hover:scale-110 text-indigo-400" />
+                                <span className="text-[10px] font-bold uppercase tracking-widest">{item.label}</span>
+                              </div>
+                              <ChevronRight
+                                className={cn(
+                                  "h-3 w-3 text-current transition-transform duration-200",
+                                  frameworksExpanded && "transform rotate-90"
+                                )}
+                              />
+                            </button>
+
+                            {frameworksExpanded && (
+                              <div className="space-y-1 ml-4 border-l border-white/5 pl-3">
+                                {item.items.map((subItem) => (
+                                  <NavLink
+                                    key={subItem.path}
+                                    to={subItem.path!}
+                                    onClick={() => setIsOpen(false)}
+                                    className={({ isActive }) => cn(
+                                      "group flex items-center justify-between px-4 py-2 rounded transition-all duration-200",
+                                      isActive
+                                        ? "bg-[var(--royal-indigo)] text-white shadow-md shadow-black/10"
+                                        : "text-[var(--lavender)]/60 hover:bg-[#334155]/60 hover:text-white"
+                                    )}
+                                  >
+                                    {({ isActive }) => (
+                                      <div className="flex items-center gap-3">
+                                        <subItem.icon className={cn(
+                                          "h-4 w-4 transition-transform group-hover:scale-110",
+                                          isActive ? "text-white" : "text-indigo-400/60"
+                                        )} />
+                                        <span className={cn(
+                                          "text-[10px] font-bold uppercase tracking-widest transition-colors",
+                                          isActive ? "text-white" : "text-[var(--lavender)]/60 group-hover:text-white"
+                                        )}>
+                                          {subItem.label}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </NavLink>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <NavLink
+                          key={item.path}
+                          to={item.path!}
+                          end={item.path === '/app'}
+                          onClick={() => setIsOpen(false)}
+                          className={({ isActive }) => cn(
+                            "group flex items-center justify-between px-4 py-2 rounded transition-all duration-200",
+                            isActive
+                              ? "bg-[var(--royal-indigo)] text-white shadow-md shadow-black/10"
+                              : "text-[var(--lavender)] hover:bg-[#334155]/60 hover:text-white"
+                          )}
+                        >
+                          <div className="flex items-center gap-3">
+                            <item.icon className="h-4 w-4 transition-transform group-hover:scale-110 text-current" />
+                            <span className="text-[10px] font-bold uppercase tracking-widest">{item.label}</span>
+                          </div>
+                          <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-40 transition-opacity" />
+                        </NavLink>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            );
+          })}
         </nav>
 
         {/* Footer Profile */}
