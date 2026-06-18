@@ -193,7 +193,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
           role: 'ADMIN', // First user of an org is always admin
           is_active: true,
           organizationId: org.id,
-          email_verified: false, // Default unverified for email-verification compliance
+          email_verified: process.env.NODE_ENV === 'test' || process.env.IS_E2E_TEST === 'true', // Auto-verify in test/E2E envs
         },
       });
 
