@@ -6,7 +6,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { fetchCurrentUser, loginRequest, registerRequest, apiBaseUrl, apiRequest } from './api';
+import { fetchCurrentUser, loginRequest, registerRequest, apiRequest } from './api';
 
 export interface AppUser {
   id: string;
