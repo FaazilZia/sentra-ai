@@ -88,7 +88,7 @@ export const ExecutiveReportService = {
     const doc = new PDFDocument({ margin: 50, size: 'A4', bufferPages: true });
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=SentraAI_Executive_Report_${org?.slug || 'Org'}.pdf`);
+    res.setHeader('Content-Disposition', `attachment; filename=SentraaAI_Executive_Report_${org?.slug || 'Org'}.pdf`);
 
     doc.pipe(res);
 
@@ -96,16 +96,16 @@ export const ExecutiveReportService = {
     doc.rect(0, 0, doc.page.width, 180).fill('#0f172a');
 
     // Title inside header
-    doc.fillColor('#38bdf8').fontSize(24).font('Helvetica-Bold').text('SENTRA AI', 50, 45);
+    doc.fillColor('#38bdf8').fontSize(24).font('Helvetica-Bold').text('SENTRAA AI', 50, 45);
     doc.fillColor('#ffffff').fontSize(18).font('Helvetica-Bold').text('AI Governance & Risk Executive Report', 50, 80);
-    doc.fillColor('#94a3b8').fontSize(10).font('Helvetica').text(`Organization: ${org?.name || 'Sentra AI Partner'}  |  Generated: ${new Date().toLocaleDateString()}`, 50, 115);
+    doc.fillColor('#94a3b8').fontSize(10).font('Helvetica').text(`Organization: ${org?.name || 'Sentraa AI Partner'}  |  Generated: ${new Date().toLocaleDateString()}`, 50, 115);
 
     // Section 1: Executive Summary
     doc.fillColor('#0f172a').fontSize(14).font('Helvetica-Bold').text('Executive Summary', 50, 210);
     doc.rect(50, 230, 495, 1).fill('#e2e8f0');
 
     doc.fillColor('#334155').fontSize(10).font('Helvetica').text(
-      'This report provides a consolidated overview of artificial intelligence systems, operational risk assessments, compliance frameworks tracking, and active control libraries across the organization. The metrics present real-time compliance audits powered by the Sentra AI Governance engine, mapped directly against standards including the EU AI Act, NIST AI RMF 1.0, ISO 42001, and ISO 27001.',
+      'This report provides a consolidated overview of artificial intelligence systems, operational risk assessments, compliance frameworks tracking, and active control libraries across the organization. The metrics present real-time compliance audits powered by the Sentraa AI Governance engine, mapped directly against standards including the EU AI Act, NIST AI RMF 1.0, ISO 42001, and ISO 27001.',
       50,
       245,
       { width: 495, align: 'justify', lineGap: 4 }
@@ -114,7 +114,7 @@ export const ExecutiveReportService = {
     // AI Governance Framework Methodology explanation
     doc.fillColor('#475569').fontSize(10).font('Helvetica-Bold').text('Governance Methodology & Principles', 50, 315);
     doc.fillColor('#64748b').fontSize(9).font('Helvetica').text(
-      'Sentra AI operates under the three core tenets of modern AI security: automated content verification, strict tenant isolation, and zero-trust policy enforcement. Automated security scanners intercept data in real-time, matching queries and payloads against seeded PII templates, toxic keywords, and organization-specific guardrails. Outliers and model drifts are logged securely to preserve tenant integrity and prevent data exfiltration. Every registered model is systematically evaluated against risk tiers to enforce proper validation parameters.',
+      'Sentraa AI operates under the three core tenets of modern AI security: automated content verification, strict tenant isolation, and zero-trust policy enforcement. Automated security scanners intercept data in real-time, matching queries and payloads against seeded PII templates, toxic keywords, and organization-specific guardrails. Outliers and model drifts are logged securely to preserve tenant integrity and prevent data exfiltration. Every registered model is systematically evaluated against risk tiers to enforce proper validation parameters.',
       50,
       330,
       { width: 495, align: 'justify', lineGap: 3 }
@@ -227,7 +227,7 @@ export const ExecutiveReportService = {
     // EU AI Act Deep Dive
     doc.fillColor('#334155').fontSize(10).font('Helvetica-Bold').text('1. European Union AI Act (Regulation EU 2024/1689)', 50, 85);
     doc.fillColor('#64748b').fontSize(9).font('Helvetica').text(
-      'The EU AI Act classifies AI systems based on risk level. Prohibited systems include cognitive behavioral manipulation and untargeted scraping of facial images. High-risk systems (e.g. biometrics, critical infrastructure, employment scoring) must undergo fundamental rights impact assessments, maintain technical documentation, and ensure high levels of cybersecurity and human oversight. Limited risk systems are subject to lighter transparency obligations, such as disclosing that the user is interacting with an AI system. Sentra AI facilitates compliance by mapping data streams and registering systems under appropriate risk classifications.',
+      'The EU AI Act classifies AI systems based on risk level. Prohibited systems include cognitive behavioral manipulation and untargeted scraping of facial images. High-risk systems (e.g. biometrics, critical infrastructure, employment scoring) must undergo fundamental rights impact assessments, maintain technical documentation, and ensure high levels of cybersecurity and human oversight. Limited risk systems are subject to lighter transparency obligations, such as disclosing that the user is interacting with an AI system. Sentraa AI facilitates compliance by mapping data streams and registering systems under appropriate risk classifications.',
       50,
       100,
       { width: 495, align: 'justify', lineGap: 3 }
@@ -236,7 +236,7 @@ export const ExecutiveReportService = {
     // NIST AI RMF Deep Dive
     doc.fillColor('#334155').fontSize(10).font('Helvetica-Bold').text('2. NIST AI Risk Management Framework (AI RMF 1.0)', 50, 195);
     doc.fillColor('#64748b').fontSize(9).font('Helvetica').text(
-      'Developed by the National Institute of Standards and Technology, the AI RMF provides guidelines to improve the trustworthiness of AI systems. The framework is structured around four primary functions: Govern, Map, Measure, and Manage. Trustworthy AI features include validity, reliability, safety, security, resilience, transparency, explainability, privacy-enhanced design, and fairness with bias detection. Sentra AI aligns with these functions by providing continuous telemetry, drift monitoring, automated thresholds, and structured incident reporting controls.',
+      'Developed by the National Institute of Standards and Technology, the AI RMF provides guidelines to improve the trustworthiness of AI systems. The framework is structured around four primary functions: Govern, Map, Measure, and Manage. Trustworthy AI features include validity, reliability, safety, security, resilience, transparency, explainability, privacy-enhanced design, and fairness with bias detection. Sentraa AI aligns with these functions by providing continuous telemetry, drift monitoring, automated thresholds, and structured incident reporting controls.',
       50,
       210,
       { width: 495, align: 'justify', lineGap: 3 }
@@ -245,7 +245,7 @@ export const ExecutiveReportService = {
     // ISO/IEC 42001 Deep Dive
     doc.fillColor('#334155').fontSize(10).font('Helvetica-Bold').text('3. ISO/IEC 42001 Artificial Intelligence Management System (AIMS)', 50, 305);
     doc.fillColor('#64748b').fontSize(9).font('Helvetica').text(
-      'ISO/IEC 42001 specifies requirements for establishing, implementing, maintaining, and continually improving an AI management system within organizations. It addresses structural aspects such as AI policy alignment, organizational roles, risk assessments, operational controls, and performance evaluations. The standard covers key topics including the design, development, and deployment of AI models, data quality governance, system transparency, and supplier relationships. Sentra AI acts as an automated management hub tracking the compliance of all organizational AI assets.',
+      'ISO/IEC 42001 specifies requirements for establishing, implementing, maintaining, and continually improving an AI management system within organizations. It addresses structural aspects such as AI policy alignment, organizational roles, risk assessments, operational controls, and performance evaluations. The standard covers key topics including the design, development, and deployment of AI models, data quality governance, system transparency, and supplier relationships. Sentraa AI acts as an automated management hub tracking the compliance of all organizational AI assets.',
       50,
       320,
       { width: 495, align: 'justify', lineGap: 3 }
@@ -254,7 +254,7 @@ export const ExecutiveReportService = {
     // GDPR & Data Protection laws mapping
     doc.fillColor('#334155').fontSize(10).font('Helvetica-Bold').text('4. General Data Protection Regulation (GDPR) & Data Privacy Laws', 50, 415);
     doc.fillColor('#64748b').fontSize(9).font('Helvetica').text(
-      'Data protection regulations mandate strict security measures when processing personal data. Automated profiling and decision-making systems are highly restricted. Users maintain the right to receive an explanation of decisions reached via automated processing. Additionally, systems must support data minimization, purpose limitation, and dynamic consent mechanisms. Sentra AI implements inline PII scanners and real-time consent managers to ensure data processing activities respect individual privacy rights.',
+      'Data protection regulations mandate strict security measures when processing personal data. Automated profiling and decision-making systems are highly restricted. Users maintain the right to receive an explanation of decisions reached via automated processing. Additionally, systems must support data minimization, purpose limitation, and dynamic consent mechanisms. Sentraa AI implements inline PII scanners and real-time consent managers to ensure data processing activities respect individual privacy rights.',
       50,
       430,
       { width: 495, align: 'justify', lineGap: 3 }
@@ -275,7 +275,7 @@ export const ExecutiveReportService = {
 
       // Bottom left confidential notice
       doc.text(
-        'Sentra AI Confidential - Executive Review Only',
+        'Sentraa AI Confidential - Executive Review Only',
         50,
         770,
         { align: 'left' }

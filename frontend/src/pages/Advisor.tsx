@@ -12,7 +12,7 @@ export default function Advisor() {
   const [messages, setMessages] = useState<AdvisorMessage[]>([
     {
       role: 'assistant',
-      content: "Hello! I am your **Sentra AI Compliance Advisor**. I have real-time access to your organization's EU AI Act posture, NIST AI RMF score, ISO 42001/27001 checklists, and unresolved drift incidents. How can I help secure your AI pipelines today?"
+      content: "Hello! I am your **Sentraa AI Compliance Advisor**. I have real-time access to your organization's EU AI Act posture, NIST AI RMF score, ISO 42001/27001 checklists, and unresolved drift incidents. How can I help secure your AI pipelines today?"
     }
   ]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -258,7 +258,7 @@ export default function Advisor() {
             onClick={() => setMessages([
               {
                 role: 'assistant',
-                content: "Hello! I am your **Sentra AI Compliance Advisor**. I have real-time access to your organization's EU AI Act posture, NIST AI RMF score, ISO 42001/27001 checklists, and unresolved drift incidents. How can I help secure your AI pipelines today?"
+                content: "Hello! I am your **Sentraa AI Compliance Advisor**. I have real-time access to your organization's EU AI Act posture, NIST AI RMF score, ISO 42001/27001 checklists, and unresolved drift incidents. How can I help secure your AI pipelines today?"
               }
             ])}
             className="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 rounded-lg text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:bg-slate-50 active:bg-slate-100"

@@ -1,0 +1,58 @@
+01-dashboard.png 	 /app 	 Dashboard Overview
+02-policies.png 	 /app/policies 	 Policies Management
+03-incidents.png 	 /app/incidents 	 Incident Management
+04-guardrails.png 	 /app/guardrails 	 Guardrails Center
+05-risk-center.png 	 /app/risk 	 Risk Center
+06-compliance-eu-ai-act.png 	 /app/compliance?tab=eu-ai-act 	 Compliance: EU AI Act
+06-compliance-nist-ai-rmf.png 	 /app/compliance?tab=nist-ai-rmf 	 Compliance: NIST AI RMF
+06-compliance-iso-42001.png 	 /app/compliance?tab=iso-42001 	 Compliance: ISO 42001
+06-compliance-iso-27001.png 	 /app/compliance?tab=iso-27001 	 Compliance: ISO 27001
+06-compliance-ccpa.png 	 /app/compliance?tab=ccpa 	 Compliance: CCPA
+07-evidence.png 	 /app/evidence 	 Evidence & Proof
+08-drift.png 	 /app/drift 	 Drift Detection
+09-shadow-ai.png 	 /app/shadow 	 Shadow AI Discovery
+10-inventory.png 	 /app/inventory 	 AI Asset Inventory
+11-consent-manager.png 	 /app/consent 	 User Consent Manager
+12-ai-registry.png 	 /app/ai-registry 	 AI Model Registry
+13-risk-assessment.png 	 /app/risk-assessment 	 Risk Assessment
+14-impact-assessments.png 	 /app/impact-assessments 	 Impact Assessments
+15-ce-marking.png 	 /app/ce-marking 	 CE Marking Compliance
+16-ccpa.png 	 /app/ccpa 	 CCPA Compliance
+17-dora.png 	 /app/dora 	 DORA Compliance
+18-oecd.png 	 /app/oecd 	 OECD Principles
+19-ftc.png 	 /app/ftc 	 FTC Guidelines
+20-controls.png 	 /app/controls 	 Governance Controls
+21-vendor-risk.png 	 /app/vendor-risk 	 Vendor Risk Assessment
+22-obligations.png 	 /app/obligations 	 Regulatory Obligations
+23-workflows.png 	 /app/workflows 	 Compliance Workflows
+24-tasks.png 	 /app/tasks 	 Action Tasks
+25-file-manager.png 	 /app/files 	 Evidentiary Files
+26-intake.png 	 /app/intake 	 Intake Submissions Portal
+27-executive-report.png 	 /app/executive-report 	 Executive Reports
+28-advisor.png 	 /app/advisor 	 AI Governance Advisor
+29-automations.png 	 /app/automations 	 Workflow Automations
+30-datasets.png 	 /app/datasets 	 Training Datasets Registry
+31-training.png 	 /app/training 	 Training & Awareness Register
+32-governance-os-mapper.png 	 /app/governance-os?tab=mapper 	 GovernanceOS: Cross-Framework mapper
+32-governance-os-gaps.png 	 /app/governance-os?tab=gaps 	 GovernanceOS: Gaps checklist
+33-evaluation.png 	 /app/evaluation 	 Model Evaluations
+34-settings-profile.png 	 /app/settings#tab=profile 	 Settings: Profile Settings
+34-settings-password.png 	 /app/settings#tab=password 	 Settings: Password
+34-settings-llmkeys.png 	 /app/settings#tab=llmkeys 	 Settings: LLM Keys
+34-settings-features.png 	 /app/settings#tab=features 	 Settings: Features
+34-settings-general.png 	 /app/settings#tab=general 	 Settings: General & Alerts
+34-settings-mcp.png 	 /app/settings#tab=mcp 	 Settings: MCP Gateway
+34-settings-sso.png 	 /app/settings#tab=sso 	 Settings: SAML SSO
+34-settings-team.png 	 /app/settings#tab=team 	 Settings: Team Management
+35-readiness.png 	 /app/readiness 	 Readiness Assessment
+36-live-feed.png 	 /app/live-feed 	 Live Block Feed
+37-gdpr.png 	 /app/gdpr 	 GDPR Compliance
+38-hipaa.png 	 /app/hipaa 	 HIPAA Compliance
+39-soc2.png 	 /app/soc2 	 SOC2 Readiness
+40-pci.png 	 /app/pci 	 PCI-DSS Compliance
+41-dpdp.png 	 /app/dpdp 	 DPDP Act Compliance
+42-entity-graph.png 	 /app/entity-graph 	 Data Flow Entity Graph
+43-intake-builder.png 	 /app/intake/builder 	 Intake Form Builder
+44-agent-discovery.png 	 /app/agent-discovery 	 Agent Auto-Discovery
+45-audit-explorer.png 	 /app/audit 	 Audit Explorer
+46-superadmin.png 	 /superadmin 	 Superadmin Console

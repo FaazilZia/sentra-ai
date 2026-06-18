@@ -153,7 +153,7 @@ export class TrainingService {
               organizationId,
               control_id: control.id,
               status: 'IMPLEMENTED',
-              notes: 'Auto-implemented by Sentra Training Register (zero mandatory compliance gaps).'
+              notes: 'Auto-implemented by Sentraa Training Register (zero mandatory compliance gaps).'
             }
           });
           

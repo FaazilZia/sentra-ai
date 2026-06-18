@@ -17,7 +17,7 @@ export const transporter = nodemailer.createTransport({
 });
 
 export const sendEmail = async (options: { to: string; subject: string; html: string }) => {
-  const from = process.env.SMTP_FROM || '"Sentra AI" <noreply@sentra.ai>';
+  const from = process.env.SMTP_FROM || '"Sentraa AI" <noreply@sentra.ai>';
   try {
     const info = await transporter.sendMail({
       from,

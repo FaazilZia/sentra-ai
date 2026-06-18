@@ -42,7 +42,7 @@ export default function SharedView() {
         <div className="flex flex-col items-center gap-4">
           <LoaderCircle className="h-10 w-10 animate-spin text-[var(--royal-indigo)]" />
           <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] font-mono">
-            SENTRA.AI // SECURE_PORTAL
+            SENTRAA.AI // SECURE_PORTAL
           </span>
         </div>
       </div>
@@ -60,7 +60,7 @@ export default function SharedView() {
           </p>
           <div className="mt-6 border-t border-[var(--border-default)] pt-6">
             <span className="text-[8px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] block">
-              SENTRA AI GOVERNANCE GATEWAY
+              SENTRAA AI GOVERNANCE GATEWAY
             </span>
           </div>
         </div>
@@ -74,12 +74,46 @@ export default function SharedView() {
       <header className="border-b border-[var(--border-default)] bg-[var(--bg-card)]/50 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-7 w-7 rounded-lg bg-gradient-to-tr from-[var(--royal-indigo)] to-[var(--lavender)] flex items-center justify-center font-black text-white text-[12px]">
-              S
+            <div className="h-7 w-7 rounded-lg bg-gradient-to-tr from-[var(--royal-indigo)] to-[var(--lavender)] flex items-center justify-center font-black text-white">
+              <svg viewBox="0 0 240 140" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" xmlns="http://www.w3.org/2000/svg">
+                <g stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+                  <line x1="152" y1="30" x2="132" y2="18"/>
+                  <line x1="132" y1="18" x2="104" y2="13"/>
+                  <line x1="104" y1="13" x2="78" y2="30"/>
+                  <line x1="78" y1="30" x2="74" y2="58"/>
+                  <line x1="74" y1="58" x2="108" y2="66"/>
+                  <line x1="108" y1="66" x2="128" y2="47"/>
+                  <line x1="108" y1="66" x2="95" y2="86"/>
+                  <line x1="108" y1="66" x2="150" y2="73"/>
+                  <line x1="150" y1="73" x2="146" y2="104"/>
+                  <line x1="146" y1="104" x2="163" y2="99"/>
+                  <line x1="146" y1="104" x2="162" y2="119"/>
+                  <line x1="146" y1="104" x2="119" y2="121"/>
+                  <line x1="119" y1="121" x2="90" y2="112"/>
+                  <line x1="90" y1="112" x2="66" y2="104"/>
+                </g>
+                <g fill="currentColor">
+                  <circle cx="152" cy="30" r="3"/>
+                  <circle cx="132" cy="18" r="10"/>
+                  <circle cx="104" cy="13" r="6"/>
+                  <circle cx="78" cy="30" r="9"/>
+                  <circle cx="74" cy="58" r="7"/>
+                  <circle cx="128" cy="47" r="3"/>
+                  <circle cx="95" cy="86" r="3"/>
+                  <circle cx="150" cy="73" r="7"/>
+                  <circle cx="146" cy="104" r="10"/>
+                  <circle cx="163" cy="99" r="3"/>
+                  <circle cx="162" cy="119" r="3"/>
+                  <circle cx="119" cy="121" r="6"/>
+                  <circle cx="90" cy="112" r="10"/>
+                  <circle cx="66" cy="104" r="3"/>
+                </g>
+                <circle cx="108" cy="66" r="11" fill="none" stroke="currentColor" strokeWidth="7"/>
+              </svg>
             </div>
             <div>
               <span className="text-[11px] font-black text-white tracking-[0.3em] uppercase block">
-                SENTRA AI // SHARE
+                SENTRAA AI // SHARE
               </span>
               <span className="text-[8px] font-black tracking-wider text-[var(--text-muted)] uppercase block mt-0.5">
                 TRUST PORTAL FOR {data.organization.name}
@@ -128,7 +162,7 @@ export default function SharedView() {
       {/* Branding Footer */}
       <footer className="border-t border-[var(--border-default)] bg-[var(--bg-card)]/20 py-8 text-center text-gray-500">
         <p className="text-[10px] font-bold uppercase tracking-widest">
-          Secured by Sentra AI Governance Engine
+          Secured by Sentraa AI Governance Engine
         </p>
         <p className="text-[8px] font-medium tracking-wider text-[var(--text-muted)] uppercase mt-2">
           This portal uses cryptographically secure tokens. Anyone with the URL can view this dashboard.

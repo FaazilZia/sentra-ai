@@ -30,7 +30,7 @@ export const wrapOpenAIChatCompletion = async (
 
   if (decision.status === 'blocked') {
     logger.warn(`[OpenAI Governance] BLOCKED: ${decision.reason}`);
-    throw new Error(`Execution Blocked by Sentra AI Governance: ${decision.reason}`);
+    throw new Error(`Execution Blocked by Sentraa AI Governance: ${decision.reason}`);
   }
 
   // Real OpenAI API call

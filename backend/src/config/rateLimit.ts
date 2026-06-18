@@ -1,5 +1,5 @@
 /**
- * Sentra AI Production-Grade Resilient Rate Limiter
+ * Sentraa AI Production-Grade Resilient Rate Limiter
  * 
  * KNOWN-COMPATIBLE RUNTIME DEPENDENCY VERSIONS:
  * - express-rate-limit: ^8.3.2

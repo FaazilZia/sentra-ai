@@ -175,7 +175,7 @@ export class AdvisorService {
 
     const posture = await this.getCompliancePosture(organizationId);
 
-    const systemPrompt = `You are Sentra AI's Chief Compliance Officer and Compliance Copilot.
+    const systemPrompt = `You are Sentraa AI's Chief Compliance Officer and Compliance Copilot.
 Your duty is to advise the organization on their compliance posture with rich insights and direct access to compliance tools.
 
 Current Compliance Posture Summary:

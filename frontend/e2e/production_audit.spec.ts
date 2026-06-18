@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import axios from 'axios';
 
-test.describe('Sentra AI - Full Production Audit Flow', () => {
+test.describe('Sentraa AI - Full Production Audit Flow', () => {
   test.setTimeout(120000);
 
   test.beforeEach(async ({ page }) => {
@@ -19,7 +19,7 @@ test.describe('Sentra AI - Full Production Audit Flow', () => {
     await page.reload();
 
     await page.fill('input[type="email"]', 'admin@sentra.ai');
-    await page.fill('input[type="password"]', 'Sentra@Admin123');
+    await page.fill('input[type="password"]', process.env.TEST_ADMIN_PASSWORD || 'CHANGE_ME_TEST_PASSWORD');
     
     console.log('Submitting login...');
     await page.click('button[type="submit"]');

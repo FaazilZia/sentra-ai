@@ -49,15 +49,15 @@ async function main() {
     update: {},
     create: {
       id: DEFAULT_ORGANIZATION_ID,
-      name: 'Sentra AI',
-      slug: 'sentra-ai',
+      name: 'Sentraa AI',
+      slug: 'sentraa-ai',
       is_active: true,
     },
   });
   console.log(`✅ Company: ${company.name} (${company.id})`);
 
   // 2. Ensure admin user
-  const seedPassword = process.env.SEED_ADMIN_PASSWORD || `SentraAuto_${randomUUID().slice(0, 12)}`;
+  const seedPassword = process.env.SEED_ADMIN_PASSWORD || `SentraaAuto_${randomUUID().slice(0, 12)}`;
   const passwordHash = await bcrypt.hash(seedPassword, 12);
   const user = await prisma.users.upsert({
     where: { email: 'admin@sentra.ai' },

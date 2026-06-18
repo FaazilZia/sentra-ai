@@ -6,7 +6,7 @@ import prisma from '../config/db';
 import logger from '../utils/logger';
 import { encrypt, decrypt } from '../utils/encryption';
 
-const MFA_ISSUER = process.env.APP_NAME || 'Sentra AI';
+const MFA_ISSUER = process.env.APP_NAME || 'Sentraa AI';
 
 export const MFAService = {
   /**

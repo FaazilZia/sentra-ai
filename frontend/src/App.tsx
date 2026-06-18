@@ -89,7 +89,7 @@ function AppRoutes() {
       <div className="min-h-screen bg-[var(--bg-page)] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <LoaderCircle className="h-10 w-10 animate-spin text-[var(--royal-indigo)]" />
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] font-mono">SENTRA.AI // AUTH_SYNC</span>
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] font-mono">SENTRAA.AI // AUTH_SYNC</span>
         </div>
       </div>
     );

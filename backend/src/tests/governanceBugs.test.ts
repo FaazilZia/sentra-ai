@@ -57,7 +57,7 @@ describe('Governance & Security QA Stress Tests (Failing First)', () => {
   let orgAToken: string;
   let orgBToken: string;
   
-  const orgAId = '00000000-0000-0000-0000-000000000001'; // Sentra AI Default
+  const orgAId = '00000000-0000-0000-0000-000000000001'; // Sentraa AI Default
   const orgBId = '00000000-0000-0000-0000-000000000008'; // Secondary Org
   
   let userAId: string;

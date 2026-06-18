@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import axios from 'axios';
 
-test.describe('Sentra AI Real-time Dashboard', () => {
+test.describe('Sentraa AI Real-time Dashboard', () => {
   test.setTimeout(90000);
   
   test('Dashboard reflects blocked threats in real-time', async ({ page }) => {
@@ -13,7 +13,7 @@ test.describe('Sentra AI Real-time Dashboard', () => {
     await page.goto('/login', { waitUntil: 'domcontentloaded' });
     
     await page.fill('input[type="email"]', 'admin@sentra.ai');
-    await page.fill('input[type="password"]', 'Sentra@Admin123');
+    await page.fill('input[type="password"]', process.env.TEST_ADMIN_PASSWORD || 'CHANGE_ME_TEST_PASSWORD');
     
     console.log('Submitting login...');
     await page.click('button[type="submit"]');

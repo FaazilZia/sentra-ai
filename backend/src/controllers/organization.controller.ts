@@ -69,7 +69,7 @@ export const testAlert = asyncHandler(async (req: any, res: Response) => {
   const dummyDecision = {
     status: 'blocked',
     risk: 'high',
-    reason: 'This is a test notification from the Sentra AI dashboard.',
+    reason: 'This is a test notification from the Sentraa AI dashboard.',
     compliance: ['TEST_POLICY'],
     explanation: 'Verifying that your alert channels are correctly configured.'
   };

@@ -395,7 +395,7 @@ export default function DPDP() {
                 
                 <div className="bg-orange-950/10 border border-orange-900/30 rounded-xl p-4 text-[10px] text-orange-300 leading-relaxed">
                   <HelpCircle className="h-4 w-4 mb-1 text-orange-400 block animate-pulse" />
-                  Sentra AI tracks notice disclosures, explicit consent tracking, DPO registration status, and localized database parameters to evaluate compliance.
+                  Sentraa AI tracks notice disclosures, explicit consent tracking, DPO registration status, and localized database parameters to evaluate compliance.
                 </div>
               </>
             ) : (

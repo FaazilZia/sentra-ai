@@ -91,14 +91,14 @@ export const SlackService = {
     try {
       const webhook = new IncomingWebhook(webhookUrl);
       await webhook.send({
-        text: '🔔 *Sentra AI Slack Integration Test* \nConnection successful! This channel is now active for compliance alerts.',
+        text: '🔔 *Sentraa AI Slack Integration Test* \nConnection successful! This channel is now active for compliance alerts.',
         channel,
         blocks: [
           {
             type: 'header',
             text: {
               type: 'plain_text',
-              text: '🔔 Sentra AI Integration Test',
+              text: '🔔 Sentraa AI Integration Test',
               emoji: true
             }
           },
@@ -114,7 +114,7 @@ export const SlackService = {
             elements: [
               {
                 type: 'mrkdwn',
-                text: 'Sentra AI Security Ledger • Webhook Test'
+                text: 'Sentraa AI Security Ledger • Webhook Test'
               }
             ]
           }
@@ -134,7 +134,7 @@ export const SlackService = {
     const config = await this.getConfig(orgId);
     if (!config || !config.enabled || !config.notifyOn.includes('guardrail_block')) return;
 
-    const title = '🛡️ Sentra AI Guardrail Interception Alert';
+    const title = '🛡️ Sentraa AI Guardrail Interception Alert';
     const blocks = [
       {
         type: 'header',
@@ -172,7 +172,7 @@ export const SlackService = {
     const config = await this.getConfig(orgId);
     if (!config || !config.enabled || !config.notifyOn.includes('drift_detected')) return;
 
-    const title = '📉 Sentra AI Behavioral Drift Warning';
+    const title = '📉 Sentraa AI Behavioral Drift Warning';
     const blocks = [
       {
         type: 'header',
@@ -210,7 +210,7 @@ export const SlackService = {
     const config = await this.getConfig(orgId);
     if (!config || !config.enabled || !config.notifyOn.includes('incident_created')) return;
 
-    const title = '⚠️ Sentra AI Incident Logged';
+    const title = '⚠️ Sentraa AI Incident Logged';
     const blocks = [
       {
         type: 'header',
@@ -248,7 +248,7 @@ export const SlackService = {
     const config = await this.getConfig(orgId);
     if (!config || !config.enabled || !config.notifyOn.includes('policy_violation')) return;
 
-    const title = '❌ Sentra AI Policy Violation Alert';
+    const title = '❌ Sentraa AI Policy Violation Alert';
     const blocks = [
       {
         type: 'header',
@@ -286,7 +286,7 @@ export const SlackService = {
     const config = await this.getConfig(orgId);
     if (!config || !config.enabled || !config.notifyOn.includes('workflow_change')) return;
 
-    const title = '🔄 Sentra AI Workflow Change';
+    const title = '🔄 Sentraa AI Workflow Change';
     const blocks = [
       {
         type: 'header',

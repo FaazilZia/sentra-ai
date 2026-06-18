@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
 
 const FRONTEND_URL = 'http://localhost:5173';
-const BACKEND_URL = 'https://sentra-backend-node.onrender.com';
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3000';
 
 const ADMIN_EMAIL = 'admin@sentra.ai';
 const ADMIN_PASSWORD = process.env.SMOKE_TEST_PASSWORD;
@@ -180,7 +180,7 @@ async function run() {
       await page.waitForURL(/\/app/, { timeout: 15000 });
 
       // Verify onboarding wizard modal shows up
-      const welcomeHeader = page.locator('text="Welcome to Sentra AI GRC"');
+      const welcomeHeader = page.locator('text="Welcome to Sentraa AI GRC"');
       await expectToBeVisible(welcomeHeader, 'Onboarding wizard welcome screen not visible', 10000);
 
       // Step through the wizard
@@ -394,7 +394,7 @@ async function expectToBeHidden(locator, errMsg, timeout = 5000) {
 
 function printReport() {
   console.log('\n============================================================');
-  console.log('  SENTRA AI SMOKE TEST REPORT');
+  console.log('  SENTRAA AI SMOKE TEST REPORT');
   console.log('============================================================\n');
 
   console.log('| # | Test | Status | Notes |');

@@ -347,7 +347,7 @@ export default function DORA() {
                 
                 <div className="bg-indigo-950/10 border border-indigo-900/30 rounded-xl p-4 text-[10px] text-indigo-300 leading-relaxed">
                   <HelpCircle className="h-4 w-4 mb-1 text-indigo-400 block animate-pulse" />
-                  Sentra AI continuously checks security scanning results, BCP mock tests, and vendor logs against DORA rules to automate compliance postures.
+                  Sentraa AI continuously checks security scanning results, BCP mock tests, and vendor logs against DORA rules to automate compliance postures.
                 </div>
               </>
             ) : (
