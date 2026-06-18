@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const ADMIN_EMAIL = 'admin@sentra.ai';
-const ADMIN_PASS  = process.env.TEST_ADMIN_PASSWORD || 'Sentra@Admin123';
+const ADMIN_PASS  = process.env.TEST_ADMIN_PASSWORD || 'CHANGE_ME_TEST_PASSWORD';
 const SCREENSHOT_DIR = '/Users/mohammadfaazilzia/Desktop/Sentra AI/screenshots/dashboard';
 
 // Enforce test execution order and a single session

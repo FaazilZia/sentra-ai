@@ -13,7 +13,7 @@ test.describe('Sentraa AI Real-time Dashboard', () => {
     await page.goto('/login', { waitUntil: 'domcontentloaded' });
     
     await page.fill('input[type="email"]', 'admin@sentra.ai');
-    await page.fill('input[type="password"]', process.env.TEST_ADMIN_PASSWORD || 'Sentra@Admin123');
+    await page.fill('input[type="password"]', process.env.TEST_ADMIN_PASSWORD || 'CHANGE_ME_TEST_PASSWORD');
     
     console.log('Submitting login...');
     await page.click('button[type="submit"]');
