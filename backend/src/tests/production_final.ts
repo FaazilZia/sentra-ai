@@ -32,7 +32,7 @@ async function runTest(name: string, action: string, metadata: any = {}): Promis
 
 async function audit() {
   console.log('═══════════════════════════════════════════════');
-  console.log('   SENTRA AI MASTER PRODUCTION READINESS AUDIT');
+  console.log('   SENTRAA AI MASTER PRODUCTION READINESS AUDIT');
   console.log('═══════════════════════════════════════════════\n');
 
   const tests = [

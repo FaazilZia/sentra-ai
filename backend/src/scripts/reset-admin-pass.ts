@@ -27,7 +27,7 @@ async function main() {
     create: {
       id: ADMIN_USER_ID,
       email: 'admin@sentra.ai',
-      full_name: 'Sentra Admin',
+      full_name: 'Sentraa Admin',
       password_hash: passwordHash,
       role: 'ADMIN',
       is_active: true,

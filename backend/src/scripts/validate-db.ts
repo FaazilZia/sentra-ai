@@ -26,7 +26,7 @@ async function main() {
   await prisma.$connect();
 
   console.log('\n============================================================');
-  console.log('  SENTRA AI v2.0.0 — DATABASE VALIDATION REPORT');
+  console.log('  SENTRAA AI v2.0.0 — DATABASE VALIDATION REPORT');
   console.log('  Target:', process.env.DATABASE_URL?.replace(/:[^:@]+@/, ':***@'));
   console.log('============================================================\n');
 

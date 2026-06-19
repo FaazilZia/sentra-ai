@@ -51,7 +51,7 @@ async function runGovernanceTest() {
   }
 
   console.log('═══════════════════════════════════════════════');
-  console.log('   SENTRA AI GOVERNANCE STRESS TEST REPORT');
+  console.log('   SENTRAA AI GOVERNANCE STRESS TEST REPORT');
   console.log('═══════════════════════════════════════════════\n');
 
   for (const tc of testCases) {

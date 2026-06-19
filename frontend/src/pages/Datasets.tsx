@@ -215,7 +215,7 @@ export default function Datasets() {
                       type="text" 
                       value={newSourceUrl}
                       onChange={(e) => setNewSourceUrl(e.target.value)}
-                      placeholder="s3://sentra-data-bucket/..."
+                      placeholder="s3://sentraa-data-bucket/..."
                       className="w-full text-xs bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:border-[var(--royal-indigo)] font-mono"
                     />
                   </div>

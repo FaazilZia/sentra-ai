@@ -10,7 +10,7 @@ async function main() {
   await prisma.$connect();
 
   console.log('\n============================================================');
-  console.log('  SENTRA AI v2.0.0 — SEED VERIFICATION REPORT');
+  console.log('  SENTRAA AI v2.0.0 — SEED VERIFICATION REPORT');
   console.log('============================================================\n');
 
   let issues = 0;

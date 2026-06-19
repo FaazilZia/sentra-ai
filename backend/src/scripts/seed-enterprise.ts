@@ -16,7 +16,7 @@ async function seedEnterprise() {
   await prisma.$connect();
 
   console.log('\n============================================================');
-  console.log('  SENTRA AI v2.0.0 — ENTERPRISE SEED');
+  console.log('  SENTRAA AI v2.0.0 — ENTERPRISE SEED');
   console.log('============================================================\n');
 
   // ── 1. System Roles ───────────────────────────────────────

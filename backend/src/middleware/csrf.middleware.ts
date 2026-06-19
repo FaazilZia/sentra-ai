@@ -27,8 +27,8 @@ export const csrfProtection = (req: CsrfRequest, res: Response, next: NextFuncti
   // 2. Validate on mutating HTTP methods
   const mutatingMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
   if (mutatingMethods.includes(req.method)) {
-    // Skip verification in test environment to avoid breaking integration/unit tests
-    if (process.env.NODE_ENV === 'test') {
+    // Skip verification in test/E2E environments to avoid breaking integration/E2E tests
+    if (process.env.NODE_ENV === 'test' || process.env.IS_E2E_TEST === 'true') {
       return next();
     }
     

@@ -246,8 +246,8 @@ export async function apiRequest<T>(
 
   // Handle Token Refresh on 401
   if (response.status === 401 && retry) {
-    // Rely strictly on httpOnly secure cookie session verification
-    window.dispatchEvent(new CustomEvent('auth:expired'));
+    const tokenUsed = impersonationToken || accessToken || '';
+    window.dispatchEvent(new CustomEvent('auth:expired', { detail: { token: tokenUsed } }));
   }
 
   const responseData = await response.text();

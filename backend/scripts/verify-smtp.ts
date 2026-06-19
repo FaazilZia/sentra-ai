@@ -113,7 +113,7 @@ async function run() {
   }
 
   // 5. Verify the AlertService test email pathway
-  console.log('\n3. Verifying Sentra AlertService internal pipeline...');
+  console.log('\n3. Verifying Sentraa AlertService internal pipeline...');
   try {
     const { alertService } = require('../src/services/alert.service');
     const alertInfo = await alertService.sendTestEmail(recipient, 'Test Org');

@@ -29,6 +29,9 @@ frontend/vite.config.d.ts
 # Environment & Security
 .env
 *.env
+.env.*
+.env.test
+*.env.test
 *.backup
 .venv/
 venv/
@@ -53,6 +56,9 @@ frontend/test-results/
 frontend/playwright-report/
 backend/test-results/
 backend/playwright-report/
+test-playwright-report*/
+data/
+trace/
 
 # Local development artifacts
 .local-dev/

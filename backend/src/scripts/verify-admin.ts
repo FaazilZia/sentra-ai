@@ -19,8 +19,8 @@ async function main() {
     update: {},
     create: {
       id: PROD_TEST_ORG_ID,
-      name: 'Sentra Production Test',
-      slug: 'sentra-production-test',
+      name: 'Sentraa Production Test',
+      slug: 'sentraa-production-test',
       is_active: true,
     }
   });

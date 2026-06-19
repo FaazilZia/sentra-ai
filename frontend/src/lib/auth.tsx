@@ -6,7 +6,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { fetchCurrentUser, loginRequest, registerRequest, apiBaseUrl, apiRequest } from './api';
+import { fetchCurrentUser, loginRequest, registerRequest, apiRequest } from './api';
 
 export interface AppUser {
   id: string;
@@ -48,10 +48,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Listen for auth expiration events from api.ts
-    const handleAuthExpired = () => {
-      logout();
+    const handleAuthExpired = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const expiredToken = customEvent.detail?.token;
+      const currentToken = localStorage.getItem('sentra_impersonation_token') || localStorage.getItem('sentra_access_token');
+      
+      if (!expiredToken || expiredToken === currentToken) {
+        logout();
+      } else {
+        console.warn('⚠️ auth:expired ignored because the expired token does not match the active token.');
+      }
     };
-    window.addEventListener('auth:expired', handleAuthExpired);
+    window.addEventListener('auth:expired', handleAuthExpired as EventListener);
 
     // Impersonation check
     const impToken = localStorage.getItem('sentra_impersonation_token');
@@ -105,7 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
     return () => {
-      window.removeEventListener('auth:expired', handleAuthExpired);
+      window.removeEventListener('auth:expired', handleAuthExpired as EventListener);
     };
   }, []);
 
@@ -158,10 +166,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function logout() {
     try {
-      await fetch(`${apiBaseUrl}/auth/logout`, {
+      await apiRequest('/auth/logout', {
         method: 'POST',
-        credentials: 'include',
-      });
+      }, false);
     } catch (error) {
       console.error('Logout request failed:', error);
     }

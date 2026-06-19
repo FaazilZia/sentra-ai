@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
 
 const FRONTEND_URL = 'http://localhost:5173';
-const BACKEND_URL = 'https://sentra-backend-node.onrender.com';
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3000';
 
 const ADMIN_EMAIL = 'admin@sentra.ai';
 const ADMIN_PASSWORD = process.env.SMOKE_TEST_PASSWORD;
