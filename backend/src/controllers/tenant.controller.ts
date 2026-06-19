@@ -122,6 +122,7 @@ export const inviteUser = asyncHandler(async (req: any, res: Response) => {
         const orgName = org?.name || 'Sentraa AI';
         const joinLink = `${(process.env.FRONTEND_URL || 'http://localhost:5173').split(',')[0]}/accept-invite?token=${invitation.token}`;
 
+        // TODO: The sentra.ai sender domain should eventually be migrated to sentraatech.com once DNS/Postmark is configured.
         await transporter.sendMail({
           from: process.env.SMTP_FROM || '"Sentraa AI" <noreply@sentra.ai>',
           to: email,

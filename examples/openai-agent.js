@@ -33,7 +33,7 @@ async function runSupportAgent() {
   });
 
   if (!result.success) {
-    console.error(`❌ ACTION BLOCKED by Sentra AI`);
+    console.error(`❌ ACTION BLOCKED by Sentraa AI`);
     console.error(`Reason: ${result.governance.reason}`);
     console.error(`Impact: ${result.governance.impact}`);
     console.error(`Compliance: ${JSON.stringify(result.governance.compliance)}`);

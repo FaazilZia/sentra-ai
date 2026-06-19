@@ -28,6 +28,7 @@ async function run() {
   const port = process.env.SMTP_PORT || '587';
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
+  // TODO: The sentra.ai sender domain should eventually be migrated to sentraatech.com once DNS/Postmark is configured for it.
   const from = process.env.SMTP_FROM || '"Sentraa AI Alerts" <alerts@sentra.ai>';
 
   console.log(`Configuration found:`);

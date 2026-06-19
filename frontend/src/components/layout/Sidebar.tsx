@@ -334,7 +334,7 @@ export function Sidebar() {
             </div>
             <div>
               <span className="text-sm font-black uppercase tracking-widest text-white">Sentraa</span>
-              <span className="text-[10px] block font-bold text-[var(--lavender)] uppercase -mt-1 tracking-tighter opacity-70">AI</span>
+              <span className="text-[10px] block font-bold text-[var(--lavender)] uppercase -mt-1 tracking-tighter opacity-70">Governance</span>
             </div>
           </div>
 
@@ -489,6 +489,7 @@ export function Sidebar() {
               {userInitials}
             </div>
             <div className="flex-1 min-w-0">
+              {/* Note: The default seeded user fullName in DB is 'Sentra Admin'. We do not modify seed DB values here. */}
               <p className="text-[10px] font-black text-white uppercase tracking-tight truncate">{user?.fullName || 'Admin User'}</p>
               <p className="text-[9px] font-bold text-[var(--lavender)] uppercase opacity-50 truncate">{user?.role || 'Governance Admin'}</p>
             </div>

@@ -136,7 +136,7 @@ if (decision.status === 'BLOCK') {
               <div className="flex items-center justify-between">
                 <h4 className="text-base font-black text-white uppercase tracking-tight flex items-center gap-2">
                   <Terminal className="h-5 w-5 text-indigo-400" />
-                  Step 2: Connect Sentra SDK
+                  Step 2: Connect Sentraa SDK
                 </h4>
                 <button
                   onClick={handleCopyCode}
@@ -178,7 +178,7 @@ if (decision.status === 'BLOCK') {
             <div className="space-y-4 animate-slide-in">
               <h4 className="text-base font-black text-white uppercase tracking-tight">Step 3: Define Policies & Guardrails</h4>
               <p className="text-gray-400 text-xs leading-relaxed">
-                Rules govern what autonomous actions require verification. When a policy triggers a violation, Sentra intercepts the token stream or function calls automatically.
+                Rules govern what autonomous actions require verification. When a policy triggers a violation, Sentraa intercepts the token stream or function calls automatically.
               </p>
               
               <div className="bg-black/20 border border-gray-800/60 rounded-xl p-4 space-y-3">
