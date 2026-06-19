@@ -37,3 +37,25 @@ services:
         sync: false
       - key: GOOGLE_CLIENT_SECRET
         sync: false
+      - key: GOOGLE_CALLBACK_URL
+        value: https://sentra-backend-node.onrender.com/api/v1/auth/google/callback
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: MASKING_SALT
+        sync: false
+      - key: METRICS_SECRET_TOKEN
+        sync: false
+      - key: SCIM_BEARER_TOKEN
+        sync: false

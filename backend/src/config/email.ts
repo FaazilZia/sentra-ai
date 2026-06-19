@@ -17,8 +17,7 @@ export const transporter = nodemailer.createTransport({
 });
 
 export const sendEmail = async (options: { to: string; subject: string; html: string }) => {
-  // TODO: The sentra.ai sender domain should eventually be migrated to sentraatech.com once DNS/Postmark is configured.
-  const from = process.env.SMTP_FROM || '"Sentraa AI" <noreply@sentra.ai>';
+  const from = process.env.SMTP_FROM || '"Sentraa AI" <noreply@sentraatech.com>';
   try {
     const info = await transporter.sendMail({
       from,

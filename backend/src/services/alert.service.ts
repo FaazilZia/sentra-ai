@@ -65,11 +65,10 @@ class AlertService {
         return;
       }
 
-      const dashboardUrl = (process.env.FRONTEND_URL || 'https://app.sentra.ai').split(',')[0];
+      const dashboardUrl = (process.env.FRONTEND_URL || 'https://sentra-ai-tau.vercel.app').split(',')[0];
       
-      // TODO: The sentra.ai sender domain should eventually be migrated to sentraatech.com once DNS/Postmark is configured.
       const mailOptions = {
-        from: process.env.SMTP_FROM || '"Sentraa AI Alerts" <alerts@sentra.ai>',
+        from: process.env.SMTP_FROM || '"Sentraa AI Alerts" <alerts@sentraatech.com>',
         to: org.alertEmail,
         subject: `🚨 [BLOCK] AI Security Violation: ${violation.action}`,
         html: `
@@ -129,7 +128,7 @@ class AlertService {
 
       if (!org?.slackWebhookUrl) return;
 
-      const dashboardUrl = (process.env.FRONTEND_URL || 'https://app.sentra.ai').split(',')[0];
+      const dashboardUrl = (process.env.FRONTEND_URL || 'https://sentra-ai-tau.vercel.app').split(',')[0];
 
       const slackMessage = {
         blocks: [
@@ -214,9 +213,8 @@ class AlertService {
   async sendTestEmail(email: string, orgName: string) {
     if (!this.transporter) throw new Error('SMTP transporter not initialized');
 
-    // TODO: The sentra.ai sender domain should eventually be migrated to sentraatech.com once DNS/Postmark is configured.
     const mailOptions = {
-      from: process.env.SMTP_FROM || '"Sentraa AI Alerts" <alerts@sentra.ai>',
+      from: process.env.SMTP_FROM || '"Sentraa AI Alerts" <alerts@sentraatech.com>',
       to: email,
       subject: `🧪 Sentraa AI: Test Alert for ${orgName}`,
       html: `
