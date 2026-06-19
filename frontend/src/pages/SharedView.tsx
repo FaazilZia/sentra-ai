@@ -42,7 +42,7 @@ export default function SharedView() {
         <div className="flex flex-col items-center gap-4">
           <LoaderCircle className="h-10 w-10 animate-spin text-[var(--royal-indigo)]" />
           <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-secondary)] font-mono">
-            SENTRA.AI // SECURE_PORTAL
+            SENTRAA.AI // SECURE_PORTAL
           </span>
         </div>
       </div>
@@ -60,7 +60,7 @@ export default function SharedView() {
           </p>
           <div className="mt-6 border-t border-[var(--border-default)] pt-6">
             <span className="text-[8px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] block">
-              SENTRA AI GOVERNANCE GATEWAY
+              SENTRAA AI GOVERNANCE GATEWAY
             </span>
           </div>
         </div>
@@ -79,7 +79,7 @@ export default function SharedView() {
             </div>
             <div>
               <span className="text-[11px] font-black text-white tracking-[0.3em] uppercase block">
-                SENTRA AI // SHARE
+                SENTRAA AI // SHARE
               </span>
               <span className="text-[8px] font-black tracking-wider text-[var(--text-muted)] uppercase block mt-0.5">
                 TRUST PORTAL FOR {data.organization.name}
@@ -128,7 +128,7 @@ export default function SharedView() {
       {/* Branding Footer */}
       <footer className="border-t border-[var(--border-default)] bg-[var(--bg-card)]/20 py-8 text-center text-gray-500">
         <p className="text-[10px] font-bold uppercase tracking-widest">
-          Secured by Sentra AI Governance Engine
+          Secured by Sentraa AI Governance Engine
         </p>
         <p className="text-[8px] font-medium tracking-wider text-[var(--text-muted)] uppercase mt-2">
           This portal uses cryptographically secure tokens. Anyone with the URL can view this dashboard.

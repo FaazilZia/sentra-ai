@@ -473,7 +473,7 @@ if (process.env.NODE_ENV !== 'production') {
 // Root of v1
 v1Router.get('/', (req, res) => {
   res.status(200).json({ 
-    message: 'Sentra AI API v1 Operational',
+    message: 'Sentraa AI API v1 Operational',
     status: 'ONLINE',
     organization_centric: true 
   });
@@ -487,7 +487,7 @@ app.use('/api/v1', v1Router);
 app.get('/', (req, res) => {
   res.status(200).json({ 
     success: true, 
-    message: 'Sentra AI Enterprise API',
+    message: 'Sentraa AI Enterprise API',
     version: '2.0.0'
   });
 });

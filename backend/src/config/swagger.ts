@@ -4,9 +4,9 @@ const options: swaggerJsdoc.Options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Sentra AI API Spec',
+      title: 'Sentraa AI API Spec',
       version: '2.0.0',
-      description: 'Production-ready enterprise API for Sentra AI B2B AI governance SaaS',
+      description: 'Production-ready enterprise API for Sentraa AI B2B AI governance SaaS',
     },
     servers: [
       {

@@ -119,17 +119,18 @@ export const inviteUser = asyncHandler(async (req: any, res: Response) => {
         });
 
         const org = await TenantService.getOrganization(orgId);
-        const orgName = org?.name || 'Sentra AI';
+        const orgName = org?.name || 'Sentraa AI';
         const joinLink = `${(process.env.FRONTEND_URL || 'http://localhost:5173').split(',')[0]}/accept-invite?token=${invitation.token}`;
 
+        // TODO: The sentra.ai sender domain should eventually be migrated to sentraatech.com once DNS/Postmark is configured.
         await transporter.sendMail({
-          from: process.env.SMTP_FROM || '"Sentra AI" <noreply@sentra.ai>',
+          from: process.env.SMTP_FROM || '"Sentraa AI" <noreply@sentra.ai>',
           to: email,
-          subject: `You've been invited to join ${orgName} on Sentra AI`,
+          subject: `You've been invited to join ${orgName} on Sentraa AI`,
           html: `
             <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px;">
               <h2 style="color: #0f172a; margin-top: 0;">You've been invited!</h2>
-              <p>You have been invited to join <strong>${orgName}</strong> on Sentra AI.</p>
+              <p>You have been invited to join <strong>${orgName}</strong> on Sentraa AI.</p>
               <p>Click the link below to accept the invitation and set up your account:</p>
               <p style="margin: 24px 0;">
                 <a href="${joinLink}" style="display: inline-block; background: #0f172a; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">Accept Invitation</a>
@@ -139,7 +140,7 @@ export const inviteUser = asyncHandler(async (req: any, res: Response) => {
                 <a href="${joinLink}" style="color: #0284c7;">${joinLink}</a>
               </p>
               <p style="font-size: 12px; color: #94a3b8; margin-top: 32px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
-                This invitation was sent by Sentra AI Governance Platform.
+                This invitation was sent by Sentraa AI Governance Platform.
               </p>
             </div>
           `

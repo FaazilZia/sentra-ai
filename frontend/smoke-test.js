@@ -180,7 +180,7 @@ async function run() {
       await page.waitForURL(/\/app/, { timeout: 15000 });
 
       // Verify onboarding wizard modal shows up
-      const welcomeHeader = page.locator('text="Welcome to Sentra AI GRC"');
+      const welcomeHeader = page.locator('text="Welcome to Sentraa AI GRC"');
       await expectToBeVisible(welcomeHeader, 'Onboarding wizard welcome screen not visible', 10000);
 
       // Step through the wizard
@@ -394,7 +394,7 @@ async function expectToBeHidden(locator, errMsg, timeout = 5000) {
 
 function printReport() {
   console.log('\n============================================================');
-  console.log('  SENTRA AI SMOKE TEST REPORT');
+  console.log('  SENTRAA AI SMOKE TEST REPORT');
   console.log('============================================================\n');
 
   console.log('| # | Test | Status | Notes |');

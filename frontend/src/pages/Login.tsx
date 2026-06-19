@@ -95,7 +95,7 @@ export default function LoginPage({ defaultIsSignUp = false }: { defaultIsSignUp
               S
             </div>
             <div>
-              <p className="text-[15px] font-semibold tracking-tight text-white">Sentra AI</p>
+              <p className="text-[15px] font-semibold tracking-tight text-white">Sentraa AI</p>
               <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">
                 Compliance OS
               </p>

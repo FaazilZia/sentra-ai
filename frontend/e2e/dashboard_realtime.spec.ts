@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import axios from 'axios';
 
-test.describe('Sentra AI Real-time Dashboard', () => {
+test.describe('Sentraa AI Real-time Dashboard', () => {
   test.setTimeout(90000);
   
   test('Dashboard reflects blocked threats in real-time', async ({ page }) => {

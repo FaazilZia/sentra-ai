@@ -71,7 +71,7 @@ export class SentraClient {
 
         const json = await response.json();
         const decision = (json.decision || json.data?.decision || 'ALLOWED').toUpperCase();
-        const reason = json.reason || json.data?.reason || 'Processed by Sentra AI';
+        const reason = json.reason || json.data?.reason || 'Processed by Sentraa AI';
         // Backend returns { success, decision, reason } or wrapped in data
         const isAllowed = decision === 'ALLOW' || decision === 'ALLOWED';
         return {

@@ -100,7 +100,7 @@ export default function Dashboard() {
           <ShieldAlert className="h-5 w-5 text-amber-400 shrink-0 animate-pulse" />
           <div className="text-xs">
             <span className="font-black uppercase tracking-wider block mb-0.5">⚡ Demo Environment Active</span>
-            Sentra AI is running in sandbox mode for <span className="font-bold text-white">{user?.organizationName}</span>. Metrics represent simulated pipeline events. Use the floating simulation controller to inject threats.
+            Sentraa AI is running in sandbox mode for <span className="font-bold text-white">{user?.organizationName}</span>. Metrics represent simulated pipeline events. Use the floating simulation controller to inject threats.
           </div>
         </div>
       )}
@@ -233,7 +233,7 @@ export default function Dashboard() {
                 Simulate Security Threat
               </h3>
               <p className="text-[11px] text-gray-400 mt-1 leading-relaxed">
-                Inject malicious AI requests into Sentra's activity logging framework. These events will propagate in real time across the Live Block Feed and incident dashboards.
+                Inject malicious AI requests into Sentraa's activity logging framework. These events will propagate in real time across the Live Block Feed and incident dashboards.
               </p>
             </div>
 

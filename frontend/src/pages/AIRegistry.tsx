@@ -665,7 +665,7 @@ export default function AIRegistry() {
                     id="reg-system-name"
                     type="text"
                     required
-                    placeholder="e.g. Sentra Support Agent"
+                    placeholder="e.g. Sentraa Support Agent"
                     value={newSystem.name}
                     onChange={(e) => setNewSystem({ ...newSystem, name: e.target.value })}
                     className="bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500"

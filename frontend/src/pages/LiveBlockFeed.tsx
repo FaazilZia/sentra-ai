@@ -234,7 +234,7 @@ export default function LiveBlockFeed() {
             <Shield className="h-12 w-12 text-gray-600 mb-4 animate-pulse" />
             <h3 className="text-sm font-black text-white uppercase tracking-widest">No interceptions yet</h3>
             <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mt-1.5 leading-relaxed">
-              Sentra is watching. Send an action through the SDK to see it here.
+              Sentraa is watching. Send an action through the SDK to see it here.
             </p>
             
             {/* Code Snippet */}

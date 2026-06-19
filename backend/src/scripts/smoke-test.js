@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Sentra AI v2.0.0 — Enterprise Smoke Test Suite
+ * Sentraa AI v2.0.0 — Enterprise Smoke Test Suite
  * Run: node src/scripts/smoke-test.js [BASE_URL]
  * Validates all enterprise API endpoints and security protections.
  */
@@ -37,7 +37,7 @@ async function req(path, opts = {}) {
 
 async function main() {
   console.log('\n============================================================');
-  console.log('  SENTRA AI v2.0.0 — ENTERPRISE SMOKE TEST SUITE');
+  console.log('  SENTRAA AI v2.0.0 — ENTERPRISE SMOKE TEST SUITE');
   console.log(`  Target: ${BASE_URL}`);
   console.log('============================================================\n');
 

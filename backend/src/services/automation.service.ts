@@ -118,7 +118,7 @@ export class AutomationService {
           output = `Created incident successfully with ID: ${createdIncident.id}`;
           break;
         case 'SEND_SLACK_NOTIFICATION':
-          output = `Slack Webhook triggered for channel ${config.channel || '#compliance-alerts'}: [Sentra AI Automation] ${auto.name} fired successfully.`;
+          output = `Slack Webhook triggered for channel ${config.channel || '#compliance-alerts'}: [Sentraa AI Automation] ${auto.name} fired successfully.`;
           break;
         case 'GENERATE_REPORT':
           output = `Triggered compliance audit executive PDF export compiled on organization state.`;

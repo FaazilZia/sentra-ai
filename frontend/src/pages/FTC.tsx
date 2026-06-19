@@ -347,7 +347,7 @@ export default function FTC() {
                 
                 <div className="bg-indigo-950/10 border border-indigo-900/30 rounded-xl p-4 text-[10px] text-indigo-300 leading-relaxed">
                   <HelpCircle className="h-4 w-4 mb-1 text-indigo-400 block animate-pulse" />
-                  Sentra AI tracks dynamic pricing updates, consumer opt-out preferences, and model access credentials to establish verification proof against FTC audits.
+                  Sentraa AI tracks dynamic pricing updates, consumer opt-out preferences, and model access credentials to establish verification proof against FTC audits.
                 </div>
               </>
             ) : (

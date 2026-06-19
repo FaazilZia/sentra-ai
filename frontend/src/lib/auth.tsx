@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Auth Bypass for local development/demo
     if (import.meta.env.VITE_BYPASS_AUTH === 'true') {
-      console.info('🛡️ Sentra AI: Auth bypass enabled. Session restored with demo credentials.');
+      console.info('🛡️ Sentraa AI: Auth bypass enabled. Session restored with demo credentials.');
       setUser({
         id: '00000000-0000-0000-0000-000000000000',
         email: 'admin@sentra.ai',
@@ -136,9 +136,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoginError(null);
 
     try {
-      const derivedName = fullName?.trim() || email.split('@')[0] || 'Sentra User';
+      const derivedName = fullName?.trim() || email.split('@')[0] || 'Sentraa User';
       const derivedOrg = organizationName?.trim() || 
-        `${email.split('@')[1]?.split('.')[0]?.toUpperCase() || 'Sentra Org'} Workspace`;
+        `${email.split('@')[1]?.split('.')[0]?.toUpperCase() || 'Sentraa Org'} Workspace`;
 
       await registerRequest({
         email,

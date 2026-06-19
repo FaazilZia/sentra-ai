@@ -348,7 +348,7 @@ export default function CCPA() {
                 
                 <div className="bg-indigo-950/10 border border-indigo-900/30 rounded-xl p-4 text-[10px] text-indigo-300 leading-relaxed">
                   <HelpCircle className="h-4 w-4 mb-1 text-indigo-400 block animate-pulse" />
-                  Sentra AI automatically maps intercepted database actions and user consent records to compliance controls, facilitating continuous evidence assembly.
+                  Sentraa AI automatically maps intercepted database actions and user consent records to compliance controls, facilitating continuous evidence assembly.
                 </div>
               </>
             ) : (

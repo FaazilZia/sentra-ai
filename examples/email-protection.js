@@ -29,7 +29,7 @@ async function runEmailBot() {
   });
 
   if (!result.success) {
-    console.log("🛡️ Sentra AI Intercepted:");
+    console.log("🛡️ Sentraa AI Intercepted:");
     console.log(`- Status: BLOCKED`);
     console.log(`- Reason: ${result.governance.reason}`);
   }

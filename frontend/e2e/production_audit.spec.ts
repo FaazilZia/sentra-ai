@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import axios from 'axios';
 
-test.describe('Sentra AI - Full Production Audit Flow', () => {
+test.describe('Sentraa AI - Full Production Audit Flow', () => {
   test.setTimeout(120000);
 
   test.beforeEach(async ({ page }) => {
