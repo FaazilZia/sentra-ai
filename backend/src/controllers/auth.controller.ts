@@ -271,15 +271,6 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
-    // Require email verification on login
-    if (user.email_verified === false) {
-      return res.status(403).json({ 
-        success: false,
-        error: 'EMAIL_NOT_VERIFIED', 
-        message: 'Please verify your email before logging in.'
-      });
-    }
-
     const role = user.role || 'USER';
     const { accessToken, refreshToken } = await setAuthCookiesAndTokens(
       res,
