@@ -167,7 +167,7 @@ export default function Drift() {
         
         <div className="flex flex-wrap items-center gap-3 self-start sm:self-auto">
           {/* Filter Tabs */}
-          <div className="flex bg-[var(--bg-page)]/60 border border-[var(--border-default)] rounded-xl p-1">
+          <div className="flex bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-1">
             {(['open', 'resolved', 'all'] as const).map((t) => (
               <button
                 key={t}
@@ -310,7 +310,7 @@ export default function Drift() {
       </div>
 
       {/* Main Alert List */}
-      <div className="card-base overflow-hidden border border-[var(--border-default)] bg-[var(--bg-page)]/20 rounded-2xl shadow-xl backdrop-blur-md">
+      <div className="card-base overflow-hidden border border-[var(--border-default)] bg-[var(--bg-card)] rounded-2xl shadow-xl backdrop-blur-md">
         <div className="p-5 border-b border-[var(--border-default)] flex items-center justify-between bg-[var(--bg-page)]">
           <div className="flex items-center gap-2">
             <ShieldAlert className="h-4 w-4 text-indigo-400" />

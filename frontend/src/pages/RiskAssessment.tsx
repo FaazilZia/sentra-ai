@@ -298,7 +298,7 @@ export default function RiskAssessment() {
                         tabIndex={0}
                         onClick={() => setSelectedAssessment(ass)}
                         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedAssessment(ass); } }}
-                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-[var(--border-default)]/60 bg-[var(--bg-page)]/30 hover:border-[var(--border-default)] transition-all cursor-pointer outline-none"
+                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-[var(--border-default)]/60 bg-[var(--bg-card)] hover:border-[var(--border-default)] transition-all cursor-pointer outline-none"
                       >
                         <div className="flex items-start gap-3">
                           <div className="rounded-lg bg-gray-800 p-2 text-[var(--text-secondary)]">

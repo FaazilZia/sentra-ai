@@ -323,7 +323,7 @@ export default function AIRegistry() {
               placeholder="Search by system name, vendor, model, use case..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-[var(--bg-page)]/60 border border-[var(--border-default)] rounded-xl py-3 pl-11 pr-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+              className="w-full bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl py-3 pl-11 pr-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
             />
           </div>
 
@@ -629,7 +629,7 @@ export default function AIRegistry() {
               </div>
             </div>
           ) : (
-            <div className="hidden lg:flex flex-col items-center justify-center py-24 bg-[var(--bg-page)]/20 border border-dashed border-[var(--border-default)] rounded-2xl text-center p-6">
+            <div className="hidden lg:flex flex-col items-center justify-center py-24 bg-[var(--bg-card)] border border-dashed border-[var(--border-default)] rounded-2xl text-center p-6">
               <Bot className="h-10 w-10 text-gray-700 mb-3 animate-pulse" />
               <h3 className="font-semibold text-[var(--text-secondary)] text-sm">No System Selected</h3>
               <p className="text-[var(--text-muted)] text-xs mt-1 max-w-[200px]">

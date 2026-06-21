@@ -288,7 +288,7 @@ export default function Workflows() {
                 </div>
 
                 {task.metadata?.metadata?.prompt && (
-                  <div className="flex flex-col gap-1.5 bg-[var(--bg-page)]/30 border border-[var(--border-default)]/60 p-4 rounded-xl">
+                  <div className="flex flex-col gap-1.5 bg-[var(--bg-card)] border border-[var(--border-default)]/60 p-4 rounded-xl">
                     <span className="text-[9px] font-semibold uppercase tracking-widest text-indigo-400/80">User Input / Prompt context</span>
                     <pre className="text-[10px] text-[var(--text-secondary)] font-mono overflow-x-auto whitespace-pre-wrap mt-1 leading-relaxed max-h-[100px] overflow-y-auto">
                       {task.metadata.metadata.prompt}

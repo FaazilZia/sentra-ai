@@ -317,7 +317,7 @@ export default function GDPR() {
           </div>
 
           {filteredControls.length === 0 ? (
-            <div className="bg-[var(--bg-page)]/20 border border-[var(--border-default)] border-dashed rounded-2xl p-12 text-center text-[var(--text-muted)]">
+            <div className="bg-[var(--bg-card)] border border-[var(--border-default)] border-dashed rounded-2xl p-12 text-center text-[var(--text-muted)]">
               <Shield className="h-8 w-8 mx-auto mb-3 text-gray-650" />
               <h4 className="text-xs font-semibold uppercase text-[var(--text-secondary)]">No Articles Found</h4>
               <p className="text-[10px] text-[var(--text-muted)] mt-1">Try relaxing filters or search query.</p>

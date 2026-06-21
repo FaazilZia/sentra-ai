@@ -291,7 +291,7 @@ export default function Tasks() {
           description="Create a task or change filters to get started."
         />
       ) : (
-        <div className="bg-[var(--bg-page)]/30 border border-[var(--border-default)]/80 rounded-2xl overflow-hidden">
+        <div className="bg-[var(--bg-card)] border border-[var(--border-default)]/80 rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>

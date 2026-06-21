@@ -210,22 +210,22 @@ export default function ExecutiveReport() {
           </h3>
           
           <div className="flex flex-col gap-3 mt-1 text-xs">
-            <div className="flex items-center justify-between p-3.5 bg-[var(--bg-page)]/30 rounded-xl border border-[var(--border-default)]/60">
+            <div className="flex items-center justify-between p-3.5 bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)]/60">
               <span className="text-[var(--text-secondary)]">Total MET (Compliant)</span>
               <span className="font-bold text-emerald-400">{stats.obligationsByStatus.MET}</span>
             </div>
 
-            <div className="flex items-center justify-between p-3.5 bg-[var(--bg-page)]/30 rounded-xl border border-[var(--border-default)]/60">
+            <div className="flex items-center justify-between p-3.5 bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)]/60">
               <span className="text-[var(--text-secondary)]">In Progress (Active)</span>
               <span className="font-bold text-indigo-400">{stats.obligationsByStatus.IN_PROGRESS}</span>
             </div>
 
-            <div className="flex items-center justify-between p-3.5 bg-[var(--bg-page)]/30 rounded-xl border border-[var(--border-default)]/60">
+            <div className="flex items-center justify-between p-3.5 bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)]/60">
               <span className="text-[var(--text-secondary)]">Pending Review</span>
               <span className="font-bold text-yellow-400">{stats.obligationsByStatus.PENDING}</span>
             </div>
 
-            <div className="flex items-center justify-between p-3.5 bg-[var(--bg-page)]/30 rounded-xl border border-[var(--border-default)]/60">
+            <div className="flex items-center justify-between p-3.5 bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)]/60">
               <span className="text-[var(--text-secondary)]">Not Applicable (Exempt)</span>
               <span className="font-bold text-[var(--text-muted)]">{stats.obligationsByStatus.NOT_APPLICABLE}</span>
             </div>
@@ -240,22 +240,22 @@ export default function ExecutiveReport() {
           </h3>
           
           <div className="flex flex-col gap-3 mt-1 text-xs">
-            <div className="flex items-center justify-between p-3.5 bg-[var(--bg-page)]/30 rounded-xl border border-[var(--border-default)]/60">
+            <div className="flex items-center justify-between p-3.5 bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)]/60">
               <span className="text-[var(--text-secondary)]">Approved SaaS Tools</span>
               <span className="font-bold text-emerald-400">{stats.vendorsByStatus.APPROVED}</span>
             </div>
 
-            <div className="flex items-center justify-between p-3.5 bg-[var(--bg-page)]/30 rounded-xl border border-[var(--border-default)]/60">
+            <div className="flex items-center justify-between p-3.5 bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)]/60">
               <span className="text-[var(--text-secondary)]">Pending Safety Audits</span>
               <span className="font-bold text-yellow-400">{stats.vendorsByStatus.PENDING}</span>
             </div>
 
-            <div className="flex items-center justify-between p-3.5 bg-[var(--bg-page)]/30 rounded-xl border border-[var(--border-default)]/60">
+            <div className="flex items-center justify-between p-3.5 bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)]/60">
               <span className="text-[var(--text-secondary)]">Flagged / Restricted Integrations</span>
               <span className="font-bold text-red-400">{stats.vendorsByStatus.FLAGGED}</span>
             </div>
 
-            <div className="flex items-center justify-between p-3.5 bg-[var(--bg-page)]/30 rounded-xl border border-[var(--border-default)]/60">
+            <div className="flex items-center justify-between p-3.5 bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)]/60">
               <span className="text-[var(--text-secondary)]">Dynamic Drift Alerts Logged</span>
               <span className="font-bold text-red-400/90 flex items-center gap-1">
                 <AlertTriangle className="h-4 w-4 text-red-500" />

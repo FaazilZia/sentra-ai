@@ -156,7 +156,7 @@ export default function Controls() {
       </div>
 
       {/* Control List Operations */}
-      <div className="flex flex-col md:flex-row gap-4 justify-between items-stretch md:items-center bg-[var(--bg-page)]/20 border border-[var(--border-default)]/40 p-4 rounded-2xl">
+      <div className="flex flex-col md:flex-row gap-4 justify-between items-stretch md:items-center bg-[var(--bg-card)] border border-[var(--border-default)]/40 p-4 rounded-2xl">
         <div className="relative flex-1">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--text-muted)]" />
           <input
@@ -333,7 +333,7 @@ export default function Controls() {
                 {evidenceList.length > 0 && (
                   <div className="flex flex-col gap-2 mt-3 bg-black/20 p-3 rounded-xl border border-[var(--border-default)]/60 max-h-[140px] overflow-y-auto">
                     {evidenceList.map((ev, index) => (
-                      <div key={index} className="flex items-center justify-between gap-4 p-2 bg-[var(--bg-page)]/30 rounded-lg border border-[var(--border-default)]/40 text-[10px]">
+                      <div key={index} className="flex items-center justify-between gap-4 p-2 bg-[var(--bg-card)] rounded-lg border border-[var(--border-default)]/40 text-[10px]">
                         <div className="flex items-center gap-2">
                           <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
                           <span className="font-semibold text-white truncate max-w-[200px]">{ev.name}</span>

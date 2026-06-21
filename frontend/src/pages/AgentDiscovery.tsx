@@ -387,7 +387,7 @@ export default function AgentDiscovery() {
         {/* Discovery List / Registered List */}
         {activeTab === 'SHADOW' ? (
           agents.length === 0 ? (
-            <div className="bg-[var(--bg-page)]/20 border border-zinc-800 border-dashed rounded-2xl p-12 text-center text-[var(--text-muted)] max-w-md mx-auto my-6">
+            <div className="bg-[var(--bg-card)] border border-zinc-800 border-dashed rounded-2xl p-12 text-center text-[var(--text-muted)] max-w-md mx-auto my-6">
               <Radio className="h-8 w-8 mx-auto mb-3 text-indigo-500/60 animate-pulse" />
               <h4 className="text-xs font-semibold uppercase text-[var(--text-secondary)]">No Agents Discovered</h4>
               <p className="text-[10px] text-[var(--text-muted)] mt-1">Agents detected by Shadow AI scanner will appear here.</p>

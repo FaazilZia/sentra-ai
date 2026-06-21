@@ -247,7 +247,7 @@ export default function VendorRisk() {
           placeholder="Search by vendor name, category, or notes..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full bg-[var(--bg-page)]/60 border border-[var(--border-default)] rounded-xl py-3 pl-11 pr-4 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition-all shadow-inner"
+          className="w-full bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl py-3 pl-11 pr-4 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition-all shadow-inner"
         />
       </div>
 
@@ -309,7 +309,7 @@ export default function VendorRisk() {
 
               {/* Data Shared list */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                <div className="bg-[var(--bg-page)]/30 border border-[var(--border-default)]/60 p-4 rounded-xl flex flex-col gap-2">
+                <div className="bg-[var(--bg-card)] border border-[var(--border-default)]/60 p-4 rounded-xl flex flex-col gap-2">
                   <span className="text-[9px] font-semibold uppercase tracking-widest text-indigo-400/80 flex items-center gap-1">
                     <TrendingUp className="h-3 w-3" /> Data Egress Map
                   </span>
@@ -327,7 +327,7 @@ export default function VendorRisk() {
                   </div>
                 </div>
 
-                <div className="bg-[var(--bg-page)]/30 border border-[var(--border-default)]/60 p-4 rounded-xl flex flex-col gap-2">
+                <div className="bg-[var(--bg-card)] border border-[var(--border-default)]/60 p-4 rounded-xl flex flex-col gap-2">
                   <span className="text-[9px] font-semibold uppercase tracking-widest text-purple-400/80 flex items-center gap-1">
                     <Award className="h-3 w-3" /> Certifications Verified
                   </span>
@@ -347,7 +347,7 @@ export default function VendorRisk() {
               </div>
 
               {/* Assessment Notes */}
-              <div className="bg-[var(--bg-page)]/10 border border-[var(--border-default)] p-4 rounded-xl flex flex-col gap-1.5 text-[11px] leading-relaxed">
+              <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-4 rounded-xl flex flex-col gap-1.5 text-[11px] leading-relaxed">
                 <span className="text-[9px] font-semibold uppercase text-[var(--text-muted)] flex items-center gap-1">
                   <FileText className="h-3 w-3" /> Auditor Assessment Notes
                 </span>

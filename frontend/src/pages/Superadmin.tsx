@@ -464,7 +464,7 @@ export default function Superadmin() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="border-b border-[var(--border-default)] bg-[var(--bg-page)]/40 text-[9px] font-semibold uppercase tracking-widest text-[var(--text-secondary)]">
+                      <tr className="border-b border-[var(--border-default)] bg-[var(--bg-card)] text-[9px] font-semibold uppercase tracking-widest text-[var(--text-secondary)]">
                         <th className="px-6 py-4">Account Profile</th>
                         <th className="px-6 py-4">Associated Organization</th>
                         <th className="px-6 py-4">System Role</th>

@@ -178,7 +178,7 @@ export default function ConsentManager() {
           </div>
 
           {/* History Ledger Table */}
-          <div className="card-base overflow-hidden border border-[var(--border-default)] bg-[var(--bg-page)]/20 shadow-2xl rounded-2xl backdrop-blur-md">
+          <div className="card-base overflow-hidden border border-[var(--border-default)] bg-[var(--bg-card)] shadow-2xl rounded-2xl backdrop-blur-md">
             
             <div className="p-5 border-b border-[var(--border-default)] bg-[var(--bg-page)] flex items-center justify-between">
               <span className="text-[10px] font-semibold tracking-wider text-indigo-400 uppercase flex items-center gap-1.5">

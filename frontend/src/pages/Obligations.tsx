@@ -107,7 +107,7 @@ export default function Obligations() {
       </div>
 
       {/* Operations Bar */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-stretch sm:items-center bg-[var(--bg-page)]/20 border border-[var(--border-default)]/40 p-4 rounded-2xl">
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-stretch sm:items-center bg-[var(--bg-card)] border border-[var(--border-default)]/40 p-4 rounded-2xl">
         <div className="relative flex-1">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--text-muted)]" />
           <input
@@ -151,7 +151,7 @@ export default function Obligations() {
               <div
                 key={ob.id}
                 className={`bg-[var(--bg-page)] border rounded-2xl p-6 flex flex-col gap-4 transition-all relative overflow-hidden group ${
-                  isEditing ? 'border-indigo-500/50 bg-[var(--bg-page)]/80' : 'border-[var(--border-default)]/80 hover:border-[var(--border-default)]'
+                  isEditing ? 'border-indigo-500/50 bg-[var(--bg-card)]' : 'border-[var(--border-default)]/80 hover:border-[var(--border-default)]'
                 }`}
               >
                 {/* Header */}
@@ -182,7 +182,7 @@ export default function Obligations() {
                 <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{ob.description}</p>
 
                 {/* Integration Details / Links */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-[var(--bg-page)]/30 border border-[var(--border-default)]/40 p-4 rounded-xl text-[10px] text-[var(--text-secondary)]">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-[var(--bg-card)] border border-[var(--border-default)]/40 p-4 rounded-xl text-[10px] text-[var(--text-secondary)]">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-[var(--text-muted)]" />
                     <span>Compliance Deadline:</span>

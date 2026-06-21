@@ -254,7 +254,7 @@ export default function FileManager() {
         </div>
 
         {/* Right Panel: File List & Upload Area */}
-        <div className="lg:col-span-8 flex flex-col gap-4 bg-[var(--bg-page)]/30 border border-[var(--border-default)]/80 rounded-2xl p-6 min-h-0 overflow-hidden">
+        <div className="lg:col-span-8 flex flex-col gap-4 bg-[var(--bg-card)] border border-[var(--border-default)]/80 rounded-2xl p-6 min-h-0 overflow-hidden">
           
           {/* Drag and drop Uploader */}
           <div

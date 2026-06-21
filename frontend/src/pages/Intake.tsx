@@ -330,7 +330,7 @@ export default function Intake() {
             <div className="space-y-6 text-left">
               {scoredResult ? (
                 /* Auto scored output screen */
-                <div className="bg-[var(--bg-page)]/60 border border-[var(--border-default)]/80 rounded-2xl p-8 flex flex-col gap-6 animate-scale-in">
+                <div className="bg-[var(--bg-card)] border border-[var(--border-default)]/80 rounded-2xl p-8 flex flex-col gap-6 animate-scale-in">
                   
                   {pollingActive ? (
                     <div className="py-12 flex flex-col items-center justify-center gap-4 text-center">
@@ -358,7 +358,7 @@ export default function Intake() {
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="bg-[var(--bg-page)]/40 border border-[var(--border-default)] p-5 rounded-xl">
+                        <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-5 rounded-xl">
                           <span className="text-[9px] text-[var(--text-muted)] font-semibold uppercase tracking-widest block mb-2">Detected Risk Factors</span>
                           <ul className="space-y-1.5 text-[11px] text-[var(--text-secondary)]">
                             {riskScoreResult.risk_factors?.map((f: string, i: number) => (
@@ -370,7 +370,7 @@ export default function Intake() {
                           </ul>
                         </div>
 
-                        <div className="bg-[var(--bg-page)]/40 border border-[var(--border-default)] p-5 rounded-xl">
+                        <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-5 rounded-xl">
                           <span className="text-[9px] text-[var(--text-muted)] font-semibold uppercase tracking-widest block mb-2">Recommended Safety Controls</span>
                           <ul className="space-y-1.5 text-[11px] text-[var(--text-secondary)]">
                             {riskScoreResult.recommended_controls?.map((c: string, i: number) => (
@@ -822,7 +822,7 @@ export default function Intake() {
             </div>
           ) : (
             /* Sidebar Help section */
-            <div className="hidden lg:flex flex-col items-center justify-center py-20 bg-[var(--bg-page)]/20 border border-dashed border-[var(--border-default)] rounded-2xl text-center p-6 sticky top-6">
+            <div className="hidden lg:flex flex-col items-center justify-center py-20 bg-[var(--bg-card)] border border-dashed border-[var(--border-default)] rounded-2xl text-center p-6 sticky top-6">
               <ClipboardCheck className="h-10 w-10 text-gray-700 mb-3 animate-pulse" />
               <h4 className="font-semibold text-[var(--text-secondary)] text-sm">AI Governance Intake</h4>
               <p className="text-[var(--text-muted)] text-xs mt-1 max-w-[200px] leading-relaxed">

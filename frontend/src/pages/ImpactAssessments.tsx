@@ -345,7 +345,7 @@ export default function ImpactAssessments() {
       ) : (
         /* FRIA Table / Wizards View */
         <div className="flex flex-col gap-6">
-          <div className="bg-[var(--bg-page)]/30 border border-[var(--border-default)] rounded-2xl overflow-hidden backdrop-blur-md">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl overflow-hidden backdrop-blur-md">
             <div className="p-5 border-b border-[var(--border-default)]/80 bg-[var(--bg-page)] flex items-center justify-between">
               <h3 className="font-bold text-white text-sm">Fundamental Rights Impact Assessments</h3>
               <span className="text-xs text-[var(--text-secondary)]">{friaAssessments.length} total assessments</span>
@@ -785,22 +785,22 @@ export default function ImpactAssessments() {
             <div className="p-6 flex flex-col gap-5 max-h-[60vh] overflow-y-auto text-[var(--text-secondary)]">
               <div>
                 <h4 className="font-bold text-white mb-1 flex items-center gap-1.5"><Sparkles className="h-4 w-4 text-indigo-400" /> Pipeline Description</h4>
-                <p className="bg-[var(--bg-page)]/30 border border-[var(--border-default)] p-3 rounded-xl leading-relaxed">{selectedAssessment.form_data.description}</p>
+                <p className="bg-[var(--bg-card)] border border-[var(--border-default)] p-3 rounded-xl leading-relaxed">{selectedAssessment.form_data.description}</p>
               </div>
 
               <div>
                 <h4 className="font-bold text-white mb-1 flex items-center gap-1.5"><Building className="h-4 w-4 text-purple-400" /> Anticipated Benefits</h4>
-                <p className="bg-[var(--bg-page)]/30 border border-[var(--border-default)] p-3 rounded-xl leading-relaxed">{selectedAssessment.form_data.benefits}</p>
+                <p className="bg-[var(--bg-card)] border border-[var(--border-default)] p-3 rounded-xl leading-relaxed">{selectedAssessment.form_data.benefits}</p>
               </div>
 
               <div>
                 <h4 className="font-bold text-white mb-1 flex items-center gap-1.5"><ShieldAlert className="h-4 w-4 text-blue-400" /> Privacy & Protection</h4>
-                <p className="bg-[var(--bg-page)]/30 border border-[var(--border-default)] p-3 rounded-xl leading-relaxed">{selectedAssessment.form_data.data_protection}</p>
+                <p className="bg-[var(--bg-card)] border border-[var(--border-default)] p-3 rounded-xl leading-relaxed">{selectedAssessment.form_data.data_protection}</p>
               </div>
 
               <div>
                 <h4 className="font-bold text-white mb-1 flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> Human Oversight</h4>
-                <p className="bg-[var(--bg-page)]/30 border border-[var(--border-default)] p-3 rounded-xl leading-relaxed">{selectedAssessment.form_data.oversight}</p>
+                <p className="bg-[var(--bg-card)] border border-[var(--border-default)] p-3 rounded-xl leading-relaxed">{selectedAssessment.form_data.oversight}</p>
               </div>
               
               <div className="grid grid-cols-2 gap-4 border-t border-[var(--border-default)]/80 pt-4 mt-1 text-[10px] text-[var(--text-muted)]">
