@@ -267,7 +267,7 @@ export function Sidebar() {
       {/* Mobile Hamburger Menu Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="lg:hidden fixed top-3.5 left-4 z-50 p-2 rounded-lg bg-[#1e293b]/90 backdrop-blur-md border border-white/10 text-white hover:bg-[#334155] focus:outline-none transition-colors shadow-lg"
+        className="lg:hidden fixed top-3.5 left-4 z-50 p-2 rounded-lg bg-[#1e293b] border border-white/10 text-white hover:bg-[#334155] focus:outline-none transition-colors shadow-lg"
         aria-label="Open sidebar menu"
       >
         <Menu className="h-4.5 w-4.5" />
@@ -288,7 +288,7 @@ export function Sidebar() {
       {/* Sidebar navigation drawer */}
       <aside 
         className={cn(
-          "fixed left-0 top-0 z-50 h-screen w-[var(--sidebar-width)] bg-[#1e293b] backdrop-blur-xl border-r border-white/5 flex flex-col transition-transform duration-300 ease-in-out shadow-2xl shadow-black/5 transform lg:translate-x-0",
+          "fixed left-0 top-0 z-50 h-screen w-[var(--sidebar-width)] bg-[#1e293b] border-r border-white/5 flex flex-col transition-transform duration-300 ease-in-out shadow-2xl shadow-black/5 transform lg:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >

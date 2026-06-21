@@ -256,7 +256,7 @@ export function Header() {
 
           {/* Search Dropdown Panel */}
           {isSearchOpen && (
-            <div className="absolute right-0 mt-2 w-96 max-h-[420px] overflow-y-auto bg-white/90 backdrop-blur-md border border-[var(--border-default)] rounded-[var(--radius)] shadow-2xl z-50 py-2 custom-scrollbar">
+            <div className="absolute right-0 mt-2 w-96 max-h-[420px] overflow-y-auto bg-white border border-[var(--border-default)] rounded-[var(--radius)] shadow-2xl z-50 py-2 custom-scrollbar">
               {searchResults.length === 0 ? (
                 <div className="px-4 py-6 text-center text-[var(--text-muted)] text-[var(--text-xs)]">
                   NO RESULTS FOUND
@@ -333,7 +333,7 @@ export function Header() {
 
             {/* Notifications Dropdown Panel */}
             {isBellOpen && (
-              <div className="absolute right-0 mt-2 w-80 bg-white/95 backdrop-blur-md border border-[var(--border-default)] rounded-[var(--radius)] shadow-2xl z-50 overflow-hidden flex flex-col max-h-[460px] animate-fade-in">
+              <div className="absolute right-0 mt-2 w-80 bg-white border border-[var(--border-default)] rounded-[var(--radius)] shadow-2xl z-50 overflow-hidden flex flex-col max-h-[460px] animate-fade-in">
                 <div className="px-4 py-3 border-b border-[var(--border-default)] flex items-center justify-between bg-[var(--bg-page)]/40">
                   <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-primary)]">Notifications</span>
                   {unreadCount > 0 && (

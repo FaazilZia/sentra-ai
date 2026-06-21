@@ -37,7 +37,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
       {/* Impersonation Floating HUD */}
       {originalUser && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] bg-[#d97706]/95 backdrop-blur-md text-white px-5 py-3 rounded-full flex items-center gap-6 shadow-2xl border border-amber-400/40 text-[10px] font-black uppercase tracking-widest animate-pulse-slow">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] bg-[#d97706]/95 text-white px-5 py-3 rounded-full flex items-center gap-6 shadow-2xl border border-amber-400/40 text-[10px] font-black uppercase tracking-widest animate-pulse-slow">
           <div className="flex items-center gap-3">
             <span className="relative flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
