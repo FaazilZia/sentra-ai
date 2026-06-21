@@ -370,8 +370,8 @@ export default function OECD() {
                   </p>
                 </div>
                 
-                <div className="bg-indigo-950/10 border border-indigo-900/30 rounded-xl p-4 text-[10px] text-indigo-300 leading-relaxed">
-                  <HelpCircle className="h-4 w-4 mb-1 text-indigo-400 block animate-pulse" />
+                <div className="bg-indigo-950/10 border border-indigo-900/30 rounded-xl p-4 text-[10px] text-indigo-800 leading-relaxed">
+                  <HelpCircle className="h-4 w-4 mb-1 text-indigo-600 block animate-pulse" />
                   Sentraa AI maps algorithmic fairness logs, user interaction disclosures, and model cards against OECD Principles to guarantee trustworthy operations.
                 </div>
               </>

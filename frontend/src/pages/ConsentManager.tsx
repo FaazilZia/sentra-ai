@@ -125,7 +125,7 @@ export default function ConsentManager() {
                 )}>
                   <ShieldCheck className="h-8 w-8" />
                 </div>
-                <h3 className="font-semibold text-white text-base mt-4 uppercase tracking-wider">
+                <h3 className="font-semibold text-[var(--text-primary)] text-base mt-4 uppercase tracking-wider">
                   {isConsentGranted ? 'Authorization Granted' : 'Authorization Withdrawn'}
                 </h3>
                 <p className="text-[10px] text-[var(--text-secondary)] leading-relaxed mt-2 max-w-xs mx-auto">

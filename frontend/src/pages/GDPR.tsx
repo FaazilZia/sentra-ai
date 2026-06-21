@@ -357,7 +357,7 @@ export default function GDPR() {
                 )}
 
                 {ctrl.notes && (
-                  <div className="text-[10px] text-indigo-300/90 flex items-start gap-1.5 bg-indigo-950/5 border border-indigo-950/20 rounded-xl p-3">
+                  <div className="text-[10px] text-indigo-800 flex items-start gap-1.5 bg-indigo-950/5 border border-indigo-950/20 rounded-xl p-3">
                     <FileText className="h-3.5 w-3.5 mt-0.5 text-indigo-400 shrink-0" />
                     <div>
                       <span className="font-bold text-[8.5px] text-indigo-400 uppercase block mb-0.5">Implementation Notes</span>
@@ -391,8 +391,8 @@ export default function GDPR() {
                   </p>
                 </div>
                 
-                <div className="bg-indigo-950/10 border border-indigo-900/30 rounded-xl p-4 text-[10px] text-indigo-300 leading-relaxed">
-                  <HelpCircle className="h-4 w-4 mb-1 text-indigo-400 block animate-pulse" />
+                <div className="bg-indigo-950/10 border border-indigo-900/30 rounded-xl p-4 text-[10px] text-indigo-800 leading-relaxed">
+                  <HelpCircle className="h-4 w-4 mb-1 text-indigo-600 block animate-pulse" />
                   Sentraa AI maps live LLM executions and intercept operations to relevant articles in GDPR Chapters (such as Articles 5, 25, 32, and 35) to facilitate active compliance validation.
                 </div>
               </>

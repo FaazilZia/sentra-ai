@@ -390,8 +390,8 @@ export default function SOC2() {
                   </p>
                 </div>
                 
-                <div className="bg-violet-950/10 border border-violet-900/30 rounded-xl p-4 text-[10px] text-violet-300 leading-relaxed">
-                  <HelpCircle className="h-4 w-4 mb-1 text-violet-400 block animate-pulse" />
+                <div className="bg-violet-950/10 border border-violet-900/30 rounded-xl p-4 text-[10px] text-violet-800 leading-relaxed">
+                  <HelpCircle className="h-4 w-4 mb-1 text-violet-600 block animate-pulse" />
                   Sentraa AI maps logical access boundaries, vulnerability checks, and automated systems resilience directly to Trust Services Criteria.
                 </div>
               </>

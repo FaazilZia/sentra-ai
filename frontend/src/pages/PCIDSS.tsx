@@ -390,8 +390,8 @@ export default function PCIDSS() {
                   </p>
                 </div>
                 
-                <div className="bg-rose-950/10 border border-rose-900/30 rounded-xl p-4 text-[10px] text-rose-300 leading-relaxed">
-                  <HelpCircle className="h-4 w-4 mb-1 text-rose-400 block animate-pulse" />
+                <div className="bg-rose-950/10 border border-rose-900/30 rounded-xl p-4 text-[10px] text-rose-800 leading-relaxed">
+                  <HelpCircle className="h-4 w-4 mb-1 text-rose-600 block animate-pulse" />
                   Sentraa AI validates logical separation parameters, PAN masking configurations, and database query restrictions to verify active compliance checks.
                 </div>
               </>
