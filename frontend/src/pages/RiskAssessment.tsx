@@ -276,7 +276,7 @@ export default function RiskAssessment() {
               </div>
 
               {/* Past Assessments List */}
-              <div className="bg-[var(--bg-page)] border border-[var(--border-default)]/80 rounded-2xl p-6 flex flex-col gap-4">
+              <div className="bg-[var(--bg-card)] border border-[var(--border-strong)] rounded-2xl p-6 flex flex-col gap-4 shadow-sm">
                 <h3 className="font-bold text-white text-sm uppercase tracking-wider text-[var(--text-secondary)]">
                   Assessment Logs & Tiers
                 </h3>
@@ -328,7 +328,7 @@ export default function RiskAssessment() {
 
             {/* Right Column: Framework explanation / Wizard Guide */}
             <div className="lg:col-span-1">
-              <div className="bg-[var(--bg-page)] border border-[var(--border-default)]/80 rounded-2xl p-6 flex flex-col gap-4">
+              <div className="bg-[var(--bg-card)] border border-[var(--border-strong)] rounded-2xl p-6 flex flex-col gap-4 shadow-sm">
                 <h3 className="font-bold text-white text-sm flex items-center gap-2 border-b border-[var(--border-default)]/80 pb-3">
                   <HelpCircle className="h-4 w-4 text-indigo-400" />
                   Risk Tier Methodology
@@ -388,13 +388,13 @@ export default function RiskAssessment() {
                   { label: 'Medium Risk', value: portfolio.riskDistribution?.MEDIUM ?? 0, color: 'text-amber-400' },
                   { label: 'Low Risk', value: portfolio.riskDistribution?.LOW ?? 0, color: 'text-emerald-400' },
                 ].map((s) => (
-                  <div key={s.label} className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-4">
+                  <div key={s.label} className="bg-[var(--bg-card)] border border-[var(--border-strong)] rounded-2xl p-4 shadow-sm">
                     <p className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-widest">{s.label}</p>
                     <p className={`text-2xl font-semibold mt-1 ${s.color}`}>{s.value}</p>
                   </div>
                 ))}
               </div>
-              <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-6">
+              <div className="bg-[var(--bg-card)] border border-[var(--border-strong)] rounded-2xl p-6 shadow-sm">
                 <p className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest mb-4">Probability × Impact Heatmap</p>
                 <div className="flex gap-4">
                   <div className="flex flex-col justify-between text-[9px] text-[var(--text-muted)] uppercase font-bold py-1" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
@@ -437,7 +437,7 @@ export default function RiskAssessment() {
                   </div>
                 </div>
               </div>
-              <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl overflow-hidden">
+              <div className="bg-[var(--bg-card)] border border-[var(--border-strong)] rounded-2xl overflow-hidden shadow-sm">
                 <div className="p-5 border-b border-[var(--border-default)]">
                   <p className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest">All Systems — Risk Register</p>
                 </div>

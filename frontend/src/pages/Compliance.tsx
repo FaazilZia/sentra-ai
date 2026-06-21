@@ -924,7 +924,7 @@ function EuAiActTab({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Accordion list */}
         <div className="lg:col-span-8 flex flex-col gap-4">
-          <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10">
+          <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/30">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">Active Standard</span>
@@ -1457,7 +1457,7 @@ function NistAiRmfTab({
 
       {/* NIST AI RMF Maturity Accordion */}
       <div className="flex flex-col gap-4">
-        <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10">
+        <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/30">
           <div className="flex items-center justify-between mb-2">
             <div>
               <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">Operational Maturity Matrix</span>
@@ -1650,7 +1650,7 @@ function Iso42001Tab({
 
       {/* Clause Trees */}
       <div className="flex flex-col gap-4">
-        <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10">
+        <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/30">
           <div className="flex items-center justify-between mb-4">
             <div>
               <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">Active Standard</span>
@@ -1822,7 +1822,7 @@ function Iso27001Tab({
 
       {/* Clause Trees */}
       <div className="flex flex-col gap-4">
-        <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10">
+        <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/30">
           <div className="flex items-center justify-between mb-4">
             <div>
               <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">Active Standard</span>

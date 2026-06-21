@@ -209,19 +209,19 @@ export default function FTC() {
         </div>
 
         <div className="md:col-span-3 grid grid-cols-2 lg:grid-cols-4 gap-4 p-2">
-          <div className="bg-[var(--bg-page)] border border-gray-855 rounded-xl p-4 flex flex-col justify-between">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-strong)] rounded-xl p-4 flex flex-col justify-between shadow-sm">
             <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase">Total Controls</span>
             <span className="text-2xl font-semibold text-[var(--text-primary)] mt-1">{summary.total_controls}</span>
           </div>
-          <div className="bg-emerald-950/10 border border-emerald-900/20 rounded-xl p-4 flex flex-col justify-between">
+          <div className="bg-emerald-950/10 border border-emerald-900/40 rounded-xl p-4 flex flex-col justify-between shadow-sm">
             <span className="text-[9px] font-bold text-emerald-500 uppercase">Implemented</span>
             <span className="text-2xl font-semibold text-emerald-400 mt-1">{summary.implemented}</span>
           </div>
-          <div className="bg-amber-950/10 border border-amber-900/20 rounded-xl p-4 flex flex-col justify-between">
+          <div className="bg-amber-950/10 border border-amber-900/40 rounded-xl p-4 flex flex-col justify-between shadow-sm">
             <span className="text-[9px] font-bold text-amber-500 uppercase">In Progress</span>
             <span className="text-2xl font-semibold text-amber-400 mt-1">{summary.in_progress}</span>
           </div>
-          <div className="bg-blue-950/10 border border-blue-900/20 rounded-xl p-4 flex flex-col justify-between">
+          <div className="bg-blue-950/10 border border-blue-900/40 rounded-xl p-4 flex flex-col justify-between shadow-sm">
             <span className="text-[9px] font-bold text-blue-500 uppercase">Not Applicable</span>
             <span className="text-2xl font-semibold text-blue-400 mt-1">{summary.not_applicable}</span>
           </div>

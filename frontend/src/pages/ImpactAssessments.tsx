@@ -218,10 +218,10 @@ export default function ImpactAssessments() {
   };
 
   const columns: Array<{ title: string; status: ImpactAssessment['status']; color: string; border: string }> = [
-    { title: 'Draft', status: 'DRAFT', color: 'bg-gray-500/5', border: 'border-[var(--border-default)]' },
-    { title: 'In Review', status: 'IN_REVIEW', color: 'bg-indigo-500/5', border: 'border-indigo-900/40' },
-    { title: 'Approved', status: 'APPROVED', color: 'bg-emerald-500/5', border: 'border-emerald-900/40' },
-    { title: 'Rejected', status: 'REJECTED', color: 'bg-red-500/5', border: 'border-red-900/40' }
+    { title: 'Draft', status: 'DRAFT', color: 'bg-gray-500/10', border: 'border-[var(--border-strong)]' },
+    { title: 'In Review', status: 'IN_REVIEW', color: 'bg-indigo-500/10', border: 'border-indigo-500/30' },
+    { title: 'Approved', status: 'APPROVED', color: 'bg-emerald-500/10', border: 'border-emerald-500/30' },
+    { title: 'Rejected', status: 'REJECTED', color: 'bg-red-500/10', border: 'border-red-500/30' }
   ];
 
   return (

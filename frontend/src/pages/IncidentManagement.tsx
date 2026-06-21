@@ -309,19 +309,19 @@ export default function IncidentManagement() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-5 rounded-xl">
+        <div className="bg-[var(--bg-card)] border border-[var(--border-strong)] p-5 rounded-xl shadow-sm">
           <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Total Incidents</p>
           <p className="text-2xl font-semibold text-white mt-1">{stats.total}</p>
         </div>
-        <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-5 rounded-xl border-l-red-500/50">
+        <div className="bg-[var(--bg-card)] border border-[var(--border-strong)] p-5 rounded-xl border-l-red-500/50 shadow-sm">
           <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Open</p>
           <p className="text-2xl font-semibold text-red-400 mt-1">{stats.open}</p>
         </div>
-        <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-5 rounded-xl border-l-amber-500/50">
+        <div className="bg-[var(--bg-card)] border border-[var(--border-strong)] p-5 rounded-xl border-l-amber-500/50 shadow-sm">
           <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">In Progress</p>
           <p className="text-2xl font-semibold text-amber-400 mt-1">{stats.inProgress}</p>
         </div>
-        <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-5 rounded-xl border-l-green-500/50">
+        <div className="bg-[var(--bg-card)] border border-[var(--border-strong)] p-5 rounded-xl border-l-green-500/50 shadow-sm">
           <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Resolved</p>
           <p className="text-2xl font-semibold text-green-400 mt-1">{stats.resolved}</p>
         </div>

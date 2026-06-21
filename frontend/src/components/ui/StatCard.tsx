@@ -56,7 +56,7 @@ export function StatCard({
   const strokeColor = sectionStrokeColors[section] || '#4F46E5';
 
   return (
-    <div className="group relative flex h-full min-h-[140px] flex-col justify-between overflow-hidden rounded-xl border border-[var(--border-default)] bg-white p-4 transition-all hover:shadow-md">
+    <div className="group relative flex h-full min-h-[140px] flex-col justify-between overflow-hidden rounded-xl border border-[var(--border-strong)] bg-white p-4 transition-all hover:shadow-md shadow-sm">
       {/* Node dot (Fix 5) */}
       <span className={cn("absolute top-3 left-3 h-2.5 w-2.5 rounded-full", sectionDotColors[section])} />
 

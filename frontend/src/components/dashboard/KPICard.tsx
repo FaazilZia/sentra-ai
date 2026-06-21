@@ -46,7 +46,7 @@ export default function KPICard({ label, value, icon, status, trend, isLoading, 
   };
 
   return (
-    <div className="card-base p-6 flex flex-col relative overflow-hidden group hover:shadow-md transition-all min-h-[140px]">
+    <div className="card-base p-6 flex flex-col relative overflow-hidden group hover:shadow-md transition-all min-h-[140px] shadow-sm border-[var(--border-strong)]">
       {/* Node dot (Fix 5) */}
       <span className={cn("absolute top-3 left-3 h-2.5 w-2.5 rounded-full", dotColors[status])} />
 

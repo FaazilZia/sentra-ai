@@ -124,7 +124,7 @@ export default function ExecutiveReport() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         
         {/* Total Systems */}
-        <div className="bg-[var(--bg-page)] border border-[var(--border-default)]/80 rounded-2xl p-5 flex items-center justify-between gap-4">
+        <div className="bg-[var(--bg-card)] border border-[var(--border-strong)] rounded-2xl p-5 flex items-center justify-between gap-4 shadow-sm">
           <div>
             <span className="text-[10px] text-[var(--text-muted)] uppercase font-semibold tracking-wider block">Total AI Systems</span>
             <span className="text-2xl font-semibold text-white mt-1 block">{stats.totalSystems}</span>
@@ -135,7 +135,7 @@ export default function ExecutiveReport() {
         </div>
 
         {/* Active Controls */}
-        <div className="bg-[var(--bg-page)] border border-[var(--border-default)]/80 rounded-2xl p-5 flex items-center justify-between gap-4">
+        <div className="bg-[var(--bg-card)] border border-[var(--border-strong)] rounded-2xl p-5 flex items-center justify-between gap-4 shadow-sm">
           <div>
             <span className="text-[10px] text-[var(--text-muted)] uppercase font-semibold tracking-wider block">Active Controls MET</span>
             <span className="text-2xl font-semibold text-emerald-400 mt-1 block">{stats.activeControls} <span className="text-xs text-[var(--text-muted)] font-normal">/ {stats.totalControls}</span></span>
@@ -146,7 +146,7 @@ export default function ExecutiveReport() {
         </div>
 
         {/* Obligations MET */}
-        <div className="bg-[var(--bg-page)] border border-[var(--border-default)]/80 rounded-2xl p-5 flex items-center justify-between gap-4">
+        <div className="bg-[var(--bg-card)] border border-[var(--border-strong)] rounded-2xl p-5 flex items-center justify-between gap-4 shadow-sm">
           <div>
             <span className="text-[10px] text-[var(--text-muted)] uppercase font-semibold tracking-wider block">Obligations Resolved</span>
             <span className="text-2xl font-semibold text-indigo-400 mt-1 block">{stats.obligationsByStatus.MET} <span className="text-xs text-[var(--text-muted)] font-normal">/ {stats.totalObligations}</span></span>
@@ -157,7 +157,7 @@ export default function ExecutiveReport() {
         </div>
 
         {/* Vendor tools */}
-        <div className="bg-[var(--bg-page)] border border-[var(--border-default)]/80 rounded-2xl p-5 flex items-center justify-between gap-4">
+        <div className="bg-[var(--bg-card)] border border-[var(--border-strong)] rounded-2xl p-5 flex items-center justify-between gap-4 shadow-sm">
           <div>
             <span className="text-[10px] text-[var(--text-muted)] uppercase font-semibold tracking-wider block">External Vendor Tools</span>
             <span className="text-2xl font-semibold text-purple-400 mt-1 block">{stats.totalVendors}</span>
@@ -173,7 +173,7 @@ export default function ExecutiveReport() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Systems by risk tier */}
-        <div className="bg-[var(--bg-page)] border border-[var(--border-default)]/80 rounded-2xl p-6 flex flex-col gap-4">
+        <div className="bg-[var(--bg-card)] border border-[var(--border-strong)] rounded-2xl p-6 flex flex-col gap-4 shadow-sm">
           <h3 className="font-bold text-white text-xs uppercase tracking-wider text-[var(--text-secondary)] flex items-center gap-2">
             <ShieldAlert className="h-4 w-4 text-indigo-400" />
             AI Risk Distribution
@@ -203,7 +203,7 @@ export default function ExecutiveReport() {
         </div>
 
         {/* Compliance obligations statuses */}
-        <div className="bg-[var(--bg-page)] border border-[var(--border-default)]/80 rounded-2xl p-6 flex flex-col gap-4">
+        <div className="bg-[var(--bg-card)] border border-[var(--border-strong)] rounded-2xl p-6 flex flex-col gap-4 shadow-sm">
           <h3 className="font-bold text-white text-xs uppercase tracking-wider text-[var(--text-secondary)] flex items-center gap-2">
             <Award className="h-4 w-4 text-indigo-400" />
             Obligations Performance
@@ -233,7 +233,7 @@ export default function ExecutiveReport() {
         </div>
 
         {/* Third-party vendors review status */}
-        <div className="bg-[var(--bg-page)] border border-[var(--border-default)]/80 rounded-2xl p-6 flex flex-col gap-4">
+        <div className="bg-[var(--bg-card)] border border-[var(--border-strong)] rounded-2xl p-6 flex flex-col gap-4 shadow-sm">
           <h3 className="font-bold text-white text-xs uppercase tracking-wider text-[var(--text-secondary)] flex items-center gap-2">
             <Building2 className="h-4 w-4 text-indigo-400" />
             External Vendors Review

@@ -203,7 +203,7 @@ export default function RiskCenter() {
       {/* Main Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Risk Trend Chart */}
-        <div className="lg:col-span-8 card-base p-6">
+        <div className="lg:col-span-8 card-base p-6 shadow-sm border-[var(--border-strong)]">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-wider text-[11px] text-[var(--text-secondary)]">Org-wide Risk Score Trend (30 Days)</h3>
             <div className="flex items-center gap-2">
@@ -274,7 +274,7 @@ export default function RiskCenter() {
         </div>
 
         {/* Severity Breakdown */}
-        <div className="lg:col-span-4 card-base p-6">
+        <div className="lg:col-span-4 card-base p-6 shadow-sm border-[var(--border-strong)]">
           <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] mb-6 uppercase tracking-wider text-[11px] text-[var(--text-secondary)]">Severity Breakdown</h3>
           <div ref={chartContainerRef} className="h-[200px] w-full" aria-hidden="true">
             <ResponsiveContainer width="100%" height="100%">
@@ -319,7 +319,7 @@ export default function RiskCenter() {
       </div>
 
       {/* Quantitative Risk Score Portfolio Table */}
-      <div className="card-base overflow-hidden">
+      <div className="card-base overflow-hidden shadow-sm border-[var(--border-strong)]">
         <div className="p-5 border-b border-[var(--border-default)] flex items-center justify-between bg-black/5">
           <div>
             <h3 className="text-sm font-semibold text-white uppercase tracking-tight">Active AI Agent Risk Matrix</h3>
@@ -391,7 +391,7 @@ export default function RiskCenter() {
       </div>
 
       {/* Risk Events Table */}
-      <div className="card-base overflow-hidden">
+      <div className="card-base overflow-hidden shadow-sm border-[var(--border-strong)]">
         <div className="p-5 border-b border-[var(--border-default)] flex items-center justify-between">
           <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)]">Active Threat Alerts</h3>
           <button 
