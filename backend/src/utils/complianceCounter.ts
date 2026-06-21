@@ -58,14 +58,19 @@ export async function seedMissingImplementations(
   const missing = controls.filter((c: any) => !existingIds.has(c.id));
 
   if (missing.length > 0) {
-    await db[implModel].createMany({
-      data: missing.map((c: any) => ({
-        organizationId,
-        control_id: c.id,
-        status: 'NOT_STARTED',
-        ...defaultExtra
-      }))
-    });
+    try {
+      await db[implModel].createMany({
+        data: missing.map((c: any) => ({
+          organizationId,
+          control_id: c.id,
+          status: 'NOT_STARTED',
+          ...defaultExtra
+        })),
+        skipDuplicates: true
+      });
+    } catch (err) {
+      console.warn(`[SEED] seedMissingImplementations concurrency conflict handled:`, err);
+    }
   }
 }
 

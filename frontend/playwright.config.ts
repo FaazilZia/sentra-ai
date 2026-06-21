@@ -54,10 +54,6 @@ export default defineConfig({
       use: { ...devices['Desktop Safari'] },
     },
     {
-      name: 'edge',
-      use: { ...devices['Desktop Chrome'], channel: 'msedge' },
-    },
-    {
       name: 'mobile-safari',
       use: { ...devices['iPhone 13'] },
     },

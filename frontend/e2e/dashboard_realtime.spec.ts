@@ -18,18 +18,17 @@ test.describe('Sentraa AI Real-time Dashboard', () => {
     console.log('Submitting login...');
     await page.click('button[type="submit"]');
     
+    // Wait for redirect AND app shell (sidebar) to confirm auth is complete
     await page.waitForURL(/\/app|\//, { timeout: 30000 });
+    await expect(page.locator('aside')).toBeVisible({ timeout: 15000 });
+    console.log('✅ Auth successful');
 
-    // 2. Wait for Dashboard to load
-    console.log('Ensuring on dashboard...');
-    await expect(page).toHaveURL(/\/app|\//); // Matches /app or root
-    
-    // 3. Navigate to Risk Center specifically
+    // 2. Navigate to Risk Center
     console.log('Navigating to Risk Center...');
     await page.goto('/app/risk', { waitUntil: 'domcontentloaded' });
     
-    // 4. Capture current blocked count
-    console.log('Waiting for metrics...');
+    // 3. Wait for the KPI card to finish loading (skeleton disappears)
+    console.log('Waiting for metrics card to load...');
     const blockedCountLocator = page.getByTestId('threats-prevented-count');
     await expect(blockedCountLocator).toBeVisible({ timeout: 20000 });
     
@@ -37,10 +36,11 @@ test.describe('Sentraa AI Real-time Dashboard', () => {
     const initialCount = Number.parseInt(initialText.replaceAll(',', ''), 10) || 0;
     console.log(`Initial blocked count: ${initialCount}`);
 
-    // 4. Simulate a malicious prompt via Backend API (outside browser)
+    // 4. Retrieve auth token from localStorage
     const token = await page.evaluate(() => localStorage.getItem('sentra_access_token'));
     if (!token) throw new Error('No access token found in localStorage after login');
     
+    // 5. Fire a malicious prompt: "export" + "password" triggers multi-signal BLOCK
     console.log('Sending malicious prompt to trigger guardrail...');
     try {
       await axios.post('http://localhost:3000/api/v1/guardrails/proxy', 
@@ -48,17 +48,17 @@ test.describe('Sentraa AI Real-time Dashboard', () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
     } catch (e: any) {
-      console.log(`API Result: ${e.response?.status || 'Error'}`);
+      console.log(`API Result: ${e.response?.status || 'Error'} — guardrail fired`);
     }
 
-    // 5. Verify the UI updates
+    // 6. Poll the UI until the count increments (RiskCenter polls every 15s; allow up to 45s)
     console.log('Waiting for real-time UI update (up to 45s)...');
     await expect(async () => {
       const text = (await blockedCountLocator.innerText()).replaceAll(',', '');
       const newCount = Number.parseInt(text, 10) || 0;
       console.log(`Checking UI count: ${newCount} (vs initial ${initialCount})`);
       expect(newCount).toBeGreaterThan(initialCount);
-    }).toPass({ timeout: 45000, intervals: [5000] });
+    }).toPass({ timeout: 45000, intervals: [3000] });
 
     const finalCount = await blockedCountLocator.innerText();
     console.log(`Verified! Blocked count increased to: ${finalCount}`);

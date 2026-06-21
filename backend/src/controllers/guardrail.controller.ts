@@ -8,6 +8,7 @@ import { parsePagination } from '../utils/pagination';
 import { asyncHandler, sendSuccess, sendError, getOrgId } from '../utils/controllerHelpers';
 import { ChangeHistoryService } from '../services/changeHistory.service';
 import { encrypt } from '../utils/encryption';
+import { io } from '../server';
 
 export const processAIRequest = asyncHandler(async (req: any, res: Response) => {
   const { prompt, model = 'gpt-4o' } = req.body;
@@ -30,7 +31,7 @@ export const processAIRequest = asyncHandler(async (req: any, res: Response) => 
   const inputResult = await GuardrailService.evaluateInput(prompt);
 
   if (inputResult.decision === 'BLOCK') {
-    await GuardrailService.logInterception({
+    const log = await GuardrailService.logInterception({
       user_id: userId,
       organizationId: organizationId,
       input_text: prompt,
@@ -39,6 +40,24 @@ export const processAIRequest = asyncHandler(async (req: any, res: Response) => 
       reason: inputResult.reason,
       policy_triggered: inputResult.policy_triggered
     });
+
+    // Emit real-time socket event so the LiveBlockFeed picks it up
+    if (io) {
+      io.to(`company_${organizationId}`).emit('activity_log', {
+        id: log?.id || require('crypto').randomUUID(),
+        organizationId,
+        timestamp: new Date().toISOString(),
+        decision: 'BLOCK',
+        risk: 'high',
+        reason: inputResult.reason,
+        compliance: [],
+        ai_summary: `Guardrail blocked: ${inputResult.policy_triggered || 'adversarial pattern'}`,
+        metadata: {
+          agent: 'AI System',
+          action: prompt.length > 60 ? prompt.substring(0, 60) + '...' : prompt
+        }
+      });
+    }
 
     // Trigger the Alerts Engine in background (fire and forget)
     EventTriggerService.evaluateThresholds(organizationId).catch(err => {
@@ -52,6 +71,7 @@ export const processAIRequest = asyncHandler(async (req: any, res: Response) => 
       reason: inputResult.reason
     });
   }
+
 
   // 2. Mock AI Call (In a real system, call OpenAI/Anthropic here)
   // We simulate an AI response that might leak sensitive data to test post-AI check

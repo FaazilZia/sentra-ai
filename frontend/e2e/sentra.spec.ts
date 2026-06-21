@@ -6,8 +6,6 @@ const API_BASE    = 'http://localhost:3000/api/v1';
 
 async function loginAsAdmin(page: Page) {
   await page.goto('/login', { waitUntil: 'domcontentloaded' });
-  await page.evaluate(() => localStorage.clear());
-  await page.reload({ waitUntil: 'domcontentloaded' });
   await page.fill('input[type="email"]', ADMIN_EMAIL);
   await page.fill('input[type="password"]', ADMIN_PASS);
   await page.click('button[type="submit"]');
@@ -52,24 +50,42 @@ test.describe('Authentication', () => {
     await expect(page.locator('text=Overview')).toBeVisible();
   });
 
-  test('logout clears session and redirects to /login', async ({ page }) => {
+  test('logout clears session and redirects to /login', async ({ page, context }) => {
     await loginAsAdmin(page);
     await page.evaluate(() => {
       localStorage.removeItem('sentra_access_token');
       localStorage.removeItem('sentra_refresh_token');
+      localStorage.removeItem('accessToken');
+      sessionStorage.clear();
     });
+    await context.clearCookies();
     await page.goto('/app');
     await expect(page).toHaveURL(/\/login/, { timeout: 10_000 });
   });
 });
 
 test.describe('Navigation & Layout', () => {
-  test.beforeEach(async ({ page }) => { await loginAsAdmin(page); });
+  test.beforeEach(async ({ page }) => {
+    await loginAsAdmin(page);
+    await page.evaluate(() => {
+      localStorage.setItem('sentra_sidebar_expanded', JSON.stringify({
+        CORE: true,
+        COMPLIANCE: true,
+        'AI SYSTEMS': true,
+        GOVERNANCE: true,
+        OPERATIONS: true,
+        INTELLIGENCE: true,
+        SETTINGS: true,
+        'PLATFORM ADMIN': true
+      }));
+    });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+  });
 
   const navRoutes = [
     { label: 'Overview',    path: '/app' },
     { label: 'Risk Center', path: '/app/risk' },
-    { label: 'Compliance',  path: '/app/compliance' },
+    { label: 'Compliance Hub', path: '/app/compliance' },
     { label: 'Shadow AI',   path: '/app/shadow' },
     { label: 'Guardrails',  path: '/app/guardrails' },
     { label: 'Policies',    path: '/app/policies' },
@@ -239,12 +255,16 @@ test.describe('Compliance', () => {
   });
 
   test('compliance page renders content', async ({ page }) => {
-    // Wait for any meaningful content — table, card, chart, or framework name
-    const frameworks = ['GDPR', 'SOC', 'ISO', 'HIPAA', 'NIST', 'PCI'];
-    
-    // Give the page time to load data
-    await page.waitForTimeout(3000);
+    // Wait for the sidebar/app shell to be visible, ensuring AUTH_SYNC is completed
+    await expect(page.locator('aside')).toBeVisible({ timeout: 15000 });
 
+    // Wait for the loading indicator to disappear (up to 20 seconds)
+    await page.locator('text=Loading compliance hierarchy...').waitFor({ state: 'hidden', timeout: 20000 }).catch(() => {});
+
+    // Wait for the main title to be visible to avoid race conditions
+    await expect(page.locator('text=Compliance & Audit').first()).toBeVisible({ timeout: 15000 });
+
+    const frameworks = ['GDPR', 'SOC', 'ISO', 'HIPAA', 'NIST', 'PCI', 'EU AI Act'];
     let found = false;
     for (const fw of frameworks) {
       found = await page.locator(`text=${fw}`).isVisible().catch(() => false);

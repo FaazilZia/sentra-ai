@@ -57,7 +57,7 @@ async function main() {
   console.log(`✅ Company: ${company.name} (${company.id})`);
 
   // 2. Ensure admin user
-  const seedPassword = process.env.SEED_ADMIN_PASSWORD || `SentraaAuto_${randomUUID().slice(0, 12)}`;
+  const seedPassword = process.env.SEED_ADMIN_PASSWORD || process.env.TEST_ADMIN_PASSWORD || 'Sentra@RotatedAdmin2026!';
   const passwordHash = await bcrypt.hash(seedPassword, 12);
   const user = await prisma.users.upsert({
     where: { email: 'admin@sentra.ai' },
