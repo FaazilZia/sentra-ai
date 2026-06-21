@@ -329,7 +329,7 @@ export default function FTC() {
                             {ctrl.checklist_items.length > 0 && (
                               <div className="mt-3 flex flex-wrap gap-1">
                                 {ctrl.checklist_items.map((item, idx) => (
-                                  <span key={idx} className="text-[9px] bg-white border border-[var(--border-default)] text-[var(--text-muted)] px-2 py-0.5 rounded-full">
+                                  <span key={idx} className="text-[9px] bg-[var(--bg-card)] border border-[var(--border-default)] text-[var(--text-muted)] px-2 py-0.5 rounded-full">
                                     ✓ {item}
                                   </span>
                                 ))}
@@ -389,7 +389,7 @@ export default function FTC() {
                     id="control-status-select"
                     value={editStatus}
                     onChange={e => setEditStatus(e.target.value)}
-                    className="w-full bg-white border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
                   >
                     <option value="NOT_STARTED">NOT STARTED</option>
                     <option value="IN_PROGRESS">IN PROGRESS</option>
@@ -406,7 +406,7 @@ export default function FTC() {
                     type="date"
                     value={editDueDate}
                     onChange={e => setEditDueDate(e.target.value)}
-                    className="w-full bg-white border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
                   />
                 </div>
 
@@ -419,7 +419,7 @@ export default function FTC() {
                     onChange={e => setEditNotes(e.target.value)}
                     placeholder="Enter compliance justification notes, evidence links, checklist completions..."
                     rows={5}
-                    className="w-full bg-white border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] placeholder-[var(--text-muted)] resize-none focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] placeholder-[var(--text-muted)] resize-none focus:outline-none focus:border-indigo-500"
                   />
                 </div>
 

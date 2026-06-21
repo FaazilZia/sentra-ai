@@ -453,7 +453,7 @@ export default function Guardrails() {
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="e.g. Jailbreak Detection" 
-                  className="w-full bg-white border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
                   required
                 />
               </div>
@@ -466,7 +466,7 @@ export default function Guardrails() {
                   onChange={e => setDescription(e.target.value)}
                   placeholder="What does this rule protect against?" 
                   rows={3}
-                  className="w-full bg-white border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500 resize-none"
+                  className="w-full bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500 resize-none"
                 />
               </div>
 
@@ -477,7 +477,7 @@ export default function Guardrails() {
                     id="guardrail-effect-select"
                     value={effect}
                     onChange={e => setEffect(e.target.value as any)}
-                    className="w-full bg-white border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
                   >
                     <option value="BLOCK">BLOCK</option>
                     <option value="MODIFY">MODIFY</option>
@@ -494,14 +494,14 @@ export default function Guardrails() {
                     onChange={e => setPriority(Number(e.target.value))}
                     min={1} 
                     max={100}
-                    className="w-full bg-white border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
                   />
                 </div>
               </div>
 
               <div>
                 <span className="text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-widest block mb-1.5">Rule Scope</span>
-                <div className="flex gap-4 bg-white border border-[var(--border-default)] rounded-xl p-3">
+                <div className="flex gap-4 bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-3">
                   <label className="flex items-center gap-2 cursor-pointer select-none">
                     <input 
                       type="checkbox" 
@@ -523,7 +523,7 @@ export default function Guardrails() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between bg-white border border-[var(--border-default)] rounded-xl p-3">
+              <div className="flex items-center justify-between bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-3">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">Enabled Status</span>
                 <button 
                   type="button"

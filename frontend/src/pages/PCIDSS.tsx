@@ -409,7 +409,7 @@ export default function PCIDSS() {
                     id="control-status-select"
                     value={editStatus}
                     onChange={e => setEditStatus(e.target.value)}
-                    className="w-full bg-white border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-rose-500"
+                    className="w-full bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-rose-500"
                   >
                     <option value="NOT_STARTED">NOT STARTED</option>
                     <option value="IN_PROGRESS">IN PROGRESS</option>
@@ -427,7 +427,7 @@ export default function PCIDSS() {
                     onChange={e => setEditNotes(e.target.value)}
                     placeholder="Enter compliance justification notes, evidence links, checklist completions..."
                     rows={8}
-                    className="w-full bg-white border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] placeholder-[var(--text-muted)] resize-none focus:outline-none focus:border-rose-500"
+                    className="w-full bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] placeholder-[var(--text-muted)] resize-none focus:outline-none focus:border-rose-500"
                   />
                 </div>
 

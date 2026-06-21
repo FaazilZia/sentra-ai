@@ -280,7 +280,7 @@ export default function CEMarking() {
                         value={val.status}
                         onChange={e => setSteps(prev => ({ ...prev, [s.key]: { ...val, status: e.target.value as any } }))}
                         className={cn(
-                          "bg-white border text-[10px] font-semibold uppercase tracking-wider rounded-xl px-3 py-1.5 outline-none transition-colors cursor-pointer",
+                          "bg-[var(--bg-card)] border text-[10px] font-semibold uppercase tracking-wider rounded-xl px-3 py-1.5 outline-none transition-colors cursor-pointer",
                           val.status === 'COMPLETED' ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/5" : (val.status === 'IN_PROGRESS' ? "border-amber-500/30 text-amber-400 bg-amber-500/5" : "border-[var(--border-default)] text-[var(--text-muted)]")
                         )}
                       >

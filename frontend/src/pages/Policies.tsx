@@ -493,7 +493,7 @@ export default function Policies() {
                   value={newName}
                   onChange={e => setNewName(e.target.value)}
                   placeholder="Policy Name" 
-                  className="w-full bg-white border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
                   required
                 />
               </div>
@@ -506,7 +506,7 @@ export default function Policies() {
                   onChange={e => setNewDesc(e.target.value)}
                   placeholder="Description" 
                   rows={3}
-                  className="w-full bg-white border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500 resize-none"
+                  className="w-full bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500 resize-none"
                 />
               </div>
 
@@ -516,7 +516,7 @@ export default function Policies() {
                   id="policy-effect-select"
                   value={newEffect}
                   onChange={e => setNewEffect(e.target.value as any)}
-                  className="w-full bg-white border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
                 >
                   <option value="deny">deny</option>
                   <option value="allow">allow</option>
