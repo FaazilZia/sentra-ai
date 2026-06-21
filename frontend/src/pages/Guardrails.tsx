@@ -277,7 +277,7 @@ export default function Guardrails() {
         <div className="flex gap-2">
           <button 
             onClick={handleOpenTemplates}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[var(--border-default)] hover:border-[var(--border-default)] rounded-lg text-[10px] font-semibold text-white uppercase tracking-widest transition-all active:scale-95"
+            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[var(--border-default)] hover:border-[var(--border-default)] rounded-lg text-[10px] font-semibold text-[var(--text-primary)] uppercase tracking-widest transition-all active:scale-95"
           >
             <FileCheck className="h-4 w-4 text-indigo-400" />
             Load Templates
@@ -321,7 +321,7 @@ export default function Guardrails() {
       </div>
 
       {/* Main Table */}
-      <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl overflow-hidden backdrop-blur-md">
+      <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl overflow-hidden">
         {policies.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -351,7 +351,7 @@ export default function Guardrails() {
                       </td>
                       <td className="p-4">
                         <div>
-                          <h4 className="font-bold text-white uppercase tracking-tight">{p.name}</h4>
+                          <h4 className="font-bold text-[var(--text-primary)] uppercase tracking-tight">{p.name}</h4>
                           <p className="text-[10px] text-[var(--text-muted)] mt-0.5 line-clamp-1">{p.description || 'No description provided.'}</p>
                         </div>
                       </td>
@@ -413,7 +413,7 @@ export default function Guardrails() {
           /* Empty State */
           <div className="flex flex-col items-center justify-center py-16 px-4 text-center max-w-sm mx-auto">
             <Lock className="h-12 w-12 text-[var(--text-muted)] mb-4 animate-pulse" />
-            <h3 className="text-sm font-semibold text-white uppercase tracking-widest">No guardrails configured</h3>
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-widest">No guardrails configured</h3>
             <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mt-1.5 leading-relaxed">
               Add your first rule to start protecting your AI agents.
             </p>
@@ -439,7 +439,7 @@ export default function Guardrails() {
               <X className="h-4 w-4" />
             </button>
 
-            <h3 className="text-sm font-semibold uppercase tracking-widest text-white mb-6 flex items-center gap-2">
+            <h3 className="text-sm font-semibold uppercase tracking-widest text-[var(--text-primary)] mb-6 flex items-center gap-2">
               <ShieldCheck className="h-5 w-5 text-indigo-400" />
               {isAddOpen ? 'Add AI Guardrail' : 'Edit AI Guardrail'}
             </h3>
@@ -572,7 +572,7 @@ export default function Guardrails() {
             </button>
 
             <div className="mb-6">
-              <h3 className="text-sm font-semibold uppercase tracking-widest text-white flex items-center gap-2">
+              <h3 className="text-sm font-semibold uppercase tracking-widest text-[var(--text-primary)] flex items-center gap-2">
                 <FileCheck className="h-5 w-5 text-indigo-400" />
                 Import Guardrail Template
               </h3>
@@ -584,7 +584,7 @@ export default function Guardrails() {
                 <div key={idx} className="bg-gray-950/30 border border-[var(--border-default)] rounded-xl p-4 flex items-center justify-between gap-4 group">
                   <div className="text-left">
                     <div className="flex items-center gap-2">
-                      <h4 className="text-xs font-bold text-white uppercase tracking-tight">{temp.name}</h4>
+                      <h4 className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-tight">{temp.name}</h4>
                       <span className="text-[8px] font-semibold uppercase px-1.5 py-0.5 rounded bg-white border border-[var(--border-default)] text-indigo-400 tracking-wider">
                         {temp.category || 'Security'}
                       </span>

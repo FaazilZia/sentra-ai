@@ -186,7 +186,7 @@ export default function FTC() {
       </div>
 
       {/* Summary Scorecard */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-6 backdrop-blur-md">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-6">
         <div className="md:col-span-1 flex items-center justify-center md:border-r md:border-gray-855 p-2">
           <div className="relative h-28 w-28 flex items-center justify-center">
             {/* SVG Progress Circle */}
@@ -202,7 +202,7 @@ export default function FTC() {
               />
             </svg>
             <div className="text-center">
-              <span className="text-3xl font-semibold text-white">{summary.compliance_score}%</span>
+              <span className="text-3xl font-semibold text-[var(--text-primary)]">{summary.compliance_score}%</span>
               <p className="text-[8px] font-bold text-[var(--text-muted)] uppercase tracking-wider mt-0.5">Posture Score</p>
             </div>
           </div>
@@ -211,7 +211,7 @@ export default function FTC() {
         <div className="md:col-span-3 grid grid-cols-2 lg:grid-cols-4 gap-4 p-2">
           <div className="bg-[var(--bg-page)] border border-gray-855 rounded-xl p-4 flex flex-col justify-between">
             <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase">Total Controls</span>
-            <span className="text-2xl font-semibold text-white mt-1">{summary.total_controls}</span>
+            <span className="text-2xl font-semibold text-[var(--text-primary)] mt-1">{summary.total_controls}</span>
           </div>
           <div className="bg-emerald-950/10 border border-emerald-900/20 rounded-xl p-4 flex flex-col justify-between">
             <span className="text-[9px] font-bold text-emerald-500 uppercase">Implemented</span>
@@ -284,7 +284,7 @@ export default function FTC() {
             const sectionCompleted = section.controls.filter(c => c.implementation?.status === 'IMPLEMENTED' || c.implementation?.status === 'NOT_APPLICABLE').length;
 
             return (
-              <div key={section.section_code} className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl overflow-hidden backdrop-blur-md">
+              <div key={section.section_code} className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl overflow-hidden">
                 {/* Header */}
                 <button 
                   onClick={() => toggleSection(section.section_code)}
@@ -295,7 +295,7 @@ export default function FTC() {
                       {section.section_code}
                     </span>
                     <div className="text-left">
-                      <h3 className="text-xs font-semibold text-white uppercase tracking-tight">{section.title}</h3>
+                      <h3 className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-tight">{section.title}</h3>
                       <p className="text-[10px] text-[var(--text-muted)] max-w-md line-clamp-1">{section.description}</p>
                     </div>
                   </div>
@@ -303,7 +303,7 @@ export default function FTC() {
                   <div className="flex items-center gap-4">
                     <div className="text-right hidden sm:block">
                       <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase">Section Progress</span>
-                      <p className="text-[10px] font-bold text-white mt-0.5">{sectionCompleted}/{sectionTotal} controls</p>
+                      <p className="text-[10px] font-bold text-[var(--text-primary)] mt-0.5">{sectionCompleted}/{sectionTotal} controls</p>
                     </div>
                     {isExpanded ? <ChevronUp className="h-4 w-4 text-[var(--text-muted)]" /> : <ChevronDown className="h-4 w-4 text-[var(--text-muted)]" />}
                   </div>
@@ -321,7 +321,7 @@ export default function FTC() {
                               <span className="text-[9px] font-mono font-bold text-indigo-400 bg-indigo-500/5 px-2 py-0.5 rounded border border-indigo-500/10">
                                 {ctrl.control_code}
                               </span>
-                              <h4 className="text-xs font-bold text-white uppercase tracking-tight">{ctrl.title}</h4>
+                              <h4 className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-tight">{ctrl.title}</h4>
                             </div>
                             <p className="text-[10.5px] text-[var(--text-secondary)] leading-relaxed mt-1.5">{ctrl.description}</p>
                             
@@ -360,11 +360,11 @@ export default function FTC() {
 
         {/* Sidebar Panel for Editing & Context */}
         <div className="lg:col-span-1">
-          <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-6 backdrop-blur-md flex flex-col gap-6 sticky top-6">
+          <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-6 flex flex-col gap-6 sticky top-6">
             {!editingControl ? (
               <>
                 <div>
-                  <h3 className="text-xs font-semibold text-white uppercase tracking-widest mb-3">Regulatory Context</h3>
+                  <h3 className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-widest mb-3">Regulatory Context</h3>
                   <p className="text-[10.5px] text-[var(--text-secondary)] leading-relaxed">
                     The Federal Trade Commission (FTC) enforces guidelines targeting deceptive, unfair, and discriminatory algorithmic business practices. It requires substantiation of all AI claims, transparency to consumers, data minimization, and robust system security programs.
                   </p>
@@ -378,7 +378,7 @@ export default function FTC() {
             ) : (
               <div className="flex flex-col gap-4">
                 <div>
-                  <h3 className="text-xs font-semibold text-white uppercase tracking-widest">Update Control</h3>
+                  <h3 className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-widest">Update Control</h3>
                   <p className="text-[10px] font-mono text-indigo-400 mt-1">{editingControl.control_code} — {editingControl.title}</p>
                 </div>
 

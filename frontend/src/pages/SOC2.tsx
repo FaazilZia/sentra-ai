@@ -200,7 +200,7 @@ export default function SOC2() {
       </div>
 
       {/* Summary Scorecard */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-6 backdrop-blur-md">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-6">
         <div className="md:col-span-1 flex items-center justify-center md:border-r md:border-[var(--border-default)] p-2">
           <div className="relative h-28 w-28 flex items-center justify-center">
             <svg className="absolute transform -rotate-90 w-full h-full" viewBox="0 0 100 100">
@@ -215,7 +215,7 @@ export default function SOC2() {
               />
             </svg>
             <div className="text-center">
-              <span className="text-3xl font-semibold text-white">{summary.compliance_score}%</span>
+              <span className="text-3xl font-semibold text-[var(--text-primary)]">{summary.compliance_score}%</span>
               <p className="text-[8px] font-bold text-[var(--text-muted)] uppercase tracking-wider mt-0.5">Posture Score</p>
             </div>
           </div>
@@ -224,7 +224,7 @@ export default function SOC2() {
         <div className="md:col-span-3 grid grid-cols-2 lg:grid-cols-4 gap-4 p-2">
           <div className="bg-[var(--bg-page)] border border-[var(--border-default)]/60 rounded-xl p-4 flex flex-col justify-between">
             <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase">Total Controls</span>
-            <span className="text-2xl font-semibold text-white mt-1">{summary.total_controls}</span>
+            <span className="text-2xl font-semibold text-[var(--text-primary)] mt-1">{summary.total_controls}</span>
           </div>
           <div className="bg-emerald-950/10 border border-emerald-900/20 rounded-xl p-4 flex flex-col justify-between">
             <span className="text-[9px] font-bold text-emerald-500 uppercase">Implemented</span>
@@ -282,7 +282,7 @@ export default function SOC2() {
             className={cn(
               "flex items-center justify-between p-3.5 rounded-xl border text-left transition-all",
               selectedChapterId === 'ALL'
-                ? "bg-violet-950/15 border-violet-500/30 text-white"
+                ? "bg-violet-950/15 border-violet-500/30 text-[var(--text-primary)]"
                 : "bg-[var(--bg-page)] border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover: "
             )}
           >
@@ -297,7 +297,7 @@ export default function SOC2() {
               className={cn(
                 "flex flex-col gap-1 p-3.5 rounded-xl border text-left transition-all",
                 selectedChapterId === ch.id
-                  ? "bg-violet-950/15 border-violet-500/30 text-white"
+                  ? "bg-violet-950/15 border-violet-500/30 text-[var(--text-primary)]"
                   : "bg-[var(--bg-page)] border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover: "
               )}
             >
@@ -326,7 +326,7 @@ export default function SOC2() {
               <div 
                 key={ctrl.id} 
                 className={cn(
-                  "bg-[var(--bg-page)] border rounded-2xl p-5 backdrop-blur-md flex flex-col gap-3.5 transition-all hover:border-[var(--border-default)]",
+                  "bg-[var(--bg-page)] border rounded-2xl p-5 flex flex-col gap-3.5 transition-all hover:border-[var(--border-default)]",
                   editingControl?.id === ctrl.id ? "border-violet-500/40 ring-1 ring-violet-500/20" : "border-[var(--border-default)]"
                 )}
               >
@@ -336,7 +336,7 @@ export default function SOC2() {
                       <span className="text-[9px] font-mono font-bold text-violet-400 bg-violet-500/5 px-2 py-0.5 rounded border border-violet-500/10">
                         {ctrl.articleNumber}
                       </span>
-                      <h4 className="text-xs font-bold text-white uppercase tracking-tight">{ctrl.title}</h4>
+                      <h4 className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-tight">{ctrl.title}</h4>
                     </div>
                     {ctrl.description && (
                       <p className="text-[10.5px] text-[var(--text-secondary)] leading-relaxed mt-2">{ctrl.description}</p>
@@ -380,11 +380,11 @@ export default function SOC2() {
 
         {/* Sidebar Update Panel */}
         <div className="lg:col-span-1">
-          <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-6 backdrop-blur-md flex flex-col gap-6 sticky top-6">
+          <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-6 flex flex-col gap-6 sticky top-6">
             {!editingControl ? (
               <>
                 <div>
-                  <h3 className="text-xs font-semibold text-white uppercase tracking-widest mb-3">Regulatory Context</h3>
+                  <h3 className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-widest mb-3">Regulatory Context</h3>
                   <p className="text-[10.5px] text-[var(--text-secondary)] leading-relaxed">
                     SOC 2 compliance evaluates an organization's controls based on five Trust Services Criteria: Security, Availability, Processing Integrity, Confidentiality, and Privacy.
                   </p>
@@ -398,7 +398,7 @@ export default function SOC2() {
             ) : (
               <div className="flex flex-col gap-4 animate-fade-in">
                 <div>
-                  <h3 className="text-xs font-semibold text-white uppercase tracking-widest">Update Control</h3>
+                  <h3 className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-widest">Update Control</h3>
                   <p className="text-[10px] font-mono text-violet-400 mt-1">{editingControl.articleNumber} — {editingControl.title}</p>
                 </div>
 
