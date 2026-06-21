@@ -21,6 +21,13 @@ interface KPICardProps {
   testId?: string;
 }
 
+const dotColors = {
+  primary: 'bg-indigo-500',
+  warning: 'bg-amber-500',
+  success: 'bg-emerald-500',
+  danger: 'bg-rose-500',
+};
+
 export default function KPICard({ label, value, icon, status, trend, isLoading, testId }: KPICardProps) {
   const Icon = icons[icon] || LayoutDashboard;
 
@@ -40,9 +47,10 @@ export default function KPICard({ label, value, icon, status, trend, isLoading, 
 
   return (
     <div className="card-base p-6 flex flex-col relative overflow-hidden group hover:shadow-md transition-all min-h-[140px]">
+      {/* Node dot (Fix 5) */}
+      <span className={cn("absolute top-3 left-3 h-2.5 w-2.5 rounded-full", dotColors[status])} />
 
-
-      <div className="flex items-start justify-between mb-5">
+      <div className="flex items-start justify-between mb-5 ml-5">
         <div 
           className="h-10 w-10 rounded-lg flex items-center justify-center shadow-sm"
           style={{ backgroundColor: bgColors[status], color: statusColors[status] }}
@@ -61,7 +69,7 @@ export default function KPICard({ label, value, icon, status, trend, isLoading, 
       </div>
 
       <div className="space-y-1">
-        <span className="text-[var(--text-xs)] font-bold text-[var(--text-secondary)] uppercase tracking-[0.05em]">{label}</span>
+        <span className="text-[var(--text-xs)] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.05em]">{label}</span>
         <div className="flex items-baseline gap-2">
           {isLoading ? (
             <div className="h-8 w-20 bg-[var(--bg-page)] animate-pulse rounded" />

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Activity, CheckCircle2, ChevronRight, RefreshCw, Landmark } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { fetchFrameworkMap, fetchGapAnalysis, fetchOverlapScore, FrameworkMappingItem, GapAnalysisItem } from '@/lib/api';
+import { NodePulseLoader } from '@/components/ui/NodePulseLoader';
 
 export default function GovernanceOS() {
   const [mappings, setMappings] = useState<FrameworkMappingItem[]>([]);
@@ -9,6 +10,12 @@ export default function GovernanceOS() {
   const [overlap, setOverlap] = useState<{ score: number; totalMapped: number; totalImplemented: number } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'mapper' | 'gaps'>('mapper');
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
+
+  const filteredMappings = mappings.filter(m => {
+    if (statusFilter === 'ALL') return true;
+    return m.status?.toLowerCase() === statusFilter.toLowerCase();
+  });
 
   useEffect(() => {
     loadData();
@@ -35,24 +42,24 @@ export default function GovernanceOS() {
   const getStatusBadge = (status: string) => {
     switch (status?.toLowerCase()) {
       case 'implemented':
-        return <span className="badge-pill bg-emerald-50 text-emerald-600 border border-emerald-100">IMPLEMENTED</span>;
+        return <span className="badge-pill bg-emerald-50 text-emerald-600 border border-emerald-100">Implemented</span>;
       case 'in_progress':
-        return <span className="badge-pill bg-indigo-50 text-indigo-600 border border-indigo-100">IN PROGRESS</span>;
+        return <span className="badge-pill bg-indigo-50 text-indigo-600 border border-indigo-100">In progress</span>;
       case 'not_applicable':
         return <span className="badge-pill bg-slate-100 text-slate-400 border border-slate-200">N/A</span>;
       default:
-        return <span className="badge-pill bg-amber-50 text-amber-500 border border-amber-100">NOT STARTED</span>;
+        return <span className="badge-pill bg-amber-50 text-amber-500 border border-amber-100">Not started</span>;
     }
   };
 
   const getSeverityBadge = (severity: string) => {
     switch (severity?.toLowerCase()) {
       case 'high':
-        return <span className="badge-pill bg-rose-50 border border-rose-200 text-rose-600 text-[8px]">HIGH SEVERITY</span>;
+        return <span className="badge-pill bg-rose-50 border border-rose-200 text-rose-600 text-[8px]">High severity</span>;
       case 'medium':
-        return <span className="badge-pill bg-amber-50 border border-amber-200 text-amber-600 text-[8px]">MEDIUM RISK</span>;
+        return <span className="badge-pill bg-amber-50 border border-amber-200 text-amber-600 text-[8px]">Medium risk</span>;
       default:
-        return <span className="badge-pill bg-blue-50 border border-blue-200 text-blue-600 text-[8px]">LOW DISCREPANCY</span>;
+        return <span className="badge-pill bg-blue-50 border border-blue-200 text-blue-600 text-[8px]">Low discrepancy</span>;
     }
   };
 
@@ -76,7 +83,7 @@ export default function GovernanceOS() {
             <Landmark className="h-6 w-6" />
           </div>
           <div>
-            <h2 className="text-xs font-black uppercase tracking-widest text-[var(--text-primary)]">GovernanceOS framework Mapper</h2>
+            <h2 className="text-[22px] font-semibold text-[var(--text-primary)] tracking-tight">GovernanceOS Framework Mapper</h2>
             <p className="text-[10px] text-[var(--text-secondary)] font-medium">Harmonize controls between NIST AI RMF, EU AI Act, ISO 42001, and ISO 27001 to resolve double-work gaps</p>
           </div>
         </div>
@@ -90,10 +97,7 @@ export default function GovernanceOS() {
       </div>
 
       {isLoading ? (
-        <div className="p-12 text-center text-xs font-bold text-slate-400 flex flex-col items-center justify-center gap-2 font-mono">
-          <RefreshCw className="h-5 w-5 animate-spin text-[var(--royal-indigo)]" />
-          COMPILING GOVERNANCE MAPPING MATRIX...
-        </div>
+        <NodePulseLoader label="Compiling governance mapping matrix…" className="p-12" />
       ) : (
         <>
           {/* Posture Overlay Score & Gauge Grid */}
@@ -101,7 +105,7 @@ export default function GovernanceOS() {
             
             {/* SVG Radial Gauge */}
             <div className="card-base bg-white p-6 flex flex-col items-center justify-center gap-4 text-center">
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Framework Coverage Overlap</h3>
+              <h3 className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Framework coverage overlap</h3>
               
               <div className="relative h-32 w-32 flex items-center justify-center mt-2">
                 <svg className="w-full h-full transform -rotate-90">
@@ -126,7 +130,7 @@ export default function GovernanceOS() {
                   />
                 </svg>
                 <div className="absolute flex flex-col items-center">
-                  <span className="text-2xl font-black text-slate-800">{overlap?.score || 0}%</span>
+                  <span className="text-2xl font-semibold text-slate-800">{overlap?.score || 0}%</span>
                   <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Overlap</span>
                 </div>
               </div>
@@ -140,8 +144,8 @@ export default function GovernanceOS() {
             <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="card-base p-6 flex flex-col justify-between bg-white border-l-4 border-l-[var(--royal-indigo)]">
                 <div>
-                  <div className="text-[9px] font-black uppercase tracking-wider text-slate-400">Total concern areas Mapped</div>
-                  <div className="text-3xl font-black mt-2 text-slate-800">{overlap?.totalMapped || 15}</div>
+                  <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Total concern areas mapped</div>
+                  <div className="text-3xl font-semibold mt-2 text-slate-800">{overlap?.totalMapped || 15}</div>
                 </div>
                 <div className="text-[10px] text-slate-400 font-medium flex items-center gap-1 mt-4">
                   <CheckCircle2 className="h-4 w-4 text-emerald-500" />
@@ -151,8 +155,8 @@ export default function GovernanceOS() {
 
               <div className="card-base p-6 flex flex-col justify-between bg-white border-l-4 border-l-teal-500">
                 <div>
-                  <div className="text-[9px] font-black uppercase tracking-wider text-slate-400">Implemented Controls</div>
-                  <div className="text-3xl font-black mt-2 text-teal-600">{overlap?.totalImplemented || 0}</div>
+                  <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Implemented controls</div>
+                  <div className="text-3xl font-semibold mt-2 text-teal-600">{overlap?.totalImplemented || 0}</div>
                 </div>
                 <div className="text-[10px] text-slate-400 font-medium flex items-center gap-1 mt-4">
                   <Activity className="h-4 w-4 text-indigo-500 animate-pulse" />
@@ -165,11 +169,11 @@ export default function GovernanceOS() {
 
           {/* Mapping Matrix tabs */}
           <div className="card-base bg-white overflow-hidden shadow-sm flex-1">
-            <div className="border-b border-slate-100 bg-slate-50 flex items-center px-4 py-2 justify-between">
+            <div className="border-b border-slate-100 bg-slate-50 flex flex-col sm:flex-row sm:items-center px-4 py-2 justify-between gap-2">
               <div className="flex gap-2">
                 <button
                   onClick={() => setActiveTab('mapper')}
-                  className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all rounded ${
+                  className={`px-4 py-2 text-[10px] font-semibold uppercase tracking-widest transition-all rounded ${
                     activeTab === 'mapper' ? 'bg-white text-[var(--royal-indigo)] shadow-sm border border-slate-100' : 'text-slate-500 hover:text-slate-700'
                   }`}
                 >
@@ -177,36 +181,52 @@ export default function GovernanceOS() {
                 </button>
                 <button
                   onClick={() => setActiveTab('gaps')}
-                  className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all rounded flex items-center gap-1.5 ${
+                  className={`px-4 py-2 text-[10px] font-semibold uppercase tracking-widest transition-all rounded flex items-center gap-1.5 ${
                     activeTab === 'gaps' ? 'bg-white text-[var(--royal-indigo)] shadow-sm border border-slate-100' : 'text-slate-500 hover:text-slate-700'
                   }`}
                 >
                   Gaps checklist
                   {gaps.length > 0 && (
-                    <span className="badge-pill bg-rose-100 text-rose-600 font-black text-[9px]">{gaps.length}</span>
+                    <span className="badge-pill bg-rose-100 text-rose-600 font-semibold text-[9px]">{gaps.length}</span>
                   )}
                 </button>
               </div>
+              {activeTab === 'mapper' && (
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Filter:</span>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-[10px] font-semibold text-slate-600 focus:outline-none focus:border-[var(--royal-indigo)]"
+                  >
+                    <option value="ALL">All Statuses</option>
+                    <option value="IMPLEMENTED">Implemented</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="NOT_STARTED">Not Started</option>
+                    <option value="NOT_APPLICABLE">Not Applicable</option>
+                  </select>
+                </div>
+              )}
             </div>
 
-            <div className="p-4 overflow-x-auto">
+            <div className="p-4 max-h-[600px] overflow-y-auto overflow-x-auto relative">
               
               {/* Tab 1: Mappings Grid */}
               {activeTab === 'mapper' && (
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-100">
-                      <th className="px-6 py-3.5 text-[9px] font-black uppercase tracking-wider text-slate-400">Concern Area</th>
-                      <th className="px-6 py-3.5 text-[9px] font-black uppercase tracking-wider text-slate-400">NIST AI RMF</th>
-                      <th className="px-6 py-3.5 text-[9px] font-black uppercase tracking-wider text-slate-400">EU AI Act</th>
-                      <th className="px-6 py-3.5 text-[9px] font-black uppercase tracking-wider text-slate-400">ISO/IEC 42001</th>
-                      <th className="px-6 py-3.5 text-[9px] font-black uppercase tracking-wider text-slate-400">ISO/IEC 27001</th>
-                      <th className="px-6 py-3.5 text-[9px] font-black uppercase tracking-wider text-slate-400">Unified Status</th>
+                      <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400 sticky top-0 bg-slate-50 z-10">Concern area</th>
+                      <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400 sticky top-0 bg-slate-50 z-10">NIST AI RMF</th>
+                      <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400 sticky top-0 bg-slate-50 z-10">EU AI Act</th>
+                      <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400 sticky top-0 bg-slate-50 z-10">ISO/IEC 42001</th>
+                      <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400 sticky top-0 bg-slate-50 z-10">ISO/IEC 27001</th>
+                      <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400 sticky top-0 bg-slate-50 z-10">Unified status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {mappings.map((m) => (
-                      <tr key={m.id} className="hover:bg-slate-50/40 transition-colors">
+                    {filteredMappings.map((m) => (
+                      <tr key={m.id} className="hover:bg-[var(--bg-hover)] transition-colors">
                         <td className="px-6 py-4">
                           <div className="font-bold text-[12px] text-slate-800 leading-normal">{m.concernArea}</div>
                         </td>
@@ -281,7 +301,7 @@ export default function GovernanceOS() {
                         <div className="flex justify-end pt-2 border-t border-slate-200/40">
                           <Link 
                             to={getComplianceAnchor(gap.framework)}
-                            className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-[var(--royal-indigo)] hover:text-[var(--mid-indigo)] active:scale-95 transition-all"
+                            className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-widest text-[var(--royal-indigo)] hover:text-[var(--mid-indigo)] active:scale-95 transition-all"
                           >
                             Resolve in Framework
                             <ChevronRight className="h-3.5 w-3.5" />

@@ -320,6 +320,7 @@ export function Header() {
           <div ref={bellRef} className="relative">
             <button 
               onClick={() => setIsBellOpen(prev => !prev)}
+              aria-label="Toggle notifications panel"
               className="p-2 rounded text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-all relative outline-none"
             >
               <Bell className="h-4 w-4" />

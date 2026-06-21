@@ -66,14 +66,14 @@ function DraggablePaletteItem({ type, label, description, icon, onAdd }: Draggab
       role="button"
       tabIndex={0}
       className={cn(
-        "flex items-center gap-3 p-3 bg-zinc-900/30 border border-zinc-850 hover:border-zinc-700 hover:bg-white/5 rounded-xl transition text-left cursor-grab active:cursor-grabbing select-none",
+        "flex items-center gap-3 p-3 bg-white border border-[var(--border-default)] hover:border-[var(--border-default)] hover:bg-[var(--bg-page)] rounded-xl transition text-left cursor-grab active:cursor-grabbing select-none",
         isDragging && "opacity-50 border-[var(--royal-indigo)] z-50"
       )}
     >
       {icon}
       <div>
         <p className="text-xs font-bold text-white">{label}</p>
-        <p className="text-[9px] text-zinc-500 uppercase">{description}</p>
+        <p className="text-[9px] text-[var(--text-muted)] uppercase">{description}</p>
       </div>
     </div>
   );
@@ -333,23 +333,23 @@ export default function IntakeFormBuilder() {
 
   return (
     <DndContext onDragEnd={handleDragEnd}>
-      <div className="flex flex-col h-screen bg-[#08080f] text-slate-200 font-sans overflow-hidden">
+      <div className="flex flex-col h-screen bg-[var(--bg-page)] text-[var(--text-secondary)] font-sans overflow-hidden">
         {/* Top action header */}
-        <div className="p-4 bg-zinc-950/50 border-b border-zinc-900 flex justify-between items-center z-10">
+        <div className="p-4 bg-white border-b border-[var(--border-default)] flex justify-between items-center z-10">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-[var(--mid-indigo)]/20 border border-[var(--royal-indigo)]/30 rounded-lg">
               <ClipboardList className="h-5 w-5 text-[var(--royal-indigo)]" />
             </div>
             <div>
-              <h1 className="text-sm font-black uppercase tracking-wider text-white">Intake Form Builder</h1>
-              <p className="text-[9px] uppercase tracking-widest text-zinc-500 font-bold">Design questionnaire schemas for safety audits</p>
+              <h1 className="text-[22px] font-semibold text-[var(--text-primary)] tracking-tight">Intake Form Builder</h1>
+              <p className="text-[9px] uppercase tracking-widest text-[var(--text-muted)] font-bold">Design questionnaire schemas for safety audits</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={() => setPreviewMode(!previewMode)}
-              className="flex items-center gap-1.5 px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded text-[10px] font-black uppercase tracking-widest text-gray-300 transition-all active:scale-95"
+              className="flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-[var(--bg-hover)] border border-[var(--border-default)] rounded text-[10px] font-semibold uppercase tracking-widest text-[var(--text-secondary)] transition-all active:scale-95"
             >
               <Eye className="h-3.5 w-3.5 text-indigo-400" />
               {previewMode ? 'Edit Design' : 'Form Preview'}
@@ -358,7 +358,7 @@ export default function IntakeFormBuilder() {
             <button
               onClick={() => saveFormConfig(false)}
               disabled={saving}
-              className="flex items-center gap-1.5 px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-850 text-gray-300 disabled:opacity-50 rounded text-[10px] font-black uppercase tracking-widest transition-all active:scale-95"
+              className="flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-[var(--bg-hover)] border border-[var(--border-default)] text-[var(--text-secondary)] disabled:opacity-50 rounded text-[10px] font-semibold uppercase tracking-widest transition-all active:scale-95"
             >
               {saving ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
               Save Draft
@@ -367,7 +367,7 @@ export default function IntakeFormBuilder() {
             <button
               onClick={() => saveFormConfig(true)}
               disabled={saving}
-              className="flex items-center gap-1.5 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] disabled:opacity-50 text-white rounded text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-md shadow-indigo-500/10"
+              className="flex items-center gap-1.5 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] disabled:opacity-50 text-white rounded text-[10px] font-semibold uppercase tracking-widest transition-all active:scale-95 shadow-md shadow-indigo-500/10"
             >
               {saving ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
               Publish
@@ -375,7 +375,7 @@ export default function IntakeFormBuilder() {
             
             <button
               onClick={() => navigate('/app/intake')}
-              className="px-3 py-2 bg-zinc-950 hover:bg-zinc-900 border border-zinc-900 rounded text-[10px] font-black uppercase tracking-widest text-zinc-400 transition-all"
+              className="px-3 py-2 bg-white hover:bg-white border border-[var(--border-default)] rounded text-[10px] font-semibold uppercase tracking-widest text-[var(--text-secondary)] transition-all"
             >
               Back to Queue
             </button>
@@ -385,17 +385,17 @@ export default function IntakeFormBuilder() {
       {/* Main Builder layout */}
       {previewMode ? (
         // Preview Pane
-        <div className="flex-1 overflow-y-auto p-8 flex justify-center bg-zinc-950/10">
-          <div className="w-full max-w-2xl bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-6 space-y-6 text-left">
+        <div className="flex-1 overflow-y-auto p-8 flex justify-center bg-white/10">
+          <div className="w-full max-w-2xl bg-white/50 border border-[var(--border-default)]/80 rounded-2xl p-6 space-y-6 text-left">
             <div>
               <h2 className="text-base font-bold text-white uppercase tracking-tight">{formConfig.title}</h2>
-              <p className="text-xs text-zinc-400 mt-1 leading-relaxed">{formConfig.description}</p>
+              <p className="text-xs text-[var(--text-secondary)] mt-1 leading-relaxed">{formConfig.description}</p>
             </div>
             
             <div className="space-y-4">
               {formConfig.fields.map((field) => (
                 <div key={field.id} className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
+                  <label className="text-[10px] font-semibold uppercase tracking-widest text-[var(--text-secondary)]">
                     {field.label} {field.required && <span className="text-red-500">*</span>}
                   </label>
                   
@@ -404,7 +404,7 @@ export default function IntakeFormBuilder() {
                       type="text"
                       placeholder={field.placeholder}
                       disabled
-                      className="bg-black/30 border border-zinc-850 rounded-xl p-3 text-xs text-zinc-300 w-full"
+                      className="bg-black/30 border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] w-full"
                     />
                   )}
                   
@@ -413,26 +413,26 @@ export default function IntakeFormBuilder() {
                       placeholder={field.placeholder}
                       rows={3}
                       disabled
-                      className="bg-black/30 border border-zinc-850 rounded-xl p-3 text-xs text-zinc-300 w-full"
+                      className="bg-black/30 border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] w-full"
                     />
                   )}
 
                   {field.type === 'select' && (
                     <div className="relative">
-                      <select disabled className="bg-black/30 border border-zinc-850 rounded-xl p-3 text-xs text-zinc-300 w-full appearance-none">
+                      <select disabled className="bg-black/30 border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] w-full appearance-none">
                         <option>Choose option...</option>
                         {field.options?.map((opt, i) => (
                           <option key={i}>{opt}</option>
                         ))}
                       </select>
-                      <ChevronDown className="absolute right-3 top-3.5 h-4 w-4 text-zinc-500" />
+                      <ChevronDown className="absolute right-3 top-3.5 h-4 w-4 text-[var(--text-muted)]" />
                     </div>
                   )}
 
                   {field.type === 'checkbox' && (
                     <label className="flex items-center gap-2 mt-1 cursor-pointer">
-                      <input type="checkbox" disabled className="rounded border-zinc-850 bg-black/30 text-indigo-600 focus:ring-0 focus:ring-offset-0" />
-                      <span className="text-xs text-zinc-300">Acknowledge agreement</span>
+                      <input type="checkbox" disabled className="rounded border-[var(--border-default)] bg-black/30 text-indigo-600 focus:ring-0 focus:ring-offset-0" />
+                      <span className="text-xs text-[var(--text-secondary)]">Acknowledge agreement</span>
                     </label>
                   )}
 
@@ -440,8 +440,8 @@ export default function IntakeFormBuilder() {
                     <div className="space-y-1.5 mt-1">
                       {field.options?.map((opt, i) => (
                         <label key={i} className="flex items-center gap-2 cursor-pointer">
-                          <input type="radio" disabled name={field.id} className="border-zinc-850 bg-black/30 text-indigo-600 focus:ring-0 focus:ring-offset-0" />
-                          <span className="text-xs text-zinc-300">{opt}</span>
+                          <input type="radio" disabled name={field.id} className="border-[var(--border-default)] bg-black/30 text-indigo-600 focus:ring-0 focus:ring-offset-0" />
+                          <span className="text-xs text-[var(--text-secondary)]">{opt}</span>
                         </label>
                       ))}
                     </div>
@@ -456,15 +456,15 @@ export default function IntakeFormBuilder() {
         <div className="flex-1 flex overflow-hidden">
           
           {/* Column 1: Palette & Template List */}
-          <div className="w-72 bg-zinc-950/40 border-r border-zinc-900 flex flex-col overflow-y-auto">
+          <div className="w-72 bg-white border-r border-[var(--border-default)] flex flex-col overflow-y-auto">
             {/* Template picker */}
-            <div className="p-4 border-b border-zinc-900/60 bg-[#09090e]/40">
-              <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500 block mb-3">
+            <div className="p-4 border-b border-[var(--border-default)]/60 bg-[#09090e]/40">
+              <span className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-muted)] block mb-3">
                 Intake Questionnaire Configs
               </span>
               
               {loadingForms ? (
-                <div className="py-4 text-center text-xs text-zinc-500">Loading forms...</div>
+                <div className="py-4 text-center text-xs text-[var(--text-muted)]">Loading forms...</div>
               ) : (
                 <div className="space-y-1.5 max-h-40 overflow-y-auto">
                   {existingForms.map((ef) => (
@@ -475,7 +475,7 @@ export default function IntakeFormBuilder() {
                         "w-full text-left p-2 rounded text-[11px] font-bold truncate transition",
                         formConfig.id === ef.id 
                           ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/20"
-                          : "bg-zinc-900/30 border border-zinc-850 hover:border-zinc-700 text-zinc-400 hover:text-white"
+                          : "bg-white border border-[var(--border-default)] hover:border-[var(--border-default)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                       )}
                     >
                       {ef.title} {ef.isActive && <span className="text-[8px] text-emerald-500 uppercase ml-1.5">(Active)</span>}
@@ -486,7 +486,7 @@ export default function IntakeFormBuilder() {
 
               <button
                 onClick={createNewTemplate}
-                className="w-full flex items-center justify-center gap-1.5 mt-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-[9px] font-black uppercase tracking-widest hover:bg-zinc-800 transition active:scale-95"
+                className="w-full flex items-center justify-center gap-1.5 mt-3 py-1.5 bg-white border border-[var(--border-default)] rounded text-[9px] font-semibold uppercase tracking-widest hover:bg-[var(--bg-hover)] transition active:scale-95"
               >
                 <Plus className="h-3.5 w-3.5 text-indigo-400" />
                 Create New Template
@@ -495,7 +495,7 @@ export default function IntakeFormBuilder() {
 
             {/* Draggable/Clickable Palette Items */}
             <div className="p-4 space-y-4">
-              <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500 block">
+              <span className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-muted)] block">
                 Fields Palette
               </span>
 
@@ -544,42 +544,42 @@ export default function IntakeFormBuilder() {
           </div>
 
           {/* Column 2: Form Canvas */}
-          <div className="flex-1 bg-zinc-950/10 overflow-y-auto p-6 flex justify-center">
+          <div className="flex-1 bg-white/10 overflow-y-auto p-6 flex justify-center">
             {loading ? (
               <div className="flex flex-col items-center justify-center gap-3">
                 <RefreshCw className="h-6 w-6 animate-spin text-indigo-500" />
-                <span className="text-[10px] font-black uppercase text-zinc-500">Loading form builder...</span>
+                <span className="text-[10px] font-semibold uppercase text-[var(--text-muted)]">Loading form builder...</span>
               </div>
             ) : (
               <DroppableCanvas id="canvas-zone">
                 {/* Form Metadata Card */}
-                <div className="card-base p-5 bg-zinc-950/30 border-zinc-850">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500 block mb-3">
+                <div className="card-base p-5 bg-[var(--bg-page)] border-[var(--border-default)]">
+                  <span className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-muted)] block mb-3">
                     Form Schema Info
                   </span>
                   <div className="space-y-4">
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Form Title</label>
+                      <label className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-secondary)]">Form Title</label>
                       <input
                         type="text"
                         value={formConfig.title}
                         onChange={(e) => setFormConfig(prev => ({ ...prev, title: e.target.value }))}
-                        className="bg-black/30 border border-zinc-850 rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-bold"
+                        className="bg-black/30 border border-[var(--border-default)] rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-bold"
                       />
                     </div>
                     
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Description</label>
+                      <label className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-secondary)]">Description</label>
                       <textarea
                         value={formConfig.description}
                         onChange={(e) => setFormConfig(prev => ({ ...prev, description: e.target.value }))}
                         rows={2}
-                        className="bg-black/30 border border-zinc-850 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-indigo-500"
+                        className="bg-black/30 border border-[var(--border-default)] rounded px-3 py-2 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
                       />
                     </div>
 
-                    <div className="flex items-center justify-between border-t border-zinc-900 pt-3">
-                      <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Set Active Form</span>
+                    <div className="flex items-center justify-between border-t border-[var(--border-default)] pt-3">
+                      <span className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-secondary)]">Set Active Form</span>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
                           type="checkbox"
@@ -587,7 +587,7 @@ export default function IntakeFormBuilder() {
                           onChange={(e) => setFormConfig(prev => ({ ...prev, isActive: e.target.checked }))}
                           className="sr-only peer"
                         />
-                        <div className="w-9 h-5 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-400 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600 peer-checked:after:bg-white"></div>
+                        <div className="w-9 h-5 bg-[var(--bg-hover)] rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-400 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600 peer-checked:after:bg-white"></div>
                       </label>
                     </div>
                   </div>
@@ -595,12 +595,12 @@ export default function IntakeFormBuilder() {
 
                 {/* Canvas Form Fields */}
                 <div className="space-y-3">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500 block">
+                  <span className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-muted)] block">
                     Form Design Canvas
                   </span>
 
                   {formConfig.fields.length === 0 ? (
-                    <div className="py-12 border-2 border-dashed border-zinc-850 rounded-xl flex flex-col items-center justify-center gap-2 text-zinc-500">
+                    <div className="py-12 border-2 border-dashed border-[var(--border-default)] rounded-xl flex flex-col items-center justify-center gap-2 text-[var(--text-muted)]">
                       <AlertTriangle className="h-6 w-6" />
                       <span className="text-xs italic">Questionnaire canvas is empty. Add fields from palette.</span>
                     </div>
@@ -619,22 +619,22 @@ export default function IntakeFormBuilder() {
                             "p-4 rounded-xl border transition-all text-left flex justify-between items-start cursor-pointer select-none",
                             isSelected 
                               ? "bg-indigo-600/10 border-indigo-500 shadow-md shadow-indigo-500/5" 
-                              : "bg-zinc-900/40 border-zinc-850/80 hover:border-zinc-700"
+                              : "bg-white border-[var(--border-default)]/80 hover:border-[var(--border-default)]"
                           )}
                         >
                           <div className="space-y-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="text-[9px] font-mono font-black uppercase text-indigo-400 tracking-wide bg-indigo-500/5 px-1.5 py-0.5 rounded border border-indigo-500/10">
+                              <span className="text-[9px] font-mono font-semibold uppercase text-indigo-400 tracking-wide bg-indigo-500/5 px-1.5 py-0.5 rounded border border-indigo-500/10">
                                 {field.type}
                               </span>
                               <span className="text-xs font-bold text-white truncate">{field.label}</span>
                               {field.required && <span className="text-red-500 text-xs font-bold">*</span>}
                             </div>
                             
-                            <p className="text-[10px] text-zinc-500 font-mono">key: {field.name}</p>
+                            <p className="text-[10px] text-[var(--text-muted)] font-mono">key: {field.name}</p>
                             
                             {field.options && field.options.length > 0 && (
-                              <p className="text-[9px] text-zinc-500 truncate mt-1">
+                              <p className="text-[9px] text-[var(--text-muted)] truncate mt-1">
                                 Options: {field.options.join(' | ')}
                               </p>
                             )}
@@ -644,20 +644,20 @@ export default function IntakeFormBuilder() {
                             <button
                               onClick={(e) => { e.stopPropagation(); moveField(index, 'up'); }}
                               disabled={index === 0}
-                              className="p-1 hover:bg-zinc-800 disabled:opacity-20 text-zinc-400 rounded"
+                              className="p-1 hover:bg-[var(--bg-hover)] disabled:opacity-20 text-[var(--text-secondary)] rounded"
                             >
                               <ArrowUp className="h-3.5 w-3.5" />
                             </button>
                             <button
                               onClick={(e) => { e.stopPropagation(); moveField(index, 'down'); }}
                               disabled={index === formConfig.fields.length - 1}
-                              className="p-1 hover:bg-zinc-800 disabled:opacity-20 text-zinc-400 rounded"
+                              className="p-1 hover:bg-[var(--bg-hover)] disabled:opacity-20 text-[var(--text-secondary)] rounded"
                             >
                               <ArrowDown className="h-3.5 w-3.5" />
                             </button>
                             <button
                               onClick={(e) => { e.stopPropagation(); deleteField(field.id); }}
-                              className="p-1 hover:bg-red-500/10 text-zinc-500 hover:text-red-400 rounded"
+                              className="p-1 hover:bg-red-500/10 text-[var(--text-muted)] hover:text-red-400 rounded"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
@@ -672,10 +672,10 @@ export default function IntakeFormBuilder() {
           </div>
 
           {/* Column 3: Property Editor */}
-          <div className="w-80 bg-zinc-950/40 border-l border-zinc-900 flex flex-col overflow-y-auto">
-            <div className="p-4 border-b border-zinc-900 bg-[#09090e]/40 flex items-center gap-2">
+          <div className="w-80 bg-white border-l border-[var(--border-default)] flex flex-col overflow-y-auto">
+            <div className="p-4 border-b border-[var(--border-default)] bg-[#09090e]/40 flex items-center gap-2">
               <Settings2 className="h-4 w-4 text-indigo-400" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-indigo-400">
                 Properties Editor
               </span>
             </div>
@@ -684,51 +684,51 @@ export default function IntakeFormBuilder() {
               <div className="p-5 space-y-5 text-left">
                 {/* Field type info badge */}
                 <div>
-                  <span className="text-[8px] font-black text-zinc-500 uppercase block mb-1">Field Type</span>
-                  <span className="text-[9px] font-bold text-white uppercase bg-zinc-800 border border-zinc-700 px-2 py-0.5 rounded">
+                  <span className="text-[8px] font-semibold text-[var(--text-muted)] uppercase block mb-1">Field Type</span>
+                  <span className="text-[9px] font-bold text-white uppercase bg-[var(--bg-hover)] border border-[var(--border-default)] px-2 py-0.5 rounded">
                     {selectedField.type} Question
                   </span>
                 </div>
 
                 {/* Field Label */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Question Label / Title</label>
+                  <label className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">Question Label / Title</label>
                   <input
                     type="text"
                     value={selectedField.label}
                     onChange={(e) => updateFieldProperty(selectedField.id, 'label', e.target.value)}
-                    className="bg-black/30 border border-zinc-850 rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-bold"
+                    className="bg-black/30 border border-[var(--border-default)] rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-bold"
                   />
                 </div>
 
                 {/* Field Name / API key */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Field Key (snake_case)</label>
+                  <label className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">Field Key (snake_case)</label>
                   <input
                     type="text"
                     value={selectedField.name}
                     onChange={(e) => updateFieldProperty(selectedField.id, 'name', e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
-                    className="bg-black/30 border border-zinc-850 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-indigo-500 font-mono"
+                    className="bg-black/30 border border-[var(--border-default)] rounded px-3 py-2 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500 font-mono"
                   />
-                  <p className="text-[8px] text-zinc-500">Must be a unique programmatic identifier.</p>
+                  <p className="text-[8px] text-[var(--text-muted)]">Must be a unique programmatic identifier.</p>
                 </div>
 
                 {/* Field Placeholder (if input/textarea) */}
                 {(selectedField.type === 'text' || selectedField.type === 'textarea') && (
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Placeholder Text</label>
+                    <label className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">Placeholder Text</label>
                     <input
                       type="text"
                       value={selectedField.placeholder || ''}
                       onChange={(e) => updateFieldProperty(selectedField.id, 'placeholder', e.target.value)}
-                      className="bg-black/30 border border-zinc-850 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-indigo-500"
+                      className="bg-black/30 border border-[var(--border-default)] rounded px-3 py-2 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
                     />
                   </div>
                 )}
 
                 {/* Required Toggle */}
-                <div className="flex items-center justify-between border-t border-zinc-900/60 pt-3">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Required Question</span>
+                <div className="flex items-center justify-between border-t border-[var(--border-default)]/60 pt-3">
+                  <span className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">Required Question</span>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
                       type="checkbox"
@@ -736,14 +736,14 @@ export default function IntakeFormBuilder() {
                       onChange={(e) => updateFieldProperty(selectedField.id, 'required', e.target.checked)}
                       className="sr-only peer"
                     />
-                    <div className="w-9 h-5 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-400 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600 peer-checked:after:bg-white"></div>
+                    <div className="w-9 h-5 bg-[var(--bg-hover)] rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-400 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600 peer-checked:after:bg-white"></div>
                   </label>
                 </div>
 
                 {/* Options list editor (if dropdown/radio) */}
                 {(selectedField.type === 'select' || selectedField.type === 'radio') && (
-                  <div className="border-t border-zinc-900/60 pt-4 space-y-3">
-                    <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500 block">
+                  <div className="border-t border-[var(--border-default)]/60 pt-4 space-y-3">
+                    <span className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-muted)] block">
                       Selection Options
                     </span>
                     
@@ -761,11 +761,11 @@ export default function IntakeFormBuilder() {
                         name="optionText"
                         type="text"
                         placeholder="Add new option..."
-                        className="bg-black/30 border border-zinc-850 rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 flex-1"
+                        className="bg-black/30 border border-[var(--border-default)] rounded px-3 py-1.5 text-xs text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 flex-1"
                       />
                       <button
                         type="submit"
-                        className="p-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded text-indigo-400"
+                        className="p-1.5 bg-white hover:bg-[var(--bg-hover)] border border-[var(--border-default)] rounded text-indigo-400"
                       >
                         <Plus className="h-4 w-4" />
                       </button>
@@ -773,11 +773,11 @@ export default function IntakeFormBuilder() {
 
                     <div className="space-y-1.5 max-h-48 overflow-y-auto">
                       {(selectedField.options || []).map((opt, i) => (
-                        <div key={i} className="flex justify-between items-center bg-zinc-900/30 border border-zinc-850/60 p-2 rounded">
-                          <span className="text-xs text-zinc-300 font-bold">{opt}</span>
+                        <div key={i} className="flex justify-between items-center bg-white border border-[var(--border-default)]/60 p-2 rounded">
+                          <span className="text-xs text-[var(--text-secondary)] font-bold">{opt}</span>
                           <button
                             onClick={() => removeOption(selectedField.id, i)}
-                            className="p-1 text-zinc-500 hover:text-red-500 rounded"
+                            className="p-1 text-[var(--text-muted)] hover:text-red-500 rounded"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
@@ -788,7 +788,7 @@ export default function IntakeFormBuilder() {
                 )}
               </div>
             ) : (
-              <div className="p-12 text-center text-zinc-500 text-xs italic">
+              <div className="p-12 text-center text-[var(--text-muted)] text-xs italic">
                 Select a field from the design canvas to configure properties.
               </div>
             )}

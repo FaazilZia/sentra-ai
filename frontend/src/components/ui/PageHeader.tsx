@@ -12,7 +12,7 @@ export function PageHeader({ title, description, action, className }: PageHeader
   return (
     <div className={cn("flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8", className)}>
       <div>
-        <h1 className="text-[var(--text-xl)] font-black text-[var(--text-primary)] tracking-wide uppercase">
+        <h1 className="text-[22px] font-semibold text-[var(--text-primary)] tracking-tight">
           {title}
         </h1>
         {description && (

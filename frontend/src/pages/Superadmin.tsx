@@ -336,7 +336,7 @@ export default function Superadmin() {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black tracking-tight uppercase flex items-center gap-2">
+          <h1 className="text-[22px] font-semibold tracking-tight flex items-center gap-2 text-[var(--text-primary)]">
             <Award className="h-6 w-6 text-indigo-500" />
             <span>Platform Admin Console</span>
           </h1>
@@ -352,7 +352,7 @@ export default function Superadmin() {
             loadQueues();
             addToast({ message: 'Platform status cache refreshed', type: 'info' });
           }}
-          className="flex items-center justify-center gap-2 h-9 px-4 border border-[var(--border-default)] hover:bg-[var(--bg-hover)] text-[10px] font-black uppercase tracking-wider rounded-lg transition-all"
+          className="flex items-center justify-center gap-2 h-9 px-4 border border-[var(--border-default)] hover:bg-[var(--bg-hover)] text-[10px] font-semibold uppercase tracking-wider rounded-lg transition-all"
         >
           <RefreshCw className="h-3.5 w-3.5" />
           <span>Refresh Console</span>
@@ -363,28 +363,28 @@ export default function Superadmin() {
       {!statsLoading && stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-4">
           <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-4 rounded-xl shadow-sm flex flex-col justify-between">
-            <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-wider">Total Tenants</span>
-            <span className="text-2xl font-black text-white mt-2">{stats.organizations.total}</span>
+            <span className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Total Tenants</span>
+            <span className="text-2xl font-semibold text-white mt-2">{stats.organizations.total}</span>
           </div>
           <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-4 rounded-xl shadow-sm flex flex-col justify-between">
-            <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-wider">Active Tenants</span>
-            <span className="text-2xl font-black text-emerald-400 mt-2">{stats.organizations.active}</span>
+            <span className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Active Tenants</span>
+            <span className="text-2xl font-semibold text-emerald-400 mt-2">{stats.organizations.active}</span>
           </div>
           <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-4 rounded-xl shadow-sm flex flex-col justify-between">
-            <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-wider">Suspended Tenants</span>
-            <span className="text-2xl font-black text-amber-500 mt-2">{stats.organizations.suspended}</span>
+            <span className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Suspended Tenants</span>
+            <span className="text-2xl font-semibold text-amber-500 mt-2">{stats.organizations.suspended}</span>
           </div>
           <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-4 rounded-xl shadow-sm flex flex-col justify-between">
-            <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-wider">Global User Accounts</span>
-            <span className="text-2xl font-black text-indigo-400 mt-2">{stats.users}</span>
+            <span className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Global User Accounts</span>
+            <span className="text-2xl font-semibold text-indigo-400 mt-2">{stats.users}</span>
           </div>
           <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-4 rounded-xl shadow-sm flex flex-col justify-between">
-            <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-wider">AI Agents Registered</span>
-            <span className="text-2xl font-black text-purple-400 mt-2">{stats.aiAgents}</span>
+            <span className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">AI Agents Registered</span>
+            <span className="text-2xl font-semibold text-purple-400 mt-2">{stats.aiAgents}</span>
           </div>
           <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-4 rounded-xl shadow-sm flex flex-col justify-between">
-            <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-wider">Security Incidents</span>
-            <span className="text-2xl font-black text-rose-500 mt-2">{stats.incidents}</span>
+            <span className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Security Incidents</span>
+            <span className="text-2xl font-semibold text-rose-500 mt-2">{stats.incidents}</span>
           </div>
         </div>
       )}
@@ -394,10 +394,10 @@ export default function Superadmin() {
         <button 
           onClick={() => { setActiveTab('users'); setSelectedOrgId(null); setSelectedOrg(null); }}
           className={cn(
-            "pb-3 text-xs font-black uppercase tracking-widest transition-all border-b-2 flex items-center gap-2",
+            "pb-3 text-xs font-semibold uppercase tracking-widest transition-all border-b-2 flex items-center gap-2",
             activeTab === 'users' && !selectedOrgId
               ? "border-indigo-500 text-white" 
-              : "border-transparent text-[var(--text-secondary)] hover:text-white"
+              : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           )}
         >
           <Users className="h-4 w-4" />
@@ -406,10 +406,10 @@ export default function Superadmin() {
         <button 
           onClick={() => { setActiveTab('orgs'); }}
           className={cn(
-            "pb-3 text-xs font-black uppercase tracking-widest transition-all border-b-2 flex items-center gap-2",
+            "pb-3 text-xs font-semibold uppercase tracking-widest transition-all border-b-2 flex items-center gap-2",
             activeTab === 'orgs' || selectedOrgId
               ? "border-indigo-500 text-white" 
-              : "border-transparent text-[var(--text-secondary)] hover:text-white"
+              : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           )}
         >
           <Building className="h-4 w-4" />
@@ -418,10 +418,10 @@ export default function Superadmin() {
         <button 
           onClick={() => { setActiveTab('queues'); setSelectedOrgId(null); setSelectedOrg(null); }}
           className={cn(
-            "pb-3 text-xs font-black uppercase tracking-widest transition-all border-b-2 flex items-center gap-2",
+            "pb-3 text-xs font-semibold uppercase tracking-widest transition-all border-b-2 flex items-center gap-2",
             activeTab === 'queues'
               ? "border-indigo-500 text-white" 
-              : "border-transparent text-[var(--text-secondary)] hover:text-white"
+              : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           )}
         >
           <Activity className="h-4 w-4" />
@@ -438,7 +438,7 @@ export default function Superadmin() {
             
             {/* Action Bar */}
             <div className="flex items-center justify-between bg-[var(--bg-card)] border border-[var(--border-default)] p-4 rounded-xl">
-              <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-wider">
+              <span className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                 Showing {users.length} active platform accounts
               </span>
               <div className="relative">
@@ -457,14 +457,14 @@ export default function Superadmin() {
             {usersLoading ? (
               <div className="flex flex-col items-center justify-center py-16 gap-3">
                 <RefreshCw className="h-8 w-8 animate-spin text-indigo-500" />
-                <span className="text-[9px] font-black uppercase tracking-widest text-[var(--text-secondary)]">Loading User Registry...</span>
+                <span className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-secondary)]">Loading User Registry...</span>
               </div>
             ) : (
               <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl overflow-hidden shadow-md">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="border-b border-[var(--border-default)] bg-[var(--bg-page)]/40 text-[9px] font-black uppercase tracking-widest text-[var(--text-secondary)]">
+                      <tr className="border-b border-[var(--border-default)] bg-[var(--bg-page)]/40 text-[9px] font-semibold uppercase tracking-widest text-[var(--text-secondary)]">
                         <th className="px-6 py-4">Account Profile</th>
                         <th className="px-6 py-4">Associated Organization</th>
                         <th className="px-6 py-4">System Role</th>
@@ -481,10 +481,10 @@ export default function Superadmin() {
                         </tr>
                       ) : (
                         users.map((user) => (
-                          <tr key={user.id} className="hover:bg-white/5 transition-all text-xs">
+                          <tr key={user.id} className="hover:bg-[var(--bg-page)] transition-all text-xs">
                             <td className="px-6 py-4">
                               <div className="flex flex-col">
-                                <span className="font-black text-white">{user.full_name}</span>
+                                <span className="font-semibold text-white">{user.full_name}</span>
                                 <span className="text-[10px] text-[var(--text-muted)] mt-0.5">{user.email}</span>
                               </div>
                             </td>
@@ -514,7 +514,7 @@ export default function Superadmin() {
                             </td>
                             <td className="px-6 py-4 text-center">
                               <span className={cn(
-                                "text-[9px] font-black uppercase px-2 py-0.5 rounded",
+                                "text-[9px] font-semibold uppercase px-2 py-0.5 rounded",
                                 user.is_active 
                                   ? "bg-emerald-500/10 text-emerald-400" 
                                   : "bg-rose-500/10 text-rose-400"
@@ -526,7 +526,7 @@ export default function Superadmin() {
                               <div className="flex items-center justify-end gap-2">
                                 <button
                                   onClick={() => handleImpersonate(user.id, user.full_name)}
-                                  className="p-1.5 rounded hover:bg-indigo-500/10 text-indigo-400 border border-transparent hover:border-indigo-500/30 transition-all flex items-center gap-1.5 text-[9px] font-black uppercase tracking-wider"
+                                  className="p-1.5 rounded hover:bg-indigo-500/10 text-indigo-400 border border-transparent hover:border-indigo-500/30 transition-all flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wider"
                                   title="Impersonate User"
                                 >
                                   <Eye className="h-3.5 w-3.5" />
@@ -535,7 +535,7 @@ export default function Superadmin() {
                                 <button
                                   onClick={() => handleToggleUserBan(user)}
                                   className={cn(
-                                    "p-1.5 rounded border border-transparent transition-all text-[9px] font-black uppercase tracking-wider",
+                                    "p-1.5 rounded border border-transparent transition-all text-[9px] font-semibold uppercase tracking-wider",
                                     user.is_active 
                                       ? "hover:bg-amber-500/10 text-amber-400 hover:border-amber-500/30" 
                                       : "hover:bg-emerald-500/10 text-emerald-400 hover:border-emerald-500/30"
@@ -570,7 +570,7 @@ export default function Superadmin() {
             
             {/* Search Bar */}
             <div className="flex items-center justify-between bg-[var(--bg-card)] border border-[var(--border-default)] p-4 rounded-xl">
-              <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-wider">
+              <span className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                 Multi-Tenant Administration Screen
               </span>
               <div className="relative">
@@ -589,12 +589,12 @@ export default function Superadmin() {
             {orgsLoading ? (
               <div className="flex flex-col items-center justify-center py-16 gap-3">
                 <RefreshCw className="h-8 w-8 animate-spin text-indigo-500" />
-                <span className="text-[9px] font-black uppercase tracking-widest text-[var(--text-secondary)]">Loading Organization Ledger...</span>
+                <span className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-secondary)]">Loading Organization Ledger...</span>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {orgs.length === 0 ? (
-                  <div className="col-span-full bg-[var(--bg-card)] border border-[var(--border-default)] p-12 text-center text-[var(--text-muted)] font-black uppercase tracking-widest text-xs">
+                  <div className="col-span-full bg-[var(--bg-card)] border border-[var(--border-default)] p-12 text-center text-[var(--text-muted)] font-semibold uppercase tracking-widest text-xs">
                     No active tenants match the query
                   </div>
                 ) : (
@@ -609,13 +609,13 @@ export default function Superadmin() {
                       <div>
                         <div className="flex items-start justify-between">
                           <div>
-                            <h3 className="text-sm font-black text-white">{org.name}</h3>
+                            <h3 className="text-sm font-semibold text-white">{org.name}</h3>
                             <span className="text-[9px] uppercase tracking-wider font-bold text-[var(--text-muted)] block mt-0.5">
                               SLUG: {org.slug}
                             </span>
                           </div>
                           <span className={cn(
-                            "text-[8px] font-black uppercase px-2 py-0.5 rounded",
+                            "text-[8px] font-semibold uppercase px-2 py-0.5 rounded",
                             org.is_active 
                               ? "bg-emerald-500/10 text-emerald-400" 
                               : "bg-rose-500/10 text-rose-400"
@@ -627,29 +627,29 @@ export default function Superadmin() {
                         {/* Middle stats grid */}
                         <div className="grid grid-cols-3 gap-2 mt-6 border-y border-[var(--border-default)]/40 py-3 text-center">
                           <div>
-                            <span className="text-[8px] font-black uppercase tracking-tighter text-[var(--text-secondary)] block">Users</span>
-                            <span className="text-xs font-black text-white mt-1 block">{org._count.users}</span>
+                            <span className="text-[8px] font-semibold uppercase tracking-tighter text-[var(--text-secondary)] block">Users</span>
+                            <span className="text-xs font-semibold text-white mt-1 block">{org._count.users}</span>
                           </div>
                           <div>
-                            <span className="text-[8px] font-black uppercase tracking-tighter text-[var(--text-secondary)] block">Agents</span>
-                            <span className="text-xs font-black text-white mt-1 block">{org._count.ai_agents}</span>
+                            <span className="text-[8px] font-semibold uppercase tracking-tighter text-[var(--text-secondary)] block">Agents</span>
+                            <span className="text-xs font-semibold text-white mt-1 block">{org._count.ai_agents}</span>
                           </div>
                           <div>
-                            <span className="text-[8px] font-black uppercase tracking-tighter text-[var(--text-secondary)] block">Violations</span>
-                            <span className="text-xs font-black text-rose-400 mt-1 block">{org._count.incidents}</span>
+                            <span className="text-[8px] font-semibold uppercase tracking-tighter text-[var(--text-secondary)] block">Violations</span>
+                            <span className="text-xs font-semibold text-rose-400 mt-1 block">{org._count.incidents}</span>
                           </div>
                         </div>
                       </div>
 
                       {/* Footer Actions */}
                       <div className="flex items-center justify-between mt-4">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-indigo-400">
+                        <span className="text-[9px] font-semibold uppercase tracking-widest text-indigo-400">
                           {org.plan.toUpperCase()} PLAN
                         </span>
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleDrillDownOrg(org.id)}
-                            className="btn-secondary h-7 !px-2.5 !py-0 !text-[8.5px] uppercase font-black tracking-widest flex items-center gap-1"
+                            className="btn-secondary h-7 !px-2.5 !py-0 !text-[8.5px] uppercase font-semibold tracking-widest flex items-center gap-1"
                           >
                             <Settings className="h-3 w-3" />
                             <span>Drill down</span>
@@ -657,7 +657,7 @@ export default function Superadmin() {
                           <button
                             onClick={() => handleToggleOrgSuspend(org)}
                             className={cn(
-                              "h-7 px-2.5 rounded text-[8.5px] font-black uppercase tracking-widest transition-all border flex items-center justify-center gap-1",
+                              "h-7 px-2.5 rounded text-[8.5px] font-semibold uppercase tracking-widest transition-all border flex items-center justify-center gap-1",
                               org.is_active 
                                 ? "bg-amber-500/5 text-amber-400 border-amber-500/20 hover:bg-amber-500/10" 
                                 : "bg-emerald-500/5 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/10"
@@ -683,7 +683,7 @@ export default function Superadmin() {
             <div>
               <button 
                 onClick={() => { setSelectedOrgId(null); setSelectedOrg(null); }}
-                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] hover:text-white transition-colors"
+                className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-widest text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
               >
                 <ChevronLeft className="h-4 w-4" />
                 <span>Return to organizations grid</span>
@@ -693,7 +693,7 @@ export default function Superadmin() {
             {orgDetailLoading ? (
               <div className="flex flex-col items-center justify-center py-16 gap-3">
                 <RefreshCw className="h-8 w-8 animate-spin text-indigo-500" />
-                <span className="text-[9px] font-black uppercase tracking-widest text-[var(--text-secondary)]">Retrieving Tenant Metadata...</span>
+                <span className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-secondary)]">Retrieving Tenant Metadata...</span>
               </div>
             ) : selectedOrg ? (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -703,13 +703,13 @@ export default function Superadmin() {
                   <div className="card-base p-6 flex flex-col gap-6">
                     <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-4">
                       <div>
-                        <h2 className="text-lg font-black text-white">{selectedOrg.name}</h2>
+                        <h2 className="text-lg font-semibold text-white">{selectedOrg.name}</h2>
                         <p className="text-[9px] uppercase tracking-wider text-[var(--text-muted)] mt-1 font-bold">
                           TENANT ID: {selectedOrg.id}
                         </p>
                       </div>
                       <span className={cn(
-                        "text-[9px] font-black uppercase px-2 py-0.5 rounded",
+                        "text-[9px] font-semibold uppercase px-2 py-0.5 rounded",
                         selectedOrg.is_active 
                           ? "bg-emerald-500/10 text-emerald-400" 
                           : "bg-rose-500/10 text-rose-400"
@@ -720,25 +720,25 @@ export default function Superadmin() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="flex flex-col gap-1.5">
-                        <span className="text-[8px] font-black uppercase tracking-widest text-[var(--text-secondary)]">Tenant Slug</span>
+                        <span className="text-[8px] font-semibold uppercase tracking-widest text-[var(--text-secondary)]">Tenant Slug</span>
                         <span className="bg-[var(--bg-page)] border border-[var(--border-default)]/60 rounded p-2 text-xs font-mono font-bold text-white">
                           {selectedOrg.slug}
                         </span>
                       </div>
                       <div className="flex flex-col gap-1.5">
-                        <span className="text-[8px] font-black uppercase tracking-widest text-[var(--text-secondary)]">Custom Domain</span>
+                        <span className="text-[8px] font-semibold uppercase tracking-widest text-[var(--text-secondary)]">Custom Domain</span>
                         <span className="bg-[var(--bg-page)] border border-[var(--border-default)]/60 rounded p-2 text-xs font-mono font-bold text-white">
                           {selectedOrg.custom_domain || 'NOT CONFIGURATION'}
                         </span>
                       </div>
                       <div className="flex flex-col gap-1.5">
-                        <span className="text-[8px] font-black uppercase tracking-widest text-[var(--text-secondary)]">Creation Timestamp</span>
+                        <span className="text-[8px] font-semibold uppercase tracking-widest text-[var(--text-secondary)]">Creation Timestamp</span>
                         <span className="bg-[var(--bg-page)] border border-[var(--border-default)]/60 rounded p-2 text-xs font-bold text-white">
                           {new Date(selectedOrg.created_at).toLocaleString()}
                         </span>
                       </div>
                       <div className="flex flex-col gap-1.5">
-                        <span className="text-[8px] font-black uppercase tracking-widest text-[var(--text-secondary)]">System Region</span>
+                        <span className="text-[8px] font-semibold uppercase tracking-widest text-[var(--text-secondary)]">System Region</span>
                         <span className="bg-[var(--bg-page)] border border-[var(--border-default)]/60 rounded p-2 text-xs font-bold text-white uppercase">
                           {selectedOrg.data_region || 'US'}
                         </span>
@@ -747,8 +747,8 @@ export default function Superadmin() {
 
                     <div className="border-t border-[var(--border-default)]/50 pt-4 flex items-center justify-between">
                       <div className="flex flex-col">
-                        <span className="text-[8px] font-black uppercase tracking-widest text-[var(--text-secondary)]">Active Tier</span>
-                        <span className="text-sm font-black text-white mt-1 uppercase">{selectedOrg.plan} Tier</span>
+                        <span className="text-[8px] font-semibold uppercase tracking-widest text-[var(--text-secondary)]">Active Tier</span>
+                        <span className="text-sm font-semibold text-white mt-1 uppercase">{selectedOrg.plan} Tier</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <button
@@ -766,14 +766,14 @@ export default function Superadmin() {
                               addToast({ message: 'Feature not supported', type: 'error' });
                             }
                           }}
-                          className="btn-secondary h-8 !px-3 !py-0 !text-[9px] uppercase font-black tracking-widest"
+                          className="btn-secondary h-8 !px-3 !py-0 !text-[9px] uppercase font-semibold tracking-widest"
                         >
                           Modify Plan
                         </button>
                         <button
                           onClick={() => handleToggleOrgSuspend(selectedOrg)}
                           className={cn(
-                            "h-8 px-3 rounded text-[9px] font-black uppercase tracking-widest transition-all border flex items-center justify-center gap-1.5",
+                            "h-8 px-3 rounded text-[9px] font-semibold uppercase tracking-widest transition-all border flex items-center justify-center gap-1.5",
                             selectedOrg.is_active 
                               ? "bg-amber-500/5 text-amber-400 border-amber-500/20 hover:bg-amber-500/10" 
                               : "bg-emerald-500/5 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/10"
@@ -787,12 +787,12 @@ export default function Superadmin() {
 
                   {/* Workspaces List inside Tenant */}
                   <div className="card-base p-6">
-                    <h3 className="text-xs font-black uppercase tracking-widest text-white border-b border-[var(--border-default)]/50 pb-3 mb-4">
+                    <h3 className="text-xs font-semibold uppercase tracking-widest text-white border-b border-[var(--border-default)]/50 pb-3 mb-4">
                       Associated Workspaces
                     </h3>
                     <div className="divide-y divide-[var(--border-default)]/40">
                       {selectedOrg.workspaces && selectedOrg.workspaces.length === 0 ? (
-                        <div className="text-center text-[var(--text-muted)] text-[10px] uppercase font-black py-4">
+                        <div className="text-center text-[var(--text-muted)] text-[10px] uppercase font-semibold py-4">
                           No active workspaces found
                         </div>
                       ) : (
@@ -804,7 +804,7 @@ export default function Superadmin() {
                                 ID: {workspace.id}
                               </span>
                             </div>
-                            <span className="text-[9px] font-black uppercase px-2 py-0.5 bg-[var(--bg-page)] border border-[var(--border-default)] rounded">
+                            <span className="text-[9px] font-semibold uppercase px-2 py-0.5 bg-[var(--bg-page)] border border-[var(--border-default)] rounded">
                               Active
                             </span>
                           </div>
@@ -819,32 +819,32 @@ export default function Superadmin() {
                   
                   {/* Stats Counter */}
                   <div className="card-base p-6 bg-gradient-to-br from-indigo-950/20 to-purple-950/20">
-                    <h3 className="text-xs font-black uppercase tracking-widest text-white mb-4">
+                    <h3 className="text-xs font-semibold uppercase tracking-widest text-white mb-4">
                       Activity Metrics
                     </h3>
                     <div className="flex flex-col gap-4">
                       <div className="flex justify-between items-center border-b border-[var(--border-default)]/30 pb-2">
                         <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider">Active Users</span>
-                        <span className="text-sm font-black text-white">{selectedOrg._count?.users || 0}</span>
+                        <span className="text-sm font-semibold text-white">{selectedOrg._count?.users || 0}</span>
                       </div>
                       <div className="flex justify-between items-center border-b border-[var(--border-default)]/30 pb-2">
                         <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider">AI Agents</span>
-                        <span className="text-sm font-black text-white">{selectedOrg._count?.ai_agents || 0}</span>
+                        <span className="text-sm font-semibold text-white">{selectedOrg._count?.ai_agents || 0}</span>
                       </div>
                       <div className="flex justify-between items-center border-b border-[var(--border-default)]/30 pb-2">
                         <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider">Incidents</span>
-                        <span className="text-sm font-black text-rose-400">{selectedOrg._count?.incidents || 0}</span>
+                        <span className="text-sm font-semibold text-rose-400">{selectedOrg._count?.incidents || 0}</span>
                       </div>
                       <div className="flex justify-between items-center pb-2">
                         <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider">Governance Policies</span>
-                        <span className="text-sm font-black text-purple-400">{selectedOrg._count?.policies || 0}</span>
+                        <span className="text-sm font-semibold text-purple-400">{selectedOrg._count?.policies || 0}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Danger Zone */}
                   <div className="card-base p-6 border-rose-950 bg-rose-950/5">
-                    <h3 className="text-xs font-black uppercase tracking-widest text-rose-400 mb-4 flex items-center gap-1.5">
+                    <h3 className="text-xs font-semibold uppercase tracking-widest text-rose-400 mb-4 flex items-center gap-1.5">
                       <ShieldAlert className="h-4 w-4" />
                       <span>Danger Zone</span>
                     </h3>
@@ -853,7 +853,7 @@ export default function Superadmin() {
                     </p>
                     <button
                       onClick={() => handleDeleteOrg(selectedOrg.id, selectedOrg.name)}
-                      className="w-full h-9 flex items-center justify-center gap-2 border border-rose-500/20 bg-rose-500/5 hover:bg-rose-500/10 text-rose-400 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all"
+                      className="w-full h-9 flex items-center justify-center gap-2 border border-rose-500/20 bg-rose-500/5 hover:bg-rose-500/10 text-rose-400 rounded-lg text-[10px] font-semibold uppercase tracking-widest transition-all"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                       <span>Delete Tenant</span>
@@ -873,14 +873,14 @@ export default function Superadmin() {
             {/* Action Bar */}
             <div className="flex items-center justify-between bg-[var(--bg-card)] border border-[var(--border-default)] p-4 rounded-xl">
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-wider">
+                <span className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                   BullMQ Queue Orchestrator
                 </span>
                 <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
               </div>
               <button 
                 onClick={() => { loadQueues(); setActiveQueueName(null); setFailedJobs([]); }}
-                className="flex items-center justify-center gap-2 h-7 px-3 border border-[var(--border-default)] hover:bg-[var(--bg-hover)] text-[9px] font-black uppercase tracking-wider rounded transition-all"
+                className="flex items-center justify-center gap-2 h-7 px-3 border border-[var(--border-default)] hover:bg-[var(--bg-hover)] text-[9px] font-semibold uppercase tracking-wider rounded transition-all"
               >
                 <RefreshCw className="h-3 w-3" />
                 <span>Refresh Queues</span>
@@ -891,7 +891,7 @@ export default function Superadmin() {
             {queuesLoading ? (
               <div className="flex flex-col items-center justify-center py-16 gap-3">
                 <RefreshCw className="h-8 w-8 animate-spin text-indigo-500" />
-                <span className="text-[9px] font-black uppercase tracking-widest text-[var(--text-secondary)]">Loading BullMQ engine data...</span>
+                <span className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-secondary)]">Loading BullMQ engine data...</span>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -905,9 +905,9 @@ export default function Superadmin() {
                   >
                     <div>
                       <div className="flex items-center justify-between border-b border-[var(--border-default)]/40 pb-2">
-                        <span className="font-mono font-black text-white text-xs">{q.name}</span>
+                        <span className="font-mono font-semibold text-white text-xs">{q.name}</span>
                         <span className={cn(
-                          "text-[8px] font-black uppercase px-2 py-0.5 rounded",
+                          "text-[8px] font-semibold uppercase px-2 py-0.5 rounded",
                           q.status === 'online' 
                             ? "bg-emerald-500/10 text-emerald-400" 
                             : "bg-slate-500/10 text-slate-400"
@@ -921,19 +921,19 @@ export default function Superadmin() {
                         <div className="grid grid-cols-2 gap-4 mt-4">
                           <div className="flex justify-between items-center text-[10px]">
                             <span className="text-[var(--text-muted)] font-bold uppercase">Waiting</span>
-                            <span className="font-mono font-black text-white">{q.counts.waiting}</span>
+                            <span className="font-mono font-semibold text-white">{q.counts.waiting}</span>
                           </div>
                           <div className="flex justify-between items-center text-[10px]">
                             <span className="text-[var(--text-muted)] font-bold uppercase">Active</span>
-                            <span className="font-mono font-black text-white">{q.counts.active}</span>
+                            <span className="font-mono font-semibold text-white">{q.counts.active}</span>
                           </div>
                           <div className="flex justify-between items-center text-[10px]">
                             <span className="text-[var(--text-muted)] font-bold uppercase">Delayed</span>
-                            <span className="font-mono font-black text-white">{q.counts.delayed}</span>
+                            <span className="font-mono font-semibold text-white">{q.counts.delayed}</span>
                           </div>
                           <div className="flex justify-between items-center text-[10px]">
                             <span className="text-rose-400 font-bold uppercase">Failed</span>
-                            <span className="font-mono font-black text-rose-400">{q.counts.failed}</span>
+                            <span className="font-mono font-semibold text-rose-400">{q.counts.failed}</span>
                           </div>
                         </div>
                       ) : (
@@ -948,7 +948,7 @@ export default function Superadmin() {
                       {q.counts && q.counts.failed > 0 && (
                         <button
                           onClick={() => handleFlushFailed(q.name)}
-                          className="h-7 px-2.5 rounded bg-rose-500/5 text-[9px] font-black uppercase tracking-widest text-rose-400 border border-rose-500/25 hover:bg-rose-500/10"
+                          className="h-7 px-2.5 rounded bg-rose-500/5 text-[9px] font-semibold uppercase tracking-widest text-rose-400 border border-rose-500/25 hover:bg-rose-500/10"
                         >
                           Purge Failed
                         </button>
@@ -958,7 +958,7 @@ export default function Superadmin() {
                           setActiveQueueName(q.name);
                           loadFailedJobs(q.name);
                         }}
-                        className="btn-secondary h-7 !px-2.5 !py-0 !text-[9px] font-black uppercase tracking-widest flex items-center gap-1"
+                        className="btn-secondary h-7 !px-2.5 !py-0 !text-[9px] font-semibold uppercase tracking-widest flex items-center gap-1"
                       >
                         <Eye className="h-3.5 w-3.5" />
                         <span>Inspect Failures</span>
@@ -974,7 +974,7 @@ export default function Superadmin() {
               <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-6 rounded-xl shadow-md mt-4 flex flex-col gap-6">
                 <div className="flex items-center justify-between border-b border-[var(--border-default)]/40 pb-4">
                   <div>
-                    <h3 className="text-xs font-black uppercase tracking-widest text-white">
+                    <h3 className="text-xs font-semibold uppercase tracking-widest text-white">
                       Inspect Failures: <span className="text-indigo-400 font-mono">{activeQueueName}</span>
                     </h3>
                     <p className="text-[9px] uppercase tracking-wider text-[var(--text-muted)] font-bold mt-1">
@@ -990,7 +990,7 @@ export default function Superadmin() {
                     </button>
                     <button 
                       onClick={() => loadFailedJobs(activeQueueName)}
-                      className="flex items-center justify-center gap-1.5 h-8 px-3 border border-[var(--border-default)] hover:bg-[var(--bg-hover)] text-[9px] font-black uppercase tracking-wider rounded-lg transition-all"
+                      className="flex items-center justify-center gap-1.5 h-8 px-3 border border-[var(--border-default)] hover:bg-[var(--bg-hover)] text-[9px] font-semibold uppercase tracking-wider rounded-lg transition-all"
                     >
                       <RefreshCw className="h-3 w-3" />
                       <span>Refresh</span>
@@ -1001,10 +1001,10 @@ export default function Superadmin() {
                 {failedJobsLoading ? (
                   <div className="flex flex-col items-center justify-center py-8 gap-3">
                     <RefreshCw className="h-6 w-6 animate-spin text-indigo-500" />
-                    <span className="text-[9px] font-black uppercase tracking-widest text-[var(--text-secondary)]">Querying failures...</span>
+                    <span className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-secondary)]">Querying failures...</span>
                   </div>
                 ) : failedJobs.length === 0 ? (
-                  <div className="text-center text-[var(--text-muted)] text-[10px] uppercase font-black py-8 border border-[var(--border-default)] border-dashed rounded-lg">
+                  <div className="text-center text-[var(--text-muted)] text-[10px] uppercase font-semibold py-8 border border-[var(--border-default)] border-dashed rounded-lg">
                     No failed jobs in this queue. Everything operational.
                   </div>
                 ) : (
@@ -1013,7 +1013,7 @@ export default function Superadmin() {
                       <div key={job.id} className="bg-[var(--bg-page)] border border-[var(--border-default)]/60 p-4 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-3">
-                            <span className="font-mono font-black text-xs text-white">JOB_ID: {job.id}</span>
+                            <span className="font-mono font-semibold text-xs text-white">JOB_ID: {job.id}</span>
                             <span className="text-[9px] font-bold uppercase px-2 py-0.5 bg-indigo-500/10 text-indigo-400 rounded">
                               {job.name}
                             </span>
@@ -1026,7 +1026,7 @@ export default function Superadmin() {
                           </p>
                           {job.payload && (
                             <details className="mt-2 group">
-                              <summary className="text-[9px] font-black uppercase tracking-widest text-[var(--text-secondary)] cursor-pointer hover:text-white select-none">
+                              <summary className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-secondary)] cursor-pointer hover:text-[var(--text-primary)] select-none">
                                 View Payload
                               </summary>
                               <pre className="text-[9px] font-mono text-[var(--text-muted)] bg-[var(--bg-card)] border border-[var(--border-default)] rounded p-2.5 mt-1 overflow-x-auto">
@@ -1042,7 +1042,7 @@ export default function Superadmin() {
                           </span>
                           <button
                             onClick={() => handleRetryJob(activeQueueName, job.id)}
-                            className="btn-primary h-8 flex items-center gap-1.5 !px-3.5 !py-0 !text-[9px] font-black uppercase tracking-widest shadow-lg shadow-indigo-500/10"
+                            className="btn-primary h-8 flex items-center gap-1.5 !px-3.5 !py-0 !text-[9px] font-semibold uppercase tracking-widest shadow-lg shadow-indigo-500/10"
                           >
                             <Play className="h-3 w-3" />
                             <span>Retry</span>

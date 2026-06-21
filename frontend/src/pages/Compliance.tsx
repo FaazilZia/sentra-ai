@@ -354,7 +354,7 @@ export default function Compliance() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Loading compliance hierarchy...</p>
+        <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Loading compliance hierarchy...</p>
       </div>
     );
   }
@@ -363,8 +363,8 @@ export default function Compliance() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 p-6">
         <AlertCircle className="h-12 w-12 text-rose-500 animate-bounce" />
-        <h3 className="text-sm font-black text-white uppercase tracking-wider">Error Loading Compliance Page</h3>
-        <p className="text-xs text-gray-400 text-center max-w-md">{error}</p>
+        <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Error Loading Compliance Page</h3>
+        <p className="text-xs text-[var(--text-secondary)] text-center max-w-md">{error}</p>
         <button 
           onClick={() => window.location.reload()}
           className="mt-2 px-4 py-2 bg-indigo-600 rounded-lg text-xs font-bold text-white uppercase hover:bg-indigo-700 transition"
@@ -401,7 +401,7 @@ export default function Compliance() {
       {/* Top Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black text-[var(--text-primary)] tracking-tight uppercase">Compliance & Audit</h1>
+          <h1 className="text-[22px] font-semibold text-[var(--text-primary)] tracking-tight">Compliance & Audit</h1>
           <p className="text-[var(--text-xs)] font-bold text-[var(--text-secondary)] uppercase tracking-[0.2em] mt-1">
             Continuous Operational Governance Framework Maps
           </p>
@@ -409,7 +409,7 @@ export default function Compliance() {
         <div className="flex items-center gap-3">
           <button 
             onClick={() => setIsShareOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[var(--bg-card)] border border-[var(--border-default)] rounded-lg text-[10px] font-black text-[var(--text-primary)] uppercase tracking-widest hover:bg-white/5 transition-all active:scale-95 shadow-lg"
+            className="flex items-center gap-2 px-4 py-2.5 bg-[var(--bg-card)] border border-[var(--border-default)] rounded-lg text-[10px] font-semibold text-[var(--text-primary)] uppercase tracking-widest hover:bg-[var(--bg-page)] transition-all active:scale-95 shadow-lg"
           >
             <Share className="h-4 w-4 text-indigo-400" />
             Share Portal
@@ -422,10 +422,10 @@ export default function Compliance() {
         <button
           onClick={() => setActiveTab('eu-ai-act')}
           className={cn(
-            "px-5 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all active:scale-95 flex items-center gap-2",
+            "px-5 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all active:scale-95 flex items-center gap-2",
             activeTab === 'eu-ai-act' 
               ? "bg-indigo-600 text-white shadow-md shadow-indigo-950/20" 
-              : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
+              : "text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-page)]"
           )}
         >
           🇪🇺 EU AI Act
@@ -433,10 +433,10 @@ export default function Compliance() {
         <button
           onClick={() => setActiveTab('nist-ai-rmf')}
           className={cn(
-            "px-5 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all active:scale-95 flex items-center gap-2",
+            "px-5 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all active:scale-95 flex items-center gap-2",
             activeTab === 'nist-ai-rmf' 
               ? "bg-indigo-600 text-white shadow-md shadow-indigo-950/20" 
-              : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
+              : "text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-page)]"
           )}
         >
           🇺🇸 NIST AI RMF
@@ -444,10 +444,10 @@ export default function Compliance() {
         <button
           onClick={() => setActiveTab('iso-42001')}
           className={cn(
-            "px-5 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all active:scale-95 flex items-center gap-2",
+            "px-5 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all active:scale-95 flex items-center gap-2",
             activeTab === 'iso-42001' 
               ? "bg-indigo-600 text-white shadow-md shadow-indigo-950/20" 
-              : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
+              : "text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-page)]"
           )}
         >
           🌐 ISO 42001
@@ -455,10 +455,10 @@ export default function Compliance() {
         <button
           onClick={() => setActiveTab('iso-27001')}
           className={cn(
-            "px-5 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all active:scale-95 flex items-center gap-2",
+            "px-5 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all active:scale-95 flex items-center gap-2",
             activeTab === 'iso-27001' 
               ? "bg-indigo-600 text-white shadow-md shadow-indigo-950/20" 
-              : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
+              : "text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-page)]"
           )}
         >
           🔒 ISO 27001
@@ -466,10 +466,10 @@ export default function Compliance() {
         <button
           onClick={() => setActiveTab('ccpa')}
           className={cn(
-            "px-5 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all active:scale-95 flex items-center gap-2",
+            "px-5 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all active:scale-95 flex items-center gap-2",
             activeTab === 'ccpa'
               ? "bg-emerald-600 text-white shadow-lg shadow-emerald-500/20"
-              : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
+              : "text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-page)]"
           )}
         >
           🇺🇸 CCPA
@@ -560,29 +560,33 @@ export default function Compliance() {
               <div className="flex items-center gap-3">
                 <ShieldCheck className="h-5 w-5 text-indigo-400" />
                 <div>
-                  <span className="text-[9px] font-black uppercase tracking-widest text-indigo-400 block">
+                  <span className="text-[9px] font-semibold uppercase tracking-widest text-indigo-400 block">
                     {selectedControl.framework === 'iso-42001' ? 'ISO 42001 Control' : selectedControl.framework === 'iso-27001' ? 'ISO 27001 Control' : 'EU AI Act obligations'}
                   </span>
-                  <h3 className="text-sm font-black text-white uppercase tracking-tight">{selectedControl.control_code}</h3>
+                  <h3 className="text-sm font-semibold text-white uppercase tracking-tight">{selectedControl.control_code}</h3>
                 </div>
               </div>
-              <button onClick={() => setSelectedControl(null)} className="p-1 rounded-lg border border-zinc-800 hover:border-zinc-700 bg-zinc-900 hover:bg-zinc-800 transition">
-                <X className="h-4 w-4 text-gray-400" />
+              <button 
+                onClick={() => setSelectedControl(null)} 
+                aria-label="Close details drawer"
+                className="p-1 rounded-lg border border-zinc-800 hover:border-zinc-700 bg-zinc-900 hover:bg-zinc-800 transition"
+              >
+                <X className="h-4 w-4 text-[var(--text-secondary)]" />
               </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
               <div className="space-y-2 bg-zinc-900/30 border border-zinc-900 p-4 rounded-xl">
-                <h4 className="text-xs font-black text-white uppercase tracking-tight">{selectedControl.title}</h4>
-                <p className="text-xs text-gray-400 leading-relaxed">{selectedControl.description}</p>
+                <h4 className="text-xs font-semibold text-white uppercase tracking-tight">{selectedControl.title}</h4>
+                <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{selectedControl.description}</p>
               </div>
 
               {selectedControl.evidence_required?.length > 0 && (
                 <div className="space-y-2">
-                  <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Required Evidentiary Filings</h5>
+                  <h5 className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">Required Evidentiary Filings</h5>
                   <div className="border border-zinc-900 rounded-xl divide-y divide-zinc-900 overflow-hidden bg-black/10">
                     {selectedControl.evidence_required.map((ev: string, idx: number) => (
-                      <div key={idx} className="p-3 text-xs text-gray-300 flex items-start gap-2.5 leading-relaxed">
+                      <div key={idx} className="p-3 text-xs text-[var(--text-secondary)] flex items-start gap-2.5 leading-relaxed">
                         <span className="h-1.5 w-1.5 bg-indigo-500 rounded-full mt-1.5 flex-shrink-0" />
                         {ev}
                       </div>
@@ -593,10 +597,10 @@ export default function Compliance() {
 
               {selectedControl.checklist_items?.length > 0 && (
                 <div className="space-y-2">
-                  <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Operational Checklist</h5>
+                  <h5 className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">Operational Checklist</h5>
                   <div className="border border-zinc-900 rounded-xl divide-y divide-zinc-900 overflow-hidden bg-black/10">
                     {selectedControl.checklist_items.map((item: string, idx: number) => (
-                      <div key={idx} className="p-3 text-xs text-gray-300 flex items-start gap-2.5 leading-relaxed">
+                      <div key={idx} className="p-3 text-xs text-[var(--text-secondary)] flex items-start gap-2.5 leading-relaxed">
                         <span className="h-4 w-4 rounded border border-zinc-800 flex items-center justify-center bg-zinc-900 mt-0.5 flex-shrink-0">
                           {editStatus === 'IMPLEMENTED' ? <Check className="h-3 w-3 text-emerald-400" /> : <span className="text-[9px] text-zinc-700">{idx+1}</span>}
                         </span>
@@ -608,10 +612,10 @@ export default function Compliance() {
               )}
 
               <div className="border-t border-zinc-900 pt-6 space-y-4">
-                <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Compliance Status</h5>
+                <h5 className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">Compliance Status</h5>
                 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase">Status</label>
+                  <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase">Status</label>
                   <select value={editStatus} onChange={(e) => setEditStatus(e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 text-xs text-white rounded-lg p-2.5 outline-none">
                     <option value="NOT_STARTED">NOT STARTED</option>
                     <option value="IN_PROGRESS">IN PROGRESS</option>
@@ -623,18 +627,18 @@ export default function Compliance() {
                 <div className="grid grid-cols-2 gap-4">
                   {selectedControl.framework ? null : (
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><User className="h-3 w-3" /> Owner</label>
+                      <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase flex items-center gap-1"><User className="h-3 w-3" /> Owner</label>
                       <input type="text" value={editOwner} placeholder="user_id" onChange={(e) => setEditOwner(e.target.value)} className="bg-zinc-900 border border-zinc-800 text-xs text-white rounded-lg p-2.5 outline-none" />
                     </div>
                   )}
                   <div className="flex flex-col gap-1.5 col-span-2 md:col-span-1">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><Calendar className="h-3 w-3" /> Due Date</label>
+                    <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase flex items-center gap-1"><Calendar className="h-3 w-3" /> Due Date</label>
                     <input type="date" value={editDueDate} onChange={(e) => setEditDueDate(e.target.value)} className="bg-zinc-900 border border-zinc-800 text-xs text-white rounded-lg p-2.5 outline-none" />
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase">Notes</label>
+                  <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase">Notes</label>
                   <textarea rows={3} value={editNotes} onChange={(e) => setEditNotes(e.target.value)} className="bg-zinc-900 border border-zinc-800 text-xs text-white rounded-lg p-2.5 outline-none resize-none" />
                 </div>
 
@@ -647,7 +651,7 @@ export default function Compliance() {
                         : handleSaveControl
                   } 
                   disabled={isSavingControl || isSavingIso42001 || isSavingIso27001} 
-                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-zinc-800 rounded-lg text-xs font-black text-white uppercase tracking-wider flex items-center justify-center gap-2"
+                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-zinc-800 rounded-lg text-xs font-semibold text-white uppercase tracking-wider flex items-center justify-center gap-2"
                 >
                   {isSavingControl || isSavingIso42001 || isSavingIso27001 ? 'Saving...' : 'Save status'}
                 </button>
@@ -668,24 +672,28 @@ export default function Compliance() {
               <div className="flex items-center gap-3">
                 <ShieldCheck className="h-5 w-5 text-indigo-400" />
                 <div>
-                  <span className="text-[9px] font-black uppercase tracking-widest text-indigo-400 block">NIST Governance Control</span>
-                  <h3 className="text-sm font-black text-white uppercase tracking-tight">{selectedNistSub.subcategory_code}</h3>
+                  <span className="text-[9px] font-semibold uppercase tracking-widest text-indigo-400 block">NIST Governance Control</span>
+                  <h3 className="text-sm font-semibold text-white uppercase tracking-tight">{selectedNistSub.subcategory_code}</h3>
                 </div>
               </div>
-              <button onClick={() => setSelectedNistSub(null)} className="p-1 rounded-lg border border-zinc-800 hover:border-zinc-700 bg-zinc-900 hover:bg-zinc-800 transition">
-                <X className="h-4 w-4 text-gray-400" />
+              <button 
+                onClick={() => setSelectedNistSub(null)} 
+                aria-label="Close details drawer"
+                className="p-1 rounded-lg border border-zinc-800 hover:border-zinc-700 bg-zinc-900 hover:bg-zinc-800 transition"
+              >
+                <X className="h-4 w-4 text-[var(--text-secondary)]" />
               </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
               
               <div className="space-y-2 bg-zinc-900/30 border border-zinc-900 p-4 rounded-xl">
-                <h4 className="text-xs font-black text-white uppercase tracking-tight">{selectedNistSub.title}</h4>
-                <p className="text-xs text-gray-400 leading-relaxed">{selectedNistSub.description}</p>
+                <h4 className="text-xs font-semibold text-white uppercase tracking-tight">{selectedNistSub.title}</h4>
+                <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{selectedNistSub.description}</p>
               </div>
 
               <div className="space-y-2">
-                <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Cross-Framework Impact</h5>
+                <h5 className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">Cross-Framework Impact</h5>
                 {isLoadingCrossImpact ? (
                   <div className="p-4 border border-zinc-900 rounded-xl flex justify-center text-zinc-500 text-xs">
                     Scanning cross mappings...
@@ -693,15 +701,15 @@ export default function Compliance() {
                 ) : nistCrossImpact.length > 0 ? (
                   <div className="border border-zinc-900 rounded-xl divide-y divide-zinc-900 overflow-hidden bg-black/10 animate-fade-in">
                     {nistCrossImpact.map((map: any, idx: number) => (
-                      <div key={idx} className="p-3 text-xs text-gray-300 flex items-start gap-2.5 leading-relaxed justify-between">
+                      <div key={idx} className="p-3 text-xs text-[var(--text-secondary)] flex items-start gap-2.5 leading-relaxed justify-between">
                         <div className="flex items-start gap-2 pr-4">
                           <span className="h-1.5 w-1.5 bg-indigo-500 rounded-full mt-1.5 flex-shrink-0" />
                           <div>
-                            <span className="text-[9px] font-black uppercase text-indigo-400 bg-indigo-950/20 px-1 border border-indigo-500/10 rounded mr-2">
+                            <span className="text-[9px] font-semibold uppercase text-indigo-400 bg-indigo-950/20 px-1 border border-indigo-500/10 rounded mr-2">
                               {map.targetFramework}
                             </span>
                             <span className="font-bold text-white">{map.targetControlCode}</span>
-                            <p className="text-[10px] text-gray-500 leading-relaxed mt-0.5">{map.description}</p>
+                            <p className="text-[10px] text-[var(--text-muted)] leading-relaxed mt-0.5">{map.description}</p>
                           </div>
                         </div>
                         <span className="text-[9px] font-bold text-zinc-500 shrink-0">
@@ -719,10 +727,10 @@ export default function Compliance() {
 
               {selectedNistSub.implementation_examples?.length > 0 && (
                 <div className="space-y-2">
-                  <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Implementation Guidelines</h5>
+                  <h5 className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">Implementation Guidelines</h5>
                   <div className="border border-zinc-900 rounded-xl divide-y divide-zinc-900 overflow-hidden bg-black/10">
                     {selectedNistSub.implementation_examples.map((item: string, idx: number) => (
-                      <div key={idx} className="p-3 text-xs text-gray-300 flex items-start gap-2.5 leading-relaxed">
+                      <div key={idx} className="p-3 text-xs text-[var(--text-secondary)] flex items-start gap-2.5 leading-relaxed">
                         <span className="h-1.5 w-1.5 bg-indigo-500 rounded-full mt-1.5 flex-shrink-0" />
                         {item}
                       </div>
@@ -732,10 +740,10 @@ export default function Compliance() {
               )}
 
               <div className="border-t border-zinc-900 pt-6 space-y-4">
-                <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Governance Settings</h5>
+                <h5 className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">Governance Settings</h5>
                 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase">Operational Status</label>
+                  <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase">Operational Status</label>
                   <select 
                     value={editNistStatus} 
                     onChange={(e) => setEditNistStatus(e.target.value)} 
@@ -750,7 +758,7 @@ export default function Compliance() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">
+                    <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase flex items-center gap-1">
                       <Award className="h-3 w-3 text-zinc-500" /> Maturity Level (1-5)
                     </label>
                     <select
@@ -767,7 +775,7 @@ export default function Compliance() {
                   </div>
                   
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">
+                    <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase flex items-center gap-1">
                       <ShieldAlert className="h-3 w-3 text-zinc-500" /> Escalation Tier
                     </label>
                     <select
@@ -783,7 +791,7 @@ export default function Compliance() {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase">Assurance Action Notes</label>
+                  <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase">Assurance Action Notes</label>
                   <textarea 
                     rows={3} 
                     value={editNistNotes} 
@@ -796,7 +804,7 @@ export default function Compliance() {
                 <button 
                   onClick={handleSaveNistControl} 
                   disabled={isSavingNist} 
-                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-zinc-800 rounded-lg text-xs font-black text-white uppercase tracking-wider flex items-center justify-center gap-2"
+                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-zinc-800 rounded-lg text-xs font-semibold text-white uppercase tracking-wider flex items-center justify-center gap-2"
                 >
                   {isSavingNist ? 'Saving details...' : 'Save governance settings'}
                 </button>
@@ -919,11 +927,11 @@ function EuAiActTab({
           <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10 backdrop-blur-md">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Active Standard</span>
-                <h2 className="text-lg font-black text-white uppercase tracking-tight">EU AI Act (Control Hierarchy)</h2>
+                <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">Active Standard</span>
+                <h2 className="text-lg font-semibold text-white uppercase tracking-tight">EU AI Act (Control Hierarchy)</h2>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-xs font-bold text-gray-400">Total Controls: {summary.total_controls}</span>
+                <span className="text-xs font-bold text-[var(--text-secondary)]">Total Controls: {summary.total_controls}</span>
                 <div className="h-1.5 w-24 bg-zinc-800 rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-indigo-500 rounded-full transition-all duration-500" 
@@ -932,7 +940,7 @@ function EuAiActTab({
                 </div>
               </div>
             </div>
-            <p className="text-xs text-gray-400 leading-relaxed">
+            <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
               Maintain regulatory compliance mapping to the European Union Artificial Intelligence Act. Drill down into specific articles, review operational expectations, assign ownership, and submit evidentiary proofs.
             </p>
           </div>
@@ -966,7 +974,7 @@ function EuAiActTab({
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-0.5">
-                          <h4 className="text-[12px] font-black text-white uppercase tracking-tight">{art.title}</h4>
+                          <h4 className="text-[12px] font-semibold text-white uppercase tracking-tight">{art.title}</h4>
                           <span className={cn(
                             "text-[8px] font-bold tracking-widest px-1.5 py-0.5 rounded border uppercase",
                             art.risk_tier === 'PROHIBITED' ? "bg-rose-950/20 text-rose-400 border-rose-500/10" :
@@ -976,15 +984,15 @@ function EuAiActTab({
                             {art.risk_tier.replace('_', ' ')}
                           </span>
                         </div>
-                        <p className="text-[9px] font-bold text-gray-500 uppercase tracking-wide leading-tight">{art.chapter}</p>
+                        <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wide leading-tight">{art.chapter}</p>
                       </div>
                     </div>
                     
                     <div className="flex items-center gap-4">
-                      <span className="text-[10px] font-black text-gray-400 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded uppercase tracking-tighter">
+                      <span className="text-[10px] font-semibold text-[var(--text-secondary)] bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded uppercase tracking-tighter">
                         {completedInArticle} / {totalInArticle} Done
                       </span>
-                      {isOpen ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
+                      {isOpen ? <ChevronUp className="h-4 w-4 text-[var(--text-secondary)]" /> : <ChevronDown className="h-4 w-4 text-[var(--text-secondary)]" />}
                     </div>
                   </button>
 
@@ -997,26 +1005,26 @@ function EuAiActTab({
                         return (
                           <div 
                             key={c.control_code}
-                            className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-3 hover:bg-white/5 transition"
+                            className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-3 hover:bg-[var(--bg-page)] transition"
                           >
                             <div className="flex-1 text-left min-w-0 pr-4">
                               <div className="flex items-center gap-2 mb-1">
-                                <span className="text-[10px] font-black text-indigo-400 tracking-tight">{c.control_code}</span>
+                                <span className="text-[10px] font-semibold text-indigo-400 tracking-tight">{c.control_code}</span>
                                 <h5 className="text-[12px] font-bold text-white uppercase tracking-tight truncate">{c.title}</h5>
                               </div>
-                              <p className="text-xs text-gray-400 leading-relaxed truncate">{c.description}</p>
+                              <p className="text-xs text-[var(--text-secondary)] leading-relaxed truncate">{c.description}</p>
                             </div>
                             
                             <div className="flex items-center gap-3 self-end sm:self-auto">
                               {evidenceCount > 0 && (
-                                <span className="flex items-center gap-1 text-[9px] font-black uppercase text-indigo-300 bg-indigo-950/20 border border-indigo-500/10 px-2 py-0.5 rounded">
+                                <span className="flex items-center gap-1 text-[9px] font-semibold uppercase text-indigo-300 bg-indigo-950/20 border border-indigo-500/10 px-2 py-0.5 rounded">
                                   <Paperclip className="h-3 w-3" />
                                   {evidenceCount} Evidence
                                 </span>
                               )}
                               
                               <span className={cn(
-                                "text-[9px] font-black px-2 py-0.5 rounded border uppercase tracking-tight",
+                                "text-[9px] font-semibold px-2 py-0.5 rounded border uppercase tracking-tight",
                                 getStatusColor(status)
                               )}>
                                 {status.replace('_', ' ')}
@@ -1024,7 +1032,7 @@ function EuAiActTab({
 
                               <button
                                 onClick={() => setSelectedControl(c)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-indigo-500/30 rounded text-[9px] font-black text-white uppercase hover:bg-zinc-800 transition active:scale-95"
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-indigo-500/30 rounded text-[9px] font-semibold text-white uppercase hover:bg-zinc-800 transition active:scale-95"
                               >
                                 <Edit2 className="h-2.5 w-2.5 text-indigo-400" />
                                 Update
@@ -1044,8 +1052,8 @@ function EuAiActTab({
         <div className="lg:col-span-4 flex flex-col gap-6">
           {/* Backlog Distribution */}
           <div className="card-base p-6 backdrop-blur-md">
-            <h3 className="text-sm font-black text-white uppercase tracking-tight mb-4">Active Backlog</h3>
-            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-6">Cross-Framework Violations</p>
+            <h3 className="text-sm font-semibold text-white uppercase tracking-tight mb-4">Active Backlog</h3>
+            <p className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest mb-6">Cross-Framework Violations</p>
             
             {violationData.length > 0 ? (
               <>
@@ -1082,9 +1090,9 @@ function EuAiActTab({
                     <div key={item.name} className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">{item.name}</span>
+                        <span className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{item.name}</span>
                       </div>
-                      <span className="text-[10px] font-black text-white">{item.value} Incident{item.value > 1 ? 's' : ''}</span>
+                      <span className="text-[10px] font-semibold text-white">{item.value} Incident{item.value > 1 ? 's' : ''}</span>
                     </div>
                   ))}
                 </div>
@@ -1092,31 +1100,31 @@ function EuAiActTab({
             ) : (
               <div className="flex flex-col items-center justify-center py-10 text-center opacity-40">
                 <CheckCircle2 className="h-10 w-10 text-emerald-400 mb-2 animate-bounce" />
-                <p className="text-[10px] font-black text-white uppercase tracking-widest">Backlog Clean</p>
-                <p className="text-[9px] text-gray-400 mt-1">No active compliance violations recorded.</p>
+                <p className="text-[10px] font-semibold text-white uppercase tracking-widest">Backlog Clean</p>
+                <p className="text-[9px] text-[var(--text-secondary)] mt-1">No active compliance violations recorded.</p>
               </div>
             )}
           </div>
 
           {/* Integrations Scope */}
           <div className="card-base p-6 bg-gradient-to-br from-zinc-950 to-indigo-950/10 backdrop-blur-md">
-            <h3 className="text-sm font-black text-white uppercase tracking-tight mb-4">Integrations Scope</h3>
+            <h3 className="text-sm font-semibold text-white uppercase tracking-tight mb-4">Integrations Scope</h3>
             <div className="space-y-4">
               <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
-                <span className="text-xs text-gray-400">Total Violations</span>
-                <span className="text-xs font-black text-white">{totalViolations}</span>
+                <span className="text-xs text-[var(--text-secondary)]">Total Violations</span>
+                <span className="text-xs font-semibold text-white">{totalViolations}</span>
               </div>
               <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
-                <span className="text-xs text-gray-400">Not Applicable Controls</span>
-                <span className="text-xs font-black text-blue-400">{summary.not_applicable}</span>
+                <span className="text-xs text-[var(--text-secondary)]">Not Applicable Controls</span>
+                <span className="text-xs font-semibold text-blue-400">{summary.not_applicable}</span>
               </div>
               <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
-                <span className="text-xs text-gray-400">In Progress Audits</span>
-                <span className="text-xs font-black text-amber-400">{summary.in_progress}</span>
+                <span className="text-xs text-[var(--text-secondary)]">In Progress Audits</span>
+                <span className="text-xs font-semibold text-amber-400">{summary.in_progress}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-400">System Mode</span>
-                <span className="text-[9px] font-black uppercase text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
+                <span className="text-xs text-[var(--text-secondary)]">System Mode</span>
+                <span className="text-[9px] font-semibold uppercase text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
                   Autonomous
                 </span>
               </div>
@@ -1125,24 +1133,24 @@ function EuAiActTab({
 
           {/* PII Compliance Scan */}
           <div className="card-base p-6 border border-red-500/20 bg-gradient-to-br from-zinc-950 to-red-950/10 backdrop-blur-md">
-            <h3 className="text-sm font-black text-white uppercase tracking-tight mb-2">PII Compliance Scan</h3>
-            <p className="text-[9px] font-black text-red-400 uppercase tracking-widest mb-4">Realtime Interceptor Violations</p>
+            <h3 className="text-sm font-semibold text-white uppercase tracking-tight mb-2">PII Compliance Scan</h3>
+            <p className="text-[9px] font-semibold text-red-400 uppercase tracking-widest mb-4">Realtime Interceptor Violations</p>
             <div className="space-y-3">
               <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
-                <span className="text-xs text-gray-400">GDPR Violations</span>
-                <span className={`text-xs font-black ${piiBreakdown.GDPR > 0 ? 'text-red-400' : 'text-gray-400'}`}>{piiBreakdown.GDPR}</span>
+                <span className="text-xs text-[var(--text-secondary)]">GDPR Violations</span>
+                <span className={`text-xs font-semibold ${piiBreakdown.GDPR > 0 ? 'text-red-400' : 'text-[var(--text-secondary)]'}`}>{piiBreakdown.GDPR}</span>
               </div>
               <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
-                <span className="text-xs text-gray-400">HIPAA Violations</span>
-                <span className={`text-xs font-black ${piiBreakdown.HIPAA > 0 ? 'text-red-400' : 'text-gray-400'}`}>{piiBreakdown.HIPAA}</span>
+                <span className="text-xs text-[var(--text-secondary)]">HIPAA Violations</span>
+                <span className={`text-xs font-semibold ${piiBreakdown.HIPAA > 0 ? 'text-red-400' : 'text-[var(--text-secondary)]'}`}>{piiBreakdown.HIPAA}</span>
               </div>
               <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
-                <span className="text-xs text-gray-400">DPDP Violations</span>
-                <span className={`text-xs font-black ${piiBreakdown.DPDP > 0 ? 'text-red-400' : 'text-gray-400'}`}>{piiBreakdown.DPDP}</span>
+                <span className="text-xs text-[var(--text-secondary)]">DPDP Violations</span>
+                <span className={`text-xs font-semibold ${piiBreakdown.DPDP > 0 ? 'text-red-400' : 'text-[var(--text-secondary)]'}`}>{piiBreakdown.DPDP}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-400">Total Blocked/Flagged</span>
-                <span className={`text-xs font-black ${totalPii > 0 ? 'text-red-400' : 'text-emerald-400'}`}>{totalPii}</span>
+                <span className="text-xs text-[var(--text-secondary)]">Total Blocked/Flagged</span>
+                <span className={`text-xs font-semibold ${totalPii > 0 ? 'text-red-400' : 'text-emerald-400'}`}>{totalPii}</span>
               </div>
             </div>
           </div>
@@ -1180,8 +1188,8 @@ function NistAiRmfTab({
       <div className="card-base p-10 flex flex-col items-center justify-center text-center gap-6 border-indigo-500/20 bg-gradient-to-br from-indigo-950/10 to-zinc-950 backdrop-blur-md">
         <RefreshCw className="h-12 w-12 text-indigo-400 animate-spin" />
         <div>
-          <h3 className="text-lg font-black text-white uppercase tracking-wider">Framework Data Seeding in Progress</h3>
-          <p className="text-xs text-gray-400 mt-2 max-w-md">
+          <h3 className="text-lg font-semibold text-white uppercase tracking-wider">Framework Data Seeding in Progress</h3>
+          <p className="text-xs text-[var(--text-secondary)] mt-2 max-w-md">
             NIST AI RMF 1.0 standard policies, severity weights, and cross-framework mappings are currently initializing in the secure database ledger.
           </p>
         </div>
@@ -1202,7 +1210,7 @@ function NistAiRmfTab({
     return (
       <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Compiling NIST Governance telemetry data...</p>
+        <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Compiling NIST Governance telemetry data...</p>
       </div>
     );
   }
@@ -1211,8 +1219,8 @@ function NistAiRmfTab({
     return (
       <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 p-6 border border-zinc-900 rounded-xl bg-zinc-950/10 backdrop-blur-md">
         <ShieldAlert className="h-10 w-10 text-rose-500 animate-pulse" />
-        <h3 className="text-sm font-black text-white uppercase tracking-wider">NIST Scoring Engine Disconnected</h3>
-        <p className="text-xs text-gray-400">{nistError}</p>
+        <h3 className="text-sm font-semibold text-white uppercase tracking-wider">NIST Scoring Engine Disconnected</h3>
+        <p className="text-xs text-[var(--text-secondary)]">{nistError}</p>
         <button 
           onClick={() => loadNistData()}
           className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-xs font-bold text-white uppercase rounded-lg tracking-widest transition shadow-lg"
@@ -1261,14 +1269,14 @@ function NistAiRmfTab({
           <div className="card-base p-6 flex flex-col gap-5 bg-gradient-to-b from-zinc-950 to-indigo-950/5 backdrop-blur-md">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-black text-white uppercase tracking-tight">Governance Posture</h3>
-                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Continuous AI RMF Assurance</p>
+                <h3 className="text-sm font-semibold text-white uppercase tracking-tight">Governance Posture</h3>
+                <p className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest">Continuous AI RMF Assurance</p>
               </div>
               
               <button 
                 onClick={handleExportConformity}
                 disabled={isExportingConformity}
-                className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600/10 border border-indigo-500/20 hover:border-indigo-500/50 rounded-lg text-[9px] font-black text-indigo-400 hover:text-white uppercase transition active:scale-95 disabled:opacity-50 shadow-md"
+                className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600/10 border border-indigo-500/20 hover:border-indigo-500/50 rounded-lg text-[9px] font-semibold text-indigo-400 hover:text-[var(--text-primary)] uppercase transition active:scale-95 disabled:opacity-50 shadow-md"
               >
                 <Download className="h-3 w-3" />
                 {isExportingConformity ? 'Signing...' : 'Conformity Package'}
@@ -1295,13 +1303,13 @@ function NistAiRmfTab({
                   />
                 </svg>
                 <div className="text-center">
-                  <span className="text-3xl font-black text-white">{nistOverview?.score || 0}</span>
-                  <span className="text-zinc-500 text-xs block uppercase font-black">Score</span>
+                  <span className="text-3xl font-semibold text-white">{nistOverview?.score || 0}</span>
+                  <span className="text-zinc-500 text-xs block uppercase font-semibold">Score</span>
                 </div>
               </div>
 
               {nistOverview?.score === 0 && (
-                <div className="mt-4 text-rose-400 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 animate-pulse">
+                <div className="mt-4 text-rose-400 text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1 animate-pulse">
                   <ShieldAlert className="h-3.5 w-3.5" />
                   No governance evidence ingested
                 </div>
@@ -1309,7 +1317,7 @@ function NistAiRmfTab({
             </div>
 
             <div>
-              <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-3">Score Explainability Ledger</h4>
+              <h4 className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest mb-3">Score Explainability Ledger</h4>
               <div className="space-y-2">
                 {(nistOverview?.reasons || []).length > 0 ? (
                   (nistOverview?.reasons || []).map((reason: any, idx: number) => (
@@ -1319,7 +1327,7 @@ function NistAiRmfTab({
                         <p className="text-white font-bold leading-tight uppercase text-[10px]">
                           {reason.type.replace('_', ' ')} ({reason.value > 0 ? `+${reason.value}` : reason.value})
                         </p>
-                        <p className="text-[11px] text-gray-400 mt-0.5 leading-relaxed">{reason.msg}</p>
+                        <p className="text-[11px] text-[var(--text-secondary)] mt-0.5 leading-relaxed">{reason.msg}</p>
                       </div>
                     </div>
                   ))
@@ -1339,8 +1347,8 @@ function NistAiRmfTab({
           {/* self-monitoring diagnostics */}
           <div className="card-base p-6 flex flex-col gap-4 backdrop-blur-md">
             <div>
-              <h3 className="text-sm font-black text-white uppercase tracking-tight">Self-Monitoring Diagnostics</h3>
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Worker Health & Reliability</p>
+              <h3 className="text-sm font-semibold text-white uppercase tracking-tight">Self-Monitoring Diagnostics</h3>
+              <p className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest">Worker Health & Reliability</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1360,13 +1368,13 @@ function NistAiRmfTab({
                       </div>
                       
                       <div>
-                        <h4 className="text-xs font-black text-white uppercase tracking-tight">{w.worker_name.replace('_', ' ')}</h4>
+                        <h4 className="text-xs font-semibold text-white uppercase tracking-tight">{w.worker_name.replace('_', ' ')}</h4>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[9px] font-bold text-gray-500 flex items-center gap-1 uppercase">
+                          <span className="text-[9px] font-bold text-[var(--text-muted)] flex items-center gap-1 uppercase">
                             <Clock className="h-2.5 w-2.5" />
                             {w.processing_latency_ms}ms latency
                           </span>
-                          <span className="text-[9px] font-bold text-gray-500 flex items-center gap-1 uppercase">
+                          <span className="text-[9px] font-bold text-[var(--text-muted)] flex items-center gap-1 uppercase">
                             <Server className="h-2.5 w-2.5" />
                             Depth: {w.queue_depth}
                           </span>
@@ -1375,7 +1383,7 @@ function NistAiRmfTab({
                     </div>
 
                     <span className={cn(
-                      "text-[8px] font-black px-1.5 py-0.5 rounded border uppercase tracking-widest",
+                      "text-[8px] font-semibold px-1.5 py-0.5 rounded border uppercase tracking-widest",
                       w.health_status === 'HEALTHY' ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
                       w.health_status === 'DEGRADED' ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
                       "bg-rose-500/10 text-rose-400 border-rose-500/20"
@@ -1395,8 +1403,8 @@ function NistAiRmfTab({
           {/* Incidents */}
           <div className="card-base p-6 flex flex-col gap-4 backdrop-blur-md">
             <div>
-              <h3 className="text-sm font-black text-white uppercase tracking-tight">Governance SOC Incidents Hub</h3>
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Active Violations & SLAs</p>
+              <h3 className="text-sm font-semibold text-white uppercase tracking-tight">Governance SOC Incidents Hub</h3>
+              <p className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest">Active Violations & SLAs</p>
             </div>
 
             <div className="space-y-3 max-h-[220px] overflow-y-auto custom-scrollbar">
@@ -1411,12 +1419,12 @@ function NistAiRmfTab({
                       <div className="min-w-0 flex-1">
                         <h4 className="text-xs font-bold text-white truncate uppercase tracking-tight">{inc.title}</h4>
                         <div className="flex items-center gap-2.5 mt-0.5">
-                          <span className="text-[9px] font-bold text-gray-500 flex items-center gap-1 uppercase">
+                          <span className="text-[9px] font-bold text-[var(--text-muted)] flex items-center gap-1 uppercase">
                             <Clock className="h-2.5 w-2.5" />
                             SLA: {new Date(inc.sla_deadline).toLocaleDateString()}
                           </span>
                           {inc.sla_breach && (
-                            <span className="text-[8px] font-black uppercase text-rose-400 bg-rose-950/20 px-1 border border-rose-500/10 rounded">
+                            <span className="text-[8px] font-semibold uppercase text-rose-400 bg-rose-950/20 px-1 border border-rose-500/10 rounded">
                               SLA Breached
                             </span>
                           )}
@@ -1428,7 +1436,7 @@ function NistAiRmfTab({
                     </div>
 
                     <span className={cn(
-                      "text-[8px] font-black px-1.5 py-0.5 rounded border uppercase tracking-widest",
+                      "text-[8px] font-semibold px-1.5 py-0.5 rounded border uppercase tracking-widest",
                       inc.status === 'OPEN' ? "bg-rose-500/10 text-rose-400 border-rose-500/20" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                     )}>
                       {inc.status}
@@ -1438,8 +1446,8 @@ function NistAiRmfTab({
               ) : (
                 <div className="flex flex-col items-center justify-center py-8 text-center opacity-40">
                   <CheckCircle2 className="h-8 w-8 text-emerald-400 mb-2" />
-                  <p className="text-[10px] font-black text-white uppercase tracking-widest">No active incidents cataloged</p>
-                  <p className="text-[9px] text-gray-500 mt-1">All telemetry events are within healthy SLA parameters.</p>
+                  <p className="text-[10px] font-semibold text-white uppercase tracking-widest">No active incidents cataloged</p>
+                  <p className="text-[9px] text-[var(--text-muted)] mt-1">All telemetry events are within healthy SLA parameters.</p>
                 </div>
               )}
             </div>
@@ -1452,11 +1460,11 @@ function NistAiRmfTab({
         <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10 backdrop-blur-md">
           <div className="flex items-center justify-between mb-2">
             <div>
-              <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Operational Maturity Matrix</span>
-              <h2 className="text-lg font-black text-white uppercase tracking-tight">NIST RMF 1.0 Subcategory Status</h2>
+              <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">Operational Maturity Matrix</span>
+              <h2 className="text-lg font-semibold text-white uppercase tracking-tight">NIST RMF 1.0 Subcategory Status</h2>
             </div>
           </div>
-          <p className="text-xs text-gray-400 leading-relaxed">
+          <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
             Continuous operational verification mapped directly to live system telemetry (interceptor, drift scans, evaluation). Click subcategories to patch compliance settings, notes, and view cross-framework GDPR/EU impact analyses.
           </p>
         </div>
@@ -1479,14 +1487,14 @@ function NistFunctionBlock({ fn, setSelectedNistSub }: { fn: any; setSelectedNis
     <div className="card-base p-5 border border-zinc-950 bg-zinc-950/40">
       <div className="flex items-center justify-between border-b border-zinc-900 pb-3 mb-4">
         <div>
-          <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Function Group</span>
-          <h3 className="text-sm font-black text-white uppercase tracking-tight flex items-center gap-2">
+          <span className="text-[9px] font-semibold text-indigo-400 uppercase tracking-widest">Function Group</span>
+          <h3 className="text-sm font-semibold text-white uppercase tracking-tight flex items-center gap-2">
             {fn.title}
-            <span className="text-[10px] font-bold text-gray-400">({fn.score}%)</span>
+            <span className="text-[10px] font-bold text-[var(--text-secondary)]">({fn.score}%)</span>
           </h3>
         </div>
         
-        <span className="text-[9px] font-black text-zinc-500 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded uppercase tracking-widest">
+        <span className="text-[9px] font-semibold text-zinc-500 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded uppercase tracking-widest">
           {compSub} / {totalSub} Mapped
         </span>
       </div>
@@ -1504,7 +1512,7 @@ function NistCategoryBlock({ cat, setSelectedNistSub }: { cat: any; setSelectedN
   return (
     <div className="bg-black/15 rounded-xl border border-zinc-900 p-4 space-y-3">
       <div>
-        <h4 className="text-xs font-black text-white uppercase tracking-tight flex items-center gap-2">
+        <h4 className="text-xs font-semibold text-white uppercase tracking-tight flex items-center gap-2">
           <span className="text-[10px] text-indigo-400">{cat.category_code}</span>
           {cat.title}
         </h4>
@@ -1516,7 +1524,7 @@ function NistCategoryBlock({ cat, setSelectedNistSub }: { cat: any; setSelectedN
           <div key={sub.code} className="bg-zinc-900/30 border border-zinc-900 hover:border-zinc-800 p-3 rounded-lg flex items-center justify-between gap-4 group transition shadow-sm animate-fade-in">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 mb-0.5">
-                <span className="text-[9px] font-black text-indigo-400">{sub.code}</span>
+                <span className="text-[9px] font-semibold text-indigo-400">{sub.code}</span>
                 <h5 className="text-[11px] font-bold text-white truncate max-w-[200px] uppercase tracking-tight">{sub.title}</h5>
               </div>
               
@@ -1533,7 +1541,7 @@ function NistCategoryBlock({ cat, setSelectedNistSub }: { cat: any; setSelectedN
                   Mat: {sub.maturityLevel}/5
                 </span>
                 {sub.telemetryLinked > 0 && (
-                  <span className="text-[8px] font-black uppercase text-indigo-400 bg-indigo-950/20 px-1 rounded flex items-center gap-0.5 animate-pulse">
+                  <span className="text-[8px] font-semibold uppercase text-indigo-400 bg-indigo-950/20 px-1 rounded flex items-center gap-0.5 animate-pulse">
                     <Activity className="h-2 w-2" />
                     {sub.telemetryLinked}
                   </span>
@@ -1562,7 +1570,8 @@ function NistCategoryBlock({ cat, setSelectedNistSub }: { cat: any; setSelectedN
                   }
                 });
               }}
-              className="flex items-center justify-center p-2 bg-zinc-900 border border-zinc-800 group-hover:border-indigo-500/30 rounded-lg text-gray-400 group-hover:text-white transition active:scale-95"
+              aria-label={`Edit ${sub.code} subcategory`}
+              className="flex items-center justify-center p-2 bg-zinc-900 border border-zinc-800 group-hover:border-indigo-500/30 rounded-lg text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition active:scale-95"
             >
               <Edit2 className="h-3 w-3" />
             </button>
@@ -1594,7 +1603,7 @@ function Iso42001Tab({
     return (
       <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Loading ISO 42001 Compliance Matrix...</p>
+        <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Loading ISO 42001 Compliance Matrix...</p>
       </div>
     );
   }
@@ -1603,8 +1612,8 @@ function Iso42001Tab({
     return (
       <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 p-6 border border-zinc-900 rounded-xl bg-zinc-950/10 backdrop-blur-md">
         <ShieldAlert className="h-10 w-10 text-rose-500 animate-pulse" />
-        <h3 className="text-sm font-black text-white uppercase tracking-wider">ISO 42001 Scoring Error</h3>
-        <p className="text-xs text-gray-400">{iso42001Error}</p>
+        <h3 className="text-sm font-semibold text-white uppercase tracking-wider">ISO 42001 Scoring Error</h3>
+        <p className="text-xs text-[var(--text-secondary)]">{iso42001Error}</p>
       </div>
     );
   }
@@ -1644,11 +1653,11 @@ function Iso42001Tab({
         <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10 backdrop-blur-md">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Active Standard</span>
-              <h2 className="text-lg font-black text-white uppercase tracking-tight">ISO/IEC 42001:2023 Artificial Intelligence Management</h2>
+              <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">Active Standard</span>
+              <h2 className="text-lg font-semibold text-white uppercase tracking-tight">ISO/IEC 42001:2023 Artificial Intelligence Management</h2>
             </div>
           </div>
-          <p className="text-xs text-gray-400 leading-relaxed">
+          <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
             Verify compliance with international standards for establishing, implementing, maintaining, and continually improving an Artificial Intelligence Management System (AIMS). Manage organizational controls and evidence logs.
           </p>
         </div>
@@ -1677,20 +1686,20 @@ function Iso42001Tab({
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <h4 className="text-[12px] font-black text-white uppercase tracking-tight">{cls.title}</h4>
+                        <h4 className="text-[12px] font-semibold text-white uppercase tracking-tight">{cls.title}</h4>
                         <span className="text-[8px] font-bold tracking-widest px-1.5 py-0.5 rounded border uppercase bg-indigo-950/20 text-indigo-400 border-indigo-500/10">
                           {cls.clause_type}
                         </span>
                       </div>
-                      <p className="text-[10px] text-gray-400 font-medium leading-relaxed max-w-xl">{cls.description}</p>
+                      <p className="text-[10px] text-[var(--text-secondary)] font-medium leading-relaxed max-w-xl">{cls.description}</p>
                     </div>
                   </div>
                   
                   <div className="flex items-center gap-4">
-                    <span className="text-[10px] font-black text-gray-400 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded uppercase tracking-tighter">
+                    <span className="text-[10px] font-semibold text-[var(--text-secondary)] bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded uppercase tracking-tighter">
                       {completedInClause} / {totalInClause} Done
                     </span>
-                    {isClauseOpen ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
+                    {isClauseOpen ? <ChevronUp className="h-4 w-4 text-[var(--text-secondary)]" /> : <ChevronDown className="h-4 w-4 text-[var(--text-secondary)]" />}
                   </div>
                 </button>
 
@@ -1702,19 +1711,19 @@ function Iso42001Tab({
                       return (
                         <div 
                           key={c.control_code}
-                          className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-3 hover:bg-white/5 transition animate-fade-in"
+                          className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-3 hover:bg-[var(--bg-page)] transition animate-fade-in"
                         >
                           <div className="flex-1 text-left min-w-0 pr-4">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="text-[10px] font-black text-indigo-400 tracking-tight">{c.control_code}</span>
+                              <span className="text-[10px] font-semibold text-indigo-400 tracking-tight">{c.control_code}</span>
                               <h5 className="text-[12px] font-bold text-white uppercase tracking-tight truncate">{c.title}</h5>
                             </div>
-                            <p className="text-xs text-gray-400 leading-relaxed">{c.description}</p>
+                            <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{c.description}</p>
                           </div>
                           
                           <div className="flex items-center gap-3 self-end sm:self-auto">
                             <span className={cn(
-                              "text-[9px] font-black px-2 py-0.5 rounded border uppercase tracking-tight",
+                              "text-[9px] font-semibold px-2 py-0.5 rounded border uppercase tracking-tight",
                               getStatusColor(status)
                             )}>
                               {status.replace('_', ' ')}
@@ -1725,7 +1734,7 @@ function Iso42001Tab({
                                 ...c,
                                 framework: 'iso-42001'
                               })}
-                              className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-indigo-500/30 rounded text-[9px] font-black text-white uppercase hover:bg-zinc-800 transition active:scale-95"
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-indigo-500/30 rounded text-[9px] font-semibold text-white uppercase hover:bg-zinc-800 transition active:scale-95"
                             >
                               <Edit2 className="h-2.5 w-2.5 text-indigo-400" />
                               Update
@@ -1766,7 +1775,7 @@ function Iso27001Tab({
     return (
       <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Loading ISO 27001 Compliance Matrix...</p>
+        <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Loading ISO 27001 Compliance Matrix...</p>
       </div>
     );
   }
@@ -1775,8 +1784,8 @@ function Iso27001Tab({
     return (
       <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 p-6 border border-zinc-900 rounded-xl bg-zinc-950/10 backdrop-blur-md">
         <ShieldAlert className="h-10 w-10 text-rose-500 animate-pulse" />
-        <h3 className="text-sm font-black text-white uppercase tracking-wider">ISO 27001 Scoring Error</h3>
-        <p className="text-xs text-gray-400">{iso27001Error}</p>
+        <h3 className="text-sm font-semibold text-white uppercase tracking-wider">ISO 27001 Scoring Error</h3>
+        <p className="text-xs text-[var(--text-secondary)]">{iso27001Error}</p>
       </div>
     );
   }
@@ -1816,11 +1825,11 @@ function Iso27001Tab({
         <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10 backdrop-blur-md">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Active Standard</span>
-              <h2 className="text-lg font-black text-white uppercase tracking-tight">ISO/IEC 27001:2022 Information Security Management</h2>
+              <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">Active Standard</span>
+              <h2 className="text-lg font-semibold text-white uppercase tracking-tight">ISO/IEC 27001:2022 Information Security Management</h2>
             </div>
           </div>
-          <p className="text-xs text-gray-400 leading-relaxed">
+          <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
             Verify compliance with international standards for establishing, implementing, maintaining, and continually improving an Information Security Management System (ISMS). Review Clauses 4–10 and Annex controls.
           </p>
         </div>
@@ -1849,17 +1858,17 @@ function Iso27001Tab({
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <h4 className="text-[12px] font-black text-white uppercase tracking-tight">{cls.title}</h4>
+                        <h4 className="text-[12px] font-semibold text-white uppercase tracking-tight">{cls.title}</h4>
                       </div>
-                      <p className="text-[10px] text-gray-400 font-medium leading-relaxed max-w-xl">{cls.description}</p>
+                      <p className="text-[10px] text-[var(--text-secondary)] font-medium leading-relaxed max-w-xl">{cls.description}</p>
                     </div>
                   </div>
                   
                   <div className="flex items-center gap-4">
-                    <span className="text-[10px] font-black text-gray-400 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded uppercase tracking-tighter">
+                    <span className="text-[10px] font-semibold text-[var(--text-secondary)] bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded uppercase tracking-tighter">
                       {completedInClause} / {totalInClause} Done
                     </span>
-                    {isClauseOpen ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
+                    {isClauseOpen ? <ChevronUp className="h-4 w-4 text-[var(--text-secondary)]" /> : <ChevronDown className="h-4 w-4 text-[var(--text-secondary)]" />}
                   </div>
                 </button>
 
@@ -1871,19 +1880,19 @@ function Iso27001Tab({
                       return (
                         <div 
                           key={c.control_code}
-                          className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-3 hover:bg-white/5 transition animate-fade-in"
+                          className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-3 hover:bg-[var(--bg-page)] transition animate-fade-in"
                         >
                           <div className="flex-1 text-left min-w-0 pr-4">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="text-[10px] font-black text-indigo-400 tracking-tight">{c.control_code}</span>
+                              <span className="text-[10px] font-semibold text-indigo-400 tracking-tight">{c.control_code}</span>
                               <h5 className="text-[12px] font-bold text-white uppercase tracking-tight truncate">{c.title}</h5>
                             </div>
-                            <p className="text-xs text-gray-400 leading-relaxed">{c.description}</p>
+                            <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{c.description}</p>
                           </div>
                           
                           <div className="flex items-center gap-3 self-end sm:self-auto">
                             <span className={cn(
-                              "text-[9px] font-black px-2 py-0.5 rounded border uppercase tracking-tight",
+                              "text-[9px] font-semibold px-2 py-0.5 rounded border uppercase tracking-tight",
                               getStatusColor(status)
                             )}>
                               {status.replace('_', ' ')}
@@ -1894,7 +1903,7 @@ function Iso27001Tab({
                                 ...c,
                                 framework: 'iso-27001'
                               })}
-                              className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-indigo-500/30 rounded text-[9px] font-black text-white uppercase hover:bg-zinc-800 transition active:scale-95"
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-indigo-500/30 rounded text-[9px] font-semibold text-white uppercase hover:bg-zinc-800 transition active:scale-95"
                             >
                               <Edit2 className="h-2.5 w-2.5 text-indigo-400" />
                               Update
@@ -1926,7 +1935,7 @@ function CcpaTab({
   ccpaData
 }: CcpaTabProps) {
   if (ccpaLoading) {
-    return <div className="text-center py-12 text-gray-500 text-sm">Loading CCPA compliance data...</div>;
+    return <div className="text-center py-12 text-[var(--text-muted)] text-sm">Loading CCPA compliance data...</div>;
   }
 
   if (ccpaError) {
@@ -1946,16 +1955,16 @@ function CcpaTab({
           { label: 'In Progress', value: ccpaData.summary?.in_progress ?? 0, color: 'text-amber-400' },
           { label: 'Compliance Score', value: `${ccpaData.summary?.compliance_score ?? 0}%`, color: 'text-indigo-400' },
         ].map((stat) => (
-          <div key={stat.label} className="bg-[#111827]/40 border border-gray-800 rounded-2xl p-4 backdrop-blur-md">
-            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{stat.label}</p>
-            <p className={`text-2xl font-black mt-1 ${stat.color}`}>{stat.value}</p>
+          <div key={stat.label} className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-4 backdrop-blur-md">
+            <p className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-widest">{stat.label}</p>
+            <p className={`text-2xl font-semibold mt-1 ${stat.color}`}>{stat.value}</p>
           </div>
         ))}
       </div>
-      <div className="bg-[#111827]/40 border border-gray-800 rounded-2xl p-5 backdrop-blur-md">
+      <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-5 backdrop-blur-md">
         <div className="flex items-center justify-between mb-3">
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Overall CCPA Compliance</p>
-          <p className="text-sm font-black text-white">{ccpaData.summary?.compliance_score ?? 0}%</p>
+          <p className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest">Overall CCPA Compliance</p>
+          <p className="text-sm font-semibold text-white">{ccpaData.summary?.compliance_score ?? 0}%</p>
         </div>
         <div className="w-full h-2 bg-gray-800 rounded-full">
           <div className="h-full bg-emerald-500 rounded-full transition-all duration-700" style={{ width: `${ccpaData.summary?.compliance_score ?? 0}%` }} />
@@ -1968,20 +1977,20 @@ function CcpaTab({
           const total = sectionControls.length;
           const pct = total > 0 ? Math.round((implemented / total) * 100) : 0;
           return (
-            <div key={section.section_code} className="bg-[#111827]/40 border border-gray-800 rounded-2xl p-5 backdrop-blur-md">
+            <div key={section.section_code} className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-5 backdrop-blur-md">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
-                  <span className="text-[10px] font-black text-gray-500 bg-gray-900/60 border border-gray-800 px-2 py-0.5 rounded font-mono">{section.section_code}</span>
+                  <span className="text-[10px] font-semibold text-[var(--text-muted)] bg-gray-900/60 border border-[var(--border-default)] px-2 py-0.5 rounded font-mono">{section.section_code}</span>
                   <p className="text-sm font-bold text-white">{section.title}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-[10px] text-gray-500">{implemented}/{total} controls</span>
-                  <span className={cn('text-[10px] font-black uppercase px-2 py-0.5 rounded border', pct === 100 ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : pct > 0 ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' : 'text-gray-500 bg-gray-500/10 border-gray-500/20')}>
+                  <span className="text-[10px] text-[var(--text-muted)]">{implemented}/{total} controls</span>
+                  <span className={cn('text-[10px] font-semibold uppercase px-2 py-0.5 rounded border', pct === 100 ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : pct > 0 ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' : 'text-[var(--text-muted)] bg-gray-500/10 border-gray-500/20')}>
                     {pct === 100 ? 'Complete' : pct > 0 ? 'In Progress' : 'Not Started'}
                   </span>
                 </div>
               </div>
-              <p className="text-[11px] text-gray-500 mb-3">{section.description}</p>
+              <p className="text-[11px] text-[var(--text-muted)] mb-3">{section.description}</p>
               <div className="w-full h-1 bg-gray-800 rounded-full">
                 <div className="h-full bg-indigo-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
               </div>
@@ -1990,7 +1999,7 @@ function CcpaTab({
         })}
       </div>
       <div className="text-center pt-2">
-        <a href="/app/ccpa" className="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 rounded-xl text-[10px] font-black text-white uppercase tracking-widest hover:bg-indigo-500 transition-all">
+        <a href="/app/ccpa" className="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 rounded-xl text-[10px] font-semibold text-white uppercase tracking-widest hover:bg-indigo-500 transition-all">
           Open Full CCPA Dashboard →
         </a>
       </div>

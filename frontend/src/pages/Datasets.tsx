@@ -135,7 +135,7 @@ export default function Datasets() {
                   <div className="bg-indigo-50 text-[var(--royal-indigo)] p-1.5 rounded-lg">
                     <Database className="h-4 w-4" />
                   </div>
-                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-800">Register Dataset</h3>
+                  <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-800">Register Dataset</h3>
                 </div>
                 <button 
                   onClick={() => setIsDrawerOpen(false)}
@@ -147,7 +147,7 @@ export default function Datasets() {
 
               <form onSubmit={handleCreateDataset} className="space-y-4">
                 <div>
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Dataset Name</label>
+                  <label className="block text-[9px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5">Dataset Name</label>
                   <input 
                     type="text" 
                     required
@@ -159,7 +159,7 @@ export default function Datasets() {
                 </div>
 
                 <div>
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Description</label>
+                  <label className="block text-[9px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5">Description</label>
                   <textarea 
                     value={newDesc}
                     onChange={(e) => setNewDesc(e.target.value)}
@@ -170,7 +170,7 @@ export default function Datasets() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Usage Type</label>
+                    <label className="block text-[9px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5">Usage Type</label>
                     <select
                       value={newType}
                       onChange={(e) => setNewType(e.target.value)}
@@ -185,7 +185,7 @@ export default function Datasets() {
                   </div>
                   
                   <div>
-                    <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Classification</label>
+                    <label className="block text-[9px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5">Classification</label>
                     <select
                       value={newClassification}
                       onChange={(e) => setNewClassification(e.target.value)}
@@ -201,7 +201,7 @@ export default function Datasets() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Record Count</label>
+                    <label className="block text-[9px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5">Record Count</label>
                     <input 
                       type="number" 
                       value={newRecordCount}
@@ -210,7 +210,7 @@ export default function Datasets() {
                     />
                   </div>
                   <div>
-                    <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Source URL</label>
+                    <label className="block text-[9px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5">Source URL</label>
                     <input 
                       type="text" 
                       value={newSourceUrl}
@@ -222,7 +222,7 @@ export default function Datasets() {
                 </div>
 
                 <div>
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Link to AI System</label>
+                  <label className="block text-[9px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5">Link to AI System</label>
                   <select
                     value={newLinkedSystemId}
                     onChange={(e) => setNewLinkedSystemId(e.target.value)}
@@ -236,7 +236,7 @@ export default function Datasets() {
                 </div>
 
                 <div>
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Tags (Comma Separated)</label>
+                  <label className="block text-[9px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5">Tags (Comma Separated)</label>
                   <input 
                     type="text" 
                     value={newTagsString}
@@ -274,7 +274,7 @@ export default function Datasets() {
             <Layers className="h-6 w-6" />
           </div>
           <div>
-            <h2 className="text-xs font-black uppercase tracking-widest text-[var(--text-primary)]">Dataset Inventory</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--text-primary)]">Dataset Inventory</h2>
             <p className="text-[10px] text-[var(--text-secondary)] font-medium">Catalog data assets, tag PII characteristics, and link sets to AI System pipelines</p>
           </div>
         </div>
@@ -291,7 +291,7 @@ export default function Datasets() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <div className="card-base p-4 flex items-center justify-between bg-white border-l-4 border-l-slate-400">
           <div>
-            <div className="text-[9px] font-black uppercase tracking-wider text-slate-400">Registered Sets</div>
+            <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Registered Sets</div>
             <div className="text-xl font-bold mt-1 text-slate-800">{totalDatasets}</div>
           </div>
           <div className="bg-slate-50 text-slate-500 p-2.5 rounded-xl border border-slate-100">
@@ -301,7 +301,7 @@ export default function Datasets() {
 
         <div className="card-base p-4 flex items-center justify-between bg-white border-l-4 border-l-rose-500">
           <div>
-            <div className="text-[9px] font-black uppercase tracking-wider text-slate-400">Restricted Sensitivity</div>
+            <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Restricted Sensitivity</div>
             <div className="text-xl font-bold mt-1 text-rose-600">{restrictedCount}</div>
           </div>
           <div className="bg-rose-50 text-rose-500 p-2.5 rounded-xl border border-rose-100">
@@ -311,7 +311,7 @@ export default function Datasets() {
 
         <div className="card-base p-4 flex items-center justify-between bg-white border-l-4 border-l-amber-500">
           <div>
-            <div className="text-[9px] font-black uppercase tracking-wider text-slate-400">Confidential Classification</div>
+            <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Confidential Classification</div>
             <div className="text-xl font-bold mt-1 text-amber-600">{confidentialCount}</div>
           </div>
           <div className="bg-amber-50 text-amber-500 p-2.5 rounded-xl border border-amber-100">
@@ -321,7 +321,7 @@ export default function Datasets() {
 
         <div className="card-base p-4 flex items-center justify-between bg-white border-l-4 border-l-indigo-600">
           <div>
-            <div className="text-[9px] font-black uppercase tracking-wider text-slate-400">Linked to AI Systems</div>
+            <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Linked to AI Systems</div>
             <div className="text-xl font-bold mt-1 text-[var(--royal-indigo)]">{activeLinkedCount}</div>
           </div>
           <div className="bg-indigo-50 text-[var(--royal-indigo)] p-2.5 rounded-xl border border-indigo-100">
@@ -333,7 +333,7 @@ export default function Datasets() {
       {/* Main Datasets Table Grid */}
       <div className="card-base bg-white overflow-hidden shadow-sm">
         <div className="border-b border-slate-100 px-4 py-3 bg-slate-50 flex items-center justify-between">
-          <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-700">Governance Datasets Registry</h3>
+          <h3 className="text-[10px] font-semibold uppercase tracking-widest text-slate-700">Governance Datasets Registry</h3>
           <span className="badge-pill bg-slate-200 text-slate-600 font-bold">{datasets.length} Total</span>
         </div>
 
@@ -351,13 +351,13 @@ export default function Datasets() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
-                  <th className="px-6 py-3.5 text-[9px] font-black uppercase tracking-wider text-slate-400">Dataset Details</th>
-                  <th className="px-6 py-3.5 text-[9px] font-black uppercase tracking-wider text-slate-400">Sensitivity Class</th>
-                  <th className="px-6 py-3.5 text-[9px] font-black uppercase tracking-wider text-slate-400">Usage Type</th>
-                  <th className="px-6 py-3.5 text-[9px] font-black uppercase tracking-wider text-slate-400">Volume</th>
-                  <th className="px-6 py-3.5 text-[9px] font-black uppercase tracking-wider text-slate-400">Linked AI System</th>
-                  <th className="px-6 py-3.5 text-[9px] font-black uppercase tracking-wider text-slate-400">Governance Linker</th>
-                  <th className="px-6 py-3.5 text-[9px] font-black uppercase tracking-wider text-slate-400 text-right">Actions</th>
+                  <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400">Dataset Details</th>
+                  <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400">Sensitivity Class</th>
+                  <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400">Usage Type</th>
+                  <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400">Volume</th>
+                  <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400">Linked AI System</th>
+                  <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400">Governance Linker</th>
+                  <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">

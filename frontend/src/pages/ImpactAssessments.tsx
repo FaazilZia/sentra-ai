@@ -1,3 +1,4 @@
+import { NodePulseLoader } from '@/components/ui/NodePulseLoader';
 import { useEffect, useState } from 'react';
 import { apiRequest } from '@/lib/api';
 import { 
@@ -217,14 +218,14 @@ export default function ImpactAssessments() {
   };
 
   const columns: Array<{ title: string; status: ImpactAssessment['status']; color: string; border: string }> = [
-    { title: 'Draft', status: 'DRAFT', color: 'bg-gray-500/5', border: 'border-gray-800' },
+    { title: 'Draft', status: 'DRAFT', color: 'bg-gray-500/5', border: 'border-[var(--border-default)]' },
     { title: 'In Review', status: 'IN_REVIEW', color: 'bg-indigo-500/5', border: 'border-indigo-900/40' },
     { title: 'Approved', status: 'APPROVED', color: 'bg-emerald-500/5', border: 'border-emerald-900/40' },
     { title: 'Rejected', status: 'REJECTED', color: 'bg-red-500/5', border: 'border-red-900/40' }
   ];
 
   return (
-    <div className="flex flex-col gap-6 p-6 animate-fade-in text-gray-200">
+    <div className="flex flex-col gap-6 p-6 animate-fade-in  ">
       
       {/* Header section */}
       <PageHeader 
@@ -252,11 +253,11 @@ export default function ImpactAssessments() {
       />
 
       {/* Tabs */}
-      <div className="flex border-b border-gray-800 gap-6">
+      <div className="flex border-b border-[var(--border-default)] gap-6">
         <button
           onClick={() => setActiveTab('DPIA_AIA')}
           className={`pb-3 text-sm font-bold transition-all relative ${
-            activeTab === 'DPIA_AIA' ? 'text-indigo-400' : 'text-gray-400 hover:text-white'
+            activeTab === 'DPIA_AIA' ? 'text-indigo-400' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
           }`}
         >
           DPIA / AIA Kanban Board
@@ -267,7 +268,7 @@ export default function ImpactAssessments() {
         <button
           onClick={() => setActiveTab('FRIA')}
           className={`pb-3 text-sm font-bold transition-all relative ${
-            activeTab === 'FRIA' ? 'text-purple-400' : 'text-gray-400 hover:text-white'
+            activeTab === 'FRIA' ? 'text-purple-400' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
           }`}
         >
           EU AI Act FRIA assessments (Art. 27)
@@ -279,7 +280,7 @@ export default function ImpactAssessments() {
 
       {loading ? (
         <div className="flex items-center justify-center py-40">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
+          <NodePulseLoader label="Compiling assessment workspace..." />
         </div>
       ) : activeTab === 'DPIA_AIA' ? (
         /* Kanban Board Grid */
@@ -291,9 +292,9 @@ export default function ImpactAssessments() {
                 key={col.status}
                 className={`rounded-2xl border ${col.border} ${col.color} p-4 flex flex-col gap-4 min-h-[500px] bg-black/10 backdrop-blur-md`}
               >
-                <div className="flex items-center justify-between border-b border-gray-800/80 pb-2">
+                <div className="flex items-center justify-between border-b border-[var(--border-default)]/80 pb-2">
                   <h3 className="font-bold text-white text-xs uppercase tracking-wider">{col.title}</h3>
-                  <span className="text-[10px] bg-black/40 px-2 py-0.5 rounded-full border border-gray-800 text-gray-500 font-bold">
+                  <span className="text-[10px] bg-black/40 px-2 py-0.5 rounded-full border border-[var(--border-default)] text-[var(--text-muted)] font-bold">
                     {list.length}
                   </span>
                 </div>
@@ -311,7 +312,7 @@ export default function ImpactAssessments() {
                       }}
                       role="button"
                       tabIndex={0}
-                      className="bg-[#111827]/40 border border-gray-800/60 hover:border-indigo-500/40 p-4 rounded-xl cursor-pointer transition-all hover:-translate-y-0.5 active:scale-98"
+                      className="bg-[var(--bg-page)] border border-[var(--border-default)]/60 hover:border-indigo-500/40 p-4 rounded-xl cursor-pointer transition-all hover:-translate-y-0.5 active:scale-98"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
@@ -319,20 +320,20 @@ export default function ImpactAssessments() {
                         }`}>
                           {ass.type}
                         </span>
-                        <span className="text-[10px] text-gray-500">{new Date(ass.created_at).toLocaleDateString()}</span>
+                        <span className="text-[10px] text-[var(--text-muted)]">{new Date(ass.created_at).toLocaleDateString()}</span>
                       </div>
 
                       <h4 className="font-bold text-white text-sm mt-2 line-clamp-1">{ass.ai_system?.name || 'Unknown System'}</h4>
-                      <p className="text-[10px] text-gray-400 mt-1 line-clamp-2">{ass.form_data.description || 'No description entered.'}</p>
+                      <p className="text-[10px] text-[var(--text-secondary)] mt-1 line-clamp-2">{ass.form_data.description || 'No description entered.'}</p>
                       
-                      <div className="flex items-center gap-1.5 mt-3 pt-2 border-t border-gray-800/40 text-[10px] text-gray-500">
+                      <div className="flex items-center gap-1.5 mt-3 pt-2 border-t border-[var(--border-default)]/40 text-[10px] text-[var(--text-muted)]">
                         <User className="h-3 w-3" />
                         <span className="truncate">{ass.submitted_by || 'Anonymous'}</span>
                       </div>
                     </div>
                   ))}
                   {list.length === 0 && (
-                    <div className="text-center py-10 text-[10px] text-gray-600 border border-dashed border-gray-800/40 rounded-xl">
+                    <div className="text-center py-10 text-[10px] text-[var(--text-muted)] border border-dashed border-[var(--border-default)]/40 rounded-xl">
                       Empty
                     </div>
                   )}
@@ -344,16 +345,16 @@ export default function ImpactAssessments() {
       ) : (
         /* FRIA Table / Wizards View */
         <div className="flex flex-col gap-6">
-          <div className="bg-[#111827]/30 border border-gray-800 rounded-2xl overflow-hidden backdrop-blur-md">
-            <div className="p-5 border-b border-gray-800/80 bg-gray-900/10 flex items-center justify-between">
+          <div className="bg-[var(--bg-page)]/30 border border-[var(--border-default)] rounded-2xl overflow-hidden backdrop-blur-md">
+            <div className="p-5 border-b border-[var(--border-default)]/80 bg-[var(--bg-page)] flex items-center justify-between">
               <h3 className="font-bold text-white text-sm">Fundamental Rights Impact Assessments</h3>
-              <span className="text-xs text-gray-400">{friaAssessments.length} total assessments</span>
+              <span className="text-xs text-[var(--text-secondary)]">{friaAssessments.length} total assessments</span>
             </div>
             
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="border-b border-gray-800/80 text-gray-400 bg-gray-950/20 font-semibold">
+                  <tr className="border-b border-[var(--border-default)]/80 text-[var(--text-secondary)] bg-gray-950/20 font-semibold">
                     <th className="p-4">AI System Name</th>
                     <th className="p-4">Risk Level</th>
                     <th className="p-4">Status</th>
@@ -363,7 +364,7 @@ export default function ImpactAssessments() {
                 </thead>
                 <tbody className="divide-y divide-gray-800/50">
                   {friaAssessments.map((fria) => (
-                    <tr key={fria.id} className="hover:bg-gray-800/20 transition-all">
+                    <tr key={fria.id} className="hover:bg-[var(--bg-hover)]/20 transition-all">
                       <td className="p-4 font-bold text-white flex items-center gap-2">
                         <FileCheck className="h-4 w-4 text-purple-400" />
                         {fria.ai_system?.name}
@@ -382,7 +383,7 @@ export default function ImpactAssessments() {
                           {fria.status}
                         </span>
                       </td>
-                      <td className="p-4 text-gray-400">
+                      <td className="p-4 text-[var(--text-secondary)]">
                         {new Date(fria.updated_at).toLocaleString()}
                       </td>
                       <td className="p-4 text-right">
@@ -390,7 +391,7 @@ export default function ImpactAssessments() {
                           onClick={() => openFriaWizard(fria.id)}
                           className={`px-3.5 py-1.5 rounded-xl font-semibold transition-all text-xs ${
                             fria.status === 'COMPLETED'
-                              ? 'bg-gray-800 border border-gray-700 text-gray-300 hover:bg-gray-700'
+                              ? 'bg-gray-800 border border-[var(--border-default)] text-[var(--text-secondary)] hover:bg-gray-700'
                               : 'bg-purple-600 hover:bg-purple-500 text-white shadow-md shadow-purple-500/10'
                           }`}
                         >
@@ -401,7 +402,7 @@ export default function ImpactAssessments() {
                   ))}
                   {friaAssessments.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="text-center py-20 text-gray-500">
+                      <td colSpan={5} className="text-center py-20 text-[var(--text-muted)]">
                         No FRIA assessments completed. Launch one to evaluate system impact on fundamental rights under EU AI Act Art. 27.
                       </td>
                     </tr>
@@ -416,15 +417,15 @@ export default function ImpactAssessments() {
       {/* Launch DPIA/AIA Modal */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[#111827] border border-gray-800 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-scale-in">
-            <div className="flex items-center justify-between border-b border-gray-800 p-5 bg-[#0f172a]/60">
+          <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-scale-in">
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] p-5 bg-[#0f172a]/60">
               <h3 className="font-bold text-white flex items-center gap-2">
                 <FileText className="h-5 w-5 text-indigo-400" />
                 Launch Impact Assessment
               </h3>
               <button
                 onClick={() => setIsOpen(false)}
-                className="rounded-lg p-1 hover:bg-gray-800 text-gray-500 hover:text-white transition-all"
+                className="rounded-lg p-1 hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -434,13 +435,13 @@ export default function ImpactAssessments() {
               <div className="grid grid-cols-2 gap-4">
                 
                 <div className="flex flex-col gap-1.5 col-span-2">
-                  <label htmlFor="target-ai-system" className="text-gray-400 font-semibold">Select Target AI System *</label>
+                  <label htmlFor="target-ai-system" className="text-[var(--text-secondary)] font-semibold">Select Target AI System *</label>
                   <select
                     id="target-ai-system"
                     required
                     value={selectedSystemId}
                     onChange={(e) => setSelectedSystemId(e.target.value)}
-                    className="bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 text-xs"
+                    className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 text-xs"
                   >
                     <option value="">Choose System...</option>
                     {systems.map(s => (
@@ -450,13 +451,13 @@ export default function ImpactAssessments() {
                 </div>
  
                 <div className="flex flex-col gap-1.5 col-span-2">
-                  <span className="text-gray-400 font-semibold">Assessment Type *</span>
+                  <span className="text-[var(--text-secondary)] font-semibold">Assessment Type *</span>
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
                       onClick={() => setType('DPIA')}
                       className={`py-2 px-4 rounded-xl border text-center font-semibold transition-all ${
-                        type === 'DPIA' ? 'bg-indigo-950/20 border-indigo-500 text-indigo-300' : 'bg-black/30 border-gray-800 text-gray-400'
+                        type === 'DPIA' ? 'bg-indigo-950/20 border-indigo-500 text-indigo-300' : 'bg-black/30 border-[var(--border-default)] text-[var(--text-secondary)]'
                       }`}
                     >
                       DPIA (Data Protection)
@@ -465,7 +466,7 @@ export default function ImpactAssessments() {
                       type="button"
                       onClick={() => setType('AIA')}
                       className={`py-2 px-4 rounded-xl border text-center font-semibold transition-all ${
-                        type === 'AIA' ? 'bg-purple-950/20 border-purple-500 text-purple-300' : 'bg-black/30 border-gray-800 text-gray-400'
+                        type === 'AIA' ? 'bg-purple-950/20 border-purple-500 text-purple-300' : 'bg-black/30 border-[var(--border-default)] text-[var(--text-secondary)]'
                       }`}
                     >
                       AIA (Algorithmic)
@@ -474,60 +475,60 @@ export default function ImpactAssessments() {
                 </div>
 
                 <div className="flex flex-col gap-1.5 col-span-2">
-                  <label htmlFor="pipeline-description" className="text-gray-400 font-semibold">Description of AI Pipeline *</label>
+                  <label htmlFor="pipeline-description" className="text-[var(--text-secondary)] font-semibold">Description of AI Pipeline *</label>
                   <textarea
                     id="pipeline-description"
                     required
                     placeholder="Provide details on model operations, data flows, and pipeline inputs..."
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
+                    className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
                   />
                 </div>
  
                 <div className="flex flex-col gap-1.5 col-span-2">
-                  <label htmlFor="pipeline-benefits" className="text-gray-400 font-semibold">Anticipated Usecase Benefits *</label>
+                  <label htmlFor="pipeline-benefits" className="text-[var(--text-secondary)] font-semibold">Anticipated Usecase Benefits *</label>
                   <textarea
                     id="pipeline-benefits"
                     required
                     placeholder="List expected functional, speed, or performance utility gains..."
                     value={formData.benefits}
                     onChange={(e) => setFormData({ ...formData, benefits: e.target.value })}
-                    className="bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
+                    className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
                   />
                 </div>
  
                 <div className="flex flex-col gap-1.5 col-span-2">
-                  <label htmlFor="pipeline-protection" className="text-gray-400 font-semibold">Data Protection & Privacy Safeguards *</label>
+                  <label htmlFor="pipeline-protection" className="text-[var(--text-secondary)] font-semibold">Data Protection & Privacy Safeguards *</label>
                   <textarea
                     id="pipeline-protection"
                     required
                     placeholder="Detail active masking, filter APIs, retention controls, or PII scrubbers..."
                     value={formData.data_protection}
                     onChange={(e) => setFormData({ ...formData, data_protection: e.target.value })}
-                    className="bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
+                    className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
                   />
                 </div>
  
                 <div className="flex flex-col gap-1.5 col-span-2">
-                  <label htmlFor="pipeline-oversight" className="text-gray-400 font-semibold">Human Oversight & Fallback Protocols *</label>
+                  <label htmlFor="pipeline-oversight" className="text-[var(--text-secondary)] font-semibold">Human Oversight & Fallback Protocols *</label>
                   <textarea
                     id="pipeline-oversight"
                     required
                     placeholder="Explain audit rules, human queues, veto options, and panic-stop configurations..."
                     value={formData.oversight}
                     onChange={(e) => setFormData({ ...formData, oversight: e.target.value })}
-                    className="bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
+                    className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
                   />
                 </div>
 
               </div>
 
-              <div className="flex items-center justify-end gap-3 border-t border-gray-800 pt-4 mt-2">
+              <div className="flex items-center justify-end gap-3 border-t border-[var(--border-default)] pt-4 mt-2">
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="rounded-xl border border-gray-800 px-5 py-2.5 text-sm font-semibold text-gray-400 hover:bg-gray-800 hover:text-white transition-all"
+                  className="rounded-xl border border-[var(--border-default)] px-5 py-2.5 text-sm font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-all"
                 >
                   Cancel
                 </button>
@@ -546,15 +547,15 @@ export default function ImpactAssessments() {
       {/* Launch FRIA Modal */}
       {isFriaOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[#111827] border border-gray-800 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl animate-scale-in">
-            <div className="flex items-center justify-between border-b border-gray-800 p-5 bg-[#0f172a]/60">
+          <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl max-w-md w-full overflow-hidden shadow-2xl animate-scale-in">
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] p-5 bg-[#0f172a]/60">
               <h3 className="font-bold text-white flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-purple-400 animate-pulse" />
                 Launch EU AI Act FRIA (Art. 27)
               </h3>
               <button
                 onClick={() => setIsFriaOpen(false)}
-                className="rounded-lg p-1 hover:bg-gray-800 text-gray-500 hover:text-white transition-all"
+                className="rounded-lg p-1 hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -562,13 +563,13 @@ export default function ImpactAssessments() {
 
             <form onSubmit={handleLaunchFria} className="p-6 flex flex-col gap-4 text-xs">
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="fria-system" className="text-gray-400 font-semibold">Select AI System for Rights Impact Audit *</label>
+                <label htmlFor="fria-system" className="text-[var(--text-secondary)] font-semibold">Select AI System for Rights Impact Audit *</label>
                 <select
                   id="fria-system"
                   required
                   value={friaSystemId}
                   onChange={(e) => setFriaSystemId(e.target.value)}
-                  className="bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-purple-500 text-xs"
+                  className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2.5 text-white focus:outline-none focus:border-purple-500 text-xs"
                 >
                   <option value="">Choose System...</option>
                   {systems.map(s => (
@@ -581,11 +582,11 @@ export default function ImpactAssessments() {
                 Under Art. 27 of the EU AI Act, deployers of high-risk AI systems must perform a fundamental rights impact assessment covering affected groups, right to explainability, and specific discrimination controls prior to launch.
               </div>
 
-              <div className="flex items-center justify-end gap-3 border-t border-gray-800 pt-4 mt-2">
+              <div className="flex items-center justify-end gap-3 border-t border-[var(--border-default)] pt-4 mt-2">
                 <button
                   type="button"
                   onClick={() => setIsFriaOpen(false)}
-                  className="rounded-xl border border-gray-800 px-4 py-2 text-xs font-semibold text-gray-400 hover:bg-gray-800 hover:text-white transition-all"
+                  className="rounded-xl border border-[var(--border-default)] px-4 py-2 text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-all"
                 >
                   Cancel
                 </button>
@@ -604,12 +605,12 @@ export default function ImpactAssessments() {
       {/* FRIA Wizard Drawer/Overlay */}
       {currentFria && (
         <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/70 backdrop-blur-md">
-          <div className="bg-[#0b0f19] border-l border-gray-800 h-full max-w-2xl w-full flex flex-col justify-between shadow-2xl animate-slide-in text-xs">
+          <div className="bg-[var(--bg-page)] border-l border-[var(--border-default)] h-full max-w-2xl w-full flex flex-col justify-between shadow-2xl animate-slide-in text-xs">
             
             {/* Header */}
-            <div className="p-6 border-b border-gray-800/80 bg-gray-900/10 flex items-center justify-between">
+            <div className="p-6 border-b border-[var(--border-default)]/80 bg-[var(--bg-page)] flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest">EU AI ACT ARTICLE 27 FRIA</span>
+                <span className="text-[10px] font-semibold text-purple-400 uppercase tracking-widest">EU AI ACT ARTICLE 27 FRIA</span>
                 <h3 className="font-bold text-white text-base mt-0.5">{currentFria.ai_system?.name}</h3>
               </div>
               <button
@@ -617,7 +618,7 @@ export default function ImpactAssessments() {
                   saveFriaProgress(false);
                   setCurrentFria(null);
                 }}
-                className="rounded-lg p-1.5 hover:bg-gray-800 text-gray-500 hover:text-white transition-all"
+                className="rounded-lg p-1.5 hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -629,7 +630,7 @@ export default function ImpactAssessments() {
               {/* Progress Indicator */}
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-gray-400 font-bold">Progress</span>
+                  <span className="text-[var(--text-secondary)] font-bold">Progress</span>
                   <span className="text-purple-400 font-bold">
                     Question {currentQuestionIndex + 1} of {currentFria.responses.length}
                   </span>
@@ -648,7 +649,7 @@ export default function ImpactAssessments() {
                   <div className="bg-purple-950/10 border border-purple-900/30 p-4 rounded-xl flex gap-3 items-start">
                     <HelpCircle className="h-5 w-5 text-purple-400 shrink-0 mt-0.5" />
                     <div>
-                      <span className="font-black text-purple-400 uppercase tracking-widest text-[9px]">
+                      <span className="font-semibold text-purple-400 uppercase tracking-widest text-[9px]">
                         {currentFria.responses[currentQuestionIndex].question_code}
                       </span>
                       <p className="font-bold text-white text-sm mt-1 leading-relaxed">
@@ -658,19 +659,19 @@ export default function ImpactAssessments() {
                   </div>
 
                   <div className="flex flex-col gap-2 mt-2">
-                    <label htmlFor="wizard-answer" className="text-gray-400 font-bold">Deployer Assessment Response *</label>
+                    <label htmlFor="wizard-answer" className="text-[var(--text-secondary)] font-bold">Deployer Assessment Response *</label>
                     <textarea
                       id="wizard-answer"
                       placeholder="Detail system controls, impact constraints, processes, and verification evidence for this right..."
                       disabled={currentFria.status === 'COMPLETED'}
                       value={currentFria.responses[currentQuestionIndex].answer}
                       onChange={(e) => handleUpdateFriaResponse('answer', e.target.value)}
-                      className="bg-black/40 border border-gray-800 rounded-xl p-3.5 text-white focus:outline-none focus:border-purple-500 min-h-[160px] text-xs leading-relaxed"
+                      className="bg-black/40 border border-[var(--border-default)] rounded-xl p-3.5 text-white focus:outline-none focus:border-purple-500 min-h-[160px] text-xs leading-relaxed"
                     />
                   </div>
 
                   <div className="flex flex-col gap-2">
-                    <label htmlFor="wizard-notes" className="text-gray-400 font-bold">Internal Compliance Notes</label>
+                    <label htmlFor="wizard-notes" className="text-[var(--text-secondary)] font-bold">Internal Compliance Notes</label>
                     <input
                       id="wizard-notes"
                       type="text"
@@ -678,14 +679,14 @@ export default function ImpactAssessments() {
                       disabled={currentFria.status === 'COMPLETED'}
                       value={currentFria.responses[currentQuestionIndex].notes || ''}
                       onChange={(e) => handleUpdateFriaResponse('notes', e.target.value)}
-                      className="bg-black/40 border border-gray-800 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-purple-500 text-xs"
+                      className="bg-black/40 border border-[var(--border-default)] rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-purple-500 text-xs"
                     />
                   </div>
 
-                  <div className="flex items-center justify-between bg-gray-900/20 border border-gray-850 p-4 rounded-xl mt-2">
+                  <div className="flex items-center justify-between bg-gray-900/20 border border-[var(--border-default)] p-4 rounded-xl mt-2">
                     <div className="flex flex-col gap-0.5">
                       <span className="font-bold text-white">Flag Rights Risk</span>
-                      <span className="text-[10px] text-gray-500">Toggle this to flag active high risk to fundamental rights.</span>
+                      <span className="text-[10px] text-[var(--text-muted)]">Toggle this to flag active high risk to fundamental rights.</span>
                     </div>
                     <button
                       type="button"
@@ -694,7 +695,7 @@ export default function ImpactAssessments() {
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-bold uppercase transition-all ${
                         currentFria.responses[currentQuestionIndex].risk_flag
                           ? 'bg-red-500/10 border-red-500/30 text-red-400 shadow-md shadow-red-500/5'
-                          : 'bg-black/30 border-gray-800 text-gray-500 hover:text-white'
+                          : 'bg-black/30 border-[var(--border-default)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                       }`}
                     >
                       <AlertTriangle className="h-3.5 w-3.5" />
@@ -706,7 +707,7 @@ export default function ImpactAssessments() {
             </div>
 
             {/* Bottom Actions Panel */}
-            <div className="p-6 border-t border-gray-800 bg-gray-950/30 flex items-center justify-between">
+            <div className="p-6 border-t border-[var(--border-default)] bg-gray-950/30 flex items-center justify-between">
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -714,7 +715,7 @@ export default function ImpactAssessments() {
                     saveFriaProgress(false);
                     setCurrentFria(null);
                   }}
-                  className="rounded-xl border border-gray-800 px-4 py-2 font-semibold text-gray-400 hover:bg-gray-800 hover:text-white transition-all"
+                  className="rounded-xl border border-[var(--border-default)] px-4 py-2 font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-all"
                 >
                   Close & Save
                 </button>
@@ -728,7 +729,7 @@ export default function ImpactAssessments() {
                     await saveFriaProgress(false);
                     setCurrentQuestionIndex(currentQuestionIndex - 1);
                   }}
-                  className="flex items-center gap-1 rounded-xl border border-gray-800 px-4 py-2 font-semibold text-gray-300 hover:bg-gray-800 disabled:opacity-30 transition-all"
+                  className="flex items-center gap-1 rounded-xl border border-[var(--border-default)] px-4 py-2 font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] disabled:opacity-30 transition-all"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   Prev
@@ -767,49 +768,49 @@ export default function ImpactAssessments() {
       {/* Review / Detail Modal */}
       {selectedAssessment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[#111827] border border-gray-800 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-scale-in text-xs">
-            <div className="flex items-center justify-between border-b border-gray-800 p-5 bg-[#0f172a]/60">
+          <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-scale-in text-xs">
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] p-5 bg-[#0f172a]/60">
               <div>
-                <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{selectedAssessment.type} Assessment</span>
+                <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">{selectedAssessment.type} Assessment</span>
                 <h3 className="font-bold text-white text-base mt-0.5">{selectedAssessment.ai_system?.name || 'AI System'}</h3>
               </div>
               <button
                 onClick={() => setSelectedAssessment(null)}
-                className="rounded-lg p-1 hover:bg-gray-800 text-gray-500 hover:text-white transition-all"
+                className="rounded-lg p-1 hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="p-6 flex flex-col gap-5 max-h-[60vh] overflow-y-auto text-gray-300">
+            <div className="p-6 flex flex-col gap-5 max-h-[60vh] overflow-y-auto text-[var(--text-secondary)]">
               <div>
                 <h4 className="font-bold text-white mb-1 flex items-center gap-1.5"><Sparkles className="h-4 w-4 text-indigo-400" /> Pipeline Description</h4>
-                <p className="bg-[#0b0f19]/30 border border-gray-800 p-3 rounded-xl leading-relaxed">{selectedAssessment.form_data.description}</p>
+                <p className="bg-[var(--bg-page)]/30 border border-[var(--border-default)] p-3 rounded-xl leading-relaxed">{selectedAssessment.form_data.description}</p>
               </div>
 
               <div>
                 <h4 className="font-bold text-white mb-1 flex items-center gap-1.5"><Building className="h-4 w-4 text-purple-400" /> Anticipated Benefits</h4>
-                <p className="bg-[#0b0f19]/30 border border-gray-800 p-3 rounded-xl leading-relaxed">{selectedAssessment.form_data.benefits}</p>
+                <p className="bg-[var(--bg-page)]/30 border border-[var(--border-default)] p-3 rounded-xl leading-relaxed">{selectedAssessment.form_data.benefits}</p>
               </div>
 
               <div>
                 <h4 className="font-bold text-white mb-1 flex items-center gap-1.5"><ShieldAlert className="h-4 w-4 text-blue-400" /> Privacy & Protection</h4>
-                <p className="bg-[#0b0f19]/30 border border-gray-800 p-3 rounded-xl leading-relaxed">{selectedAssessment.form_data.data_protection}</p>
+                <p className="bg-[var(--bg-page)]/30 border border-[var(--border-default)] p-3 rounded-xl leading-relaxed">{selectedAssessment.form_data.data_protection}</p>
               </div>
 
               <div>
                 <h4 className="font-bold text-white mb-1 flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> Human Oversight</h4>
-                <p className="bg-[#0b0f19]/30 border border-gray-800 p-3 rounded-xl leading-relaxed">{selectedAssessment.form_data.oversight}</p>
+                <p className="bg-[var(--bg-page)]/30 border border-[var(--border-default)] p-3 rounded-xl leading-relaxed">{selectedAssessment.form_data.oversight}</p>
               </div>
               
-              <div className="grid grid-cols-2 gap-4 border-t border-gray-800/80 pt-4 mt-1 text-[10px] text-gray-500">
+              <div className="grid grid-cols-2 gap-4 border-t border-[var(--border-default)]/80 pt-4 mt-1 text-[10px] text-[var(--text-muted)]">
                 <span>Submitted by: <span className="text-white font-semibold">{selectedAssessment.submitted_by}</span></span>
                 <span>Date: <span className="text-white font-semibold">{new Date(selectedAssessment.created_at).toLocaleString()}</span></span>
               </div>
             </div>
 
             {selectedAssessment.status === 'IN_REVIEW' && (
-              <div className="bg-[#0f172a]/60 border-t border-gray-800 p-5 flex items-center justify-end gap-3">
+              <div className="bg-[#0f172a]/60 border-t border-[var(--border-default)] p-5 flex items-center justify-end gap-3">
                 <button
                   onClick={() => handleUpdateStatus(selectedAssessment.id, 'REJECTED')}
                   className="rounded-xl border border-red-500/30 px-5 py-2 text-xs font-semibold text-red-400 hover:bg-red-500/10 transition-all"

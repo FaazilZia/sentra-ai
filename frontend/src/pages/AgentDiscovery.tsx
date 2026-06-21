@@ -226,31 +226,31 @@ export default function AgentDiscovery() {
   const getRiskBadge = (level: string) => {
     switch (level) {
       case 'CRITICAL':
-        return <span className="text-[9px] font-black uppercase bg-red-500/10 text-red-500 px-2 py-0.5 rounded border border-red-500/20 tracking-wider">Critical</span>;
+        return <span className="text-[9px] font-semibold uppercase bg-red-500/10 text-red-500 px-2 py-0.5 rounded border border-red-500/20 tracking-wider">Critical</span>;
       case 'HIGH':
-        return <span className="text-[9px] font-black uppercase bg-orange-500/10 text-orange-500 px-2 py-0.5 rounded border border-orange-500/20 tracking-wider">High</span>;
+        return <span className="text-[9px] font-semibold uppercase bg-orange-500/10 text-orange-500 px-2 py-0.5 rounded border border-orange-500/20 tracking-wider">High</span>;
       case 'MEDIUM':
-        return <span className="text-[9px] font-black uppercase bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded border border-yellow-500/20 tracking-wider">Medium</span>;
+        return <span className="text-[9px] font-semibold uppercase bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded border border-yellow-500/20 tracking-wider">Medium</span>;
       default:
-        return <span className="text-[9px] font-black uppercase bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded border border-emerald-500/20 tracking-wider">Low</span>;
+        return <span className="text-[9px] font-semibold uppercase bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded border border-emerald-500/20 tracking-wider">Low</span>;
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'ACTIVE':
-        return <span className="text-[9px] font-black uppercase bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 tracking-wider">Active / Confirmed</span>;
+        return <span className="text-[9px] font-semibold uppercase bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 tracking-wider">Active / Confirmed</span>;
       case 'DEPRECATED':
-        return <span className="text-[9px] font-black uppercase bg-red-500/10 text-red-400 px-2 py-0.5 rounded border border-red-500/20 tracking-wider">Deprecated / Rejected</span>;
+        return <span className="text-[9px] font-semibold uppercase bg-red-500/10 text-red-400 px-2 py-0.5 rounded border border-red-500/20 tracking-wider">Deprecated / Rejected</span>;
       case 'UNDER_REVIEW':
-        return <span className="text-[9px] font-black uppercase bg-yellow-500/10 text-yellow-400 px-2 py-0.5 rounded border border-yellow-500/20 tracking-wider">Under Review</span>;
+        return <span className="text-[9px] font-semibold uppercase bg-yellow-500/10 text-yellow-400 px-2 py-0.5 rounded border border-yellow-500/20 tracking-wider">Under Review</span>;
       default:
-        return <span className="text-[9px] font-black uppercase bg-zinc-500/10 text-zinc-400 px-2 py-0.5 rounded border border-zinc-500/20 tracking-wider">{status}</span>;
+        return <span className="text-[9px] font-semibold uppercase bg-zinc-500/10 text-zinc-400 px-2 py-0.5 rounded border border-zinc-500/20 tracking-wider">{status}</span>;
     }
   };
 
   return (
-    <div className="p-6 space-y-6 bg-[#090910] min-h-screen text-slate-200 font-sans">
+    <div className="p-6 space-y-6 bg-[#090910] min-h-screen text-[var(--text-secondary)] font-sans">
       {/* Header */}
       <div className="flex justify-between items-center pb-4 border-b border-zinc-900">
         <div className="flex items-center gap-3">
@@ -258,7 +258,7 @@ export default function AgentDiscovery() {
             <Radio className="h-5 w-5 text-[var(--royal-indigo)] animate-pulse" />
           </div>
           <div>
-            <h1 className="text-sm font-black uppercase tracking-wider text-white">AI Agent Discovery Hub</h1>
+            <h1 className="text-[22px] font-semibold text-[var(--text-primary)] tracking-tight">AI Agent Discovery Hub</h1>
             <p className="text-[9px] uppercase tracking-widest text-zinc-500 font-bold">Automatic connector scan for shadow AI usage & unregistered pipelines</p>
           </div>
         </div>
@@ -266,7 +266,7 @@ export default function AgentDiscovery() {
         <button
           onClick={handleSync}
           disabled={syncing}
-          className="flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-800 text-[10px] font-black uppercase tracking-widest text-white hover:bg-zinc-800 rounded transition-all active:scale-95 disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-800 text-[10px] font-semibold uppercase tracking-widest text-white hover:bg-zinc-800 rounded transition-all active:scale-95 disabled:opacity-50"
         >
           <RefreshCw className={cn("h-3.5 w-3.5", syncing && "animate-spin")} />
           {syncing ? 'Scanning Connectors...' : 'Sync Connector Scans'}
@@ -293,32 +293,32 @@ export default function AgentDiscovery() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="card-base p-4 flex items-center justify-between">
           <div>
-            <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Total Discovered</span>
-            <h3 className="text-2xl font-black text-white mt-1 font-mono">{totalCount}</h3>
+            <span className="text-[9px] font-semibold uppercase tracking-widest text-zinc-500">Total Discovered</span>
+            <h3 className="text-2xl font-semibold text-white mt-1 font-mono">{totalCount}</h3>
           </div>
           <Cpu className="h-8 w-8 text-indigo-500/40" />
         </div>
 
         <div className="card-base p-4 flex items-center justify-between">
           <div>
-            <span className="text-[9px] font-black uppercase tracking-widest text-yellow-500">Unreviewed</span>
-            <h3 className="text-2xl font-black text-yellow-500 mt-1 font-mono">{unreviewedCount}</h3>
+            <span className="text-[9px] font-semibold uppercase tracking-widest text-yellow-500">Unreviewed</span>
+            <h3 className="text-2xl font-semibold text-yellow-500 mt-1 font-mono">{unreviewedCount}</h3>
           </div>
           <ShieldAlert className="h-8 w-8 text-yellow-500/30" />
         </div>
 
         <div className="card-base p-4 flex items-center justify-between">
           <div>
-            <span className="text-[9px] font-black uppercase tracking-widest text-emerald-500">Confirmed</span>
-            <h3 className="text-2xl font-black text-emerald-500 mt-1 font-mono">{confirmedCount}</h3>
+            <span className="text-[9px] font-semibold uppercase tracking-widest text-emerald-500">Confirmed</span>
+            <h3 className="text-2xl font-semibold text-emerald-500 mt-1 font-mono">{confirmedCount}</h3>
           </div>
           <CheckCircle className="h-8 w-8 text-emerald-500/30" />
         </div>
 
         <div className="card-base p-4 flex items-center justify-between">
           <div>
-            <span className="text-[9px] font-black uppercase tracking-widest text-red-500">Rejected</span>
-            <h3 className="text-2xl font-black text-red-500 mt-1 font-mono">{rejectedCount}</h3>
+            <span className="text-[9px] font-semibold uppercase tracking-widest text-red-500">Rejected</span>
+            <h3 className="text-2xl font-semibold text-red-500 mt-1 font-mono">{rejectedCount}</h3>
           </div>
           <AlertTriangle className="h-8 w-8 text-red-500/30" />
         </div>
@@ -329,7 +329,7 @@ export default function AgentDiscovery() {
         <button
           onClick={() => setActiveTab('SHADOW')}
           className={cn(
-            "pb-3 text-xs font-black uppercase tracking-widest transition-all relative",
+            "pb-3 text-xs font-semibold uppercase tracking-widest transition-all relative",
             activeTab === 'SHADOW' ? "text-white" : "text-zinc-500 hover:text-zinc-300"
           )}
         >
@@ -341,7 +341,7 @@ export default function AgentDiscovery() {
         <button
           onClick={() => setActiveTab('REGISTERED')}
           className={cn(
-            "pb-3 text-xs font-black uppercase tracking-widest transition-all relative",
+            "pb-3 text-xs font-semibold uppercase tracking-widest transition-all relative",
             activeTab === 'REGISTERED' ? "text-white" : "text-zinc-500 hover:text-zinc-300"
           )}
         >
@@ -387,10 +387,10 @@ export default function AgentDiscovery() {
         {/* Discovery List / Registered List */}
         {activeTab === 'SHADOW' ? (
           agents.length === 0 ? (
-            <div className="bg-[#111827]/20 border border-zinc-800 border-dashed rounded-2xl p-12 text-center text-gray-500 max-w-md mx-auto my-6">
+            <div className="bg-[var(--bg-page)]/20 border border-zinc-800 border-dashed rounded-2xl p-12 text-center text-[var(--text-muted)] max-w-md mx-auto my-6">
               <Radio className="h-8 w-8 mx-auto mb-3 text-indigo-500/60 animate-pulse" />
-              <h4 className="text-xs font-black uppercase text-gray-400">No Agents Discovered</h4>
-              <p className="text-[10px] text-gray-500 mt-1">Agents detected by Shadow AI scanner will appear here.</p>
+              <h4 className="text-xs font-semibold uppercase text-[var(--text-secondary)]">No Agents Discovered</h4>
+              <p className="text-[10px] text-[var(--text-muted)] mt-1">Agents detected by Shadow AI scanner will appear here.</p>
             </div>
           ) : filteredAgents.length === 0 ? (
             <div className="py-16 text-center text-zinc-500 text-xs italic">
@@ -432,14 +432,14 @@ export default function AgentDiscovery() {
                   <div className="flex gap-2 shrink-0">
                     <button
                       onClick={() => handleOpenReview(agent)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-[9px] font-black uppercase tracking-widest transition active:scale-95"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-[9px] font-semibold uppercase tracking-widest transition active:scale-95"
                     >
                       <Plus className="h-3 w-3" />
                       Review & Register
                     </button>
                     <button
                       onClick={() => handleDismiss(agent.id)}
-                      className="px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-white rounded text-[9px] font-black uppercase tracking-widest transition active:scale-95"
+                      className="px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-[var(--text-primary)] rounded text-[9px] font-semibold uppercase tracking-widest transition active:scale-95"
                     >
                       Dismiss
                     </button>
@@ -486,7 +486,7 @@ export default function AgentDiscovery() {
                   <div className="flex gap-2 shrink-0">
                     <button
                       onClick={() => setSelectedRegisteredAgent(agent)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-850 hover:bg-zinc-800 text-white rounded text-[9px] font-black uppercase tracking-widest transition active:scale-95"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-850 hover:bg-zinc-800 text-white rounded text-[9px] font-semibold uppercase tracking-widest transition active:scale-95"
                     >
                       <Eye className="h-3 w-3" />
                       Review / Edit Status
@@ -504,12 +504,12 @@ export default function AgentDiscovery() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="w-full max-w-md bg-zinc-950 border border-zinc-900 rounded-2xl shadow-2xl overflow-hidden animate-scale-in text-left">
             <div className="p-4 border-b border-zinc-900 bg-[#0c0c14]/40 flex justify-between items-center">
-              <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-indigo-400">
                 Unregistered Agent Review Portal
               </span>
               <button
                 onClick={() => setSelectedAgent(null)}
-                className="text-zinc-500 hover:text-white font-mono text-xs p-1"
+                className="text-zinc-500 hover:text-[var(--text-primary)] font-mono text-xs p-1"
               >
                 ✕
               </button>
@@ -521,7 +521,7 @@ export default function AgentDiscovery() {
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Registry System Name</label>
+                <label className="text-[9px] font-semibold uppercase tracking-widest text-zinc-500">Registry System Name</label>
                 <input
                   type="text"
                   required
@@ -532,7 +532,7 @@ export default function AgentDiscovery() {
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Description</label>
+                <label className="text-[9px] font-semibold uppercase tracking-widest text-zinc-500">Description</label>
                 <textarea
                   required
                   value={promoteDescription}
@@ -543,7 +543,7 @@ export default function AgentDiscovery() {
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Risk Tier Classification</label>
+                <label className="text-[9px] font-semibold uppercase tracking-widest text-zinc-500">Risk Tier Classification</label>
                 <select
                   value={promoteRiskTier}
                   onChange={(e) => setPromoteRiskTier(e.target.value)}
@@ -560,14 +560,14 @@ export default function AgentDiscovery() {
                 <button
                   type="button"
                   onClick={() => setSelectedAgent(null)}
-                  className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded text-[9px] font-black uppercase tracking-widest transition"
+                  className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-[var(--text-primary)] rounded text-[9px] font-semibold uppercase tracking-widest transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isPromoting}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded text-[9px] font-black uppercase tracking-widest transition shadow-lg shadow-indigo-600/10"
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded text-[9px] font-semibold uppercase tracking-widest transition shadow-lg shadow-indigo-600/10"
                 >
                   {isPromoting ? 'Registering...' : 'Approve & Register'}
                 </button>
@@ -582,12 +582,12 @@ export default function AgentDiscovery() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="w-full max-w-md bg-zinc-950 border border-zinc-900 rounded-2xl shadow-2xl overflow-hidden animate-scale-in text-left">
             <div className="p-4 border-b border-zinc-900 bg-[#0c0c14]/40 flex justify-between items-center">
-              <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-indigo-400">
                 Registered Agent Status Manager
               </span>
               <button
                 onClick={() => setSelectedRegisteredAgent(null)}
-                className="text-zinc-500 hover:text-white font-mono text-xs p-1"
+                className="text-zinc-500 hover:text-[var(--text-primary)] font-mono text-xs p-1"
               >
                 ✕
               </button>
@@ -595,12 +595,12 @@ export default function AgentDiscovery() {
 
             <div className="p-5 space-y-4">
               <div className="space-y-1">
-                <h4 className="text-xs font-black uppercase text-zinc-500 tracking-wider">System Name</h4>
+                <h4 className="text-xs font-semibold uppercase text-zinc-500 tracking-wider">System Name</h4>
                 <p className="text-sm font-bold text-white">{selectedRegisteredAgent.name}</p>
               </div>
 
               <div className="space-y-1">
-                <h4 className="text-xs font-black uppercase text-zinc-500 tracking-wider">Current Status</h4>
+                <h4 className="text-xs font-semibold uppercase text-zinc-500 tracking-wider">Current Status</h4>
                 <div>{getStatusBadge(selectedRegisteredAgent.status)}</div>
               </div>
 
@@ -611,28 +611,28 @@ export default function AgentDiscovery() {
               <div className="pt-3 border-t border-zinc-900/60 flex flex-wrap gap-2 justify-end">
                 <button
                   onClick={() => setSelectedRegisteredAgent(null)}
-                  className="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded text-[9px] font-black uppercase tracking-widest transition"
+                  className="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-[var(--text-primary)] rounded text-[9px] font-semibold uppercase tracking-widest transition"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => handleUpdateStatus('ACTIVE')}
                   disabled={updatingRegistered}
-                  className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[9px] font-black uppercase tracking-widest transition active:scale-95 disabled:opacity-50"
+                  className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[9px] font-semibold uppercase tracking-widest transition active:scale-95 disabled:opacity-50"
                 >
                   Confirm / Active
                 </button>
                 <button
                   onClick={() => handleUpdateStatus('DEPRECATED')}
                   disabled={updatingRegistered}
-                  className="px-3 py-2 bg-red-600 hover:bg-red-500 text-white rounded text-[9px] font-black uppercase tracking-widest transition active:scale-95 disabled:opacity-50"
+                  className="px-3 py-2 bg-red-600 hover:bg-red-500 text-white rounded text-[9px] font-semibold uppercase tracking-widest transition active:scale-95 disabled:opacity-50"
                 >
                   Reject / Deprecate
                 </button>
                 <button
                   onClick={() => handleUpdateStatus('UNDER_REVIEW')}
                   disabled={updatingRegistered}
-                  className="px-3 py-2 bg-yellow-600 hover:bg-yellow-500 text-white rounded text-[9px] font-black uppercase tracking-widest transition active:scale-95 disabled:opacity-50"
+                  className="px-3 py-2 bg-yellow-600 hover:bg-yellow-500 text-white rounded text-[9px] font-semibold uppercase tracking-widest transition active:scale-95 disabled:opacity-50"
                 >
                   Under Review
                 </button>

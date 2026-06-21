@@ -149,7 +149,7 @@ export default function Inventory() {
     <div className="flex flex-col gap-6 animate-fade-in p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black text-[var(--text-primary)] tracking-tight uppercase">AI System Inventory</h1>
+          <h1 className="text-[22px] font-semibold text-[var(--text-primary)] tracking-tight">AI System Inventory</h1>
           <p className="text-[var(--text-xs)] font-bold text-[var(--text-secondary)] uppercase tracking-[0.2em] mt-1">
             Comprehensive Registry of Authorized AI Assets
           </p>
@@ -164,7 +164,7 @@ export default function Inventory() {
           </button>
           <button 
             onClick={() => setShowRegisterModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[var(--mid-indigo)] rounded-lg text-[10px] font-black text-white uppercase tracking-widest hover:bg-[var(--royal-indigo)] transition-all shadow-lg shadow-indigo-500/20 active:scale-95"
+            className="flex items-center gap-2 px-4 py-2.5 bg-[var(--mid-indigo)] rounded-lg text-[10px] font-semibold text-white uppercase tracking-widest hover:bg-[var(--royal-indigo)] transition-all shadow-lg shadow-indigo-500/20 active:scale-95"
           >
             <Plus className="h-4 w-4" />
             Register New System
@@ -214,17 +214,17 @@ export default function Inventory() {
             />
           </div>
           <div className="h-8 w-px bg-[var(--border-default)] mx-2" />
-          <button className="flex items-center gap-2 px-3 py-2 text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest hover:text-white transition-colors">
+          <button className="flex items-center gap-2 px-3 py-2 text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest hover:text-[var(--text-primary)] transition-colors">
             Department <ChevronDown className="h-3 w-3" />
           </button>
-          <button className="flex items-center gap-2 px-3 py-2 text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest hover:text-white transition-colors">
+          <button className="flex items-center gap-2 px-3 py-2 text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest hover:text-[var(--text-primary)] transition-colors">
             Provider <ChevronDown className="h-3 w-3" />
           </button>
-          <button className="flex items-center gap-2 px-3 py-2 text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest hover:text-white transition-colors">
+          <button className="flex items-center gap-2 px-3 py-2 text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest hover:text-[var(--text-primary)] transition-colors">
             Status <ChevronDown className="h-3 w-3" />
           </button>
         </div>
-        <button className="p-2 text-[var(--text-muted)] hover:text-white transition-colors">
+        <button className="p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
           <Filter className="h-4 w-4" />
         </button>
       </div>
@@ -250,7 +250,7 @@ export default function Inventory() {
                   <td colSpan={7} className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center justify-center gap-3">
                       <RefreshCw className="h-6 w-6 animate-spin text-[var(--royal-indigo)]" />
-                      <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Loading Inventory...</p>
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">Loading Inventory...</p>
                     </div>
                   </td>
                 </tr>
@@ -278,7 +278,7 @@ export default function Inventory() {
                       </td>
                       <td className="px-6 py-4">
                         <span className={cn(
-                          "inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tight",
+                          "inline-flex items-center px-2 py-0.5 rounded text-[9px] font-semibold uppercase tracking-tight",
                           item.status === 'Active' || item.status === 'active' ? "bg-emerald-500/10 text-emerald-400" :
                           item.status === 'Blocked' || item.status === 'blocked' ? "bg-rose-500/10 text-rose-500" :
                           "bg-amber-500/10 text-amber-400"
@@ -298,11 +298,11 @@ export default function Inventory() {
                               style={{ width: `${riskScorePercent}%` }}
                             />
                           </div>
-                          <span className="text-[10px] font-black text-[var(--text-primary)] tabular-nums">{riskScorePercent}%</span>
+                          <span className="text-[10px] font-semibold text-[var(--text-primary)] tabular-nums">{riskScorePercent}%</span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="px-2 py-0.5 rounded bg-white/5 text-[var(--text-secondary)] text-[10px] font-bold uppercase">
+                        <span className="px-2 py-0.5 rounded bg-[var(--bg-page)] text-[var(--text-secondary)] text-[10px] font-bold uppercase">
                           {departmentLabel}
                         </span>
                       </td>
@@ -313,13 +313,13 @@ export default function Inventory() {
                         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button 
                             onClick={() => addToast({ message: `Opening ${item.name} external link...`, type: 'info' })}
-                            className="p-1.5 rounded text-[var(--text-muted)] hover:text-[var(--royal-indigo)] hover:bg-white/5 transition-all"
+                            className="p-1.5 rounded text-[var(--text-muted)] hover:text-[var(--royal-indigo)] hover:bg-[var(--bg-page)] transition-all"
                           >
                             <ExternalLink className="h-3.5 w-3.5" />
                           </button>
                           <button 
                             onClick={() => addToast({ message: `Viewing actions for ${item.name}...`, type: 'info' })}
-                            className="p-1.5 rounded text-[var(--text-muted)] hover:text-[var(--royal-indigo)] hover:bg-white/5 transition-all"
+                            className="p-1.5 rounded text-[var(--text-muted)] hover:text-[var(--royal-indigo)] hover:bg-[var(--bg-page)] transition-all"
                           >
                             <MoreVertical className="h-3.5 w-3.5" />
                           </button>
@@ -333,7 +333,7 @@ export default function Inventory() {
                   <td colSpan={7} className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center gap-3 opacity-40">
                       <Cpu className="h-8 w-8 text-[var(--text-muted)]" />
-                      <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">No AI systems registered yet</p>
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">No AI systems registered yet</p>
                     </div>
                   </td>
                 </tr>
@@ -348,12 +348,12 @@ export default function Inventory() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="w-full max-w-md bg-zinc-950 border border-zinc-900 rounded-2xl shadow-2xl overflow-hidden animate-scale-in text-left">
             <div className="p-4 border-b border-zinc-900 bg-[#0c0c14]/40 flex justify-between items-center">
-              <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-indigo-400">
                 Register New AI System
               </span>
               <button
                 onClick={() => setShowRegisterModal(false)}
-                className="text-zinc-500 hover:text-white font-mono text-xs p-1"
+                className="text-zinc-500 hover:text-[var(--text-primary)] font-mono text-xs p-1"
               >
                 ✕
               </button>
@@ -361,7 +361,7 @@ export default function Inventory() {
 
             <form onSubmit={handleRegister} className="p-5 space-y-4">
               <div className="flex flex-col gap-1">
-                <label htmlFor="reg-name" className="text-[9px] font-black uppercase tracking-widest text-zinc-500">System Name</label>
+                <label htmlFor="reg-name" className="text-[9px] font-semibold uppercase tracking-widest text-zinc-500">System Name</label>
                 <input
                   id="reg-name"
                   type="text"
@@ -374,7 +374,7 @@ export default function Inventory() {
               </div>
 
               <div className="flex flex-col gap-1">
-                <label htmlFor="reg-model" className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Model Architecture</label>
+                <label htmlFor="reg-model" className="text-[9px] font-semibold uppercase tracking-widest text-zinc-500">Model Architecture</label>
                 <input
                   id="reg-model"
                   type="text"
@@ -387,7 +387,7 @@ export default function Inventory() {
               </div>
 
               <div className="flex flex-col gap-1">
-                <label htmlFor="reg-provider" className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Provider</label>
+                <label htmlFor="reg-provider" className="text-[9px] font-semibold uppercase tracking-widest text-zinc-500">Provider</label>
                 <input
                   id="reg-provider"
                   type="text"
@@ -400,7 +400,7 @@ export default function Inventory() {
               </div>
 
               <div className="flex flex-col gap-1">
-                <label htmlFor="reg-dept" className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Department</label>
+                <label htmlFor="reg-dept" className="text-[9px] font-semibold uppercase tracking-widest text-zinc-500">Department</label>
                 <input
                   id="reg-dept"
                   type="text"
@@ -416,14 +416,14 @@ export default function Inventory() {
                 <button
                   type="button"
                   onClick={() => setShowRegisterModal(false)}
-                  className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded text-[9px] font-black uppercase tracking-widest transition"
+                  className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-[var(--text-primary)] rounded text-[9px] font-semibold uppercase tracking-widest transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={registering}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded text-[9px] font-black uppercase tracking-widest transition shadow-lg shadow-indigo-600/10"
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded text-[9px] font-semibold uppercase tracking-widest transition shadow-lg shadow-indigo-600/10"
                 >
                   {registering ? 'Registering...' : 'Register Asset'}
                 </button>

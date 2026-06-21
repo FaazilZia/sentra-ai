@@ -1,3 +1,4 @@
+import { NodePulseLoader } from '@/components/ui/NodePulseLoader';
 import { useState, useEffect } from 'react';
 import { apiRequest, apiBaseUrl } from '@/lib/api';
 import { useStore } from '@/store/useStore';
@@ -31,6 +32,7 @@ export default function FileManager() {
   const addToast = useStore((state) => state.addToast);
   const [activeFolder, setActiveFolder] = useState<string>('EU_AI_ACT');
   const [files, setFiles] = useState<EvidenceFile[]>([]);
+  const [folderStats, setFolderStats] = useState<Record<string, { count: number; lastUploaded: string | null }>>({});
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -42,12 +44,36 @@ export default function FileManager() {
     loadFiles();
   }, [activeFolder]);
 
+  const loadFolderStats = async () => {
+    try {
+      const stats: Record<string, { count: number; lastUploaded: string | null }> = {};
+      await Promise.all(
+        FRAMEWORK_FOLDERS.map(async (folder) => {
+          try {
+            const data = await apiRequest<EvidenceFile[]>(`/file-ingestion/${folder.key}/general`);
+            const count = data?.length || 0;
+            const lastUploaded = data && data.length > 0
+              ? new Date(Math.max(...data.map(d => new Date(d.created_at).getTime()))).toISOString()
+              : null;
+            stats[folder.key] = { count, lastUploaded };
+          } catch (e) {
+            stats[folder.key] = { count: 0, lastUploaded: null };
+          }
+        })
+      );
+      setFolderStats(stats);
+    } catch (err) {
+      print('Failed to load folder stats:', err);
+    }
+  };
+
   const loadFiles = async () => {
     setLoading(true);
     try {
       // Endpoint is GET /file-ingestion/:controlType/:controlId
       const data = await apiRequest<EvidenceFile[]>(`/file-ingestion/${activeFolder}/general`);
       setFiles(data || []);
+      loadFolderStats();
     } catch (err) {
       console.error('Failed to load files:', err);
       addToast({ message: 'Failed to load evidence files', type: 'error' });
@@ -174,7 +200,7 @@ export default function FileManager() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-6 animate-fade-in text-gray-200 h-screen overflow-hidden">
+    <div className="flex flex-col gap-6 p-6 animate-fade-in text-[var(--text-secondary)] h-screen overflow-hidden">
       <PageHeader 
         title="Evidence File Manager"
         description="Ingest audit documents, compliance logs, and policy execution evidence for model validation audits."
@@ -183,13 +209,14 @@ export default function FileManager() {
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0 overflow-hidden pb-6">
         
         {/* Left Panel: Folders Tree */}
-        <div className="lg:col-span-4 flex flex-col gap-4 bg-[#111827]/40 border border-gray-800/80 rounded-2xl p-4 overflow-y-auto">
-          <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest block mb-2 px-1">
+        <div className="lg:col-span-4 flex flex-col gap-4 bg-[var(--bg-page)] border border-[var(--border-default)]/80 rounded-2xl p-4 overflow-y-auto">
+          <span className="text-[9px] font-semibold text-[var(--royal-indigo)] uppercase tracking-widest block mb-2 px-1">
             Framework Directories
           </span>
           <div className="space-y-2">
             {FRAMEWORK_FOLDERS.map((folder) => {
               const isActive = activeFolder === folder.key;
+              const stats = folderStats[folder.key] || { count: 0, lastUploaded: null };
               return (
                 <button
                   key={folder.key}
@@ -199,16 +226,26 @@ export default function FileManager() {
                   }}
                   className={`w-full text-left p-4 rounded-xl border transition-all flex items-start gap-3.5 group ${
                     isActive 
-                      ? 'bg-indigo-950/20 border-indigo-500/30 text-white' 
-                      : 'bg-black/10 border-gray-800/60 hover:border-gray-700/80 text-gray-400'
+                      ? 'bg-indigo-50 border-indigo-200 text-[var(--text-primary)] shadow-sm' 
+                      : 'bg-white border-[var(--border-default)] hover:border-slate-350 text-[var(--text-secondary)]'
                   }`}
                 >
                   <Folder className={`h-5 w-5 shrink-0 mt-0.5 transition-transform group-hover:scale-110 ${
-                    isActive ? 'text-indigo-400' : 'text-gray-500'
+                    isActive ? 'text-[var(--royal-indigo)]' : 'text-[var(--text-muted)]'
                   }`} />
-                  <div>
-                    <h4 className="font-bold text-xs uppercase tracking-wider">{folder.label}</h4>
-                    <p className="text-[10px] text-gray-500 leading-normal mt-1">{folder.desc}</p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <h4 className="font-bold text-xs uppercase tracking-wider truncate">{folder.label}</h4>
+                      <span className="badge-pill bg-indigo-50 text-[var(--royal-indigo)] border border-indigo-150 font-bold shrink-0 text-[10px] px-2 py-0.5">
+                        {stats.count} files
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-[var(--text-muted)] leading-normal mt-1">{folder.desc}</p>
+                    {stats.lastUploaded && (
+                      <span className="text-[8px] text-[var(--text-muted)] font-mono block mt-2">
+                        Last uploaded: {new Date(stats.lastUploaded).toLocaleDateString()}
+                      </span>
+                    )}
                   </div>
                 </button>
               );
@@ -217,7 +254,7 @@ export default function FileManager() {
         </div>
 
         {/* Right Panel: File List & Upload Area */}
-        <div className="lg:col-span-8 flex flex-col gap-4 bg-[#111827]/30 border border-gray-800/80 rounded-2xl p-6 min-h-0 overflow-hidden">
+        <div className="lg:col-span-8 flex flex-col gap-4 bg-[var(--bg-page)]/30 border border-[var(--border-default)]/80 rounded-2xl p-6 min-h-0 overflow-hidden">
           
           {/* Drag and drop Uploader */}
           <div
@@ -227,8 +264,8 @@ export default function FileManager() {
             onDrop={handleDrop}
             className={`border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center gap-2.5 transition-all relative ${
               dragActive 
-                ? 'border-indigo-500 bg-indigo-500/5' 
-                : 'border-gray-800 bg-black/10 hover:border-gray-700'
+                ? 'border-indigo-500 bg-indigo-50' 
+                : 'border-[var(--border-default)] bg-slate-50 hover:border-[var(--border-default)]'
             }`}
           >
             <input 
@@ -238,22 +275,22 @@ export default function FileManager() {
               onChange={handleFileChange}
               disabled={uploading}
             />
-            <UploadCloud className={`h-8 w-8 ${uploading ? 'animate-bounce text-indigo-400' : 'text-gray-500'}`} />
+            <UploadCloud className={`h-8 w-8 ${uploading ? 'animate-bounce text-[var(--royal-indigo)]' : 'text-[var(--text-muted)]'}`} />
             
             <div className="text-center">
-              <p className="text-xs font-bold text-white">
+              <p className="text-xs font-bold text-[var(--text-primary)]">
                 {uploading ? 'Uploading file...' : 'Drag and drop evidence files here, or'}
               </p>
               {!uploading && (
                 <label 
                   htmlFor="file-upload-input"
-                  className="text-xs text-indigo-400 font-bold hover:underline cursor-pointer block mt-1"
+                  className="text-xs text-[var(--royal-indigo)] font-bold hover:underline cursor-pointer block mt-1"
                 >
                   browse local files
                 </label>
               )}
             </div>
-            <p className="text-[9px] text-gray-500 uppercase font-semibold">
+            <p className="text-[9px] text-[var(--text-muted)] uppercase font-semibold">
               PDF, PNG, JPG, CSV, DOCX, XLSX, TXT, JSON (MAX 10MB)
             </p>
           </div>
@@ -262,13 +299,13 @@ export default function FileManager() {
 
           {/* Files Queue List */}
           <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-3">
+            <span className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-3">
               Evidence Files In Directory
             </span>
 
             {loading ? (
               <div className="flex-1 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-indigo-500" />
+                <NodePulseLoader label="Indexing stored evidence files..." />
               </div>
             ) : files.length === 0 ? (
               <div className="flex-1 flex items-center justify-center">
@@ -283,46 +320,46 @@ export default function FileManager() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="border-b border-gray-800 text-[9px] font-black uppercase tracking-widest text-gray-500 pb-2">
+                      <tr className="border-b border-[var(--border-default)] text-[9px] font-semibold uppercase tracking-widest text-[var(--text-muted)] pb-2">
                         <th className="pb-3 font-bold">File Details</th>
                         <th className="pb-3 font-bold">Size</th>
                         <th className="pb-3 font-bold">Uploaded At</th>
                         <th className="pb-3 font-bold text-right">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-800/40">
+                    <tbody className="divide-y divide-[var(--border-default)]">
                       {files.map((file) => (
                         <tr 
                           key={file.id} 
-                          className={`hover:bg-white/[0.01] transition-colors cursor-pointer group ${
-                            selectedFile?.id === file.id ? 'bg-white/[0.02]' : ''
+                          className={`hover:hover:bg-[var(--bg-hover)] transition-colors cursor-pointer group ${
+                            selectedFile?.id === file.id ? 'bg-[var(--bg-hover)]' : ''
                           }`}
                           onClick={() => setSelectedFile(file)}
                         >
                           <td className="py-3.5 pr-4 flex items-center gap-3">
-                            <div className="rounded-lg bg-indigo-500/5 p-2 border border-indigo-500/10 group-hover:bg-indigo-500/10 transition-colors">
-                              <FileText className="h-4 w-4 text-indigo-400" />
+                            <div className="rounded-lg bg-indigo-50 p-2 border border-indigo-100 group-hover:bg-indigo-100 transition-colors">
+                              <FileText className="h-4 w-4 text-[var(--royal-indigo)]" />
                             </div>
                             <div className="flex flex-col gap-0.5 min-w-0">
-                              <span className="font-bold text-white text-xs truncate group-hover:text-indigo-300 transition-colors">
+                              <span className="font-bold text-[var(--text-primary)] text-xs truncate group-hover:text-[var(--royal-indigo)] transition-colors">
                                 {file.original_name}
                               </span>
-                              <span className="text-[9px] text-gray-500 uppercase font-semibold font-mono">
+                              <span className="text-[9px] text-[var(--text-muted)] uppercase font-semibold font-mono">
                                 {file.mime_type}
                               </span>
                             </div>
                           </td>
-                          <td className="py-3.5 text-gray-400 font-medium">
+                          <td className="py-3.5 text-[var(--text-secondary)] font-medium">
                             {formatBytes(file.size)}
                           </td>
-                          <td className="py-3.5 text-gray-400 font-medium">
+                          <td className="py-3.5 text-[var(--text-secondary)] font-medium">
                             {new Date(file.created_at).toLocaleDateString()}
                           </td>
                           <td className="py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center justify-end gap-1.5">
                               <button
                                 onClick={() => setSelectedFile(file)}
-                                className="p-1.5 hover:text-indigo-400 text-gray-500 transition-colors"
+                                className="p-1.5 hover:text-[var(--royal-indigo)] text-[var(--text-muted)] transition-colors"
                                 title="Preview details"
                               >
                                 <Eye className="h-4 w-4" />
@@ -331,14 +368,14 @@ export default function FileManager() {
                                 href={getFileUrl(file)}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="p-1.5 hover:text-indigo-400 text-gray-500 transition-colors"
+                                className="p-1.5 hover:text-[var(--royal-indigo)] text-[var(--text-muted)] transition-colors"
                                 title="Open in new window"
                               >
                                 <ExternalLink className="h-4 w-4" />
                               </a>
                               <button
                                 onClick={() => handleDeleteFile(file.id)}
-                                className="p-1.5 hover:text-red-500 text-gray-500 transition-colors"
+                                className="p-1.5 hover:text-red-500 text-[var(--text-muted)] transition-colors"
                                 title="Delete evidence file"
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -357,16 +394,16 @@ export default function FileManager() {
 
         {/* Selected File Details & Preview Side Drawer */}
         {selectedFile && (
-          <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-[#111827] border-l border-gray-800 shadow-2xl flex flex-col animate-slide-in text-xs">
+          <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-[var(--bg-page)] border-l border-[var(--border-default)] shadow-2xl flex flex-col animate-slide-in text-xs">
             {/* Drawer Header */}
-            <div className="flex items-center justify-between border-b border-gray-800 p-5 bg-[#0f172a]/60">
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] p-5 bg-white">
               <div className="flex items-center gap-2">
-                <Info className="h-4 w-4 text-indigo-400" />
-                <h3 className="font-bold text-white text-sm">Evidence Preview</h3>
+                <Info className="h-4 w-4 text-[var(--royal-indigo)]" />
+                <h3 className="font-bold text-[var(--text-primary)] text-sm">Evidence Preview</h3>
               </div>
               <button
                 onClick={() => setSelectedFile(null)}
-                className="rounded-lg p-1 hover:bg-gray-800 text-gray-500 hover:text-white transition-all"
+                className="rounded-lg p-1 hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -375,40 +412,40 @@ export default function FileManager() {
             {/* Drawer Content */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6 flex flex-col">
               {/* Metadata Panel */}
-              <div className="bg-black/20 border border-gray-800 p-4 rounded-xl space-y-3.5">
+              <div className="bg-slate-50 border border-[var(--border-default)] p-4 rounded-xl space-y-3.5">
                 <div>
-                  <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-0.5">File Name</span>
-                  <p className="font-bold text-white leading-normal break-all">{selectedFile.original_name}</p>
+                  <span className="text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-widest block mb-0.5">File Name</span>
+                  <p className="font-bold text-[var(--text-primary)] leading-normal break-all">{selectedFile.original_name}</p>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-0.5">File Size</span>
-                    <p className="font-bold text-gray-300">{formatBytes(selectedFile.size)}</p>
+                    <span className="text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-widest block mb-0.5">File Size</span>
+                    <p className="font-bold text-[var(--text-secondary)]">{formatBytes(selectedFile.size)}</p>
                   </div>
                   <div>
-                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-0.5">Mime Type</span>
-                    <p className="font-bold text-gray-300 font-mono break-all">{selectedFile.mime_type}</p>
+                    <span className="text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-widest block mb-0.5">Mime Type</span>
+                    <p className="font-bold text-[var(--text-secondary)] font-mono break-all">{selectedFile.mime_type}</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-0.5">Framework</span>
-                    <p className="font-bold text-indigo-400 font-mono">{selectedFile.control_type}</p>
+                    <span className="text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-widest block mb-0.5">Framework</span>
+                    <p className="font-bold text-[var(--royal-indigo)] font-mono">{selectedFile.control_type}</p>
                   </div>
                   <div>
-                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-0.5">Uploaded</span>
-                    <p className="font-bold text-gray-300">{new Date(selectedFile.created_at).toLocaleString()}</p>
+                    <span className="text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-widest block mb-0.5">Uploaded</span>
+                    <p className="font-bold text-[var(--text-secondary)]">{new Date(selectedFile.created_at).toLocaleString()}</p>
                   </div>
                 </div>
               </div>
 
               {/* Rendering Panel */}
               <div className="flex-1 flex flex-col gap-2 min-h-[300px]">
-                <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest block">Document Rendering</span>
+                <span className="text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-widest block">Document Rendering</span>
                 {isPreviewable(selectedFile.mime_type) ? (
-                  <div className="flex-1 bg-black/40 border border-gray-800 rounded-xl overflow-hidden relative">
+                  <div className="flex-1 bg-slate-100 border border-[var(--border-default)] rounded-xl overflow-hidden relative">
                     <iframe 
                       src={getFileUrl(selectedFile)}
                       title="evidence-preview"
@@ -416,17 +453,17 @@ export default function FileManager() {
                     />
                   </div>
                 ) : (
-                  <div className="flex-1 bg-black/20 border border-gray-800 rounded-xl flex flex-col items-center justify-center p-6 text-center gap-2">
+                  <div className="flex-1 bg-slate-50 border border-[var(--border-default)] rounded-xl flex flex-col items-center justify-center p-6 text-center gap-2">
                     <ShieldAlert className="h-8 w-8 text-amber-500/80" />
-                    <p className="font-bold text-white">No Inline Preview Available</p>
-                    <p className="text-[10px] text-gray-500 leading-normal max-w-[200px]">
+                    <p className="font-bold text-[var(--text-primary)]">No Inline Preview Available</p>
+                    <p className="text-[10px] text-[var(--text-muted)] leading-normal max-w-[200px]">
                       This file format cannot be rendered inside the dashboard. Click below to download the file directly.
                     </p>
                     <a
                       href={getFileUrl(selectedFile)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold transition-all shadow-md shadow-indigo-600/10 hover:scale-105 active:scale-95"
+                      className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-[var(--text-primary)] rounded-lg font-bold transition-all shadow-md shadow-indigo-600/10 hover:scale-105 active:scale-95"
                     >
                       <ExternalLink className="h-3.5 w-3.5" /> Download File
                     </a>

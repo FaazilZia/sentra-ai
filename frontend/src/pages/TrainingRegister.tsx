@@ -147,7 +147,7 @@ export default function TrainingRegister() {
             <div className="flex items-center justify-between border-b border-slate-100 p-4 bg-slate-50">
               <div className="flex items-center gap-2 text-[var(--royal-indigo)]">
                 <UserCheck className="h-5 w-5" />
-                <h3 className="text-xs font-black uppercase tracking-widest text-slate-800">Record Course Completion</h3>
+                <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-800">Record Course Completion</h3>
               </div>
               <button onClick={() => setIsLogModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
                 <X className="h-5 w-5" />
@@ -156,7 +156,7 @@ export default function TrainingRegister() {
 
             <form onSubmit={handleRecordCompletion} className="p-6 space-y-4">
               <div>
-                <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Select Training Course</label>
+                <label className="block text-[9px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5">Select Training Course</label>
                 <select
                   value={selectedCourseId}
                   onChange={(e) => setSelectedCourseId(e.target.value)}
@@ -169,7 +169,7 @@ export default function TrainingRegister() {
               </div>
 
               <div>
-                <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5 font-bold">Log for User</label>
+                <label className="block text-[9px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5 font-bold">Log for User</label>
                 <select
                   value={logUserId}
                   onChange={(e) => setLogUserId(e.target.value)}
@@ -184,7 +184,7 @@ export default function TrainingRegister() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5 font-bold">Exam Score (%)</label>
+                  <label className="block text-[9px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5 font-bold">Exam Score (%)</label>
                   <input 
                     type="number" 
                     value={logScore}
@@ -194,7 +194,7 @@ export default function TrainingRegister() {
                 </div>
                 
                 <div>
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5 font-bold">Status outcome</label>
+                  <label className="block text-[9px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5 font-bold">Status outcome</label>
                   <select
                     value={logPassed ? 'true' : 'false'}
                     onChange={(e) => setLogPassed(e.target.value === 'true')}
@@ -207,7 +207,7 @@ export default function TrainingRegister() {
               </div>
 
               <div>
-                <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Auditor Notes</label>
+                <label className="block text-[9px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5">Auditor Notes</label>
                 <textarea 
                   value={logNotes}
                   onChange={(e) => setLogNotes(e.target.value)}
@@ -243,7 +243,7 @@ export default function TrainingRegister() {
             <div className="flex items-center justify-between border-b border-slate-100 p-4 bg-slate-50">
               <div className="flex items-center gap-2 text-indigo-600">
                 <BookOpen className="h-5 w-5" />
-                <h3 className="text-xs font-black uppercase tracking-widest text-slate-800">Add Training Course</h3>
+                <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-800">Add Training Course</h3>
               </div>
               <button onClick={() => setIsCreateModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
                 <X className="h-5 w-5" />
@@ -252,7 +252,7 @@ export default function TrainingRegister() {
 
             <form onSubmit={handleCreateCourse} className="p-6 space-y-4">
               <div>
-                <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Course Title</label>
+                <label className="block text-[9px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5">Course Title</label>
                 <input 
                   type="text" 
                   required
@@ -264,7 +264,7 @@ export default function TrainingRegister() {
               </div>
 
               <div>
-                <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Description</label>
+                <label className="block text-[9px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5">Description</label>
                 <textarea 
                   value={newDesc}
                   onChange={(e) => setNewDesc(e.target.value)}
@@ -275,7 +275,7 @@ export default function TrainingRegister() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5 font-bold">Duration (Minutes)</label>
+                  <label className="block text-[9px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5 font-bold">Duration (Minutes)</label>
                   <input 
                     type="number" 
                     value={newDuration}
@@ -285,7 +285,7 @@ export default function TrainingRegister() {
                 </div>
                 
                 <div>
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5 font-bold">Requirement Tier</label>
+                  <label className="block text-[9px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5 font-bold">Requirement Tier</label>
                   <select
                     value={newMandatory ? 'true' : 'false'}
                     onChange={(e) => setNewMandatory(e.target.value === 'true')}
@@ -298,7 +298,7 @@ export default function TrainingRegister() {
               </div>
 
               <div>
-                <label className="block text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Framework Alignment (Comma Separated)</label>
+                <label className="block text-[9px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5">Framework Alignment (Comma Separated)</label>
                 <input 
                   type="text" 
                   value={newTagsString}
@@ -335,7 +335,7 @@ export default function TrainingRegister() {
             <Award className="h-6 w-6" />
           </div>
           <div>
-            <h2 className="text-xs font-black uppercase tracking-widest text-[var(--text-primary)]">Mandatory Training Register</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--text-primary)]">Mandatory Training Register</h2>
             <p className="text-[10px] text-[var(--text-secondary)] font-medium">Verify employee competence checklists to automatically fulfill ISO 42001 competence controls</p>
           </div>
         </div>
@@ -360,7 +360,7 @@ export default function TrainingRegister() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <div className="card-base p-4 flex items-center justify-between bg-white">
           <div>
-            <div className="text-[9px] font-black uppercase tracking-wider text-slate-400">Total Courses</div>
+            <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Total Courses</div>
             <div className="text-xl font-bold mt-1 text-slate-800">{status?.totalCourses || courses.length}</div>
           </div>
           <div className="bg-slate-50 text-slate-500 p-2.5 rounded-xl border border-slate-100">
@@ -370,7 +370,7 @@ export default function TrainingRegister() {
 
         <div className="card-base p-4 flex items-center justify-between bg-white">
           <div>
-            <div className="text-[9px] font-black uppercase tracking-wider text-slate-400">Mandatory Core</div>
+            <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Mandatory Core</div>
             <div className="text-xl font-bold mt-1 text-indigo-600">{status?.mandatoryCourses || 0}</div>
           </div>
           <div className="bg-indigo-50 text-[var(--royal-indigo)] p-2.5 rounded-xl border border-indigo-100">
@@ -380,7 +380,7 @@ export default function TrainingRegister() {
 
         <div className="card-base p-4 flex items-center justify-between bg-white">
           <div>
-            <div className="text-[9px] font-black uppercase tracking-wider text-slate-400">Outstanding Gaps</div>
+            <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Outstanding Gaps</div>
             <div className="text-xl font-bold mt-1 text-rose-600">{status?.pendingGaps ?? 0}</div>
           </div>
           <div className="bg-rose-50 text-rose-500 p-2.5 rounded-xl border border-rose-100">
@@ -390,7 +390,7 @@ export default function TrainingRegister() {
 
         <div className="card-base p-4 flex items-center justify-between bg-white">
           <div>
-            <div className="text-[9px] font-black uppercase tracking-wider text-slate-400">Global Completion Rate</div>
+            <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Global Completion Rate</div>
             <div className="text-xl font-bold mt-1 text-teal-600">
               {status ? `${status.completionRate}%` : '0%'}
             </div>
@@ -408,7 +408,7 @@ export default function TrainingRegister() {
           <div className="flex gap-2">
             <button
               onClick={() => setActiveTab('courses')}
-              className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all rounded ${
+              className={`px-4 py-2 text-[10px] font-semibold uppercase tracking-widest transition-all rounded ${
                 activeTab === 'courses' ? 'bg-white text-[var(--royal-indigo)] shadow-sm' : 'text-slate-500 hover:text-slate-700'
               }`}
             >
@@ -416,7 +416,7 @@ export default function TrainingRegister() {
             </button>
             <button
               onClick={() => setActiveTab('gaps')}
-              className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all rounded flex items-center gap-1.5 ${
+              className={`px-4 py-2 text-[10px] font-semibold uppercase tracking-widest transition-all rounded flex items-center gap-1.5 ${
                 activeTab === 'gaps' ? 'bg-white text-[var(--royal-indigo)] shadow-sm' : 'text-slate-500 hover:text-slate-700'
               }`}
             >
@@ -427,7 +427,7 @@ export default function TrainingRegister() {
             </button>
             <button
               onClick={() => setActiveTab('matrix')}
-              className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all rounded ${
+              className={`px-4 py-2 text-[10px] font-semibold uppercase tracking-widest transition-all rounded ${
                 activeTab === 'matrix' ? 'bg-white text-[var(--royal-indigo)] shadow-sm' : 'text-slate-500 hover:text-slate-700'
               }`}
             >
@@ -453,11 +453,11 @@ export default function TrainingRegister() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-100">
-                    <th className="px-6 py-3.5 text-[9px] font-black uppercase tracking-wider text-slate-400">Course Syllabus</th>
-                    <th className="px-6 py-3.5 text-[9px] font-black uppercase tracking-wider text-slate-400">Framework Alignment</th>
-                    <th className="px-6 py-3.5 text-[9px] font-black uppercase tracking-wider text-slate-400">Duration</th>
-                    <th className="px-6 py-3.5 text-[9px] font-black uppercase tracking-wider text-slate-400">Requirement Tier</th>
-                    <th className="px-6 py-3.5 text-[9px] font-black uppercase tracking-wider text-slate-400">Log completions</th>
+                    <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400">Course Syllabus</th>
+                    <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400">Framework Alignment</th>
+                    <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400">Duration</th>
+                    <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400">Requirement Tier</th>
+                    <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400">Log completions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -494,7 +494,7 @@ export default function TrainingRegister() {
                             setSelectedCourseId(c.id);
                             setIsLogModalOpen(true);
                           }}
-                          className="px-2.5 py-1 border border-[var(--royal-indigo)] rounded text-[9px] font-black uppercase tracking-widest text-[var(--royal-indigo)] hover:bg-[var(--ghost-violet)]/20 active:scale-95 transition-all"
+                          className="px-2.5 py-1 border border-[var(--royal-indigo)] rounded text-[9px] font-semibold uppercase tracking-widest text-[var(--royal-indigo)] hover:bg-[var(--ghost-violet)]/20 active:scale-95 transition-all"
                         >
                           Record Signoff
                         </button>
@@ -509,10 +509,10 @@ export default function TrainingRegister() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-100">
-                    <th className="px-6 py-3.5 text-[9px] font-black uppercase tracking-wider text-slate-400">Employee Details</th>
-                    <th className="px-6 py-3.5 text-[9px] font-black uppercase tracking-wider text-slate-400">Outstanding Syllabus Gap</th>
-                    <th className="px-6 py-3.5 text-[9px] font-black uppercase tracking-wider text-slate-400">Compliance Deficit</th>
-                    <th className="px-6 py-3.5 text-[9px] font-black uppercase tracking-wider text-slate-400">Action Signoff</th>
+                    <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400">Employee Details</th>
+                    <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400">Outstanding Syllabus Gap</th>
+                    <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400">Compliance Deficit</th>
+                    <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400">Action Signoff</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -544,7 +544,7 @@ export default function TrainingRegister() {
                               setLogUserId(gap.userId);
                               setIsLogModalOpen(true);
                             }}
-                            className="px-2.5 py-1 bg-rose-50 border border-rose-200 rounded text-[9px] font-black uppercase tracking-widest text-rose-600 hover:bg-rose-100 active:scale-95 transition-all"
+                            className="px-2.5 py-1 bg-rose-50 border border-rose-200 rounded text-[9px] font-semibold uppercase tracking-widest text-rose-600 hover:bg-rose-100 active:scale-95 transition-all"
                           >
                             Signoff Course
                           </button>
@@ -560,9 +560,9 @@ export default function TrainingRegister() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-100">
-                    <th className="px-6 py-3.5 text-[9px] font-black uppercase tracking-wider text-slate-400">Employee List</th>
+                    <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400">Employee List</th>
                     {courses.map(c => (
-                      <th key={c.id} className="px-6 py-3.5 text-[9px] font-black uppercase tracking-wider text-slate-400 text-center truncate max-w-[120px]">
+                      <th key={c.id} className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400 text-center truncate max-w-[120px]">
                         {c.title}
                       </th>
                     ))}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   AreaChart, 
   Area, 
@@ -46,12 +46,30 @@ const severityData = [
 export default function RiskCenter() {
   const addToast = useStore((state) => state.addToast);
   const { riskEvents } = useSocketStore();
-  
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+
   // Guardrails metrics & portfolio states
   const [metrics, setMetrics] = useState<GuardrailMetrics | null>(null);
   const [portfolio, setPortfolio] = useState<RiskPortfolioResponse | null>(null);
   const [trendData, setTrendData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Strip-mine focusable elements inside chart area to ensure WCAG compliance under aria-hidden
+  useEffect(() => {
+    const handleAriaFocus = () => {
+      if (chartContainerRef.current) {
+        const focusables = chartContainerRef.current.querySelectorAll('[tabindex], svg, path, g, rect, circle');
+        focusables.forEach((el) => {
+          el.setAttribute('tabindex', '-1');
+          el.setAttribute('focusable', 'false');
+        });
+      }
+    };
+    
+    handleAriaFocus();
+    const timer = setTimeout(handleAriaFocus, 1000);
+    return () => clearTimeout(timer);
+  }, [loading]);
   
   // Dialog / Interaction states
   const [selectedIncident, setSelectedIncident] = useState<any | null>(null);
@@ -126,7 +144,7 @@ export default function RiskCenter() {
     <div className="flex flex-col gap-6 animate-fade-in p-6 text-left">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black text-[var(--text-primary)] tracking-tight uppercase">Risk Center</h1>
+          <h1 className="text-[22px] font-semibold text-[var(--text-primary)] tracking-tight">Risk Center</h1>
           <p className="text-[var(--text-xs)] font-bold text-[var(--text-secondary)] uppercase tracking-[0.2em] mt-1">
             Real-time Threat Detection & Mitigation
           </p>
@@ -134,7 +152,7 @@ export default function RiskCenter() {
         <div className="flex items-center gap-3">
           <button 
             onClick={() => setIsShareOpen(true)}
-            className="flex items-center gap-2 px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-default)] rounded-lg text-[10px] font-bold text-white uppercase tracking-widest hover:bg-white/5 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-default)] rounded-lg text-[10px] font-bold text-white uppercase tracking-widest hover:bg-[var(--bg-page)] transition-colors"
           >
             <Share className="h-3.5 w-3.5 text-indigo-400" />
             Share
@@ -187,7 +205,7 @@ export default function RiskCenter() {
         {/* Risk Trend Chart */}
         <div className="lg:col-span-8 card-base p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-wider text-[11px] text-gray-400">Org-wide Risk Score Trend (30 Days)</h3>
+            <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-wider text-[11px] text-[var(--text-secondary)]">Org-wide Risk Score Trend (30 Days)</h3>
             <div className="flex items-center gap-2">
               {portfolio && (
                 <span className={cn(
@@ -247,7 +265,7 @@ export default function RiskCenter() {
                   />
                 </AreaChart>
               ) : (
-                <div className="h-full flex items-center justify-center text-xs text-gray-500 font-bold uppercase tracking-wider font-mono">
+                <div className="h-full flex items-center justify-center text-xs text-[var(--text-muted)] font-bold uppercase tracking-wider font-mono">
                   No historical risk logs recorded yet
                 </div>
               )}
@@ -257,11 +275,12 @@ export default function RiskCenter() {
 
         {/* Severity Breakdown */}
         <div className="lg:col-span-4 card-base p-6">
-          <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] mb-6 uppercase tracking-wider text-[11px] text-gray-400">Severity Breakdown</h3>
-          <div className="h-[200px] w-full">
+          <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] mb-6 uppercase tracking-wider text-[11px] text-[var(--text-secondary)]">Severity Breakdown</h3>
+          <div ref={chartContainerRef} className="h-[200px] w-full" aria-hidden="true">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart tabIndex={-1}>
                 <Pie
+                  tabIndex={-1}
                   data={severityData || []}
                   cx="50%"
                   cy="50%"
@@ -271,7 +290,7 @@ export default function RiskCenter() {
                   dataKey="value"
                 >
                   {(severityData || []).map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                    <Cell key={`cell-${index}`} fill={entry.color} tabIndex={-1} />
                   ))}
                 </Pie>
                 <Tooltip 
@@ -292,7 +311,7 @@ export default function RiskCenter() {
                   <div className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
                   <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">{item.name}</span>
                 </div>
-                <span className="text-[10px] font-black text-[var(--text-primary)]">{item.value}</span>
+                <span className="text-[10px] font-semibold text-[var(--text-primary)]">{item.value}</span>
               </div>
             ))}
           </div>
@@ -303,7 +322,7 @@ export default function RiskCenter() {
       <div className="card-base overflow-hidden">
         <div className="p-5 border-b border-[var(--border-default)] flex items-center justify-between bg-black/5">
           <div>
-            <h3 className="text-sm font-black text-white uppercase tracking-tight">Active AI Agent Risk Matrix</h3>
+            <h3 className="text-sm font-semibold text-white uppercase tracking-tight">Active AI Agent Risk Matrix</h3>
             <p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mt-0.5">
               Live quantitative assessment scorecards
             </p>
@@ -311,7 +330,7 @@ export default function RiskCenter() {
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-white/5 border-b border-[var(--border-default)] font-mono text-[var(--text-secondary)] uppercase">
+            <thead className="bg-[var(--bg-page)] border-b border-[var(--border-default)] font-mono text-[var(--text-secondary)] uppercase">
               <tr>
                 <th className="px-6 py-4">Agent / System</th>
                 <th className="px-6 py-4">Composite Risk Score</th>
@@ -324,7 +343,7 @@ export default function RiskCenter() {
             <tbody className="divide-y divide-[var(--border-default)]">
               {portfolio && portfolio.scoresByAgent && portfolio.scoresByAgent.length > 0 ? (
                 portfolio.scoresByAgent.map((agent) => (
-                  <tr key={agent.agentId} className="hover:bg-white/5 transition-colors">
+                  <tr key={agent.agentId} className="hover:bg-[var(--bg-page)] transition-colors">
                     <td className="px-6 py-4 font-bold text-white flex items-center gap-2">
                       <div className={cn(
                         "h-2 w-2 rounded-full animate-pulse",
@@ -334,7 +353,7 @@ export default function RiskCenter() {
                     </td>
                     <td className="px-6 py-4">
                       <span className={cn(
-                        "inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[9px] font-black uppercase tracking-tight",
+                        "inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-tight",
                         agent.compositeScore <= 33 ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
                         agent.compositeScore <= 66 ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" :
                         "bg-red-500/10 text-red-400 border border-red-500/20 shadow-[0_0_8px_rgba(239,68,68,0.1)]"
@@ -342,13 +361,13 @@ export default function RiskCenter() {
                         {agent.compositeScore} - {agent.compositeScore <= 33 ? 'Low' : agent.compositeScore <= 66 ? 'Medium' : 'High'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 font-bold text-gray-200">{agent.likelihood} / 100</td>
-                    <td className="px-6 py-4 font-bold text-gray-200">{agent.impact} / 100</td>
+                    <td className="px-6 py-4 font-bold  ">{agent.likelihood} / 100</td>
+                    <td className="px-6 py-4 font-bold  ">{agent.impact} / 100</td>
                     <td className="px-6 py-4 text-[var(--text-muted)] font-mono">{new Date(agent.lastUpdated).toLocaleString()}</td>
                     <td className="px-6 py-4 text-right">
                       <button
                         onClick={() => openOverrideModal(agent)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 hover:border-[var(--royal-indigo)] hover:bg-[var(--royal-indigo)]/10 text-[9px] font-black uppercase tracking-wider rounded-lg text-indigo-400 hover:text-white transition-all ml-auto"
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--bg-page)] border border-[var(--border-default)] hover:border-[var(--royal-indigo)] hover:bg-[var(--royal-indigo)]/10 text-[9px] font-semibold uppercase tracking-wider rounded-lg text-indigo-400 hover:text-[var(--text-primary)] transition-all ml-auto"
                       >
                         <Sliders className="h-3 w-3" />
                         Override
@@ -361,7 +380,7 @@ export default function RiskCenter() {
                   <td colSpan={6} className="px-6 py-12 text-center text-[var(--text-muted)]">
                     <div className="flex flex-col items-center gap-2 opacity-40">
                       <ShieldAlert className="h-8 w-8" />
-                      <p className="text-[10px] font-black uppercase tracking-widest">No agents mapped for assessment</p>
+                      <p className="text-[10px] font-semibold uppercase tracking-widest">No agents mapped for assessment</p>
                     </div>
                   </td>
                 </tr>
@@ -412,7 +431,7 @@ export default function RiskCenter() {
                   </td>
                   <td className="px-6 py-4">
                     <span className={cn(
-                      "inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tight",
+                      "inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[9px] font-semibold uppercase tracking-tight",
                       event.severity === 'Critical' ? "bg-[var(--risk-critical)] text-[var(--risk-critical-text)] shadow-[0_0_8px_rgba(239,68,68,0.2)]" :
                       event.severity === 'High' ? "bg-[var(--risk-high)] text-[var(--risk-high-text)]" :
                       event.severity === 'Medium' ? "bg-[var(--risk-medium)] text-[var(--risk-medium-text)]" :
@@ -427,7 +446,7 @@ export default function RiskCenter() {
                   </td>
                   <td className="px-6 py-4">
                     <span className={cn(
-                      "inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tight",
+                      "inline-flex items-center px-2 py-0.5 rounded text-[9px] font-semibold uppercase tracking-tight",
                       event.status === 'Blocked' ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
                       event.status === 'Flagged' ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" :
                       "bg-slate-500/10 text-slate-400 border border-slate-500/20"
@@ -438,7 +457,8 @@ export default function RiskCenter() {
                   <td className="px-6 py-4 text-right">
                     <button 
                       onClick={() => setSelectedIncident(event)}
-                      className="p-1.5 rounded text-[var(--text-muted)] hover:text-[var(--royal-indigo)] hover:bg-white/5 transition-all"
+                      aria-label="View incident details"
+                      className="p-1.5 rounded text-[var(--text-muted)] hover:text-[var(--royal-indigo)] hover:bg-[var(--bg-page)] transition-all"
                     >
                       <MoreVertical className="h-4 w-4" />
                     </button>
@@ -449,7 +469,7 @@ export default function RiskCenter() {
                   <td colSpan={6} className="px-6 py-12 text-center text-[var(--text-muted)]">
                     <div className="flex flex-col items-center gap-2 opacity-40">
                       <AlertTriangle className="h-8 w-8" />
-                      <p className="text-[10px] font-black uppercase tracking-widest">No active risk events</p>
+                      <p className="text-[10px] font-semibold uppercase tracking-widest">No active risk events</p>
                     </div>
                   </td>
                 </tr>
@@ -472,14 +492,15 @@ export default function RiskCenter() {
           <div className="relative w-full max-w-md bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl shadow-2xl overflow-hidden text-left flex flex-col">
             <div className="px-6 py-4 border-b border-[var(--border-default)] flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-black text-white uppercase tracking-wider">Manual Risk Override</h3>
+                <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Manual Risk Override</h3>
                 <p className="text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mt-0.5">
                   Adjust metrics for {overrideAgent.agentName}
                 </p>
               </div>
               <button 
                 onClick={() => setOverrideAgent(null)}
-                className="p-1.5 hover:bg-white/5 rounded-lg transition-colors text-[var(--text-secondary)] hover:text-white"
+                aria-label="Close override modal"
+                className="p-1.5 hover:bg-[var(--bg-page)] rounded-lg transition-colors text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -489,11 +510,11 @@ export default function RiskCenter() {
               {/* Score Preview Badge */}
               <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-5 flex items-center justify-between">
                 <div>
-                  <span className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)] block">Computed Composite Score</span>
-                  <span className="text-3xl font-black text-white block mt-1">{liveComposite}</span>
+                  <span className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-muted)] block">Computed Composite Score</span>
+                  <span className="text-3xl font-semibold text-white block mt-1">{liveComposite}</span>
                 </div>
                 <span className={cn(
-                  "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest",
+                  "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-widest",
                   liveComposite <= 33 ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
                   liveComposite <= 66 ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" :
                   "bg-red-500/10 text-red-400 border border-red-500/20"
@@ -544,14 +565,14 @@ export default function RiskCenter() {
               <div className="flex items-center gap-3 pt-4 border-t border-[var(--border-default)]">
                 <button
                   onClick={() => setOverrideAgent(null)}
-                  className="flex-1 px-4 py-2 border border-[var(--border-default)] rounded-xl text-[10px] font-black uppercase tracking-widest text-[var(--text-primary)] hover:bg-white/5 transition-colors"
+                  className="flex-1 px-4 py-2 border border-[var(--border-default)] rounded-xl text-[10px] font-semibold uppercase tracking-widest text-[var(--text-primary)] hover:bg-[var(--bg-page)] transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   disabled={savingOverride}
                   onClick={handleSaveOverride}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] rounded-xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-[var(--royal-indigo)] transition-colors disabled:opacity-50"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] rounded-xl text-[10px] font-semibold uppercase tracking-widest text-white hover:bg-[var(--royal-indigo)] transition-colors disabled:opacity-50"
                 >
                   {savingOverride ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
                   Save Override
@@ -569,18 +590,19 @@ export default function RiskCenter() {
             <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-4">
               <div className="flex items-center gap-2">
                 <ShieldAlert className="h-4.5 w-4.5 text-[var(--royal-indigo)]" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-primary)]">Incident details</span>
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--text-primary)]">Incident details</span>
               </div>
               <button 
                 onClick={() => setSelectedIncident(null)}
-                className="p-1 rounded hover:bg-[var(--bg-hover)] transition-all outline-none"
+                aria-label="Close incident details"
+                className="p-1.5 rounded hover:bg-[var(--bg-hover)] transition-all outline-none"
               >
                 <X className="h-4 w-4 text-[var(--text-secondary)]" />
               </button>
             </div>
             
             <div className="space-y-1">
-              <h2 className="text-[13px] font-black uppercase tracking-tight text-[var(--text-primary)]">Threat in {selectedIncident.agent}</h2>
+              <h2 className="text-[13px] font-semibold uppercase tracking-tight text-[var(--text-primary)]">Threat in {selectedIncident.agent}</h2>
               <div className="flex items-center gap-2 text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
                 <span>Severity: {selectedIncident.severity}</span>
                 <span>•</span>
@@ -589,13 +611,13 @@ export default function RiskCenter() {
             </div>
 
             <div className="space-y-1 text-left">
-              <h4 className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Detected Action</h4>
+              <h4 className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">Detected Action</h4>
               <p className="text-[var(--text-xs)] text-[var(--text-secondary)] leading-relaxed font-mono bg-slate-50 p-2.5 rounded border border-[var(--border-default)] break-words">{selectedIncident.action}</p>
             </div>
 
             {selectedIncident.aiSummary && (
               <div className="space-y-1 text-left">
-                <h4 className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">AI Insight Summary</h4>
+                <h4 className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">AI Insight Summary</h4>
                 <p className="text-[var(--text-xs)] text-[var(--text-secondary)] leading-relaxed">{selectedIncident.aiSummary}</p>
               </div>
             )}

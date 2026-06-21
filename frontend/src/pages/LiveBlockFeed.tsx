@@ -76,29 +76,24 @@ export default function LiveBlockFeed() {
   });
 
   return (
-    <div className="flex flex-col gap-6 p-6 animate-fade-in text-gray-200 min-h-screen">
+    <div className="flex flex-col gap-6 p-6 animate-fade-in min-h-screen">
       {/* Header Row */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-2">
-            <Activity className="h-6 w-6 text-indigo-400" />
+          <h1 className="text-[22px] font-semibold text-[var(--text-primary)] tracking-tight flex items-center gap-2">
+            <Activity className="h-5 w-5 text-[var(--royal-indigo)]" />
             Live Block Feed
           </h1>
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">
+          <p className="text-[var(--text-xs)] font-medium text-[var(--text-secondary)] mt-1">
             Real-time pre-execution interception log
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Connection Status Pill */}
-          <div className={cn(
-            "flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-wider",
-            isLive 
-              ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-400" 
-              : "bg-gray-800 border-gray-750 text-gray-400"
-          )}>
-            <span className={cn("h-2 w-2 rounded-full", isLive ? "bg-emerald-500 animate-pulse" : "bg-gray-500")} />
-            {isLive ? 'Live' : 'Reconnecting'}
+          {/* Connection Status — inline text with dot (Fix 3) */}
+          <div className="flex items-center gap-2 text-[11px] font-semibold text-[var(--text-secondary)]">
+            <span className={cn("h-2 w-2 rounded-full", isLive ? "bg-emerald-500 animate-pulse" : "bg-[var(--text-muted)]")} />
+            {isLive ? 'Live' : 'Reconnecting…'}
           </div>
 
           {/* Simulate Attack Button */}
@@ -106,10 +101,10 @@ export default function LiveBlockFeed() {
             <button
               onClick={simulateAttack}
               disabled={simulating}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-50"
+              className="btn-primary flex items-center gap-2 !text-[11px] !py-2 disabled:opacity-50"
             >
               <Play className="h-3.5 w-3.5" />
-              {simulating ? 'Simulating...' : 'Simulate Attack'}
+              {simulating ? 'Simulating…' : 'Simulate attack'}
             </button>
           )}
         </div>
@@ -118,7 +113,7 @@ export default function LiveBlockFeed() {
       {/* KPI Cards Row */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <KPICard 
-          label="Total Intercepted" 
+          label="Total intercepted" 
           value={totalIntercepted.toString()} 
           icon="systems" 
           status="primary" 
@@ -144,16 +139,16 @@ export default function LiveBlockFeed() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex gap-2 border-b border-gray-850/60 pb-2">
+      <div className="flex gap-2 border-b border-[var(--border-default)] pb-2">
         {(['All', 'Blocked', 'Flagged', 'Allowed'] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={cn(
-              "px-4 py-2 text-[10px] font-black uppercase tracking-widest border-b-2 transition-all duration-200",
+              "px-4 py-2 text-[11px] font-semibold border-b-2 transition-all duration-200",
               activeTab === tab 
-                ? "border-indigo-500 text-white" 
-                : "border-transparent text-gray-500 hover:text-gray-300"
+                ? "border-[var(--royal-indigo)] text-[var(--text-primary)]" 
+                : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
             )}
           >
             {tab}
@@ -162,23 +157,23 @@ export default function LiveBlockFeed() {
       </div>
 
       {/* Live Feed Log Table */}
-      <div className="bg-[#111827]/40 border border-gray-800 rounded-2xl overflow-hidden backdrop-blur-md">
+      <div className="card-base overflow-hidden">
         {filteredEvents.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-gray-850/60 text-[9px] font-black text-gray-500 uppercase tracking-widest bg-gray-900/10">
+                <tr className="border-b border-[var(--border-default)] text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider bg-[var(--bg-page)]">
                   <th className="p-4">Timestamp</th>
                   <th className="p-4">Agent</th>
                   <th className="p-4">Action</th>
                   <th className="p-4">Decision</th>
-                  <th className="p-4">Risk Level</th>
-                  <th className="p-4">Tier That Caught It</th>
+                  <th className="p-4">Risk level</th>
+                  <th className="p-4">Tier that caught it</th>
                   <th className="p-4">Reason</th>
                   <th className="p-4 w-10"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-850/60 text-xs">
+              <tbody className="divide-y divide-[var(--border-default)] text-xs">
                 {filteredEvents.map(event => {
                   const isExpanded = !!expandedRows[event.id];
                   const tier = getTier(event.reason || '');
@@ -187,37 +182,37 @@ export default function LiveBlockFeed() {
                     : event.action;
 
                   return (
-                    <tr key={event.id} className="hover:bg-gray-900/10 transition-colors">
-                      <td className="p-4 font-mono text-[10px] text-gray-500">{event.time}</td>
-                      <td className="p-4 font-bold text-white uppercase tracking-tight">{event.agent}</td>
-                      <td className="p-4 text-gray-400 font-mono text-[10px]">{truncatedAction}</td>
+                    <tr key={event.id} className="hover:bg-[var(--bg-hover)] transition-colors">
+                      <td className="p-4 font-mono text-[10px] text-[var(--text-muted)]">{event.time}</td>
+                      <td className="p-4 font-semibold text-[var(--text-primary)] tracking-tight">{event.agent}</td>
+                      <td className="p-4 text-[var(--text-secondary)] font-mono text-[10px]">{truncatedAction}</td>
                       <td className="p-4">
                         <span className={cn(
-                          "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border",
-                          event.status === 'Blocked' && "bg-rose-500/10 border-rose-500/20 text-rose-400",
-                          event.status === 'Flagged' && "bg-amber-500/10 border-amber-500/20 text-amber-400",
-                          event.status === 'Allowed' && "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                          "px-2 py-0.5 rounded text-[9px] font-semibold border",
+                          event.status === 'Blocked' && "bg-rose-50 border-rose-200 text-rose-600",
+                          event.status === 'Flagged' && "bg-amber-50 border-amber-200 text-amber-600",
+                          event.status === 'Allowed' && "bg-emerald-50 border-emerald-200 text-emerald-600"
                         )}>
                           {event.status}
                         </span>
                       </td>
                       <td className="p-4">
                         <span className={cn(
-                          "font-bold text-[9px] uppercase tracking-wider",
-                          event.severity === 'Critical' && "text-rose-500",
-                          event.severity === 'High' && "text-orange-500",
-                          event.severity === 'Medium' && "text-amber-500",
-                          event.severity === 'Low' && "text-emerald-500"
+                          "font-semibold text-[10px]",
+                          event.severity === 'Critical' && "text-rose-600",
+                          event.severity === 'High' && "text-orange-600",
+                          event.severity === 'Medium' && "text-amber-600",
+                          event.severity === 'Low' && "text-emerald-600"
                         )}>
                           {event.severity}
                         </span>
                       </td>
-                      <td className="p-4 font-bold text-[10px] text-gray-400 uppercase tracking-tight">{tier}</td>
-                      <td className="p-4 text-gray-500 text-[10px] line-clamp-1">{event.reason || 'None'}</td>
+                      <td className="p-4 font-semibold text-[10px] text-[var(--text-secondary)] tracking-tight">{tier}</td>
+                      <td className="p-4 text-[var(--text-muted)] text-[10px] line-clamp-1">{event.reason || 'None'}</td>
                       <td className="p-4">
                         <button 
                           onClick={() => toggleRow(event.id)}
-                          className="p-1 hover:bg-gray-800 rounded text-gray-500 hover:text-white transition-all"
+                          className="p-1 hover:bg-[var(--bg-hover)] rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all"
                         >
                           {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                         </button>
@@ -231,22 +226,22 @@ export default function LiveBlockFeed() {
         ) : (
           /* Empty State */
           <div className="flex flex-col items-center justify-center py-16 px-4 text-center max-w-lg mx-auto">
-            <Shield className="h-12 w-12 text-gray-600 mb-4 animate-pulse" />
-            <h3 className="text-sm font-black text-white uppercase tracking-widest">No interceptions yet</h3>
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mt-1.5 leading-relaxed">
+            <Shield className="h-12 w-12 text-[var(--text-muted)] mb-4" />
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">No interceptions yet</h3>
+            <p className="text-[11px] font-medium text-[var(--text-secondary)] mt-1.5 leading-relaxed">
               Sentraa is watching. Send an action through the SDK to see it here.
             </p>
             
             {/* Code Snippet */}
-            <div className="w-full bg-[#0b0f19] border border-gray-850 rounded-xl p-4 mt-6 text-left relative group">
+            <div className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded-xl p-4 mt-6 text-left relative group">
               <button 
                 onClick={handleCopyCode}
-                className="absolute right-3 top-3 p-1.5 bg-gray-900 border border-gray-800 rounded-lg text-gray-400 hover:text-white hover:border-gray-700 transition-colors"
+                className="absolute right-3 top-3 p-1.5 bg-white border border-[var(--border-default)] rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] transition-colors"
                 title="Copy snippet"
               >
                 <Copy className="h-3.5 w-3.5" />
               </button>
-              <pre className="font-mono text-[10px] text-gray-400 overflow-x-auto select-all">
+              <pre className="font-mono text-[10px] text-[var(--text-secondary)] overflow-x-auto select-all">
 {`const decision = await sentra.checkAction({
   agent: 'my-agent',
   action: 'delete all user records'
@@ -264,51 +259,51 @@ export default function LiveBlockFeed() {
         const tier = getTier(event.reason || '');
 
         return (
-          <div key={`${event.id}-detail`} className="bg-gray-950/40 border border-gray-850 rounded-2xl p-6 flex flex-col gap-4 animate-slide-in">
-            <div className="flex items-center justify-between border-b border-gray-900 pb-3">
+          <div key={`${event.id}-detail`} className="card-base p-6 flex flex-col gap-4 animate-fade-in">
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-3">
               <div className="flex items-center gap-2">
-                <Terminal className="h-4 w-4 text-indigo-400" />
-                <span className="font-mono text-[10px] text-gray-500">{event.id}</span>
+                <Terminal className="h-4 w-4 text-[var(--royal-indigo)]" />
+                <span className="font-mono text-[10px] text-[var(--text-muted)]">{event.id}</span>
               </div>
-              <span className="text-[9px] font-black uppercase text-indigo-400 tracking-wider">
+              <span className="text-[10px] font-semibold text-[var(--royal-indigo)] tracking-wider">
                 Intercepted by {tier}
               </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-[11px]">
               <div>
-                <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Full Action Payload</span>
-                <div className="bg-[#0c101b] border border-gray-850 rounded-xl p-4 font-mono text-gray-300 whitespace-pre-wrap max-h-48 overflow-y-auto">
+                <span className="text-[10px] font-semibold text-[var(--text-secondary)] block mb-1">Full action payload</span>
+                <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-xl p-4 font-mono text-[var(--text-secondary)] whitespace-pre-wrap max-h-48 overflow-y-auto">
                   {event.action}
                 </div>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Interception Reason</span>
-                  <p className="text-gray-300 leading-relaxed font-semibold">{event.reason || 'No specific reason given.'}</p>
+                  <span className="text-[10px] font-semibold text-[var(--text-secondary)] block mb-1">Interception reason</span>
+                  <p className="text-[var(--text-primary)] leading-relaxed font-medium">{event.reason || 'No specific reason given.'}</p>
                 </div>
 
                 {event.aiSummary && (
                   <div>
-                    <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider block mb-1">AI Copilot Analysis</span>
-                    <p className="text-indigo-200/90 leading-relaxed italic bg-indigo-950/10 border border-indigo-900/20 p-3 rounded-xl">
+                    <span className="text-[10px] font-semibold text-[var(--text-secondary)] block mb-1">AI copilot analysis</span>
+                    <p className="text-[var(--royal-indigo)] leading-relaxed italic bg-indigo-50 border border-indigo-100 p-3 rounded-xl">
                       "{event.aiSummary}"
                     </p>
                   </div>
                 )}
 
                 <div>
-                  <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Compliance Frameworks Affected</span>
+                  <span className="text-[10px] font-semibold text-[var(--text-secondary)] block mb-1">Compliance frameworks affected</span>
                   <div className="flex flex-wrap gap-1.5 mt-1">
                     {event.frameworks && event.frameworks.length > 0 ? (
-                      event.frameworks.map((f, i) => (
-                        <span key={i} className="text-[9px] font-black uppercase bg-purple-500/10 border border-purple-500/20 text-purple-400 px-2 py-0.5 rounded">
+                      event.frameworks.map((f: string, i: number) => (
+                        <span key={i} className="text-[9px] font-semibold bg-indigo-50 border border-indigo-200 text-[var(--royal-indigo)] px-2 py-0.5 rounded">
                           {f}
                         </span>
                       ))
                     ) : (
-                      <span className="text-gray-600 text-[10px]">None triggered</span>
+                      <span className="text-[var(--text-muted)] text-[10px]">None triggered</span>
                     )}
                   </div>
                 </div>
@@ -320,12 +315,12 @@ export default function LiveBlockFeed() {
 
       {/* Persistent Bottom Bar for Blocked Events */}
       {blockedCount > 0 && (
-        <div className="fixed bottom-0 left-0 lg:left-[var(--sidebar-width)] right-0 bg-rose-600 text-white font-black text-[10px] uppercase tracking-widest py-3 px-6 shadow-2xl flex items-center justify-between z-40 border-t border-rose-500">
+        <div className="fixed bottom-0 left-0 lg:left-[var(--sidebar-width)] right-0 bg-rose-600 text-white font-semibold text-[11px] py-3 px-6 shadow-2xl flex items-center justify-between z-40 border-t border-rose-500">
           <div className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4 animate-bounce" />
             <span>🔴 {blockedCount} {blockedCount === 1 ? 'action' : 'actions'} blocked in this session</span>
           </div>
-          <span className="bg-rose-700 px-2.5 py-1 rounded text-[8px] tracking-normal font-bold">REMEDIATION REQUIRED</span>
+          <span className="bg-rose-700 px-2.5 py-1 rounded text-[10px] font-medium">Remediation required</span>
         </div>
       )}
     </div>

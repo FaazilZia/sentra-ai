@@ -93,14 +93,14 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex flex-col gap-6 animate-fade-in p-6 relative min-h-screen pb-24 text-gray-200">
+    <div className="flex flex-col gap-6 animate-fade-in p-6 relative min-h-screen pb-24">
       {/* Demo Warning Banner */}
       {isDemoOrg && (
-        <div className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 text-amber-200 shadow-md">
-          <ShieldAlert className="h-5 w-5 text-amber-400 shrink-0 animate-pulse" />
+        <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4 text-amber-800 shadow-sm">
+          <ShieldAlert className="h-5 w-5 text-amber-500 shrink-0 animate-pulse" />
           <div className="text-xs">
-            <span className="font-black uppercase tracking-wider block mb-0.5">⚡ Demo Environment Active</span>
-            Sentraa AI is running in sandbox mode for <span className="font-bold text-white">{user?.organizationName}</span>. Metrics represent simulated pipeline events. Use the floating simulation controller to inject threats.
+            <span className="font-semibold block mb-0.5">⚡ Demo environment active</span>
+            Sentraa AI is running in sandbox mode for <span className="font-bold text-[var(--text-primary)]">{user?.organizationName}</span>. Metrics represent simulated pipeline events. Use the floating simulation controller to inject threats.
           </div>
         </div>
       )}
@@ -114,7 +114,7 @@ export default function Dashboard() {
                 <ShieldCheck className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-black uppercase tracking-tight">Initialize Governance Pipeline</h2>
+                <h2 className="text-xl font-semibold tracking-tight">Initialize governance pipeline</h2>
                 <p className="mt-1 text-sm font-medium text-indigo-100 max-w-xl">
                   Your workspace is currently protected by the <span className="font-bold text-white">Default Governance Blueprint</span>. 
                   Deploy your first custom policy to tailor risk thresholds for your organization's specific AI stack.
@@ -123,7 +123,7 @@ export default function Dashboard() {
             </div>
             <Link 
               to="/app/policies"
-              className="flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-xs font-black uppercase tracking-widest text-[var(--royal-indigo)] transition-all hover:bg-indigo-50 hover:scale-105 active:scale-95 shadow-lg shadow-black/20"
+              className="flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-xs font-semibold text-[var(--royal-indigo)] transition-all hover:bg-indigo-50 hover:scale-105 active:scale-95 shadow-lg shadow-black/20"
             >
               Configure Policy
               <ArrowRight className="h-4 w-4" />
@@ -131,7 +131,7 @@ export default function Dashboard() {
           </div>
           
           {/* Decorative Elements */}
-          <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10 blur-3xl" />
+          <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-[var(--bg-page)] blur-3xl" />
           <div className="absolute -bottom-8 left-1/4 h-32 w-32 rounded-full bg-indigo-400/20 blur-3xl" />
           <Sparkles className="absolute right-12 top-6 h-12 w-12 text-white/5" />
         </div>
@@ -209,30 +209,30 @@ export default function Dashboard() {
       {isAdmin && (
         <button
           onClick={() => setIsModalOpen(true)}
-          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-5 py-3.5 bg-gradient-to-r from-amber-600 to-red-600 hover:from-amber-500 hover:to-red-500 text-white rounded-full font-black text-xs uppercase tracking-widest shadow-2xl transition-all hover:scale-105 active:scale-95 duration-200 border border-amber-500/20 ring-4 ring-red-950/20"
+          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-5 py-3.5 bg-gradient-to-r from-amber-600 to-red-600 hover:from-amber-500 hover:to-red-500 text-white rounded-full font-semibold text-xs shadow-2xl transition-all hover:scale-105 active:scale-95 duration-200 border border-amber-500/20 ring-4 ring-red-950/20"
         >
           <Zap className="h-4 w-4 text-amber-200 animate-bounce" />
-          Simulate Threat
+          Simulate threat
         </button>
       )}
 
       {/* Scenario Selection Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[#111827] border border-gray-800 rounded-3xl p-6 w-full max-w-md flex flex-col gap-5 relative animate-in fade-in zoom-in-95 duration-200 shadow-2xl">
+          <div className="bg-white border border-[var(--border-default)] rounded-3xl p-6 w-full max-w-md flex flex-col gap-5 relative animate-in fade-in zoom-in-95 duration-200 shadow-2xl">
             <button 
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 p-1 rounded-lg border border-gray-800 text-gray-400 hover:text-white bg-gray-900/40 transition-colors"
+              className="absolute top-4 right-4 p-1 rounded-lg border border-[var(--border-default)] text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-[var(--bg-page)] transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
 
             <div>
-              <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2">
                 <ShieldAlert className="h-5 w-5 text-amber-500" />
-                Simulate Security Threat
+                Simulate security threat
               </h3>
-              <p className="text-[11px] text-gray-400 mt-1 leading-relaxed">
+              <p className="text-[11px] text-[var(--text-secondary)] mt-1 leading-relaxed">
                 Inject malicious AI requests into Sentraa's activity logging framework. These events will propagate in real time across the Live Block Feed and incident dashboards.
               </p>
             </div>
@@ -241,49 +241,49 @@ export default function Dashboard() {
               <button
                 onClick={() => handleSimulate('data_exfiltration')}
                 disabled={simulating}
-                className="flex items-center justify-between p-3.5 bg-gray-950/40 border border-gray-850 hover:border-red-500/30 rounded-2xl text-left transition-all active:scale-98 group"
+                className="flex items-center justify-between p-3.5 bg-[var(--bg-page)] border border-[var(--border-default)] hover:border-red-300 rounded-2xl text-left transition-all active:scale-98 group"
               >
                 <div>
-                  <span className="text-[10px] font-black text-red-400 uppercase tracking-wider block mb-0.5">Bulk Data Exfiltration</span>
-                  <span className="text-[10px] text-gray-500 block leading-tight">Shadow agent attempts bulk extraction of user SSNs without masking constraints.</span>
+                  <span className="text-[10px] font-semibold text-red-600 block mb-0.5">Bulk data exfiltration</span>
+                  <span className="text-[10px] text-[var(--text-muted)] block leading-tight">Shadow agent attempts bulk extraction of user SSNs without masking constraints.</span>
                 </div>
-                <Play className="h-4 w-4 text-gray-500 group-hover:text-red-400 shrink-0 ml-2" />
+                <Play className="h-4 w-4 text-[var(--text-muted)] group-hover:text-red-500 shrink-0 ml-2" />
               </button>
 
               <button
                 onClick={() => handleSimulate('prompt_injection')}
                 disabled={simulating}
-                className="flex items-center justify-between p-3.5 bg-gray-950/40 border border-gray-850 hover:border-amber-500/30 rounded-2xl text-left transition-all active:scale-98 group"
+                className="flex items-center justify-between p-3.5 bg-[var(--bg-page)] border border-[var(--border-default)] hover:border-amber-300 rounded-2xl text-left transition-all active:scale-98 group"
               >
                 <div>
-                  <span className="text-[10px] font-black text-amber-400 uppercase tracking-wider block mb-0.5">Prompt Injection Bypass</span>
-                  <span className="text-[10px] text-gray-500 block leading-tight">Adversarial system-reset commands designed to bypass default system prompt jailbreaks.</span>
+                  <span className="text-[10px] font-semibold text-amber-600 block mb-0.5">Prompt injection bypass</span>
+                  <span className="text-[10px] text-[var(--text-muted)] block leading-tight">Adversarial system-reset commands designed to bypass default system prompt jailbreaks.</span>
                 </div>
-                <Play className="h-4 w-4 text-gray-500 group-hover:text-amber-400 shrink-0 ml-2" />
+                <Play className="h-4 w-4 text-[var(--text-muted)] group-hover:text-amber-500 shrink-0 ml-2" />
               </button>
 
               <button
                 onClick={() => handleSimulate('unauthorized_agent')}
                 disabled={simulating}
-                className="flex items-center justify-between p-3.5 bg-gray-950/40 border border-gray-850 hover:border-orange-500/30 rounded-2xl text-left transition-all active:scale-98 group"
+                className="flex items-center justify-between p-3.5 bg-[var(--bg-page)] border border-[var(--border-default)] hover:border-orange-300 rounded-2xl text-left transition-all active:scale-98 group"
               >
                 <div>
-                  <span className="text-[10px] font-black text-orange-400 uppercase tracking-wider block mb-0.5">Rogue Shadow AI Agent</span>
-                  <span className="text-[10px] text-gray-500 block leading-tight">An unverified agent token attempts workspace-wide system configurations.</span>
+                  <span className="text-[10px] font-semibold text-orange-600 block mb-0.5">Rogue shadow AI agent</span>
+                  <span className="text-[10px] text-[var(--text-muted)] block leading-tight">An unverified agent token attempts workspace-wide system configurations.</span>
                 </div>
-                <Play className="h-4 w-4 text-gray-500 group-hover:text-orange-400 shrink-0 ml-2" />
+                <Play className="h-4 w-4 text-[var(--text-muted)] group-hover:text-orange-500 shrink-0 ml-2" />
               </button>
 
               <button
                 onClick={() => handleSimulate('general')}
                 disabled={simulating}
-                className="flex items-center justify-between p-3.5 bg-gray-950/40 border border-gray-850 hover:border-indigo-500/30 rounded-2xl text-left transition-all active:scale-98 group"
+                className="flex items-center justify-between p-3.5 bg-[var(--bg-page)] border border-[var(--border-default)] hover:border-indigo-300 rounded-2xl text-left transition-all active:scale-98 group"
               >
                 <div>
-                  <span className="text-[10px] font-black text-indigo-400 uppercase tracking-wider block mb-0.5">General Threat Burst</span>
-                  <span className="text-[10px] text-gray-500 block leading-tight">Trigger a standard mix of credential harvesting blocks and transaction limit violations.</span>
+                  <span className="text-[10px] font-semibold text-indigo-600 block mb-0.5">General threat burst</span>
+                  <span className="text-[10px] text-[var(--text-muted)] block leading-tight">Trigger a standard mix of credential harvesting blocks and transaction limit violations.</span>
                 </div>
-                <Play className="h-4 w-4 text-gray-500 group-hover:text-indigo-400 shrink-0 ml-2" />
+                <Play className="h-4 w-4 text-[var(--text-muted)] group-hover:text-indigo-500 shrink-0 ml-2" />
               </button>
             </div>
           </div>

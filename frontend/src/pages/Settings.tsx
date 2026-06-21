@@ -692,7 +692,7 @@ export default function Settings() {
       {/* Title */}
       <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-4">
         <div>
-          <h1 className="text-2xl font-black text-[var(--text-primary)] tracking-tight uppercase">Settings</h1>
+          <h1 className="text-[22px] font-semibold text-[var(--text-primary)] tracking-tight">Settings</h1>
           <p className="text-[var(--text-xs)] font-bold text-[var(--text-secondary)] uppercase tracking-[0.2em] mt-1">
             Global Configuration & Enterprise Controls
           </p>
@@ -703,7 +703,7 @@ export default function Settings() {
       <div className="flex border-b border-[var(--border-default)] mb-4 gap-2 overflow-x-auto custom-scrollbar">
         <button
           onClick={() => setActiveTab('profile')}
-          className={`px-5 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 shrink-0 ${
+          className={`px-5 py-3 text-xs font-semibold uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 shrink-0 ${
             activeTab === 'profile'
               ? 'border-[var(--royal-indigo)] text-[var(--text-primary)]'
               : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
@@ -714,7 +714,7 @@ export default function Settings() {
         </button>
         <button
           onClick={() => setActiveTab('password')}
-          className={`px-5 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 shrink-0 ${
+          className={`px-5 py-3 text-xs font-semibold uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 shrink-0 ${
             activeTab === 'password'
               ? 'border-[var(--royal-indigo)] text-[var(--text-primary)]'
               : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
@@ -725,7 +725,7 @@ export default function Settings() {
         </button>
         <button
           onClick={() => setActiveTab('llmkeys')}
-          className={`px-5 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 shrink-0 ${
+          className={`px-5 py-3 text-xs font-semibold uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 shrink-0 ${
             activeTab === 'llmkeys'
               ? 'border-[var(--royal-indigo)] text-[var(--text-primary)]'
               : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
@@ -736,7 +736,7 @@ export default function Settings() {
         </button>
         <button
           onClick={() => setActiveTab('features')}
-          className={`px-5 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 shrink-0 ${
+          className={`px-5 py-3 text-xs font-semibold uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 shrink-0 ${
             activeTab === 'features'
               ? 'border-[var(--royal-indigo)] text-[var(--text-primary)]'
               : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
@@ -747,7 +747,7 @@ export default function Settings() {
         </button>
         <button
           onClick={() => setActiveTab('general')}
-          className={`px-5 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 shrink-0 ${
+          className={`px-5 py-3 text-xs font-semibold uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 shrink-0 ${
             activeTab === 'general'
               ? 'border-[var(--royal-indigo)] text-[var(--text-primary)]'
               : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
@@ -758,7 +758,7 @@ export default function Settings() {
         </button>
         <button
           onClick={() => setActiveTab('mcp')}
-          className={`px-5 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 shrink-0 ${
+          className={`px-5 py-3 text-xs font-semibold uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 shrink-0 ${
             activeTab === 'mcp'
               ? 'border-[var(--royal-indigo)] text-[var(--text-primary)]'
               : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
@@ -769,7 +769,7 @@ export default function Settings() {
         </button>
         <button
           onClick={() => setActiveTab('sso')}
-          className={`px-5 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 shrink-0 ${
+          className={`px-5 py-3 text-xs font-semibold uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 shrink-0 ${
             activeTab === 'sso'
               ? 'border-[var(--royal-indigo)] text-[var(--text-primary)]'
               : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
@@ -780,7 +780,7 @@ export default function Settings() {
         </button>
         <button
           onClick={() => setActiveTab('team')}
-          className={`px-5 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 shrink-0 ${
+          className={`px-5 py-3 text-xs font-semibold uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 shrink-0 ${
             activeTab === 'team'
               ? 'border-[var(--royal-indigo)] text-[var(--text-primary)]'
               : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
@@ -952,7 +952,7 @@ export default function Settings() {
               <X className="h-4 w-4" />
             </button>
 
-            <h3 className="text-sm font-black uppercase tracking-wider text-[var(--text-primary)] flex items-center gap-2 mb-2">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-[var(--text-primary)] flex items-center gap-2 mb-2">
               <Plus className="h-4 w-4 text-[var(--royal-indigo)]" />
               Generate MCP Agent Key
             </h3>
@@ -962,7 +962,7 @@ export default function Settings() {
 
             <form onSubmit={handleCreateMcpKey} className="space-y-4">
               <div>
-                <label htmlFor="mcp-key-name" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+                <label htmlFor="mcp-key-name" className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
                   Key Name / Agent Name *
                 </label>
                 <input
@@ -977,7 +977,7 @@ export default function Settings() {
               </div>
 
               <div>
-                <label htmlFor="mcp-allowed-tools" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+                <label htmlFor="mcp-allowed-tools" className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
                   Allowed Tools (Comma-separated)
                 </label>
                 <input
@@ -991,7 +991,7 @@ export default function Settings() {
               </div>
 
               <div>
-                <label htmlFor="mcp-blocked-tools" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+                <label htmlFor="mcp-blocked-tools" className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
                   Blocked Tools (Comma-separated)
                 </label>
                 <input
@@ -1008,14 +1008,14 @@ export default function Settings() {
                 <button
                   type="button"
                   onClick={() => setCreateKeyModalOpen(false)}
-                  className="px-4 py-2 bg-black/5 border border-[var(--border-default)] rounded text-[9px] font-black uppercase tracking-wider text-[var(--text-primary)] hover:bg-black/10 transition-colors"
+                  className="px-4 py-2 bg-black/5 border border-[var(--border-default)] rounded text-[9px] font-semibold uppercase tracking-wider text-[var(--text-primary)] hover:bg-black/10 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={creatingMcpKey || !newKeyName.trim()}
-                  className="px-5 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-wider transition-colors disabled:opacity-50"
+                  className="px-5 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-semibold uppercase tracking-wider transition-colors disabled:opacity-50"
                 >
                   {creatingMcpKey ? 'Generating...' : 'Generate key'}
                 </button>
@@ -1029,7 +1029,7 @@ export default function Settings() {
       {rawKeyModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fade-in">
           <div className="w-full max-w-md bg-[var(--bg-page)] border border-red-500/20 rounded-xl shadow-2xl overflow-hidden p-6 relative">
-            <h3 className="text-sm font-black uppercase tracking-wider text-green-500 flex items-center gap-2 mb-2">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-green-500 flex items-center gap-2 mb-2">
               <CheckCircle2 className="h-4 w-4" />
               Agent Secret Key Generated
             </h3>
@@ -1038,7 +1038,7 @@ export default function Settings() {
             <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3.5 mb-6 flex gap-3 text-red-400">
               <ShieldAlert className="h-5 w-5 shrink-0" />
               <div>
-                <p className="text-[10px] font-black uppercase tracking-wider">Security Warning</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider">Security Warning</p>
                 <p className="text-[9px] font-bold leading-normal mt-0.5">
                   Store this key securely. It will not be shown again. If you lose this key, you will have to regenerate a new one.
                 </p>
@@ -1047,7 +1047,7 @@ export default function Settings() {
 
             <div className="space-y-4">
               <div>
-                <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1">
+                <span className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1">
                   Raw Key Value
                 </span>
                 <div className="flex gap-2">
@@ -1073,7 +1073,7 @@ export default function Settings() {
                     setGeneratedRawKey('');
                     setRawKeyModalOpen(false);
                   }}
-                  className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white rounded text-[10px] font-black uppercase tracking-wider transition-colors"
+                  className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white rounded text-[10px] font-semibold uppercase tracking-wider transition-colors"
                 >
                   I have saved this key
                 </button>
@@ -1087,7 +1087,7 @@ export default function Settings() {
       {revokeModalOpen && keyToRevoke && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
           <div className="w-full max-w-sm bg-[var(--bg-page)] border border-red-500/20 rounded-xl shadow-2xl overflow-hidden p-6 relative">
-            <h3 className="text-sm font-black uppercase tracking-wider text-red-500 flex items-center gap-2 mb-2">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-red-500 flex items-center gap-2 mb-2">
               <ShieldAlert className="h-4 w-4" />
               Revoke Agent Credentials?
             </h3>
@@ -1104,7 +1104,7 @@ export default function Settings() {
                   setRevokeModalOpen(false);
                   setKeyToRevoke(null);
                 }}
-                className="px-4 py-2 bg-black/5 border border-[var(--border-default)] rounded text-[9px] font-black uppercase tracking-wider text-[var(--text-primary)] hover:bg-black/10 transition-colors"
+                className="px-4 py-2 bg-black/5 border border-[var(--border-default)] rounded text-[9px] font-semibold uppercase tracking-wider text-[var(--text-primary)] hover:bg-black/10 transition-colors"
               >
                 Cancel
               </button>
@@ -1112,7 +1112,7 @@ export default function Settings() {
                 type="button"
                 onClick={handleRevokeMcpKey}
                 disabled={revokingMcpKey}
-                className="px-5 py-2 bg-red-500 hover:bg-red-600 text-white rounded text-[9px] font-black uppercase tracking-wider transition-colors disabled:opacity-50"
+                className="px-5 py-2 bg-red-500 hover:bg-red-600 text-white rounded text-[9px] font-semibold uppercase tracking-wider transition-colors disabled:opacity-50"
               >
                 {revokingMcpKey ? 'Revoking...' : 'Revoke Key'}
               </button>
@@ -1164,10 +1164,11 @@ function ProfileTab({
 
           <form onSubmit={handleSaveProfile} className="space-y-6">
             <div>
-              <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+              <label htmlFor="settings-profile-email" className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
                 Email Address (Read-only)
               </label>
               <input
+                id="settings-profile-email"
                 type="text"
                 value={user?.email || ''}
                 disabled
@@ -1176,10 +1177,11 @@ function ProfileTab({
             </div>
 
             <div>
-              <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+              <label htmlFor="settings-profile-name" className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
                 Full Name
               </label>
               <input
+                id="settings-profile-name"
                 type="text"
                 value={profileName}
                 onChange={(e) => setProfileName(e.target.value)}
@@ -1189,10 +1191,11 @@ function ProfileTab({
             </div>
 
             <div>
-              <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+              <label htmlFor="settings-profile-job" className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
                 Job Title
               </label>
               <input
+                id="settings-profile-job"
                 type="text"
                 value={profileJobTitle}
                 onChange={(e) => setProfileJobTitle(e.target.value)}
@@ -1205,7 +1208,7 @@ function ProfileTab({
               <button
                 type="submit"
                 disabled={savingProfile}
-                className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-semibold uppercase tracking-widest transition-all disabled:opacity-50"
               >
                 <Save className="h-3.5 w-3.5" />
                 {savingProfile ? 'Saving...' : 'Save Profile'}
@@ -1229,7 +1232,7 @@ function ProfileTab({
                 className="h-28 w-28 rounded-full object-cover border-2 border-[var(--border-default)] bg-zinc-900"
               />
             ) : (
-              <div className="h-28 w-28 rounded-full bg-indigo-600 border border-white/10 flex items-center justify-center text-3xl font-black text-white">
+              <div className="h-28 w-28 rounded-full bg-indigo-600 border border-[var(--border-default)] flex items-center justify-center text-3xl font-semibold text-white">
                 {(profileName || user?.fullName || 'AD')
                   .split(' ')
                   .map((n: string) => n[0])
@@ -1245,7 +1248,7 @@ function ProfileTab({
             )}
           </div>
 
-          <label className="px-4 py-2 bg-zinc-800 border border-[var(--border-default)] hover:bg-zinc-700 text-white rounded text-[9px] font-black uppercase tracking-widest cursor-pointer transition-all active:scale-95">
+          <label className="px-4 py-2 bg-zinc-800 border border-[var(--border-default)] hover:bg-zinc-700 text-white rounded text-[9px] font-semibold uppercase tracking-widest cursor-pointer transition-all active:scale-95">
             Choose New Avatar
             <input
               type="file"
@@ -1294,7 +1297,7 @@ function PasswordTab({
 
         <form onSubmit={handleChangePasswordSubmit} className="space-y-6">
           <div>
-            <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+            <label className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
               Current Password
             </label>
             <input
@@ -1308,7 +1311,7 @@ function PasswordTab({
           </div>
 
           <div>
-            <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+            <label className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
               New Password
             </label>
             <input
@@ -1322,7 +1325,7 @@ function PasswordTab({
           </div>
 
           <div>
-            <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+            <label className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
               Confirm New Password
             </label>
             <input
@@ -1339,7 +1342,7 @@ function PasswordTab({
             <button
               type="submit"
               disabled={changingPassword}
-              className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-semibold uppercase tracking-widest transition-all disabled:opacity-50"
             >
               <Save className="h-3.5 w-3.5" />
               {changingPassword ? 'Updating...' : 'Update Password'}
@@ -1385,7 +1388,7 @@ function LlmKeysTab({
 
           <form onSubmit={handleAddLlmKey} className="space-y-6">
             <div>
-              <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+              <label className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
                 LLM Provider
               </label>
               <select
@@ -1402,7 +1405,7 @@ function LlmKeysTab({
             </div>
 
             <div>
-              <label className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+              <label className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
                 API Key
               </label>
               <input
@@ -1419,7 +1422,7 @@ function LlmKeysTab({
               <button
                 type="submit"
                 disabled={addingLlmKey || !llmApiKey.trim()}
-                className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-semibold uppercase tracking-widest transition-all disabled:opacity-50"
               >
                 <Plus className="h-3.5 w-3.5" />
                 {addingLlmKey ? 'Adding...' : 'Add Key'}
@@ -1436,19 +1439,19 @@ function LlmKeysTab({
           </h3>
 
           {loadingLlmKeys ? (
-            <div className="py-12 flex justify-center items-center text-xs text-gray-500 font-bold uppercase tracking-widest">
+            <div className="py-12 flex justify-center items-center text-xs text-[var(--text-muted)] font-bold uppercase tracking-widest">
               <RefreshCw className="h-5 w-5 animate-spin mr-2 text-indigo-500" />
               Loading provider keys...
             </div>
           ) : llmKeysList.length === 0 ? (
-            <div className="py-12 text-center text-gray-500 text-xs italic">
+            <div className="py-12 text-center text-[var(--text-muted)] text-xs italic">
               No API keys configured yet. Set up a provider key to power AI features.
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-[var(--border-default)] text-[9px] font-black text-gray-500 uppercase tracking-widest bg-zinc-950/20">
+                  <tr className="border-b border-[var(--border-default)] text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-widest bg-zinc-950/20">
                     <th className="py-3 px-4">Provider</th>
                     <th className="py-3 px-4">Masked Key</th>
                     <th className="py-3 px-4">Configured By</th>
@@ -1457,21 +1460,21 @@ function LlmKeysTab({
                 </thead>
                 <tbody className="divide-y divide-[var(--border-default)]">
                   {llmKeysList.map((k) => (
-                    <tr key={k.id} className="hover:bg-white/5 transition-colors">
+                    <tr key={k.id} className="hover:bg-[var(--bg-page)] transition-colors">
                       <td className="py-3.5 px-4 font-bold text-white uppercase tracking-wider">
                         {k.provider}
                       </td>
-                      <td className="py-3.5 px-4 font-mono text-[11px] text-gray-400">
+                      <td className="py-3.5 px-4 font-mono text-[11px] text-[var(--text-secondary)]">
                         {k.maskedKey}
                       </td>
-                      <td className="py-3.5 px-4 text-gray-400">
+                      <td className="py-3.5 px-4 text-[var(--text-secondary)]">
                         {k.users?.full_name || k.users?.email || 'Unknown'}
                       </td>
                       <td className="py-3.5 px-4 text-right">
                         <button
                           onClick={() => handleDeleteLlmKey(k.id)}
                           type="button"
-                          className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded border border-transparent hover:border-red-500/20 transition-all active:scale-95"
+                          className="p-1 text-[var(--text-secondary)] hover:text-red-500 hover:bg-red-500/10 rounded border border-transparent hover:border-red-500/20 transition-all active:scale-95"
                           title="Delete key"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -1508,12 +1511,12 @@ function FeaturesTab({
       </h3>
 
       {loadingFeatureFlags ? (
-        <div className="py-12 flex justify-center items-center text-xs text-gray-500 font-bold uppercase tracking-widest">
+        <div className="py-12 flex justify-center items-center text-xs text-[var(--text-muted)] font-bold uppercase tracking-widest">
           <RefreshCw className="h-5 w-5 animate-spin mr-2 text-indigo-500" />
           Loading feature states...
         </div>
       ) : featureFlagsList.length === 0 ? (
-        <div className="py-12 text-center text-gray-500 text-xs italic">
+        <div className="py-12 text-center text-[var(--text-muted)] text-xs italic">
           No system feature flags registered.
         </div>
       ) : (
@@ -1640,7 +1643,7 @@ function GeneralTab({
           
           <div className="space-y-6">
             <div>
-              <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Active API Key</span>
+              <span className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Active API Key</span>
               <div className="flex items-center gap-2">
                 <div className="flex-1 bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2.5 font-mono text-[11px] text-[var(--text-primary)] overflow-hidden text-ellipsis">
                   {apiKey}
@@ -1664,7 +1667,7 @@ function GeneralTab({
                 onClick={handleRotateKey}
                 disabled={loading}
                 type="button"
-                className="flex items-center gap-2 px-4 py-2 bg-black/5 border border-[var(--border-default)] rounded text-[10px] font-black text-[var(--text-primary)] uppercase tracking-widest hover:bg-black/10 transition-all disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-black/5 border border-[var(--border-default)] rounded text-[10px] font-semibold text-[var(--text-primary)] uppercase tracking-widest hover:bg-black/10 transition-all disabled:opacity-50"
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
                 Regenerate Key
@@ -1686,7 +1689,7 @@ function GeneralTab({
             <form onSubmit={handleSaveEmail}>
               <div className="flex flex-col gap-3">
                 <div>
-                  <label htmlFor="alert-email" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Alert Email</label>
+                  <label htmlFor="alert-email" className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Alert Email</label>
                   <input 
                     id="alert-email"
                     type="email" 
@@ -1698,7 +1701,7 @@ function GeneralTab({
                 </div>
                 <button 
                   type="submit"
-                  className="flex items-center justify-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] rounded text-[9px] font-black text-white uppercase tracking-widest hover:bg-[var(--royal-indigo)] transition-all w-fit self-end"
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] rounded text-[9px] font-semibold text-white uppercase tracking-widest hover:bg-[var(--royal-indigo)] transition-all w-fit self-end"
                 >
                   <Save className="h-3.5 w-3.5" />
                   Save Email
@@ -1711,7 +1714,7 @@ function GeneralTab({
             <form onSubmit={handleSaveWebhook}>
               <div className="flex flex-col gap-3">
                 <div>
-                  <label htmlFor="webhook-url" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Webhook URL</label>
+                  <label htmlFor="webhook-url" className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Webhook URL</label>
                   <input 
                     id="webhook-url"
                     type="url" 
@@ -1723,7 +1726,7 @@ function GeneralTab({
                 </div>
                 <button 
                   type="submit"
-                  className="flex items-center justify-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] rounded text-[9px] font-black text-white uppercase tracking-widest hover:bg-[var(--royal-indigo)] transition-all w-fit self-end"
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] rounded text-[9px] font-semibold text-white uppercase tracking-widest hover:bg-[var(--royal-indigo)] transition-all w-fit self-end"
                 >
                   <Save className="h-3.5 w-3.5" />
                   Save Webhook
@@ -1742,7 +1745,7 @@ function GeneralTab({
               <Slack className="h-4 w-4 text-[#4A154B]" />
               Slack Integration
             </h3>
-            <span className={`text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded border ${
+            <span className={`text-[9px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded border ${
               slackStatus === 'connected' 
                 ? 'bg-green-500/10 text-green-500 border-green-500/20' 
                 : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
@@ -1754,7 +1757,7 @@ function GeneralTab({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div>
-                <label htmlFor="slack-webhook" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Slack Webhook URL</label>
+                <label htmlFor="slack-webhook" className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Slack Webhook URL</label>
                 <input 
                   id="slack-webhook"
                   type="password" 
@@ -1766,7 +1769,7 @@ function GeneralTab({
               </div>
 
               <div>
-                <label htmlFor="slack-channel" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Slack Channel</label>
+                <label htmlFor="slack-channel" className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">Slack Channel</label>
                 <input 
                   id="slack-channel"
                   type="text" 
@@ -1785,14 +1788,14 @@ function GeneralTab({
                   onChange={(e) => setSlackEnabled(e.target.checked)}
                   className="h-4 w-4 accent-[var(--royal-indigo)] rounded border-[var(--border-default)] cursor-pointer"
                 />
-                <label htmlFor="slack-enabled" className="text-[10px] font-black text-[var(--text-primary)] uppercase tracking-wider cursor-pointer">
+                <label htmlFor="slack-enabled" className="text-[10px] font-semibold text-[var(--text-primary)] uppercase tracking-wider cursor-pointer">
                   Enable Slack Notifications
                 </label>
               </div>
             </div>
 
             <div>
-              <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-2.5">Alert Triggers</span>
+              <span className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-2.5">Alert Triggers</span>
               <div className="space-y-2.5 bg-[var(--bg-page)] border border-[var(--border-default)] rounded p-4">
                 {[
                   { id: 'guardrail_block', label: 'Guardrail Blocks' },
@@ -1829,7 +1832,7 @@ function GeneralTab({
               <button 
                 onClick={handleDeleteSlack}
                 type="button"
-                className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded text-[9px] font-black uppercase tracking-widest transition-all"
+                className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded text-[9px] font-semibold uppercase tracking-widest transition-all"
               >
                 Disconnect Slack
               </button>
@@ -1838,7 +1841,7 @@ function GeneralTab({
               onClick={handleTestSlack}
               disabled={slackTesting || !slackUrl || !slackChannel}
               type="button"
-              className="px-4 py-2 bg-black/5 hover:bg-black/10 text-[var(--text-primary)] border border-[var(--border-default)] rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+              className="px-4 py-2 bg-black/5 hover:bg-black/10 text-[var(--text-primary)] border border-[var(--border-default)] rounded text-[9px] font-semibold uppercase tracking-widest transition-all disabled:opacity-50"
             >
               {slackTesting ? 'Testing...' : 'Test Connection'}
             </button>
@@ -1846,7 +1849,7 @@ function GeneralTab({
               onClick={handleSaveSlack}
               disabled={slackSaving || !slackUrl || !slackChannel}
               type="button"
-              className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-semibold uppercase tracking-widest transition-all disabled:opacity-50"
             >
               <Save className="h-3.5 w-3.5" />
               {slackSaving ? 'Saving...' : 'Save Settings'}
@@ -1863,7 +1866,7 @@ function GeneralTab({
               <Shield className="h-4 w-4 text-[var(--royal-indigo)]" />
               Multi-Factor Authentication (MFA)
             </h3>
-            <span className={`text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded border ${
+            <span className={`text-[9px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded border ${
               mfaStatus?.enabled 
                 ? 'bg-green-500/10 text-green-500 border-green-500/20' 
                 : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
@@ -1889,7 +1892,7 @@ function GeneralTab({
                   <div className="bg-yellow-500/10 border border-yellow-500/20 rounded p-4 space-y-3">
                     <div className="flex items-center gap-2">
                       <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-yellow-500">MFA Recovery Codes Generated</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-widest text-yellow-500">MFA Recovery Codes Generated</span>
                     </div>
                     <p className="text-[10px] text-[var(--text-secondary)] leading-relaxed">
                       Write down these recovery codes in a secure location. Each code can be used once to bypass MFA if you lose your authentication device.
@@ -1910,7 +1913,7 @@ function GeneralTab({
                           setTimeout(() => setCodesCopied(false), 2000);
                         }}
                         type="button"
-                        className="flex items-center gap-2 px-3 py-1.5 bg-black/5 hover:bg-black/10 border border-[var(--border-default)] rounded text-[9px] font-black uppercase tracking-widest text-[var(--text-primary)] transition-all"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-black/5 hover:bg-black/10 border border-[var(--border-default)] rounded text-[9px] font-semibold uppercase tracking-widest text-[var(--text-primary)] transition-all"
                       >
                         <Copy className="h-3 w-3" />
                         {codesCopied ? 'Copied!' : 'Copy Codes'}
@@ -1918,7 +1921,7 @@ function GeneralTab({
                       <button
                         onClick={() => setShowRecoveryCodes(false)}
                         type="button"
-                        className="px-3 py-1.5 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all"
+                        className="px-3 py-1.5 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-semibold uppercase tracking-widest transition-all"
                       >
                         I Have Saved These Codes
                       </button>
@@ -1927,7 +1930,7 @@ function GeneralTab({
                 )}
 
                 <div className="border-t border-[var(--border-default)]/60 pt-4">
-                  <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-2">Disable Multi-Factor Authentication</span>
+                  <span className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-2">Disable Multi-Factor Authentication</span>
                   <div className="flex flex-col md:flex-row md:items-center gap-3">
                     <input 
                       type="text" 
@@ -1940,7 +1943,7 @@ function GeneralTab({
                       onClick={handleMfaDisable}
                       disabled={mfaLoading || mfaToken.length < 6}
                       type="button"
-                      className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50 flex items-center gap-2"
+                      className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded text-[9px] font-semibold uppercase tracking-widest transition-all disabled:opacity-50 flex items-center gap-2"
                     >
                       <Lock className="h-3.5 w-3.5" />
                       Disable Authenticator
@@ -1959,7 +1962,7 @@ function GeneralTab({
                     onClick={handleMfaSetup}
                     disabled={mfaLoading}
                     type="button"
-                    className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                    className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-semibold uppercase tracking-widest transition-all disabled:opacity-50"
                   >
                     <Unlock className="h-3.5 w-3.5" />
                     Enable Authenticator
@@ -1995,7 +1998,7 @@ function GeneralTab({
                     </div>
 
                     <div className="border-t border-[var(--border-default)] pt-4 space-y-3">
-                      <label htmlFor="mfa-totp-enable" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block">Verify Authenticator Setup</label>
+                      <label htmlFor="mfa-totp-enable" className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block">Verify Authenticator Setup</label>
                       <p className="text-[10px] text-[var(--text-secondary)] mb-2">
                         Enter the 6-digit verification code generated by your mobile app to finalize configuration:
                       </p>
@@ -2013,7 +2016,7 @@ function GeneralTab({
                             onClick={handleMfaEnable}
                             disabled={mfaLoading || mfaToken.length < 6}
                             type="button"
-                            className="px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50 flex items-center gap-2"
+                            className="px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-semibold uppercase tracking-widest transition-all disabled:opacity-50 flex items-center gap-2"
                           >
                             <QrCode className="h-3.5 w-3.5" />
                             Verify & Enable MFA
@@ -2021,7 +2024,7 @@ function GeneralTab({
                           <button
                             onClick={() => { setMfaSetupData(null); setMfaToken(''); }}
                             type="button"
-                            className="px-4 py-2 border border-[var(--border-default)] rounded text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest hover:bg-black/5 transition-all"
+                            className="px-4 py-2 border border-[var(--border-default)] rounded text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-widest hover:bg-black/5 transition-all"
                           >
                             Cancel
                           </button>
@@ -2091,7 +2094,7 @@ function McpTab({
             <button
               onClick={() => setCreateKeyModalOpen(true)}
               type="button"
-              className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all"
+              className="flex items-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-semibold uppercase tracking-widest transition-all"
             >
               <Plus className="h-3.5 w-3.5" />
               Create Agent Key
@@ -2114,19 +2117,19 @@ function McpTab({
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-[var(--border-default)] text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-wider">
-                  <th className="pb-3 font-black">Key Name</th>
-                  <th className="pb-3 font-black">Prefix</th>
-                  <th className="pb-3 font-black">Created At</th>
-                  <th className="pb-3 font-black">Last Used</th>
-                  <th className="pb-3 font-black text-center">Allowed Tools</th>
-                  <th className="pb-3 font-black text-center">Status</th>
-                  <th className="pb-3 font-black text-right">Actions</th>
+                <tr className="border-b border-[var(--border-default)] text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="pb-3 font-semibold">Key Name</th>
+                  <th className="pb-3 font-semibold">Prefix</th>
+                  <th className="pb-3 font-semibold">Created At</th>
+                  <th className="pb-3 font-semibold">Last Used</th>
+                  <th className="pb-3 font-semibold text-center">Allowed Tools</th>
+                  <th className="pb-3 font-semibold text-center">Status</th>
+                  <th className="pb-3 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {mcpKeys.map((key) => (
-                  <tr key={key.id} className="border-b border-[var(--border-default)]/30 hover:bg-white/5 transition-colors">
+                  <tr key={key.id} className="border-b border-[var(--border-default)]/30 hover:bg-[var(--bg-page)] transition-colors">
                     <td className="py-3.5 font-bold text-[var(--text-primary)]">{key.name}</td>
                     <td className="py-3.5 font-mono text-[var(--text-secondary)] text-[10px]">{key.key_prefix}••••</td>
                     <td className="py-3.5 text-[var(--text-muted)]">{new Date(key.created_at).toLocaleDateString()}</td>
@@ -2144,7 +2147,7 @@ function McpTab({
                     </td>
                     <td className="py-3.5">
                       <div className="flex justify-center">
-                        <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${
+                        <span className={`text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded border ${
                           key.is_active 
                             ? 'bg-green-500/10 text-green-500 border-green-500/20' 
                             : 'bg-red-500/10 text-red-500 border-red-500/20'
@@ -2193,7 +2196,7 @@ function McpTab({
 
           {/* Filter Selector */}
           <div className="flex items-center gap-2 bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-1.5">
-            <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-wider">Decision:</span>
+            <span className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Decision:</span>
             <select
               value={logsFilterDecision}
               onChange={(e) => {
@@ -2225,19 +2228,19 @@ function McpTab({
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-[var(--border-default)] text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-wider">
-                    <th className="pb-3 font-black">Timestamp</th>
-                    <th className="pb-3 font-black">Tool Name</th>
-                    <th className="pb-3 font-black">Args Summary</th>
-                    <th className="pb-3 font-black text-center">Decision</th>
-                    <th className="pb-3 font-black text-center">Risk</th>
-                    <th className="pb-3 font-black">Reason</th>
-                    <th className="pb-3 font-black text-right">Latency</th>
+                  <tr className="border-b border-[var(--border-default)] text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+                    <th className="pb-3 font-semibold">Timestamp</th>
+                    <th className="pb-3 font-semibold">Tool Name</th>
+                    <th className="pb-3 font-semibold">Args Summary</th>
+                    <th className="pb-3 font-semibold text-center">Decision</th>
+                    <th className="pb-3 font-semibold text-center">Risk</th>
+                    <th className="pb-3 font-semibold">Reason</th>
+                    <th className="pb-3 font-semibold text-right">Latency</th>
                   </tr>
                 </thead>
                 <tbody>
                   {mcpLogs.map((log) => (
-                    <tr key={log.id} className="border-b border-[var(--border-default)]/30 hover:bg-white/5 transition-colors">
+                    <tr key={log.id} className="border-b border-[var(--border-default)]/30 hover:bg-[var(--bg-page)] transition-colors">
                       <td className="py-3 text-[var(--text-muted)] whitespace-nowrap">
                         {new Date(log.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                       </td>
@@ -2247,7 +2250,7 @@ function McpTab({
                       </td>
                       <td className="py-3">
                         <div className="flex justify-center">
-                          <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${
+                          <span className={`text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded border ${
                             log.decision === 'allowed'
                               ? 'bg-green-500/10 text-green-500 border-green-500/20'
                               : 'bg-red-500/10 text-red-500 border-red-500/20'
@@ -2258,7 +2261,7 @@ function McpTab({
                       </td>
                       <td className="py-3">
                         <div className="flex justify-center">
-                          <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${
+                          <span className={`text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded border ${
                             log.risk_level === 'high' 
                               ? 'bg-red-500/10 text-red-500 border-red-500/20' 
                               : log.risk_level === 'medium'
@@ -2293,7 +2296,7 @@ function McpTab({
                     onClick={() => setLogsPage(prev => Math.max(1, prev - 1))}
                     disabled={logsPage === 1}
                     type="button"
-                    className="px-3 py-1 bg-black/5 hover:bg-black/10 border border-[var(--border-default)] rounded text-[9px] font-black uppercase tracking-wider disabled:opacity-50 text-[var(--text-primary)]"
+                    className="px-3 py-1 bg-black/5 hover:bg-black/10 border border-[var(--border-default)] rounded text-[9px] font-semibold uppercase tracking-wider disabled:opacity-50 text-[var(--text-primary)]"
                   >
                     Previous
                   </button>
@@ -2301,7 +2304,7 @@ function McpTab({
                     onClick={() => setLogsPage(prev => Math.min(logsPages, prev + 1))}
                     disabled={logsPage === logsPages}
                     type="button"
-                    className="px-3 py-1 bg-black/5 hover:bg-black/10 border border-[var(--border-default)] rounded text-[9px] font-black uppercase tracking-wider disabled:opacity-50 text-[var(--text-primary)]"
+                    className="px-3 py-1 bg-black/5 hover:bg-black/10 border border-[var(--border-default)] rounded text-[9px] font-semibold uppercase tracking-wider disabled:opacity-50 text-[var(--text-primary)]"
                   >
                     Next
                   </button>
@@ -2354,7 +2357,7 @@ function SsoTab({
 
           <form onSubmit={handleSaveSso} className="space-y-6">
             <div>
-              <label htmlFor="sso-provider" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+              <label htmlFor="sso-provider" className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
                 SSO Provider Name
               </label>
               <input
@@ -2368,7 +2371,7 @@ function SsoTab({
             </div>
 
             <div>
-              <label htmlFor="idp-xml" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+              <label htmlFor="idp-xml" className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
                 IdP Metadata XML
               </label>
               <textarea
@@ -2385,7 +2388,7 @@ function SsoTab({
               <button
                 type="submit"
                 disabled={savingSso || !idpMetadataXml.trim()}
-                className="flex items-center gap-2 px-5 py-2.5 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                className="flex items-center gap-2 px-5 py-2.5 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[10px] font-semibold uppercase tracking-widest transition-all disabled:opacity-50"
               >
                 <Save className="h-3.5 w-3.5" />
                 {savingSso ? 'Configuring SSO...' : 'Save & Enable SSO'}
@@ -2410,12 +2413,12 @@ function SsoTab({
           ) : (
             <div className="space-y-6">
               <div>
-                <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1">
+                <span className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1">
                   SAML Status
                 </span>
                 <div className="flex items-center gap-2">
                   <span className={`inline-block h-2 w-2 rounded-full ${company.sso_enabled ? 'bg-green-500' : 'bg-zinc-500'}`} />
-                  <span className="text-[11px] font-black uppercase tracking-wider text-[var(--text-primary)]">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-primary)]">
                     {company.sso_enabled ? `SAML SSO Enabled (${company.sso_provider || 'SAML'})` : 'Inactive (Mock SSO Active)'}
                   </span>
                 </div>
@@ -2424,7 +2427,7 @@ function SsoTab({
               <div className="h-px bg-[var(--border-default)]/40" />
 
               <div>
-                <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1">
+                <span className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1">
                   Your SP Entity ID
                 </span>
                 <div className="flex items-center gap-2 bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 font-mono text-[10px] text-[var(--text-secondary)] overflow-hidden text-ellipsis whitespace-nowrap">
@@ -2433,7 +2436,7 @@ function SsoTab({
               </div>
 
               <div>
-                <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1">
+                <span className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1">
                   Your ACS URL (Assertion Consumer Service)
                 </span>
                 <div className="flex items-center gap-2 bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 font-mono text-[10px] text-[var(--text-secondary)] overflow-hidden text-ellipsis whitespace-nowrap">
@@ -2444,7 +2447,7 @@ function SsoTab({
               <div className="h-px bg-[var(--border-default)]/40" />
 
               <div>
-                <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1">
+                <span className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1">
                   SSO Login URL
                 </span>
                 <div className="flex items-center gap-2">
@@ -2471,7 +2474,7 @@ function SsoTab({
                     href={spEntityId}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 px-4 py-2 border border-[var(--border-default)] rounded text-[9px] font-black uppercase tracking-widest text-[var(--text-primary)] hover:bg-black/10 transition-colors w-full"
+                    className="flex items-center justify-center gap-2 px-4 py-2 border border-[var(--border-default)] rounded text-[9px] font-semibold uppercase tracking-widest text-[var(--text-primary)] hover:bg-black/10 transition-colors w-full"
                   >
                     <ExternalLink className="h-3.5 w-3.5" />
                     Download SP Metadata XML
@@ -2521,7 +2524,7 @@ function TeamTab({
 
           <form onSubmit={handleInviteUser} className="space-y-4">
             <div>
-              <label htmlFor="invite-email" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+              <label htmlFor="invite-email" className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
                 Email Address
               </label>
               <input
@@ -2536,7 +2539,7 @@ function TeamTab({
             </div>
 
             <div>
-              <label htmlFor="invite-role" className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+              <label htmlFor="invite-role" className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
                 Organization Role
               </label>
               <select
@@ -2556,7 +2559,7 @@ function TeamTab({
             <button
               type="submit"
               disabled={inviting || !inviteEmail.trim()}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50 w-full"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-semibold uppercase tracking-widest transition-all disabled:opacity-50 w-full"
             >
               <Plus className="h-3.5 w-3.5" />
               {inviting ? 'Sending Invite...' : 'Send Invitation'}
@@ -2585,7 +2588,7 @@ function TeamTab({
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-[var(--border-default)] text-[9px] font-black uppercase tracking-widest text-[var(--text-secondary)]">
+                  <tr className="border-b border-[var(--border-default)] text-[9px] font-semibold uppercase tracking-widest text-[var(--text-secondary)]">
                     <th className="pb-3 font-bold">Email</th>
                     <th className="pb-3 font-bold">Role</th>
                     <th className="pb-3 font-bold">Expires</th>

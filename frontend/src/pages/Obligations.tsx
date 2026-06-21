@@ -93,23 +93,23 @@ export default function Obligations() {
   });
 
   return (
-    <div className="flex flex-col gap-6 p-6 animate-fade-in text-gray-200">
+    <div className="flex flex-col gap-6 p-6 animate-fade-in  ">
       
       {/* Header section */}
       <div>
-        <h1 className="text-2xl font-black tracking-tight text-white flex items-center gap-3">
+        <h1 className="text-[22px] font-semibold tracking-tight text-[var(--text-primary)] flex items-center gap-3">
           <ListTodo className="h-8 w-8 text-indigo-400" />
           COMPLIANCE OBLIGATION TRACKER
         </h1>
-        <p className="text-gray-400 text-sm mt-1">
+        <p className="text-[var(--text-secondary)] text-sm mt-1">
           Monitor and track article-level or task-level legal obligations from global regulatory frameworks.
         </p>
       </div>
 
       {/* Operations Bar */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-stretch sm:items-center bg-[#111827]/20 border border-gray-800/40 p-4 rounded-2xl">
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-stretch sm:items-center bg-[var(--bg-page)]/20 border border-[var(--border-default)]/40 p-4 rounded-2xl">
         <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--text-muted)]" />
           <input
             type="text"
             placeholder="Search by article title or description..."
@@ -120,7 +120,7 @@ export default function Obligations() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Filter className="h-4 w-4 text-gray-500" />
+          <Filter className="h-4 w-4 text-[var(--text-muted)]" />
           <select
             value={frameworkFilter}
             onChange={(e) => setFrameworkFilter(e.target.value)}
@@ -140,7 +140,7 @@ export default function Obligations() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
         </div>
       ) : filteredObligations.length === 0 ? (
-        <div className="text-center py-20 text-gray-500 text-xs">
+        <div className="text-center py-20 text-[var(--text-muted)] text-xs">
           No compliance obligations match the filters.
         </div>
       ) : (
@@ -150,19 +150,19 @@ export default function Obligations() {
             return (
               <div
                 key={ob.id}
-                className={`bg-[#111827]/40 border rounded-2xl p-6 flex flex-col gap-4 transition-all relative overflow-hidden group ${
-                  isEditing ? 'border-indigo-500/50 bg-[#111827]/80' : 'border-gray-800/80 hover:border-gray-700'
+                className={`bg-[var(--bg-page)] border rounded-2xl p-6 flex flex-col gap-4 transition-all relative overflow-hidden group ${
+                  isEditing ? 'border-indigo-500/50 bg-[var(--bg-page)]/80' : 'border-[var(--border-default)]/80 hover:border-[var(--border-default)]'
                 }`}
               >
                 {/* Header */}
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <span className="text-[10px] font-black text-indigo-400 font-mono uppercase tracking-widest">{getFrameworkLabel(ob.framework)}</span>
+                    <span className="text-[10px] font-semibold text-indigo-400 font-mono uppercase tracking-widest">{getFrameworkLabel(ob.framework)}</span>
                     <h3 className="font-bold text-white text-base mt-0.5">{ob.article_or_task}</h3>
                   </div>
 
                   {!isEditing ? (
-                    <span className={`text-[9px] px-2.5 py-1 rounded-full font-black uppercase ${getStatusBadgeColor(ob.status)}`}>
+                    <span className={`text-[9px] px-2.5 py-1 rounded-full font-semibold uppercase ${getStatusBadgeColor(ob.status)}`}>
                       {ob.status}
                     </span>
                   ) : (
@@ -179,12 +179,12 @@ export default function Obligations() {
                   )}
                 </div>
 
-                <p className="text-xs text-gray-400 leading-relaxed">{ob.description}</p>
+                <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{ob.description}</p>
 
                 {/* Integration Details / Links */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-[#0b0f19]/30 border border-gray-800/40 p-4 rounded-xl text-[10px] text-gray-400">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-[var(--bg-page)]/30 border border-[var(--border-default)]/40 p-4 rounded-xl text-[10px] text-[var(--text-secondary)]">
                   <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-gray-500" />
+                    <Calendar className="h-4 w-4 text-[var(--text-muted)]" />
                     <span>Compliance Deadline:</span>
                     {!isEditing ? (
                       <span className="text-white font-semibold">{ob.deadline ? new Date(ob.deadline).toLocaleDateString() : 'None'}</span>
@@ -193,13 +193,13 @@ export default function Obligations() {
                         type="date"
                         value={editDeadline}
                         onChange={(e) => setEditDeadline(e.target.value)}
-                        className="bg-black/40 border border-gray-800 rounded px-2 py-0.5 text-white focus:outline-none text-[10px]"
+                        className="bg-black/40 border border-[var(--border-default)] rounded px-2 py-0.5 text-white focus:outline-none text-[10px]"
                       />
                     )}
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <LinkIcon className="h-4 w-4 text-gray-500" />
+                    <LinkIcon className="h-4 w-4 text-[var(--text-muted)]" />
                     <span>Linked Control Safeguard:</span>
                     {!isEditing ? (
                       <span className="text-indigo-400 font-semibold">{ob.control ? `${ob.control.control_id} - ${ob.control.title}` : 'Unlinked'}</span>
@@ -207,7 +207,7 @@ export default function Obligations() {
                       <select
                         value={editControlId}
                         onChange={(e) => setEditControlId(e.target.value)}
-                        className="bg-black/40 border border-gray-800 rounded px-2 py-0.5 text-white focus:outline-none text-[10px] max-w-[200px]"
+                        className="bg-black/40 border border-[var(--border-default)] rounded px-2 py-0.5 text-white focus:outline-none text-[10px] max-w-[200px]"
                       >
                         <option value="">Unlinked / None</option>
                         {controls.filter(c => c.framework === ob.framework).map(c => (
@@ -219,7 +219,7 @@ export default function Obligations() {
                 </div>
 
                 {/* Footer Controls */}
-                <div className="border-t border-gray-800/40 pt-3 mt-1 flex items-center justify-end gap-2 text-[10px]">
+                <div className="border-t border-[var(--border-default)]/40 pt-3 mt-1 flex items-center justify-end gap-2 text-[10px]">
                   {!isEditing ? (
                     <button
                       onClick={() => handleStartEdit(ob)}
@@ -231,7 +231,7 @@ export default function Obligations() {
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() => setEditingId(null)}
-                        className="text-gray-500 hover:text-white font-semibold flex items-center gap-1"
+                        className="text-[var(--text-muted)] hover:text-[var(--text-primary)] font-semibold flex items-center gap-1"
                       >
                         <X className="h-3.5 w-3.5" /> Cancel
                       </button>

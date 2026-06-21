@@ -1,3 +1,5 @@
+import { NodePulseLoader } from '@/components/ui/NodePulseLoader';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useState, useEffect } from 'react';
 import { 
   ChevronDown, ChevronUp,
@@ -123,16 +125,39 @@ export default function FTC() {
       case 'NOT_APPLICABLE':
         return 'text-blue-400 bg-blue-500/10 border-blue-500/20';
       default:
-        return 'text-gray-400 bg-gray-500/10 border-gray-500/20';
+        return 'text-[var(--text-secondary)] bg-gray-500/10 border-gray-500/20';
     }
   };
 
   if (loading && !data) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center text-gray-500">
-          <RefreshCw className="h-8 w-8 mx-auto mb-4 animate-spin text-indigo-500" />
-          <p className="text-xs font-black uppercase tracking-widest">Loading FTC Governance...</p>
+        <div className="text-center text-[var(--text-muted)]">
+          <NodePulseLoader label="Loading FTC posture details..." />
+          <p className="text-xs font-semibold uppercase tracking-widest">Loading FTC Governance...</p>
+        </div>
+      </div>
+    );
+  }
+
+    if (!loading && (!data || !data.sections || data.sections.length === 0)) {
+    return (
+      <div className="flex flex-col gap-6 p-6 animate-fade-in text-[var(--text-secondary)]">
+        <div>
+          <h1 className="text-[22px] font-semibold text-[var(--text-primary)] tracking-tight flex items-center gap-2">
+            <ShieldCheck className="h-6 w-6 text-[var(--royal-indigo)]" />
+            FTC Act Section 5 OS
+          </h1>
+          <p className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-[0.2em] mt-1">
+            Federal Trade Commission (FTC) AI Fairness & Deception Prevention
+          </p>
+        </div>
+        <div className="flex-1 flex items-center justify-center min-h-[400px]">
+          <EmptyState 
+            icon={ShieldCheck}
+            title="No FTC Controls Seeded"
+            description="Contact your administrator to initialise the FTC framework for your organisation."
+          />
         </div>
       </div>
     );
@@ -148,20 +173,20 @@ export default function FTC() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-6 animate-fade-in text-gray-200">
+    <div className="flex flex-col gap-6 p-6 animate-fade-in  ">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-2">
+        <h1 className="text-[22px] font-semibold text-[var(--text-primary)] tracking-tight flex items-center gap-2">
           <span className="text-2xl">⚖️</span>
           FTC AI Guidelines
         </h1>
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">
+        <p className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-[0.2em] mt-1">
           Federal Trade Commission AI Guidelines and Truthfulness Compliance OS
         </p>
       </div>
 
       {/* Summary Scorecard */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 bg-[#111827]/40 border border-gray-800 rounded-2xl p-6 backdrop-blur-md">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-6 backdrop-blur-md">
         <div className="md:col-span-1 flex items-center justify-center md:border-r md:border-gray-855 p-2">
           <div className="relative h-28 w-28 flex items-center justify-center">
             {/* SVG Progress Circle */}
@@ -177,28 +202,28 @@ export default function FTC() {
               />
             </svg>
             <div className="text-center">
-              <span className="text-3xl font-black text-white">{summary.compliance_score}%</span>
-              <p className="text-[8px] font-bold text-gray-500 uppercase tracking-wider mt-0.5">Posture Score</p>
+              <span className="text-3xl font-semibold text-white">{summary.compliance_score}%</span>
+              <p className="text-[8px] font-bold text-[var(--text-muted)] uppercase tracking-wider mt-0.5">Posture Score</p>
             </div>
           </div>
         </div>
 
         <div className="md:col-span-3 grid grid-cols-2 lg:grid-cols-4 gap-4 p-2">
-          <div className="bg-gray-900/40 border border-gray-855 rounded-xl p-4 flex flex-col justify-between">
-            <span className="text-[9px] font-bold text-gray-500 uppercase">Total Controls</span>
-            <span className="text-2xl font-black text-white mt-1">{summary.total_controls}</span>
+          <div className="bg-[var(--bg-page)] border border-gray-855 rounded-xl p-4 flex flex-col justify-between">
+            <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase">Total Controls</span>
+            <span className="text-2xl font-semibold text-white mt-1">{summary.total_controls}</span>
           </div>
           <div className="bg-emerald-950/10 border border-emerald-900/20 rounded-xl p-4 flex flex-col justify-between">
             <span className="text-[9px] font-bold text-emerald-500 uppercase">Implemented</span>
-            <span className="text-2xl font-black text-emerald-400 mt-1">{summary.implemented}</span>
+            <span className="text-2xl font-semibold text-emerald-400 mt-1">{summary.implemented}</span>
           </div>
           <div className="bg-amber-950/10 border border-amber-900/20 rounded-xl p-4 flex flex-col justify-between">
             <span className="text-[9px] font-bold text-amber-500 uppercase">In Progress</span>
-            <span className="text-2xl font-black text-amber-400 mt-1">{summary.in_progress}</span>
+            <span className="text-2xl font-semibold text-amber-400 mt-1">{summary.in_progress}</span>
           </div>
           <div className="bg-blue-950/10 border border-blue-900/20 rounded-xl p-4 flex flex-col justify-between">
             <span className="text-[9px] font-bold text-blue-500 uppercase">Not Applicable</span>
-            <span className="text-2xl font-black text-blue-400 mt-1">{summary.not_applicable}</span>
+            <span className="text-2xl font-semibold text-blue-400 mt-1">{summary.not_applicable}</span>
           </div>
         </div>
       </div>
@@ -206,13 +231,13 @@ export default function FTC() {
       {/* Filters & Search */}
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
         <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-[var(--text-muted)]" />
           <input 
             type="text" 
             placeholder="Search FTC controls..." 
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full bg-[#111827]/40 border border-gray-800 rounded-xl pl-9 pr-4 py-2 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-indigo-500"
+            className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded-xl pl-9 pr-4 py-2 text-xs text-[var(--text-secondary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-indigo-500"
           />
         </div>
 
@@ -222,10 +247,10 @@ export default function FTC() {
               key={status}
               onClick={() => setStatusFilter(status)}
               className={cn(
-                "px-3 py-1.5 rounded-xl border text-[9px] font-black uppercase tracking-wider transition-all",
+                "px-3 py-1.5 rounded-xl border text-[9px] font-semibold uppercase tracking-wider transition-all",
                 statusFilter === status 
                   ? "bg-indigo-600 border-indigo-500 text-white" 
-                  : "bg-[#111827]/40 border-gray-800 text-gray-400 hover:border-gray-700 hover:text-white"
+                  : "bg-[var(--bg-page)] border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--border-default)] hover:text-[var(--text-primary)]"
               )}
             >
               {status.replace('_', ' ')}
@@ -259,28 +284,28 @@ export default function FTC() {
             const sectionCompleted = section.controls.filter(c => c.implementation?.status === 'IMPLEMENTED' || c.implementation?.status === 'NOT_APPLICABLE').length;
 
             return (
-              <div key={section.section_code} className="bg-[#111827]/40 border border-gray-800 rounded-2xl overflow-hidden backdrop-blur-md">
+              <div key={section.section_code} className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl overflow-hidden backdrop-blur-md">
                 {/* Header */}
                 <button 
                   onClick={() => toggleSection(section.section_code)}
-                  className="w-full flex items-center justify-between p-5 bg-gray-900/20 hover:bg-gray-900/40 border-b border-gray-850/60 transition-colors"
+                  className="w-full flex items-center justify-between p-5 bg-gray-900/20 hover:bg-[var(--bg-hover)]/40 border-b border-[var(--border-default)]/60 transition-colors"
                 >
                   <div className="flex items-center gap-3.5">
-                    <span className="h-6 w-9 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-[10px] font-black text-indigo-400">
+                    <span className="h-6 w-9 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-[10px] font-semibold text-indigo-400">
                       {section.section_code}
                     </span>
                     <div className="text-left">
-                      <h3 className="text-xs font-black text-white uppercase tracking-tight">{section.title}</h3>
-                      <p className="text-[10px] text-gray-500 max-w-md line-clamp-1">{section.description}</p>
+                      <h3 className="text-xs font-semibold text-white uppercase tracking-tight">{section.title}</h3>
+                      <p className="text-[10px] text-[var(--text-muted)] max-w-md line-clamp-1">{section.description}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-4">
                     <div className="text-right hidden sm:block">
-                      <span className="text-[9px] font-bold text-gray-500 uppercase">Section Progress</span>
+                      <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase">Section Progress</span>
                       <p className="text-[10px] font-bold text-white mt-0.5">{sectionCompleted}/{sectionTotal} controls</p>
                     </div>
-                    {isExpanded ? <ChevronUp className="h-4 w-4 text-gray-500" /> : <ChevronDown className="h-4 w-4 text-gray-500" />}
+                    {isExpanded ? <ChevronUp className="h-4 w-4 text-[var(--text-muted)]" /> : <ChevronDown className="h-4 w-4 text-[var(--text-muted)]" />}
                   </div>
                 </button>
 
@@ -298,13 +323,13 @@ export default function FTC() {
                               </span>
                               <h4 className="text-xs font-bold text-white uppercase tracking-tight">{ctrl.title}</h4>
                             </div>
-                            <p className="text-[10.5px] text-gray-400 leading-relaxed mt-1.5">{ctrl.description}</p>
+                            <p className="text-[10.5px] text-[var(--text-secondary)] leading-relaxed mt-1.5">{ctrl.description}</p>
                             
                             {/* Checklist & Evidence Required */}
                             {ctrl.checklist_items.length > 0 && (
                               <div className="mt-3 flex flex-wrap gap-1">
                                 {ctrl.checklist_items.map((item, idx) => (
-                                  <span key={idx} className="text-[9px] bg-gray-900 border border-gray-800 text-gray-500 px-2 py-0.5 rounded-full">
+                                  <span key={idx} className="text-[9px] bg-white border border-[var(--border-default)] text-[var(--text-muted)] px-2 py-0.5 rounded-full">
                                     ✓ {item}
                                   </span>
                                 ))}
@@ -313,12 +338,12 @@ export default function FTC() {
                           </div>
 
                           <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-3 shrink-0">
-                            <span className={cn('text-[9px] font-black uppercase px-2.5 py-1 rounded border shadow-sm', statusColor(currentStatus))}>
+                            <span className={cn('text-[9px] font-semibold uppercase px-2.5 py-1 rounded border shadow-sm', statusColor(currentStatus))}>
                               {currentStatus.replace('_', ' ')}
                             </span>
                             <button
                               onClick={() => handleEditControl(ctrl)}
-                              className="px-3 py-1.5 rounded-xl border border-gray-800 hover:border-indigo-500/30 bg-gray-900/40 text-[9px] font-black text-gray-400 hover:text-white uppercase tracking-widest active:scale-95 transition-all"
+                              className="px-3 py-1.5 rounded-xl border border-[var(--border-default)] hover:border-indigo-500/30 bg-[var(--bg-page)] text-[9px] font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] uppercase tracking-widest active:scale-95 transition-all"
                             >
                               Update
                             </button>
@@ -335,12 +360,12 @@ export default function FTC() {
 
         {/* Sidebar Panel for Editing & Context */}
         <div className="lg:col-span-1">
-          <div className="bg-[#111827]/40 border border-gray-800 rounded-2xl p-6 backdrop-blur-md flex flex-col gap-6 sticky top-6">
+          <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-6 backdrop-blur-md flex flex-col gap-6 sticky top-6">
             {!editingControl ? (
               <>
                 <div>
-                  <h3 className="text-xs font-black text-white uppercase tracking-widest mb-3">Regulatory Context</h3>
-                  <p className="text-[10.5px] text-gray-400 leading-relaxed">
+                  <h3 className="text-xs font-semibold text-white uppercase tracking-widest mb-3">Regulatory Context</h3>
+                  <p className="text-[10.5px] text-[var(--text-secondary)] leading-relaxed">
                     The Federal Trade Commission (FTC) enforces guidelines targeting deceptive, unfair, and discriminatory algorithmic business practices. It requires substantiation of all AI claims, transparency to consumers, data minimization, and robust system security programs.
                   </p>
                 </div>
@@ -353,18 +378,18 @@ export default function FTC() {
             ) : (
               <div className="flex flex-col gap-4">
                 <div>
-                  <h3 className="text-xs font-black text-white uppercase tracking-widest">Update Control</h3>
+                  <h3 className="text-xs font-semibold text-white uppercase tracking-widest">Update Control</h3>
                   <p className="text-[10px] font-mono text-indigo-400 mt-1">{editingControl.control_code} — {editingControl.title}</p>
                 </div>
 
                 {/* Status Selection */}
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="control-status-select" className="text-[10px] font-bold text-gray-500 uppercase">Implementation Status</label>
+                  <label htmlFor="control-status-select" className="text-[10px] font-bold text-[var(--text-muted)] uppercase">Implementation Status</label>
                   <select
                     id="control-status-select"
                     value={editStatus}
                     onChange={e => setEditStatus(e.target.value)}
-                    className="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 text-xs text-gray-200 focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-white border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
                   >
                     <option value="NOT_STARTED">NOT STARTED</option>
                     <option value="IN_PROGRESS">IN PROGRESS</option>
@@ -375,40 +400,40 @@ export default function FTC() {
 
                 {/* Due Date */}
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="control-due-date" className="text-[10px] font-bold text-gray-500 uppercase">Due Date</label>
+                  <label htmlFor="control-due-date" className="text-[10px] font-bold text-[var(--text-muted)] uppercase">Due Date</label>
                   <input
                     id="control-due-date"
                     type="date"
                     value={editDueDate}
                     onChange={e => setEditDueDate(e.target.value)}
-                    className="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 text-xs text-gray-200 focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-white border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
                   />
                 </div>
 
                 {/* Notes */}
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="control-notes" className="text-[10px] font-bold text-gray-500 uppercase">Implementation Notes</label>
+                  <label htmlFor="control-notes" className="text-[10px] font-bold text-[var(--text-muted)] uppercase">Implementation Notes</label>
                   <textarea
                     id="control-notes"
                     value={editNotes}
                     onChange={e => setEditNotes(e.target.value)}
                     placeholder="Enter compliance justification notes, evidence links, checklist completions..."
                     rows={5}
-                    className="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 text-xs text-gray-200 placeholder-gray-700 resize-none focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-white border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] placeholder-[var(--text-muted)] resize-none focus:outline-none focus:border-indigo-500"
                   />
                 </div>
 
                 <div className="flex gap-2">
                   <button 
                     onClick={() => setEditingControl(null)}
-                    className="flex-1 py-2.5 rounded-xl border border-gray-800 hover:bg-gray-900 text-[10px] font-black text-gray-400 uppercase tracking-widest transition-all"
+                    className="flex-1 py-2.5 rounded-xl border border-[var(--border-default)] hover:bg-white text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest transition-all"
                   >
                     Cancel
                   </button>
                   <button 
                     onClick={handleSaveControl} 
                     disabled={saving}
-                    className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-[10px] font-black text-white uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2"
+                    className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-[10px] font-semibold text-white uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2"
                   >
                     <Save className="h-3.5 w-3.5" />
                     Save Control

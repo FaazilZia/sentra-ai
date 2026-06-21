@@ -262,7 +262,7 @@ export default function IncidentManagement() {
       {/* Top Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-black tracking-tight uppercase text-white">Incident Management</h1>
+          <h1 className="text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">Incident Management</h1>
           <p className="text-[var(--text-xs)] font-bold text-[var(--text-secondary)] uppercase tracking-[0.2em] mt-1">
             Real-time Threat Monitoring & Remediation
           </p>
@@ -272,10 +272,10 @@ export default function IncidentManagement() {
             onClick={triggerScan}
             disabled={scanStatus === 'PROCESSING'}
             className={cn(
-              "flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-lg border",
+              "flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold uppercase tracking-widest transition-all shadow-lg border",
               scanStatus === 'PROCESSING' 
                 ? "bg-indigo-950/20 border-indigo-900 text-indigo-400 cursor-not-allowed"
-                : "bg-[var(--bg-card)] border-[var(--border-default)] hover:bg-white/5 text-white active:scale-95"
+                : "bg-[var(--bg-card)] border-[var(--border-default)] hover:bg-[var(--bg-page)] text-white active:scale-95"
             )}
           >
             <Play className={cn("h-4 w-4", scanStatus === 'PROCESSING' ? "animate-spin" : "text-indigo-400")} />
@@ -283,7 +283,7 @@ export default function IncidentManagement() {
           </button>
           <button 
             onClick={() => setIsLogModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 border border-indigo-500 hover:bg-indigo-700 rounded-lg text-xs font-black text-white uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-indigo-950/20"
+            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 border border-indigo-500 hover:bg-indigo-700 rounded-lg text-xs font-semibold text-white uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-indigo-950/20"
           >
             <Plus className="h-4 w-4" />
             Log Incident
@@ -294,7 +294,7 @@ export default function IncidentManagement() {
       {/* Scan Progress Bar */}
       {scanStatus === 'PROCESSING' && (
         <div className="w-full bg-indigo-950/20 border border-indigo-500/20 p-4 rounded-xl flex flex-col gap-2">
-          <div className="flex justify-between items-center text-xs text-indigo-400 uppercase tracking-widest font-black">
+          <div className="flex justify-between items-center text-xs text-indigo-400 uppercase tracking-widest font-semibold">
             <span>Scan Engine Active</span>
             <span>{scanProgress || 0}% Completed</span>
           </div>
@@ -311,19 +311,19 @@ export default function IncidentManagement() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-5 rounded-xl">
           <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Total Incidents</p>
-          <p className="text-2xl font-black text-white mt-1">{stats.total}</p>
+          <p className="text-2xl font-semibold text-white mt-1">{stats.total}</p>
         </div>
         <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-5 rounded-xl border-l-red-500/50">
           <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Open</p>
-          <p className="text-2xl font-black text-red-400 mt-1">{stats.open}</p>
+          <p className="text-2xl font-semibold text-red-400 mt-1">{stats.open}</p>
         </div>
         <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-5 rounded-xl border-l-amber-500/50">
           <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">In Progress</p>
-          <p className="text-2xl font-black text-amber-400 mt-1">{stats.inProgress}</p>
+          <p className="text-2xl font-semibold text-amber-400 mt-1">{stats.inProgress}</p>
         </div>
         <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-5 rounded-xl border-l-green-500/50">
           <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Resolved</p>
-          <p className="text-2xl font-black text-green-400 mt-1">{stats.resolved}</p>
+          <p className="text-2xl font-semibold text-green-400 mt-1">{stats.resolved}</p>
         </div>
       </div>
 
@@ -338,10 +338,10 @@ export default function IncidentManagement() {
                 key={t}
                 onClick={() => setFilter(t)}
                 className={cn(
-                  "px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wider transition-all",
+                  "px-3 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wider transition-all",
                   filter === t 
                     ? "bg-indigo-600 text-white shadow"
-                    : "text-gray-400 hover:text-white"
+                    : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                 )}
               >
                 {t.replace('_', ' ')}
@@ -351,7 +351,7 @@ export default function IncidentManagement() {
 
           {/* Search bar */}
           <div className="relative max-w-xs w-full">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-[var(--text-muted)]" />
             <input
               type="text"
               placeholder="Search agent, type, desc..."
@@ -367,18 +367,18 @@ export default function IncidentManagement() {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
               <RefreshCw className="h-8 w-8 text-indigo-500 animate-spin" />
-              <p className="text-xs text-gray-400 uppercase tracking-widest">Fetching incidents...</p>
+              <p className="text-xs text-[var(--text-secondary)] uppercase tracking-widest">Fetching incidents...</p>
             </div>
           ) : filteredIncidents.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center opacity-50">
               <CheckCircle2 className="h-12 w-12 text-green-400 mb-3" />
-              <h3 className="text-sm font-black text-white uppercase tracking-wider">No Incidents Found</h3>
-              <p className="text-xs text-gray-400 mt-1 max-w-xs">All systems operational. No active threats or violations logged.</p>
+              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">No Incidents Found</h3>
+              <p className="text-xs text-[var(--text-secondary)] mt-1 max-w-xs">All systems operational. No active threats or violations logged.</p>
             </div>
           ) : (
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-[var(--border-default)] bg-zinc-950/40 text-[9px] font-black text-gray-400 uppercase tracking-wider">
+                <tr className="border-b border-[var(--border-default)] bg-zinc-950/40 text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                   <th className="p-4">Severity</th>
                   <th className="p-4">Type</th>
                   <th className="p-4">Status</th>
@@ -395,11 +395,11 @@ export default function IncidentManagement() {
                     <tr 
                       key={inc.id}
                       onClick={() => handleOpenPanel(inc)}
-                      className="hover:bg-white/5 transition-colors cursor-pointer group"
+                      className="hover:bg-[var(--bg-page)] transition-colors cursor-pointer group"
                     >
                       <td className="p-4">
                         <span className={cn(
-                          "px-2 py-0.5 rounded border text-[9px] font-black uppercase tracking-tight",
+                          "px-2 py-0.5 rounded border text-[9px] font-semibold uppercase tracking-tight",
                           getSeverityBadge(inc.severity)
                         )}>
                           {getSeverityLabel(inc.severity)} ({inc.severity})
@@ -414,7 +414,7 @@ export default function IncidentManagement() {
                             value={normStatus === 'in progress' ? 'in_progress' : normStatus === 'unresolved' ? 'open' : normStatus}
                             onChange={e => handleUpdateStatus(inc.id, e.target.value)}
                             className={cn(
-                              "text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-md border border-[var(--border-default)] outline-none cursor-pointer focus:border-indigo-500/50",
+                              "text-[9px] font-semibold uppercase tracking-wider px-2 py-1 rounded-md border border-[var(--border-default)] outline-none cursor-pointer focus:border-indigo-500/50",
                               getStatusBadgeColor(normStatus)
                             )}
                           >
@@ -424,21 +424,21 @@ export default function IncidentManagement() {
                           </select>
                         </div>
                       </td>
-                      <td className="p-4 font-mono text-gray-300">
+                      <td className="p-4 font-mono text-[var(--text-secondary)]">
                         {inc.agent_id}
                       </td>
-                      <td className="p-4 text-gray-400 max-w-xs truncate">
+                      <td className="p-4 text-[var(--text-secondary)] max-w-xs truncate">
                         {inc.details}
                       </td>
-                      <td className="p-4 text-gray-500">
+                      <td className="p-4 text-[var(--text-muted)]">
                         {new Date(inc.created_at).toLocaleString()}
                       </td>
                       <td className="p-4 text-right" onClick={e => e.stopPropagation()}>
                         <button 
                           onClick={() => handleOpenPanel(inc)}
-                          className="p-1.5 hover:bg-white/5 border border-transparent hover:border-[var(--border-default)] rounded transition active:scale-95"
+                          className="p-1.5 hover:bg-[var(--bg-page)] border border-transparent hover:border-[var(--border-default)] rounded transition active:scale-95"
                         >
-                          <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-white" />
+                          <ChevronRight className="h-4 w-4 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]" />
                         </button>
                       </td>
                     </tr>
@@ -463,35 +463,35 @@ export default function IncidentManagement() {
             className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
           />
           {/* Panel */}
-          <div className="fixed right-0 top-0 h-screen w-full max-w-lg bg-[#0b0f19] border-l border-zinc-900 shadow-2xl p-6 overflow-y-auto z-50 flex flex-col gap-6 animate-slide-in">
+          <div className="fixed right-0 top-0 h-screen w-full max-w-lg bg-[var(--bg-page)] border-l border-zinc-900 shadow-2xl p-6 overflow-y-auto z-50 flex flex-col gap-6 animate-slide-in">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-zinc-900 pb-4">
               <div>
-                <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Incident Investigation</span>
-                <h2 className="text-base font-black text-white uppercase tracking-tight mt-0.5 truncate max-w-xs">{selectedIncident.action.replace(/_/g, ' ')}</h2>
+                <span className="text-[9px] font-semibold text-indigo-400 uppercase tracking-widest">Incident Investigation</span>
+                <h2 className="text-base font-semibold text-white uppercase tracking-tight mt-0.5 truncate max-w-xs">{selectedIncident.action.replace(/_/g, ' ')}</h2>
               </div>
               <button 
                 onClick={() => setSelectedIncident(null)}
-                className="p-1.5 hover:bg-white/5 border border-zinc-800 rounded transition"
+                className="p-1.5 hover:bg-[var(--bg-page)] border border-zinc-800 rounded transition"
               >
-                <X className="h-4 w-4 text-gray-400" />
+                <X className="h-4 w-4 text-[var(--text-secondary)]" />
               </button>
             </div>
 
             {/* Details Grid */}
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-zinc-950/40 border border-zinc-900 p-3 rounded-lg">
-                <span className="text-[8px] font-black text-gray-500 uppercase tracking-widest">Severity</span>
-                <p className="text-xs font-black text-white mt-1 uppercase">{getSeverityLabel(selectedIncident.severity)} ({selectedIncident.severity})</p>
+                <span className="text-[8px] font-semibold text-[var(--text-muted)] uppercase tracking-widest">Severity</span>
+                <p className="text-xs font-semibold text-white mt-1 uppercase">{getSeverityLabel(selectedIncident.severity)} ({selectedIncident.severity})</p>
               </div>
               <div className="bg-zinc-950/40 border border-zinc-900 p-3 rounded-lg">
-                <span className="text-[8px] font-black text-gray-500 uppercase tracking-widest">Status</span>
+                <span className="text-[8px] font-semibold text-[var(--text-muted)] uppercase tracking-widest">Status</span>
                 <div className="mt-1">
                   <select
                     value={selectedIncident.status.toLowerCase() === 'unresolved' ? 'open' : selectedIncident.status.toLowerCase() === 'in progress' ? 'in_progress' : selectedIncident.status.toLowerCase()}
                     onChange={e => handleUpdateStatus(selectedIncident.id, e.target.value)}
                     className={cn(
-                      "text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded border outline-none cursor-pointer focus:border-indigo-500/50",
+                      "text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded border outline-none cursor-pointer focus:border-indigo-500/50",
                       getStatusBadgeColor(selectedIncident.status)
                     )}
                   >
@@ -502,12 +502,12 @@ export default function IncidentManagement() {
                 </div>
               </div>
               <div className="bg-zinc-950/40 border border-zinc-900 p-3 rounded-lg col-span-2">
-                <span className="text-[8px] font-black text-gray-500 uppercase tracking-widest">Agent ID</span>
-                <p className="text-xs font-mono text-gray-300 mt-1">{selectedIncident.agent_id}</p>
+                <span className="text-[8px] font-semibold text-[var(--text-muted)] uppercase tracking-widest">Agent ID</span>
+                <p className="text-xs font-mono text-[var(--text-secondary)] mt-1">{selectedIncident.agent_id}</p>
               </div>
               <div className="bg-zinc-950/40 border border-zinc-900 p-3 rounded-lg col-span-2">
-                <span className="text-[8px] font-black text-gray-500 uppercase tracking-widest">Description</span>
-                <p className="text-xs text-gray-300 mt-1 leading-relaxed">{selectedIncident.details}</p>
+                <span className="text-[8px] font-semibold text-[var(--text-muted)] uppercase tracking-widest">Description</span>
+                <p className="text-xs text-[var(--text-secondary)] mt-1 leading-relaxed">{selectedIncident.details}</p>
               </div>
             </div>
 
@@ -516,16 +516,16 @@ export default function IncidentManagement() {
               <div className="flex flex-col gap-4 border-t border-zinc-900 pt-4">
                 {selectedIncident.prompt_excerpt && (
                   <div>
-                    <span className="text-[8px] font-black text-gray-500 uppercase tracking-widest">Prompt Excerpt</span>
-                    <pre className="bg-zinc-950 border border-zinc-900 p-3 rounded-lg text-xs font-mono text-gray-400 mt-1 overflow-x-auto whitespace-pre-wrap">
+                    <span className="text-[8px] font-semibold text-[var(--text-muted)] uppercase tracking-widest">Prompt Excerpt</span>
+                    <pre className="bg-zinc-950 border border-zinc-900 p-3 rounded-lg text-xs font-mono text-[var(--text-secondary)] mt-1 overflow-x-auto whitespace-pre-wrap">
                       {selectedIncident.prompt_excerpt}
                     </pre>
                   </div>
                 )}
                 {selectedIncident.response_excerpt && (
                   <div>
-                    <span className="text-[8px] font-black text-gray-500 uppercase tracking-widest">Response Excerpt</span>
-                    <pre className="bg-zinc-950 border border-zinc-900 p-3 rounded-lg text-xs font-mono text-gray-400 mt-1 overflow-x-auto whitespace-pre-wrap">
+                    <span className="text-[8px] font-semibold text-[var(--text-muted)] uppercase tracking-widest">Response Excerpt</span>
+                    <pre className="bg-zinc-950 border border-zinc-900 p-3 rounded-lg text-xs font-mono text-[var(--text-secondary)] mt-1 overflow-x-auto whitespace-pre-wrap">
                       {selectedIncident.response_excerpt}
                     </pre>
                   </div>
@@ -535,18 +535,18 @@ export default function IncidentManagement() {
 
             {/* History Timeline */}
             <div className="flex flex-col gap-3 border-t border-zinc-900 pt-4 flex-1">
-              <span className="text-[8px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-1.5">
+              <span className="text-[8px] font-semibold text-indigo-400 uppercase tracking-widest flex items-center gap-1.5">
                 <History className="h-3 w-3" />
                 Remediation Audit Trail
               </span>
 
               {loadingTimeline ? (
-                <div className="flex items-center gap-2 text-xs text-gray-500 py-4 font-bold uppercase tracking-wider">
+                <div className="flex items-center gap-2 text-xs text-[var(--text-muted)] py-4 font-bold uppercase tracking-wider">
                   <RefreshCw className="h-4.5 w-4.5 animate-spin text-indigo-500" />
                   Loading timeline...
                 </div>
               ) : timeline.length === 0 ? (
-                <p className="text-xs text-gray-500 italic py-2">No history actions recorded for this incident yet.</p>
+                <p className="text-xs text-[var(--text-muted)] italic py-2">No history actions recorded for this incident yet.</p>
               ) : (
                 <div className="relative border-l border-zinc-800 ml-2 pl-4 py-2 space-y-5">
                   {timeline.map((item, idx) => (
@@ -554,8 +554,8 @@ export default function IncidentManagement() {
                       {/* Node point */}
                       <span className="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full bg-indigo-500 border border-[#0b0f19]" />
                       <div className="bg-zinc-950/20 border border-zinc-900 p-3 rounded-lg">
-                        <div className="flex justify-between items-center text-[10px] font-bold text-gray-500">
-                          <span className="uppercase text-gray-400">{item.changeType.replace(/_/g, ' ')}</span>
+                        <div className="flex justify-between items-center text-[10px] font-bold text-[var(--text-muted)]">
+                          <span className="uppercase text-[var(--text-secondary)]">{item.changeType.replace(/_/g, ' ')}</span>
                           <span>{new Date(item.createdAt).toLocaleString()}</span>
                         </div>
                         <p className="text-xs text-white font-semibold mt-1">{item.changeNote || 'No explanation note provided.'}</p>
@@ -590,23 +590,23 @@ export default function IncidentManagement() {
           {/* Content */}
           <form 
             onSubmit={handleLogIncident}
-            className="bg-[#0b0f19] border border-zinc-900 w-full max-w-md rounded-xl p-6 overflow-hidden z-10 flex flex-col gap-5 animate-scale-in"
+            className="bg-[var(--bg-page)] border border-zinc-900 w-full max-w-md rounded-xl p-6 overflow-hidden z-10 flex flex-col gap-5 animate-scale-in"
           >
             <div className="flex justify-between items-center border-b border-zinc-900 pb-3">
-              <h3 className="text-sm font-black text-white uppercase tracking-wider">Log Manual Incident</h3>
+              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Log Manual Incident</h3>
               <button 
                 type="button"
                 onClick={() => setIsLogModalOpen(false)}
-                className="p-1 hover:bg-white/5 border border-zinc-900 rounded"
+                className="p-1 hover:bg-[var(--bg-page)] border border-zinc-900 rounded"
               >
-                <X className="h-4 w-4 text-gray-400" />
+                <X className="h-4 w-4 text-[var(--text-secondary)]" />
               </button>
             </div>
 
             <div className="flex flex-col gap-4">
               {/* Type */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Incident Type</label>
+                <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Incident Type</label>
                 <select
                   value={logType}
                   onChange={e => setLogType(e.target.value)}
@@ -622,7 +622,7 @@ export default function IncidentManagement() {
 
               {/* Severity */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Severity</label>
+                <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Severity</label>
                 <select
                   value={logSeverity}
                   onChange={e => setLogSeverity(e.target.value)}
@@ -637,26 +637,26 @@ export default function IncidentManagement() {
 
               {/* Agent */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Agent Identifier</label>
+                <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Agent Identifier</label>
                 <input
                   type="text"
                   placeholder="e.g. customer-service-agent"
                   value={logAgent}
                   onChange={e => setLogAgent(e.target.value)}
-                  className="bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500/50"
+                  className="bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-indigo-500/50"
                   required
                 />
               </div>
 
               {/* Description */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Description</label>
+                <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Description</label>
                 <textarea
                   placeholder="Provide incident details, audit expectations, and trigger actions..."
                   value={logDescription}
                   onChange={e => setLogDescription(e.target.value)}
                   rows={4}
-                  className="bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 resize-none"
+                  className="bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-indigo-500/50 resize-none"
                   required
                 />
               </div>
@@ -666,7 +666,7 @@ export default function IncidentManagement() {
               <button
                 type="button"
                 onClick={() => setIsLogModalOpen(false)}
-                className="px-4 py-2 border border-zinc-800 rounded-lg text-xs font-bold text-gray-400 uppercase tracking-widest hover:bg-white/5 transition"
+                className="px-4 py-2 border border-zinc-800 rounded-lg text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest hover:bg-[var(--bg-page)] transition"
               >
                 Cancel
               </button>

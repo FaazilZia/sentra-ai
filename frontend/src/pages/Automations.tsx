@@ -139,7 +139,7 @@ export default function Automations() {
                   <Zap className="h-4 w-4 animate-bounce" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-800">Rule Builder Wizard</h3>
+                  <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-800">Rule Builder Wizard</h3>
                   <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Step {wizardStep} of 3</span>
                 </div>
               </div>
@@ -163,7 +163,7 @@ export default function Automations() {
               {wizardStep === 1 && (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Rule Name</label>
+                    <label className="block text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5">Rule Name</label>
                     <input 
                       type="text" 
                       value={newAutoName}
@@ -173,7 +173,7 @@ export default function Automations() {
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Description (Optional)</label>
+                    <label className="block text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5">Description (Optional)</label>
                     <textarea 
                       value={newAutoDesc}
                       onChange={(e) => setNewAutoDesc(e.target.value)}
@@ -187,7 +187,7 @@ export default function Automations() {
               {wizardStep === 2 && (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Select System Trigger Type</label>
+                    <label className="block text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5">Select System Trigger Type</label>
                     <select
                       value={newTriggerType}
                       onChange={(e) => {
@@ -209,7 +209,7 @@ export default function Automations() {
                   
                   {newTriggerType === 'COMPLIANCE_SCORE_BELOW_THRESHOLD' && (
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Maturity Score Threshold (%)</label>
+                      <label className="block text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5">Maturity Score Threshold (%)</label>
                       <input 
                         type="number" 
                         value={newTriggerConfig.threshold || 80}
@@ -224,7 +224,7 @@ export default function Automations() {
               {wizardStep === 3 && (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Select Governance Action</label>
+                    <label className="block text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5">Select Governance Action</label>
                     <select
                       value={newActionType}
                       onChange={(e) => {
@@ -250,7 +250,7 @@ export default function Automations() {
 
                   {newActionType === 'SEND_SLACK_NOTIFICATION' && (
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Slack Channel Target</label>
+                      <label className="block text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5">Slack Channel Target</label>
                       <input 
                         type="text" 
                         value={newActionConfig.channel || ''}
@@ -262,7 +262,7 @@ export default function Automations() {
 
                   {newActionType === 'SEND_EMAIL' && (
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Recipient Email Address</label>
+                      <label className="block text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5">Recipient Email Address</label>
                       <input 
                         type="email" 
                         value={newActionConfig.recipient || ''}
@@ -274,7 +274,7 @@ export default function Automations() {
 
                   {newActionType === 'CREATE_INCIDENT' && (
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Escalated Severity Tier</label>
+                      <label className="block text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5">Escalated Severity Tier</label>
                       <select 
                         value={newActionConfig.severity || 'HIGH'}
                         onChange={(e) => setNewActionConfig({ severity: e.target.value })}
@@ -335,7 +335,7 @@ export default function Automations() {
             <Cpu className="h-6 w-6" />
           </div>
           <div>
-            <h2 className="text-xs font-black uppercase tracking-widest text-[var(--text-primary)]">Automations Control Center</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--text-primary)]">Automations Control Center</h2>
             <p className="text-[10px] text-[var(--text-secondary)] font-medium">Coordinate system events to trigger compliance, notifications, and alert actions</p>
           </div>
         </div>
@@ -352,7 +352,7 @@ export default function Automations() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <div className="card-base p-4 flex items-center justify-between bg-white">
           <div>
-            <div className="text-[9px] font-black uppercase tracking-wider text-slate-400">Total Rules</div>
+            <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Total Rules</div>
             <div className="text-xl font-bold mt-1 text-slate-800">{totalAutomations}</div>
           </div>
           <div className="bg-slate-50 text-slate-500 p-2.5 rounded-xl border border-slate-100">
@@ -362,7 +362,7 @@ export default function Automations() {
 
         <div className="card-base p-4 flex items-center justify-between bg-white">
           <div>
-            <div className="text-[9px] font-black uppercase tracking-wider text-slate-400">Active Pipelines</div>
+            <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Active Pipelines</div>
             <div className="text-xl font-bold mt-1 text-indigo-600">{activeCount}</div>
           </div>
           <div className="bg-indigo-50 text-[var(--royal-indigo)] p-2.5 rounded-xl border border-indigo-100">
@@ -372,7 +372,7 @@ export default function Automations() {
 
         <div className="card-base p-4 flex items-center justify-between bg-white">
           <div>
-            <div className="text-[9px] font-black uppercase tracking-wider text-slate-400">Total Executions</div>
+            <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Total Executions</div>
             <div className="text-xl font-bold mt-1 text-slate-800">{totalLogsCount}</div>
           </div>
           <div className="bg-teal-50 text-teal-600 p-2.5 rounded-xl border border-teal-100">
@@ -382,7 +382,7 @@ export default function Automations() {
 
         <div className="card-base p-4 flex items-center justify-between bg-white">
           <div>
-            <div className="text-[9px] font-black uppercase tracking-wider text-slate-400">Success Rate</div>
+            <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Success Rate</div>
             <div className="text-xl font-bold mt-1 text-teal-600">
               {totalLogsCount > 0 ? `${Math.round((successCount / totalLogsCount) * 100)}%` : '100%'}
             </div>
@@ -399,7 +399,7 @@ export default function Automations() {
         <div className="lg:col-span-2 flex flex-col gap-4">
           <div className="card-base bg-white overflow-hidden shadow-sm">
             <div className="border-b border-slate-100 px-4 py-3 bg-slate-50 flex items-center justify-between">
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-700">Configured Rule Pipelines</h3>
+              <h3 className="text-[10px] font-semibold uppercase tracking-widest text-slate-700">Configured Rule Pipelines</h3>
               <span className="badge-pill bg-slate-200 text-slate-600 font-bold">{automations.length} Active</span>
             </div>
             
@@ -488,7 +488,7 @@ export default function Automations() {
           <div className="card-base bg-white overflow-hidden shadow-sm flex flex-col h-[500px]">
             <div className="border-b border-slate-100 px-4 py-3 bg-slate-50 flex items-center justify-between">
               <div>
-                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-700">Execution Run logs</h3>
+                <h3 className="text-[10px] font-semibold uppercase tracking-widest text-slate-700">Execution Run logs</h3>
                 <p className="text-[8px] font-bold text-slate-400 uppercase mt-0.5 tracking-wider truncate max-w-[150px]">{selectedAutoName || 'System Logs'}</p>
               </div>
               <span className="badge-pill bg-teal-50 text-teal-600 font-bold border-teal-100">{selectedLogs.length} Runs</span>
@@ -511,7 +511,7 @@ export default function Automations() {
                         ) : (
                           <Cpu className="h-3.5 w-3.5 text-amber-500 shrink-0" />
                         )}
-                        <span className={`text-[9px] font-black uppercase tracking-wider ${
+                        <span className={`text-[9px] font-semibold uppercase tracking-wider ${
                           log.status === 'SUCCESS' ? 'text-teal-600' : log.status === 'FAILURE' ? 'text-rose-600' : 'text-amber-600'
                         }`}>
                           {log.status}

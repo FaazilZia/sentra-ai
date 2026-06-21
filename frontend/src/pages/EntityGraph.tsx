@@ -10,6 +10,7 @@ import ReactFlow, {
   MarkerType,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
+import { NodePulseLoader } from '@/components/ui/NodePulseLoader';
 import { 
   Network, 
   Search, 
@@ -165,21 +166,23 @@ export default function EntityGraph() {
           id: `dataset-${ds.id}`,
           position: { x: X_COLS.DATASET, y: datasetIdx * Y_SPACING + 50 },
           data: { 
-            label: ds.name, 
+            label: (
+              <div className="absolute top-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-medium text-[var(--text-secondary)]">
+                {ds.name}
+              </div>
+            ), 
             type: 'DATASET',
             classification: ds.data_classification,
             details: ds 
           },
           style: {
-            background: '#0d1b2a',
-            color: '#38bdf8',
-            border: '1px solid #0284c7',
-            borderRadius: '8px',
-            padding: '12px',
-            fontSize: '10px',
-            fontWeight: 'bold',
-            width: 180,
-            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+            background: '#818CF8',
+            border: 'none',
+            borderRadius: '50%',
+            width: 14,
+            height: 14,
+            boxShadow: '0 0 6px rgba(129, 140, 248, 0.3)',
+            overflow: 'visible'
           }
         });
         datasetIdx++;
@@ -193,21 +196,22 @@ export default function EntityGraph() {
           id: `vendor-${v.id}`,
           position: { x: X_COLS.VENDOR, y: vendorIdx * Y_SPACING + 50 },
           data: { 
-            label: v.vendor_name, 
+            label: (
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] font-normal text-[var(--text-muted)]">
+                {v.vendor_name}
+              </div>
+            ), 
             type: 'VENDOR',
             risk: v.risk_level,
             details: v 
           },
           style: {
-            background: '#1c1917',
-            color: '#f59e0b',
-            border: '1px solid #d97706',
-            borderRadius: '8px',
-            padding: '12px',
-            fontSize: '10px',
-            fontWeight: 'bold',
-            width: 180,
-            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+            background: '#C7D2FE',
+            border: 'none',
+            borderRadius: '50%',
+            width: 8,
+            height: 8,
+            overflow: 'visible'
           }
         });
         vendorIdx++;
@@ -221,21 +225,23 @@ export default function EntityGraph() {
           id: `system-${s.id}`,
           position: { x: X_COLS.SYSTEM, y: systemIdx * Y_SPACING + 50 },
           data: { 
-            label: s.name, 
+            label: (
+              <div className="absolute top-6 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-semibold text-[var(--text-primary)]">
+                {s.name}
+              </div>
+            ), 
             type: 'SYSTEM',
             tier: s.risk_tier,
             details: s 
           },
           style: {
-            background: '#1e1b4b',
-            color: '#818cf8',
-            border: '1px solid #4f46e5',
-            borderRadius: '8px',
-            padding: '12px',
-            fontSize: '10px',
-            fontWeight: 'bold',
-            width: 200,
-            boxShadow: '0 4px 12px -2px rgba(79, 70, 229, 0.2)'
+            background: '#3730A3',
+            border: 'none',
+            borderRadius: '50%',
+            width: 20,
+            height: 20,
+            boxShadow: '0 0 10px rgba(55, 48, 163, 0.4)',
+            overflow: 'visible'
           }
         });
         systemIdx++;
@@ -249,21 +255,22 @@ export default function EntityGraph() {
           id: `risk-${r.id}`,
           position: { x: X_COLS.RISK, y: riskIdx * Y_SPACING + 50 },
           data: { 
-            label: `Risk: ${r.risk_level} (${r.score})`, 
+            label: (
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] font-normal text-[var(--text-muted)]">
+                {`Risk: ${r.risk_level} (${r.score})`}
+              </div>
+            ), 
             type: 'RISK',
             level: r.risk_level,
             details: r 
           },
           style: {
-            background: '#450a0a',
-            color: '#f87171',
-            border: '1px solid #dc2626',
-            borderRadius: '8px',
-            padding: '12px',
-            fontSize: '10px',
-            fontWeight: 'bold',
-            width: 180,
-            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+            background: '#C7D2FE',
+            border: 'none',
+            borderRadius: '50%',
+            width: 8,
+            height: 8,
+            overflow: 'visible'
           }
         });
         riskIdx++;
@@ -277,21 +284,23 @@ export default function EntityGraph() {
           id: `policy-${p.id}`,
           position: { x: X_COLS.POLICY, y: policyIdx * Y_SPACING + 50 },
           data: { 
-            label: p.name, 
+            label: (
+              <div className="absolute top-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-medium text-[var(--text-secondary)]">
+                {p.name}
+              </div>
+            ), 
             type: 'POLICY',
             status: p.status,
             details: p 
           },
           style: {
-            background: '#064e3b',
-            color: '#34d399',
-            border: '1px solid #059669',
-            borderRadius: '8px',
-            padding: '12px',
-            fontSize: '10px',
-            fontWeight: 'bold',
-            width: 180,
-            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+            background: '#818CF8',
+            border: 'none',
+            borderRadius: '50%',
+            width: 14,
+            height: 14,
+            boxShadow: '0 0 6px rgba(129, 140, 248, 0.3)',
+            overflow: 'visible'
           }
         });
         policyIdx++;
@@ -308,8 +317,8 @@ export default function EntityGraph() {
           source: `dataset-${ds.id}`,
           target: `system-${ds.ai_system_id}`,
           animated: true,
-          style: { stroke: '#0284c7', strokeWidth: 1.5 },
-          markerEnd: { type: MarkerType.ArrowClosed, color: '#0284c7' }
+          style: { stroke: 'rgba(79, 70, 229, 0.3)', strokeWidth: 1.5 },
+          markerEnd: { type: MarkerType.ArrowClosed, color: 'rgba(79, 70, 229, 0.3)' }
         });
       }
     });
@@ -321,8 +330,8 @@ export default function EntityGraph() {
           id: `edge-risk-${r.id}-sys-${r.ai_system_id}`,
           source: `risk-${r.id}`,
           target: `system-${r.ai_system_id}`,
-          style: { stroke: '#dc2626', strokeWidth: 1.5 },
-          markerEnd: { type: MarkerType.ArrowClosed, color: '#dc2626' }
+          style: { stroke: 'rgba(79, 70, 229, 0.3)', strokeWidth: 1.5 },
+          markerEnd: { type: MarkerType.ArrowClosed, color: 'rgba(79, 70, 229, 0.3)' }
         });
       }
     });
@@ -338,8 +347,8 @@ export default function EntityGraph() {
             id: `edge-ven-${v.id}-sys-${s.id}`,
             source: `vendor-${v.id}`,
             target: `system-${s.id}`,
-            style: { stroke: '#d97706', strokeWidth: 1.5, strokeDasharray: '5,5' },
-            markerEnd: { type: MarkerType.ArrowClosed, color: '#d97706' }
+            style: { stroke: 'rgba(79, 70, 229, 0.3)', strokeWidth: 1.5, strokeDasharray: '5,5' },
+            markerEnd: { type: MarkerType.ArrowClosed, color: 'rgba(79, 70, 229, 0.3)' }
           });
         }
       });
@@ -357,8 +366,8 @@ export default function EntityGraph() {
             id: `edge-risk-${r.id}-pol-${p.id}`,
             source: `risk-${r.id}`,
             target: `policy-${p.id}`,
-            style: { stroke: '#059669', strokeWidth: 1.5 },
-            markerEnd: { type: MarkerType.ArrowClosed, color: '#059669' }
+            style: { stroke: 'rgba(79, 70, 229, 0.3)', strokeWidth: 1.5 },
+            markerEnd: { type: MarkerType.ArrowClosed, color: 'rgba(79, 70, 229, 0.3)' }
           });
         }
       });
@@ -376,54 +385,54 @@ export default function EntityGraph() {
   const getEntityIcon = (type: string) => {
     switch (type) {
       case 'SYSTEM':
-        return <Layers className="h-5 w-5 text-indigo-400" />;
+        return <Layers className="h-5 w-5 text-[var(--royal-indigo)]" />;
       case 'DATASET':
-        return <Box className="h-5 w-5 text-sky-400" />;
+        return <Box className="h-5 w-5 text-[var(--violet-blue)]" />;
       case 'RISK':
-        return <ShieldAlert className="h-5 w-5 text-red-400" />;
+        return <ShieldAlert className="h-5 w-5 text-[var(--sentraa-danger, #DC2626)]" />;
       case 'POLICY':
-        return <FileText className="h-5 w-5 text-emerald-400" />;
+        return <FileText className="h-5 w-5 text-[var(--sentraa-success, #059669)]" />;
       case 'VENDOR':
         return <Building2 className="h-5 w-5 text-amber-400" />;
       default:
-        return <Network className="h-5 w-5 text-gray-400" />;
+        return <Network className="h-5 w-5 text-[var(--text-secondary)]" />;
     }
   };
 
   return (
     <div className="flex flex-col h-screen bg-[#080810] text-slate-100 font-sans">
       {/* Top Panel Controls */}
-      <div className="p-4 bg-zinc-950/40 border-b border-zinc-900 flex flex-wrap gap-4 items-center justify-between z-10">
+      <div className="p-4 bg-white border-b border-[var(--border-default)] shadow-sm flex flex-wrap gap-4 items-center justify-between z-10">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-[var(--mid-indigo)]/20 border border-[var(--royal-indigo)]/30 rounded-lg">
             <Network className="h-5 w-5 text-[var(--royal-indigo)]" />
           </div>
           <div>
-            <h1 className="text-sm font-black uppercase tracking-wider text-white">Entity Relationship Graph</h1>
-            <p className="text-[9px] uppercase tracking-widest text-zinc-500 font-bold">Lineage, dependencies & posture mappings</p>
+            <h1 className="text-[22px] font-semibold text-[var(--text-primary)] tracking-tight">Entity Relationship Graph</h1>
+            <p className="text-[9px] uppercase tracking-widest text-[var(--text-muted)] font-bold">Lineage, dependencies & posture mappings</p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
           {/* Search bar */}
           <div className="relative">
-            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-zinc-500" />
+            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-[var(--text-muted)]" />
             <input
               type="text"
               placeholder="Search entities..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-zinc-900 border border-zinc-800 rounded px-8 py-2 text-[11px] font-bold text-white focus:outline-none focus:border-[var(--royal-indigo)] w-48 font-mono placeholder-zinc-600"
+              className="bg-zinc-900 border border-zinc-800 rounded px-8 py-2 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)] w-48 font-mono placeholder-zinc-600"
             />
           </div>
 
           {/* Filter standard */}
           <div className="flex items-center gap-1.5">
-            <Filter className="h-3.5 w-3.5 text-zinc-500" />
+            <Filter className="h-3.5 w-3.5 text-[var(--text-muted)]" />
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-[10px] font-bold text-white focus:outline-none focus:border-[var(--royal-indigo)]"
+              className="bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-[10px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
             >
               <option value="ALL">All Nodes</option>
               <option value="SYSTEM">AI Systems</option>
@@ -436,7 +445,7 @@ export default function EntityGraph() {
 
           <button
             onClick={loadData}
-            className="p-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded transition-all active:scale-95 text-zinc-400 hover:text-white"
+            className="p-2 bg-white hover:bg-[var(--bg-hover)] border border-[var(--border-default)] rounded transition-all active:scale-95 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             title="Refresh graph data"
           >
             <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
@@ -450,7 +459,7 @@ export default function EntityGraph() {
           {loading ? (
             <div className="h-full flex flex-col items-center justify-center gap-3 bg-zinc-950/10">
               <RefreshCw className="h-8 w-8 animate-spin text-[var(--royal-indigo)]" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Mapping Entity Space...</span>
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">Mapping Entity Space...</span>
             </div>
           ) : (
             <ReactFlow
@@ -462,8 +471,8 @@ export default function EntityGraph() {
               fitView
               attributionPosition="bottom-right"
             >
-              <Background color="#1f1f2e" gap={16} size={1} />
-              <Controls className="bg-zinc-900 border-zinc-800 text-white rounded overflow-hidden" />
+              <Background color="rgba(55, 48, 163, 0.08)" gap={16} size={1} />
+              <Controls className="bg-white border-[var(--border-default)] text-[var(--text-primary)] rounded-xl overflow-hidden" />
               <MiniMap 
                 nodeStrokeColor={(n) => {
                   if (n.data?.type === 'SYSTEM') return '#4f46e5';
@@ -481,7 +490,7 @@ export default function EntityGraph() {
                   if (n.data?.type === 'VENDOR') return '#1c1917';
                   return '#09090b';
                 }}
-                className="bg-zinc-950/80 border border-zinc-900 rounded"
+                className="bg-white border border-[var(--border-default)] rounded-xl"
               />
             </ReactFlow>
           )}
@@ -489,17 +498,17 @@ export default function EntityGraph() {
 
         {/* Right Side Detail panel */}
         {selectedNodeData && (
-          <div className="w-80 bg-zinc-950/80 backdrop-blur-md border-l border-zinc-900 h-full flex flex-col z-10 absolute right-0 top-0 shadow-2xl transition-all">
-            <div className="p-4 border-b border-zinc-900 flex justify-between items-center bg-[#09090e]/60">
+          <div className="w-80 bg-white border-l border-[var(--border-default)] h-full flex flex-col z-10 absolute right-0 top-0 shadow-2xl transition-all">
+            <div className="p-4 border-b border-[var(--border-default)] flex justify-between items-center bg-white">
               <div className="flex items-center gap-2">
                 {getEntityIcon(selectedNodeData.type)}
-                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--royal-indigo)]">
                   {selectedNodeData.type} Details
                 </span>
               </div>
               <button
                 onClick={() => setSelectedNodeData(null)}
-                className="text-zinc-500 hover:text-white text-xs font-bold font-mono px-2 py-1 rounded bg-zinc-900 border border-zinc-800/80"
+                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-semibold px-2 py-1 rounded bg-white border border-[var(--border-default)]"
               >
                 Close
               </button>
@@ -507,15 +516,15 @@ export default function EntityGraph() {
 
             <div className="flex-1 overflow-y-auto p-5 space-y-5">
               <div>
-                <h3 className="text-sm font-black text-white">{selectedNodeData.label}</h3>
-                <p className="text-[10px] text-zinc-500 font-mono mt-1 uppercase">ID: {selectedNodeData.details.id.slice(0, 8)}...</p>
+                <h3 className="text-sm font-semibold text-[var(--text-primary)]">{selectedNodeData.label}</h3>
+                <p className="text-[10px] text-[var(--text-muted)] font-mono mt-1 uppercase">ID: {selectedNodeData.details.id.slice(0, 8)}...</p>
               </div>
 
               {/* Description */}
               {selectedNodeData.details.description && (
                 <div className="space-y-1">
-                  <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Description</span>
-                  <p className="text-xs text-zinc-400 leading-relaxed bg-zinc-900/30 p-2.5 rounded border border-zinc-900/50">
+                  <span className="text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-widest">Description</span>
+                  <p className="text-xs text-[var(--text-secondary)] leading-relaxed bg-[var(--bg-page)] p-2.5 rounded border border-[var(--border-default)]">
                     {selectedNodeData.details.description}
                   </p>
                 </div>
@@ -525,13 +534,13 @@ export default function EntityGraph() {
               {selectedNodeData.type === 'SYSTEM' && (
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-zinc-900/40 p-3 rounded border border-zinc-900">
-                      <span className="text-[8px] font-black text-zinc-500 uppercase">Risk Tier</span>
-                      <p className="text-xs font-bold text-indigo-400 mt-1 uppercase">{selectedNodeData.tier || 'UNKNOWN'}</p>
+                    <div className="bg-[var(--bg-page)] p-3 rounded border border-[var(--border-default)]">
+                      <span className="text-[8px] font-semibold text-[var(--text-muted)] uppercase">Risk Tier</span>
+                      <p className="text-xs font-bold text-[var(--royal-indigo)] mt-1 uppercase">{selectedNodeData.tier || 'UNKNOWN'}</p>
                     </div>
-                    <div className="bg-zinc-900/40 p-3 rounded border border-zinc-900">
-                      <span className="text-[8px] font-black text-zinc-500 uppercase">Status</span>
-                      <p className="text-xs font-bold text-emerald-400 mt-1 uppercase">{selectedNodeData.details.status}</p>
+                    <div className="bg-[var(--bg-page)] p-3 rounded border border-[var(--border-default)]">
+                      <span className="text-[8px] font-semibold text-[var(--text-muted)] uppercase">Status</span>
+                      <p className="text-xs font-bold text-[var(--sentraa-success, #059669)] mt-1 uppercase">{selectedNodeData.details.status}</p>
                     </div>
                   </div>
                 </div>
@@ -541,19 +550,19 @@ export default function EntityGraph() {
               {selectedNodeData.type === 'DATASET' && (
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-zinc-900/40 p-3 rounded border border-zinc-900">
-                      <span className="text-[8px] font-black text-zinc-500 uppercase">Classification</span>
-                      <p className="text-xs font-bold text-sky-400 mt-1 uppercase">{selectedNodeData.classification || 'INTERNAL'}</p>
+                    <div className="bg-[var(--bg-page)] p-3 rounded border border-[var(--border-default)]">
+                      <span className="text-[8px] font-semibold text-[var(--text-muted)] uppercase">Classification</span>
+                      <p className="text-xs font-bold text-[var(--violet-blue)] mt-1 uppercase">{selectedNodeData.classification || 'INTERNAL'}</p>
                     </div>
-                    <div className="bg-zinc-900/40 p-3 rounded border border-zinc-900">
-                      <span className="text-[8px] font-black text-zinc-500 uppercase">Type</span>
-                      <p className="text-xs font-bold text-indigo-400 mt-1 uppercase">{selectedNodeData.details.dataset_type}</p>
+                    <div className="bg-[var(--bg-page)] p-3 rounded border border-[var(--border-default)]">
+                      <span className="text-[8px] font-semibold text-[var(--text-muted)] uppercase">Type</span>
+                      <p className="text-xs font-bold text-[var(--royal-indigo)] mt-1 uppercase">{selectedNodeData.details.dataset_type}</p>
                     </div>
                   </div>
                   {selectedNodeData.details.record_count && (
-                    <div className="bg-zinc-900/40 p-3 rounded border border-zinc-900 flex justify-between items-center">
-                      <span className="text-[8px] font-black text-zinc-500 uppercase">Record Count</span>
-                      <span className="text-xs font-bold font-mono text-white">{selectedNodeData.details.record_count.toLocaleString()}</span>
+                    <div className="bg-[var(--bg-page)] p-3 rounded border border-[var(--border-default)] flex justify-between items-center">
+                      <span className="text-[8px] font-semibold text-[var(--text-muted)] uppercase">Record Count</span>
+                      <span className="text-xs font-bold font-mono text-[var(--text-primary)]">{selectedNodeData.details.record_count.toLocaleString()}</span>
                     </div>
                   )}
                 </div>
@@ -563,18 +572,18 @@ export default function EntityGraph() {
               {selectedNodeData.type === 'RISK' && (
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-zinc-900/40 p-3 rounded border border-zinc-900">
-                      <span className="text-[8px] font-black text-zinc-500 uppercase">Score</span>
-                      <p className="text-xs font-bold text-red-400 mt-1 font-mono">{selectedNodeData.details.score}</p>
+                    <div className="bg-[var(--bg-page)] p-3 rounded border border-[var(--border-default)]">
+                      <span className="text-[8px] font-semibold text-[var(--text-muted)] uppercase">Score</span>
+                      <p className="text-xs font-bold text-[var(--sentraa-danger, #DC2626)] mt-1 font-mono">{selectedNodeData.details.score}</p>
                     </div>
-                    <div className="bg-zinc-900/40 p-3 rounded border border-zinc-900">
-                      <span className="text-[8px] font-black text-zinc-500 uppercase">Risk Level</span>
-                      <p className="text-xs font-bold text-red-500 mt-1 uppercase">{selectedNodeData.level}</p>
+                    <div className="bg-[var(--bg-page)] p-3 rounded border border-[var(--border-default)]">
+                      <span className="text-[8px] font-semibold text-[var(--text-muted)] uppercase">Risk Level</span>
+                      <p className="text-xs font-bold text-[var(--sentraa-danger, #DC2626)] mt-1 uppercase">{selectedNodeData.level}</p>
                     </div>
                   </div>
-                  <div className="bg-zinc-900/40 p-3 rounded border border-zinc-900 flex justify-between items-center">
-                    <span className="text-[8px] font-black text-zinc-500 uppercase">Status</span>
-                    <span className="text-xs font-bold text-amber-500 uppercase">{selectedNodeData.details.status}</span>
+                  <div className="bg-[var(--bg-page)] p-3 rounded border border-[var(--border-default)] flex justify-between items-center">
+                    <span className="text-[8px] font-semibold text-[var(--text-muted)] uppercase">Status</span>
+                    <span className="text-xs font-bold text-[var(--sentraa-warning, #D97706)] uppercase">{selectedNodeData.details.status}</span>
                   </div>
                 </div>
               )}
@@ -582,14 +591,14 @@ export default function EntityGraph() {
               {/* Policy details metadata */}
               {selectedNodeData.type === 'POLICY' && (
                 <div className="space-y-3">
-                  <div className="bg-zinc-900/40 p-3 rounded border border-zinc-900 flex justify-between items-center">
-                    <span className="text-[8px] font-black text-zinc-500 uppercase">Status</span>
-                    <span className="text-xs font-bold text-emerald-400 uppercase">{selectedNodeData.details.status}</span>
+                  <div className="bg-[var(--bg-page)] p-3 rounded border border-[var(--border-default)] flex justify-between items-center">
+                    <span className="text-[8px] font-semibold text-[var(--text-muted)] uppercase">Status</span>
+                    <span className="text-xs font-bold text-[var(--sentraa-success, #059669)] uppercase">{selectedNodeData.details.status}</span>
                   </div>
                   {selectedNodeData.details.priority && (
-                    <div className="bg-zinc-900/40 p-3 rounded border border-zinc-900 flex justify-between items-center">
-                      <span className="text-[8px] font-black text-zinc-500 uppercase">Priority</span>
-                      <span className="text-xs font-bold text-indigo-400">{selectedNodeData.details.priority}</span>
+                    <div className="bg-[var(--bg-page)] p-3 rounded border border-[var(--border-default)] flex justify-between items-center">
+                      <span className="text-[8px] font-semibold text-[var(--text-muted)] uppercase">Priority</span>
+                      <span className="text-xs font-bold text-[var(--royal-indigo)]">{selectedNodeData.details.priority}</span>
                     </div>
                   )}
                 </div>
@@ -599,29 +608,29 @@ export default function EntityGraph() {
               {selectedNodeData.type === 'VENDOR' && (
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-zinc-900/40 p-3 rounded border border-zinc-900">
-                      <span className="text-[8px] font-black text-zinc-500 uppercase">Risk Level</span>
-                      <p className="text-xs font-bold text-amber-500 mt-1 uppercase">{selectedNodeData.risk}</p>
+                    <div className="bg-[var(--bg-page)] p-3 rounded border border-[var(--border-default)]">
+                      <span className="text-[8px] font-semibold text-[var(--text-muted)] uppercase">Risk Level</span>
+                      <p className="text-xs font-bold text-[var(--sentraa-warning, #D97706)] mt-1 uppercase">{selectedNodeData.risk}</p>
                     </div>
-                    <div className="bg-zinc-900/40 p-3 rounded border border-zinc-900">
-                      <span className="text-[8px] font-black text-zinc-500 uppercase">Risk Score</span>
-                      <p className="text-xs font-bold text-amber-500 mt-1 font-mono">{selectedNodeData.details.risk_score}</p>
+                    <div className="bg-[var(--bg-page)] p-3 rounded border border-[var(--border-default)]">
+                      <span className="text-[8px] font-semibold text-[var(--text-muted)] uppercase">Risk Score</span>
+                      <p className="text-xs font-bold text-[var(--sentraa-warning, #D97706)] mt-1 font-mono">{selectedNodeData.details.risk_score}</p>
                     </div>
                   </div>
-                  <div className="bg-zinc-900/40 p-3 rounded border border-zinc-900 flex justify-between items-center">
-                    <span className="text-[8px] font-black text-zinc-500 uppercase">Type</span>
-                    <span className="text-[10px] font-bold text-zinc-400 uppercase">{selectedNodeData.details.vendor_type}</span>
+                  <div className="bg-[var(--bg-page)] p-3 rounded border border-[var(--border-default)] flex justify-between items-center">
+                    <span className="text-[8px] font-semibold text-[var(--text-muted)] uppercase">Type</span>
+                    <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase">{selectedNodeData.details.vendor_type}</span>
                   </div>
-                  <div className="bg-zinc-900/40 p-3 rounded border border-zinc-900 flex justify-between items-center">
-                    <span className="text-[8px] font-black text-zinc-500 uppercase">Assess Status</span>
-                    <span className="text-xs font-bold text-emerald-400 uppercase">{selectedNodeData.details.status}</span>
+                  <div className="bg-[var(--bg-page)] p-3 rounded border border-[var(--border-default)] flex justify-between items-center">
+                    <span className="text-[8px] font-semibold text-[var(--text-muted)] uppercase">Assess Status</span>
+                    <span className="text-xs font-bold text-[var(--sentraa-success, #059669)] uppercase">{selectedNodeData.details.status}</span>
                   </div>
                 </div>
               )}
             </div>
 
             {/* View Standard Link */}
-            <div className="p-4 bg-zinc-950/60 border-t border-zinc-900 flex justify-center">
+            <div className="p-4 bg-zinc-950/60 border-t border-[var(--border-default)] flex justify-center">
               <a
                 href={
                   selectedNodeData.type === 'SYSTEM' ? '/app/ai-registry' :
@@ -630,9 +639,9 @@ export default function EntityGraph() {
                   selectedNodeData.type === 'POLICY' ? '/app/policies' :
                   selectedNodeData.type === 'VENDOR' ? '/app/vendor-risk' : '#'
                 }
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white rounded text-[10px] font-black uppercase tracking-widest border border-zinc-800 transition-all active:scale-95"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-[var(--text-primary)] rounded text-[10px] font-semibold uppercase tracking-widest border border-zinc-800 transition-all active:scale-95"
               >
-                <ExternalLink className="h-3.5 w-3.5 text-indigo-400" />
+                <ExternalLink className="h-3.5 w-3.5 text-[var(--royal-indigo)]" />
                 Inspect Entity
               </a>
             </div>

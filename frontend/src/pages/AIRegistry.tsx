@@ -1,3 +1,4 @@
+import { NodePulseLoader } from '@/components/ui/NodePulseLoader';
 import { useEffect, useState } from 'react';
 import { apiRequest } from '@/lib/api';
 import { 
@@ -97,13 +98,13 @@ export default function AIRegistry() {
 
   const getLifecycleColor = (stage?: string) => {
     switch (stage?.toUpperCase()) {
-      case 'DEVELOPMENT': return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+      case 'DEVELOPMENT': return 'bg-gray-500/10 text-[var(--text-secondary)] border-gray-500/20';
       case 'TESTING': return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20';
       case 'STAGING': return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
       case 'PRODUCTION': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
       case 'DEPRECATED': return 'bg-orange-500/10 text-orange-400 border-orange-500/20';
       case 'RETIRED': return 'bg-red-500/10 text-red-400 border-red-500/20';
-      default: return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+      default: return 'bg-gray-500/10 text-[var(--text-secondary)] border-gray-500/20';
     }
   };
 
@@ -283,7 +284,7 @@ export default function AIRegistry() {
     switch (status) {
       case 'ACTIVE': return <CheckCircle2 className="h-4 w-4 text-emerald-400" />;
       case 'UNDER_REVIEW': return <AlertCircle className="h-4 w-4 text-yellow-400" />;
-      default: return <X className="h-4 w-4 text-gray-400" />;
+      default: return <X className="h-4 w-4 text-[var(--text-secondary)]" />;
     }
   };
 
@@ -295,7 +296,7 @@ export default function AIRegistry() {
   );
 
   return (
-    <div className="flex flex-col gap-6 p-6 animate-fade-in text-gray-200">
+    <div className="flex flex-col gap-6 p-6 animate-fade-in  ">
       <PageHeader 
         title="AI System Registry"
         description="Maintain your enterprise inventory of AI systems, versions, owners, and dynamic model cards."
@@ -316,19 +317,19 @@ export default function AIRegistry() {
         {/* Inventory Column */}
         <div className="lg:col-span-2 flex flex-col gap-4">
           <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--text-muted)]" />
             <input
               type="text"
               placeholder="Search by system name, vendor, model, use case..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-[#111827]/60 border border-gray-800 rounded-xl py-3 pl-11 pr-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+              className="w-full bg-[var(--bg-page)]/60 border border-[var(--border-default)] rounded-xl py-3 pl-11 pr-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
             />
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center py-20 bg-[#111827]/40 border border-gray-800/80 rounded-2xl">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
+            <div className="flex items-center justify-center py-20 bg-[var(--bg-page)] border border-[var(--border-default)]/80 rounded-2xl">
+              <NodePulseLoader label="Loading AI systems registry..." />
             </div>
           ) : filteredSystems.length === 0 ? (
             <EmptyState 
@@ -353,7 +354,7 @@ export default function AIRegistry() {
                   className={`group relative overflow-hidden rounded-xl border p-5 transition-all cursor-pointer ${
                     selectedSystem?.id === sys.id 
                       ? 'bg-indigo-950/20 border-indigo-500/50 shadow-md shadow-indigo-500/5' 
-                      : 'bg-[#111827]/40 border-gray-800/60 hover:bg-[#111827]/80 hover:border-gray-700'
+                      : 'bg-[var(--bg-page)] border-[var(--border-default)]/60 hover:bg-[var(--bg-page)]/80 hover:border-[var(--border-default)]'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-4">
@@ -368,16 +369,16 @@ export default function AIRegistry() {
                             {sys.risk_tier} RISK
                           </span>
                         </h3>
-                        <p className="text-xs text-gray-400 mt-1 line-clamp-1">{sys.description || 'No description provided.'}</p>
+                        <p className="text-xs text-[var(--text-secondary)] mt-1 line-clamp-1">{sys.description || 'No description provided.'}</p>
                         
-                        <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-gray-400">
-                          <span className="flex items-center gap-1.5"><Layers className="h-3.5 w-3.5 text-gray-500" /> {sys.model_name} (v{sys.model_version})</span>
-                          <span className="flex items-center gap-1.5"><User className="h-3.5 w-3.5 text-gray-500" /> {sys.vendor}</span>
+                        <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-[var(--text-secondary)]">
+                          <span className="flex items-center gap-1.5"><Layers className="h-3.5 w-3.5 text-[var(--text-muted)]" /> {sys.model_name} (v{sys.model_version})</span>
+                          <span className="flex items-center gap-1.5"><User className="h-3.5 w-3.5 text-[var(--text-muted)]" /> {sys.vendor}</span>
                           <span className="flex items-center gap-1.5">{getStatusIcon(sys.status)} {sys.status}</span>
                         </div>
                       </div>
                     </div>
-                    <ChevronRight className="h-5 w-5 text-gray-600 group-hover:text-gray-400 group-hover:translate-x-1 transition-all self-center" />
+                    <ChevronRight className="h-5 w-5 text-[var(--text-muted)] group-hover:text-[var(--text-secondary)] group-hover:translate-x-1 transition-all self-center" />
                   </div>
                 </div>
               ))}
@@ -388,11 +389,11 @@ export default function AIRegistry() {
         {/* Model Card / Details Column */}
         <div className="lg:col-span-1">
           {selectedSystem ? (
-            <div className="bg-[#111827]/40 border border-gray-800/80 rounded-2xl p-6 flex flex-col gap-6 sticky top-6">
+            <div className="bg-[var(--bg-page)] border border-[var(--border-default)]/80 rounded-2xl p-6 flex flex-col gap-6 sticky top-6">
               
-              <div className="flex items-start justify-between gap-4 border-b border-gray-800/80 pb-4">
+              <div className="flex items-start justify-between gap-4 border-b border-[var(--border-default)]/80 pb-4">
                 <div>
-                  <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Model Specification</span>
+                  <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">Model Specification</span>
                   <h2 className="text-xl font-bold text-white mt-0.5">{selectedSystem.name}</h2>
                   <div className="flex items-center gap-2 mt-1">
                     <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${getLifecycleColor(selectedSystem.lifecycle_stage)}`}>
@@ -402,16 +403,16 @@ export default function AIRegistry() {
                 </div>
                 <button
                   onClick={() => setSelectedSystem(null)}
-                  className="rounded-lg p-1 hover:bg-gray-800 text-gray-500 hover:text-white transition-all"
+                  className="rounded-lg p-1 hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all"
                 >
                   <X className="h-5 w-5" />
                 </button>
               </div>
 
               {/* Lifecycle Stage Controls */}
-              <div className="bg-[#0f172a]/40 border border-gray-800/60 rounded-xl p-4 flex flex-col gap-3">
+              <div className="bg-[#0f172a]/40 border border-[var(--border-default)]/60 rounded-xl p-4 flex flex-col gap-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Lifecycle Management</span>
+                  <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Lifecycle Management</span>
                   <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${getLifecycleColor(selectedSystem.lifecycle_stage)}`}>
                     {selectedSystem.lifecycle_stage || 'DEVELOPMENT'}
                   </span>
@@ -469,7 +470,7 @@ export default function AIRegistry() {
               {/* Model Card Block */}
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-white flex items-center gap-2 text-sm uppercase tracking-wider text-gray-300">
+                  <h3 className="font-bold text-white flex items-center gap-2 text-sm uppercase tracking-wider text-[var(--text-secondary)]">
                     <FileText className="h-4 w-4 text-purple-400" />
                     Model Card
                   </h3>
@@ -491,94 +492,94 @@ export default function AIRegistry() {
                 </div>
 
                 {!isModelCardEdit ? (
-                  <div className="flex flex-col gap-4 text-xs text-gray-300 bg-[#0f172a]/40 border border-gray-800/60 rounded-xl p-4 max-h-[500px] overflow-y-auto">
+                  <div className="flex flex-col gap-4 text-xs text-[var(--text-secondary)] bg-[#0f172a]/40 border border-[var(--border-default)]/60 rounded-xl p-4 max-h-[500px] overflow-y-auto">
                     <div>
                       <h4 className="font-semibold text-indigo-400 mb-1 flex items-center gap-1"><Sparkles className="h-3.5 w-3.5" /> Intended Use</h4>
-                      <p className="text-gray-400 leading-relaxed">{modelCardData.intended_use || 'No intended use documented yet.'}</p>
+                      <p className="text-[var(--text-secondary)] leading-relaxed">{modelCardData.intended_use || 'No intended use documented yet.'}</p>
                     </div>
 
                     <div>
                       <h4 className="font-semibold text-purple-400 mb-1 flex items-center gap-1"><X className="h-3.5 w-3.5" /> Out of Scope Use</h4>
-                      <p className="text-gray-400 leading-relaxed">{modelCardData.out_of_scope_use || 'No restrictions documented yet.'}</p>
+                      <p className="text-[var(--text-secondary)] leading-relaxed">{modelCardData.out_of_scope_use || 'No restrictions documented yet.'}</p>
                     </div>
 
                     <div>
                       <h4 className="font-semibold text-blue-400 mb-1 flex items-center gap-1"><Layers className="h-3.5 w-3.5" /> Training Data</h4>
-                      <p className="text-gray-400 leading-relaxed">{modelCardData.training_data_description || 'No data specifications documented yet.'}</p>
+                      <p className="text-[var(--text-secondary)] leading-relaxed">{modelCardData.training_data_description || 'No data specifications documented yet.'}</p>
                     </div>
 
                     <div>
                       <h4 className="font-semibold text-orange-400 mb-1 flex items-center gap-1"><ShieldAlert className="h-3.5 w-3.5" /> Limitations & Bias</h4>
-                      <p className="text-gray-400 leading-relaxed">{modelCardData.known_limitations || 'No limitations documented yet.'}</p>
-                      <p className="text-gray-400 leading-relaxed mt-1.5">{modelCardData.bias_considerations || 'No bias considerations documented yet.'}</p>
+                      <p className="text-[var(--text-secondary)] leading-relaxed">{modelCardData.known_limitations || 'No limitations documented yet.'}</p>
+                      <p className="text-[var(--text-secondary)] leading-relaxed mt-1.5">{modelCardData.bias_considerations || 'No bias considerations documented yet.'}</p>
                     </div>
 
                     <div>
                       <h4 className="font-semibold text-emerald-400 mb-1 flex items-center gap-1"><Info className="h-3.5 w-3.5" /> Performance Metrics</h4>
-                      <pre className="mt-1 bg-black/30 p-2.5 rounded-lg border border-gray-800 text-[10px] text-emerald-300 font-mono overflow-x-auto">
+                      <pre className="mt-1 bg-black/30 p-2.5 rounded-lg border border-[var(--border-default)] text-[10px] text-emerald-300 font-mono overflow-x-auto">
                         {performanceMetricsText}
                       </pre>
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-4 text-xs bg-[#0f172a]/20 rounded-xl p-4 max-h-[500px] overflow-y-auto border border-gray-800/80">
+                  <div className="flex flex-col gap-4 text-xs bg-[#0f172a]/20 rounded-xl p-4 max-h-[500px] overflow-y-auto border border-[var(--border-default)]/80">
                     <div className="flex flex-col gap-1">
-                      <label htmlFor="card-intended-use" className="text-[10px] uppercase font-bold text-gray-500">Intended Use</label>
+                      <label htmlFor="card-intended-use" className="text-[10px] uppercase font-bold text-[var(--text-muted)]">Intended Use</label>
                       <textarea
                         id="card-intended-use"
                         value={modelCardData.intended_use || ''}
                         onChange={(e) => setModelCardData({ ...modelCardData, intended_use: e.target.value })}
-                        className="bg-black/30 border border-gray-800 rounded-lg p-2 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
+                        className="bg-black/30 border border-[var(--border-default)] rounded-lg p-2 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
                       />
                     </div>
 
                     <div className="flex flex-col gap-1">
-                      <label htmlFor="card-out-of-scope" className="text-[10px] uppercase font-bold text-gray-500">Out of Scope Use</label>
+                      <label htmlFor="card-out-of-scope" className="text-[10px] uppercase font-bold text-[var(--text-muted)]">Out of Scope Use</label>
                       <textarea
                         id="card-out-of-scope"
                         value={modelCardData.out_of_scope_use || ''}
                         onChange={(e) => setModelCardData({ ...modelCardData, out_of_scope_use: e.target.value })}
-                        className="bg-black/30 border border-gray-800 rounded-lg p-2 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
+                        className="bg-black/30 border border-[var(--border-default)] rounded-lg p-2 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
                       />
                     </div>
 
                     <div className="flex flex-col gap-1">
-                      <label htmlFor="card-training-data" className="text-[10px] uppercase font-bold text-gray-500">Training Data Description</label>
+                      <label htmlFor="card-training-data" className="text-[10px] uppercase font-bold text-[var(--text-muted)]">Training Data Description</label>
                       <textarea
                         id="card-training-data"
                         value={modelCardData.training_data_description || ''}
                         onChange={(e) => setModelCardData({ ...modelCardData, training_data_description: e.target.value })}
-                        className="bg-black/30 border border-gray-800 rounded-lg p-2 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
+                        className="bg-black/30 border border-[var(--border-default)] rounded-lg p-2 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
                       />
                     </div>
 
                     <div className="flex flex-col gap-1">
-                      <label htmlFor="card-limitations" className="text-[10px] uppercase font-bold text-gray-500">Known Limitations</label>
+                      <label htmlFor="card-limitations" className="text-[10px] uppercase font-bold text-[var(--text-muted)]">Known Limitations</label>
                       <textarea
                         id="card-limitations"
                         value={modelCardData.known_limitations || ''}
                         onChange={(e) => setModelCardData({ ...modelCardData, known_limitations: e.target.value })}
-                        className="bg-black/30 border border-gray-800 rounded-lg p-2 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
+                        className="bg-black/30 border border-[var(--border-default)] rounded-lg p-2 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
                       />
                     </div>
 
                     <div className="flex flex-col gap-1">
-                      <label htmlFor="card-bias" className="text-[10px] uppercase font-bold text-gray-500">Bias Considerations</label>
+                      <label htmlFor="card-bias" className="text-[10px] uppercase font-bold text-[var(--text-muted)]">Bias Considerations</label>
                       <textarea
                         id="card-bias"
                         value={modelCardData.bias_considerations || ''}
                         onChange={(e) => setModelCardData({ ...modelCardData, bias_considerations: e.target.value })}
-                        className="bg-black/30 border border-gray-800 rounded-lg p-2 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
+                        className="bg-black/30 border border-[var(--border-default)] rounded-lg p-2 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
                       />
                     </div>
 
                     <div className="flex flex-col gap-1">
-                      <label htmlFor="card-metrics" className="text-[10px] uppercase font-bold text-gray-500">Performance Metrics (JSON)</label>
+                      <label htmlFor="card-metrics" className="text-[10px] uppercase font-bold text-[var(--text-muted)]">Performance Metrics (JSON)</label>
                       <textarea
                         id="card-metrics"
                         value={performanceMetricsText}
                         onChange={(e) => setPerformanceMetricsText(e.target.value)}
-                        className="bg-black/30 border border-gray-800 rounded-lg p-2 text-emerald-300 font-mono focus:outline-none focus:border-indigo-500 min-h-[80px]"
+                        className="bg-black/30 border border-[var(--border-default)] rounded-lg p-2 text-emerald-300 font-mono focus:outline-none focus:border-indigo-500 min-h-[80px]"
                       />
                     </div>
                   </div>
@@ -586,33 +587,33 @@ export default function AIRegistry() {
               </div>
 
               {/* Lifecycle History Timeline */}
-              <div className="pt-4 border-t border-gray-800 flex flex-col gap-3">
-                <h3 className="font-bold text-white flex items-center gap-2 text-sm uppercase tracking-wider text-gray-300">
+              <div className="pt-4 border-t border-[var(--border-default)] flex flex-col gap-3">
+                <h3 className="font-bold text-white flex items-center gap-2 text-sm uppercase tracking-wider text-[var(--text-secondary)]">
                   <Layers className="h-4 w-4 text-indigo-400" />
                   Lifecycle History
                 </h3>
                 {loadingHistory ? (
-                  <div className="text-xs text-gray-500 font-mono">Loading history...</div>
+                  <div className="text-xs text-[var(--text-muted)] font-mono">Loading history...</div>
                 ) : lifecycleHistory.length === 0 ? (
-                  <div className="text-xs text-gray-500 italic">No lifecycle transitions recorded yet.</div>
+                  <div className="text-xs text-[var(--text-muted)] italic">No lifecycle transitions recorded yet.</div>
                 ) : (
-                  <div className="flex flex-col gap-4 pl-2 border-l border-gray-800 mt-2 ml-1.5">
+                  <div className="flex flex-col gap-4 pl-2 border-l border-[var(--border-default)] mt-2 ml-1.5">
                     {lifecycleHistory.map((item) => (
                       <div key={item.id} className="relative pl-4">
                         <div className="absolute -left-[21px] top-1 h-2.5 w-2.5 rounded-full bg-indigo-500 border border-[#111827]" />
-                        <div className="flex items-center justify-between text-[11px] font-semibold text-gray-300">
+                        <div className="flex items-center justify-between text-[11px] font-semibold text-[var(--text-secondary)]">
                           <span className={`px-1.5 py-0.5 rounded text-[9px] border font-bold ${getLifecycleColor(item.stage)}`}>
                             {item.stage}
                           </span>
-                          <span className="text-[10px] text-gray-500 font-mono">
+                          <span className="text-[10px] text-[var(--text-muted)] font-mono">
                             {new Date(item.effective_date).toLocaleDateString()}
                           </span>
                         </div>
-                        <div className="text-[10px] text-gray-400 mt-1">
-                          Changed by: <span className="font-semibold text-gray-300">{item.changed_by}</span>
+                        <div className="text-[10px] text-[var(--text-secondary)] mt-1">
+                          Changed by: <span className="font-semibold text-[var(--text-secondary)]">{item.changed_by}</span>
                         </div>
                         {item.notes && (
-                          <p className="text-[10px] text-gray-500 italic mt-1 bg-black/10 p-1.5 rounded border border-gray-800/40">
+                          <p className="text-[10px] text-[var(--text-muted)] italic mt-1 bg-black/10 p-1.5 rounded border border-[var(--border-default)]/40">
                             "{item.notes}"
                           </p>
                         )}
@@ -623,15 +624,15 @@ export default function AIRegistry() {
               </div>
 
               {/* Change History Sub-section */}
-              <div className="pt-4 border-t border-gray-800">
+              <div className="pt-4 border-t border-[var(--border-default)]">
                 <ChangeHistoryTimeline entityType="agent" entityId={selectedSystem.id} />
               </div>
             </div>
           ) : (
-            <div className="hidden lg:flex flex-col items-center justify-center py-24 bg-[#111827]/20 border border-dashed border-gray-800 rounded-2xl text-center p-6">
+            <div className="hidden lg:flex flex-col items-center justify-center py-24 bg-[var(--bg-page)]/20 border border-dashed border-[var(--border-default)] rounded-2xl text-center p-6">
               <Bot className="h-10 w-10 text-gray-700 mb-3 animate-pulse" />
-              <h3 className="font-semibold text-gray-400 text-sm">No System Selected</h3>
-              <p className="text-gray-500 text-xs mt-1 max-w-[200px]">
+              <h3 className="font-semibold text-[var(--text-secondary)] text-sm">No System Selected</h3>
+              <p className="text-[var(--text-muted)] text-xs mt-1 max-w-[200px]">
                 Click on any system in the inventory list to view full specifications and update its model card.
               </p>
             </div>
@@ -643,15 +644,15 @@ export default function AIRegistry() {
       {/* Register Modal */}
       {isRegisterOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[#111827] border border-gray-800 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-scale-in">
-            <div className="flex items-center justify-between border-b border-gray-800 p-5 bg-[#0f172a]/60">
+          <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-scale-in">
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] p-5 bg-[#0f172a]/60">
               <h3 className="font-bold text-white flex items-center gap-2">
                 <Cpu className="h-5 w-5 text-indigo-400" />
                 Register New AI System
               </h3>
               <button
                 onClick={() => setIsRegisterOpen(false)}
-                className="rounded-lg p-1 hover:bg-gray-800 text-gray-500 hover:text-white transition-all"
+                className="rounded-lg p-1 hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -660,7 +661,7 @@ export default function AIRegistry() {
             <form onSubmit={handleRegister} className="p-6 flex flex-col gap-4 max-h-[70vh] overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5 col-span-2">
-                  <label htmlFor="reg-system-name" className="text-xs font-semibold text-gray-400">System Name *</label>
+                  <label htmlFor="reg-system-name" className="text-xs font-semibold text-[var(--text-secondary)]">System Name *</label>
                   <input
                     id="reg-system-name"
                     type="text"
@@ -668,23 +669,23 @@ export default function AIRegistry() {
                     placeholder="e.g. Sentraa Support Agent"
                     value={newSystem.name}
                     onChange={(e) => setNewSystem({ ...newSystem, name: e.target.value })}
-                    className="bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500"
+                    className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500"
                   />
                 </div>
 
                 <div className="flex flex-col gap-1.5 col-span-2">
-                  <label htmlFor="reg-description" className="text-xs font-semibold text-gray-400">Description</label>
+                  <label htmlFor="reg-description" className="text-xs font-semibold text-[var(--text-secondary)]">Description</label>
                   <textarea
                     id="reg-description"
                     placeholder="Short description of the system's architecture and capabilities..."
                     value={newSystem.description}
                     onChange={(e) => setNewSystem({ ...newSystem, description: e.target.value })}
-                    className="bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
+                    className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
                   />
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="reg-model-name" className="text-xs font-semibold text-gray-400">Model Name *</label>
+                  <label htmlFor="reg-model-name" className="text-xs font-semibold text-[var(--text-secondary)]">Model Name *</label>
                   <input
                     id="reg-model-name"
                     type="text"
@@ -692,12 +693,12 @@ export default function AIRegistry() {
                     placeholder="e.g. gpt-4o"
                     value={newSystem.model_name}
                     onChange={(e) => setNewSystem({ ...newSystem, model_name: e.target.value })}
-                    className="bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500"
+                    className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500"
                   />
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="reg-model-version" className="text-xs font-semibold text-gray-400">Model Version *</label>
+                  <label htmlFor="reg-model-version" className="text-xs font-semibold text-[var(--text-secondary)]">Model Version *</label>
                   <input
                     id="reg-model-version"
                     type="text"
@@ -705,12 +706,12 @@ export default function AIRegistry() {
                     placeholder="e.g. 1.0.0"
                     value={newSystem.model_version}
                     onChange={(e) => setNewSystem({ ...newSystem, model_version: e.target.value })}
-                    className="bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500"
+                    className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500"
                   />
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="reg-vendor" className="text-xs font-semibold text-gray-400">Vendor *</label>
+                  <label htmlFor="reg-vendor" className="text-xs font-semibold text-[var(--text-secondary)]">Vendor *</label>
                   <input
                     id="reg-vendor"
                     type="text"
@@ -718,12 +719,12 @@ export default function AIRegistry() {
                     placeholder="e.g. OpenAI"
                     value={newSystem.vendor}
                     onChange={(e) => setNewSystem({ ...newSystem, vendor: e.target.value })}
-                    className="bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500"
+                    className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500"
                   />
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="reg-use-case" className="text-xs font-semibold text-gray-400">Use Case *</label>
+                  <label htmlFor="reg-use-case" className="text-xs font-semibold text-[var(--text-secondary)]">Use Case *</label>
                   <input
                     id="reg-use-case"
                     type="text"
@@ -731,16 +732,16 @@ export default function AIRegistry() {
                     placeholder="e.g. Customer Support"
                     value={newSystem.use_case}
                     onChange={(e) => setNewSystem({ ...newSystem, use_case: e.target.value })}
-                    className="bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500"
+                    className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500"
                   />
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-gray-400">Risk Tier *</label>
+                  <label className="text-xs font-semibold text-[var(--text-secondary)]">Risk Tier *</label>
                   <select
                     value={newSystem.risk_tier}
                     onChange={(e) => setNewSystem({ ...newSystem, risk_tier: e.target.value as any })}
-                    className="bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500"
+                    className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500"
                   >
                     <option value="LOW">LOW</option>
                     <option value="MEDIUM">MEDIUM</option>
@@ -750,11 +751,11 @@ export default function AIRegistry() {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-gray-400">Status *</label>
+                  <label className="text-xs font-semibold text-[var(--text-secondary)]">Status *</label>
                   <select
                     value={newSystem.status}
                     onChange={(e) => setNewSystem({ ...newSystem, status: e.target.value as any })}
-                    className="bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500"
+                    className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500"
                   >
                     <option value="ACTIVE">ACTIVE</option>
                     <option value="UNDER_REVIEW">UNDER REVIEW</option>
@@ -763,11 +764,11 @@ export default function AIRegistry() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 border-t border-gray-800 pt-4 mt-2">
+              <div className="flex items-center justify-end gap-3 border-t border-[var(--border-default)] pt-4 mt-2">
                 <button
                   type="button"
                   onClick={() => setIsRegisterOpen(false)}
-                  className="rounded-xl border border-gray-800 px-5 py-2.5 text-sm font-semibold text-gray-400 hover:bg-gray-800 hover:text-white transition-all"
+                  className="rounded-xl border border-[var(--border-default)] px-5 py-2.5 text-sm font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-all"
                 >
                   Cancel
                 </button>
@@ -786,15 +787,15 @@ export default function AIRegistry() {
       {/* Lifecycle Transition Modal */}
       {isTransitionOpen && selectedSystem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[#111827] border border-gray-800 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl animate-scale-in">
-            <div className="flex items-center justify-between border-b border-gray-800 p-5 bg-[#0f172a]/60">
+          <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl max-w-md w-full overflow-hidden shadow-2xl animate-scale-in">
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] p-5 bg-[#0f172a]/60">
               <h3 className="font-bold text-white flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-indigo-400" />
                 Transition Lifecycle Stage
               </h3>
               <button
                 onClick={() => setIsTransitionOpen(false)}
-                className="rounded-lg p-1 hover:bg-gray-800 text-gray-500 hover:text-white transition-all"
+                className="rounded-lg p-1 hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -802,7 +803,7 @@ export default function AIRegistry() {
 
             <form onSubmit={handleTransitionSubmit} className="p-6 flex flex-col gap-4">
               <div>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-[var(--text-secondary)]">
                   You are about to transition <span className="font-bold text-white">{selectedSystem.name}</span> to the stage:
                 </p>
                 <div className="mt-2.5 flex items-center gap-2">
@@ -813,21 +814,21 @@ export default function AIRegistry() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="transition-notes" className="text-xs font-semibold text-gray-400">Optional Notes / Rationale</label>
+                <label htmlFor="transition-notes" className="text-xs font-semibold text-[var(--text-secondary)]">Optional Notes / Rationale</label>
                 <textarea
                   id="transition-notes"
                   placeholder="e.g. Completed initial security checks and standard evaluations."
                   value={transitionNotes}
                   onChange={(e) => setTransitionNotes(e.target.value)}
-                  className="bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 min-h-[85px] text-xs"
+                  className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 min-h-[85px] text-xs"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 border-t border-gray-800 pt-4 mt-2">
+              <div className="flex items-center justify-end gap-3 border-t border-[var(--border-default)] pt-4 mt-2">
                 <button
                   type="button"
                   onClick={() => setIsTransitionOpen(false)}
-                  className="rounded-xl border border-gray-800 px-4 py-2 text-xs font-semibold text-gray-400 hover:bg-gray-800 hover:text-white transition-all"
+                  className="rounded-xl border border-[var(--border-default)] px-4 py-2 text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-all"
                 >
                   Cancel
                 </button>

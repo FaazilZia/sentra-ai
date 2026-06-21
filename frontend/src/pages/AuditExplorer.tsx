@@ -101,14 +101,14 @@ const AuditExplorer: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '24px', background: '#0f0f1a', minHeight: '100vh', color: '#e2e8f0', fontFamily: "'Inter', sans-serif" }}>
+    <div style={{ padding: '24px', background: 'var(--bg-page)', minHeight: '100vh', color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#f1f5f9', margin: 0 }}>
+          <h1 style={{ fontSize: '22px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
             🔍 Audit Log Explorer
           </h1>
-          <p style={{ color: '#94a3b8', marginTop: '4px', fontSize: '0.875rem' }}>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '4px', fontSize: '0.875rem' }}>
             Immutable, hash-chained audit trail — {total.toLocaleString()} total entries
           </p>
         </div>
@@ -116,8 +116,8 @@ const AuditExplorer: React.FC = () => {
           <button
             onClick={() => setIsShareOpen(true)}
             style={{
-              padding: '8px 16px', borderRadius: '8px', border: '1px solid #334155',
-              background: '#1e293b', color: '#38bdf8', cursor: 'pointer', fontSize: '0.875rem',
+              padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--border-default)',
+              background: '#ffffff', color: 'var(--royal-indigo)', cursor: 'pointer', fontSize: '0.875rem',
               display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600
             }}
           >
@@ -127,8 +127,8 @@ const AuditExplorer: React.FC = () => {
             onClick={verifyChain}
             disabled={verifying}
             style={{
-              padding: '8px 16px', borderRadius: '8px', border: '1px solid #334155',
-              background: '#1e293b', color: '#e2e8f0', cursor: 'pointer', fontSize: '0.875rem',
+              padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--border-default)',
+              background: '#ffffff', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.875rem',
               display: 'flex', alignItems: 'center', gap: '6px',
             }}
           >
@@ -138,8 +138,8 @@ const AuditExplorer: React.FC = () => {
             onClick={() => exportLogs('csv')}
             disabled={exporting}
             style={{
-              padding: '8px 16px', borderRadius: '8px', border: '1px solid #334155',
-              background: '#1e293b', color: '#e2e8f0', cursor: 'pointer', fontSize: '0.875rem',
+              padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--border-default)',
+              background: '#ffffff', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.875rem',
             }}
           >
             {exporting ? 'Exporting...' : '⬇ CSV'}
@@ -148,8 +148,8 @@ const AuditExplorer: React.FC = () => {
             onClick={() => exportLogs('json')}
             disabled={exporting}
             style={{
-              padding: '8px 16px', borderRadius: '8px', border: '1px solid #334155',
-              background: '#1e293b', color: '#e2e8f0', cursor: 'pointer', fontSize: '0.875rem',
+              padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--border-default)',
+              background: '#ffffff', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.875rem',
             }}
           >
             ⬇ JSON
@@ -170,7 +170,7 @@ const AuditExplorer: React.FC = () => {
             <strong style={{ color: chainStatus.valid ? '#22c55e' : '#ef4444' }}>
               {chainStatus.valid ? 'Chain Intact' : 'Chain Broken!'}
             </strong>
-            <span style={{ color: '#94a3b8', marginLeft: '8px', fontSize: '0.8rem' }}>
+            <span style={{ color: 'var(--text-secondary)', marginLeft: '8px', fontSize: '0.8rem' }}>
               {chainStatus.totalChecked} entries verified
               {!chainStatus.valid && ` — broken at entry ${chainStatus.brokenAt}`}
             </span>
@@ -182,8 +182,8 @@ const AuditExplorer: React.FC = () => {
       <div style={{
         display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
         gap: '12px', marginBottom: '20px',
-        background: 'rgba(30,41,59,0.6)', padding: '16px', borderRadius: '12px',
-        border: '1px solid #1e293b',
+        background: '#ffffff', padding: '16px', borderRadius: '12px',
+        border: '1px solid var(--border-default)',
       }}>
         <input
           placeholder="🔎 Search action, resource..."
@@ -209,18 +209,18 @@ const AuditExplorer: React.FC = () => {
         <input type="date" value={filters.fromDate} onChange={e => setFilters(f => ({ ...f, fromDate: e.target.value }))} style={inputStyle} />
         <input type="date" value={filters.toDate} onChange={e => setFilters(f => ({ ...f, toDate: e.target.value }))} style={inputStyle} />
         <button onClick={() => { setPage(1); fetchLogs(); }}
-          style={{ ...inputStyle, background: '#6366f1', color: '#fff', cursor: 'pointer', border: 'none', fontWeight: 600 }}>
+          style={{ ...inputStyle, background: '#6366f1', color: 'var(--text-primary)', cursor: 'pointer', border: 'none', fontWeight: 600 }}>
           Apply Filters
         </button>
       </div>
 
       {/* Log Table */}
-      <div style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid #1e293b' }}>
+      <div style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border-default)' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
           <thead>
-            <tr style={{ background: 'rgba(30,41,59,0.9)' }}>
+            <tr style={{ background: 'var(--bg-page)' }}>
               {['Timestamp', 'User', 'Action', 'Event Type', 'Severity', 'Resource', 'Outcome', 'IP'].map(h => (
-                <th key={h} style={{ padding: '12px 16px', textAlign: 'left', color: '#64748b', fontWeight: 600, borderBottom: '1px solid #1e293b', whiteSpace: 'nowrap' }}>
+                <th key={h} style={{ padding: '12px 16px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, borderBottom: '1px solid var(--border-default)', whiteSpace: 'nowrap' }}>
                   {h}
                 </th>
               ))}
@@ -228,17 +228,17 @@ const AuditExplorer: React.FC = () => {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={8} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>Loading...</td></tr>
+              <tr><td colSpan={8} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Loading...</td></tr>
             ) : logs.length === 0 ? (
-              <tr><td colSpan={8} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>No audit logs found</td></tr>
+              <tr><td colSpan={8} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>No audit logs found</td></tr>
             ) : logs.map((log, i) => (
-              <tr key={log.id} style={{ background: i % 2 === 0 ? 'rgba(15,15,26,0.6)' : 'rgba(30,41,59,0.3)', transition: 'background 0.15s' }}>
-                <td style={{ padding: '10px 16px', color: '#94a3b8', whiteSpace: 'nowrap' }}>
+              <tr key={log.id} style={{ background: i % 2 === 0 ? 'var(--bg-page)' : '#ffffff', transition: 'background 0.15s' }}>
+                <td style={{ padding: '10px 16px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                   {new Date(log.timestamp).toLocaleString()}
                 </td>
-                <td style={{ padding: '10px 16px', color: '#e2e8f0' }}>
+                <td style={{ padding: '10px 16px', color: 'var(--text-secondary)' }}>
                   <div>{log.user?.full_name || '—'}</div>
-                  <div style={{ color: '#64748b', fontSize: '0.7rem' }}>{log.user?.email}</div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>{log.user?.email}</div>
                 </td>
                 <td style={{ padding: '10px 16px', color: '#a78bfa', fontFamily: 'monospace', fontSize: '0.75rem' }}>
                   {log.action}
@@ -256,9 +256,9 @@ const AuditExplorer: React.FC = () => {
                     color: SEVERITY_COLORS[log.severity] || '#94a3b8',
                   }}>{log.severity}</span>
                 </td>
-                <td style={{ padding: '10px 16px', color: '#94a3b8', fontSize: '0.75rem' }}>
+                <td style={{ padding: '10px 16px', color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
                   {log.resource_type && <span style={{ color: '#6366f1' }}>{log.resource_type}</span>}
-                  {log.resource_id && <span style={{ color: '#475569' }}>/{log.resource_id?.slice(0, 8)}</span>}
+                  {log.resource_id && <span style={{ color: 'var(--text-muted)' }}>/{log.resource_id?.slice(0, 8)}</span>}
                 </td>
                 <td style={{ padding: '10px 16px' }}>
                   <span style={{
@@ -267,7 +267,7 @@ const AuditExplorer: React.FC = () => {
                     color: log.outcome === 'success' ? '#22c55e' : '#ef4444',
                   }}>{log.outcome}</span>
                 </td>
-                <td style={{ padding: '10px 16px', color: '#64748b', fontSize: '0.7rem', fontFamily: 'monospace' }}>
+                <td style={{ padding: '10px 16px', color: 'var(--text-muted)', fontSize: '0.7rem', fontFamily: 'monospace' }}>
                   {log.ip_address}
                 </td>
               </tr>
@@ -280,7 +280,7 @@ const AuditExplorer: React.FC = () => {
       {pages > 1 && (
         <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '20px' }}>
           <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} style={pageBtnStyle}>← Prev</button>
-          <span style={{ padding: '8px 16px', color: '#94a3b8', fontSize: '0.875rem' }}>
+          <span style={{ padding: '8px 16px', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
             Page {page} of {pages}
           </span>
           <button onClick={() => setPage(p => Math.min(pages, p + 1))} disabled={page === pages} style={pageBtnStyle}>Next →</button>
@@ -297,13 +297,13 @@ const AuditExplorer: React.FC = () => {
 };
 
 const inputStyle: React.CSSProperties = {
-  padding: '8px 12px', borderRadius: '8px', border: '1px solid #334155',
-  background: '#0f172a', color: '#e2e8f0', fontSize: '0.875rem', outline: 'none',
+  padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-default)',
+  background: '#ffffff', color: 'var(--text-secondary)', fontSize: '0.875rem', outline: 'none',
 };
 
 const pageBtnStyle: React.CSSProperties = {
-  padding: '8px 16px', borderRadius: '8px', border: '1px solid #334155',
-  background: '#1e293b', color: '#e2e8f0', cursor: 'pointer', fontSize: '0.875rem',
+  padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--border-default)',
+  background: '#ffffff', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.875rem',
 };
 
 export default AuditExplorer;

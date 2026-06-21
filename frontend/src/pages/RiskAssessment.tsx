@@ -213,22 +213,22 @@ export default function RiskAssessment() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-6 animate-fade-in text-gray-200">
+    <div className="flex flex-col gap-6 p-6 animate-fade-in  ">
       
       <div className="flex items-center gap-2 pb-0">
-        <button onClick={() => setView('assessment')} className={cn("px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", view === 'assessment' ? "bg-indigo-600 text-white shadow-lg" : "text-gray-400 border border-gray-800 hover:text-white hover:bg-gray-800/60")}>Risk Assessment</button>
-        <button onClick={() => setView('matrix')} className={cn("px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", view === 'matrix' ? "bg-purple-600 text-white shadow-lg" : "text-gray-400 border border-gray-800 hover:text-white hover:bg-gray-800/60")}>Risk Matrix</button>
+        <button onClick={() => setView('assessment')} className={cn("px-4 py-2 rounded-xl text-[10px] font-semibold uppercase tracking-widest transition-all", view === 'assessment' ? "bg-indigo-600 text-white shadow-lg" : "text-[var(--text-secondary)] border border-[var(--border-default)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]/60")}>Risk Assessment</button>
+        <button onClick={() => setView('matrix')} className={cn("px-4 py-2 rounded-xl text-[10px] font-semibold uppercase tracking-widest transition-all", view === 'matrix' ? "bg-purple-600 text-white shadow-lg" : "text-[var(--text-secondary)] border border-[var(--border-default)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]/60")}>Risk Matrix</button>
       </div>
 
       {view === 'assessment' && (
         <>
           {/* Header section */}
           <div>
-            <h1 className="text-2xl font-black tracking-tight text-white flex items-center gap-3">
+            <h1 className="text-[22px] font-semibold tracking-tight text-[var(--text-primary)] flex items-center gap-3">
               <ClipboardCheck className="h-8 w-8 text-indigo-400" />
               STRUCTURED RISK ASSESSMENTS
             </h1>
-            <p className="text-gray-400 text-sm mt-1">
+            <p className="text-[var(--text-secondary)] text-sm mt-1">
               Perform multi-step qualitative risk tier assessments to evaluate vulnerability, classification, and oversight protocols.
             </p>
           </div>
@@ -246,7 +246,7 @@ export default function RiskAssessment() {
                     <Shield className="h-5 w-5 text-indigo-400" />
                     Initiate Risk Tier Assessment
                   </h2>
-                  <p className="text-xs text-gray-400 leading-relaxed max-w-xl">
+                  <p className="text-xs text-[var(--text-secondary)] leading-relaxed max-w-xl">
                     Run a dynamic questionnaire audit of a newly registered or updated AI System to recalculate and bind its risk classification tier.
                   </p>
                   
@@ -254,7 +254,7 @@ export default function RiskAssessment() {
                     <select
                       value={selectedSystemId}
                       onChange={(e) => setSelectedSystemId(e.target.value)}
-                      className="bg-black/40 border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 flex-1"
+                      className="bg-black/40 border border-[var(--border-default)] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 flex-1"
                     >
                       <option value="">Select AI System to assess...</option>
                       {systems.map(s => (
@@ -276,8 +276,8 @@ export default function RiskAssessment() {
               </div>
 
               {/* Past Assessments List */}
-              <div className="bg-[#111827]/40 border border-gray-800/80 rounded-2xl p-6 flex flex-col gap-4">
-                <h3 className="font-bold text-white text-sm uppercase tracking-wider text-gray-400">
+              <div className="bg-[var(--bg-page)] border border-[var(--border-default)]/80 rounded-2xl p-6 flex flex-col gap-4">
+                <h3 className="font-bold text-white text-sm uppercase tracking-wider text-[var(--text-secondary)]">
                   Assessment Logs & Tiers
                 </h3>
 
@@ -286,7 +286,7 @@ export default function RiskAssessment() {
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-500" />
                   </div>
                 ) : assessments.length === 0 ? (
-                  <div className="text-center py-10 text-gray-500 text-xs">
+                  <div className="text-center py-10 text-[var(--text-muted)] text-xs">
                     No risk assessments logged yet.
                   </div>
                 ) : (
@@ -298,24 +298,24 @@ export default function RiskAssessment() {
                         tabIndex={0}
                         onClick={() => setSelectedAssessment(ass)}
                         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedAssessment(ass); } }}
-                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-gray-800/60 bg-[#0b0f19]/30 hover:border-gray-700 transition-all cursor-pointer outline-none"
+                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-[var(--border-default)]/60 bg-[var(--bg-page)]/30 hover:border-[var(--border-default)] transition-all cursor-pointer outline-none"
                       >
                         <div className="flex items-start gap-3">
-                          <div className="rounded-lg bg-gray-800 p-2 text-gray-400">
+                          <div className="rounded-lg bg-gray-800 p-2 text-[var(--text-secondary)]">
                             <ClipboardCheck className="h-4 w-4" />
                           </div>
                           <div>
                             <h4 className="font-bold text-white text-sm">{ass.ai_system?.name || 'Unknown System'}</h4>
-                            <p className="text-[10px] text-gray-500 mt-0.5">Assessed on {new Date(ass.created_at).toLocaleDateString()}</p>
+                            <p className="text-[10px] text-[var(--text-muted)] mt-0.5">Assessed on {new Date(ass.created_at).toLocaleDateString()}</p>
                           </div>
                         </div>
 
                         <div className="flex items-center gap-4">
                           <div className="text-right">
-                            <span className="text-[10px] text-gray-500 block uppercase font-bold tracking-wider">Audit Score</span>
-                            <span className="text-sm font-black text-white">{ass.score} / 100</span>
+                            <span className="text-[10px] text-[var(--text-muted)] block uppercase font-bold tracking-wider">Audit Score</span>
+                            <span className="text-sm font-semibold text-white">{ass.score} / 100</span>
                           </div>
-                          <span className={`text-[10px] px-2.5 py-1 rounded-full border font-black uppercase ${getRiskLevelColor(ass.risk_level)}`}>
+                          <span className={`text-[10px] px-2.5 py-1 rounded-full border font-semibold uppercase ${getRiskLevelColor(ass.risk_level)}`}>
                             {ass.risk_level}
                           </span>
                         </div>
@@ -328,41 +328,41 @@ export default function RiskAssessment() {
 
             {/* Right Column: Framework explanation / Wizard Guide */}
             <div className="lg:col-span-1">
-              <div className="bg-[#111827]/40 border border-gray-800/80 rounded-2xl p-6 flex flex-col gap-4">
-                <h3 className="font-bold text-white text-sm flex items-center gap-2 border-b border-gray-800/80 pb-3">
+              <div className="bg-[var(--bg-page)] border border-[var(--border-default)]/80 rounded-2xl p-6 flex flex-col gap-4">
+                <h3 className="font-bold text-white text-sm flex items-center gap-2 border-b border-[var(--border-default)]/80 pb-3">
                   <HelpCircle className="h-4 w-4 text-indigo-400" />
                   Risk Tier Methodology
                 </h3>
                 
-                <div className="flex flex-col gap-3 text-xs text-gray-400 leading-relaxed">
+                <div className="flex flex-col gap-3 text-xs text-[var(--text-secondary)] leading-relaxed">
                   <p>
                     Sentraa AI utilizes a standardized point-based risk scoring framework aligned with standard EU AI Act use case classifications.
                   </p>
                   
-                  <div className="flex flex-col gap-2 bg-black/20 p-3.5 rounded-xl border border-gray-800/60 mt-1">
+                  <div className="flex flex-col gap-2 bg-black/20 p-3.5 rounded-xl border border-[var(--border-default)]/60 mt-1">
                     <div className="flex justify-between items-center">
                       <span className="font-semibold text-emerald-400">LOW TIER</span>
-                      <span className="text-gray-500 font-mono">0 - 30 pts</span>
+                      <span className="text-[var(--text-muted)] font-mono">0 - 30 pts</span>
                     </div>
-                    <p className="text-[10px] text-gray-500">Internal utility pipelines or heavily audited sandboxes with active masking/filtering.</p>
+                    <p className="text-[10px] text-[var(--text-muted)]">Internal utility pipelines or heavily audited sandboxes with active masking/filtering.</p>
                     
                     <div className="flex justify-between items-center mt-1">
                       <span className="font-semibold text-yellow-400">MEDIUM TIER</span>
-                      <span className="text-gray-500 font-mono">31 - 60 pts</span>
+                      <span className="text-[var(--text-muted)] font-mono">31 - 60 pts</span>
                     </div>
-                    <p className="text-[10px] text-gray-500">Standard customer interactions with active logging and human-in-the-loop review.</p>
+                    <p className="text-[10px] text-[var(--text-muted)]">Standard customer interactions with active logging and human-in-the-loop review.</p>
 
                     <div className="flex justify-between items-center mt-1">
                       <span className="font-semibold text-orange-400">HIGH TIER</span>
-                      <span className="text-gray-500 font-mono">61 - 80 pts</span>
+                      <span className="text-[var(--text-muted)] font-mono">61 - 80 pts</span>
                     </div>
-                    <p className="text-[10px] text-gray-500">HR, evaluation, access control or financial data pipelines. Requires rigorous auditing.</p>
+                    <p className="text-[10px] text-[var(--text-muted)]">HR, evaluation, access control or financial data pipelines. Requires rigorous auditing.</p>
 
                     <div className="flex justify-between items-center mt-1">
                       <span className="font-semibold text-red-400">CRITICAL TIER</span>
-                      <span className="text-gray-500 font-mono">81 - 100 pts</span>
+                      <span className="text-[var(--text-muted)] font-mono">81 - 100 pts</span>
                     </div>
-                    <p className="text-[10px] text-gray-500">Highly autonomous systems processing sensitive health, financial or biometrics pipelines.</p>
+                    <p className="text-[10px] text-[var(--text-muted)]">Highly autonomous systems processing sensitive health, financial or biometrics pipelines.</p>
                   </div>
                 </div>
               </div>
@@ -375,10 +375,10 @@ export default function RiskAssessment() {
       {view === 'matrix' && (
         <div className="space-y-6 animate-fade-in text-left">
           <div>
-            <h1 className="text-2xl font-black text-white uppercase tracking-tight">Risk Portfolio Matrix</h1>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">Probability × Impact — All AI Systems</p>
+            <h1 className="text-[22px] font-semibold text-[var(--text-primary)] tracking-tight">Risk Portfolio Matrix</h1>
+            <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-[0.2em] mt-1">Probability × Impact — All AI Systems</p>
           </div>
-          {portfolioLoading && <div className="text-center py-12 text-gray-500">Loading risk portfolio...</div>}
+          {portfolioLoading && <div className="text-center py-12 text-[var(--text-muted)]">Loading risk portfolio...</div>}
           {portfolio && !portfolioLoading && (
             <>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -388,16 +388,16 @@ export default function RiskAssessment() {
                   { label: 'Medium Risk', value: portfolio.riskDistribution?.MEDIUM ?? 0, color: 'text-amber-400' },
                   { label: 'Low Risk', value: portfolio.riskDistribution?.LOW ?? 0, color: 'text-emerald-400' },
                 ].map((s) => (
-                  <div key={s.label} className="bg-[#111827]/40 border border-gray-800 rounded-2xl p-4 backdrop-blur-md">
-                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{s.label}</p>
-                    <p className={`text-2xl font-black mt-1 ${s.color}`}>{s.value}</p>
+                  <div key={s.label} className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-4 backdrop-blur-md">
+                    <p className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-widest">{s.label}</p>
+                    <p className={`text-2xl font-semibold mt-1 ${s.color}`}>{s.value}</p>
                   </div>
                 ))}
               </div>
-              <div className="bg-[#111827]/40 border border-gray-800 rounded-2xl p-6 backdrop-blur-md">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Probability × Impact Heatmap</p>
+              <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-6 backdrop-blur-md">
+                <p className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest mb-4">Probability × Impact Heatmap</p>
                 <div className="flex gap-4">
-                  <div className="flex flex-col justify-between text-[9px] text-gray-600 uppercase font-bold py-1" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+                  <div className="flex flex-col justify-between text-[9px] text-[var(--text-muted)] uppercase font-bold py-1" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
                     <span>High Probability</span><span>Low Probability</span>
                   </div>
                   <div className="flex-1">
@@ -416,10 +416,10 @@ export default function RiskAssessment() {
                             <div key={impact} className={`flex-1 aspect-square rounded border ${bgColor} flex flex-col items-center justify-center transition-all cursor-default group relative`}>
                               {cellAgents.length > 0 && (
                                 <>
-                                  <span className="text-xs font-black text-white">{cellAgents.length}</span>
-                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 bg-gray-900 border border-gray-700 rounded-lg p-2 min-w-[140px] shadow-xl">
-                                    {cellAgents.slice(0, 3).map((a: any) => <p key={a.agentId} className="text-[10px] text-gray-300 truncate">{a.agentName}</p>)}
-                                    {cellAgents.length > 3 && <p className="text-[9px] text-gray-500">+{cellAgents.length - 3} more</p>}
+                                  <span className="text-xs font-semibold text-white">{cellAgents.length}</span>
+                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 bg-white border border-[var(--border-default)] rounded-lg p-2 min-w-[140px] shadow-xl">
+                                    {cellAgents.slice(0, 3).map((a: any) => <p key={a.agentId} className="text-[10px] text-[var(--text-secondary)] truncate">{a.agentName}</p>)}
+                                    {cellAgents.length > 3 && <p className="text-[9px] text-[var(--text-muted)]">+{cellAgents.length - 3} more</p>}
                                   </div>
                                 </>
                               )}
@@ -430,23 +430,23 @@ export default function RiskAssessment() {
                     ))}
                     <div className="flex gap-1 mt-2">
                       {['Very Low', 'Low', 'Medium', 'High', 'Critical'].map((l) => (
-                        <div key={l} className="flex-1 text-center text-[9px] text-gray-600 uppercase font-bold">{l}</div>
+                        <div key={l} className="flex-1 text-center text-[9px] text-[var(--text-muted)] uppercase font-bold">{l}</div>
                       ))}
                     </div>
-                    <p className="text-center text-[9px] text-gray-600 uppercase font-bold mt-1">Impact →</p>
+                    <p className="text-center text-[9px] text-[var(--text-muted)] uppercase font-bold mt-1">Impact →</p>
                   </div>
                 </div>
               </div>
-              <div className="bg-[#111827]/40 border border-gray-800 rounded-2xl overflow-hidden backdrop-blur-md">
-                <div className="p-5 border-b border-gray-800">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">All Systems — Risk Register</p>
+              <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl overflow-hidden backdrop-blur-md">
+                <div className="p-5 border-b border-[var(--border-default)]">
+                  <p className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest">All Systems — Risk Register</p>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="border-b border-gray-800">
+                      <tr className="border-b border-[var(--border-default)]">
                         {['Agent', 'Risk Score', 'Risk Level', 'Exposure', 'Top Risk', 'Status'].map((h) => (
-                          <th key={h} className="text-left px-4 py-3 text-[10px] font-black text-gray-500 uppercase">{h}</th>
+                          <th key={h} className="text-left px-4 py-3 text-[10px] font-semibold text-[var(--text-muted)] uppercase">{h}</th>
                         ))}
                       </tr>
                     </thead>
@@ -454,21 +454,21 @@ export default function RiskAssessment() {
                       {(portfolio.agents || []).sort((a: any, b: any) => (b.riskScore ?? 0) - (a.riskScore ?? 0)).map((agent: any) => {
                         const riskColor = agent.riskLevel === 'HIGH' || agent.riskLevel === 'CRITICAL' ? 'text-rose-400' : agent.riskLevel === 'MEDIUM' ? 'text-amber-400' : 'text-emerald-400';
                         return (
-                          <tr key={agent.agentId} className="border-b border-gray-800/50 hover:bg-gray-800/20">
+                          <tr key={agent.agentId} className="border-b border-[var(--border-default)]/50 hover:bg-[var(--bg-hover)]/20">
                             <td className="px-4 py-3 font-bold text-white">{agent.agentName}</td>
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2">
                                 <div className="w-16 h-1.5 bg-gray-800 rounded-full">
                                   <div className={cn("h-full rounded-full", agent.riskScore > 70 ? "bg-rose-500" : agent.riskScore > 40 ? "bg-amber-500" : "bg-emerald-500")} style={{ width: `${agent.riskScore ?? 0}%` }} />
                                 </div>
-                                <span className="text-gray-300 font-mono">{agent.riskScore ?? 0}</span>
+                                <span className="text-[var(--text-secondary)] font-mono">{agent.riskScore ?? 0}</span>
                               </div>
                             </td>
-                            <td className="px-4 py-3"><span className={`text-[10px] font-black uppercase ${riskColor}`}>{agent.riskLevel ?? 'LOW'}</span></td>
-                            <td className="px-4 py-3 text-gray-400 font-mono">{agent.exposureScore ?? 0}</td>
-                            <td className="px-4 py-3 text-gray-400 max-w-xs truncate">{agent.topRisks?.[0] ?? '—'}</td>
+                            <td className="px-4 py-3"><span className={`text-[10px] font-semibold uppercase ${riskColor}`}>{agent.riskLevel ?? 'LOW'}</span></td>
+                            <td className="px-4 py-3 text-[var(--text-secondary)] font-mono">{agent.exposureScore ?? 0}</td>
+                            <td className="px-4 py-3 text-[var(--text-secondary)] max-w-xs truncate">{agent.topRisks?.[0] ?? '—'}</td>
                             <td className="px-4 py-3">
-                              <span className={cn('text-[9px] font-black uppercase px-2 py-0.5 rounded border', agent.complianceStatus === 'COMPLIANT' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-rose-400 bg-rose-500/10 border-rose-500/20')}>
+                              <span className={cn('text-[9px] font-semibold uppercase px-2 py-0.5 rounded border', agent.complianceStatus === 'COMPLIANT' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-rose-400 bg-rose-500/10 border-rose-500/20')}>
                                 {agent.complianceStatus ?? 'UNKNOWN'}
                               </span>
                             </td>
@@ -487,17 +487,17 @@ export default function RiskAssessment() {
       {/* Wizard Modal */}
       {isWizardOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-[#111827] border border-gray-800 rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl animate-scale-in">
+          <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl animate-scale-in">
             
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-gray-800 p-5 bg-[#0f172a]/60">
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] p-5 bg-[#0f172a]/60">
               <div>
-                <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Active Governance Audit</span>
+                <span className="text-[9px] font-semibold text-indigo-400 uppercase tracking-widest">Active Governance Audit</span>
                 <h3 className="font-bold text-white text-base mt-0.5">Qualitative Risk Matrix Questionnaire</h3>
               </div>
               <button
                 onClick={() => setIsWizardOpen(false)}
-                className="rounded-lg p-1 hover:bg-gray-800 text-gray-500 hover:text-white transition-all"
+                className="rounded-lg p-1 hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -525,7 +525,7 @@ export default function RiskAssessment() {
 
                   {/* Question Block */}
                   <div className="flex flex-col gap-4 animate-fade-in">
-                    <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">Question {currentStep + 1} of {QUESTIONS.length}</span>
+                    <span className="text-xs text-[var(--text-muted)] font-bold uppercase tracking-wider">Question {currentStep + 1} of {QUESTIONS.length}</span>
                     <h2 className="text-lg font-bold text-white leading-relaxed">{QUESTIONS[currentStep].text}</h2>
                     
                     <div className="flex flex-col gap-3 mt-2">
@@ -547,11 +547,11 @@ export default function RiskAssessment() {
                             className={`p-4 rounded-xl border transition-all cursor-pointer text-xs font-semibold leading-relaxed flex items-center justify-between gap-4 ${
                               isSelected 
                                 ? 'bg-indigo-950/20 border-indigo-500/60 text-white shadow-md' 
-                                : 'bg-[#0f172a]/40 border-gray-800/80 hover:bg-black/30 hover:border-gray-700 text-gray-400 hover:text-gray-200'
+                                : 'bg-[#0f172a]/40 border-[var(--border-default)]/80 hover:bg-black/30 hover:border-[var(--border-default)] text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'
                             }`}
                           >
                             <span>{opt.text}</span>
-                            <span className="text-[10px] font-mono px-2 py-0.5 rounded border border-gray-800 text-gray-500 font-bold">+{opt.score} pts</span>
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded border border-[var(--border-default)] text-[var(--text-muted)] font-bold">+{opt.score} pts</span>
                           </div>
                         );
                       })}
@@ -559,11 +559,11 @@ export default function RiskAssessment() {
                   </div>
 
                   {/* Navigation Footer */}
-                  <div className="flex items-center justify-between border-t border-gray-800/80 pt-5 mt-4">
+                  <div className="flex items-center justify-between border-t border-[var(--border-default)]/80 pt-5 mt-4">
                     <button
                       onClick={handlePrev}
                       disabled={currentStep === 0}
-                      className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white disabled:opacity-30 disabled:pointer-events-none font-semibold"
+                      className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-30 disabled:pointer-events-none font-semibold"
                     >
                       <ChevronLeft className="h-4 w-4" /> Back
                     </button>
@@ -593,20 +593,20 @@ export default function RiskAssessment() {
                   <div className="rounded-full bg-emerald-500/10 p-4 border border-emerald-500/20 mb-4 animate-bounce">
                     <CheckCircle2 className="h-10 w-10 text-emerald-400" />
                   </div>
-                  <h2 className="text-xl font-black text-white">Risk Tier Audit Completed</h2>
-                  <p className="text-xs text-gray-400 mt-1 max-w-sm">
+                  <h2 className="text-xl font-semibold text-white">Risk Tier Audit Completed</h2>
+                  <p className="text-xs text-[var(--text-secondary)] mt-1 max-w-sm">
                     Structured audit has completed successfully. System risk tier updated in the registry.
                   </p>
 
-                  <div className="flex gap-6 mt-8 p-6 bg-black/20 rounded-2xl border border-gray-800/80 w-full max-w-sm justify-around">
+                  <div className="flex gap-6 mt-8 p-6 bg-black/20 rounded-2xl border border-[var(--border-default)]/80 w-full max-w-sm justify-around">
                     <div>
-                      <span className="text-[10px] text-gray-500 uppercase font-black block tracking-wider">Final Score</span>
-                      <span className="text-2xl font-black text-white">{finishedResult.score} <span className="text-xs text-gray-500 font-normal">/ 100</span></span>
+                      <span className="text-[10px] text-[var(--text-muted)] uppercase font-semibold block tracking-wider">Final Score</span>
+                      <span className="text-2xl font-semibold text-white">{finishedResult.score} <span className="text-xs text-[var(--text-muted)] font-normal">/ 100</span></span>
                     </div>
-                    <div className="border-r border-gray-800" />
+                    <div className="border-r border-[var(--border-default)]" />
                     <div>
-                      <span className="text-[10px] text-gray-500 uppercase font-black block tracking-wider">Risk Classification</span>
-                      <span className={`text-base font-black px-3 py-0.5 rounded-full border block mt-1.5 ${getRiskLevelColor(finishedResult.risk_level)}`}>
+                      <span className="text-[10px] text-[var(--text-muted)] uppercase font-semibold block tracking-wider">Risk Classification</span>
+                      <span className={`text-base font-semibold px-3 py-0.5 rounded-full border block mt-1.5 ${getRiskLevelColor(finishedResult.risk_level)}`}>
                         {finishedResult.risk_level}
                       </span>
                     </div>
@@ -627,49 +627,49 @@ export default function RiskAssessment() {
       )}
 
       {selectedAssessment && (
-        <div className="fixed inset-y-0 right-0 z-50 w-[440px] bg-[#111827] border-l border-gray-800 shadow-2xl p-6 flex flex-col justify-between animate-fade-in text-left">
+        <div className="fixed inset-y-0 right-0 z-50 w-[440px] bg-[var(--bg-page)] border-l border-[var(--border-default)] shadow-2xl p-6 flex flex-col justify-between animate-fade-in text-left">
           <div className="flex-1 overflow-y-auto space-y-6 custom-scrollbar pr-1">
-            <div className="flex items-center justify-between border-b border-gray-800 pb-4">
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-4">
               <div className="flex items-center gap-2">
                 <ClipboardCheck className="h-4.5 w-4.5 text-indigo-400" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-white">Risk Audit details</span>
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-white">Risk Audit details</span>
               </div>
               <button 
                 onClick={() => setSelectedAssessment(null)}
-                className="p-1 rounded hover:bg-gray-800 transition-all outline-none"
+                className="p-1 rounded hover:bg-[var(--bg-hover)] transition-all outline-none"
               >
-                <X className="h-4 w-4 text-gray-400 hover:text-white" />
+                <X className="h-4 w-4 text-[var(--text-secondary)] hover:text-[var(--text-primary)]" />
               </button>
             </div>
             
             <div className="space-y-1">
-              <h2 className="text-[13px] font-black uppercase tracking-tight text-white">{selectedAssessment.ai_system?.name || 'Unknown AI System'}</h2>
-              <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+              <h2 className="text-[13px] font-semibold uppercase tracking-tight text-white">{selectedAssessment.ai_system?.name || 'Unknown AI System'}</h2>
+              <div className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
                 Usecase: {selectedAssessment.ai_system?.use_case}
               </div>
             </div>
 
-            <div className="flex items-center gap-6 bg-black/20 p-4 rounded-xl border border-gray-800/80">
+            <div className="flex items-center gap-6 bg-black/20 p-4 rounded-xl border border-[var(--border-default)]/80">
               <div>
-                <span className="text-[9px] text-gray-500 uppercase font-black block tracking-wider">Final Score</span>
-                <span className="text-xl font-black text-white">{selectedAssessment.score} / 100</span>
+                <span className="text-[9px] text-[var(--text-muted)] uppercase font-semibold block tracking-wider">Final Score</span>
+                <span className="text-xl font-semibold text-white">{selectedAssessment.score} / 100</span>
               </div>
-              <div className="border-r border-gray-800 self-stretch" />
+              <div className="border-r border-[var(--border-default)] self-stretch" />
               <div>
-                <span className="text-[9px] text-gray-500 uppercase font-black block tracking-wider">Risk Level</span>
-                <span className={`text-[10px] px-2.5 py-0.5 rounded-full border font-black uppercase inline-block mt-1 ${getRiskLevelColor(selectedAssessment.risk_level)}`}>
+                <span className="text-[9px] text-[var(--text-muted)] uppercase font-semibold block tracking-wider">Risk Level</span>
+                <span className={`text-[10px] px-2.5 py-0.5 rounded-full border font-semibold uppercase inline-block mt-1 ${getRiskLevelColor(selectedAssessment.risk_level)}`}>
                   {selectedAssessment.risk_level}
                 </span>
               </div>
             </div>
 
             {/* Evidence Sub-section */}
-            <div className="pt-4 border-t border-gray-800">
+            <div className="pt-4 border-t border-[var(--border-default)]">
               <EvidenceSection entityType="risk" entityId={selectedAssessment.id} />
             </div>
 
             {/* Change History Sub-section */}
-            <div className="pt-4 border-t border-gray-800">
+            <div className="pt-4 border-t border-[var(--border-default)]">
               <ChangeHistoryTimeline entityType="risk" entityId={selectedAssessment.id} />
             </div>
           </div>

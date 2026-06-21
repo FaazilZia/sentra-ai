@@ -243,28 +243,28 @@ export default function Guardrails() {
   if (loading && policies.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center text-gray-500">
+        <div className="text-center text-[var(--text-muted)]">
           <LoaderCircle className="h-8 w-8 mx-auto mb-4 animate-spin text-indigo-500" />
-          <p className="text-xs font-black uppercase tracking-widest">Loading Protection Policies...</p>
+          <p className="text-xs font-semibold uppercase tracking-widest">Loading Protection Policies...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6 animate-fade-in p-6 text-gray-200">
+    <div className="flex flex-col gap-6 animate-fade-in p-6  ">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-black text-white tracking-tight uppercase">AI Guardrails</h1>
+            <h1 className="text-[22px] font-semibold text-[var(--text-primary)] tracking-tight">AI Guardrails</h1>
             
             {/* Health Badge / Active Rules Pill */}
             <div className={cn(
-              "flex items-center gap-1.5 px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest",
+              "flex items-center gap-1.5 px-3 py-1 rounded-full border text-[9px] font-semibold uppercase tracking-widest",
               activeRulesCount > 0 
                 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" 
-                : "bg-gray-800 border-gray-700 text-gray-400"
+                : "bg-gray-800 border-[var(--border-default)] text-[var(--text-secondary)]"
             )}>
               <Activity className="h-3 w-3" />
               {activeRulesCount} Active Rules
@@ -277,14 +277,14 @@ export default function Guardrails() {
         <div className="flex gap-2">
           <button 
             onClick={handleOpenTemplates}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 border border-gray-800 hover:border-gray-700 rounded-lg text-[10px] font-black text-white uppercase tracking-widest transition-all active:scale-95"
+            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[var(--border-default)] hover:border-[var(--border-default)] rounded-lg text-[10px] font-semibold text-white uppercase tracking-widest transition-all active:scale-95"
           >
             <FileCheck className="h-4 w-4 text-indigo-400" />
             Load Templates
           </button>
           <button 
             onClick={handleOpenAdd}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[var(--mid-indigo)] rounded-lg text-[10px] font-black text-white uppercase tracking-widest hover:bg-[var(--royal-indigo)] transition-all shadow-lg shadow-indigo-500/20 active:scale-95"
+            className="flex items-center gap-2 px-4 py-2.5 bg-[var(--mid-indigo)] rounded-lg text-[10px] font-semibold text-white uppercase tracking-widest hover:bg-[var(--royal-indigo)] transition-all shadow-lg shadow-indigo-500/20 active:scale-95"
           >
             <Plus className="h-4 w-4" />
             Add Guardrail
@@ -321,12 +321,12 @@ export default function Guardrails() {
       </div>
 
       {/* Main Table */}
-      <div className="bg-[#111827]/40 border border-gray-800 rounded-2xl overflow-hidden backdrop-blur-md">
+      <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl overflow-hidden backdrop-blur-md">
         {policies.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-gray-850/60 text-[9px] font-black text-gray-500 uppercase tracking-widest bg-gray-900/10">
+                <tr className="border-b border-[var(--border-default)]/60 text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-widest bg-[var(--bg-page)]">
                   <th className="p-4 w-24">Priority</th>
                   <th className="p-4">Name</th>
                   <th className="p-4">Effect</th>
@@ -335,7 +335,7 @@ export default function Guardrails() {
                   <th className="p-4 w-28 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-850/60 text-xs">
+              <tbody className="divide-y divide-[var(--border-default)] text-xs">
                 {policies.map(p => {
                   const scopeDir = p.scope?.direction || [];
                   const scopeLabel = scopeDir.length === 2 ? 'Both' : (scopeDir[0] || 'input');
@@ -343,7 +343,7 @@ export default function Guardrails() {
                   const isModify = p.effect.toUpperCase() === 'MODIFY';
 
                   return (
-                    <tr key={p.id} className="hover:bg-gray-900/10 transition-colors">
+                    <tr key={p.id} className="hover:bg-[var(--bg-page)] transition-colors">
                       <td className="p-4">
                         <span className="h-6 w-9 rounded bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-[10px] font-mono font-bold text-indigo-400">
                           {p.priority}
@@ -352,12 +352,12 @@ export default function Guardrails() {
                       <td className="p-4">
                         <div>
                           <h4 className="font-bold text-white uppercase tracking-tight">{p.name}</h4>
-                          <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-1">{p.description || 'No description provided.'}</p>
+                          <p className="text-[10px] text-[var(--text-muted)] mt-0.5 line-clamp-1">{p.description || 'No description provided.'}</p>
                         </div>
                       </td>
                       <td className="p-4">
                         <span className={cn(
-                          "px-2.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border",
+                          "px-2.5 py-0.5 rounded text-[8px] font-semibold uppercase tracking-wider border",
                           isBlocked && "bg-rose-500/10 border-rose-500/25 text-rose-400",
                           isModify && "bg-amber-500/10 border-amber-500/25 text-amber-400",
                           (!isBlocked && !isModify) && "bg-emerald-500/10 border-emerald-500/25 text-emerald-400"
@@ -381,7 +381,7 @@ export default function Guardrails() {
                         </button>
                       </td>
                       <td className="p-4">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 bg-gray-900/40 border border-gray-850 px-2 py-0.5 rounded">
+                        <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--text-secondary)] bg-[var(--bg-page)] border border-[var(--border-default)] px-2 py-0.5 rounded">
                           {scopeLabel}
                         </span>
                       </td>
@@ -389,14 +389,14 @@ export default function Guardrails() {
                         <div className="flex justify-end gap-2">
                           <button 
                             onClick={() => handleOpenEdit(p)}
-                            className="p-1.5 rounded border border-gray-800 hover:border-indigo-500/30 text-gray-400 hover:text-white transition-all active:scale-95"
+                            className="p-1.5 rounded border border-[var(--border-default)] hover:border-indigo-500/30 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all active:scale-95"
                             title="Edit rule"
                           >
                             <Settings2 className="h-3.5 w-3.5" />
                           </button>
                           <button 
                             onClick={() => handleDelete(p.id)}
-                            className="p-1.5 rounded border border-gray-850 hover:bg-rose-950/25 text-gray-500 hover:text-rose-400 hover:border-rose-900/30 transition-all active:scale-95"
+                            className="p-1.5 rounded border border-[var(--border-default)] hover:bg-rose-950/25 text-[var(--text-muted)] hover:text-rose-400 hover:border-rose-900/30 transition-all active:scale-95"
                             title="Delete guardrail"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -412,14 +412,14 @@ export default function Guardrails() {
         ) : (
           /* Empty State */
           <div className="flex flex-col items-center justify-center py-16 px-4 text-center max-w-sm mx-auto">
-            <Lock className="h-12 w-12 text-gray-600 mb-4 animate-pulse" />
-            <h3 className="text-sm font-black text-white uppercase tracking-widest">No guardrails configured</h3>
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mt-1.5 leading-relaxed">
+            <Lock className="h-12 w-12 text-[var(--text-muted)] mb-4 animate-pulse" />
+            <h3 className="text-sm font-semibold text-white uppercase tracking-widest">No guardrails configured</h3>
+            <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mt-1.5 leading-relaxed">
               Add your first rule to start protecting your AI agents.
             </p>
             <button 
               onClick={handleOpenAdd}
-              className="mt-6 flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all duration-200 hover:scale-105 active:scale-95"
+              className="mt-6 flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-semibold uppercase tracking-widest rounded-xl transition-all duration-200 hover:scale-105 active:scale-95"
             >
               <Plus className="h-4 w-4" />
               Add Guardrail
@@ -431,53 +431,53 @@ export default function Guardrails() {
       {/* Add / Edit Modal */}
       {(isAddOpen || isEditOpen) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="w-full max-w-md bg-[#111827] border border-gray-850 rounded-2xl p-6 shadow-2xl relative">
+          <div className="w-full max-w-md bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-6 shadow-2xl relative">
             <button 
               onClick={() => { setIsAddOpen(false); setIsEditOpen(false); setEditingPolicy(null); }}
-              className="absolute right-4 top-4 text-gray-500 hover:text-white hover:bg-gray-850 p-1 rounded-lg transition-colors"
+              className="absolute right-4 top-4 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-gray-850 p-1 rounded-lg transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
 
-            <h3 className="text-sm font-black uppercase tracking-widest text-white mb-6 flex items-center gap-2">
+            <h3 className="text-sm font-semibold uppercase tracking-widest text-white mb-6 flex items-center gap-2">
               <ShieldCheck className="h-5 w-5 text-indigo-400" />
               {isAddOpen ? 'Add AI Guardrail' : 'Edit AI Guardrail'}
             </h3>
 
             <form onSubmit={isAddOpen ? handleCreate : handleUpdate} className="space-y-4 text-left">
               <div>
-                <label htmlFor="guardrail-name-input" className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-1">Rule Name</label>
+                <label htmlFor="guardrail-name-input" className="text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-widest block mb-1">Rule Name</label>
                 <input 
                   id="guardrail-name-input"
                   type="text" 
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="e.g. Jailbreak Detection" 
-                  className="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-xs text-gray-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-white border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
                   required
                 />
               </div>
 
               <div>
-                <label htmlFor="guardrail-desc-input" className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-1">Description</label>
+                <label htmlFor="guardrail-desc-input" className="text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-widest block mb-1">Description</label>
                 <textarea 
                   id="guardrail-desc-input"
                   value={description}
                   onChange={e => setDescription(e.target.value)}
                   placeholder="What does this rule protect against?" 
                   rows={3}
-                  className="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-xs text-gray-200 focus:outline-none focus:border-indigo-500 resize-none"
+                  className="w-full bg-white border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500 resize-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="guardrail-effect-select" className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-1">Interception Effect</label>
+                  <label htmlFor="guardrail-effect-select" className="text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-widest block mb-1">Interception Effect</label>
                   <select 
                     id="guardrail-effect-select"
                     value={effect}
                     onChange={e => setEffect(e.target.value as any)}
-                    className="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-xs text-gray-200 focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-white border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
                   >
                     <option value="BLOCK">BLOCK</option>
                     <option value="MODIFY">MODIFY</option>
@@ -486,7 +486,7 @@ export default function Guardrails() {
                 </div>
 
                 <div>
-                  <label htmlFor="guardrail-priority-input" className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-1">Priority (1-100)</label>
+                  <label htmlFor="guardrail-priority-input" className="text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-widest block mb-1">Priority (1-100)</label>
                   <input 
                     id="guardrail-priority-input"
                     type="number" 
@@ -494,37 +494,37 @@ export default function Guardrails() {
                     onChange={e => setPriority(Number(e.target.value))}
                     min={1} 
                     max={100}
-                    className="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-xs text-gray-200 focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-white border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
                   />
                 </div>
               </div>
 
               <div>
-                <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-1.5">Rule Scope</span>
-                <div className="flex gap-4 bg-gray-900 border border-gray-800 rounded-xl p-3">
+                <span className="text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-widest block mb-1.5">Rule Scope</span>
+                <div className="flex gap-4 bg-white border border-[var(--border-default)] rounded-xl p-3">
                   <label className="flex items-center gap-2 cursor-pointer select-none">
                     <input 
                       type="checkbox" 
                       checked={scopeInputs.input} 
                       onChange={e => setScopeInputs(prev => ({ ...prev, input: e.target.checked }))}
-                      className="rounded border-gray-700 bg-gray-950 text-indigo-600 focus:ring-indigo-500/20"
+                      className="rounded border-[var(--border-default)] bg-gray-950 text-indigo-600 focus:ring-indigo-500/20"
                     />
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Input Prompts</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">Input Prompts</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer select-none">
                     <input 
                       type="checkbox" 
                       checked={scopeInputs.output} 
                       onChange={e => setScopeInputs(prev => ({ ...prev, output: e.target.checked }))}
-                      className="rounded border-gray-700 bg-gray-950 text-indigo-600 focus:ring-indigo-500/20"
+                      className="rounded border-[var(--border-default)] bg-gray-950 text-indigo-600 focus:ring-indigo-500/20"
                     />
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Output Responses</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">Output Responses</span>
                   </label>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between bg-gray-900 border border-gray-800 rounded-xl p-3">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Enabled Status</span>
+              <div className="flex items-center justify-between bg-white border border-[var(--border-default)] rounded-xl p-3">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">Enabled Status</span>
                 <button 
                   type="button"
                   onClick={() => setEnabled(!enabled)}
@@ -540,17 +540,17 @@ export default function Guardrails() {
                 </button>
               </div>
 
-              <div className="flex gap-3 pt-4 border-t border-gray-850/60">
+              <div className="flex gap-3 pt-4 border-t border-[var(--border-default)]/60">
                 <button 
                   type="button"
                   onClick={() => { setIsAddOpen(false); setIsEditOpen(false); setEditingPolicy(null); }}
-                  className="flex-1 py-2.5 rounded-xl border border-gray-800 hover:bg-gray-900 text-[10px] font-black text-gray-500 hover:text-white uppercase tracking-widest transition-all"
+                  className="flex-1 py-2.5 rounded-xl border border-[var(--border-default)] hover:bg-white text-[10px] font-semibold text-[var(--text-muted)] hover:text-[var(--text-primary)] uppercase tracking-widest transition-all"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit"
-                  className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-[10px] font-black text-white uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/10"
+                  className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-[10px] font-semibold text-white uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/10"
                 >
                   {isAddOpen ? 'Deploy Guardrail' : 'Update Guardrail'}
                 </button>
@@ -563,38 +563,38 @@ export default function Guardrails() {
       {/* Templates Modal */}
       {isTemplatesOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="w-full max-w-lg bg-[#111827] border border-gray-850 rounded-2xl p-6 shadow-2xl relative max-h-[80vh] flex flex-col">
+          <div className="w-full max-w-lg bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-6 shadow-2xl relative max-h-[80vh] flex flex-col">
             <button 
               onClick={() => setIsTemplatesOpen(false)}
-              className="absolute right-4 top-4 text-gray-500 hover:text-white hover:bg-gray-850 p-1 rounded-lg transition-colors"
+              className="absolute right-4 top-4 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-gray-850 p-1 rounded-lg transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
 
             <div className="mb-6">
-              <h3 className="text-sm font-black uppercase tracking-widest text-white flex items-center gap-2">
+              <h3 className="text-sm font-semibold uppercase tracking-widest text-white flex items-center gap-2">
                 <FileCheck className="h-5 w-5 text-indigo-400" />
                 Import Guardrail Template
               </h3>
-              <p className="text-[10px] font-bold text-gray-500 uppercase mt-1">Pre-built protection rules ready for deployment</p>
+              <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase mt-1">Pre-built protection rules ready for deployment</p>
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-thin">
               {templates.map((temp, idx) => (
-                <div key={idx} className="bg-gray-950/30 border border-gray-850 rounded-xl p-4 flex items-center justify-between gap-4 group">
+                <div key={idx} className="bg-gray-950/30 border border-[var(--border-default)] rounded-xl p-4 flex items-center justify-between gap-4 group">
                   <div className="text-left">
                     <div className="flex items-center gap-2">
                       <h4 className="text-xs font-bold text-white uppercase tracking-tight">{temp.name}</h4>
-                      <span className="text-[8px] font-black uppercase px-1.5 py-0.5 rounded bg-gray-900 border border-gray-800 text-indigo-400 tracking-wider">
+                      <span className="text-[8px] font-semibold uppercase px-1.5 py-0.5 rounded bg-white border border-[var(--border-default)] text-indigo-400 tracking-wider">
                         {temp.category || 'Security'}
                       </span>
                     </div>
-                    <p className="text-[10.5px] text-gray-400 mt-1 max-w-md">{temp.description}</p>
+                    <p className="text-[10.5px] text-[var(--text-secondary)] mt-1 max-w-md">{temp.description}</p>
                   </div>
                   
                   <button
                     onClick={() => handleImportTemplate(temp)}
-                    className="shrink-0 px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all active:scale-95"
+                    className="shrink-0 px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-[9px] font-semibold uppercase tracking-widest transition-all active:scale-95"
                   >
                     Import
                   </button>

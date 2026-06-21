@@ -1,3 +1,4 @@
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useState, useEffect } from 'react';
 import { 
   Award, FileText, Shield, Activity, 
@@ -164,35 +165,35 @@ export default function CEMarking() {
 
   const statusColor = (s: string) => s === 'CERTIFIED' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20 shadow-emerald-950/20'
     : s === 'IN_PROGRESS' ? 'text-amber-400 bg-amber-500/10 border-amber-500/20 shadow-amber-950/20'
-    : 'text-gray-400 bg-gray-500/10 border-gray-500/20';
+    : 'text-[var(--text-secondary)] bg-gray-500/10 border-gray-500/20';
 
   if (activeRecord) {
     return (
-      <div className="flex flex-col gap-6 p-6 animate-fade-in text-gray-200">
+      <div className="flex flex-col gap-6 p-6 animate-fade-in  ">
         <div>
-          <button onClick={() => setActiveRecord(null)} className="text-[10px] font-bold text-gray-500 hover:text-white uppercase tracking-widest mb-2 flex items-center gap-1">
+          <button onClick={() => setActiveRecord(null)} className="text-[10px] font-bold text-[var(--text-muted)] hover:text-[var(--text-primary)] uppercase tracking-widest mb-2 flex items-center gap-1">
             ← Back to systems list
           </button>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h1 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-2">
+              <h1 className="text-[22px] font-semibold text-[var(--text-primary)] tracking-tight flex items-center gap-2">
                 <Award className="h-5 w-5 text-indigo-400" />
                 CE Marking Conformity Checklist — {activeRecord.ai_system?.name}
               </h1>
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">
+              <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">
                 EU AI Act CE Conformity assessment route tracking & certification
               </p>
             </div>
             
             <div className="flex items-center gap-4">
               <div className="text-right">
-                <p className="text-[10px] text-gray-500 uppercase font-bold">Conformity Progress</p>
-                <p className="text-sm font-black text-white">{completedStepsCount}/{STEPS_CONFIG.length} <span className="text-gray-500 font-normal">steps completed</span></p>
+                <p className="text-[10px] text-[var(--text-muted)] uppercase font-bold">Conformity Progress</p>
+                <p className="text-sm font-semibold text-white">{completedStepsCount}/{STEPS_CONFIG.length} <span className="text-[var(--text-muted)] font-normal">steps completed</span></p>
                 <div className="w-32 h-1 bg-gray-800 rounded-full mt-1">
                   <div className="h-full bg-indigo-500 rounded-full transition-all" style={{ width: `${progressPct}%` }} />
                 </div>
               </div>
-              <span className={cn('text-[9px] font-black uppercase px-2.5 py-1.5 rounded border shadow-lg', statusColor(activeRecord.overall_status))}>
+              <span className={cn('text-[9px] font-semibold uppercase px-2.5 py-1.5 rounded border shadow-lg', statusColor(activeRecord.overall_status))}>
                 {activeRecord.overall_status}
               </span>
             </div>
@@ -202,17 +203,17 @@ export default function CEMarking() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Classification & Notes Card */}
           <div className="lg:col-span-1">
-            <div className="bg-[#111827]/40 border border-gray-800 rounded-2xl p-6 backdrop-blur-md flex flex-col gap-5 sticky top-6">
+            <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-6 backdrop-blur-md flex flex-col gap-5 sticky top-6">
               <div>
-                <h3 className="text-xs font-black text-white uppercase tracking-widest mb-4">Risk Classification</h3>
+                <h3 className="text-xs font-semibold text-white uppercase tracking-widest mb-4">Risk Classification</h3>
                 
                 <div className="flex flex-col gap-1.5 mb-4">
-                  <label htmlFor="classification-select" className="text-[10px] font-bold text-gray-500 uppercase">Conformity Class</label>
+                  <label htmlFor="classification-select" className="text-[10px] font-bold text-[var(--text-muted)] uppercase">Conformity Class</label>
                   <select
                     id="classification-select"
                     value={classification}
                     onChange={e => setClassification(e.target.value)}
-                    className="w-full bg-gray-900/60 border border-gray-700 rounded-xl p-3 text-xs text-gray-200 focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-gray-900/60 border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
                   >
                     <option value="MINIMAL_RISK">MINIMAL RISK (Class A)</option>
                     <option value="LIMITED_RISK">LIMITED RISK (Class B)</option>
@@ -222,19 +223,19 @@ export default function CEMarking() {
                 </div>
 
                 <div className="flex flex-col gap-1.5 mb-4">
-                  <label htmlFor="scope-notes-textarea" className="text-[10px] font-bold text-gray-500 uppercase">Scope & Compliance Notes</label>
+                  <label htmlFor="scope-notes-textarea" className="text-[10px] font-bold text-[var(--text-muted)] uppercase">Scope & Compliance Notes</label>
                   <textarea
                     id="scope-notes-textarea"
                     value={scopeNotes}
                     onChange={e => setScopeNotes(e.target.value)}
                     placeholder="Enter compliance justification notes, applicability criteria..."
                     rows={4}
-                    className="w-full bg-gray-900/60 border border-gray-700 rounded-xl p-3 text-xs text-gray-200 placeholder-gray-600 resize-none focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-gray-900/60 border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] placeholder-[var(--text-muted)] resize-none focus:outline-none focus:border-indigo-500"
                   />
                 </div>
 
                 <button onClick={handleSaveClassification} disabled={saving}
-                  className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-[10px] font-black text-white uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2">
+                  className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-[10px] font-semibold text-white uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2">
                   <Save className="h-3.5 w-3.5" />
                   Save Classification
                 </button>
@@ -255,20 +256,20 @@ export default function CEMarking() {
               const isInProgress = val.status === 'IN_PROGRESS';
               return (
                 <div key={s.key} className={cn(
-                  "bg-[#111827]/40 border rounded-2xl p-5 backdrop-blur-md transition-all",
-                  isDone ? "border-emerald-500/20 shadow-lg shadow-emerald-950/5" : (isInProgress ? "border-amber-500/20 shadow-lg shadow-amber-950/5" : "border-gray-800")
+                  "bg-[var(--bg-page)] border rounded-2xl p-5 backdrop-blur-md transition-all",
+                  isDone ? "border-emerald-500/20 shadow-lg shadow-emerald-950/5" : (isInProgress ? "border-amber-500/20 shadow-lg shadow-amber-950/5" : "border-[var(--border-default)]")
                 )}>
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-3">
                     <div className="flex gap-3">
                       <div className={cn(
                         "h-8 w-8 rounded-xl border flex items-center justify-center shrink-0",
-                        isDone ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : (isInProgress ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : "bg-gray-900/60 border-gray-800 text-gray-500")
+                        isDone ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : (isInProgress ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : "bg-gray-900/60 border-[var(--border-default)] text-[var(--text-muted)]")
                       )}>
                         <s.icon className="h-4 w-4" />
                       </div>
                       <div>
                         <h4 className="text-xs font-bold text-white uppercase tracking-tight">{s.label}</h4>
-                        <p className="text-[10.5px] text-gray-400 leading-normal mt-0.5">{s.desc}</p>
+                        <p className="text-[10.5px] text-[var(--text-secondary)] leading-normal mt-0.5">{s.desc}</p>
                       </div>
                     </div>
 
@@ -277,8 +278,8 @@ export default function CEMarking() {
                         value={val.status}
                         onChange={e => setSteps(prev => ({ ...prev, [s.key]: { ...val, status: e.target.value as any } }))}
                         className={cn(
-                          "bg-gray-900 border text-[10px] font-black uppercase tracking-wider rounded-xl px-3 py-1.5 outline-none transition-colors cursor-pointer",
-                          val.status === 'COMPLETED' ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/5" : (val.status === 'IN_PROGRESS' ? "border-amber-500/30 text-amber-400 bg-amber-500/5" : "border-gray-800 text-gray-500")
+                          "bg-white border text-[10px] font-semibold uppercase tracking-wider rounded-xl px-3 py-1.5 outline-none transition-colors cursor-pointer",
+                          val.status === 'COMPLETED' ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/5" : (val.status === 'IN_PROGRESS' ? "border-amber-500/30 text-amber-400 bg-amber-500/5" : "border-[var(--border-default)] text-[var(--text-muted)]")
                         )}
                       >
                         <option value="NOT_STARTED">NOT STARTED</option>
@@ -293,10 +294,10 @@ export default function CEMarking() {
                       value={val.notes}
                       onChange={e => setSteps(prev => ({ ...prev, [s.key]: { ...val, notes: e.target.value } }))}
                       placeholder="Conformity evidence URL, implementation details, or notes..."
-                      className="flex-1 bg-gray-900/40 border border-gray-850 rounded-xl px-3 py-2 text-[10.5px] text-gray-300 placeholder-gray-700 focus:outline-none focus:border-indigo-500"
+                      className="flex-1 bg-[var(--bg-page)] border border-[var(--border-default)] rounded-xl px-3 py-2 text-[10.5px] text-[var(--text-secondary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-indigo-500"
                     />
                     <button onClick={() => handleSaveStep(s.key)} disabled={saving}
-                      className="px-3.5 py-2 rounded-xl border border-gray-800 hover:border-indigo-500/30 bg-gray-900/60 text-[9px] font-black text-gray-400 hover:text-white uppercase tracking-widest active:scale-95 transition-all">
+                      className="px-3.5 py-2 rounded-xl border border-[var(--border-default)] hover:border-indigo-500/30 bg-gray-900/60 text-[9px] font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] uppercase tracking-widest active:scale-95 transition-all">
                       Save
                     </button>
                   </div>
@@ -310,26 +311,28 @@ export default function CEMarking() {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6 animate-fade-in text-gray-200">
+    <div className="flex flex-col gap-6 p-6 animate-fade-in  ">
       <div>
-        <h1 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-2">
+        <h1 className="text-[22px] font-semibold text-[var(--text-primary)] tracking-tight flex items-center gap-2">
           <Award className="h-6 w-6 text-indigo-400" />
           CE Marking conformity OS
         </h1>
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">
+        <p className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-[0.2em] mt-1">
           EU AI Act Chapter II CE Certification Checklist
         </p>
       </div>
 
       <div className="grid gap-4">
         {loading ? (
-          <div className="text-center py-12 text-gray-500">Loading CE marking records...</div>
+          <div className="text-center py-12 text-[var(--text-muted)]">Loading CE marking records...</div>
         ) : aiSystems.length === 0 ? (
-          <div className="text-center py-16 text-gray-500">
-            <Award className="h-12 w-12 mx-auto mb-4 opacity-20" />
-            <p className="text-[11px] font-black uppercase tracking-widest">No systems registered</p>
-            <p className="text-[10px] mt-1">Add AI systems to the registry first to begin tracking CE conformity certification.</p>
-          </div>
+          <EmptyState
+            icon={Award}
+            title="No Systems Registered"
+            description="Add AI systems to the registry first to begin tracking CE conformity certification."
+            actionLabel="Go to AI Registry"
+            onAction={() => navigate('/app/ai-registry')}
+          />
         ) : aiSystems.map(sys => {
           const record = records.find(r => r.ai_system.id === sys.id);
           const completedCount = record ? [
@@ -346,7 +349,7 @@ export default function CEMarking() {
 
           return (
             <button key={sys.id} onClick={() => openRecord(sys.id)}
-              className="w-full text-left bg-[#111827]/40 border border-gray-800 rounded-2xl p-5 hover:border-indigo-500/30 transition-all group backdrop-blur-md">
+              className="w-full text-left bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-5 hover:border-indigo-500/30 transition-all group backdrop-blur-md">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="h-10 w-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
@@ -356,19 +359,19 @@ export default function CEMarking() {
                     <p className="text-sm font-bold text-white group-hover:text-indigo-300 transition-colors">
                       {sys.name}
                     </p>
-                    <p className="text-[10px] text-gray-500 font-mono">{sys.model_name} — {sys.risk_tier} Risk</p>
+                    <p className="text-[10px] text-[var(--text-muted)] font-mono">{sys.model_name} — {sys.risk_tier} Risk</p>
                   </div>
                 </div>
                 
                 <div className="flex items-center gap-4">
                   <div className="text-right">
-                    <p className="text-[10px] text-gray-500 uppercase font-bold">Progress</p>
+                    <p className="text-[10px] text-[var(--text-muted)] uppercase font-bold">Progress</p>
                     <p className="text-[11px] font-bold text-white">{completedCount}/7 completed</p>
                   </div>
-                  <span className={cn('text-[9px] font-black uppercase px-2.5 py-1 rounded border', statusColor(overallStatus))}>
+                  <span className={cn('text-[9px] font-semibold uppercase px-2.5 py-1 rounded border', statusColor(overallStatus))}>
                     {overallStatus}
                   </span>
-                  <ChevronRight className="h-4 w-4 text-gray-600 group-hover:text-gray-400 transition-colors" />
+                  <ChevronRight className="h-4 w-4 text-[var(--text-muted)] group-hover:text-[var(--text-secondary)] transition-colors" />
                 </div>
               </div>
             </button>

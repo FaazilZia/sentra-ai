@@ -1,3 +1,4 @@
+import { NodePulseLoader } from '@/components/ui/NodePulseLoader';
 import { useState, useEffect } from 'react';
 import { apiRequest } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -225,7 +226,7 @@ export default function Tasks() {
   const isReviewer = user?.role === 'ADMIN' || user?.role === 'COMPLIANCE_MANAGER';
 
   return (
-    <div className="flex flex-col gap-6 p-6 animate-fade-in text-gray-200">
+    <div className="flex flex-col gap-6 p-6 animate-fade-in  ">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <PageHeader 
           title="Compliance & Governance Tasks"
@@ -241,21 +242,21 @@ export default function Tasks() {
       </div>
 
       {/* Filters Bar */}
-      <div className="flex flex-col md:flex-row items-center gap-4 bg-[#111827]/40 border border-gray-800/80 p-4 rounded-2xl">
+      <div className="flex flex-col md:flex-row items-center gap-4 bg-[var(--bg-page)] border border-[var(--border-default)]/80 p-4 rounded-2xl">
         <div className="flex-1 w-full">
           <input
             type="text"
             placeholder="Search tasks..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-black/30 border border-gray-800 rounded-xl px-4 py-2 text-xs font-semibold text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
+            className="w-full bg-black/30 border border-[var(--border-default)] rounded-xl px-4 py-2 text-xs font-semibold text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
           />
         </div>
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           <select
             value={filterState}
             onChange={(e) => setFilterState(e.target.value)}
-            className="bg-black/30 border border-gray-800 rounded-xl px-3 py-2 text-xs font-semibold text-gray-300 focus:outline-none focus:border-indigo-500"
+            className="bg-black/30 border border-[var(--border-default)] rounded-xl px-3 py-2 text-xs font-semibold text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
           >
             <option value="ALL">All States</option>
             <option value="DRAFT">Draft</option>
@@ -268,7 +269,7 @@ export default function Tasks() {
           <select
             value={filterPriority}
             onChange={(e) => setFilterPriority(e.target.value)}
-            className="bg-black/30 border border-gray-800 rounded-xl px-3 py-2 text-xs font-semibold text-gray-300 focus:outline-none focus:border-indigo-500"
+            className="bg-black/30 border border-[var(--border-default)] rounded-xl px-3 py-2 text-xs font-semibold text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
           >
             <option value="ALL">All Priorities</option>
             <option value="low">Low</option>
@@ -281,7 +282,7 @@ export default function Tasks() {
       {/* Tasks Table */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
+          <NodePulseLoader label="Syncing team task list..." />
         </div>
       ) : filteredTasks.length === 0 ? (
         <EmptyState 
@@ -290,11 +291,11 @@ export default function Tasks() {
           description="Create a task or change filters to get started."
         />
       ) : (
-        <div className="bg-[#111827]/30 border border-gray-800/80 rounded-2xl overflow-hidden">
+        <div className="bg-[var(--bg-page)]/30 border border-[var(--border-default)]/80 rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-gray-800 text-[10px] font-black uppercase tracking-widest text-gray-400 bg-black/10">
+                <tr className="border-b border-[var(--border-default)] text-[10px] font-semibold uppercase tracking-widest text-[var(--text-secondary)] bg-black/10">
                   <th className="p-4 font-bold">Task Details</th>
                   <th className="p-4 font-bold">Priority</th>
                   <th className="p-4 font-bold">Assignee</th>
@@ -310,7 +311,7 @@ export default function Tasks() {
                       <div className="flex flex-col gap-1">
                         <span className="font-bold text-white text-sm">{task.title}</span>
                         {task.description && (
-                          <span className="text-gray-400 text-xs line-clamp-1">{task.description}</span>
+                          <span className="text-[var(--text-secondary)] text-xs line-clamp-1">{task.description}</span>
                         )}
                         <div className="flex items-center gap-2 mt-1.5">
                           <span className="text-[10px] bg-indigo-500/10 text-indigo-400 font-mono px-2 py-0.5 rounded border border-indigo-500/20">
@@ -333,7 +334,7 @@ export default function Tasks() {
                       <select
                         value={task.assigned_to || ''}
                         onChange={(e) => handleAssignTask(task.id, e.target.value)}
-                        className="bg-black/20 border border-gray-800 rounded-lg px-2 py-1 text-xs text-gray-300 focus:outline-none focus:border-indigo-500 max-w-[150px]"
+                        className="bg-black/20 border border-[var(--border-default)] rounded-lg px-2 py-1 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500 max-w-[150px]"
                       >
                         <option value="">Unassigned</option>
                         {users.map(u => (
@@ -346,11 +347,11 @@ export default function Tasks() {
                         {task.state.replace('_', ' ')}
                       </span>
                     </td>
-                    <td className="p-4 text-gray-400">
+                    <td className="p-4 text-[var(--text-secondary)]">
                       {task.due_date ? (
-                        <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5 text-gray-500" /> {new Date(task.due_date).toLocaleDateString()}</span>
+                        <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5 text-[var(--text-muted)]" /> {new Date(task.due_date).toLocaleDateString()}</span>
                       ) : (
-                        <span className="text-gray-600">—</span>
+                        <span className="text-[var(--text-muted)]">—</span>
                       )}
                     </td>
                     <td className="p-4 text-right">
@@ -385,7 +386,7 @@ export default function Tasks() {
                         )}
                         <button
                           onClick={() => handleDeleteTask(task.id)}
-                          className="p-1.5 hover:text-red-500 text-gray-500 transition-colors"
+                          className="p-1.5 hover:text-red-500 text-[var(--text-muted)] transition-colors"
                           title="Delete task"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -403,15 +404,15 @@ export default function Tasks() {
       {/* Create Task Modal */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[#111827] border border-gray-800 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl animate-scale-in text-xs">
-            <div className="flex items-center justify-between border-b border-gray-800 p-5 bg-[#0f172a]/60">
+          <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl max-w-md w-full overflow-hidden shadow-2xl animate-scale-in text-xs">
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] p-5 bg-[#0f172a]/60">
               <div>
-                <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Compliance Management</span>
+                <span className="text-[9px] font-semibold text-indigo-400 uppercase tracking-widest">Compliance Management</span>
                 <h3 className="font-bold text-white text-base mt-0.5">Create Action Task</h3>
               </div>
               <button
                 onClick={() => setIsCreateModalOpen(false)}
-                className="rounded-lg p-1 hover:bg-gray-800 text-gray-500 hover:text-white transition-all"
+                className="rounded-lg p-1 hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -419,7 +420,7 @@ export default function Tasks() {
 
             <form onSubmit={handleCreateTask} className="p-6 flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="task-title" className="text-gray-400 font-semibold">Title *</label>
+                <label htmlFor="task-title" className="text-[var(--text-secondary)] font-semibold">Title *</label>
                 <input
                   id="task-title"
                   type="text"
@@ -427,29 +428,29 @@ export default function Tasks() {
                   placeholder="e.g. Implement TOTP Authenticator flow"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="bg-black/30 border border-gray-800 rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500"
+                  className="bg-black/30 border border-[var(--border-default)] rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500"
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="task-desc" className="text-gray-400 font-semibold">Description</label>
+                <label htmlFor="task-desc" className="text-[var(--text-secondary)] font-semibold">Description</label>
                 <textarea
                   id="task-desc"
                   placeholder="Describe the task and any evidence requirements..."
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
-                  className="bg-black/30 border border-gray-800 rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500 min-h-[80px]"
+                  className="bg-black/30 border border-[var(--border-default)] rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500 min-h-[80px]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="task-priority" className="text-gray-400 font-semibold">Priority</label>
+                  <label htmlFor="task-priority" className="text-[var(--text-secondary)] font-semibold">Priority</label>
                   <select
                     id="task-priority"
                     value={newPriority}
                     onChange={(e) => setNewPriority(e.target.value as any)}
-                    className="bg-black/30 border border-gray-800 rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500"
+                    className="bg-black/30 border border-[var(--border-default)] rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500"
                   >
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
@@ -457,25 +458,25 @@ export default function Tasks() {
                   </select>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="task-due" className="text-gray-400 font-semibold">Due Date</label>
+                  <label htmlFor="task-due" className="text-[var(--text-secondary)] font-semibold">Due Date</label>
                   <input
                     id="task-due"
                     type="date"
                     value={newDueDate}
                     onChange={(e) => setNewDueDate(e.target.value)}
-                    className="bg-black/30 border border-gray-800 rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500"
+                    className="bg-black/30 border border-[var(--border-default)] rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="task-category" className="text-gray-400 font-semibold">Category</label>
+                  <label htmlFor="task-category" className="text-[var(--text-secondary)] font-semibold">Category</label>
                   <select
                     id="task-category"
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value)}
-                    className="bg-black/30 border border-gray-800 rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500"
+                    className="bg-black/30 border border-[var(--border-default)] rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500"
                   >
                     <option value="COMPLIANCE">Compliance</option>
                     <option value="GOVERNANCE">Governance</option>
@@ -484,25 +485,25 @@ export default function Tasks() {
                   </select>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="task-framework" className="text-gray-400 font-semibold">Framework (Optional)</label>
+                  <label htmlFor="task-framework" className="text-[var(--text-secondary)] font-semibold">Framework (Optional)</label>
                   <input
                     id="task-framework"
                     type="text"
                     placeholder="e.g. GDPR, HIPAA"
                     value={newFramework}
                     onChange={(e) => setNewFramework(e.target.value)}
-                    className="bg-black/30 border border-gray-800 rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500"
+                    className="bg-black/30 border border-[var(--border-default)] rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500"
                   />
                 </div>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="task-assignee" className="text-gray-400 font-semibold">Assignee</label>
+                <label htmlFor="task-assignee" className="text-[var(--text-secondary)] font-semibold">Assignee</label>
                 <select
                   id="task-assignee"
                   value={newAssignedTo}
                   onChange={(e) => setNewAssignedTo(e.target.value)}
-                  className="bg-black/30 border border-gray-800 rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500"
+                  className="bg-black/30 border border-[var(--border-default)] rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500"
                 >
                   <option value="">Unassigned</option>
                   {users.map(u => (
@@ -511,11 +512,11 @@ export default function Tasks() {
                 </select>
               </div>
 
-              <div className="flex items-center justify-end gap-3 border-t border-gray-800 pt-4 mt-2">
+              <div className="flex items-center justify-end gap-3 border-t border-[var(--border-default)] pt-4 mt-2">
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="rounded-xl border border-gray-800 px-5 py-2.5 text-xs font-semibold text-gray-400 hover:bg-gray-800 hover:text-white transition-all"
+                  className="rounded-xl border border-[var(--border-default)] px-5 py-2.5 text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-all"
                 >
                   Cancel
                 </button>
@@ -535,29 +536,29 @@ export default function Tasks() {
       {/* Transition Comments Modal */}
       {commentModalOpen && selectedTask && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[#111827] border border-gray-800 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl animate-scale-in text-xs">
-            <div className="flex items-center justify-between border-b border-gray-800 p-5 bg-[#0f172a]/60">
+          <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl max-w-md w-full overflow-hidden shadow-2xl animate-scale-in text-xs">
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] p-5 bg-[#0f172a]/60">
               <div>
-                <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Workflow State Transition</span>
+                <span className="text-[9px] font-semibold text-indigo-400 uppercase tracking-widest">Workflow State Transition</span>
                 <h3 className="font-bold text-white text-base mt-0.5">
                   {transitionAction === 'SUBMIT' ? 'Submit for Review' : transitionAction === 'APPROVE' ? 'Approve Task' : 'Reject Task'}
                 </h3>
               </div>
               <button
                 onClick={() => setCommentModalOpen(false)}
-                className="rounded-lg p-1 hover:bg-gray-800 text-gray-500 hover:text-white transition-all"
+                className="rounded-lg p-1 hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             <form onSubmit={handleExecuteTransition} className="p-6 flex flex-col gap-4">
-              <p className="text-gray-400 text-xs font-medium leading-relaxed">
+              <p className="text-[var(--text-secondary)] text-xs font-medium leading-relaxed">
                 Task: <span className="text-white font-bold">{selectedTask.title}</span>
               </p>
 
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="transition-comment" className="text-gray-400 font-semibold">
+                <label htmlFor="transition-comment" className="text-[var(--text-secondary)] font-semibold">
                   Transition Comment {transitionAction === 'REJECT' ? '*' : '(Optional)'}
                 </label>
                 <textarea
@@ -570,15 +571,15 @@ export default function Tasks() {
                   }
                   value={transitionComment}
                   onChange={(e) => setTransitionComment(e.target.value)}
-                  className="bg-black/30 border border-gray-800 rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500 min-h-[90px]"
+                  className="bg-black/30 border border-[var(--border-default)] rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500 min-h-[90px]"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 border-t border-gray-800 pt-4 mt-2">
+              <div className="flex items-center justify-end gap-3 border-t border-[var(--border-default)] pt-4 mt-2">
                 <button
                   type="button"
                   onClick={() => setCommentModalOpen(false)}
-                  className="rounded-xl border border-gray-800 px-5 py-2.5 text-xs font-semibold text-gray-400 hover:bg-gray-800 hover:text-white transition-all"
+                  className="rounded-xl border border-[var(--border-default)] px-5 py-2.5 text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-all"
                 >
                   Cancel
                 </button>

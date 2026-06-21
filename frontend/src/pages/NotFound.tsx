@@ -54,9 +54,9 @@ export function NotFoundPage() {
         <h1
           id="not-found-heading"
           style={{
-            fontSize: '1.75rem',
-            fontWeight: 700,
-            color: 'var(--text-primary, #f8fafc)',
+            fontSize: '22px',
+            fontWeight: 600,
+            color: 'var(--text-primary)',
             margin: '0 0 1rem',
           }}
         >

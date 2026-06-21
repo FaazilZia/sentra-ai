@@ -1,32 +1,49 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
 
 :root {
+  /* SENTRAA BRAND TOKENS (derived from the interconnected-node logo) */
+  --sentraa-primary: #3730A3;
+  --sentraa-accent: #4F46E5;
+  --sentraa-primary-light: #EEF2FF;
+  --sentraa-primary-mid: #C7D2FE;
+  --sentraa-dark-bg: #0F0A2E;
+  --sentraa-page-bg: #F8F7FF;
+  --sentraa-text-primary: #1E1B4B;
+  --sentraa-text-secondary: #6B7280;
+  --sentraa-border: rgba(55, 48, 163, 0.12);
+  --sentraa-success: #059669;
+  --sentraa-warning: #D97706;
+  --sentraa-danger: #DC2626;
+  --sentraa-radius-sm: 6px;
+  --sentraa-radius-md: 10px;
+  --sentraa-radius-lg: 16px;
+
   /* ROYAL INDIGO PALETTE */
-  --royal-indigo: #2D3AC0;     /* Primary Brand / Sidebar / Link */
-  --mid-indigo:   #3B4DD4;     /* Active Nav / Primary Hover */
-  --soft-indigo:  #5B6BEA;     /* Nav Hover */
-  --lavender:     #A5A8F5;     /* Sidebar Icons / Secondary Data */
-  --violet-blue:  #6C63FF;     /* STAT ACCENT / Primary CTA */
-  --ghost-violet: #D8D9FC;     /* Card Tints / Secondary Backgrounds */
+  --royal-indigo: #3730A3;     /* Updated to Sentraa primary */
+  --mid-indigo:   #4F46E5;     /* Updated to Sentraa accent */
+  --soft-indigo:  #6366F1;     /* Nav Hover */
+  --lavender:     #A5B4FC;     /* Sidebar Icons / Secondary Data */
+  --violet-blue:  #4F46E5;     /* STAT ACCENT / Primary CTA */
+  --ghost-violet: #E0E7FF;     /* Card Tints / Secondary Backgrounds */
   
   /* SURFACE & LAYOUT */
-  --bg-page: #F4F5FA;          /* Off-white blue-tint */
+  --bg-page: #F8F7FF;          /* Barely-visible indigo tint (Sentraa brand) */
   --bg-card: #FFFFFF;
-  --bg-sidebar: var(--royal-indigo);
+  --bg-sidebar: #0F0A2E;       /* Deep indigo-dark (darkest logo node) */
   --bg-topbar: #FFFFFF;
   --bg-hover: #F0F1FB;         /* Light indigo row hover */
 
   /* SEMANTIC COMPATIBILITY */
-  --primary-900: #1E1E2D;      /* Near Black for text */
+  --primary-900: #1E1B4B;      /* Deep indigo-black for text */
   --primary-800: var(--royal-indigo);
   --primary-700: var(--mid-indigo);
   --primary-500: var(--royal-indigo);
   --primary-400: var(--soft-indigo);
   --primary-100: var(--ghost-violet);
-  --primary-50:  #F9F9FF;
+  --primary-50:  #F5F3FF;
 
   /* TEXT */
-  --text-primary: #1E1E2D;     /* Near Black */
+  --text-primary: #1E1B4B;     /* Deep indigo-black (Sentraa brand) */
   --text-secondary: #6B7280;   /* Muted Grey */
   --text-muted: #9CA3AF;       /* Light Grey */
   --text-inverse: #FFFFFF;     /* White on dark */

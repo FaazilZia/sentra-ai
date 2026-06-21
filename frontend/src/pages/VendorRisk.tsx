@@ -1,3 +1,4 @@
+import { NodePulseLoader } from '@/components/ui/NodePulseLoader';
 import { useEffect, useState } from 'react';
 import { apiRequest } from '@/lib/api';
 import { 
@@ -204,7 +205,7 @@ export default function VendorRisk() {
   );
 
   return (
-    <div className="flex flex-col gap-6 p-6 animate-fade-in text-gray-200">
+    <div className="flex flex-col gap-6 p-6 animate-fade-in  ">
       
       <PageHeader 
         title="Third-Party Vendor AI Risk"
@@ -231,7 +232,7 @@ export default function VendorRisk() {
           <div key={card.key} className={`border rounded-2xl p-4 flex flex-col justify-between backdrop-blur-md ${card.color}`}>
             <span className="text-[10px] font-bold uppercase tracking-wider opacity-85">{card.label}</span>
             <div className="flex items-baseline justify-between mt-2">
-              <span className="text-2xl font-black">{card.count}</span>
+              <span className="text-2xl font-semibold">{card.count}</span>
               <Building2 className="h-4 w-4 opacity-30" />
             </div>
           </div>
@@ -240,20 +241,20 @@ export default function VendorRisk() {
 
       {/* Operations Bar */}
       <div className="relative">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--text-muted)]" />
         <input
           type="text"
           placeholder="Search by vendor name, category, or notes..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full bg-[#111827]/60 border border-gray-800 rounded-xl py-3 pl-11 pr-4 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition-all shadow-inner"
+          className="w-full bg-[var(--bg-page)]/60 border border-[var(--border-default)] rounded-xl py-3 pl-11 pr-4 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition-all shadow-inner"
         />
       </div>
 
       {/* Vendor Cards Grid */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
+          <NodePulseLoader label="Syncing vendor risk registers..." />
         </div>
       ) : filteredVendors.length === 0 ? (
         <EmptyState 
@@ -266,7 +267,7 @@ export default function VendorRisk() {
           {filteredVendors.map((v) => (
             <div
               key={v.id}
-              className="bg-[#111827]/40 border border-gray-800/80 rounded-2xl p-6 flex flex-col gap-4 hover:border-indigo-500/20 hover:shadow-indigo-500/2 transition-all relative overflow-hidden group shadow-lg"
+              className="bg-[var(--bg-page)] border border-[var(--border-default)]/80 rounded-2xl p-6 flex flex-col gap-4 hover:border-indigo-500/20 hover:shadow-indigo-500/2 transition-all relative overflow-hidden group shadow-lg"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-4">
@@ -282,7 +283,7 @@ export default function VendorRisk() {
                     </h3>
                     
                     <div className="flex flex-wrap items-center gap-3 mt-2">
-                      <span className="text-[9px] px-2 py-0.5 rounded-full border border-gray-800 bg-black/40 text-gray-400 font-bold font-mono">
+                      <span className="text-[9px] px-2 py-0.5 rounded-full border border-[var(--border-default)] bg-black/40 text-[var(--text-secondary)] font-bold font-mono">
                         Risk Score: {v.risk_score}/100
                       </span>
                       <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold ${getRiskColor(v.risk_level)}`}>
@@ -295,11 +296,11 @@ export default function VendorRisk() {
                 <div className="flex items-center gap-2">
                   <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full border ${getStatusBadge(v.status)}`}>
                     {getStatusIcon(v.status)}
-                    <span className="text-[9px] font-black uppercase tracking-wider">{v.status}</span>
+                    <span className="text-[9px] font-semibold uppercase tracking-wider">{v.status}</span>
                   </div>
                   <button
                     onClick={() => handleDelete(v.id)}
-                    className="rounded-xl border border-gray-850 p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/5 hover:border-red-500/20 transition-all"
+                    className="rounded-xl border border-[var(--border-default)] p-2 text-[var(--text-muted)] hover:text-red-400 hover:bg-red-500/5 hover:border-red-500/20 transition-all"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -308,11 +309,11 @@ export default function VendorRisk() {
 
               {/* Data Shared list */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                <div className="bg-[#0b0f19]/30 border border-gray-800/60 p-4 rounded-xl flex flex-col gap-2">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-indigo-400/80 flex items-center gap-1">
+                <div className="bg-[var(--bg-page)]/30 border border-[var(--border-default)]/60 p-4 rounded-xl flex flex-col gap-2">
+                  <span className="text-[9px] font-semibold uppercase tracking-widest text-indigo-400/80 flex items-center gap-1">
                     <TrendingUp className="h-3 w-3" /> Data Egress Map
                   </span>
-                  <div className="flex flex-col gap-1.5 mt-1 text-[10px] text-gray-400">
+                  <div className="flex flex-col gap-1.5 mt-1 text-[10px] text-[var(--text-secondary)]">
                     {v.data_access.length > 0 ? (
                       v.data_access.map(d => (
                         <div key={d} className="flex items-center gap-2">
@@ -321,16 +322,16 @@ export default function VendorRisk() {
                         </div>
                       ))
                     ) : (
-                      <span className="text-gray-600 italic">No sensitive data egress configured.</span>
+                      <span className="text-[var(--text-muted)] italic">No sensitive data egress configured.</span>
                     )}
                   </div>
                 </div>
 
-                <div className="bg-[#0b0f19]/30 border border-gray-800/60 p-4 rounded-xl flex flex-col gap-2">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-purple-400/80 flex items-center gap-1">
+                <div className="bg-[var(--bg-page)]/30 border border-[var(--border-default)]/60 p-4 rounded-xl flex flex-col gap-2">
+                  <span className="text-[9px] font-semibold uppercase tracking-widest text-purple-400/80 flex items-center gap-1">
                     <Award className="h-3 w-3" /> Certifications Verified
                   </span>
-                  <div className="flex flex-col gap-1.5 mt-1 text-[10px] text-gray-400">
+                  <div className="flex flex-col gap-1.5 mt-1 text-[10px] text-[var(--text-secondary)]">
                     {v.compliance_frameworks.length > 0 ? (
                       v.compliance_frameworks.map(f => (
                         <div key={f} className="flex items-center gap-2">
@@ -339,34 +340,34 @@ export default function VendorRisk() {
                         </div>
                       ))
                     ) : (
-                      <span className="text-gray-600 italic">No framework verified.</span>
+                      <span className="text-[var(--text-muted)] italic">No framework verified.</span>
                     )}
                   </div>
                 </div>
               </div>
 
               {/* Assessment Notes */}
-              <div className="bg-[#0b0f19]/10 border border-gray-850 p-4 rounded-xl flex flex-col gap-1.5 text-[11px] leading-relaxed">
-                <span className="text-[9px] font-black uppercase text-gray-500 flex items-center gap-1">
+              <div className="bg-[var(--bg-page)]/10 border border-[var(--border-default)] p-4 rounded-xl flex flex-col gap-1.5 text-[11px] leading-relaxed">
+                <span className="text-[9px] font-semibold uppercase text-[var(--text-muted)] flex items-center gap-1">
                   <FileText className="h-3 w-3" /> Auditor Assessment Notes
                 </span>
-                <p className="text-gray-300">{v.assessment_notes || 'No assessment notes recorded.'}</p>
+                <p className="text-[var(--text-secondary)]">{v.assessment_notes || 'No assessment notes recorded.'}</p>
               </div>
 
               {/* Review workflow - Admin only */}
               {userRole === 'ADMIN' && v.status === 'PENDING' && (
-                <div className="border-t border-gray-850 pt-4 mt-1 flex items-center justify-between">
-                  <span className="text-[10px] text-gray-500 italic">Waiting for Admin compliance review...</span>
+                <div className="border-t border-[var(--border-default)] pt-4 mt-1 flex items-center justify-between">
+                  <span className="text-[10px] text-[var(--text-muted)] italic">Waiting for Admin compliance review...</span>
                   <div className="flex items-center gap-2.5">
                     <button
                       onClick={() => handleReview(v.id, 'REJECTED')}
-                      className="flex items-center gap-1.5 rounded-xl border border-red-500/30 px-4 py-2 text-[10px] font-black uppercase text-red-400 hover:bg-red-500/10 transition-all"
+                      className="flex items-center gap-1.5 rounded-xl border border-red-500/30 px-4 py-2 text-[10px] font-semibold uppercase text-red-400 hover:bg-red-500/10 transition-all"
                     >
                       Reject / Flag
                     </button>
                     <button
                       onClick={() => handleReview(v.id, 'APPROVED')}
-                      className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2 text-[10px] font-black uppercase text-white shadow-lg hover:from-indigo-500 hover:to-purple-500 transition-all"
+                      className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2 text-[10px] font-semibold uppercase text-white shadow-lg hover:from-indigo-500 hover:to-purple-500 transition-all"
                     >
                       Approve Compliance
                     </button>
@@ -375,9 +376,9 @@ export default function VendorRisk() {
               )}
 
               {v.reviewed_by && (
-                <div className="flex items-center gap-1.5 text-[10px] text-gray-500 border-t border-gray-850/50 pt-3 mt-1">
+                <div className="flex items-center gap-1.5 text-[10px] text-[var(--text-muted)] border-t border-[var(--border-default)]/50 pt-3 mt-1">
                   <User className="h-3.5 w-3.5" />
-                  <span>Audited by <span className="text-gray-400 font-bold">{v.reviewed_by}</span></span>
+                  <span>Audited by <span className="text-[var(--text-secondary)] font-bold">{v.reviewed_by}</span></span>
                 </div>
               )}
             </div>
@@ -388,15 +389,15 @@ export default function VendorRisk() {
       {/* Add Vendor Tool Modal */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[#111827] border border-gray-800 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-scale-in">
-            <div className="flex items-center justify-between border-b border-gray-800 p-5 bg-[#0f172a]/60">
+          <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-scale-in">
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] p-5 bg-[#0f172a]/60">
               <h3 className="font-bold text-white flex items-center gap-2">
                 <Building2 className="h-5 w-5 text-indigo-400 animate-pulse" />
                 Audit External Vendor Compliance
               </h3>
               <button
                 onClick={() => setIsOpen(false)}
-                className="rounded-lg p-1 hover:bg-gray-800 text-gray-500 hover:text-white transition-all"
+                className="rounded-lg p-1 hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -406,7 +407,7 @@ export default function VendorRisk() {
               <div className="grid grid-cols-2 gap-4">
                 
                 <div className="flex flex-col gap-1.5 col-span-2 md:col-span-1">
-                  <label htmlFor="v-vendor-name" className="text-gray-400 font-semibold">Vendor / Partner Name *</label>
+                  <label htmlFor="v-vendor-name" className="text-[var(--text-secondary)] font-semibold">Vendor / Partner Name *</label>
                   <input
                     id="v-vendor-name"
                     type="text"
@@ -414,17 +415,17 @@ export default function VendorRisk() {
                     placeholder="e.g. Anthropic"
                     value={newVendor.vendor_name}
                     onChange={(e) => setNewVendor({ ...newVendor, vendor_name: e.target.value })}
-                    className="bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 text-xs"
+                    className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 text-xs"
                   />
                 </div>
 
                 <div className="flex flex-col gap-1.5 col-span-2 md:col-span-1">
-                  <label htmlFor="v-type" className="text-gray-400 font-semibold">Vendor Type *</label>
+                  <label htmlFor="v-type" className="text-[var(--text-secondary)] font-semibold">Vendor Type *</label>
                   <select
                     id="v-type"
                     value={newVendor.vendor_type}
                     onChange={(e) => setNewVendor({ ...newVendor, vendor_type: e.target.value as any })}
-                    className="bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 text-xs"
+                    className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 text-xs"
                   >
                     <option value="AI_MODEL">Foundation AI Model</option>
                     <option value="DATA_PROVIDER">Data Broker / Provider</option>
@@ -434,7 +435,7 @@ export default function VendorRisk() {
                 </div>
 
                 <div className="flex flex-col gap-1.5 col-span-2 md:col-span-1">
-                  <label htmlFor="v-score" className="text-gray-400 font-semibold">Calculated Risk Score (0-100) *</label>
+                  <label htmlFor="v-score" className="text-[var(--text-secondary)] font-semibold">Calculated Risk Score (0-100) *</label>
                   <input
                     id="v-score"
                     type="number"
@@ -443,13 +444,13 @@ export default function VendorRisk() {
                     required
                     value={newVendor.risk_score}
                     onChange={(e) => setNewVendor({ ...newVendor, risk_score: parseInt(e.target.value) || 0 })}
-                    className="bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 text-xs font-mono"
+                    className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 text-xs font-mono"
                   />
                 </div>
 
                 <div className="flex flex-col gap-1.5 col-span-2 md:col-span-1">
-                  <span className="text-gray-400 font-semibold">Risk Class Preview</span>
-                  <div className="h-9 flex items-center pl-3 border border-gray-800 rounded-xl bg-black/20 text-gray-500 font-bold">
+                  <span className="text-[var(--text-secondary)] font-semibold">Risk Class Preview</span>
+                  <div className="h-9 flex items-center pl-3 border border-[var(--border-default)] rounded-xl bg-black/20 text-[var(--text-muted)] font-bold">
                     {newVendor.risk_score >= 80 ? (
                       <span className="text-red-400">CRITICAL RISK</span>
                     ) : newVendor.risk_score >= 60 ? (
@@ -463,54 +464,54 @@ export default function VendorRisk() {
                 </div>
 
                 {/* Checklist Egress */}
-                <div className="flex flex-col gap-2 col-span-2 border-t border-gray-800/80 pt-4 mt-2">
-                  <span className="text-gray-400 font-semibold flex items-center gap-1">
+                <div className="flex flex-col gap-2 col-span-2 border-t border-[var(--border-default)]/80 pt-4 mt-2">
+                  <span className="text-[var(--text-secondary)] font-semibold flex items-center gap-1">
                     <Info className="h-4 w-4 text-indigo-400" />
                     Data Sharing & Egress Mapping
                   </span>
-                  <p className="text-[10px] text-gray-500">Check all types of enterprise data sent to or processed by this external model.</p>
+                  <p className="text-[10px] text-[var(--text-muted)]">Check all types of enterprise data sent to or processed by this external model.</p>
                   
                   <div className="grid grid-cols-2 gap-3 mt-2">
-                    <label htmlFor="chk-pii" className="flex items-center gap-2.5 cursor-pointer bg-black/20 border border-gray-800 p-3 rounded-xl hover:border-gray-700 select-none">
+                    <label htmlFor="chk-pii" className="flex items-center gap-2.5 cursor-pointer bg-black/20 border border-[var(--border-default)] p-3 rounded-xl hover:border-[var(--border-default)] select-none">
                       <input
                         id="chk-pii"
                         type="checkbox"
                         checked={piiShared}
                         onChange={(e) => setPiiShared(e.target.checked)}
-                        className="rounded border-gray-850 text-indigo-600 bg-black/40 focus:ring-indigo-500 h-4 w-4"
+                        className="rounded border-[var(--border-default)] text-indigo-600 bg-black/40 focus:ring-indigo-500 h-4 w-4"
                       />
                       <span>Customer PII Data</span>
                     </label>
 
-                    <label htmlFor="chk-financials" className="flex items-center gap-2.5 cursor-pointer bg-black/20 border border-gray-800 p-3 rounded-xl hover:border-gray-700 select-none">
+                    <label htmlFor="chk-financials" className="flex items-center gap-2.5 cursor-pointer bg-black/20 border border-[var(--border-default)] p-3 rounded-xl hover:border-[var(--border-default)] select-none">
                       <input
                         id="chk-financials"
                         type="checkbox"
                         checked={financialsShared}
                         onChange={(e) => setFinancialsShared(e.target.checked)}
-                        className="rounded border-gray-850 text-indigo-600 bg-black/40 focus:ring-indigo-500 h-4 w-4"
+                        className="rounded border-[var(--border-default)] text-indigo-600 bg-black/40 focus:ring-indigo-500 h-4 w-4"
                       />
                       <span>Financial Records</span>
                     </label>
 
-                    <label htmlFor="chk-code" className="flex items-center gap-2.5 cursor-pointer bg-black/20 border border-gray-800 p-3 rounded-xl hover:border-gray-700 select-none">
+                    <label htmlFor="chk-code" className="flex items-center gap-2.5 cursor-pointer bg-black/20 border border-[var(--border-default)] p-3 rounded-xl hover:border-[var(--border-default)] select-none">
                       <input
                         id="chk-code"
                         type="checkbox"
                         checked={codeShared}
                         onChange={(e) => setCodeShared(e.target.checked)}
-                        className="rounded border-gray-850 text-indigo-600 bg-black/40 focus:ring-indigo-500 h-4 w-4"
+                        className="rounded border-[var(--border-default)] text-indigo-600 bg-black/40 focus:ring-indigo-500 h-4 w-4"
                       />
                       <span>Source Code / IP</span>
                     </label>
 
-                    <label htmlFor="chk-logs" className="flex items-center gap-2.5 cursor-pointer bg-black/20 border border-gray-800 p-3 rounded-xl hover:border-gray-700 select-none">
+                    <label htmlFor="chk-logs" className="flex items-center gap-2.5 cursor-pointer bg-black/20 border border-[var(--border-default)] p-3 rounded-xl hover:border-[var(--border-default)] select-none">
                       <input
                         id="chk-logs"
                         type="checkbox"
                         checked={logsShared}
                         onChange={(e) => setLogsShared(e.target.checked)}
-                        className="rounded border-gray-850 text-indigo-600 bg-black/40 focus:ring-indigo-500 h-4 w-4"
+                        className="rounded border-[var(--border-default)] text-indigo-600 bg-black/40 focus:ring-indigo-500 h-4 w-4"
                       />
                       <span>Server Logs</span>
                     </label>
@@ -518,67 +519,67 @@ export default function VendorRisk() {
                 </div>
 
                 {/* Framework verification */}
-                <div className="flex flex-col gap-2 col-span-2 border-t border-gray-800/80 pt-4 mt-2">
-                  <span className="text-gray-400 font-semibold flex items-center gap-1">
+                <div className="flex flex-col gap-2 col-span-2 border-t border-[var(--border-default)]/80 pt-4 mt-2">
+                  <span className="text-[var(--text-secondary)] font-semibold flex items-center gap-1">
                     <Award className="h-4 w-4 text-purple-400" />
                     Security Frameworks Verified
                   </span>
                   
                   <div className="grid grid-cols-3 gap-3 mt-2">
-                    <label htmlFor="chk-iso4" className="flex items-center gap-2 cursor-pointer bg-black/20 border border-gray-800 p-2.5 rounded-xl hover:border-gray-700 select-none">
+                    <label htmlFor="chk-iso4" className="flex items-center gap-2 cursor-pointer bg-black/20 border border-[var(--border-default)] p-2.5 rounded-xl hover:border-[var(--border-default)] select-none">
                       <input
                         id="chk-iso4"
                         type="checkbox"
                         checked={iso42001}
                         onChange={(e) => setIso42001(e.target.checked)}
-                        className="rounded border-gray-850 text-purple-600 bg-black/40 focus:ring-purple-500 h-3.5 w-3.5"
+                        className="rounded border-[var(--border-default)] text-purple-600 bg-black/40 focus:ring-purple-500 h-3.5 w-3.5"
                       />
                       <span className="text-[10px]">ISO 42001</span>
                     </label>
 
-                    <label htmlFor="chk-iso2" className="flex items-center gap-2 cursor-pointer bg-black/20 border border-gray-800 p-2.5 rounded-xl hover:border-gray-700 select-none">
+                    <label htmlFor="chk-iso2" className="flex items-center gap-2 cursor-pointer bg-black/20 border border-[var(--border-default)] p-2.5 rounded-xl hover:border-[var(--border-default)] select-none">
                       <input
                         id="chk-iso2"
                         type="checkbox"
                         checked={iso27001}
                         onChange={(e) => setIso27001(e.target.checked)}
-                        className="rounded border-gray-850 text-purple-600 bg-black/40 focus:ring-purple-500 h-3.5 w-3.5"
+                        className="rounded border-[var(--border-default)] text-purple-600 bg-black/40 focus:ring-purple-500 h-3.5 w-3.5"
                       />
                       <span className="text-[10px]">ISO 27001</span>
                     </label>
 
-                    <label htmlFor="chk-soc2" className="flex items-center gap-2 cursor-pointer bg-black/20 border border-gray-800 p-2.5 rounded-xl hover:border-gray-700 select-none">
+                    <label htmlFor="chk-soc2" className="flex items-center gap-2 cursor-pointer bg-black/20 border border-[var(--border-default)] p-2.5 rounded-xl hover:border-[var(--border-default)] select-none">
                       <input
                         id="chk-soc2"
                         type="checkbox"
                         checked={soc2}
                         onChange={(e) => setSoc2(e.target.checked)}
-                        className="rounded border-gray-850 text-purple-600 bg-black/40 focus:ring-purple-500 h-3.5 w-3.5"
+                        className="rounded border-[var(--border-default)] text-purple-600 bg-black/40 focus:ring-purple-500 h-3.5 w-3.5"
                       />
                       <span className="text-[10px]">SOC 2 II</span>
                     </label>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-1.5 col-span-2 border-t border-gray-800/80 pt-4 mt-2">
-                  <label htmlFor="v-notes" className="text-gray-400 font-semibold">Vendor Security Assessment Notes *</label>
+                <div className="flex flex-col gap-1.5 col-span-2 border-t border-[var(--border-default)]/80 pt-4 mt-2">
+                  <label htmlFor="v-notes" className="text-[var(--text-secondary)] font-semibold">Vendor Security Assessment Notes *</label>
                   <textarea
                     id="v-notes"
                     required
                     placeholder="Enter compliance details, contract parameters, encryption layers, or assessment results..."
                     value={newVendor.assessment_notes}
                     onChange={(e) => setNewVendor({ ...newVendor, assessment_notes: e.target.value })}
-                    className="bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 min-h-[80px]"
+                    className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 min-h-[80px]"
                   />
                 </div>
 
               </div>
 
-              <div className="flex items-center justify-end gap-3 border-t border-gray-800 pt-4 mt-4">
+              <div className="flex items-center justify-end gap-3 border-t border-[var(--border-default)] pt-4 mt-4">
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="rounded-xl border border-gray-800 px-5 py-2.5 text-sm font-semibold text-gray-400 hover:bg-gray-800 hover:text-white transition-all"
+                  className="rounded-xl border border-[var(--border-default)] px-5 py-2.5 text-sm font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-all"
                 >
                   Cancel
                 </button>

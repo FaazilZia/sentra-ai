@@ -11,7 +11,14 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-bold tracking-tight text-[var(--text-primary)];
+    @apply font-semibold tracking-tight text-[var(--text-primary)];
+    opacity: 1 !important;
+  }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text-primary);
   }
 
   * {
@@ -51,9 +58,9 @@
            hover:bg-[var(--ghost-violet)] transition-all;
   }
 
-  .btn-danger {
-    @apply bg-[var(--risk-critical)] text-white font-semibold py-2 px-4 rounded-[var(--radius)]
-           hover:opacity-90 transition-all shadow-sm;
+  .btn-ghost {
+    @apply bg-transparent border border-[var(--border-default)] text-[var(--text-secondary)] font-semibold py-2 px-4 rounded-[var(--radius)]
+           hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-all;
   }
 
   .badge-pill {
@@ -96,3 +103,27 @@
 .animate-fade-in {
   animation: fade-in 400ms ease-out forwards;
 }
+
+/* NodePulseLoader — branded loading animation (Fix 9) */
+@keyframes node-pulse {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+.node-pulse-loader {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.node-pulse-loader > span {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--royal-indigo);
+  animation: node-pulse 1.4s ease-in-out infinite;
+}
+
+.node-pulse-loader > span:nth-child(2) { animation-delay: 0.2s; }
+.node-pulse-loader > span:nth-child(3) { animation-delay: 0.4s; }

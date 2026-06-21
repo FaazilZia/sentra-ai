@@ -193,7 +193,7 @@ export default function Workflows() {
   const isReviewer = user?.role === 'ADMIN' || user?.role === 'COMPLIANCE_MANAGER';
 
   return (
-    <div className="flex flex-col gap-6 p-6 animate-fade-in text-gray-200">
+    <div className="flex flex-col gap-6 p-6 animate-fade-in  ">
       
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <PageHeader 
@@ -212,13 +212,13 @@ export default function Workflows() {
       </div>
 
       {/* Tab Switcher */}
-      <div className="flex border-b border-gray-800 gap-2">
+      <div className="flex border-b border-[var(--border-default)] gap-2">
         <button
           onClick={() => setActiveTab('agent')}
-          className={`px-5 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 ${
+          className={`px-5 py-3 text-xs font-semibold uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 ${
             activeTab === 'agent'
               ? 'border-indigo-500 text-white'
-              : 'border-transparent text-gray-400 hover:text-gray-200'
+              : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'
           }`}
         >
           <Cpu className="h-3.5 w-3.5" />
@@ -226,10 +226,10 @@ export default function Workflows() {
         </button>
         <button
           onClick={() => setActiveTab('task')}
-          className={`px-5 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 ${
+          className={`px-5 py-3 text-xs font-semibold uppercase tracking-wider transition-all border-b-2 -mb-px flex items-center gap-2 ${
             activeTab === 'task'
               ? 'border-indigo-500 text-white'
-              : 'border-transparent text-gray-400 hover:text-gray-200'
+              : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'
           }`}
         >
           <ListTodo className="h-3.5 w-3.5" />
@@ -255,9 +255,9 @@ export default function Workflows() {
             {pendingAgents.map((task) => (
               <div
                 key={task.id}
-                className="bg-[#111827]/40 border border-gray-800/80 rounded-2xl p-6 flex flex-col gap-4 hover:border-gray-700 transition-all relative overflow-hidden group"
+                className="bg-[var(--bg-page)] border border-[var(--border-default)]/80 rounded-2xl p-6 flex flex-col gap-4 hover:border-[var(--border-default)] transition-all relative overflow-hidden group"
               >
-                <div className="flex items-start justify-between gap-4 border-b border-gray-800/40 pb-3">
+                <div className="flex items-start justify-between gap-4 border-b border-[var(--border-default)]/40 pb-3">
                   <div className="flex items-start gap-3.5">
                     <div className="rounded-xl bg-indigo-500/10 p-3 group-hover:bg-indigo-500/20 transition-all">
                       <Cpu className="h-5 w-5 text-indigo-400" />
@@ -267,19 +267,19 @@ export default function Workflows() {
                         {task.metadata?.agent || 'Autonomous Agent'}
                       </h3>
                       <div className="flex items-center gap-2 mt-1">
-                        <Terminal className="h-3.5 w-3.5 text-gray-500" />
-                        <span className="text-[10px] text-gray-400 font-mono font-semibold">{task.metadata?.action}</span>
+                        <Terminal className="h-3.5 w-3.5 text-[var(--text-muted)]" />
+                        <span className="text-[10px] text-[var(--text-secondary)] font-mono font-semibold">{task.metadata?.action}</span>
                       </div>
                     </div>
                   </div>
 
-                  <span className={`text-[9px] px-2.5 py-1 rounded-full font-black uppercase ${getRiskColor(task.metadata?.decision?.risk)}`}>
+                  <span className={`text-[9px] px-2.5 py-1 rounded-full font-semibold uppercase ${getRiskColor(task.metadata?.decision?.risk)}`}>
                     {task.metadata?.decision?.risk} risk
                   </span>
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-red-400/80 flex items-center gap-1">
+                  <span className="text-[9px] font-semibold uppercase tracking-widest text-red-400/80 flex items-center gap-1">
                     <AlertTriangle className="h-3.5 w-3.5" /> Intercept Block Reason
                   </span>
                   <p className="bg-red-500/5 border border-red-500/10 p-3.5 rounded-xl text-xs text-red-300/90 leading-relaxed font-semibold">
@@ -288,15 +288,15 @@ export default function Workflows() {
                 </div>
 
                 {task.metadata?.metadata?.prompt && (
-                  <div className="flex flex-col gap-1.5 bg-[#0b0f19]/30 border border-gray-800/60 p-4 rounded-xl">
-                    <span className="text-[9px] font-black uppercase tracking-widest text-indigo-400/80">User Input / Prompt context</span>
-                    <pre className="text-[10px] text-gray-400 font-mono overflow-x-auto whitespace-pre-wrap mt-1 leading-relaxed max-h-[100px] overflow-y-auto">
+                  <div className="flex flex-col gap-1.5 bg-[var(--bg-page)]/30 border border-[var(--border-default)]/60 p-4 rounded-xl">
+                    <span className="text-[9px] font-semibold uppercase tracking-widest text-indigo-400/80">User Input / Prompt context</span>
+                    <pre className="text-[10px] text-[var(--text-secondary)] font-mono overflow-x-auto whitespace-pre-wrap mt-1 leading-relaxed max-h-[100px] overflow-y-auto">
                       {task.metadata.metadata.prompt}
                     </pre>
                   </div>
                 )}
 
-                <div className="border-t border-gray-800/40 pt-4 mt-1 flex items-center justify-between text-[10px] text-gray-500">
+                <div className="border-t border-[var(--border-default)]/40 pt-4 mt-1 flex items-center justify-between text-[10px] text-[var(--text-muted)]">
                   <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> Intercepted {new Date(task.created_at).toLocaleTimeString()}</span>
                   <button
                     onClick={() => {
@@ -326,9 +326,9 @@ export default function Workflows() {
             {pendingTasks.map((task) => (
               <div
                 key={task.id}
-                className="bg-[#111827]/40 border border-gray-800/80 rounded-2xl p-6 flex flex-col gap-4 hover:border-gray-700 transition-all relative overflow-hidden group"
+                className="bg-[var(--bg-page)] border border-[var(--border-default)]/80 rounded-2xl p-6 flex flex-col gap-4 hover:border-[var(--border-default)] transition-all relative overflow-hidden group"
               >
-                <div className="flex items-start justify-between gap-4 border-b border-gray-800/40 pb-3">
+                <div className="flex items-start justify-between gap-4 border-b border-[var(--border-default)]/40 pb-3">
                   <div className="flex items-start gap-3.5">
                     <div className="rounded-xl bg-purple-500/10 p-3 group-hover:bg-purple-500/20 transition-all">
                       <FileText className="h-5 w-5 text-purple-400" />
@@ -349,28 +349,28 @@ export default function Workflows() {
                       </div>
                     </div>
                   </div>
-                  <span className="text-[9px] bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-2.5 py-1 rounded-full font-black uppercase tracking-wider">
+                  <span className="text-[9px] bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-2.5 py-1 rounded-full font-semibold uppercase tracking-wider">
                     {task.state}
                   </span>
                 </div>
 
                 {task.description && (
-                  <p className="text-gray-400 text-xs leading-relaxed">{task.description}</p>
+                  <p className="text-[var(--text-secondary)] text-xs leading-relaxed">{task.description}</p>
                 )}
 
                 <div className="grid grid-cols-2 gap-4 bg-black/20 p-3 rounded-xl text-[10px]">
-                  <div className="flex items-center gap-1.5 text-gray-400">
-                    <User className="h-4 w-4 text-gray-500" /> 
-                    <span>Created by: <strong className="text-gray-300">{task.creator.full_name}</strong></span>
+                  <div className="flex items-center gap-1.5 text-[var(--text-secondary)]">
+                    <User className="h-4 w-4 text-[var(--text-muted)]" /> 
+                    <span>Created by: <strong className="text-[var(--text-secondary)]">{task.creator.full_name}</strong></span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-gray-400">
-                    <Calendar className="h-4 w-4 text-gray-500" /> 
-                    <span>Due: <strong className="text-gray-300">{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'None'}</strong></span>
+                  <div className="flex items-center gap-1.5 text-[var(--text-secondary)]">
+                    <Calendar className="h-4 w-4 text-[var(--text-muted)]" /> 
+                    <span>Due: <strong className="text-[var(--text-secondary)]">{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'None'}</strong></span>
                   </div>
                 </div>
 
-                <div className="border-t border-gray-800/40 pt-4 mt-1 flex items-center justify-between text-[10px] text-gray-500">
-                  <span className="flex items-center gap-1.5">Assigned: <strong className="text-gray-300">{task.assignee?.full_name || 'Unassigned'}</strong></span>
+                <div className="border-t border-[var(--border-default)]/40 pt-4 mt-1 flex items-center justify-between text-[10px] text-[var(--text-muted)]">
+                  <span className="flex items-center gap-1.5">Assigned: <strong className="text-[var(--text-secondary)]">{task.assignee?.full_name || 'Unassigned'}</strong></span>
                   {isReviewer && (
                     <button
                       onClick={() => {
@@ -393,15 +393,15 @@ export default function Workflows() {
       {/* Agent Override Resolution Modal */}
       {selectedAgent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[#111827] border border-gray-800 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-scale-in text-xs">
-            <div className="flex items-center justify-between border-b border-gray-800 p-5 bg-[#0f172a]/60">
+          <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-scale-in text-xs">
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] p-5 bg-[#0f172a]/60">
               <div>
-                <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Manual Override Decision</span>
+                <span className="text-[9px] font-semibold text-indigo-400 uppercase tracking-widest">Manual Override Decision</span>
                 <h3 className="font-bold text-white text-base mt-0.5">{selectedAgent.metadata?.agent} Action Audit</h3>
               </div>
               <button
                 onClick={() => setSelectedAgent(null)}
-                className="rounded-lg p-1 hover:bg-gray-800 text-gray-500 hover:text-white transition-all"
+                className="rounded-lg p-1 hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -409,13 +409,13 @@ export default function Workflows() {
 
             <form onSubmit={handleResolveAgent} className="p-6 flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-                <span className="text-gray-400 font-semibold">Governance Resolution *</span>
+                <span className="text-[var(--text-secondary)] font-semibold">Governance Resolution *</span>
                 <div className="grid grid-cols-2 gap-4">
                   <button
                     type="button"
                     onClick={() => setAgentDecision('APPROVED')}
                     className={`py-3 px-4 rounded-xl border text-center font-bold tracking-tight text-xs transition-all flex items-center justify-center gap-2 ${
-                      agentDecision === 'APPROVED' ? 'bg-emerald-950/20 border-emerald-500 text-emerald-300' : 'bg-black/30 border-gray-800 text-gray-500'
+                      agentDecision === 'APPROVED' ? 'bg-emerald-950/20 border-emerald-500 text-emerald-300' : 'bg-black/30 border-[var(--border-default)] text-[var(--text-muted)]'
                     }`}
                   >
                     <CheckCircle2 className="h-4 w-4" />
@@ -425,7 +425,7 @@ export default function Workflows() {
                     type="button"
                     onClick={() => setAgentDecision('REJECTED')}
                     className={`py-3 px-4 rounded-xl border text-center font-bold tracking-tight text-xs transition-all flex items-center justify-center gap-2 ${
-                      agentDecision === 'REJECTED' ? 'bg-red-950/20 border-red-500 text-red-300' : 'bg-black/30 border-gray-800 text-gray-500'
+                      agentDecision === 'REJECTED' ? 'bg-red-950/20 border-red-500 text-red-300' : 'bg-black/30 border-[var(--border-default)] text-[var(--text-muted)]'
                     }`}
                   >
                     <XCircle className="h-4 w-4" />
@@ -434,12 +434,12 @@ export default function Workflows() {
                 </div>
               </div>
 
-              <div className="border-t border-gray-800 pt-4">
+              <div className="border-t border-[var(--border-default)] pt-4">
                 <ChangeHistoryTimeline entityType="workflow" entityId={selectedAgent.id} />
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="agent-comment" className="text-gray-400 font-semibold">
+                <label htmlFor="agent-comment" className="text-[var(--text-secondary)] font-semibold">
                   Resolution Comment {agentDecision === 'REJECTED' ? '*' : '(Optional)'}
                 </label>
                 <textarea
@@ -452,15 +452,15 @@ export default function Workflows() {
                   }
                   value={agentComment}
                   onChange={(e) => setAgentComment(e.target.value)}
-                  className="bg-black/30 border border-gray-800 rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500 min-h-[90px]"
+                  className="bg-black/30 border border-[var(--border-default)] rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500 min-h-[90px]"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 border-t border-gray-800 pt-4 mt-2">
+              <div className="flex items-center justify-end gap-3 border-t border-[var(--border-default)] pt-4 mt-2">
                 <button
                   type="button"
                   onClick={() => setSelectedAgent(null)}
-                  className="rounded-xl border border-gray-800 px-5 py-2.5 text-xs font-semibold text-gray-400 hover:bg-gray-800 hover:text-white transition-all"
+                  className="rounded-xl border border-[var(--border-default)] px-5 py-2.5 text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-all"
                 >
                   Cancel
                 </button>
@@ -481,15 +481,15 @@ export default function Workflows() {
       {/* Task Approval Modal */}
       {selectedTask && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[#111827] border border-gray-800 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-scale-in text-xs">
-            <div className="flex items-center justify-between border-b border-gray-800 p-5 bg-[#0f172a]/60">
+          <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-scale-in text-xs">
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] p-5 bg-[#0f172a]/60">
               <div>
-                <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Compliance Review Decision</span>
+                <span className="text-[9px] font-semibold text-indigo-400 uppercase tracking-widest">Compliance Review Decision</span>
                 <h3 className="font-bold text-white text-base mt-0.5">Approve/Reject compliance task</h3>
               </div>
               <button
                 onClick={() => setSelectedTask(null)}
-                className="rounded-lg p-1 hover:bg-gray-800 text-gray-500 hover:text-white transition-all"
+                className="rounded-lg p-1 hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -497,13 +497,13 @@ export default function Workflows() {
 
             <form onSubmit={handleResolveTask} className="p-6 flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-                <span className="text-gray-400 font-semibold">Review Decision *</span>
+                <span className="text-[var(--text-secondary)] font-semibold">Review Decision *</span>
                 <div className="grid grid-cols-2 gap-4">
                   <button
                     type="button"
                     onClick={() => setTaskDecision('APPROVE')}
                     className={`py-3 px-4 rounded-xl border text-center font-bold tracking-tight text-xs transition-all flex items-center justify-center gap-2 ${
-                      taskDecision === 'APPROVE' ? 'bg-emerald-950/20 border-emerald-500 text-emerald-300' : 'bg-black/30 border-gray-800 text-gray-500'
+                      taskDecision === 'APPROVE' ? 'bg-emerald-950/20 border-emerald-500 text-emerald-300' : 'bg-black/30 border-[var(--border-default)] text-[var(--text-muted)]'
                     }`}
                   >
                     <CheckCircle2 className="h-4 w-4" />
@@ -513,7 +513,7 @@ export default function Workflows() {
                     type="button"
                     onClick={() => setTaskDecision('REJECT')}
                     className={`py-3 px-4 rounded-xl border text-center font-bold tracking-tight text-xs transition-all flex items-center justify-center gap-2 ${
-                      taskDecision === 'REJECT' ? 'bg-red-950/20 border-red-500 text-red-300' : 'bg-black/30 border-gray-800 text-gray-500'
+                      taskDecision === 'REJECT' ? 'bg-red-950/20 border-red-500 text-red-300' : 'bg-black/30 border-[var(--border-default)] text-[var(--text-muted)]'
                     }`}
                   >
                     <XCircle className="h-4 w-4" />
@@ -523,7 +523,7 @@ export default function Workflows() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="task-comment" className="text-gray-400 font-semibold">
+                <label htmlFor="task-comment" className="text-[var(--text-secondary)] font-semibold">
                   Reviewer Comment {taskDecision === 'REJECT' ? '*' : '(Optional)'}
                 </label>
                 <textarea
@@ -536,15 +536,15 @@ export default function Workflows() {
                   }
                   value={taskComment}
                   onChange={(e) => setTaskComment(e.target.value)}
-                  className="bg-black/30 border border-gray-800 rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500 min-h-[90px]"
+                  className="bg-black/30 border border-[var(--border-default)] rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500 min-h-[90px]"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 border-t border-gray-800 pt-4 mt-2">
+              <div className="flex items-center justify-end gap-3 border-t border-[var(--border-default)] pt-4 mt-2">
                 <button
                   type="button"
                   onClick={() => setSelectedTask(null)}
-                  className="rounded-xl border border-gray-800 px-5 py-2.5 text-xs font-semibold text-gray-400 hover:bg-gray-800 hover:text-white transition-all"
+                  className="rounded-xl border border-[var(--border-default)] px-5 py-2.5 text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-all"
                 >
                   Cancel
                 </button>
@@ -565,15 +565,15 @@ export default function Workflows() {
       {/* Submit Task for Review Modal */}
       {submitModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[#111827] border border-gray-800 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl animate-scale-in text-xs">
-            <div className="flex items-center justify-between border-b border-gray-800 p-5 bg-[#0f172a]/60">
+          <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl max-w-md w-full overflow-hidden shadow-2xl animate-scale-in text-xs">
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] p-5 bg-[#0f172a]/60">
               <div>
-                <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Submit Task for Review</span>
+                <span className="text-[9px] font-semibold text-indigo-400 uppercase tracking-widest">Submit Task for Review</span>
                 <h3 className="font-bold text-white text-base mt-0.5">Request GRC Verification</h3>
               </div>
               <button
                 onClick={() => setSubmitModalOpen(false)}
-                className="rounded-lg p-1 hover:bg-gray-800 text-gray-500 hover:text-white transition-all"
+                className="rounded-lg p-1 hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -581,13 +581,13 @@ export default function Workflows() {
 
             <form onSubmit={handleSubmitTaskForReview} className="p-6 flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="submit-task-select" className="text-gray-400 font-semibold">Select Draft Task *</label>
+                <label htmlFor="submit-task-select" className="text-[var(--text-secondary)] font-semibold">Select Draft Task *</label>
                 <select
                   id="submit-task-select"
                   required
                   value={taskToSubmit}
                   onChange={(e) => setTaskToSubmit(e.target.value)}
-                  className="bg-black/30 border border-gray-800 rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500"
+                  className="bg-black/30 border border-[var(--border-default)] rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500"
                 >
                   <option value="">Choose a draft task...</option>
                   {draftTasks.map(t => (
@@ -597,21 +597,21 @@ export default function Workflows() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="submit-comment" className="text-gray-400 font-semibold">Submission Notes</label>
+                <label htmlFor="submit-comment" className="text-[var(--text-secondary)] font-semibold">Submission Notes</label>
                 <textarea
                   id="submit-comment"
                   placeholder="Provide details about evidence or validation materials attached to this task..."
                   value={submitComment}
                   onChange={(e) => setSubmitComment(e.target.value)}
-                  className="bg-black/30 border border-gray-800 rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500 min-h-[90px]"
+                  className="bg-black/30 border border-[var(--border-default)] rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500 min-h-[90px]"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 border-t border-gray-800 pt-4 mt-2">
+              <div className="flex items-center justify-end gap-3 border-t border-[var(--border-default)] pt-4 mt-2">
                 <button
                   type="button"
                   onClick={() => setSubmitModalOpen(false)}
-                  className="rounded-xl border border-gray-800 px-5 py-2.5 text-xs font-semibold text-gray-400 hover:bg-gray-800 hover:text-white transition-all"
+                  className="rounded-xl border border-[var(--border-default)] px-5 py-2.5 text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-all"
                 >
                   Cancel
                 </button>

@@ -340,6 +340,7 @@ function AppRoutes() {
             />
 
             <Route path="/" element={<Navigate to={user ? "/app" : "/login"} replace />} />
+            <Route path="/app/*" element={<Navigate to="/app" replace />} />
             <Route path="*" element={<Suspense fallback={<RouteFallback />}><NotFoundPage /></Suspense>} />
 
           </Routes>
