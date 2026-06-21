@@ -96,7 +96,7 @@ export default function ExecutiveReport() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsShareOpen(true)}
-            className="flex items-center gap-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-default)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--bg-page)] transition-all hover:scale-105 active:scale-95"
+            className="flex items-center gap-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-default)] px-4 py-2.5 text-sm font-semibold text-[var(--text-primary)] hover:bg-[var(--bg-page)] transition-all hover:scale-105 active:scale-95"
           >
             <Share className="h-4 w-4 text-indigo-400" />
             Share
@@ -104,7 +104,7 @@ export default function ExecutiveReport() {
 
           <button
             onClick={handleDownloadDocx}
-            className="flex items-center gap-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-default)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--bg-page)] transition-all hover:scale-105 active:scale-95"
+            className="flex items-center gap-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-default)] px-4 py-2.5 text-sm font-semibold text-[var(--text-primary)] hover:bg-[var(--bg-page)] transition-all hover:scale-105 active:scale-95"
           >
             <FileDown className="h-4 w-4 text-teal-400" />
             Download Word
@@ -127,7 +127,7 @@ export default function ExecutiveReport() {
         <div className="bg-[var(--bg-card)] border border-[var(--border-strong)] rounded-2xl p-5 flex items-center justify-between gap-4 shadow-sm">
           <div>
             <span className="text-[10px] text-[var(--text-muted)] uppercase font-semibold tracking-wider block">Total AI Systems</span>
-            <span className="text-2xl font-semibold text-white mt-1 block">{stats.totalSystems}</span>
+            <span className="text-2xl font-semibold text-indigo-400 mt-1 block">{stats.totalSystems}</span>
           </div>
           <div className="rounded-xl bg-indigo-500/10 p-3">
             <Cpu className="h-6 w-6 text-indigo-400" />
@@ -174,7 +174,7 @@ export default function ExecutiveReport() {
         
         {/* Systems by risk tier */}
         <div className="bg-[var(--bg-card)] border border-[var(--border-strong)] rounded-2xl p-6 flex flex-col gap-4 shadow-sm">
-          <h3 className="font-bold text-white text-xs uppercase tracking-wider text-[var(--text-secondary)] flex items-center gap-2">
+          <h3 className="font-bold text-[var(--text-secondary)] text-xs uppercase tracking-wider flex items-center gap-2">
             <ShieldAlert className="h-4 w-4 text-indigo-400" />
             AI Risk Distribution
           </h3>
@@ -204,7 +204,7 @@ export default function ExecutiveReport() {
 
         {/* Compliance obligations statuses */}
         <div className="bg-[var(--bg-card)] border border-[var(--border-strong)] rounded-2xl p-6 flex flex-col gap-4 shadow-sm">
-          <h3 className="font-bold text-white text-xs uppercase tracking-wider text-[var(--text-secondary)] flex items-center gap-2">
+          <h3 className="font-bold text-[var(--text-secondary)] text-xs uppercase tracking-wider flex items-center gap-2">
             <Award className="h-4 w-4 text-indigo-400" />
             Obligations Performance
           </h3>
@@ -234,7 +234,7 @@ export default function ExecutiveReport() {
 
         {/* Third-party vendors review status */}
         <div className="bg-[var(--bg-card)] border border-[var(--border-strong)] rounded-2xl p-6 flex flex-col gap-4 shadow-sm">
-          <h3 className="font-bold text-white text-xs uppercase tracking-wider text-[var(--text-secondary)] flex items-center gap-2">
+          <h3 className="font-bold text-[var(--text-secondary)] text-xs uppercase tracking-wider flex items-center gap-2">
             <Building2 className="h-4 w-4 text-indigo-400" />
             External Vendors Review
           </h3>

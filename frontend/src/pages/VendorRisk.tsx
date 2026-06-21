@@ -224,10 +224,10 @@ export default function VendorRisk() {
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { key: 'CRITICAL', label: 'Critical Risk', count: riskSummary.CRITICAL || 0, color: 'border-red-900/60 text-red-400 bg-red-950/10' },
-          { key: 'HIGH', label: 'High Risk', count: riskSummary.HIGH || 0, color: 'border-orange-900/60 text-orange-400 bg-orange-950/10' },
-          { key: 'MEDIUM', label: 'Medium Risk', count: riskSummary.MEDIUM || 0, color: 'border-yellow-900/60 text-yellow-400 bg-yellow-950/10' },
-          { key: 'LOW', label: 'Low Risk', count: riskSummary.LOW || 0, color: 'border-emerald-900/60 text-emerald-400 bg-emerald-950/10' }
+          { key: 'CRITICAL', label: 'Critical Risk', count: riskSummary.CRITICAL || 0, color: 'border-red-200 text-red-700 bg-red-50' },
+          { key: 'HIGH', label: 'High Risk', count: riskSummary.HIGH || 0, color: 'border-orange-200 text-orange-700 bg-orange-50' },
+          { key: 'MEDIUM', label: 'Medium Risk', count: riskSummary.MEDIUM || 0, color: 'border-yellow-200 text-yellow-700 bg-yellow-50' },
+          { key: 'LOW', label: 'Low Risk', count: riskSummary.LOW || 0, color: 'border-emerald-200 text-emerald-700 bg-emerald-50' }
         ].map(card => (
           <div key={card.key} className={`border rounded-2xl p-4 flex flex-col justify-between shadow-sm ${card.color}`}>
             <span className="text-[10px] font-bold uppercase tracking-wider opacity-85">{card.label}</span>
@@ -247,7 +247,7 @@ export default function VendorRisk() {
           placeholder="Search by vendor name, category, or notes..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl py-3 pl-11 pr-4 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition-all shadow-inner"
+          className="w-full bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl py-3 pl-11 pr-4 text-xs text-[var(--text-primary)] placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition-all shadow-inner"
         />
       </div>
 
@@ -275,7 +275,7 @@ export default function VendorRisk() {
                     <Server className="h-5 w-5 text-indigo-400" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-white text-base leading-tight group-hover:text-indigo-300 transition-all flex items-center gap-2">
+                    <h3 className="font-bold text-[var(--text-primary)] text-base leading-tight group-hover:text-indigo-300 transition-all flex items-center gap-2">
                       {v.vendor_name}
                       <span className="text-[10px] bg-indigo-950/20 text-indigo-400 px-2 py-0.5 rounded border border-indigo-900/30 uppercase font-bold tracking-wider font-mono">
                         {v.vendor_type}
