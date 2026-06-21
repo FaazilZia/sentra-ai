@@ -288,7 +288,7 @@ export default function OECD() {
                 {/* Header */}
                 <button 
                   onClick={() => toggleSection(section.section_code)}
-                  className="w-full flex items-center justify-between p-5 bg-gray-900/20 hover:bg-[var(--bg-hover)]/40 border-b border-[var(--border-default)]/60 transition-colors"
+                  className="w-full flex items-center justify-between p-5 bg-[var(--bg-card)] hover:bg-[var(--bg-hover)]/40 border-b border-[var(--border-default)]/60 transition-colors"
                 >
                   <div className="flex items-center gap-3.5">
                     <span className="h-6 w-9 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-[10px] font-semibold text-indigo-400">
@@ -315,7 +315,7 @@ export default function OECD() {
                     {filteredControls.map((ctrl) => {
                       const currentStatus = ctrl.implementation?.status || 'NOT_STARTED';
                       return (
-                        <div key={ctrl.control_code} className="bg-gray-950/20 border border-gray-855 rounded-xl p-4 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                        <div key={ctrl.control_code} className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-xl p-4 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
                               <span className="text-[9px] font-mono font-bold text-indigo-400 bg-indigo-500/5 px-2 py-0.5 rounded border border-indigo-500/10">

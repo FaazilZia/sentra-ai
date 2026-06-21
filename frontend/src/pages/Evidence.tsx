@@ -213,7 +213,7 @@ export default function Evidence() {
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left text-xs">
               <thead>
-                <tr className="bg-gray-950/20 text-[10px] font-semibold uppercase tracking-widest text-[var(--text-muted)] border-b border-[var(--border-default)]">
+                <tr className="bg-[var(--bg-card)] text-[10px] font-semibold uppercase tracking-widest text-[var(--text-muted)] border-b border-[var(--border-default)]">
                   <th className="py-3.5 px-4 pl-6">Title / Filename</th>
                   <th className="py-3.5 px-4">Framework</th>
                   <th className="py-3.5 px-4">Uploaded By</th>

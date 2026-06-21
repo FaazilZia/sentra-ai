@@ -354,7 +354,7 @@ export default function ImpactAssessments() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="border-b border-[var(--border-default)]/80 text-[var(--text-secondary)] bg-gray-950/20 font-semibold">
+                  <tr className="border-b border-[var(--border-default)]/80 text-[var(--text-secondary)] bg-[var(--bg-card)] font-semibold">
                     <th className="p-4">AI System Name</th>
                     <th className="p-4">Risk Level</th>
                     <th className="p-4">Status</th>
@@ -683,9 +683,9 @@ export default function ImpactAssessments() {
                     />
                   </div>
 
-                  <div className="flex items-center justify-between bg-gray-900/20 border border-[var(--border-default)] p-4 rounded-xl mt-2">
+                  <div className="flex items-center justify-between bg-[var(--bg-card)] border border-[var(--border-default)] p-4 rounded-xl mt-2">
                     <div className="flex flex-col gap-0.5">
-                      <span className="font-bold text-white">Flag Rights Risk</span>
+                      <span className="font-bold text-[var(--text-primary)]">Flag Rights Risk</span>
                       <span className="text-[10px] text-[var(--text-muted)]">Toggle this to flag active high risk to fundamental rights.</span>
                     </div>
                     <button

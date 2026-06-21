@@ -349,7 +349,7 @@ export default function PCIDSS() {
                 </div>
 
                 {ctrl.requirement && (
-                  <div className="bg-gray-950/20 border border-[var(--border-default)] rounded-xl p-3 text-[10px] text-[var(--text-secondary)] italic">
+                  <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-xl p-3 text-[10px] text-[var(--text-secondary)] italic">
                     <span className="font-bold uppercase not-italic text-[8.5px] text-[var(--text-muted)] block mb-1">Requirement Overview</span>
                     {ctrl.requirement}
                   </div>
