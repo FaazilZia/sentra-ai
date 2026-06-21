@@ -3,7 +3,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { useState, useEffect } from 'react';
 import { 
   ShieldCheck, ChevronDown, ChevronUp,
-  Save, Search, HelpCircle, RefreshCw
+  Save, Search, HelpCircle
 } from 'lucide-react';
 import { apiRequest } from '@/lib/api';
 import { useStore } from '@/store/useStore';

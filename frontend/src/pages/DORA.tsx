@@ -2,8 +2,8 @@ import { NodePulseLoader } from '@/components/ui/NodePulseLoader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useState, useEffect } from 'react';
 import { 
-  ChevronDown, ChevronUp,
-  Save, Search, HelpCircle, RefreshCw
+  ChevronDown, ChevronUp, ShieldCheck,
+  Save, Search, HelpCircle
 } from 'lucide-react';
 import { apiRequest } from '@/lib/api';
 import { useStore } from '@/store/useStore';

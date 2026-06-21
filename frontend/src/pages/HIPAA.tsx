@@ -2,7 +2,7 @@ import { NodePulseLoader } from '@/components/ui/NodePulseLoader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useState, useEffect } from 'react';
 import { 
-  Shield, ChevronRight, Save, Search, HelpCircle, RefreshCw, FileText
+  Shield, ChevronRight, Save, Search, HelpCircle, FileText
 } from 'lucide-react';
 import { apiRequest } from '@/lib/api';
 import { useStore } from '@/store/useStore';

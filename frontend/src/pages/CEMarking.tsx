@@ -1,5 +1,6 @@
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Award, FileText, Shield, Activity, 
   Database, BookOpen, ChevronRight, Sparkles, 
@@ -51,6 +52,7 @@ const STEPS_CONFIG = [
 ];
 
 export default function CEMarking() {
+  const navigate = useNavigate();
   const addToast = useStore((s) => s.addToast);
   const [aiSystems, setAiSystems] = useState<AiSystem[]>([]);
   const [records, setRecords] = useState<CeMarkingRecord[]>([]);

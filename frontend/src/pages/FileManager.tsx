@@ -63,7 +63,7 @@ export default function FileManager() {
       );
       setFolderStats(stats);
     } catch (err) {
-      print('Failed to load folder stats:', err);
+      console.error('Failed to load folder stats:', err);
     }
   };
 
