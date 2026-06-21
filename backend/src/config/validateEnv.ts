@@ -6,6 +6,7 @@ const envSchema = z.object({
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
   JWT_SECRET: z.string().min(1, 'JWT_SECRET is required'),
   REFRESH_SECRET: z.string().min(1, 'REFRESH_SECRET is required'),
+  GOVERNANCE_SIGNING_KEYS: z.string().min(1, 'GOVERNANCE_SIGNING_KEYS is required'),
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.string().optional(),
   SMTP_USER: z.string().optional(),

@@ -33,6 +33,8 @@ services:
         sync: false
       - key: ENCRYPTION_KEY
         sync: false
+      - key: GOVERNANCE_SIGNING_KEYS
+        sync: false
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET
