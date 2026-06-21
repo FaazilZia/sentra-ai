@@ -261,7 +261,7 @@ export default function ReadinessDashboard() {
           {/* Stats & Circular Gauge */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
             {/* Score Gauge */}
-            <div className="md:col-span-4 card-base p-6 flex flex-col items-center justify-center text-center">
+            <div className="md:col-span-4 card-base p-6 flex flex-col items-center justify-center text-center bg-zinc-950 border-zinc-900/60">
               <span className="text-[9px] font-semibold uppercase tracking-widest text-zinc-500 mb-4">
                 Overall Readiness
               </span>
@@ -310,7 +310,7 @@ export default function ReadinessDashboard() {
 
             {/* Core Stats Details */}
             <div className="md:col-span-8 grid grid-cols-2 gap-4">
-              <div className="card-base p-4 bg-zinc-950/10 border-zinc-900/60 flex flex-col justify-between">
+              <div className="card-base p-4 bg-zinc-950 border-zinc-900/60 flex flex-col justify-between">
                 <div>
                   <span className="text-[9px] font-semibold uppercase tracking-widest text-zinc-500">Total Controls</span>
                   <h3 className="text-2xl font-semibold text-white mt-1 font-mono">{loading ? '...' : overallStats.total}</h3>
@@ -318,7 +318,7 @@ export default function ReadinessDashboard() {
                 <p className="text-[9px] text-zinc-500 uppercase mt-2">Mapped requirements</p>
               </div>
 
-              <div className="card-base p-4 bg-zinc-950/10 border-zinc-900/60 flex flex-col justify-between">
+              <div className="card-base p-4 bg-zinc-950 border-zinc-900/60 flex flex-col justify-between">
                 <div>
                   <span className="text-[9px] font-semibold uppercase tracking-widest text-emerald-500">Implemented</span>
                   <h3 className="text-2xl font-semibold text-emerald-400 mt-1 font-mono">{loading ? '...' : overallStats.implemented}</h3>
@@ -326,7 +326,7 @@ export default function ReadinessDashboard() {
                 <p className="text-[9px] text-emerald-500/70 uppercase mt-2">Fully verified</p>
               </div>
 
-              <div className="card-base p-4 bg-zinc-950/10 border-zinc-900/60 flex flex-col justify-between">
+              <div className="card-base p-4 bg-zinc-950 border-zinc-900/60 flex flex-col justify-between">
                 <div>
                   <span className="text-[9px] font-semibold uppercase tracking-widest text-amber-500">In Progress</span>
                   <h3 className="text-2xl font-semibold text-amber-400 mt-1 font-mono">{loading ? '...' : overallStats.inProgress}</h3>
@@ -334,7 +334,7 @@ export default function ReadinessDashboard() {
                 <p className="text-[9px] text-amber-500/70 uppercase mt-2">Under remediation</p>
               </div>
 
-              <div className="card-base p-4 bg-zinc-950/10 border-zinc-900/60 flex flex-col justify-between">
+              <div className="card-base p-4 bg-zinc-950 border-zinc-900/60 flex flex-col justify-between">
                 <div>
                   <span className="text-[9px] font-semibold uppercase tracking-widest text-zinc-400">Not Started</span>
                   <h3 className="text-2xl font-semibold text-zinc-400 mt-1 font-mono">{loading ? '...' : overallStats.notStarted}</h3>
@@ -345,7 +345,7 @@ export default function ReadinessDashboard() {
           </div>
 
           {/* Heatmap Control Blocks Grid */}
-          <div className="card-base p-6">
+          <div className="card-base p-6 bg-zinc-950 border-zinc-900/60">
             <span className="text-[9px] font-semibold uppercase tracking-widest text-zinc-500 block mb-4">
               Control Status Visual Map
             </span>
@@ -395,7 +395,7 @@ export default function ReadinessDashboard() {
           </div>
 
           {/* Gap Analysis / Weakest Controls list */}
-          <div className="card-base p-6">
+          <div className="card-base p-6 bg-zinc-950 border-zinc-900/60">
             <div className="flex justify-between items-center mb-4">
               <span className="text-[9px] font-semibold uppercase tracking-widest text-zinc-500">
                 Actionable Gap Analysis / Weakest Controls

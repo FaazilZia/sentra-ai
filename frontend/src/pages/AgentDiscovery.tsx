@@ -291,7 +291,7 @@ export default function AgentDiscovery() {
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="card-base p-4 flex items-center justify-between">
+        <div className="card-base p-4 flex items-center justify-between bg-zinc-950 border-zinc-900/60">
           <div>
             <span className="text-[9px] font-semibold uppercase tracking-widest text-zinc-500">Total Discovered</span>
             <h3 className="text-2xl font-semibold text-white mt-1 font-mono">{totalCount}</h3>
@@ -299,7 +299,7 @@ export default function AgentDiscovery() {
           <Cpu className="h-8 w-8 text-indigo-500/40" />
         </div>
 
-        <div className="card-base p-4 flex items-center justify-between">
+        <div className="card-base p-4 flex items-center justify-between bg-zinc-950 border-zinc-900/60">
           <div>
             <span className="text-[9px] font-semibold uppercase tracking-widest text-yellow-500">Unreviewed</span>
             <h3 className="text-2xl font-semibold text-yellow-500 mt-1 font-mono">{unreviewedCount}</h3>
@@ -307,7 +307,7 @@ export default function AgentDiscovery() {
           <ShieldAlert className="h-8 w-8 text-yellow-500/30" />
         </div>
 
-        <div className="card-base p-4 flex items-center justify-between">
+        <div className="card-base p-4 flex items-center justify-between bg-zinc-950 border-zinc-900/60">
           <div>
             <span className="text-[9px] font-semibold uppercase tracking-widest text-emerald-500">Confirmed</span>
             <h3 className="text-2xl font-semibold text-emerald-500 mt-1 font-mono">{confirmedCount}</h3>
@@ -315,7 +315,7 @@ export default function AgentDiscovery() {
           <CheckCircle className="h-8 w-8 text-emerald-500/30" />
         </div>
 
-        <div className="card-base p-4 flex items-center justify-between">
+        <div className="card-base p-4 flex items-center justify-between bg-zinc-950 border-zinc-900/60">
           <div>
             <span className="text-[9px] font-semibold uppercase tracking-widest text-red-500">Rejected</span>
             <h3 className="text-2xl font-semibold text-red-500 mt-1 font-mono">{rejectedCount}</h3>
@@ -353,7 +353,7 @@ export default function AgentDiscovery() {
       </div>
 
       {/* Main List */}
-      <div className="card-base p-6 space-y-6">
+      <div className="card-base p-6 space-y-6 bg-zinc-950 border-zinc-900/60">
         {/* Filters and search panel */}
         <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div className="relative w-full sm:w-80">

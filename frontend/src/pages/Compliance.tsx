@@ -1345,7 +1345,7 @@ function NistAiRmfTab({
         <div className="xl:col-span-7 flex flex-col gap-6">
           
           {/* self-monitoring diagnostics */}
-          <div className="card-base p-6 flex flex-col gap-4 backdrop-blur-md">
+          <div className="card-base p-6 flex flex-col gap-4 bg-zinc-950 border-zinc-900/60">
             <div>
               <h3 className="text-sm font-semibold text-white uppercase tracking-tight">Self-Monitoring Diagnostics</h3>
               <p className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest">Worker Health & Reliability</p>
@@ -1401,7 +1401,7 @@ function NistAiRmfTab({
           </div>
 
           {/* Incidents */}
-          <div className="card-base p-6 flex flex-col gap-4 backdrop-blur-md">
+          <div className="card-base p-6 flex flex-col gap-4 bg-zinc-950 border-zinc-900/60">
             <div>
               <h3 className="text-sm font-semibold text-white uppercase tracking-tight">Governance SOC Incidents Hub</h3>
               <p className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest">Active Violations & SLAs</p>
