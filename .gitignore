@@ -67,3 +67,7 @@ backend/src/scratch/
 .fresh-clone/
 .vercel
 .env.test
+fix_*.py
+replace_*.py
+complete_prompt.txt
+screenshots/
