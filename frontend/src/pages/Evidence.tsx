@@ -152,7 +152,7 @@ export default function Evidence() {
       </div>
 
       {/* Selector panel */}
-      <div className="card-base p-5 flex flex-col md:flex-row md:items-center gap-4 bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl shadow-xl backdrop-blur-md">
+      <div className="card-base p-5 flex flex-col md:flex-row md:items-center gap-4 bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl shadow-xl">
         
         <div className="flex flex-col gap-1.5 flex-1">
           <label htmlFor="framework-select" className="text-[9px] font-semibold uppercase tracking-widest text-indigo-400">Compliance Framework</label>
@@ -186,7 +186,7 @@ export default function Evidence() {
       </div>
 
       {/* Main Evidence Table */}
-      <div className="card-base overflow-hidden border border-[var(--border-default)] bg-[var(--bg-card)] shadow-2xl rounded-2xl backdrop-blur-md">
+      <div className="card-base overflow-hidden border border-[var(--border-default)] bg-[var(--bg-card)] shadow-2xl rounded-2xl">
         
         <div className="p-5 border-b border-[var(--border-default)] bg-[var(--bg-page)] flex items-center justify-between">
           <span className="text-[10px] font-semibold tracking-wider text-indigo-400 uppercase flex items-center gap-1.5">

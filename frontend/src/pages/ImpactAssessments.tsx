@@ -290,7 +290,7 @@ export default function ImpactAssessments() {
             return (
               <div
                 key={col.status}
-                className={`rounded-2xl border ${col.border} ${col.color} p-4 flex flex-col gap-4 min-h-[500px] bg-black/10 backdrop-blur-md`}
+                className={`rounded-2xl border ${col.border} ${col.color} p-4 flex flex-col gap-4 min-h-[500px] bg-black/10`}
               >
                 <div className="flex items-center justify-between border-b border-[var(--border-default)]/80 pb-2">
                   <h3 className="font-bold text-white text-xs uppercase tracking-wider">{col.title}</h3>
@@ -345,7 +345,7 @@ export default function ImpactAssessments() {
       ) : (
         /* FRIA Table / Wizards View */
         <div className="flex flex-col gap-6">
-          <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl overflow-hidden backdrop-blur-md">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl overflow-hidden">
             <div className="p-5 border-b border-[var(--border-default)]/80 bg-[var(--bg-page)] flex items-center justify-between">
               <h3 className="font-bold text-white text-sm">Fundamental Rights Impact Assessments</h3>
               <span className="text-xs text-[var(--text-secondary)]">{friaAssessments.length} total assessments</span>

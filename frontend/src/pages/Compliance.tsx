@@ -924,7 +924,7 @@ function EuAiActTab({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Accordion list */}
         <div className="lg:col-span-8 flex flex-col gap-4">
-          <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10 backdrop-blur-md">
+          <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">Active Standard</span>
@@ -1051,7 +1051,7 @@ function EuAiActTab({
 
         <div className="lg:col-span-4 flex flex-col gap-6">
           {/* Backlog Distribution */}
-          <div className="card-base p-6 backdrop-blur-md">
+          <div className="card-base p-6">
             <h3 className="text-sm font-semibold text-white uppercase tracking-tight mb-4">Active Backlog</h3>
             <p className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest mb-6">Cross-Framework Violations</p>
             
@@ -1107,7 +1107,7 @@ function EuAiActTab({
           </div>
 
           {/* Integrations Scope */}
-          <div className="card-base p-6 bg-gradient-to-br from-zinc-950 to-indigo-950/10 backdrop-blur-md">
+          <div className="card-base p-6 bg-gradient-to-br from-zinc-950 to-indigo-950/10">
             <h3 className="text-sm font-semibold text-white uppercase tracking-tight mb-4">Integrations Scope</h3>
             <div className="space-y-4">
               <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
@@ -1132,7 +1132,7 @@ function EuAiActTab({
           </div>
 
           {/* PII Compliance Scan */}
-          <div className="card-base p-6 border border-red-500/20 bg-gradient-to-br from-zinc-950 to-red-950/10 backdrop-blur-md">
+          <div className="card-base p-6 border border-red-500/20 bg-gradient-to-br from-zinc-950 to-red-950/10">
             <h3 className="text-sm font-semibold text-white uppercase tracking-tight mb-2">PII Compliance Scan</h3>
             <p className="text-[9px] font-semibold text-red-400 uppercase tracking-widest mb-4">Realtime Interceptor Violations</p>
             <div className="space-y-3">
@@ -1185,7 +1185,7 @@ function NistAiRmfTab({
 }: NistAiRmfTabProps) {
   if (nistIsSeeding) {
     return (
-      <div className="card-base p-10 flex flex-col items-center justify-center text-center gap-6 border-indigo-500/20 bg-gradient-to-br from-indigo-950/10 to-zinc-950 backdrop-blur-md">
+      <div className="card-base p-10 flex flex-col items-center justify-center text-center gap-6 border-indigo-500/20 bg-gradient-to-br from-indigo-950/10 to-zinc-950">
         <RefreshCw className="h-12 w-12 text-indigo-400 animate-spin" />
         <div>
           <h3 className="text-lg font-semibold text-white uppercase tracking-wider">Framework Data Seeding in Progress</h3>
@@ -1217,7 +1217,7 @@ function NistAiRmfTab({
 
   if (nistError) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 p-6 border border-zinc-900 rounded-xl bg-zinc-950/10 backdrop-blur-md">
+      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 p-6 border border-zinc-900 rounded-xl bg-zinc-950/10">
         <ShieldAlert className="h-10 w-10 text-rose-500 animate-pulse" />
         <h3 className="text-sm font-semibold text-white uppercase tracking-wider">NIST Scoring Engine Disconnected</h3>
         <p className="text-xs text-[var(--text-secondary)]">{nistError}</p>
@@ -1266,7 +1266,7 @@ function NistAiRmfTab({
         
         {/* Score explainability change ledger */}
         <div className="xl:col-span-5 flex flex-col gap-6">
-          <div className="card-base p-6 flex flex-col gap-5 bg-gradient-to-b from-zinc-950 to-indigo-950/5 backdrop-blur-md">
+          <div className="card-base p-6 flex flex-col gap-5 bg-gradient-to-b from-zinc-950 to-indigo-950/5">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-semibold text-white uppercase tracking-tight">Governance Posture</h3>
@@ -1457,7 +1457,7 @@ function NistAiRmfTab({
 
       {/* NIST AI RMF Maturity Accordion */}
       <div className="flex flex-col gap-4">
-        <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10 backdrop-blur-md">
+        <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10">
           <div className="flex items-center justify-between mb-2">
             <div>
               <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">Operational Maturity Matrix</span>
@@ -1610,7 +1610,7 @@ function Iso42001Tab({
 
   if (iso42001Error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 p-6 border border-zinc-900 rounded-xl bg-zinc-950/10 backdrop-blur-md">
+      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 p-6 border border-zinc-900 rounded-xl bg-zinc-950/10">
         <ShieldAlert className="h-10 w-10 text-rose-500 animate-pulse" />
         <h3 className="text-sm font-semibold text-white uppercase tracking-wider">ISO 42001 Scoring Error</h3>
         <p className="text-xs text-[var(--text-secondary)]">{iso42001Error}</p>
@@ -1650,7 +1650,7 @@ function Iso42001Tab({
 
       {/* Clause Trees */}
       <div className="flex flex-col gap-4">
-        <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10 backdrop-blur-md">
+        <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10">
           <div className="flex items-center justify-between mb-4">
             <div>
               <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">Active Standard</span>
@@ -1782,7 +1782,7 @@ function Iso27001Tab({
 
   if (iso27001Error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 p-6 border border-zinc-900 rounded-xl bg-zinc-950/10 backdrop-blur-md">
+      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 p-6 border border-zinc-900 rounded-xl bg-zinc-950/10">
         <ShieldAlert className="h-10 w-10 text-rose-500 animate-pulse" />
         <h3 className="text-sm font-semibold text-white uppercase tracking-wider">ISO 27001 Scoring Error</h3>
         <p className="text-xs text-[var(--text-secondary)]">{iso27001Error}</p>
@@ -1822,7 +1822,7 @@ function Iso27001Tab({
 
       {/* Clause Trees */}
       <div className="flex flex-col gap-4">
-        <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10 backdrop-blur-md">
+        <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/10">
           <div className="flex items-center justify-between mb-4">
             <div>
               <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">Active Standard</span>
@@ -1955,13 +1955,13 @@ function CcpaTab({
           { label: 'In Progress', value: ccpaData.summary?.in_progress ?? 0, color: 'text-amber-400' },
           { label: 'Compliance Score', value: `${ccpaData.summary?.compliance_score ?? 0}%`, color: 'text-indigo-400' },
         ].map((stat) => (
-          <div key={stat.label} className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-4 backdrop-blur-md">
+          <div key={stat.label} className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-4">
             <p className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-widest">{stat.label}</p>
             <p className={`text-2xl font-semibold mt-1 ${stat.color}`}>{stat.value}</p>
           </div>
         ))}
       </div>
-      <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-5 backdrop-blur-md">
+      <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-5">
         <div className="flex items-center justify-between mb-3">
           <p className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest">Overall CCPA Compliance</p>
           <p className="text-sm font-semibold text-white">{ccpaData.summary?.compliance_score ?? 0}%</p>
@@ -1977,7 +1977,7 @@ function CcpaTab({
           const total = sectionControls.length;
           const pct = total > 0 ? Math.round((implemented / total) * 100) : 0;
           return (
-            <div key={section.section_code} className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-5 backdrop-blur-md">
+            <div key={section.section_code} className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-5">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <span className="text-[10px] font-semibold text-[var(--text-muted)] bg-gray-900/60 border border-[var(--border-default)] px-2 py-0.5 rounded font-mono">{section.section_code}</span>

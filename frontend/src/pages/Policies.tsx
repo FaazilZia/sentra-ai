@@ -294,7 +294,7 @@ export default function Policies() {
           </div>
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-16 px-4 text-center max-w-sm mx-auto bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl backdrop-blur-md w-full">
+        <div className="flex flex-col items-center justify-center py-16 px-4 text-center max-w-sm mx-auto bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl w-full">
           <ShieldOff className="h-12 w-12 text-[var(--text-muted)] mb-4 animate-pulse" />
           <h3 className="text-sm font-semibold text-white uppercase tracking-widest">No policies yet</h3>
           <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mt-1.5 leading-relaxed">

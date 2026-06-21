@@ -229,7 +229,7 @@ export default function VendorRisk() {
           { key: 'MEDIUM', label: 'Medium Risk', count: riskSummary.MEDIUM || 0, color: 'border-yellow-900/60 text-yellow-400 bg-yellow-950/10' },
           { key: 'LOW', label: 'Low Risk', count: riskSummary.LOW || 0, color: 'border-emerald-900/60 text-emerald-400 bg-emerald-950/10' }
         ].map(card => (
-          <div key={card.key} className={`border rounded-2xl p-4 flex flex-col justify-between backdrop-blur-md ${card.color}`}>
+          <div key={card.key} className={`border rounded-2xl p-4 flex flex-col justify-between ${card.color}`}>
             <span className="text-[10px] font-bold uppercase tracking-wider opacity-85">{card.label}</span>
             <div className="flex items-baseline justify-between mt-2">
               <span className="text-2xl font-semibold">{card.count}</span>

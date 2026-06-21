@@ -257,7 +257,7 @@ export default function Drift() {
 
         {/* Right Side: Post-Market Widget */}
         <div className="lg:col-span-4 flex">
-          <div className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-5 flex flex-col justify-between backdrop-blur-md shadow-xl relative overflow-hidden">
+          <div className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-5 flex flex-col justify-between shadow-xl relative overflow-hidden">
             <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-purple-500/5 blur-xl pointer-events-none" />
             
             <div>
@@ -310,7 +310,7 @@ export default function Drift() {
       </div>
 
       {/* Main Alert List */}
-      <div className="card-base overflow-hidden border border-[var(--border-default)] bg-[var(--bg-card)] rounded-2xl shadow-xl backdrop-blur-md">
+      <div className="card-base overflow-hidden border border-[var(--border-default)] bg-[var(--bg-card)] rounded-2xl shadow-xl">
         <div className="p-5 border-b border-[var(--border-default)] flex items-center justify-between bg-[var(--bg-page)]">
           <div className="flex items-center gap-2">
             <ShieldAlert className="h-4 w-4 text-indigo-400" />

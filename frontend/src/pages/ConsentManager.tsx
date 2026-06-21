@@ -100,7 +100,7 @@ export default function ConsentManager() {
         
         {/* Left Column: Status Widget */}
         <div className="lg:col-span-4 flex flex-col gap-6">
-          <div className="card-base p-6 border border-[var(--border-default)] bg-[var(--bg-page)] rounded-2xl shadow-xl backdrop-blur-md relative overflow-hidden flex flex-col justify-between min-h-[340px]">
+          <div className="card-base p-6 border border-[var(--border-default)] bg-[var(--bg-page)] rounded-2xl shadow-xl relative overflow-hidden flex flex-col justify-between min-h-[340px]">
             <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-indigo-500/5 blur-xl pointer-events-none" />
             
             <div className="space-y-4">
@@ -178,7 +178,7 @@ export default function ConsentManager() {
           </div>
 
           {/* History Ledger Table */}
-          <div className="card-base overflow-hidden border border-[var(--border-default)] bg-[var(--bg-card)] shadow-2xl rounded-2xl backdrop-blur-md">
+          <div className="card-base overflow-hidden border border-[var(--border-default)] bg-[var(--bg-card)] shadow-2xl rounded-2xl">
             
             <div className="p-5 border-b border-[var(--border-default)] bg-[var(--bg-page)] flex items-center justify-between">
               <span className="text-[10px] font-semibold tracking-wider text-indigo-400 uppercase flex items-center gap-1.5">

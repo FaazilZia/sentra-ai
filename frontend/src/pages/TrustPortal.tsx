@@ -132,7 +132,7 @@ export default function TrustPortal() {
 
       {/* Authenticated Admin Visibility Controls Panel */}
       {isAuthenticated && (
-        <div className="w-full max-w-4xl bg-gradient-to-r from-indigo-950/40 to-purple-950/20 border border-indigo-500/20 backdrop-blur-md rounded-2xl p-5 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 z-10 shadow-2xl">
+        <div className="w-full max-w-4xl bg-gradient-to-r from-indigo-950/40 to-purple-950/20 border border-indigo-500/20 rounded-2xl p-5 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 z-10 shadow-2xl">
           <div className="flex items-start gap-3.5">
             <div className="rounded-xl bg-indigo-500/10 p-2.5 shadow-md">
               <Globe className="h-5 w-5 text-indigo-400 animate-pulse" />

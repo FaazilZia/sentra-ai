@@ -388,13 +388,13 @@ export default function RiskAssessment() {
                   { label: 'Medium Risk', value: portfolio.riskDistribution?.MEDIUM ?? 0, color: 'text-amber-400' },
                   { label: 'Low Risk', value: portfolio.riskDistribution?.LOW ?? 0, color: 'text-emerald-400' },
                 ].map((s) => (
-                  <div key={s.label} className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-4 backdrop-blur-md">
+                  <div key={s.label} className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-4">
                     <p className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-widest">{s.label}</p>
                     <p className={`text-2xl font-semibold mt-1 ${s.color}`}>{s.value}</p>
                   </div>
                 ))}
               </div>
-              <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-6 backdrop-blur-md">
+              <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-6">
                 <p className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest mb-4">Probability × Impact Heatmap</p>
                 <div className="flex gap-4">
                   <div className="flex flex-col justify-between text-[9px] text-[var(--text-muted)] uppercase font-bold py-1" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
@@ -437,7 +437,7 @@ export default function RiskAssessment() {
                   </div>
                 </div>
               </div>
-              <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl overflow-hidden backdrop-blur-md">
+              <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl overflow-hidden">
                 <div className="p-5 border-b border-[var(--border-default)]">
                   <p className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest">All Systems — Risk Register</p>
                 </div>

@@ -205,7 +205,7 @@ export default function CEMarking() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Classification & Notes Card */}
           <div className="lg:col-span-1">
-            <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-6 backdrop-blur-md flex flex-col gap-5 sticky top-6">
+            <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-6 flex flex-col gap-5 sticky top-6">
               <div>
                 <h3 className="text-xs font-semibold text-white uppercase tracking-widest mb-4">Risk Classification</h3>
                 
@@ -258,7 +258,7 @@ export default function CEMarking() {
               const isInProgress = val.status === 'IN_PROGRESS';
               return (
                 <div key={s.key} className={cn(
-                  "bg-[var(--bg-page)] border rounded-2xl p-5 backdrop-blur-md transition-all",
+                  "bg-[var(--bg-page)] border rounded-2xl p-5 transition-all",
                   isDone ? "border-emerald-500/20 shadow-lg shadow-emerald-950/5" : (isInProgress ? "border-amber-500/20 shadow-lg shadow-amber-950/5" : "border-[var(--border-default)]")
                 )}>
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-3">
@@ -351,7 +351,7 @@ export default function CEMarking() {
 
           return (
             <button key={sys.id} onClick={() => openRecord(sys.id)}
-              className="w-full text-left bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-5 hover:border-indigo-500/30 transition-all group backdrop-blur-md">
+              className="w-full text-left bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-5 hover:border-indigo-500/30 transition-all group">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="h-10 w-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
