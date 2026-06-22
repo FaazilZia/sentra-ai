@@ -1428,7 +1428,7 @@ function NistAiRmfTab({
                               SLA Breached
                             </span>
                           )}
-                          <span className="text-[8px] font-bold text-zinc-600 uppercase bg-zinc-900 px-1.5 py-0.5 rounded">
+                          <span className="text-[8px] font-bold text-[var(--text-muted)] uppercase bg-[var(--border-default)] px-1.5 py-0.5 rounded">
                             {inc.incident_type}
                           </span>
                         </div>
@@ -1510,7 +1510,7 @@ function NistFunctionBlock({ fn, setSelectedNistSub }: { fn: any; setSelectedNis
 
 function NistCategoryBlock({ cat, setSelectedNistSub }: { cat: any; setSelectedNistSub: (sub: any) => void }) {
   return (
-    <div className="bg-black/15 rounded-xl border border-zinc-900 p-4 space-y-3">
+    <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4 space-y-3">
       <div>
         <h4 className="text-xs font-semibold text-white uppercase tracking-tight flex items-center gap-2">
           <span className="text-[10px] text-indigo-400">{cat.category_code}</span>
@@ -1519,13 +1519,13 @@ function NistCategoryBlock({ cat, setSelectedNistSub }: { cat: any; setSelectedN
         <p className="text-[10px] text-zinc-500 leading-relaxed mt-0.5">{cat.description}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-zinc-900/50">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-[var(--border-default)]">
         {(cat.subcategories || []).map((sub: any) => (
-          <div key={sub.code} className="bg-zinc-900/30 border border-zinc-900 hover:border-zinc-800 p-3 rounded-lg flex items-center justify-between gap-4 group transition shadow-sm animate-fade-in">
+          <div key={sub.code} className="bg-[var(--bg-card)] border border-[var(--border-default)] hover:border-[var(--border-strong)] p-3 rounded-lg flex items-center justify-between gap-4 group transition shadow-sm animate-fade-in">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 mb-0.5">
-                <span className="text-[9px] font-semibold text-indigo-400">{sub.code}</span>
-                <h5 className="text-[11px] font-bold text-white truncate max-w-[200px] uppercase tracking-tight">{sub.title}</h5>
+                <span className="text-[9px] font-semibold text-indigo-600">{sub.code}</span>
+                <h5 className="text-[11px] font-bold text-[var(--text-primary)] truncate max-w-[200px] uppercase tracking-tight">{sub.title}</h5>
               </div>
               
               <div className="flex items-center gap-2 mt-1">
@@ -1673,7 +1673,7 @@ function Iso42001Tab({
                 key={cls.clause_code} 
                 className={cn(
                   "card-base overflow-hidden border transition-all duration-300",
-                  isClauseOpen ? "border-indigo-500/30 shadow-indigo-950/10 bg-zinc-900/40" : "border-[var(--border-default)] hover:border-zinc-700 bg-zinc-950/20"
+                  isClauseOpen ? "border-indigo-500/30 bg-[var(--bg-card)]" : "border-[var(--border-default)] hover:border-[var(--border-strong)] bg-[var(--bg-card)]"
                 )}
               >
                 <button
@@ -1686,7 +1686,7 @@ function Iso42001Tab({
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <h4 className="text-[12px] font-semibold text-white uppercase tracking-tight">{cls.title}</h4>
+                        <h4 className="text-[12px] font-semibold text-[var(--text-primary)] uppercase tracking-tight">{cls.title}</h4>
                         <span className="text-[8px] font-bold tracking-widest px-1.5 py-0.5 rounded border uppercase bg-indigo-950/20 text-indigo-400 border-indigo-500/10">
                           {cls.clause_type}
                         </span>
@@ -1845,7 +1845,7 @@ function Iso27001Tab({
                 key={cls.clause_code} 
                 className={cn(
                   "card-base overflow-hidden border transition-all duration-300",
-                  isClauseOpen ? "border-indigo-500/30 shadow-indigo-950/10 bg-zinc-900/40" : "border-[var(--border-default)] hover:border-zinc-700 bg-zinc-950/20"
+                  isClauseOpen ? "border-indigo-500/30 bg-[var(--bg-card)]" : "border-[var(--border-default)] hover:border-[var(--border-strong)] bg-[var(--bg-card)]"
                 )}
               >
                 <button
@@ -1858,7 +1858,7 @@ function Iso27001Tab({
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <h4 className="text-[12px] font-semibold text-white uppercase tracking-tight">{cls.title}</h4>
+                        <h4 className="text-[12px] font-semibold text-[var(--text-primary)] uppercase tracking-tight">{cls.title}</h4>
                       </div>
                       <p className="text-[10px] text-[var(--text-secondary)] font-medium leading-relaxed max-w-xl">{cls.description}</p>
                     </div>
@@ -1981,7 +1981,7 @@ function CcpaTab({
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <span className="text-[10px] font-semibold text-[var(--text-muted)] bg-[var(--border-default)] border border-[var(--border-strong)] px-2 py-0.5 rounded font-mono">{section.section_code}</span>
-                  <p className="text-sm font-bold text-white">{section.title}</p>
+                  <p className="text-sm font-bold text-[var(--text-primary)]">{section.title}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-[10px] text-[var(--text-muted)]">{implemented}/{total} controls</span>
