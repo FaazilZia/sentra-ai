@@ -956,7 +956,7 @@ function EuAiActTab({
                   key={art.article_number} 
                   className={cn(
                     "card-base overflow-hidden border transition-all duration-300",
-                    isOpen ? "border-indigo-500/30 shadow-indigo-950/10 shadow-md bg-zinc-900/40" : "border-[var(--border-default)] hover:border-zinc-700 bg-zinc-950/20"
+                    isOpen ? "border-indigo-500/30 shadow-indigo-950/10 shadow-md bg-[var(--bg-card)]" : "border-[var(--border-default)] hover:border-indigo-300/40 bg-[var(--bg-card)]"
                   )}
                 >
                   <button
@@ -974,7 +974,7 @@ function EuAiActTab({
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-0.5">
-                          <h4 className="text-[12px] font-semibold text-white uppercase tracking-tight">{art.title}</h4>
+                          <h4 className="text-[12px] font-semibold text-[var(--text-primary)] uppercase tracking-tight">{art.title}</h4>
                           <span className={cn(
                             "text-[8px] font-bold tracking-widest px-1.5 py-0.5 rounded border uppercase",
                             art.risk_tier === 'PROHIBITED' ? "bg-rose-950/20 text-rose-400 border-rose-500/10" :
@@ -997,7 +997,7 @@ function EuAiActTab({
                   </button>
 
                   {isOpen && (
-                    <div className="border-t border-[var(--border-default)] bg-black/10 divide-y divide-zinc-900 animate-slide-in">
+                    <div className="border-t border-[var(--border-default)] bg-[var(--bg-page)] divide-y divide-[var(--border-default)] animate-slide-in">
                       {art.controls.map((c: any) => {
                         const status = c.implementation?.status || 'NOT_STARTED';
                         const evidenceCount = c.implementation?.evidence_links?.length || 0;
@@ -1010,7 +1010,7 @@ function EuAiActTab({
                             <div className="flex-1 text-left min-w-0 pr-4">
                               <div className="flex items-center gap-2 mb-1">
                                 <span className="text-[10px] font-semibold text-indigo-400 tracking-tight">{c.control_code}</span>
-                                <h5 className="text-[12px] font-bold text-white uppercase tracking-tight truncate">{c.title}</h5>
+                                <h5 className="text-[12px] font-bold text-[var(--text-primary)] uppercase tracking-tight truncate">{c.title}</h5>
                               </div>
                               <p className="text-xs text-[var(--text-secondary)] leading-relaxed truncate">{c.description}</p>
                             </div>
@@ -1032,7 +1032,7 @@ function EuAiActTab({
 
                               <button
                                 onClick={() => setSelectedControl(c)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-indigo-500/30 rounded text-[9px] font-semibold text-white uppercase hover:bg-zinc-800 transition active:scale-95"
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--bg-card)] border border-[var(--border-default)] hover:border-indigo-400/50 rounded text-[9px] font-semibold text-[var(--text-primary)] uppercase hover:bg-[var(--ghost-violet)] transition active:scale-95"
                               >
                                 <Edit2 className="h-2.5 w-2.5 text-indigo-400" />
                                 Update
