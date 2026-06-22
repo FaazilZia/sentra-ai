@@ -159,7 +159,7 @@ export default function ReadinessDashboard() {
         );
       default:
         return (
-          <span className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-widest text-zinc-400 bg-zinc-800/50 px-2 py-0.5 rounded border border-zinc-700/30">
+          <span className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-widest text-[var(--text-muted)] bg-[var(--bg-secondary)] px-2 py-0.5 rounded border border-[var(--border-default)]">
             <AlertTriangle className="h-2.5 w-2.5" /> Not Started
           </span>
         );
@@ -180,7 +180,7 @@ export default function ReadinessDashboard() {
         if (isOverdue) {
           return 'bg-red-500/20 border-red-500/50 text-red-400';
         }
-        return 'bg-zinc-900 border-zinc-800 text-zinc-500';
+        return 'bg-[var(--bg-card)] border-[var(--border-default)] text-[var(--text-muted)]';
       }
     }
   };
@@ -190,9 +190,9 @@ export default function ReadinessDashboard() {
     .slice(0, 5);
 
   return (
-    <div className="p-6 space-y-6 bg-[#0c0c14] min-h-screen text-slate-100 font-sans">
+    <div className="p-6 space-y-6 bg-[var(--bg-primary)] min-h-screen text-[var(--text-secondary)] font-sans">
       {/* Header */}
-      <div className="flex justify-between items-center pb-4 border-b border-zinc-800/60">
+      <div className="flex justify-between items-center pb-4 border-b border-[var(--border-default)]">
         <div>
           <h1 className="text-[22px] font-semibold text-[var(--text-primary)] flex items-center gap-2 tracking-tight">
             <Shield className="h-5 w-5 text-[var(--royal-indigo)]" />
@@ -204,7 +204,7 @@ export default function ReadinessDashboard() {
         </div>
         <button
           onClick={() => loadFrameworkData(selectedFramework)}
-          className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded text-[9px] font-semibold uppercase tracking-widest text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all active:scale-95"
+          className="flex items-center gap-2 px-3 py-1.5 bg-[var(--bg-secondary)] hover:bg-[var(--bg-card)] border border-[var(--border-default)] rounded text-[9px] font-semibold uppercase tracking-widest text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all active:scale-95"
         >
           <RefreshCw className={cn("h-3 w-3", loading && "animate-spin")} />
           Recalculate
@@ -215,7 +215,7 @@ export default function ReadinessDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Framework Selector */}
         <div className="lg:col-span-3 space-y-2">
-          <span className="text-[9px] font-semibold uppercase tracking-widest text-zinc-500 block mb-2 px-2">
+          <span className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-muted)] block mb-2 px-2">
             Target Standards
           </span>
           <div className="flex flex-row lg:flex-col overflow-x-auto lg:overflow-visible gap-2 pb-2 lg:pb-0">
@@ -229,14 +229,14 @@ export default function ReadinessDashboard() {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg border text-left min-w-[160px] lg:min-w-0 transition-all duration-200 active:scale-95 shrink-0",
                     isSelected 
-                      ? "bg-[var(--mid-indigo)]/10 border-[var(--royal-indigo)] text-white shadow-lg shadow-[var(--royal-indigo)]/5" 
-                      : "bg-zinc-950/20 border-zinc-800/60 text-zinc-400 hover:border-zinc-700 hover:text-[var(--text-primary)]"
+                      ? "bg-[var(--mid-indigo)]/10 border-[var(--royal-indigo)] text-[var(--text-primary)] shadow-lg shadow-[var(--royal-indigo)]/5" 
+                      : "bg-[var(--bg-primary)]/20 border-[var(--border-default)] text-[var(--text-muted)] hover:border-[var(--border-default)] hover:text-[var(--text-primary)]"
                   )}
                 >
-                  <Icon className={cn("h-4 w-4 shrink-0", isSelected ? "text-[var(--royal-indigo)]" : "text-zinc-500")} />
+                  <Icon className={cn("h-4 w-4 shrink-0", isSelected ? "text-[var(--royal-indigo)]" : "text-[var(--text-muted)]")} />
                   <div className="min-w-0">
                     <p className="text-[11px] font-semibold uppercase tracking-wider truncate">{fw.name}</p>
-                    <p className="text-[9px] text-zinc-500 truncate mt-0.5 block lg:hidden xl:block">
+                    <p className="text-[9px] text-[var(--text-muted)] truncate mt-0.5 block lg:hidden xl:block">
                       {fw.id === 'eu-ai-act' ? 'AI Act Standard' : 'Risk Framework'}
                     </p>
                   </div>
@@ -249,11 +249,11 @@ export default function ReadinessDashboard() {
         {/* Dashboard Display */}
         <div className="lg:col-span-9 space-y-6">
           {/* Active Framework Context */}
-          <div className="card-base p-6 bg-zinc-950/20 border-zinc-900">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-white">
+          <div className="card-base p-6 bg-[var(--bg-primary)]/20 border-[var(--border-default)]">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--text-primary)]">
               {selectedFramework.name} Readiness
             </h2>
-            <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+            <p className="text-xs text-[var(--text-muted)] mt-1 leading-relaxed">
               {selectedFramework.description}
             </p>
           </div>
@@ -261,8 +261,8 @@ export default function ReadinessDashboard() {
           {/* Stats & Circular Gauge */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
             {/* Score Gauge */}
-            <div className="md:col-span-4 card-base p-6 flex flex-col items-center justify-center text-center bg-zinc-950 border-zinc-900/60">
-              <span className="text-[9px] font-semibold uppercase tracking-widest text-zinc-500 mb-4">
+            <div className="md:col-span-4 card-base p-6 flex flex-col items-center justify-center text-center bg-[var(--bg-card)] border-[var(--border-default)]">
+              <span className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-4">
                 Overall Readiness
               </span>
               
@@ -271,7 +271,7 @@ export default function ReadinessDashboard() {
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                   {/* Background Track */}
                   <circle
-                    className="text-zinc-800"
+                    className="text-[var(--border-default)]"
                     strokeWidth="8"
                     stroke="currentColor"
                     fill="transparent"
@@ -297,12 +297,12 @@ export default function ReadinessDashboard() {
                   />
                 </svg>
                 <div className="absolute flex flex-col items-center justify-center">
-                  <span className="text-2xl font-semibold text-white font-mono">{score}%</span>
-                  <span className="text-[8px] font-semibold uppercase tracking-widest text-zinc-500 -mt-1">Ready</span>
+                  <span className="text-2xl font-semibold text-[var(--text-primary)] font-mono">{score}%</span>
+                  <span className="text-[8px] font-semibold uppercase tracking-widest text-[var(--text-muted)] -mt-1">Ready</span>
                 </div>
               </div>
 
-              <div className="mt-4 text-[10px] font-bold text-zinc-400 flex items-center gap-1.5 uppercase tracking-widest">
+              <div className="mt-4 text-[10px] font-bold text-[var(--text-muted)] flex items-center gap-1.5 uppercase tracking-widest">
                 <TrendingUp className="h-3.5 w-3.5 text-indigo-400" />
                 {score > 70 ? 'Optimal Posture' : 'Gaps Identified'}
               </div>
@@ -310,15 +310,15 @@ export default function ReadinessDashboard() {
 
             {/* Core Stats Details */}
             <div className="md:col-span-8 grid grid-cols-2 gap-4">
-              <div className="card-base p-4 bg-zinc-950 border-zinc-900/60 flex flex-col justify-between">
+              <div className="card-base p-4 bg-[var(--bg-card)] border-[var(--border-default)] flex flex-col justify-between">
                 <div>
-                  <span className="text-[9px] font-semibold uppercase tracking-widest text-zinc-500">Total Controls</span>
-                  <h3 className="text-2xl font-semibold text-white mt-1 font-mono">{loading ? '...' : overallStats.total}</h3>
+                  <span className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">Total Controls</span>
+                  <h3 className="text-2xl font-semibold text-[var(--text-primary)] mt-1 font-mono">{loading ? '...' : overallStats.total}</h3>
                 </div>
-                <p className="text-[9px] text-zinc-500 uppercase mt-2">Mapped requirements</p>
+                <p className="text-[9px] text-[var(--text-muted)] uppercase mt-2">Mapped requirements</p>
               </div>
 
-              <div className="card-base p-4 bg-zinc-950 border-zinc-900/60 flex flex-col justify-between">
+              <div className="card-base p-4 bg-[var(--bg-card)] border-[var(--border-default)] flex flex-col justify-between">
                 <div>
                   <span className="text-[9px] font-semibold uppercase tracking-widest text-emerald-500">Implemented</span>
                   <h3 className="text-2xl font-semibold text-emerald-400 mt-1 font-mono">{loading ? '...' : overallStats.implemented}</h3>
@@ -326,7 +326,7 @@ export default function ReadinessDashboard() {
                 <p className="text-[9px] text-emerald-500/70 uppercase mt-2">Fully verified</p>
               </div>
 
-              <div className="card-base p-4 bg-zinc-950 border-zinc-900/60 flex flex-col justify-between">
+              <div className="card-base p-4 bg-[var(--bg-card)] border-[var(--border-default)] flex flex-col justify-between">
                 <div>
                   <span className="text-[9px] font-semibold uppercase tracking-widest text-amber-500">In Progress</span>
                   <h3 className="text-2xl font-semibold text-amber-400 mt-1 font-mono">{loading ? '...' : overallStats.inProgress}</h3>
@@ -334,19 +334,19 @@ export default function ReadinessDashboard() {
                 <p className="text-[9px] text-amber-500/70 uppercase mt-2">Under remediation</p>
               </div>
 
-              <div className="card-base p-4 bg-zinc-950 border-zinc-900/60 flex flex-col justify-between">
+              <div className="card-base p-4 bg-[var(--bg-card)] border-[var(--border-default)] flex flex-col justify-between">
                 <div>
-                  <span className="text-[9px] font-semibold uppercase tracking-widest text-zinc-400">Not Started</span>
-                  <h3 className="text-2xl font-semibold text-zinc-400 mt-1 font-mono">{loading ? '...' : overallStats.notStarted}</h3>
+                  <span className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">Not Started</span>
+                  <h3 className="text-2xl font-semibold text-[var(--text-muted)] mt-1 font-mono">{loading ? '...' : overallStats.notStarted}</h3>
                 </div>
-                <p className="text-[9px] text-zinc-500 uppercase mt-2">Pending assessment</p>
+                <p className="text-[9px] text-[var(--text-muted)] uppercase mt-2">Pending assessment</p>
               </div>
             </div>
           </div>
 
           {/* Heatmap Control Blocks Grid */}
-          <div className="card-base p-6 bg-zinc-950 border-zinc-900/60">
-            <span className="text-[9px] font-semibold uppercase tracking-widest text-zinc-500 block mb-4">
+          <div className="card-base p-6 bg-[var(--bg-card)] border-[var(--border-default)]">
+            <span className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-muted)] block mb-4">
               Control Status Visual Map
             </span>
 
@@ -356,7 +356,7 @@ export default function ReadinessDashboard() {
                 Aggregating Controls...
               </div>
             ) : controls.length === 0 ? (
-              <div className="py-12 text-center text-zinc-500 text-xs italic">
+              <div className="py-12 text-center text-[var(--text-muted)] text-xs italic">
                 No controls found for this framework.
               </div>
             ) : (
@@ -376,7 +376,7 @@ export default function ReadinessDashboard() {
                   ))}
                 </div>
 
-                <div className="flex gap-4 mt-6 justify-end text-[8px] font-semibold uppercase tracking-widest text-zinc-500">
+                <div className="flex gap-4 mt-6 justify-end text-[8px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
                   <div className="flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 rounded bg-emerald-500/20 border border-emerald-500/50 block" /> Implemented
                   </div>
@@ -387,7 +387,7 @@ export default function ReadinessDashboard() {
                     <span className="w-2.5 h-2.5 rounded bg-red-500/20 border border-red-500/50 block" /> Overdue
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded bg-zinc-900 border border-zinc-800 block" /> Not Started
+                    <span className="w-2.5 h-2.5 rounded bg-[var(--bg-card)] border border-[var(--border-default)] block" /> Not Started
                   </div>
                 </div>
               </div>
@@ -395,9 +395,9 @@ export default function ReadinessDashboard() {
           </div>
 
           {/* Gap Analysis / Weakest Controls list */}
-          <div className="card-base p-6 bg-zinc-950 border-zinc-900/60">
+          <div className="card-base p-6 bg-[var(--bg-card)] border-[var(--border-default)]">
             <div className="flex justify-between items-center mb-4">
-              <span className="text-[9px] font-semibold uppercase tracking-widest text-zinc-500">
+              <span className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
                 Actionable Gap Analysis / Weakest Controls
               </span>
               <span className="text-[8px] font-bold text-amber-500/80 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 uppercase tracking-wider">
@@ -415,7 +415,7 @@ export default function ReadinessDashboard() {
                 🎉 Framework is 100% compliant! No gaps identified.
               </div>
             ) : (
-              <div className="divide-y divide-zinc-800/50 space-y-4">
+              <div className="divide-y divide-[var(--border-default)] space-y-4">
                 {weakestControls.map((ctrl) => (
                   <div key={ctrl.code} className="pt-4 first:pt-0 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
                     <div className="space-y-1">
@@ -423,12 +423,12 @@ export default function ReadinessDashboard() {
                         <span className="text-[10px] font-mono font-semibold text-indigo-400 bg-indigo-500/5 border border-indigo-500/10 px-1.5 py-0.5 rounded">
                           {ctrl.code}
                         </span>
-                        <h4 className="text-xs font-bold text-white tracking-wide">{ctrl.title}</h4>
+                        <h4 className="text-xs font-bold text-[var(--text-primary)] tracking-wide">{ctrl.title}</h4>
                       </div>
-                      <p className="text-[10px] text-zinc-400 max-w-2xl">
+                      <p className="text-[10px] text-[var(--text-muted)] max-w-2xl">
                         {ctrl.description || 'No description or mitigation instructions specified.'}
                       </p>
-                      <p className="text-[9px] text-zinc-600 font-mono">
+                      <p className="text-[9px] text-[var(--text-muted)] font-mono">
                         Clause / Section: {ctrl.clause}
                       </p>
                     </div>
@@ -437,7 +437,7 @@ export default function ReadinessDashboard() {
                       {getStatusBadge(ctrl.status)}
                       <button 
                         onClick={() => addToast({ message: 'Select compliance framework detail view from Sidebar to edit controls.', type: 'info' })}
-                        className="p-1.5 text-zinc-500 hover:text-[var(--text-primary)] bg-zinc-900 border border-zinc-800 rounded transition-all active:scale-95"
+                        className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded transition-all active:scale-95"
                         title="Configure control implementation"
                       >
                         <ArrowRight className="h-3.5 w-3.5" />

@@ -6,7 +6,7 @@ import {
   Edit, X, ListTodo
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { getFrameworkLabel, getStatusBadgeColor, SELECT_FILTER_CLASS } from '@/lib/governanceUtils';
+import { getFrameworkLabel, getStatusBadgeColor } from '@/lib/governanceUtils';
 
 interface ControlImplementation {
   id: string;
@@ -140,7 +140,7 @@ export default function Controls() {
           return (
             <div key={fw} className="bg-[var(--bg-page)] border border-[var(--border-default)]/80 rounded-2xl p-5 flex flex-col gap-3 relative overflow-hidden">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-white uppercase tracking-wider">{getFrameworkLabel(fw)}</span>
+                <span className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">{getFrameworkLabel(fw)}</span>
                 <span className="text-xs font-mono font-semibold text-indigo-400">{stats.percent}% MET</span>
               </div>
               <div className="h-2 w-full bg-[var(--bg-secondary)] rounded-full overflow-hidden">
@@ -173,7 +173,7 @@ export default function Controls() {
           <select
             value={frameworkFilter}
             onChange={(e) => setFrameworkFilter(e.target.value)}
-            className={SELECT_FILTER_CLASS}
+            className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl px-4 py-2.5 text-xs text-[var(--text-primary)] focus:outline-none focus:border-indigo-500"
           >
             <option value="ALL">All Frameworks</option>
             {uniqueFrameworks.map(fw => (

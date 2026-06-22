@@ -167,10 +167,10 @@ export default function ConsentManager() {
         <div className="lg:col-span-8 flex flex-col gap-6">
           
           {/* Informational Notice */}
-          <div className="bg-indigo-950/10 border border-indigo-900/30 p-5 rounded-2xl flex gap-3 text-xs leading-relaxed text-indigo-300">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-5 rounded-2xl flex gap-3 text-xs leading-relaxed text-[var(--text-primary)]">
             <Info className="h-5 w-5 shrink-0 text-indigo-400 mt-0.5" />
             <div>
-              <span className="font-semibold text-white uppercase tracking-wider block mb-1 text-[10px]">GDPR Recital 32 Obligations</span>
+              <span className="font-semibold text-indigo-400 uppercase tracking-wider block mb-1 text-[10px]">GDPR Recital 32 Obligations</span>
               <span>
                 Every action taken regarding user consent is cryptographically recorded onto an immutable, hash-chained ledger. This guarantees audit-proof compliance records mapped automatically to global regulatory frameworks, including GDPR, HIPAA, and DPDP.
               </span>

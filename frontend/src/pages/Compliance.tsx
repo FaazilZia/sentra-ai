@@ -924,11 +924,11 @@ function EuAiActTab({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Accordion list */}
         <div className="lg:col-span-8 flex flex-col gap-4">
-          <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/30">
+          <div className="card-base p-6 bg-[var(--bg-card)] border border-[var(--border-default)]">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">Active Standard</span>
-                <h2 className="text-lg font-semibold text-white uppercase tracking-tight">EU AI Act (Control Hierarchy)</h2>
+                <h2 className="text-lg font-semibold text-[var(--text-primary)] uppercase tracking-tight">EU AI Act (Control Hierarchy)</h2>
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-xs font-bold text-[var(--text-secondary)]">Total Controls: {summary.total_controls}</span>
@@ -1107,18 +1107,18 @@ function EuAiActTab({
           </div>
 
           {/* Integrations Scope */}
-          <div className="card-base p-6 bg-gradient-to-br from-zinc-950 to-indigo-950/10">
-            <h3 className="text-sm font-semibold text-white uppercase tracking-tight mb-4">Integrations Scope</h3>
+          <div className="card-base p-6 bg-[var(--bg-card)] border border-[var(--border-default)]">
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-tight mb-4">Integrations Scope</h3>
             <div className="space-y-4">
-              <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
+              <div className="flex justify-between items-center pb-2 border-b border-[var(--border-default)]">
                 <span className="text-xs text-[var(--text-secondary)]">Total Violations</span>
-                <span className="text-xs font-semibold text-white">{totalViolations}</span>
+                <span className="text-xs font-semibold text-[var(--text-primary)]">{totalViolations}</span>
               </div>
-              <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
+              <div className="flex justify-between items-center pb-2 border-b border-[var(--border-default)]">
                 <span className="text-xs text-[var(--text-secondary)]">Not Applicable Controls</span>
                 <span className="text-xs font-semibold text-blue-400">{summary.not_applicable}</span>
               </div>
-              <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
+              <div className="flex justify-between items-center pb-2 border-b border-[var(--border-default)]">
                 <span className="text-xs text-[var(--text-secondary)]">In Progress Audits</span>
                 <span className="text-xs font-semibold text-amber-400">{summary.in_progress}</span>
               </div>
@@ -1457,11 +1457,11 @@ function NistAiRmfTab({
 
       {/* NIST AI RMF Maturity Accordion */}
       <div className="flex flex-col gap-4">
-        <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/30">
+        <div className="card-base p-6 bg-[var(--bg-card)] border border-[var(--border-default)]">
           <div className="flex items-center justify-between mb-2">
             <div>
               <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">Operational Maturity Matrix</span>
-              <h2 className="text-lg font-semibold text-white uppercase tracking-tight">NIST RMF 1.0 Subcategory Status</h2>
+              <h2 className="text-lg font-semibold text-[var(--text-primary)] uppercase tracking-tight">NIST RMF 1.0 Subcategory Status</h2>
             </div>
           </div>
           <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
@@ -1650,11 +1650,11 @@ function Iso42001Tab({
 
       {/* Clause Trees */}
       <div className="flex flex-col gap-4">
-        <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/30">
+        <div className="card-base p-6 bg-[var(--bg-card)] border border-[var(--border-default)]">
           <div className="flex items-center justify-between mb-4">
             <div>
               <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">Active Standard</span>
-              <h2 className="text-lg font-semibold text-white uppercase tracking-tight">ISO/IEC 42001:2023 Artificial Intelligence Management</h2>
+              <h2 className="text-lg font-semibold text-[var(--text-primary)] uppercase tracking-tight">ISO/IEC 42001:2023 Artificial Intelligence Management</h2>
             </div>
           </div>
           <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
@@ -1822,11 +1822,11 @@ function Iso27001Tab({
 
       {/* Clause Trees */}
       <div className="flex flex-col gap-4">
-        <div className="card-base p-6 bg-gradient-to-r from-indigo-950/20 to-black/10 border-indigo-500/30">
+        <div className="card-base p-6 bg-[var(--bg-card)] border border-[var(--border-default)]">
           <div className="flex items-center justify-between mb-4">
             <div>
               <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">Active Standard</span>
-              <h2 className="text-lg font-semibold text-white uppercase tracking-tight">ISO/IEC 27001:2022 Information Security Management</h2>
+              <h2 className="text-lg font-semibold text-[var(--text-primary)] uppercase tracking-tight">ISO/IEC 27001:2022 Information Security Management</h2>
             </div>
           </div>
           <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
