@@ -295,8 +295,8 @@ export function Sidebar() {
         {/* Brand Logo & Mobile Close Button */}
         <div className="flex h-[var(--topbar-height)] items-center justify-between px-6 border-b border-white/5 bg-[#0f172a]/20">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded bg-[var(--mid-indigo)] text-white shadow-lg shadow-indigo-500/20">
-              <svg viewBox="0 0 240 140" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" xmlns="http://www.w3.org/2000/svg">
+            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-[var(--mid-indigo)] text-white shadow-lg shadow-indigo-500/20">
+              <svg viewBox="0 0 240 140" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" xmlns="http://www.w3.org/2000/svg">
                 <g stroke="currentColor" strokeWidth="3" strokeLinecap="round">
                   <line x1="152" y1="30" x2="132" y2="18"/>
                   <line x1="132" y1="18" x2="104" y2="13"/>
@@ -333,8 +333,8 @@ export function Sidebar() {
               </svg>
             </div>
             <div>
-              <span className="text-sm font-black uppercase tracking-widest text-white">Sentraa</span>
-              <span className="text-[10px] block font-bold text-[var(--lavender)] uppercase -mt-1 tracking-tighter opacity-70">Governance</span>
+              <span className="text-base font-black uppercase tracking-widest text-white">Sentraa</span>
+              <span className="text-[11px] block font-bold text-[var(--lavender)] uppercase -mt-1 tracking-tighter opacity-70">Governance</span>
             </div>
           </div>
 
