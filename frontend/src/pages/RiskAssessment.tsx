@@ -240,9 +240,9 @@ export default function RiskAssessment() {
             <div className="lg:col-span-2 flex flex-col gap-6">
               
               {/* New Assessment Card */}
-              <div className="bg-gradient-to-br from-[#1e1b4b]/40 to-[#311042]/20 border border-indigo-500/20 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+              <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-6 shadow-xl relative overflow-hidden">
                 <div className="relative z-10 flex flex-col gap-4">
-                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                  <h2 className="text-lg font-bold text-[var(--text-primary)] flex items-center gap-2">
                     <Shield className="h-5 w-5 text-indigo-400" />
                     Initiate Risk Tier Assessment
                   </h2>
@@ -254,7 +254,7 @@ export default function RiskAssessment() {
                     <select
                       value={selectedSystemId}
                       onChange={(e) => setSelectedSystemId(e.target.value)}
-                      className="bg-black/40 border border-[var(--border-default)] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 flex-1"
+                      className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl px-4 py-2.5 text-xs text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 flex-1"
                     >
                       <option value="">Select AI System to assess...</option>
                       {systems.map(s => (
@@ -277,7 +277,7 @@ export default function RiskAssessment() {
 
               {/* Past Assessments List */}
               <div className="bg-[var(--bg-card)] border border-[var(--border-strong)] rounded-2xl p-6 flex flex-col gap-4 shadow-sm">
-                <h3 className="font-bold text-white text-sm uppercase tracking-wider text-[var(--text-secondary)]">
+                <h3 className="font-bold text-[var(--text-primary)] text-sm uppercase tracking-wider">
                   Assessment Logs & Tiers
                 </h3>
 
@@ -305,7 +305,7 @@ export default function RiskAssessment() {
                             <ClipboardCheck className="h-4 w-4" />
                           </div>
                           <div>
-                            <h4 className="font-bold text-white text-sm">{ass.ai_system?.name || 'Unknown System'}</h4>
+                            <h4 className="font-bold text-[var(--text-primary)] text-sm">{ass.ai_system?.name || 'Unknown System'}</h4>
                             <p className="text-[10px] text-[var(--text-muted)] mt-0.5">Assessed on {new Date(ass.created_at).toLocaleDateString()}</p>
                           </div>
                         </div>
@@ -313,7 +313,7 @@ export default function RiskAssessment() {
                         <div className="flex items-center gap-4">
                           <div className="text-right">
                             <span className="text-[10px] text-[var(--text-muted)] block uppercase font-bold tracking-wider">Audit Score</span>
-                            <span className="text-sm font-semibold text-white">{ass.score} / 100</span>
+                            <span className="text-sm font-semibold text-[var(--text-primary)]">{ass.score} / 100</span>
                           </div>
                           <span className={`text-[10px] px-2.5 py-1 rounded-full border font-semibold uppercase ${getRiskLevelColor(ass.risk_level)}`}>
                             {ass.risk_level}
@@ -329,7 +329,7 @@ export default function RiskAssessment() {
             {/* Right Column: Framework explanation / Wizard Guide */}
             <div className="lg:col-span-1">
               <div className="bg-[var(--bg-card)] border border-[var(--border-strong)] rounded-2xl p-6 flex flex-col gap-4 shadow-sm">
-                <h3 className="font-bold text-white text-sm flex items-center gap-2 border-b border-[var(--border-default)]/80 pb-3">
+                <h3 className="font-bold text-[var(--text-primary)] text-sm flex items-center gap-2 border-b border-[var(--border-default)]/80 pb-3">
                   <HelpCircle className="h-4 w-4 text-indigo-400" />
                   Risk Tier Methodology
                 </h3>
@@ -339,7 +339,7 @@ export default function RiskAssessment() {
                     Sentraa AI utilizes a standardized point-based risk scoring framework aligned with standard EU AI Act use case classifications.
                   </p>
                   
-                  <div className="flex flex-col gap-2 bg-black/20 p-3.5 rounded-xl border border-[var(--border-default)]/60 mt-1">
+                  <div className="flex flex-col gap-2 bg-[var(--bg-secondary)] p-3.5 rounded-xl border border-[var(--border-default)]/60 mt-1">
                     <div className="flex justify-between items-center">
                       <span className="font-semibold text-emerald-400">LOW TIER</span>
                       <span className="text-[var(--text-muted)] font-mono">0 - 30 pts</span>
@@ -383,7 +383,7 @@ export default function RiskAssessment() {
             <>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                  { label: 'Total Systems', value: portfolio.totalAgents ?? 0, color: 'text-white' },
+                  { label: 'Total Systems', value: portfolio.totalAgents ?? 0, color: 'text-[var(--text-primary)]' },
                   { label: 'High Risk', value: portfolio.riskDistribution?.HIGH ?? 0, color: 'text-rose-400' },
                   { label: 'Medium Risk', value: portfolio.riskDistribution?.MEDIUM ?? 0, color: 'text-amber-400' },
                   { label: 'Low Risk', value: portfolio.riskDistribution?.LOW ?? 0, color: 'text-emerald-400' },
@@ -416,8 +416,8 @@ export default function RiskAssessment() {
                             <div key={impact} className={`flex-1 aspect-square rounded border ${bgColor} flex flex-col items-center justify-center transition-all cursor-default group relative`}>
                               {cellAgents.length > 0 && (
                                 <>
-                                  <span className="text-xs font-semibold text-white">{cellAgents.length}</span>
-                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 bg-white border border-[var(--border-default)] rounded-lg p-2 min-w-[140px] shadow-xl">
+                                  <span className="text-xs font-semibold text-[var(--text-primary)]">{cellAgents.length}</span>
+                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 bg-[var(--bg-card)] border border-[var(--border-default)] rounded-lg p-2 min-w-[140px] shadow-xl">
                                     {cellAgents.slice(0, 3).map((a: any) => <p key={a.agentId} className="text-[10px] text-[var(--text-secondary)] truncate">{a.agentName}</p>)}
                                     {cellAgents.length > 3 && <p className="text-[9px] text-[var(--text-muted)]">+{cellAgents.length - 3} more</p>}
                                   </div>
@@ -452,13 +452,13 @@ export default function RiskAssessment() {
                     </thead>
                     <tbody>
                       {(portfolio.agents || []).sort((a: any, b: any) => (b.riskScore ?? 0) - (a.riskScore ?? 0)).map((agent: any) => {
-                        const riskColor = agent.riskLevel === 'HIGH' || agent.riskLevel === 'CRITICAL' ? 'text-rose-400' : agent.riskLevel === 'MEDIUM' ? 'text-amber-400' : 'text-emerald-400';
+                        const riskColor = agent.riskLevel === 'HIGH' || agent.riskLevel === 'CRITICAL' ? 'text-rose-600' : agent.riskLevel === 'MEDIUM' ? 'text-amber-600' : 'text-emerald-600';
                         return (
-                          <tr key={agent.agentId} className="border-b border-[var(--border-default)]/50 hover:bg-[var(--bg-hover)]/20">
-                            <td className="px-4 py-3 font-bold text-white">{agent.agentName}</td>
+                          <tr key={agent.agentId} className="border-b border-[var(--border-default)]/50 hover:bg-[var(--bg-hover)]">
+                            <td className="px-4 py-3 font-bold text-[var(--text-primary)]">{agent.agentName}</td>
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2">
-                                <div className="w-16 h-1.5 bg-gray-800 rounded-full">
+                                <div className="w-16 h-1.5 bg-[var(--bg-secondary)] rounded-full">
                                   <div className={cn("h-full rounded-full", agent.riskScore > 70 ? "bg-rose-500" : agent.riskScore > 40 ? "bg-amber-500" : "bg-emerald-500")} style={{ width: `${agent.riskScore ?? 0}%` }} />
                                 </div>
                                 <span className="text-[var(--text-secondary)] font-mono">{agent.riskScore ?? 0}</span>
@@ -490,10 +490,10 @@ export default function RiskAssessment() {
           <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl animate-scale-in">
             
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-[var(--border-default)] p-5 bg-[#0f172a]/60">
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] p-5 bg-[var(--bg-secondary)]">
               <div>
                 <span className="text-[9px] font-semibold text-indigo-400 uppercase tracking-widest">Active Governance Audit</span>
-                <h3 className="font-bold text-white text-base mt-0.5">Qualitative Risk Matrix Questionnaire</h3>
+                <h3 className="font-bold text-[var(--text-primary)] text-base mt-0.5">Qualitative Risk Matrix Questionnaire</h3>
               </div>
               <button
                 onClick={() => setIsWizardOpen(false)}
@@ -517,7 +517,7 @@ export default function RiskAssessment() {
                             ? 'bg-indigo-500' 
                             : i < currentStep 
                               ? 'bg-indigo-900/60' 
-                              : 'bg-gray-800'
+                              : 'bg-[var(--bg-secondary)]'
                         }`}
                       />
                     ))}
@@ -526,7 +526,7 @@ export default function RiskAssessment() {
                   {/* Question Block */}
                   <div className="flex flex-col gap-4 animate-fade-in">
                     <span className="text-xs text-[var(--text-muted)] font-bold uppercase tracking-wider">Question {currentStep + 1} of {QUESTIONS.length}</span>
-                    <h2 className="text-lg font-bold text-white leading-relaxed">{QUESTIONS[currentStep].text}</h2>
+                    <h2 className="text-lg font-bold text-[var(--text-primary)] leading-relaxed">{QUESTIONS[currentStep].text}</h2>
                     
                     <div className="flex flex-col gap-3 mt-2">
                       {QUESTIONS[currentStep].options.map((opt, i) => {
@@ -546,8 +546,8 @@ export default function RiskAssessment() {
                             tabIndex={0}
                             className={`p-4 rounded-xl border transition-all cursor-pointer text-xs font-semibold leading-relaxed flex items-center justify-between gap-4 ${
                               isSelected 
-                                ? 'bg-indigo-950/20 border-indigo-500/60 text-white shadow-md' 
-                                : 'bg-[#0f172a]/40 border-[var(--border-default)]/80 hover:bg-black/30 hover:border-[var(--border-default)] text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'
+                                ? 'bg-indigo-950/20 border-indigo-500/60 text-[var(--text-primary)] shadow-md' 
+                                : 'bg-[var(--bg-secondary)] border-[var(--border-default)]/80 hover:bg-[var(--bg-hover)] hover:border-[var(--border-default)] text-[var(--text-secondary)]'
                             }`}
                           >
                             <span>{opt.text}</span>
@@ -593,15 +593,15 @@ export default function RiskAssessment() {
                   <div className="rounded-full bg-emerald-500/10 p-4 border border-emerald-500/20 mb-4 animate-bounce">
                     <CheckCircle2 className="h-10 w-10 text-emerald-400" />
                   </div>
-                  <h2 className="text-xl font-semibold text-white">Risk Tier Audit Completed</h2>
+                  <h2 className="text-xl font-semibold text-[var(--text-primary)]">Risk Tier Audit Completed</h2>
                   <p className="text-xs text-[var(--text-secondary)] mt-1 max-w-sm">
                     Structured audit has completed successfully. System risk tier updated in the registry.
                   </p>
 
-                  <div className="flex gap-6 mt-8 p-6 bg-black/20 rounded-2xl border border-[var(--border-default)]/80 w-full max-w-sm justify-around">
+                  <div className="flex gap-6 mt-8 p-6 bg-[var(--bg-secondary)] rounded-2xl border border-[var(--border-default)]/80 w-full max-w-sm justify-around">
                     <div>
                       <span className="text-[10px] text-[var(--text-muted)] uppercase font-semibold block tracking-wider">Final Score</span>
-                      <span className="text-2xl font-semibold text-white">{finishedResult.score} <span className="text-xs text-[var(--text-muted)] font-normal">/ 100</span></span>
+                      <span className="text-2xl font-semibold text-[var(--text-primary)]">{finishedResult.score} <span className="text-xs text-[var(--text-muted)] font-normal">/ 100</span></span>
                     </div>
                     <div className="border-r border-[var(--border-default)]" />
                     <div>
@@ -632,7 +632,7 @@ export default function RiskAssessment() {
             <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-4">
               <div className="flex items-center gap-2">
                 <ClipboardCheck className="h-4.5 w-4.5 text-indigo-400" />
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-white">Risk Audit details</span>
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--text-primary)]">Risk Audit details</span>
               </div>
               <button 
                 onClick={() => setSelectedAssessment(null)}
@@ -643,16 +643,16 @@ export default function RiskAssessment() {
             </div>
             
             <div className="space-y-1">
-              <h2 className="text-[13px] font-semibold uppercase tracking-tight text-white">{selectedAssessment.ai_system?.name || 'Unknown AI System'}</h2>
+              <h2 className="text-[13px] font-semibold uppercase tracking-tight text-[var(--text-primary)]">{selectedAssessment.ai_system?.name || 'Unknown AI System'}</h2>
               <div className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
                 Usecase: {selectedAssessment.ai_system?.use_case}
               </div>
             </div>
 
-            <div className="flex items-center gap-6 bg-black/20 p-4 rounded-xl border border-[var(--border-default)]/80">
+            <div className="flex items-center gap-6 bg-[var(--bg-secondary)] p-4 rounded-xl border border-[var(--border-default)]/80">
               <div>
                 <span className="text-[9px] text-[var(--text-muted)] uppercase font-semibold block tracking-wider">Final Score</span>
-                <span className="text-xl font-semibold text-white">{selectedAssessment.score} / 100</span>
+                <span className="text-xl font-semibold text-[var(--text-primary)]">{selectedAssessment.score} / 100</span>
               </div>
               <div className="border-r border-[var(--border-default)] self-stretch" />
               <div>

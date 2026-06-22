@@ -336,7 +336,7 @@ export default function Intake() {
                     <div className="py-12 flex flex-col items-center justify-center gap-4 text-center">
                       <NodePulseLoader label="Loading questionnaire queue..." />
                       <div>
-                        <h4 className="text-sm font-bold text-white uppercase tracking-widest animate-pulse">Running Claude Safety Analysis...</h4>
+                        <h4 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-widest animate-pulse">Running Claude Safety Analysis...</h4>
                         <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase mt-1">Polling real-time risk scores from active BullMQ workers...</p>
                       </div>
                     </div>
@@ -348,7 +348,7 @@ export default function Intake() {
                             <Sparkles className="h-5 w-5 animate-pulse" />
                           </div>
                           <div>
-                            <h3 className="text-base font-bold text-white uppercase tracking-tight">AI Intake Risk Profile Card</h3>
+                            <h3 className="text-base font-bold text-[var(--text-primary)] uppercase tracking-tight">AI Intake Risk Profile Card</h3>
                             <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase mt-0.5">Submission reference: {scoredResult.id.slice(0, 12)}</p>
                           </div>
                         </div>
@@ -384,7 +384,7 @@ export default function Intake() {
                       </div>
 
                       <div className="bg-slate-500/5 p-5 rounded-xl border border-[var(--border-default)] text-xs">
-                        <span className="font-bold text-white block uppercase text-[9px] tracking-widest mb-1.5">Compliance Officer review memo:</span>
+                        <span className="font-bold text-[var(--text-primary)] block uppercase text-[9px] tracking-widest mb-1.5">Compliance Officer review memo:</span>
                         <p className="text-[var(--text-secondary)] leading-relaxed italic">"{riskScoreResult.suggested_review_notes}"</p>
                       </div>
 
@@ -405,7 +405,7 @@ export default function Intake() {
                     <div className="py-12 flex flex-col items-center justify-center gap-4 text-center">
                       <NodePulseLoader label="Loading questionnaire queue..." />
                       <div>
-                        <h4 className="text-sm font-bold text-white uppercase tracking-widest animate-pulse">Running Claude Safety Analysis...</h4>
+                        <h4 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-widest animate-pulse">Running Claude Safety Analysis...</h4>
                         <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase mt-1">Polling real-time risk scores from active BullMQ workers...</p>
                       </div>
                     </div>
@@ -424,7 +424,7 @@ export default function Intake() {
                   ) : (
                     <>
                       <div className="border-b border-[var(--border-default)] pb-3">
-                        <h3 className="font-bold text-white text-sm uppercase tracking-wider">{formConfig?.title}</h3>
+                        <h3 className="font-bold text-[var(--text-primary)] text-sm uppercase tracking-wider">{formConfig?.title}</h3>
                         <p className="text-[11px] text-[var(--text-secondary)] mt-1 leading-relaxed">{formConfig?.description}</p>
                       </div>
 
@@ -440,7 +440,7 @@ export default function Intake() {
                             placeholder="e.g. Healthcare Clinical Summarizer"
                             value={agentName}
                             onChange={e => setAgentName(e.target.value)}
-                            className="bg-black/30 border border-[var(--border-default)] rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500 text-xs transition-colors"
+                            className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl p-3 text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 text-xs transition-colors"
                           />
                         </div>
 
@@ -469,7 +469,7 @@ export default function Intake() {
                             placeholder="Describe how the system operates, the target models, and how responses are exposed..."
                             value={agentDescription}
                             onChange={e => setAgentDescription(e.target.value)}
-                            className="bg-black/30 border border-[var(--border-default)] rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500 text-xs resize-none transition-colors"
+                            className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl p-3 text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 text-xs resize-none transition-colors"
                           />
                           
                           {/* Suggested questions list */}
@@ -481,7 +481,7 @@ export default function Intake() {
                               </span>
                               <div className="flex flex-col gap-2">
                                 {suggestedQuestions.map((q, i) => (
-                                  <div key={i} className="flex items-center justify-between gap-3 bg-black/20 border border-[var(--border-default)] p-2.5 rounded-lg">
+                                  <div key={i} className="flex items-center justify-between gap-3 bg-[var(--bg-secondary)] border border-[var(--border-default)] p-2.5 rounded-lg">
                                     <span className="text-[10px] text-[var(--text-secondary)] font-medium leading-relaxed">{q}</span>
                                     <button
                                       type="button"
@@ -507,7 +507,7 @@ export default function Intake() {
                             placeholder="Outline user base, input sources, decision execution autonomy, and sensitivity of variables processed..."
                             value={useCase}
                             onChange={e => setUseCase(e.target.value)}
-                            className="bg-black/30 border border-[var(--border-default)] rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500 text-xs resize-none transition-colors"
+                            className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl p-3 text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 text-xs resize-none transition-colors"
                           />
                         </div>
 
@@ -517,7 +517,7 @@ export default function Intake() {
                             id="agent-dept"
                             value={department}
                             onChange={e => setDepartment(e.target.value)}
-                            className="bg-black/30 border border-[var(--border-default)] rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500 text-xs transition-colors"
+                            className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl p-3 text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 text-xs transition-colors"
                           >
                             {departmentOptions.map((opt: string) => (
                               <option key={opt} value={opt} className="bg-[var(--bg-page)]">{opt}</option>
@@ -533,21 +533,21 @@ export default function Intake() {
                             placeholder="e.g. Salesforce CRM, Epic EHR, none"
                             value={externalIntegrations}
                             onChange={e => setExternalIntegrations(e.target.value)}
-                            className="bg-black/30 border border-[var(--border-default)] rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500 text-xs transition-colors"
+                            className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl p-3 text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 text-xs transition-colors"
                           />
                         </div>
 
                         {/* Data Access Scope Checkbox Grid */}
                         <div className="col-span-2 flex flex-col gap-2">
                           <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--text-secondary)] block mb-1">Data Access Scope *</span>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 bg-black/10 border border-[var(--border-default)] p-4 rounded-xl">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 bg-[var(--bg-secondary)] border border-[var(--border-default)] p-4 rounded-xl">
                             {dataAccessOptions.map((opt: string) => (
                               <label key={opt} className="flex items-center gap-3 cursor-pointer group text-xs text-[var(--text-secondary)] font-bold select-none">
                                 <input 
                                   type="checkbox"
                                   checked={selectedDataAccess.includes(opt)}
                                   onChange={() => handleCheckboxChange(opt)}
-                                  className="h-4 w-4 rounded border-[var(--border-default)] bg-black/30 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-black"
+                                  className="h-4 w-4 rounded border-[var(--border-default)] bg-[var(--bg-secondary)] text-indigo-500 focus:ring-indigo-500 focus:ring-offset-black"
                                 />
                                 <span className="group-hover:text-[var(--text-primary)] transition-colors">{opt}</span>
                               </label>
@@ -564,7 +564,7 @@ export default function Intake() {
                             </span>
                             <div className="space-y-3.5">
                               {customQuestions.map((cq) => (
-                                <div key={cq.id} className="flex flex-col gap-1.5 bg-black/10 border border-[var(--border-default)] p-4 rounded-xl relative text-left">
+                                <div key={cq.id} className="flex flex-col gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border-default)] p-4 rounded-xl relative text-left">
                                   <button
                                     type="button"
                                     onClick={() => handleRemoveCustomQuestion(cq.id)}
@@ -579,7 +579,7 @@ export default function Intake() {
                                     placeholder="Type your compliance specification answer..."
                                     value={cq.answer}
                                     onChange={e => handleUpdateCustomAnswer(cq.id, e.target.value)}
-                                    className="bg-black/30 border border-[var(--border-default)] rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500 text-xs transition-colors"
+                                    className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl p-3 text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 text-xs transition-colors"
                                   />
                                 </div>
                               ))}
@@ -604,7 +604,7 @@ export default function Intake() {
                               type="checkbox"
                               checked={acknowledged}
                               onChange={e => setAcknowledged(e.target.checked)}
-                              className="h-3.5 w-3.5 rounded border-indigo-800 bg-black/30 text-indigo-500 focus:ring-indigo-500"
+                              className="h-3.5 w-3.5 rounded border-indigo-850 bg-[var(--bg-secondary)] text-indigo-500 focus:ring-indigo-500"
                             />
                             I acknowledge organizational AI safety guidelines
                           </label>
@@ -662,7 +662,7 @@ export default function Intake() {
                           <ClipboardCheck className="h-5 w-5 text-indigo-400" />
                         </div>
                         <div>
-                          <h4 className="font-bold text-white group-hover:text-indigo-300 transition-all flex items-center gap-2 flex-wrap">
+                          <h4 className="font-bold text-[var(--text-primary)] group-hover:text-indigo-300 transition-all flex items-center gap-2 flex-wrap">
                             {sub.agentName}
                             <Badge variant={getRiskBadgeColor(sub.riskLevel)} className="text-[8px] scale-90 origin-left shrink-0">
                               {sub.riskLevel}
@@ -697,7 +697,7 @@ export default function Intake() {
               <div className="flex items-start justify-between gap-4 border-b border-[var(--border-default)]/80 pb-4">
                 <div>
                   <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">Intake Audit Specifications</span>
-                  <h3 className="font-bold text-white text-base mt-0.5">{selectedSubmission.agentName}</h3>
+                  <h3 className="font-bold text-[var(--text-primary)] text-base mt-0.5">{selectedSubmission.agentName}</h3>
                 </div>
                 <button
                   onClick={() => setSelectedSubmission(null)}
@@ -707,7 +707,7 @@ export default function Intake() {
                 </button>
               </div>
 
-              <div className="space-y-4 text-xs text-[var(--text-secondary)] bg-[#0f172a]/40 border border-[var(--border-default)]/60 rounded-xl p-4 max-h-[460px] overflow-y-auto pr-1 custom-scrollbar">
+              <div className="space-y-4 text-xs text-[var(--text-secondary)] bg-[var(--bg-secondary)] border border-[var(--border-default)]/60 rounded-xl p-4 max-h-[460px] overflow-y-auto pr-1 custom-scrollbar">
                 
                 <div>
                   <span className="text-[9px] uppercase font-semibold text-indigo-400 tracking-wider block mb-0.5">Automated Score</span>
@@ -723,7 +723,7 @@ export default function Intake() {
 
                 <div className="border-t border-[var(--border-default)] pt-3">
                   <span className="text-[9px] uppercase font-semibold text-[var(--text-muted)] tracking-wider block mb-0.5">Submitter Details</span>
-                  <p className="font-bold text-white">{selectedSubmission.submitter?.full_name}</p>
+                  <p className="font-bold text-[var(--text-primary)]">{selectedSubmission.submitter?.full_name}</p>
                   <p className="text-[10px] text-[var(--text-secondary)]">{selectedSubmission.submitter?.email}</p>
                   <p className="text-[9px] text-[var(--text-muted)] font-bold uppercase mt-1">Submitted at {new Date(selectedSubmission.createdAt).toLocaleString()}</p>
                 </div>
@@ -750,7 +750,7 @@ export default function Intake() {
 
                 <div className="border-t border-[var(--border-default)] pt-3">
                   <span className="text-[9px] uppercase font-semibold text-[var(--text-muted)] tracking-wider block mb-0.5">External Integrations</span>
-                  <p className="text-[var(--text-secondary)] leading-relaxed font-mono bg-black/10 p-2 rounded border border-[var(--border-default)]">{selectedSubmission.formData?.externalIntegrations || 'None documented'}</p>
+                  <p className="text-[var(--text-secondary)] leading-relaxed font-mono bg-[var(--bg-secondary)] p-2 rounded border border-[var(--border-default)]">{selectedSubmission.formData?.externalIntegrations || 'None documented'}</p>
                 </div>
 
                 <div className="border-t border-[var(--border-default)] pt-3">
@@ -766,10 +766,10 @@ export default function Intake() {
                 {selectedSubmission.reviewer && (
                   <div className="border-t border-[var(--border-default)] pt-3 bg-indigo-950/10 p-3 rounded-lg border border-indigo-900/30">
                     <span className="text-[9px] uppercase font-semibold text-indigo-400 tracking-wider block mb-0.5">Reviewer Verdict</span>
-                    <p className="font-bold text-white">{selectedSubmission.reviewer.full_name}</p>
+                    <p className="font-bold text-[var(--text-primary)]">{selectedSubmission.reviewer.full_name}</p>
                     <p className="text-[10px] text-[var(--text-secondary)]">{selectedSubmission.reviewer.email}</p>
                     {selectedSubmission.reviewNote && (
-                      <p className="mt-2 text-[10px] text-[var(--text-secondary)] leading-relaxed bg-black/20 p-2 rounded font-sans border border-indigo-950">
+                      <p className="mt-2 text-[10px] text-[var(--text-secondary)] leading-relaxed bg-[var(--bg-secondary)] p-2 rounded font-sans border border-[var(--border-default)]">
                         "{selectedSubmission.reviewNote}"
                       </p>
                     )}
@@ -791,7 +791,7 @@ export default function Intake() {
                           placeholder="Provide approval instructions or mandatory safety comments here..."
                           value={reviewNote}
                           onChange={e => setReviewNote(e.target.value)}
-                          className="bg-black/30 border border-[var(--border-default)] rounded-xl p-3 text-white focus:outline-none focus:border-indigo-500 text-xs resize-none"
+                          className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl p-3 text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 text-xs resize-none"
                         />
                       </div>
                       

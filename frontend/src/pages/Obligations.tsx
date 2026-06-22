@@ -158,7 +158,7 @@ export default function Obligations() {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <span className="text-[10px] font-semibold text-indigo-400 font-mono uppercase tracking-widest">{getFrameworkLabel(ob.framework)}</span>
-                    <h3 className="font-bold text-white text-base mt-0.5">{ob.article_or_task}</h3>
+                    <h3 className="font-bold text-[var(--text-primary)] text-base mt-0.5">{ob.article_or_task}</h3>
                   </div>
 
                   {!isEditing ? (
@@ -169,7 +169,7 @@ export default function Obligations() {
                     <select
                       value={editStatus}
                       onChange={(e) => setEditStatus(e.target.value as any)}
-                      className="bg-black/40 border border-indigo-500/50 rounded-xl px-3 py-1.5 text-[10px] font-bold text-white focus:outline-none uppercase"
+                      className="bg-[var(--bg-secondary)] border border-indigo-500/50 rounded-xl px-3 py-1.5 text-[10px] font-bold text-[var(--text-primary)] focus:outline-none uppercase"
                     >
                       <option value="PENDING">PENDING</option>
                       <option value="IN_PROGRESS">IN PROGRESS</option>
@@ -187,13 +187,13 @@ export default function Obligations() {
                     <Calendar className="h-4 w-4 text-[var(--text-muted)]" />
                     <span>Compliance Deadline:</span>
                     {!isEditing ? (
-                      <span className="text-white font-semibold">{ob.deadline ? new Date(ob.deadline).toLocaleDateString() : 'None'}</span>
+                      <span className="text-[var(--text-primary)] font-semibold">{ob.deadline ? new Date(ob.deadline).toLocaleDateString() : 'None'}</span>
                     ) : (
                       <input
                         type="date"
                         value={editDeadline}
                         onChange={(e) => setEditDeadline(e.target.value)}
-                        className="bg-black/40 border border-[var(--border-default)] rounded px-2 py-0.5 text-white focus:outline-none text-[10px]"
+                        className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded px-2 py-0.5 text-[var(--text-primary)] focus:outline-none text-[10px]"
                       />
                     )}
                   </div>
@@ -207,7 +207,7 @@ export default function Obligations() {
                       <select
                         value={editControlId}
                         onChange={(e) => setEditControlId(e.target.value)}
-                        className="bg-black/40 border border-[var(--border-default)] rounded px-2 py-0.5 text-white focus:outline-none text-[10px] max-w-[200px]"
+                        className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded px-2 py-0.5 text-[var(--text-primary)] focus:outline-none text-[10px] max-w-[200px]"
                       >
                         <option value="">Unlinked / None</option>
                         {controls.filter(c => c.framework === ob.framework).map(c => (

@@ -6,7 +6,7 @@ import {
   Edit, X, ListTodo
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { getFrameworkLabel, getStatusBadgeColor, SEARCH_INPUT_CLASS, SELECT_FILTER_CLASS } from '@/lib/governanceUtils';
+import { getFrameworkLabel, getStatusBadgeColor, SELECT_FILTER_CLASS } from '@/lib/governanceUtils';
 
 interface ControlImplementation {
   id: string;
@@ -143,7 +143,7 @@ export default function Controls() {
                 <span className="text-xs font-bold text-white uppercase tracking-wider">{getFrameworkLabel(fw)}</span>
                 <span className="text-xs font-mono font-semibold text-indigo-400">{stats.percent}% MET</span>
               </div>
-              <div className="h-2 w-full bg-gray-800 rounded-full overflow-hidden">
+              <div className="h-2 w-full bg-[var(--bg-secondary)] rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500" 
                   style={{ width: `${stats.percent}%` }}
@@ -164,7 +164,7 @@ export default function Controls() {
             placeholder="Search controls by title, ID, or description..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className={SEARCH_INPUT_CLASS}
+            className="w-full bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl py-2.5 pl-11 pr-4 text-xs text-[var(--text-primary)] placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition-all"
           />
         </div>
 
@@ -204,7 +204,7 @@ export default function Controls() {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <span className="text-[10px] font-semibold text-indigo-400 font-mono uppercase tracking-widest">{ctrl.control_id}</span>
-                    <h3 className="font-bold text-white text-sm mt-0.5">{ctrl.title}</h3>
+                    <h3 className="font-bold text-[var(--text-primary)] text-sm mt-0.5">{ctrl.title}</h3>
                   </div>
                   <span className={`text-[9px] px-2.5 py-1 rounded-full font-semibold uppercase ${getStatusBadgeColor(impl?.status)}`}>
                     {impl?.status || 'NOT_STARTED'}
@@ -234,10 +234,10 @@ export default function Controls() {
           <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl max-w-xl w-full overflow-hidden shadow-2xl animate-scale-in text-xs">
             
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-[var(--border-default)] p-5 bg-[#0f172a]/60">
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] p-5 bg-[var(--bg-secondary)]">
               <div>
                 <span className="text-[9px] font-semibold text-indigo-400 font-mono uppercase tracking-widest">{selectedControl.control_id}</span>
-                <h3 className="font-bold text-white text-sm mt-0.5">{selectedControl.title}</h3>
+                <h3 className="font-bold text-[var(--text-primary)] text-sm mt-0.5">{selectedControl.title}</h3>
               </div>
               <button
                 onClick={() => setSelectedControl(null)}
@@ -260,7 +260,7 @@ export default function Controls() {
                       type="button"
                       onClick={() => setStatus(st)}
                       className={`py-2 px-1 rounded-xl border text-center font-bold tracking-tight text-[10px] transition-all uppercase ${
-                        status === st ? 'bg-indigo-950/20 border-indigo-500 text-indigo-300' : 'bg-black/30 border-[var(--border-default)] text-[var(--text-muted)]'
+                        status === st ? 'bg-indigo-950/20 border-indigo-500 text-indigo-400' : 'bg-[var(--bg-secondary)] border-[var(--border-default)] text-[var(--text-muted)]'
                       }`}
                     >
                       {st.replaceAll('_', ' ')}
@@ -277,7 +277,7 @@ export default function Controls() {
                   placeholder="Describe how your AI systems implement or comply with this control safeguard..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
+                  className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl p-2.5 text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 min-h-[60px]"
                 />
               </div>
  
@@ -289,7 +289,7 @@ export default function Controls() {
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
-                  className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 text-xs"
+                  className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl p-2.5 text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 text-xs"
                 />
               </div>
 
@@ -308,7 +308,7 @@ export default function Controls() {
                     placeholder="Evidence name (e.g. LLM Guardrail Logs)"
                     value={evidenceName}
                     onChange={(e) => setEvidenceName(e.target.value)}
-                    className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2 text-white focus:outline-none focus:border-indigo-500 text-xs"
+                    className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl p-2 text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 text-xs"
                   />
                   <div className="flex gap-2">
                     <input
@@ -317,7 +317,7 @@ export default function Controls() {
                       placeholder="URL/Reference Link (optional)"
                       value={evidenceUrl}
                       onChange={(e) => setEvidenceUrl(e.target.value)}
-                      className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2 text-white focus:outline-none focus:border-indigo-500 flex-1 text-xs"
+                      className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl p-2 text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 flex-1 text-xs"
                     />
                     <button
                       type="button"
@@ -331,12 +331,12 @@ export default function Controls() {
 
                 {/* Evidence List */}
                 {evidenceList.length > 0 && (
-                  <div className="flex flex-col gap-2 mt-3 bg-black/20 p-3 rounded-xl border border-[var(--border-default)]/60 max-h-[140px] overflow-y-auto">
+                  <div className="flex flex-col gap-2 mt-3 bg-[var(--bg-secondary)] p-3 rounded-xl border border-[var(--border-default)]/60 max-h-[140px] overflow-y-auto">
                     {evidenceList.map((ev, index) => (
                       <div key={index} className="flex items-center justify-between gap-4 p-2 bg-[var(--bg-card)] rounded-lg border border-[var(--border-default)]/40 text-[10px]">
                         <div className="flex items-center gap-2">
                           <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                          <span className="font-semibold text-white truncate max-w-[200px]">{ev.name}</span>
+                          <span className="font-semibold text-[var(--text-primary)] truncate max-w-[200px]">{ev.name}</span>
                           <span className="text-[var(--text-muted)] font-mono">({ev.date})</span>
                         </div>
                         <button
@@ -355,7 +355,7 @@ export default function Controls() {
             </div>
 
             {/* Footer */}
-            <div className="bg-[#0f172a]/60 border-t border-[var(--border-default)] p-5 flex items-center justify-end gap-3">
+            <div className="bg-[var(--bg-secondary)] border-t border-[var(--border-default)] p-5 flex items-center justify-end gap-3">
               <button
                 onClick={() => setSelectedControl(null)}
                 className="rounded-xl border border-[var(--border-default)] px-5 py-2.5 text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-all"

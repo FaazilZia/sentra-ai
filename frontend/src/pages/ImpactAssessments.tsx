@@ -218,10 +218,10 @@ export default function ImpactAssessments() {
   };
 
   const columns: Array<{ title: string; status: ImpactAssessment['status']; color: string; border: string }> = [
-    { title: 'Draft', status: 'DRAFT', color: 'bg-gray-500/10', border: 'border-[var(--border-strong)]' },
-    { title: 'In Review', status: 'IN_REVIEW', color: 'bg-indigo-500/10', border: 'border-indigo-500/30' },
-    { title: 'Approved', status: 'APPROVED', color: 'bg-emerald-500/10', border: 'border-emerald-500/30' },
-    { title: 'Rejected', status: 'REJECTED', color: 'bg-red-500/10', border: 'border-red-500/30' }
+    { title: 'Draft', status: 'DRAFT', color: 'bg-[var(--bg-secondary)]', border: 'border-[var(--border-strong)]' },
+    { title: 'In Review', status: 'IN_REVIEW', color: 'bg-[var(--bg-secondary)]', border: 'border-indigo-500/30' },
+    { title: 'Approved', status: 'APPROVED', color: 'bg-[var(--bg-secondary)]', border: 'border-emerald-500/30' },
+    { title: 'Rejected', status: 'REJECTED', color: 'bg-[var(--bg-secondary)]', border: 'border-red-500/30' }
   ];
 
   return (
@@ -290,11 +290,11 @@ export default function ImpactAssessments() {
             return (
               <div
                 key={col.status}
-                className={`rounded-2xl border ${col.border} ${col.color} p-4 flex flex-col gap-4 min-h-[500px] bg-black/10`}
+                className={`rounded-2xl border ${col.border} ${col.color} p-4 flex flex-col gap-4 min-h-[500px]`}
               >
                 <div className="flex items-center justify-between border-b border-[var(--border-default)]/80 pb-2">
-                  <h3 className="font-bold text-white text-xs uppercase tracking-wider">{col.title}</h3>
-                  <span className="text-[10px] bg-black/40 px-2 py-0.5 rounded-full border border-[var(--border-default)] text-[var(--text-muted)] font-bold">
+                  <h3 className="font-bold text-[var(--text-primary)] text-xs uppercase tracking-wider">{col.title}</h3>
+                  <span className="text-[10px] bg-[var(--bg-secondary)] px-2 py-0.5 rounded-full border border-[var(--border-default)] text-[var(--text-muted)] font-bold">
                     {list.length}
                   </span>
                 </div>
@@ -323,7 +323,7 @@ export default function ImpactAssessments() {
                         <span className="text-[10px] text-[var(--text-muted)]">{new Date(ass.created_at).toLocaleDateString()}</span>
                       </div>
 
-                      <h4 className="font-bold text-white text-sm mt-2 line-clamp-1">{ass.ai_system?.name || 'Unknown System'}</h4>
+                      <h4 className="font-bold text-[var(--text-primary)] text-sm mt-2 line-clamp-1">{ass.ai_system?.name || 'Unknown System'}</h4>
                       <p className="text-[10px] text-[var(--text-secondary)] mt-1 line-clamp-2">{ass.form_data.description || 'No description entered.'}</p>
                       
                       <div className="flex items-center gap-1.5 mt-3 pt-2 border-t border-[var(--border-default)]/40 text-[10px] text-[var(--text-muted)]">
@@ -347,7 +347,7 @@ export default function ImpactAssessments() {
         <div className="flex flex-col gap-6">
           <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl overflow-hidden">
             <div className="p-5 border-b border-[var(--border-default)]/80 bg-[var(--bg-page)] flex items-center justify-between">
-              <h3 className="font-bold text-white text-sm">Fundamental Rights Impact Assessments</h3>
+              <h3 className="font-bold text-[var(--text-primary)] text-sm">Fundamental Rights Impact Assessments</h3>
               <span className="text-xs text-[var(--text-secondary)]">{friaAssessments.length} total assessments</span>
             </div>
             
@@ -365,7 +365,7 @@ export default function ImpactAssessments() {
                 <tbody className="divide-y divide-gray-800/50">
                   {friaAssessments.map((fria) => (
                     <tr key={fria.id} className="hover:bg-[var(--bg-hover)]/20 transition-all">
-                      <td className="p-4 font-bold text-white flex items-center gap-2">
+                      <td className="p-4 font-bold text-[var(--text-primary)] flex items-center gap-2">
                         <FileCheck className="h-4 w-4 text-purple-400" />
                         {fria.ai_system?.name}
                       </td>
@@ -418,8 +418,8 @@ export default function ImpactAssessments() {
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-scale-in">
-            <div className="flex items-center justify-between border-b border-[var(--border-default)] p-5 bg-[#0f172a]/60">
-              <h3 className="font-bold text-white flex items-center gap-2">
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] p-5 bg-[var(--bg-secondary)]">
+              <h3 className="font-bold text-[var(--text-primary)] flex items-center gap-2">
                 <FileText className="h-5 w-5 text-indigo-400" />
                 Launch Impact Assessment
               </h3>
@@ -441,7 +441,7 @@ export default function ImpactAssessments() {
                     required
                     value={selectedSystemId}
                     onChange={(e) => setSelectedSystemId(e.target.value)}
-                    className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 text-xs"
+                    className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl p-2.5 text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 text-xs"
                   >
                     <option value="">Choose System...</option>
                     {systems.map(s => (
@@ -457,7 +457,7 @@ export default function ImpactAssessments() {
                       type="button"
                       onClick={() => setType('DPIA')}
                       className={`py-2 px-4 rounded-xl border text-center font-semibold transition-all ${
-                        type === 'DPIA' ? 'bg-indigo-950/20 border-indigo-500 text-indigo-300' : 'bg-black/30 border-[var(--border-default)] text-[var(--text-secondary)]'
+                        type === 'DPIA' ? 'bg-indigo-950/20 border-indigo-500 text-indigo-300' : 'bg-[var(--bg-secondary)] border-[var(--border-default)] text-[var(--text-secondary)]'
                       }`}
                     >
                       DPIA (Data Protection)
@@ -466,7 +466,7 @@ export default function ImpactAssessments() {
                       type="button"
                       onClick={() => setType('AIA')}
                       className={`py-2 px-4 rounded-xl border text-center font-semibold transition-all ${
-                        type === 'AIA' ? 'bg-purple-950/20 border-purple-500 text-purple-300' : 'bg-black/30 border-[var(--border-default)] text-[var(--text-secondary)]'
+                        type === 'AIA' ? 'bg-purple-950/20 border-purple-500 text-purple-300' : 'bg-[var(--bg-secondary)] border-[var(--border-default)] text-[var(--text-secondary)]'
                       }`}
                     >
                       AIA (Algorithmic)
@@ -482,7 +482,7 @@ export default function ImpactAssessments() {
                     placeholder="Provide details on model operations, data flows, and pipeline inputs..."
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
+                    className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl p-2.5 text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 min-h-[60px]"
                   />
                 </div>
  
@@ -494,7 +494,7 @@ export default function ImpactAssessments() {
                     placeholder="List expected functional, speed, or performance utility gains..."
                     value={formData.benefits}
                     onChange={(e) => setFormData({ ...formData, benefits: e.target.value })}
-                    className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
+                    className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl p-2.5 text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 min-h-[60px]"
                   />
                 </div>
  
@@ -506,7 +506,7 @@ export default function ImpactAssessments() {
                     placeholder="Detail active masking, filter APIs, retention controls, or PII scrubbers..."
                     value={formData.data_protection}
                     onChange={(e) => setFormData({ ...formData, data_protection: e.target.value })}
-                    className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
+                    className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl p-2.5 text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 min-h-[60px]"
                   />
                 </div>
  
@@ -518,7 +518,7 @@ export default function ImpactAssessments() {
                     placeholder="Explain audit rules, human queues, veto options, and panic-stop configurations..."
                     value={formData.oversight}
                     onChange={(e) => setFormData({ ...formData, oversight: e.target.value })}
-                    className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 min-h-[60px]"
+                    className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl p-2.5 text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 min-h-[60px]"
                   />
                 </div>
 
@@ -548,8 +548,8 @@ export default function ImpactAssessments() {
       {isFriaOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl max-w-md w-full overflow-hidden shadow-2xl animate-scale-in">
-            <div className="flex items-center justify-between border-b border-[var(--border-default)] p-5 bg-[#0f172a]/60">
-              <h3 className="font-bold text-white flex items-center gap-2">
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] p-5 bg-[var(--bg-secondary)]">
+              <h3 className="font-bold text-[var(--text-primary)] flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-purple-400 animate-pulse" />
                 Launch EU AI Act FRIA (Art. 27)
               </h3>
@@ -560,7 +560,7 @@ export default function ImpactAssessments() {
                 <X className="h-5 w-5" />
               </button>
             </div>
-
+ 
             <form onSubmit={handleLaunchFria} className="p-6 flex flex-col gap-4 text-xs">
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="fria-system" className="text-[var(--text-secondary)] font-semibold">Select AI System for Rights Impact Audit *</label>
@@ -569,7 +569,7 @@ export default function ImpactAssessments() {
                   required
                   value={friaSystemId}
                   onChange={(e) => setFriaSystemId(e.target.value)}
-                  className="bg-black/30 border border-[var(--border-default)] rounded-xl p-2.5 text-white focus:outline-none focus:border-purple-500 text-xs"
+                  className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl p-2.5 text-[var(--text-primary)] focus:outline-none focus:border-purple-500 text-xs"
                 >
                   <option value="">Choose System...</option>
                   {systems.map(s => (
@@ -611,7 +611,7 @@ export default function ImpactAssessments() {
             <div className="p-6 border-b border-[var(--border-default)]/80 bg-[var(--bg-page)] flex items-center justify-between">
               <div>
                 <span className="text-[10px] font-semibold text-purple-400 uppercase tracking-widest">EU AI ACT ARTICLE 27 FRIA</span>
-                <h3 className="font-bold text-white text-base mt-0.5">{currentFria.ai_system?.name}</h3>
+                <h3 className="font-bold text-[var(--text-primary)] text-base mt-0.5">{currentFria.ai_system?.name}</h3>
               </div>
               <button
                 onClick={() => {
@@ -666,10 +666,10 @@ export default function ImpactAssessments() {
                       disabled={currentFria.status === 'COMPLETED'}
                       value={currentFria.responses[currentQuestionIndex].answer}
                       onChange={(e) => handleUpdateFriaResponse('answer', e.target.value)}
-                      className="bg-black/40 border border-[var(--border-default)] rounded-xl p-3.5 text-white focus:outline-none focus:border-purple-500 min-h-[160px] text-xs leading-relaxed"
+                      className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl p-3.5 text-[var(--text-primary)] focus:outline-none focus:border-purple-500 min-h-[160px] text-xs leading-relaxed"
                     />
                   </div>
-
+ 
                   <div className="flex flex-col gap-2">
                     <label htmlFor="wizard-notes" className="text-[var(--text-secondary)] font-bold">Internal Compliance Notes</label>
                     <input
@@ -679,7 +679,7 @@ export default function ImpactAssessments() {
                       disabled={currentFria.status === 'COMPLETED'}
                       value={currentFria.responses[currentQuestionIndex].notes || ''}
                       onChange={(e) => handleUpdateFriaResponse('notes', e.target.value)}
-                      className="bg-black/40 border border-[var(--border-default)] rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-purple-500 text-xs"
+                      className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl px-3.5 py-2.5 text-[var(--text-primary)] focus:outline-none focus:border-purple-500 text-xs"
                     />
                   </div>
 
@@ -695,7 +695,7 @@ export default function ImpactAssessments() {
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-bold uppercase transition-all ${
                         currentFria.responses[currentQuestionIndex].risk_flag
                           ? 'bg-red-500/10 border-red-500/30 text-red-400 shadow-md shadow-red-500/5'
-                          : 'bg-black/30 border-[var(--border-default)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                          : 'bg-[var(--bg-secondary)] border-[var(--border-default)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                       }`}
                     >
                       <AlertTriangle className="h-3.5 w-3.5" />
@@ -707,7 +707,7 @@ export default function ImpactAssessments() {
             </div>
 
             {/* Bottom Actions Panel */}
-            <div className="p-6 border-t border-[var(--border-default)] bg-gray-950/30 flex items-center justify-between">
+            <div className="p-6 border-t border-[var(--border-default)] bg-[var(--bg-secondary)] flex items-center justify-between">
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -769,10 +769,10 @@ export default function ImpactAssessments() {
       {selectedAssessment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-scale-in text-xs">
-            <div className="flex items-center justify-between border-b border-[var(--border-default)] p-5 bg-[#0f172a]/60">
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] p-5 bg-[var(--bg-secondary)]">
               <div>
                 <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">{selectedAssessment.type} Assessment</span>
-                <h3 className="font-bold text-white text-base mt-0.5">{selectedAssessment.ai_system?.name || 'AI System'}</h3>
+                <h3 className="font-bold text-[var(--text-primary)] text-base mt-0.5">{selectedAssessment.ai_system?.name || 'AI System'}</h3>
               </div>
               <button
                 onClick={() => setSelectedAssessment(null)}
@@ -784,33 +784,33 @@ export default function ImpactAssessments() {
 
             <div className="p-6 flex flex-col gap-5 max-h-[60vh] overflow-y-auto text-[var(--text-secondary)]">
               <div>
-                <h4 className="font-bold text-white mb-1 flex items-center gap-1.5"><Sparkles className="h-4 w-4 text-indigo-400" /> Pipeline Description</h4>
+                <h4 className="font-bold text-[var(--text-primary)] mb-1 flex items-center gap-1.5"><Sparkles className="h-4 w-4 text-indigo-400" /> Pipeline Description</h4>
                 <p className="bg-[var(--bg-card)] border border-[var(--border-default)] p-3 rounded-xl leading-relaxed">{selectedAssessment.form_data.description}</p>
               </div>
 
               <div>
-                <h4 className="font-bold text-white mb-1 flex items-center gap-1.5"><Building className="h-4 w-4 text-purple-400" /> Anticipated Benefits</h4>
+                <h4 className="font-bold text-[var(--text-primary)] mb-1 flex items-center gap-1.5"><Building className="h-4 w-4 text-purple-400" /> Anticipated Benefits</h4>
                 <p className="bg-[var(--bg-card)] border border-[var(--border-default)] p-3 rounded-xl leading-relaxed">{selectedAssessment.form_data.benefits}</p>
               </div>
 
               <div>
-                <h4 className="font-bold text-white mb-1 flex items-center gap-1.5"><ShieldAlert className="h-4 w-4 text-blue-400" /> Privacy & Protection</h4>
+                <h4 className="font-bold text-[var(--text-primary)] mb-1 flex items-center gap-1.5"><ShieldAlert className="h-4 w-4 text-blue-400" /> Privacy & Protection</h4>
                 <p className="bg-[var(--bg-card)] border border-[var(--border-default)] p-3 rounded-xl leading-relaxed">{selectedAssessment.form_data.data_protection}</p>
               </div>
 
               <div>
-                <h4 className="font-bold text-white mb-1 flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> Human Oversight</h4>
+                <h4 className="font-bold text-[var(--text-primary)] mb-1 flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> Human Oversight</h4>
                 <p className="bg-[var(--bg-card)] border border-[var(--border-default)] p-3 rounded-xl leading-relaxed">{selectedAssessment.form_data.oversight}</p>
               </div>
               
               <div className="grid grid-cols-2 gap-4 border-t border-[var(--border-default)]/80 pt-4 mt-1 text-[10px] text-[var(--text-muted)]">
-                <span>Submitted by: <span className="text-white font-semibold">{selectedAssessment.submitted_by}</span></span>
-                <span>Date: <span className="text-white font-semibold">{new Date(selectedAssessment.created_at).toLocaleString()}</span></span>
+                <span>Submitted by: <span className="text-[var(--text-primary)] font-semibold">{selectedAssessment.submitted_by}</span></span>
+                <span>Date: <span className="text-[var(--text-primary)] font-semibold">{new Date(selectedAssessment.created_at).toLocaleString()}</span></span>
               </div>
             </div>
 
             {selectedAssessment.status === 'IN_REVIEW' && (
-              <div className="bg-[#0f172a]/60 border-t border-[var(--border-default)] p-5 flex items-center justify-end gap-3">
+              <div className="bg-[var(--bg-secondary)] border-t border-[var(--border-default)] p-5 flex items-center justify-end gap-3">
                 <button
                   onClick={() => handleUpdateStatus(selectedAssessment.id, 'REJECTED')}
                   className="rounded-xl border border-red-500/30 px-5 py-2 text-xs font-semibold text-red-400 hover:bg-red-500/10 transition-all"

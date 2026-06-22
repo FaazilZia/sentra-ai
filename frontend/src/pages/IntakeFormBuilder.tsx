@@ -66,13 +66,13 @@ function DraggablePaletteItem({ type, label, description, icon, onAdd }: Draggab
       role="button"
       tabIndex={0}
       className={cn(
-        "flex items-center gap-3 p-3 bg-white border border-[var(--border-default)] hover:border-[var(--border-default)] hover:bg-[var(--bg-page)] rounded-xl transition text-left cursor-grab active:cursor-grabbing select-none",
+        "flex items-center gap-3 p-3 bg-[var(--bg-card)] border border-[var(--border-default)] hover:border-[var(--border-default)] hover:bg-[var(--bg-page)] rounded-xl transition text-left cursor-grab active:cursor-grabbing select-none",
         isDragging && "opacity-50 border-[var(--royal-indigo)] z-50"
       )}
     >
       {icon}
       <div>
-        <p className="text-xs font-bold text-white">{label}</p>
+        <p className="text-xs font-bold text-[var(--text-primary)]">{label}</p>
         <p className="text-[9px] text-[var(--text-muted)] uppercase">{description}</p>
       </div>
     </div>
@@ -388,7 +388,7 @@ export default function IntakeFormBuilder() {
         <div className="flex-1 overflow-y-auto p-8 flex justify-center bg-white/10">
           <div className="w-full max-w-2xl bg-white/50 border border-[var(--border-default)]/80 rounded-2xl p-6 space-y-6 text-left">
             <div>
-              <h2 className="text-base font-bold text-white uppercase tracking-tight">{formConfig.title}</h2>
+              <h2 className="text-base font-bold text-[var(--text-primary)] uppercase tracking-tight">{formConfig.title}</h2>
               <p className="text-xs text-[var(--text-secondary)] mt-1 leading-relaxed">{formConfig.description}</p>
             </div>
             
@@ -404,7 +404,7 @@ export default function IntakeFormBuilder() {
                       type="text"
                       placeholder={field.placeholder}
                       disabled
-                      className="bg-black/30 border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] w-full"
+                      className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] w-full"
                     />
                   )}
                   
@@ -413,13 +413,13 @@ export default function IntakeFormBuilder() {
                       placeholder={field.placeholder}
                       rows={3}
                       disabled
-                      className="bg-black/30 border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] w-full"
+                      className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] w-full"
                     />
                   )}
 
                   {field.type === 'select' && (
                     <div className="relative">
-                      <select disabled className="bg-black/30 border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] w-full appearance-none">
+                      <select disabled className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl p-3 text-xs text-[var(--text-secondary)] w-full appearance-none">
                         <option>Choose option...</option>
                         {field.options?.map((opt, i) => (
                           <option key={i}>{opt}</option>
@@ -431,7 +431,7 @@ export default function IntakeFormBuilder() {
 
                   {field.type === 'checkbox' && (
                     <label className="flex items-center gap-2 mt-1 cursor-pointer">
-                      <input type="checkbox" disabled className="rounded border-[var(--border-default)] bg-black/30 text-indigo-600 focus:ring-0 focus:ring-offset-0" />
+                      <input type="checkbox" disabled className="rounded border-[var(--border-default)] bg-[var(--bg-secondary)] text-indigo-600 focus:ring-0 focus:ring-offset-0" />
                       <span className="text-xs text-[var(--text-secondary)]">Acknowledge agreement</span>
                     </label>
                   )}
@@ -440,7 +440,7 @@ export default function IntakeFormBuilder() {
                     <div className="space-y-1.5 mt-1">
                       {field.options?.map((opt, i) => (
                         <label key={i} className="flex items-center gap-2 cursor-pointer">
-                          <input type="radio" disabled name={field.id} className="border-[var(--border-default)] bg-black/30 text-indigo-600 focus:ring-0 focus:ring-offset-0" />
+                          <input type="radio" disabled name={field.id} className="border-[var(--border-default)] bg-[var(--bg-secondary)] text-indigo-600 focus:ring-0 focus:ring-offset-0" />
                           <span className="text-xs text-[var(--text-secondary)]">{opt}</span>
                         </label>
                       ))}
@@ -458,7 +458,7 @@ export default function IntakeFormBuilder() {
           {/* Column 1: Palette & Template List */}
           <div className="w-72 bg-white border-r border-[var(--border-default)] flex flex-col overflow-y-auto">
             {/* Template picker */}
-            <div className="p-4 border-b border-[var(--border-default)]/60 bg-[#09090e]/40">
+            <div className="p-4 border-b border-[var(--border-default)]/60 bg-[var(--bg-secondary)]">
               <span className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-muted)] block mb-3">
                 Intake Questionnaire Configs
               </span>
@@ -564,7 +564,7 @@ export default function IntakeFormBuilder() {
                         type="text"
                         value={formConfig.title}
                         onChange={(e) => setFormConfig(prev => ({ ...prev, title: e.target.value }))}
-                        className="bg-black/30 border border-[var(--border-default)] rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-bold"
+                        className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 font-bold"
                       />
                     </div>
                     
@@ -574,7 +574,7 @@ export default function IntakeFormBuilder() {
                         value={formConfig.description}
                         onChange={(e) => setFormConfig(prev => ({ ...prev, description: e.target.value }))}
                         rows={2}
-                        className="bg-black/30 border border-[var(--border-default)] rounded px-3 py-2 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
+                        className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded px-3 py-2 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
                       />
                     </div>
 
@@ -627,7 +627,7 @@ export default function IntakeFormBuilder() {
                               <span className="text-[9px] font-mono font-semibold uppercase text-indigo-400 tracking-wide bg-indigo-500/5 px-1.5 py-0.5 rounded border border-indigo-500/10">
                                 {field.type}
                               </span>
-                              <span className="text-xs font-bold text-white truncate">{field.label}</span>
+                              <span className="text-xs font-bold text-[var(--text-primary)] truncate">{field.label}</span>
                               {field.required && <span className="text-red-500 text-xs font-bold">*</span>}
                             </div>
                             
@@ -673,7 +673,7 @@ export default function IntakeFormBuilder() {
 
           {/* Column 3: Property Editor */}
           <div className="w-80 bg-white border-l border-[var(--border-default)] flex flex-col overflow-y-auto">
-            <div className="p-4 border-b border-[var(--border-default)] bg-[#09090e]/40 flex items-center gap-2">
+            <div className="p-4 border-b border-[var(--border-default)] bg-[var(--bg-secondary)] flex items-center gap-2">
               <Settings2 className="h-4 w-4 text-indigo-400" />
               <span className="text-[10px] font-semibold uppercase tracking-widest text-indigo-400">
                 Properties Editor
@@ -685,7 +685,7 @@ export default function IntakeFormBuilder() {
                 {/* Field type info badge */}
                 <div>
                   <span className="text-[8px] font-semibold text-[var(--text-muted)] uppercase block mb-1">Field Type</span>
-                  <span className="text-[9px] font-bold text-white uppercase bg-[var(--bg-hover)] border border-[var(--border-default)] px-2 py-0.5 rounded">
+                  <span className="text-[9px] font-bold text-[var(--text-primary)] uppercase bg-[var(--bg-hover)] border border-[var(--border-default)] px-2 py-0.5 rounded">
                     {selectedField.type} Question
                   </span>
                 </div>
@@ -697,7 +697,7 @@ export default function IntakeFormBuilder() {
                     type="text"
                     value={selectedField.label}
                     onChange={(e) => updateFieldProperty(selectedField.id, 'label', e.target.value)}
-                    className="bg-black/30 border border-[var(--border-default)] rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-bold"
+                    className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 font-bold"
                   />
                 </div>
 
@@ -708,7 +708,7 @@ export default function IntakeFormBuilder() {
                     type="text"
                     value={selectedField.name}
                     onChange={(e) => updateFieldProperty(selectedField.id, 'name', e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
-                    className="bg-black/30 border border-[var(--border-default)] rounded px-3 py-2 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500 font-mono"
+                    className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded px-3 py-2 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500 font-mono"
                   />
                   <p className="text-[8px] text-[var(--text-muted)]">Must be a unique programmatic identifier.</p>
                 </div>
@@ -721,7 +721,7 @@ export default function IntakeFormBuilder() {
                       type="text"
                       value={selectedField.placeholder || ''}
                       onChange={(e) => updateFieldProperty(selectedField.id, 'placeholder', e.target.value)}
-                      className="bg-black/30 border border-[var(--border-default)] rounded px-3 py-2 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
+                      className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded px-3 py-2 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
                     />
                   </div>
                 )}
@@ -761,7 +761,7 @@ export default function IntakeFormBuilder() {
                         name="optionText"
                         type="text"
                         placeholder="Add new option..."
-                        className="bg-black/30 border border-[var(--border-default)] rounded px-3 py-1.5 text-xs text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 flex-1"
+                        className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded px-3 py-1.5 text-xs text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 flex-1"
                       />
                       <button
                         type="submit"

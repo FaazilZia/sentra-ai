@@ -315,7 +315,7 @@ export default function DORA() {
                     {filteredControls.map((ctrl) => {
                       const currentStatus = ctrl.implementation?.status || 'NOT_STARTED';
                       return (
-                        <div key={ctrl.control_code} className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-xl p-4 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                        <div key={ctrl.control_code} className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl p-4 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
                               <span className="text-[9px] font-mono font-bold text-indigo-400 bg-indigo-500/5 px-2 py-0.5 rounded border border-indigo-500/10">

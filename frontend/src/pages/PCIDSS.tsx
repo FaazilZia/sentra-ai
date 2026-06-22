@@ -262,7 +262,7 @@ export default function PCIDSS() {
               className={cn(
                 "px-3 py-1.5 rounded-xl border text-[9px] font-semibold uppercase tracking-wider transition-all shrink-0",
                 statusFilter === status 
-                  ? "bg-rose-600 border-rose-500 text-white" 
+                  ? "bg-indigo-600 border-indigo-500 text-white" 
                   : "bg-[var(--bg-page)] border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--border-default)] hover:text-[var(--text-primary)]"
               )}
             >
@@ -349,7 +349,7 @@ export default function PCIDSS() {
                 </div>
 
                 {ctrl.requirement && (
-                  <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-xl p-3 text-[10px] text-[var(--text-secondary)] italic">
+                  <div className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl p-3 text-[10px] text-[var(--text-secondary)] italic">
                     <span className="font-bold uppercase not-italic text-[8.5px] text-[var(--text-muted)] block mb-1">Requirement Overview</span>
                     {ctrl.requirement}
                   </div>

@@ -250,23 +250,23 @@ export default function AgentDiscovery() {
   };
 
   return (
-    <div className="p-6 space-y-6 bg-[#090910] min-h-screen text-[var(--text-secondary)] font-sans">
+    <div className="p-6 space-y-6 bg-[var(--bg-primary)] min-h-screen text-[var(--text-secondary)] font-sans">
       {/* Header */}
-      <div className="flex justify-between items-center pb-4 border-b border-zinc-900">
+      <div className="flex justify-between items-center pb-4 border-b border-[var(--border-default)]">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-[var(--mid-indigo)]/20 border border-[var(--royal-indigo)]/30 rounded-lg">
             <Radio className="h-5 w-5 text-[var(--royal-indigo)] animate-pulse" />
           </div>
           <div>
             <h1 className="text-[22px] font-semibold text-[var(--text-primary)] tracking-tight">AI Agent Discovery Hub</h1>
-            <p className="text-[9px] uppercase tracking-widest text-zinc-500 font-bold">Automatic connector scan for shadow AI usage & unregistered pipelines</p>
+            <p className="text-[9px] uppercase tracking-widest text-[var(--text-muted)] font-bold">Automatic connector scan for shadow AI usage & unregistered pipelines</p>
           </div>
         </div>
 
         <button
           onClick={handleSync}
           disabled={syncing}
-          className="flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-800 text-[10px] font-semibold uppercase tracking-widest text-white hover:bg-zinc-800 rounded transition-all active:scale-95 disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border-default)] text-[10px] font-semibold uppercase tracking-widest text-[var(--text-primary)] hover:bg-[var(--bg-card)] rounded transition-all active:scale-95 disabled:opacity-50"
         >
           <RefreshCw className={cn("h-3.5 w-3.5", syncing && "animate-spin")} />
           {syncing ? 'Scanning Connectors...' : 'Sync Connector Scans'}
@@ -275,15 +275,15 @@ export default function AgentDiscovery() {
 
       {/* Connection progress loader */}
       {syncing && (
-        <div className="bg-indigo-900/10 border border-[var(--royal-indigo)]/20 rounded-xl p-4 flex items-center justify-between animate-fade-in">
+        <div className="bg-[var(--bg-secondary)] border border-[var(--royal-indigo)]/20 rounded-xl p-4 flex items-center justify-between animate-fade-in">
           <div className="flex items-center gap-3">
             <Activity className="h-5 w-5 text-indigo-400 animate-spin" />
             <div>
-              <p className="text-xs font-bold text-white">Polling API Security & VPC Logs...</p>
-              <p className="text-[9px] text-zinc-500 uppercase mt-0.5">Checking workspace audits, Slack, AWS routing records & git registries.</p>
+              <p className="text-xs font-bold text-[var(--text-primary)]">Polling API Security & VPC Logs...</p>
+              <p className="text-[9px] text-[var(--text-muted)] uppercase mt-0.5">Checking workspace audits, Slack, AWS routing records & git registries.</p>
             </div>
           </div>
-          <div className="w-48 bg-zinc-800 h-1 rounded overflow-hidden">
+          <div className="w-48 bg-[var(--bg-secondary)] h-1 rounded overflow-hidden">
             <div className="bg-indigo-500 h-full w-2/3 animate-pulse"></div>
           </div>
         </div>
@@ -291,15 +291,15 @@ export default function AgentDiscovery() {
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="card-base p-4 flex items-center justify-between bg-zinc-950 border-zinc-900/60">
+        <div className="card-base p-4 flex items-center justify-between bg-[var(--bg-card)] border-[var(--border-default)]">
           <div>
-            <span className="text-[9px] font-semibold uppercase tracking-widest text-zinc-500">Total Discovered</span>
-            <h3 className="text-2xl font-semibold text-white mt-1 font-mono">{totalCount}</h3>
+            <span className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">Total Discovered</span>
+            <h3 className="text-2xl font-semibold text-[var(--text-primary)] mt-1 font-mono">{totalCount}</h3>
           </div>
           <Cpu className="h-8 w-8 text-indigo-500/40" />
         </div>
 
-        <div className="card-base p-4 flex items-center justify-between bg-zinc-950 border-zinc-900/60">
+        <div className="card-base p-4 flex items-center justify-between bg-[var(--bg-card)] border-[var(--border-default)]">
           <div>
             <span className="text-[9px] font-semibold uppercase tracking-widest text-yellow-500">Unreviewed</span>
             <h3 className="text-2xl font-semibold text-yellow-500 mt-1 font-mono">{unreviewedCount}</h3>
@@ -307,7 +307,7 @@ export default function AgentDiscovery() {
           <ShieldAlert className="h-8 w-8 text-yellow-500/30" />
         </div>
 
-        <div className="card-base p-4 flex items-center justify-between bg-zinc-950 border-zinc-900/60">
+        <div className="card-base p-4 flex items-center justify-between bg-[var(--bg-card)] border-[var(--border-default)]">
           <div>
             <span className="text-[9px] font-semibold uppercase tracking-widest text-emerald-500">Confirmed</span>
             <h3 className="text-2xl font-semibold text-emerald-500 mt-1 font-mono">{confirmedCount}</h3>
@@ -315,7 +315,7 @@ export default function AgentDiscovery() {
           <CheckCircle className="h-8 w-8 text-emerald-500/30" />
         </div>
 
-        <div className="card-base p-4 flex items-center justify-between bg-zinc-950 border-zinc-900/60">
+        <div className="card-base p-4 flex items-center justify-between bg-[var(--bg-card)] border-[var(--border-default)]">
           <div>
             <span className="text-[9px] font-semibold uppercase tracking-widest text-red-500">Rejected</span>
             <h3 className="text-2xl font-semibold text-red-500 mt-1 font-mono">{rejectedCount}</h3>
@@ -325,12 +325,12 @@ export default function AgentDiscovery() {
       </div>
 
       {/* Tab Switcher */}
-      <div className="flex border-b border-zinc-900 gap-6">
+      <div className="flex border-b border-[var(--border-default)] gap-6">
         <button
           onClick={() => setActiveTab('SHADOW')}
           className={cn(
             "pb-3 text-xs font-semibold uppercase tracking-widest transition-all relative",
-            activeTab === 'SHADOW' ? "text-white" : "text-zinc-500 hover:text-zinc-300"
+            activeTab === 'SHADOW' ? "text-[var(--text-primary)]" : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
           )}
         >
           Shadow Agents
@@ -342,7 +342,7 @@ export default function AgentDiscovery() {
           onClick={() => setActiveTab('REGISTERED')}
           className={cn(
             "pb-3 text-xs font-semibold uppercase tracking-widest transition-all relative",
-            activeTab === 'REGISTERED' ? "text-white" : "text-zinc-500 hover:text-zinc-300"
+            activeTab === 'REGISTERED' ? "text-[var(--text-primary)]" : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
           )}
         >
           Registered Agents
@@ -353,27 +353,27 @@ export default function AgentDiscovery() {
       </div>
 
       {/* Main List */}
-      <div className="card-base p-6 space-y-6 bg-zinc-950 border-zinc-900/60">
+      <div className="card-base p-6 space-y-6 bg-[var(--bg-card)] border-[var(--border-default)]">
         {/* Filters and search panel */}
         <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div className="relative w-full sm:w-80">
-            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-zinc-500" />
+            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-[var(--text-muted)]" />
             <input
               type="text"
               placeholder={activeTab === 'SHADOW' ? "Filter shadow agents..." : "Filter registered agents..."}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-zinc-950 border border-zinc-850 rounded px-9 py-2 text-xs text-white focus:outline-none focus:border-[var(--royal-indigo)] w-full font-mono placeholder-zinc-600"
+              className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded px-9 py-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)] w-full font-mono placeholder-[var(--text-muted)]"
             />
           </div>
 
           {activeTab === 'SHADOW' && (
             <div className="flex items-center gap-1.5 shrink-0">
-              <Filter className="h-3.5 w-3.5 text-zinc-500" />
+              <Filter className="h-3.5 w-3.5 text-[var(--text-muted)]" />
               <select
                 value={filterSource}
                 onChange={(e) => setFilterSource(e.target.value)}
-                className="bg-zinc-950 border border-zinc-850 rounded px-3 py-2 text-[10px] font-bold text-white focus:outline-none focus:border-[var(--royal-indigo)]"
+                className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded px-3 py-2 text-[10px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
               >
                 <option value="ALL">All Connectors</option>
                 {uniqueSources.map(s => (
@@ -387,27 +387,27 @@ export default function AgentDiscovery() {
         {/* Discovery List / Registered List */}
         {activeTab === 'SHADOW' ? (
           agents.length === 0 ? (
-            <div className="bg-[var(--bg-card)] border border-zinc-800 border-dashed rounded-2xl p-12 text-center text-[var(--text-muted)] max-w-md mx-auto my-6">
+            <div className="bg-[var(--bg-card)] border border-[var(--border-default)] border-dashed rounded-2xl p-12 text-center text-[var(--text-muted)] max-w-md mx-auto my-6">
               <Radio className="h-8 w-8 mx-auto mb-3 text-indigo-500/60 animate-pulse" />
               <h4 className="text-xs font-semibold uppercase text-[var(--text-secondary)]">No Agents Discovered</h4>
               <p className="text-[10px] text-[var(--text-muted)] mt-1">Agents detected by Shadow AI scanner will appear here.</p>
             </div>
           ) : filteredAgents.length === 0 ? (
-            <div className="py-16 text-center text-zinc-500 text-xs italic">
+            <div className="py-16 text-center text-[var(--text-muted)] text-xs italic">
               No unregistered shadow AI agent discoveries match current query parameters.
             </div>
           ) : (
-            <div className="divide-y divide-zinc-900 space-y-4">
+            <div className="divide-y divide-[var(--border-default)] space-y-4">
               {filteredAgents.map((agent) => (
                 <div
                   key={agent.id}
-                  className="pt-4 first:pt-0 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:bg-zinc-950/20 p-2.5 rounded-xl transition duration-150"
+                  className="pt-4 first:pt-0 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:bg-[var(--bg-secondary)]/20 p-2.5 rounded-xl transition duration-150"
                 >
                   <div className="space-y-1 text-left">
                     <div className="flex items-center gap-2.5 flex-wrap">
-                      <h3 className="text-xs font-bold text-white tracking-wide">{agent.name}</h3>
+                      <h3 className="text-xs font-bold text-[var(--text-primary)] tracking-wide">{agent.name}</h3>
                       {getRiskBadge(agent.risk_level)}
-                      <span className="text-[8px] font-bold uppercase bg-zinc-900 border border-zinc-800 text-zinc-500 px-2 py-0.5 rounded tracking-widest font-mono">
+                      <span className="text-[8px] font-bold uppercase bg-[var(--bg-secondary)] border border-[var(--border-default)] text-[var(--text-muted)] px-2 py-0.5 rounded tracking-widest font-mono">
                         {agent.source}
                       </span>
                       {agent.reviewStatus && (
@@ -420,11 +420,11 @@ export default function AgentDiscovery() {
                       )}
                     </div>
                     
-                    <p className="text-[11px] text-zinc-400 max-w-3xl leading-relaxed">
+                    <p className="text-[11px] text-[var(--text-secondary)] max-w-3xl leading-relaxed">
                       {agent.description}
                     </p>
                     
-                    <p className="text-[9px] text-zinc-600 font-mono">
+                    <p className="text-[9px] text-[var(--text-muted)] font-mono">
                       Scanned at: {new Date(agent.found_at).toLocaleString()} {" // "} Risk Score: {agent.risk_score}/100
                     </p>
                   </div>
@@ -439,7 +439,7 @@ export default function AgentDiscovery() {
                     </button>
                     <button
                       onClick={() => handleDismiss(agent.id)}
-                      className="px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-[var(--text-primary)] rounded text-[9px] font-semibold uppercase tracking-widest transition active:scale-95"
+                      className="px-3 py-1.5 bg-[var(--bg-secondary)] border border-[var(--border-default)] hover:border-[var(--text-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded text-[9px] font-semibold uppercase tracking-widest transition active:scale-95"
                     >
                       Dismiss
                     </button>
@@ -450,35 +450,35 @@ export default function AgentDiscovery() {
           )
         ) : (
           loadingRegistered ? (
-            <div className="py-16 text-center text-zinc-500 text-xs italic">
+            <div className="py-16 text-center text-[var(--text-muted)] text-xs italic">
               Loading registered AI systems...
             </div>
           ) : filteredRegistered.length === 0 ? (
-            <div className="py-16 text-center text-zinc-500 text-xs italic">
+            <div className="py-16 text-center text-[var(--text-muted)] text-xs italic">
               No registered AI systems found matching current query parameters.
             </div>
           ) : (
-            <div className="divide-y divide-zinc-900 space-y-4">
+            <div className="divide-y divide-[var(--border-default)] space-y-4">
               {filteredRegistered.map((agent) => (
                 <div
                   key={agent.id}
-                  className="pt-4 first:pt-0 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:bg-zinc-950/20 p-2.5 rounded-xl transition duration-150"
+                  className="pt-4 first:pt-0 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:bg-[var(--bg-secondary)]/20 p-2.5 rounded-xl transition duration-150"
                 >
                   <div className="space-y-1 text-left">
                     <div className="flex items-center gap-2.5 flex-wrap">
-                      <h3 className="text-xs font-bold text-white tracking-wide">{agent.name}</h3>
+                      <h3 className="text-xs font-bold text-[var(--text-primary)] tracking-wide">{agent.name}</h3>
                       {getRiskBadge(agent.risk_tier)}
-                      <span className="text-[8px] font-bold uppercase bg-zinc-900 border border-zinc-800 text-zinc-500 px-2 py-0.5 rounded tracking-widest font-mono">
+                      <span className="text-[8px] font-bold uppercase bg-[var(--bg-secondary)] border border-[var(--border-default)] text-[var(--text-muted)] px-2 py-0.5 rounded tracking-widest font-mono">
                         {agent.vendor || 'Registry'}
                       </span>
                       {getStatusBadge(agent.status)}
                     </div>
                     
-                    <p className="text-[11px] text-zinc-400 max-w-3xl leading-relaxed">
+                    <p className="text-[11px] text-[var(--text-secondary)] max-w-3xl leading-relaxed">
                       {agent.description || 'No description provided.'}
                     </p>
                     
-                    <p className="text-[9px] text-zinc-600 font-mono">
+                    <p className="text-[9px] text-[var(--text-muted)] font-mono">
                       Model: {agent.model_name} v{agent.model_version} {" // "} Use Case: {agent.use_case} {" // "} Created at: {new Date(agent.created_at).toLocaleString()}
                     </p>
                   </div>
@@ -486,7 +486,7 @@ export default function AgentDiscovery() {
                   <div className="flex gap-2 shrink-0">
                     <button
                       onClick={() => setSelectedRegisteredAgent(agent)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-850 hover:bg-zinc-800 text-white rounded text-[9px] font-semibold uppercase tracking-widest transition active:scale-95"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--bg-secondary)] border border-[var(--border-default)] hover:bg-[var(--bg-card)] text-[var(--text-primary)] rounded text-[9px] font-semibold uppercase tracking-widest transition active:scale-95"
                     >
                       <Eye className="h-3 w-3" />
                       Review / Edit Status
@@ -502,14 +502,14 @@ export default function AgentDiscovery() {
       {/* Review & Promotion Dialog Modal */}
       {selectedAgent && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-zinc-950 border border-zinc-900 rounded-2xl shadow-2xl overflow-hidden animate-scale-in text-left">
-            <div className="p-4 border-b border-zinc-900 bg-[#0c0c14]/40 flex justify-between items-center">
+          <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl shadow-2xl overflow-hidden animate-scale-in text-left">
+            <div className="p-4 border-b border-[var(--border-default)] bg-[var(--bg-secondary)] flex justify-between items-center">
               <span className="text-[10px] font-semibold uppercase tracking-widest text-indigo-400">
                 Unregistered Agent Review Portal
               </span>
               <button
                 onClick={() => setSelectedAgent(null)}
-                className="text-zinc-500 hover:text-[var(--text-primary)] font-mono text-xs p-1"
+                className="text-[var(--text-muted)] hover:text-[var(--text-primary)] font-mono text-xs p-1"
               >
                 ✕
               </button>
@@ -521,33 +521,33 @@ export default function AgentDiscovery() {
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="text-[9px] font-semibold uppercase tracking-widest text-zinc-500">Registry System Name</label>
+                <label className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">Registry System Name</label>
                 <input
                   type="text"
                   required
                   value={promoteName}
                   onChange={(e) => setPromoteName(e.target.value)}
-                  className="bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-bold"
+                  className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 font-bold"
                 />
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="text-[9px] font-semibold uppercase tracking-widest text-zinc-500">Description</label>
+                <label className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">Description</label>
                 <textarea
                   required
                   value={promoteDescription}
                   onChange={(e) => setPromoteDescription(e.target.value)}
                   rows={3}
-                  className="bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-indigo-500"
+                  className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded px-3 py-2 text-xs text-[var(--text-secondary)] focus:outline-none focus:border-indigo-500"
                 />
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="text-[9px] font-semibold uppercase tracking-widest text-zinc-500">Risk Tier Classification</label>
+                <label className="text-[9px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">Risk Tier Classification</label>
                 <select
                   value={promoteRiskTier}
                   onChange={(e) => setPromoteRiskTier(e.target.value)}
-                  className="bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-bold"
+                  className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 font-bold"
                 >
                   <option value="CRITICAL">Critical Risk</option>
                   <option value="HIGH">High Risk</option>
@@ -556,11 +556,11 @@ export default function AgentDiscovery() {
                 </select>
               </div>
 
-              <div className="pt-3 border-t border-zinc-900/60 flex justify-end gap-2">
+              <div className="pt-3 border-t border-[var(--border-default)] flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setSelectedAgent(null)}
-                  className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-[var(--text-primary)] rounded text-[9px] font-semibold uppercase tracking-widest transition"
+                  className="px-4 py-2 bg-[var(--bg-secondary)] hover:bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded text-[9px] font-semibold uppercase tracking-widest transition"
                 >
                   Cancel
                 </button>
@@ -580,14 +580,14 @@ export default function AgentDiscovery() {
       {/* Review Registered Agent Status Modal */}
       {selectedRegisteredAgent && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-zinc-950 border border-zinc-900 rounded-2xl shadow-2xl overflow-hidden animate-scale-in text-left">
-            <div className="p-4 border-b border-zinc-900 bg-[#0c0c14]/40 flex justify-between items-center">
+          <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl shadow-2xl overflow-hidden animate-scale-in text-left">
+            <div className="p-4 border-b border-[var(--border-default)] bg-[var(--bg-secondary)] flex justify-between items-center">
               <span className="text-[10px] font-semibold uppercase tracking-widest text-indigo-400">
                 Registered Agent Status Manager
               </span>
               <button
                 onClick={() => setSelectedRegisteredAgent(null)}
-                className="text-zinc-500 hover:text-[var(--text-primary)] font-mono text-xs p-1"
+                className="text-[var(--text-muted)] hover:text-[var(--text-primary)] font-mono text-xs p-1"
               >
                 ✕
               </button>
@@ -595,23 +595,23 @@ export default function AgentDiscovery() {
 
             <div className="p-5 space-y-4">
               <div className="space-y-1">
-                <h4 className="text-xs font-semibold uppercase text-zinc-500 tracking-wider">System Name</h4>
-                <p className="text-sm font-bold text-white">{selectedRegisteredAgent.name}</p>
+                <h4 className="text-xs font-semibold uppercase text-[var(--text-muted)] tracking-wider">System Name</h4>
+                <p className="text-sm font-bold text-[var(--text-primary)]">{selectedRegisteredAgent.name}</p>
               </div>
 
               <div className="space-y-1">
-                <h4 className="text-xs font-semibold uppercase text-zinc-500 tracking-wider">Current Status</h4>
+                <h4 className="text-xs font-semibold uppercase text-[var(--text-muted)] tracking-wider">Current Status</h4>
                 <div>{getStatusBadge(selectedRegisteredAgent.status)}</div>
               </div>
 
-              <div className="bg-zinc-900/50 border border-zinc-850 p-3.5 rounded-xl text-[10px] text-zinc-400 leading-relaxed">
+              <div className="bg-[var(--bg-secondary)] border border-[var(--border-default)] p-3.5 rounded-xl text-[10px] text-[var(--text-secondary)] leading-relaxed">
                 Choose an action below to update this agent's status. Changes are saved immediately and logged to the audit trail.
               </div>
 
-              <div className="pt-3 border-t border-zinc-900/60 flex flex-wrap gap-2 justify-end">
+              <div className="pt-3 border-t border-[var(--border-default)] flex flex-wrap gap-2 justify-end">
                 <button
                   onClick={() => setSelectedRegisteredAgent(null)}
-                  className="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-[var(--text-primary)] rounded text-[9px] font-semibold uppercase tracking-widest transition"
+                  className="px-3 py-2 bg-[var(--bg-secondary)] hover:bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded text-[9px] font-semibold uppercase tracking-widest transition"
                 >
                   Cancel
                 </button>
