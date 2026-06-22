@@ -932,7 +932,7 @@ function EuAiActTab({
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-xs font-bold text-[var(--text-secondary)]">Total Controls: {summary.total_controls}</span>
-                <div className="h-1.5 w-24 bg-zinc-800 rounded-full overflow-hidden">
+                <div className="h-1.5 w-24 bg-[var(--border-default)] rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-indigo-500 rounded-full transition-all duration-500" 
                     style={{ width: `${summary.compliance_score}%` }} 

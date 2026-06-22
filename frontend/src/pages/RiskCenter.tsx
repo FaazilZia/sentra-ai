@@ -152,9 +152,9 @@ export default function RiskCenter() {
         <div className="flex items-center gap-3">
           <button 
             onClick={() => setIsShareOpen(true)}
-            className="flex items-center gap-2 px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-default)] rounded-lg text-[10px] font-bold text-white uppercase tracking-widest hover:bg-[var(--bg-page)] transition-colors"
+            className="flex items-center gap-2 px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-default)] rounded-lg text-[10px] font-bold text-[var(--text-primary)] uppercase tracking-widest hover:bg-[var(--bg-page)] transition-colors"
           >
-            <Share className="h-3.5 w-3.5 text-indigo-400" />
+            <Share className="h-3.5 w-3.5 text-[var(--royal-indigo)]" />
             Share
           </button>
           <button 

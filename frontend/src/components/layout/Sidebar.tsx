@@ -414,7 +414,7 @@ export function Sidebar() {
                                       "group flex items-center justify-between px-4 py-2 rounded transition-all duration-200",
                                       isActive
                                         ? "bg-[var(--royal-indigo)] text-white shadow-md shadow-black/10"
-                                        : "text-[var(--lavender)] hover:bg-[#334155]/60 hover:text-white"
+                                        : "text-white/70 hover:bg-[#334155]/60 hover:text-white"
                                     )}
                                   >
                                     {({ isActive }) => (
@@ -425,7 +425,7 @@ export function Sidebar() {
                                         )} />
                                         <span className={cn(
                                           "text-[10px] font-bold uppercase tracking-widest transition-colors",
-                                          isActive ? "text-white" : "text-[var(--lavender)] group-hover:text-white"
+                                          isActive ? "text-white" : "text-white/70 group-hover:text-white"
                                         )}>
                                           {subItem.label}
                                         </span>
