@@ -1484,11 +1484,11 @@ function NistFunctionBlock({ fn, setSelectedNistSub }: { fn: any; setSelectedNis
   const compSub = (fn.categories || []).flatMap((c: any) => c.subcategories || []).filter((s: any) => s.status === 'IMPLEMENTED').length;
 
   return (
-    <div className="card-base p-5 border border-zinc-950 bg-zinc-950/40">
-      <div className="flex items-center justify-between border-b border-zinc-900 pb-3 mb-4">
+    <div className="card-base p-5 border border-[var(--border-default)] bg-[var(--bg-card)]">
+      <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-3 mb-4">
         <div>
           <span className="text-[9px] font-semibold text-indigo-400 uppercase tracking-widest">Function Group</span>
-          <h3 className="text-sm font-semibold text-white uppercase tracking-tight flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-tight flex items-center gap-2">
             {fn.title}
             <span className="text-[10px] font-bold text-[var(--text-secondary)]">({fn.score}%)</span>
           </h3>
@@ -1510,9 +1510,9 @@ function NistFunctionBlock({ fn, setSelectedNistSub }: { fn: any; setSelectedNis
 
 function NistCategoryBlock({ cat, setSelectedNistSub }: { cat: any; setSelectedNistSub: (sub: any) => void }) {
   return (
-    <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] p-4 space-y-3">
+    <div className="bg-[var(--bg-page)] rounded-xl border border-[var(--border-default)] p-4 space-y-3">
       <div>
-        <h4 className="text-xs font-semibold text-white uppercase tracking-tight flex items-center gap-2">
+        <h4 className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-tight flex items-center gap-2">
           <span className="text-[10px] text-indigo-400">{cat.category_code}</span>
           {cat.title}
         </h4>
