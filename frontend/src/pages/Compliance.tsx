@@ -1266,10 +1266,10 @@ function NistAiRmfTab({
         
         {/* Score explainability change ledger */}
         <div className="xl:col-span-5 flex flex-col gap-6">
-          <div className="card-base p-6 flex flex-col gap-5 bg-gradient-to-b from-zinc-950 to-indigo-950/5">
+          <div className="card-base p-6 flex flex-col gap-5 bg-[var(--bg-card)] border border-[var(--border-default)]">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-white uppercase tracking-tight">Governance Posture</h3>
+                <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-tight">Governance Posture</h3>
                 <p className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest">Continuous AI RMF Assurance</p>
               </div>
               
@@ -1283,10 +1283,10 @@ function NistAiRmfTab({
               </button>
             </div>
 
-            <div className="flex flex-col items-center justify-center py-6 border border-zinc-900 rounded-xl bg-black/15">
+            <div className="flex flex-col items-center justify-center py-6 border border-[var(--border-default)] rounded-xl bg-[var(--bg-page)]">
               <div className="relative h-32 w-32 flex items-center justify-center">
                 <svg className="absolute inset-0 h-full w-full transform -rotate-90">
-                  <circle cx="64" cy="64" r="54" className="stroke-zinc-800" strokeWidth="6" fill="transparent" />
+                  <circle cx="64" cy="64" r="54" className="stroke-[var(--border-strong)]" strokeWidth="6" fill="transparent" />
                   <circle 
                     cx="64" 
                     cy="64" 
@@ -1303,8 +1303,8 @@ function NistAiRmfTab({
                   />
                 </svg>
                 <div className="text-center">
-                  <span className="text-3xl font-semibold text-white">{nistOverview?.score || 0}</span>
-                  <span className="text-zinc-500 text-xs block uppercase font-semibold">Score</span>
+                  <span className="text-3xl font-semibold text-[var(--text-primary)]">{nistOverview?.score || 0}</span>
+                  <span className="text-[var(--text-muted)] text-xs block uppercase font-semibold">Score</span>
                 </div>
               </div>
 
@@ -1321,10 +1321,10 @@ function NistAiRmfTab({
               <div className="space-y-2">
                 {(nistOverview?.reasons || []).length > 0 ? (
                   (nistOverview?.reasons || []).map((reason: any, idx: number) => (
-                    <div key={idx} className="p-3 text-xs bg-zinc-900/40 border border-zinc-900 rounded-xl flex items-start gap-3 hover:border-zinc-800 transition">
+                    <div key={idx} className="p-3 text-xs bg-[var(--bg-page)] border border-[var(--border-default)] rounded-xl flex items-start gap-3 hover:border-[var(--border-strong)] transition">
                       <span className="mt-0.5 flex-shrink-0">{getNistReasonIcon(reason.type)}</span>
                       <div className="min-w-0 flex-1">
-                        <p className="text-white font-bold leading-tight uppercase text-[10px]">
+                        <p className="text-[var(--text-primary)] font-bold leading-tight uppercase text-[10px]">
                           {reason.type.replace('_', ' ')} ({reason.value > 0 ? `+${reason.value}` : reason.value})
                         </p>
                         <p className="text-[11px] text-[var(--text-secondary)] mt-0.5 leading-relaxed">{reason.msg}</p>
@@ -1332,7 +1332,7 @@ function NistAiRmfTab({
                     </div>
                   ))
                 ) : (
-                  <div className="p-3 text-xs border border-dashed border-zinc-900 text-zinc-500 rounded-xl text-center uppercase tracking-tighter">
+                  <div className="p-3 text-xs border border-dashed border-[var(--border-default)] text-[var(--text-muted)] rounded-xl text-center uppercase tracking-tighter">
                     No posture modifications registered.
                   </div>
                 )}
@@ -1345,16 +1345,16 @@ function NistAiRmfTab({
         <div className="xl:col-span-7 flex flex-col gap-6">
           
           {/* self-monitoring diagnostics */}
-          <div className="card-base p-6 flex flex-col gap-4 bg-zinc-950 border-zinc-900/60">
+          <div className="card-base p-6 flex flex-col gap-4 bg-[var(--bg-card)] border border-[var(--border-default)]">
             <div>
-              <h3 className="text-sm font-semibold text-white uppercase tracking-tight">Self-Monitoring Diagnostics</h3>
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-tight">Self-Monitoring Diagnostics</h3>
               <p className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest">Worker Health & Reliability</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {nistHealth?.workers?.length > 0 ? (
                 nistHealth.workers.map((w: any) => (
-                  <div key={w.id} className="p-4 bg-zinc-950/40 border border-zinc-900 rounded-xl flex items-center justify-between hover:border-zinc-800 transition">
+                  <div key={w.id} className="p-4 bg-[var(--bg-page)] border border-[var(--border-default)] rounded-xl flex items-center justify-between hover:border-[var(--border-strong)] transition">
                     <div className="flex items-center gap-3">
                       <div className="relative flex h-3 w-3">
                         <span className={cn(
@@ -1368,7 +1368,7 @@ function NistAiRmfTab({
                       </div>
                       
                       <div>
-                        <h4 className="text-xs font-semibold text-white uppercase tracking-tight">{w.worker_name.replace('_', ' ')}</h4>
+                        <h4 className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-tight">{w.worker_name.replace('_', ' ')}</h4>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-[9px] font-bold text-[var(--text-muted)] flex items-center gap-1 uppercase">
                             <Clock className="h-2.5 w-2.5" />
@@ -1393,7 +1393,7 @@ function NistAiRmfTab({
                   </div>
                 ))
               ) : (
-                <div className="p-4 border border-dashed border-zinc-900 rounded-xl text-center text-zinc-500 text-xs uppercase tracking-tighter col-span-2 py-6">
+                <div className="p-4 border border-dashed border-[var(--border-default)] rounded-xl text-center text-[var(--text-muted)] text-xs uppercase tracking-tighter col-span-2 py-6">
                   No workers currently registered. Uptime checks will boot on active BullMQ queues.
                 </div>
               )}
@@ -1401,23 +1401,23 @@ function NistAiRmfTab({
           </div>
 
           {/* Incidents */}
-          <div className="card-base p-6 flex flex-col gap-4 bg-zinc-950 border-zinc-900/60">
+          <div className="card-base p-6 flex flex-col gap-4 bg-[var(--bg-card)] border border-[var(--border-default)]">
             <div>
-              <h3 className="text-sm font-semibold text-white uppercase tracking-tight">Governance SOC Incidents Hub</h3>
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-tight">Governance SOC Incidents Hub</h3>
               <p className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest">Active Violations & SLAs</p>
             </div>
 
             <div className="space-y-3 max-h-[220px] overflow-y-auto custom-scrollbar">
               {nistOverview?.incidents?.length > 0 ? (
                 nistOverview.incidents.map((inc: any) => (
-                  <div key={inc.id} className="p-3 bg-zinc-950/40 border border-zinc-900 hover:border-zinc-800 rounded-xl flex items-center justify-between gap-4 transition shadow-sm">
+                  <div key={inc.id} className="p-3 bg-[var(--bg-page)] border border-[var(--border-default)] hover:border-[var(--border-strong)] rounded-xl flex items-center justify-between gap-4 transition shadow-sm">
                     <div className="flex items-start gap-3 min-w-0 flex-1">
                       <span className={cn(
                         "h-2 w-2 rounded-full mt-1.5 flex-shrink-0",
                         inc.severity === 'CRITICAL' || inc.severity === 'HIGH' ? "bg-rose-500 shadow" : "bg-amber-500"
                       )} />
                       <div className="min-w-0 flex-1">
-                        <h4 className="text-xs font-bold text-white truncate uppercase tracking-tight">{inc.title}</h4>
+                        <h4 className="text-xs font-bold text-[var(--text-primary)] truncate uppercase tracking-tight">{inc.title}</h4>
                         <div className="flex items-center gap-2.5 mt-0.5">
                           <span className="text-[9px] font-bold text-[var(--text-muted)] flex items-center gap-1 uppercase">
                             <Clock className="h-2.5 w-2.5" />
@@ -1446,7 +1446,7 @@ function NistAiRmfTab({
               ) : (
                 <div className="flex flex-col items-center justify-center py-8 text-center opacity-40">
                   <CheckCircle2 className="h-8 w-8 text-emerald-400 mb-2" />
-                  <p className="text-[10px] font-semibold text-white uppercase tracking-widest">No active incidents cataloged</p>
+                  <p className="text-[10px] font-semibold text-[var(--text-primary)] uppercase tracking-widest">No active incidents cataloged</p>
                   <p className="text-[9px] text-[var(--text-muted)] mt-1">All telemetry events are within healthy SLA parameters.</p>
                 </div>
               )}
