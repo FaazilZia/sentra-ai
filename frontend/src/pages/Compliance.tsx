@@ -1529,7 +1529,7 @@ function NistCategoryBlock({ cat, setSelectedNistSub }: { cat: any; setSelectedN
               </div>
               
               <div className="flex items-center gap-2 mt-1">
-                <div className="h-1 w-12 bg-zinc-800 rounded-full overflow-hidden">
+                <div className="h-1 w-12 bg-[var(--border-default)] rounded-full overflow-hidden">
                   <div 
                     className={cn(
                       "h-full rounded-full transition-all duration-300",
@@ -1950,7 +1950,7 @@ function CcpaTab({
     <>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total Controls', value: ccpaData.summary?.total_controls ?? 0, color: 'text-white' },
+          { label: 'Total Controls', value: ccpaData.summary?.total_controls ?? 0, color: 'text-[var(--text-primary)]' },
           { label: 'Implemented', value: ccpaData.summary?.implemented ?? 0, color: 'text-emerald-400' },
           { label: 'In Progress', value: ccpaData.summary?.in_progress ?? 0, color: 'text-amber-400' },
           { label: 'Compliance Score', value: `${ccpaData.summary?.compliance_score ?? 0}%`, color: 'text-indigo-400' },
@@ -1966,7 +1966,7 @@ function CcpaTab({
           <p className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest">Overall CCPA Compliance</p>
           <p className="text-sm font-semibold text-white">{ccpaData.summary?.compliance_score ?? 0}%</p>
         </div>
-        <div className="w-full h-2 bg-gray-800 rounded-full">
+        <div className="w-full h-2 bg-[var(--border-default)] rounded-full">
           <div className="h-full bg-emerald-500 rounded-full transition-all duration-700" style={{ width: `${ccpaData.summary?.compliance_score ?? 0}%` }} />
         </div>
       </div>
@@ -1980,7 +1980,7 @@ function CcpaTab({
             <div key={section.section_code} className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-5">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
-                  <span className="text-[10px] font-semibold text-[var(--text-muted)] bg-gray-900/60 border border-[var(--border-default)] px-2 py-0.5 rounded font-mono">{section.section_code}</span>
+                  <span className="text-[10px] font-semibold text-[var(--text-muted)] bg-[var(--border-default)] border border-[var(--border-strong)] px-2 py-0.5 rounded font-mono">{section.section_code}</span>
                   <p className="text-sm font-bold text-white">{section.title}</p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -1991,7 +1991,7 @@ function CcpaTab({
                 </div>
               </div>
               <p className="text-[11px] text-[var(--text-muted)] mb-3">{section.description}</p>
-              <div className="w-full h-1 bg-gray-800 rounded-full">
+              <div className="w-full h-1 bg-[var(--border-default)] rounded-full">
                 <div className="h-full bg-indigo-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
               </div>
             </div>
