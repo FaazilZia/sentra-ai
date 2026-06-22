@@ -1516,7 +1516,7 @@ function NistCategoryBlock({ cat, setSelectedNistSub }: { cat: any; setSelectedN
           <span className="text-[10px] text-indigo-400">{cat.category_code}</span>
           {cat.title}
         </h4>
-        <p className="text-[10px] text-zinc-500 leading-relaxed mt-0.5">{cat.description}</p>
+        <p className="text-[10px] text-[var(--text-secondary)] leading-relaxed mt-0.5">{cat.description}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-[var(--border-default)]">
@@ -1537,7 +1537,7 @@ function NistCategoryBlock({ cat, setSelectedNistSub }: { cat: any; setSelectedN
                     )}
                   />
                 </div>
-                <span className="text-[8px] font-semibold text-zinc-500 uppercase">
+                <span className="text-[8px] font-semibold text-[var(--text-muted)] uppercase">
                   Mat: {sub.maturityLevel}/5
                 </span>
                 {sub.telemetryLinked > 0 && (
@@ -1571,7 +1571,7 @@ function NistCategoryBlock({ cat, setSelectedNistSub }: { cat: any; setSelectedN
                 });
               }}
               aria-label={`Edit ${sub.code} subcategory`}
-              className="flex items-center justify-center p-2 bg-zinc-900 border border-zinc-800 group-hover:border-indigo-500/30 rounded-lg text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition active:scale-95"
+              className="flex items-center justify-center p-2 bg-[var(--bg-page)] border border-[var(--border-default)] group-hover:border-indigo-500/30 rounded-lg text-[var(--text-secondary)] group-hover:text-indigo-500 transition active:scale-95"
             >
               <Edit2 className="h-3 w-3" />
             </button>
