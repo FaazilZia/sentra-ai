@@ -257,7 +257,7 @@ export default function Drift() {
 
         {/* Right Side: Post-Market Widget */}
         <div className="lg:col-span-4 flex">
-          <div className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl p-5 flex flex-col justify-between shadow-xl relative overflow-hidden">
+          <div className="w-full bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl p-5 flex flex-col justify-between shadow-xl relative overflow-hidden">
             <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-purple-500/5 blur-xl pointer-events-none" />
             
             <div>
@@ -268,7 +268,7 @@ export default function Drift() {
                 </span>
               </div>
               
-              <h3 className="font-bold text-white text-sm mt-3">Post-Market Telemetry Overview</h3>
+              <h3 className="font-bold text-[var(--text-primary)] text-sm mt-3">Post-Market Telemetry Overview</h3>
               <p className="text-[10px] text-[var(--text-secondary)] leading-relaxed mt-1">
                 Aggregated drift, incidents, and evaluation benchmarks from the last 30 days are automatically mapped into continuous reports.
               </p>
@@ -278,7 +278,7 @@ export default function Drift() {
               <div className="my-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-[10px] flex items-start gap-2 text-left">
                 <AlertTriangle className="h-4 w-4 shrink-0 text-red-500 mt-0.5 animate-bounce" />
                 <div>
-                  <span className="font-bold block text-white uppercase text-[9px] tracking-wider">Telemetry Load Failed</span>
+                  <span className="font-bold block text-[var(--text-primary)] uppercase text-[9px] tracking-wider">Telemetry Load Failed</span>
                   {postMarketError}
                 </div>
               </div>
@@ -286,11 +286,11 @@ export default function Drift() {
               <div className="grid grid-cols-2 gap-3.5 my-4 pt-3.5 border-t border-[var(--border-default)] text-xs">
                 <div>
                   <span className="text-[10px] text-[var(--text-muted)] block">30d Drift Count</span>
-                  <span className="text-sm font-semibold text-white">{postMarketDashboard?.driftAlerts30d || 0}</span>
+                  <span className="text-sm font-semibold text-[var(--text-secondary)]">{postMarketDashboard?.driftAlerts30d || 0}</span>
                 </div>
                 <div>
                   <span className="text-[10px] text-[var(--text-muted)] block">Open SLA Incidents</span>
-                  <span className="text-sm font-semibold text-white">{postMarketDashboard?.openIncidents || 0}</span>
+                  <span className="text-sm font-semibold text-[var(--text-secondary)]">{postMarketDashboard?.openIncidents || 0}</span>
                 </div>
                 <div>
                   <span className="text-[10px] text-[var(--text-muted)] block">Avg Eval Score</span>
@@ -298,7 +298,7 @@ export default function Drift() {
                 </div>
                 <div>
                   <span className="text-[10px] text-[var(--text-muted)] block">Days Since Eval</span>
-                  <span className="text-sm font-semibold text-white">
+                  <span className="text-sm font-semibold text-[var(--text-secondary)]">
                     {postMarketDashboard?.daysSinceLastEvaluation === -1 ? 'None run' : postMarketDashboard?.daysSinceLastEvaluation}
                   </span>
                 </div>
@@ -314,7 +314,7 @@ export default function Drift() {
         <div className="p-5 border-b border-[var(--border-default)] flex items-center justify-between bg-[var(--bg-page)]">
           <div className="flex items-center gap-2">
             <ShieldAlert className="h-4 w-4 text-indigo-400" />
-            <h3 className="text-sm font-bold text-white uppercase tracking-tight">
+            <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-tight">
               Behavioral Drift Registry ({alerts.length})
             </h3>
           </div>
@@ -374,7 +374,7 @@ export default function Drift() {
                             <Cpu className="h-4 w-4" />
                           </div>
                           <div>
-                            <p className="text-xs font-bold text-white">{agentName}</p>
+                            <p className="text-xs font-bold text-[var(--text-primary)]">{agentName}</p>
                             <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider font-mono">{agentModel}</p>
                           </div>
                         </div>
@@ -490,7 +490,7 @@ export default function Drift() {
             <div className="px-6 py-5 border-b border-[var(--border-default)] flex items-center justify-between bg-[var(--bg-page)]">
               <div className="flex items-center gap-2">
                 <FileText className="h-5 w-5 text-purple-400" />
-                <span className="text-sm font-bold uppercase tracking-wider text-white">Post-Market Monitoring Report</span>
+                <span className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">Post-Market Monitoring Report</span>
               </div>
               <button 
                 onClick={() => setIsReportOpen(false)}
@@ -507,7 +507,7 @@ export default function Drift() {
                 <div className="p-5 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 flex items-start gap-3">
                   <AlertTriangle className="h-5 w-5 shrink-0 text-red-500 mt-0.5 animate-bounce" />
                   <div>
-                    <span className="font-bold text-white uppercase tracking-wider block mb-1 text-[10px]">Report Compilation Failed</span>
+                    <span className="font-bold text-[var(--text-primary)] uppercase tracking-wider block mb-1 text-[10px]">Report Compilation Failed</span>
                     <span>{reportError}</span>
                   </div>
                 </div>
@@ -521,28 +521,28 @@ export default function Drift() {
                         Timeframe: {postMarketReport.timeframeDays} days
                       </span>
                     </div>
-                    <p className="text-white text-[13px] font-bold mt-1 leading-snug">{postMarketReport.summary}</p>
+                    <p className="text-[var(--text-primary)] text-[13px] font-bold mt-1 leading-snug">{postMarketReport.summary}</p>
                     <span className="text-[9px] text-[var(--text-muted)] mt-2 font-mono">Generated: {new Date(postMarketReport.generatedAt).toLocaleString()}</span>
                   </div>
 
                   {/* Grid Metrics */}
                   <div className="grid grid-cols-3 gap-4">
-                    <div className="bg-black/20 border border-[var(--border-default)] p-4 rounded-2xl text-center">
+                    <div className="bg-[var(--bg-secondary)] border border-[var(--border-default)] p-4 rounded-2xl text-center">
                       <span className="text-[10px] text-[var(--text-muted)] block uppercase font-bold">Drift Events</span>
-                      <span className="text-2xl font-semibold text-white mt-1.5 block">{postMarketReport.metrics.driftAlertsCount}</span>
+                      <span className="text-2xl font-semibold text-[var(--text-primary)] mt-1.5 block">{postMarketReport.metrics.driftAlertsCount}</span>
                     </div>
-                    <div className="bg-black/20 border border-[var(--border-default)] p-4 rounded-2xl text-center">
+                    <div className="bg-[var(--bg-secondary)] border border-[var(--border-default)] p-4 rounded-2xl text-center">
                       <span className="text-[10px] text-[var(--text-muted)] block uppercase font-bold">Open SLA Issues</span>
-                      <span className="text-2xl font-semibold text-white mt-1.5 block">{postMarketReport.metrics.openIncidents}</span>
+                      <span className="text-2xl font-semibold text-[var(--text-primary)] mt-1.5 block">{postMarketReport.metrics.openIncidents}</span>
                     </div>
-                    <div className="bg-black/20 border border-[var(--border-default)] p-4 rounded-2xl text-center">
+                    <div className="bg-[var(--bg-secondary)] border border-[var(--border-default)] p-4 rounded-2xl text-center">
                       <span className="text-[10px] text-[var(--text-muted)] block uppercase font-bold">Avg Evaluation</span>
                       <span className="text-2xl font-semibold text-indigo-400 mt-1.5 block">{postMarketReport.metrics.avgEvalScore}%</span>
                     </div>
                   </div>
 
                   {/* Incidents Breakdown */}
-                  <div className="bg-black/10 border border-[var(--border-default)] p-5 rounded-2xl space-y-3">
+                  <div className="bg-[var(--bg-secondary)] border border-[var(--border-default)] p-5 rounded-2xl space-y-3">
                     <span className="text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-widest flex items-center gap-1.5">
                       <ShieldAlert className="h-3.5 w-3.5 text-rose-500" /> Incidents Severity Breakdown
                     </span>
@@ -566,7 +566,7 @@ export default function Drift() {
                   {/* Compliance Statuses */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     
-                    <div className="bg-black/20 border border-[var(--border-default)] p-4 rounded-2xl flex items-center justify-between">
+                    <div className="bg-[var(--bg-secondary)] border border-[var(--border-default)] p-4 rounded-2xl flex items-center justify-between">
                       <div>
                         <span className="text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-widest block">EU AI Act Art. 15 Status</span>
                         <span className="text-xs text-[var(--text-secondary)] mt-1 block">Accuracy, Cyber, and Robustness</span>
@@ -576,7 +576,7 @@ export default function Drift() {
                       </span>
                     </div>
 
-                    <div className="bg-black/20 border border-[var(--border-default)] p-4 rounded-2xl flex items-center justify-between">
+                    <div className="bg-[var(--bg-secondary)] border border-[var(--border-default)] p-4 rounded-2xl flex items-center justify-between">
                       <div>
                         <span className="text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-widest block">EU AI Act Art. 72 Status</span>
                         <span className="text-xs text-[var(--text-secondary)] mt-1 block">Post-Market Monitoring Obligations</span>

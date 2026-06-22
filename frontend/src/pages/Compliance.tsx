@@ -989,7 +989,7 @@ function EuAiActTab({
                     </div>
                     
                     <div className="flex items-center gap-4">
-                      <span className="text-[10px] font-semibold text-[var(--text-secondary)] bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded uppercase tracking-tighter">
+                      <span className="text-[10px] font-semibold text-[var(--text-primary)] bg-[var(--bg-secondary)] border border-[var(--border-default)] px-2 py-0.5 rounded uppercase tracking-tighter">
                         {completedInArticle} / {totalInArticle} Done
                       </span>
                       {isOpen ? <ChevronUp className="h-4 w-4 text-[var(--text-secondary)]" /> : <ChevronDown className="h-4 w-4 text-[var(--text-secondary)]" />}
@@ -1132,19 +1132,19 @@ function EuAiActTab({
           </div>
 
           {/* PII Compliance Scan */}
-          <div className="card-base p-6 border border-red-500/20 bg-gradient-to-br from-zinc-950 to-red-950/10">
-            <h3 className="text-sm font-semibold text-white uppercase tracking-tight mb-2">PII Compliance Scan</h3>
+          <div className="card-base p-6 border border-red-500/20 bg-[var(--bg-card)]">
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-tight mb-2">PII Compliance Scan</h3>
             <p className="text-[9px] font-semibold text-red-400 uppercase tracking-widest mb-4">Realtime Interceptor Violations</p>
             <div className="space-y-3">
-              <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
+              <div className="flex justify-between items-center pb-2 border-b border-[var(--border-default)]">
                 <span className="text-xs text-[var(--text-secondary)]">GDPR Violations</span>
                 <span className={`text-xs font-semibold ${piiBreakdown.GDPR > 0 ? 'text-red-400' : 'text-[var(--text-secondary)]'}`}>{piiBreakdown.GDPR}</span>
               </div>
-              <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
+              <div className="flex justify-between items-center pb-2 border-b border-[var(--border-default)]">
                 <span className="text-xs text-[var(--text-secondary)]">HIPAA Violations</span>
                 <span className={`text-xs font-semibold ${piiBreakdown.HIPAA > 0 ? 'text-red-400' : 'text-[var(--text-secondary)]'}`}>{piiBreakdown.HIPAA}</span>
               </div>
-              <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
+              <div className="flex justify-between items-center pb-2 border-b border-[var(--border-default)]">
                 <span className="text-xs text-[var(--text-secondary)]">DPDP Violations</span>
                 <span className={`text-xs font-semibold ${piiBreakdown.DPDP > 0 ? 'text-red-400' : 'text-[var(--text-secondary)]'}`}>{piiBreakdown.DPDP}</span>
               </div>
@@ -1494,7 +1494,7 @@ function NistFunctionBlock({ fn, setSelectedNistSub }: { fn: any; setSelectedNis
           </h3>
         </div>
         
-        <span className="text-[9px] font-semibold text-zinc-500 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded uppercase tracking-widest">
+        <span className="text-[9px] font-semibold text-[var(--text-primary)] bg-[var(--bg-secondary)] border border-[var(--border-default)] px-2 py-0.5 rounded uppercase tracking-widest">
           {compSub} / {totalSub} Mapped
         </span>
       </div>
@@ -1696,7 +1696,7 @@ function Iso42001Tab({
                   </div>
                   
                   <div className="flex items-center gap-4">
-                    <span className="text-[10px] font-semibold text-[var(--text-secondary)] bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded uppercase tracking-tighter">
+                    <span className="text-[10px] font-semibold text-[var(--text-primary)] bg-[var(--bg-secondary)] border border-[var(--border-default)] px-2 py-0.5 rounded uppercase tracking-tighter">
                       {completedInClause} / {totalInClause} Done
                     </span>
                     {isClauseOpen ? <ChevronUp className="h-4 w-4 text-[var(--text-secondary)]" /> : <ChevronDown className="h-4 w-4 text-[var(--text-secondary)]" />}
@@ -1865,7 +1865,7 @@ function Iso27001Tab({
                   </div>
                   
                   <div className="flex items-center gap-4">
-                    <span className="text-[10px] font-semibold text-[var(--text-secondary)] bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded uppercase tracking-tighter">
+                    <span className="text-[10px] font-semibold text-[var(--text-primary)] bg-[var(--bg-secondary)] border border-[var(--border-default)] px-2 py-0.5 rounded uppercase tracking-tighter">
                       {completedInClause} / {totalInClause} Done
                     </span>
                     {isClauseOpen ? <ChevronUp className="h-4 w-4 text-[var(--text-secondary)]" /> : <ChevronDown className="h-4 w-4 text-[var(--text-secondary)]" />}
