@@ -1,6 +1,7 @@
 import logger from '../utils/logger';
 import { cacheService } from './cache.service';
 import crypto from 'crypto';
+import Anthropic from '@anthropic-ai/sdk';
 
 export interface SemanticRiskResult {
   score: 'low' | 'medium' | 'high';
@@ -11,7 +12,7 @@ export interface SemanticRiskResult {
 }
 
 /**
- * Enterprise Semantic Risk Engine (Hugging Face Migration)
+ * Enterprise Semantic Risk Engine (Anthropic Claude Migration)
  * Replaces legacy keyword-based detection with Intent Analysis.
  */
 export const evaluateSemanticRisk = async (prompt: string): Promise<SemanticRiskResult> => {
@@ -43,11 +44,11 @@ export const evaluateSemanticRisk = async (prompt: string): Promise<SemanticRisk
     };
   }
 
-  // Level 0.5: Skip Hugging Face entirely when API key is not configured.
+  // Level 0.5: Skip Anthropic entirely when API key is not configured.
   // Pattern-based L1/L2 engines will handle governance instead.
-  const apiKey = process.env.HUGGINGFACE_API_KEY || '';
+  const apiKey = process.env.ANTHROPIC_API_KEY || '';
   if (!apiKey || apiKey.length < 10) {
-    logger.warn('[GOVERNANCE] Hugging Face key not configured — semantic analysis skipped. Relying on pattern-based engines.');
+    logger.warn('[GOVERNANCE] Anthropic key not configured — semantic analysis skipped. Relying on pattern-based engines.');
     return {
       score: 'low',
       categories: ['SEMANTIC_SKIPPED'],
@@ -63,9 +64,7 @@ export const evaluateSemanticRisk = async (prompt: string): Promise<SemanticRisk
 
     // 2. Wrap the logic in cacheService.getOrSet (TTL 1 hour = 3600 seconds)
     return await cacheService.getOrSet<SemanticRiskResult>(cacheKey, async () => {
-      
-      const hfModel = process.env.HUGGINGFACE_MODEL || 'mistralai/Mistral-7B-Instruct-v0.2';
-      const url = `https://api-inference.huggingface.co/models/${hfModel}`;
+      const client = new Anthropic({ apiKey });
       
       const systemInstruction = `You are a Zero-Tolerance AI Security Guardrail. Your only job is to detect and BLOCK malicious intent.
             
@@ -83,48 +82,22 @@ OUTPUT FORMAT (JSON ONLY):
   "score": "low" | "medium" | "high",
   "categories": ["category_name"],
   "explanation": "Brief reasoning",
-  "confidence": 0.0-1.0
+  "confidence": 0.0-1.0,
+  "piiDetected": true | false
 }
 
-Output nothing except the raw JSON block.`;
+Output nothing except the raw JSON block without markdown formatting or conversational text.`;
 
-      // Mistral specific format
-      const formattedPrompt = `<s>[INST] ${systemInstruction} [/INST]`;
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          inputs: formattedPrompt,
-          parameters: {
-            max_new_tokens: 150,
-            temperature: 0.1,
-            return_full_text: false
-          }
-        }),
-        signal: controller.signal as any
+      const response = await client.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1000,
+        system: systemInstruction,
+        messages: [
+          { role: 'user', content: prompt }
+        ]
       });
 
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error(`Hugging Face API Error: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json() as any;
-      let content: string;
-
-      if (Array.isArray(data) && data.length > 0 && data[0].generated_text) {
-        content = data[0].generated_text;
-      } else {
-        throw new Error('Unexpected response format from Hugging Face');
-      }
+      const content = response.content[0].type === 'text' ? response.content[0].text : '';
 
       // Robust JSON Extraction
       const jsonMatch = content.match(/\{[^}]{1,5000}\}/);
@@ -157,4 +130,3 @@ Output nothing except the raw JSON block.`;
     };
   }
 };
-
