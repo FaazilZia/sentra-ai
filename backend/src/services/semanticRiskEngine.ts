@@ -20,6 +20,29 @@ export const evaluateSemanticRisk = async (prompt: string): Promise<SemanticRisk
     return { score: 'low', categories: [], explanation: 'Empty prompt', confidence: 1.0 };
   }
 
+  // Level 0.1: Quick local check for common adversarial prompt injection patterns (TC-005)
+  const lowercasePrompt = prompt.toLowerCase();
+  const injectionKeywords = [
+    'ignore all previous instructions',
+    'ignore previous instructions',
+    'maintenance mode',
+    'sentraa_bypass',
+    'admin override',
+    'skip all policy checks',
+    'skip all checks',
+    'dan mode'
+  ];
+
+  if (injectionKeywords.some(k => lowercasePrompt.includes(k)) || lowercasePrompt.includes('bypass=true')) {
+    return {
+      score: 'high',
+      categories: ['PROMPT_INJECTION'],
+      explanation: 'Blocked: adversarial prompt injection or security policy bypass attempt detected.',
+      confidence: 0.95,
+      piiDetected: false
+    };
+  }
+
   // Level 0.5: Skip Hugging Face entirely when API key is not configured.
   // Pattern-based L1/L2 engines will handle governance instead.
   const apiKey = process.env.HUGGINGFACE_API_KEY || '';

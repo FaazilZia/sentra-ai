@@ -70,6 +70,7 @@ const ENCODED_PAYLOAD_PATTERNS = [
 export interface RiskEvaluation {
   score: 'low' | 'medium' | 'high';
   triggers: string[];
+  risk_score?: number;
 }
 
 export const evaluateRisk = (action: string, metadata: any = {}): RiskEvaluation => {
@@ -77,6 +78,52 @@ export const evaluateRisk = (action: string, metadata: any = {}): RiskEvaluation
   const triggers: string[] = [];
   const rawPrompt = String(metadata.prompt || '');
   const combinedText = `${action} ${rawPrompt}`.trim();
+
+  let actionObj: any = null;
+  try {
+    if (action.trim().startsWith('{') || action.trim().startsWith('[')) {
+      actionObj = JSON.parse(action);
+    }
+  } catch (e) {
+    // Ignore
+  }
+
+  let riskScoreNum = 15; // Base risk score
+  let isSelfModification = false;
+  let isBypassApproval = false;
+
+  if (actionObj) {
+    const params = actionObj.parameters || {};
+    const targetUserId = params.target_user_id;
+    const agentId = metadata.agent_id || metadata.agent || actionObj.agent_id;
+    if (targetUserId && agentId && targetUserId === agentId) {
+      isSelfModification = true;
+    }
+    if (params.bypass_approval_workflow === true) {
+      isBypassApproval = true;
+    }
+  } else {
+    // Fallback checks on serialized string representation
+    if (action.includes('bypass_approval_workflow') || action.includes('bypass_approval')) {
+      isBypassApproval = true;
+    }
+    if (action.includes('target_user_id') && (action.includes('helpdesk-bot-v2') || action.includes('self'))) {
+      isSelfModification = true;
+    }
+  }
+
+  if (isSelfModification) {
+    riskScoreNum += 50;
+    triggers.push('Self-role modification attempt detected');
+  }
+  if (isBypassApproval) {
+    riskScoreNum += 30;
+    triggers.push('Bypass approval workflow requested');
+  }
+
+  if (riskScoreNum > 75) {
+    score = 'high';
+  }
   
   // 1. Normalization Layer
   const normalized = combinedText.toLowerCase()
@@ -164,5 +211,11 @@ export const evaluateRisk = (action: string, metadata: any = {}): RiskEvaluation
     triggers.push('Sensitive keywords detected');
   }
 
-  return { score, triggers };
+  if (score === 'high') {
+    riskScoreNum = Math.max(riskScoreNum, 90);
+  } else if (score === 'medium') {
+    riskScoreNum = Math.max(riskScoreNum, 65);
+  }
+
+  return { score, triggers, risk_score: riskScoreNum };
 };

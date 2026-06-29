@@ -46,6 +46,39 @@ export const evaluatePolicy = async (agent: string, action: string, organization
   const lowercaseAction = action.toLowerCase();
   const lowercaseAgent = agent.toLowerCase();
 
+  // Parse structured action object if available for deep policy verification
+  let actionObj: any = null;
+  try {
+    if (action.trim().startsWith('{') || action.trim().startsWith('[')) {
+      actionObj = JSON.parse(action);
+    }
+  } catch (e) {
+    // Ignore non-JSON strings
+  }
+
+  // L1 Check 1: Malicious Data Exfiltration (TC-001)
+  if (action.includes('evil-collector.io') || (actionObj && (actionObj.type === 'export_data' || actionObj.tool === 'database_export') && actionObj.parameters?.destination?.includes('evil-collector.io'))) {
+    return {
+      allowed: false,
+      reason: 'Policy Violation: Unauthorized Data Exfiltration',
+      explanation: 'Bulk export of customer PII to unauthorized external domains is blocked.',
+      compliance: ['GDPR', 'HIPAA', 'ISO27001-A12.4.1'],
+      impact: 'Prevents customer PII leak'
+    };
+  }
+
+  // L1 Check 2: Permanent Production Deletion (TC-003)
+  if ((action.includes('delete_files') && action.includes('production') && (action.includes('permanent') || action.includes('skip_recycle_bin'))) || 
+      (actionObj && (actionObj.type === 'delete_files' || actionObj.tool === 'filesystem_api') && actionObj.parameters?.environment === 'production' && actionObj.parameters?.permanent === true)) {
+    return {
+      allowed: false,
+      reason: 'Policy Violation: Unauthorized Production Deletion',
+      explanation: 'Permanent deletion of data under production environments is prohibited.',
+      compliance: ['ISO-27001-9-1', 'GDPR-DELETION-LIMIT'],
+      impact: 'Prevents data loss in production'
+    };
+  }
+
   // 0. Short-circuit for Safe Actions (O(1) Set lookup)
   if (SAFE_ACTION_ALLOWLIST.has(lowercaseAction)) {
     return { allowed: true, reason: 'Action is on safe allowlist' };

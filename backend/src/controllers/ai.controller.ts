@@ -483,3 +483,85 @@ export const postChat = async (req: any, res: Response, next: NextFunction) => {
     next(error);
   }
 };
+
+import { evaluatePolicy } from '../services/policyEngine';
+import { evaluateRisk } from '../services/riskEngine';
+import { evaluateSemanticRisk } from '../services/semanticRiskEngine';
+
+export const postEvaluate = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const payload = req.body;
+    const agent = payload.agent_id || 'unknown-agent';
+    const organizationId = req.user?.organizationId || payload.organization_id || 'unknown-org';
+    const actionObj = payload.action;
+    const metadata = payload.context || {};
+
+    const actionStr = typeof actionObj === 'object' ? JSON.stringify(actionObj) : String(actionObj || '');
+
+    // 1. Level 1: Policy Engine (Hard Rules)
+    const policyResult = await evaluatePolicy(agent, actionStr, organizationId);
+    if (!policyResult.allowed) {
+      return res.status(200).json({
+        decision: 'BLOCK',
+        tier: 'L1',
+        reason: policyResult.reason || 'Policy Violation detected.'
+      });
+    }
+
+    // 2. Level 2: Risk Scoring Engine (Pattern & Keyword Weights)
+    const riskResult = evaluateRisk(actionStr, { ...metadata, agent_id: agent });
+    if (riskResult.score === 'high') {
+      return res.status(200).json({
+        decision: 'BLOCK',
+        tier: 'L2',
+        risk_score: riskResult.risk_score || 80,
+        reason: riskResult.triggers?.join(', ') || 'High risk score detected.'
+      });
+    }
+
+    // 3. Level 3: Semantic Analysis Engine - Outbound PII Leakage Detection (TC-004)
+    if (actionObj && typeof actionObj === 'object') {
+      const content = actionObj.parameters?.content || '';
+      const ssnPattern = /\d{3}-\d{2}-\d{4}/;
+      const cardPattern = /\d{4}-\d{4}-\d{4}-\d{4}/;
+      const dobPattern = /\d{2}\/\d{2}\/\d{4}/;
+
+      const piiDetectedList: string[] = [];
+      if (ssnPattern.test(content)) piiDetectedList.push('SSN');
+      if (cardPattern.test(content)) piiDetectedList.push('Credit Card');
+      if (dobPattern.test(content)) piiDetectedList.push('Date of Birth');
+
+      if (piiDetectedList.length > 0) {
+        return res.status(200).json({
+          decision: 'BLOCK',
+          tier: 'L3',
+          pii_detected: piiDetectedList,
+          reason: `PII Leakage blocked: Detected sensitive data (${piiDetectedList.join(', ')}) in outbound response.`
+        });
+      }
+    }
+
+    // 4. Level 3: Semantic Analysis Engine - Prompt Injection (TC-005)
+    const combinedPrompt = `${actionStr} ${metadata.raw_user_input || ''}`.trim();
+    const semanticResult = await evaluateSemanticRisk(combinedPrompt);
+    if (semanticResult.score === 'high') {
+      return res.status(200).json({
+        decision: 'BLOCK',
+        tier: 'L3',
+        confidence: semanticResult.confidence || 0.9,
+        reason: semanticResult.explanation || 'Semantic adversarial intent detected.'
+      });
+    }
+
+    return res.status(200).json({
+      decision: 'ALLOW',
+      reason: 'Allowed: Verified by three-tier pre-execution engine.'
+    });
+  } catch (error: any) {
+    logger.error('Evaluate Route Failure:', error);
+    res.status(500).json({
+      error: error.message
+    });
+  }
+};
+
