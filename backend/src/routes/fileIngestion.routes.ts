@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import express, { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -11,6 +11,7 @@ import {
 } from '../controllers/fileIngestion.controller';
 
 const router = Router();
+router.use(express.json({ limit: '10mb' }));
 
 // Configure Multer storage
 const storage = multer.diskStorage({

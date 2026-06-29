@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import express, { Router } from 'express';
 import multer from 'multer';
 import {
   uploadEvidenceFile,
@@ -17,6 +17,7 @@ const upload = multer({
 });
 
 const router = Router();
+router.use(express.json({ limit: '10mb' }));
 
 router.post('/', authenticate, upload.single('file'), validateFileUpload({ maxSizeBytes: 50 * 1024 * 1024 }), uploadEvidenceFile);
 router.get('/', authenticate, getEvidenceList);
