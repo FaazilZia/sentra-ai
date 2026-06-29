@@ -10,6 +10,8 @@ import path from 'path';
 import fs from 'fs';
 import { errorHandler } from './middleware/error.middleware';
 import { contextMiddleware } from './middleware/context.middleware';
+import { authenticate } from './middleware/auth.middleware';
+import { postEvaluate } from './controllers/ai.controller';
 import authRoutes from './routes/auth.routes';
 import adminRoutes from './routes/admin.routes';
 import userRoutes from './routes/user.routes';
@@ -479,6 +481,11 @@ v1Router.get('/', (req, res) => {
     organization_centric: true 
   });
 });
+
+// Penetration test evaluation endpoints (supporting multiple URL formats)
+app.post('/v1/evaluate', authenticate, postEvaluate);
+app.post('/api/v1/evaluate', authenticate, postEvaluate);
+v1Router.post('/evaluate', authenticate, postEvaluate);
 
 app.use('/api/v1', v1Router);
 

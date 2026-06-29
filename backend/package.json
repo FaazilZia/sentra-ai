@@ -47,6 +47,7 @@
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.7.0",
     "@prisma/config": "^7.7.0",
+    "@sentra-ai/sdk": "file:../packages/sdk",
     "@sentry/node": "^10.49.0",
     "@slack/webhook": "^7.0.9",
     "@types/better-sqlite3": "^7.6.13",

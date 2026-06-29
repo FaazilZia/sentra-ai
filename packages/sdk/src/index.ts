@@ -52,7 +52,7 @@ export class SentraClient {
       const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
       try {
-        const response = await fetch(`${this.baseUrl}/guardrails/action`, {
+        const response = await fetch(`${this.baseUrl}/ai/check-action`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -70,7 +70,8 @@ export class SentraClient {
         }
 
         const json = await response.json();
-        const decision = (json.decision || json.data?.decision || 'ALLOWED').toUpperCase();
+        const rawDecision = json.decision || json.data?.decision || json.data?.status || 'ALLOWED';
+        const decision = rawDecision.toUpperCase();
         const reason = json.reason || json.data?.reason || 'Processed by Sentraa AI';
         // Backend returns { success, decision, reason } or wrapped in data
         const isAllowed = decision === 'ALLOW' || decision === 'ALLOWED';
