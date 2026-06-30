@@ -29,7 +29,7 @@ export class InventoryService {
       data: {
         organizationId,
         name,
-        model,
+        model: model || 'gpt-4',
         permissions: permissions || [],
         status: status || 'Active',
         metadata: metadata || {},
