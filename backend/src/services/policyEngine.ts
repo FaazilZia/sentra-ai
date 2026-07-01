@@ -85,12 +85,7 @@ export const evaluatePolicy = async (agent: string, action: string, organization
   }
   
   // Fetch from cache instead of DB on every call
-  console.log(`[evaluatePolicy] Org: ${organizationId}, Agent: ${agent}, Action: ${action}`);
   const policies = await getCachedPolicies(organizationId);
-  console.log(`[evaluatePolicy] Total policies fetched: ${policies.length}`);
-  policies.forEach(p => {
-    console.log(`[evaluatePolicy]   Policy: "${p.name}", Scope: ${JSON.stringify(p.scope)}, Conditions: ${JSON.stringify(p.conditions)}`);
-  });
 
   // Find all policies that match this agent
   const matchedPolicies = policies.filter(p => {
@@ -260,7 +255,7 @@ export const evaluatePolicy = async (agent: string, action: string, organization
             };
           }
         } catch (e) {
-          // Skip invalid regex
+          console.warn(`[evaluatePolicy] Invalid regex in policy "${policy.name}" (id: ${policy.id}): ${e}`);
         }
       }
     }
