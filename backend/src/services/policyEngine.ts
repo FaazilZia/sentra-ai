@@ -85,10 +85,15 @@ export const evaluatePolicy = async (agent: string, action: string, organization
   }
   
   // Fetch from cache instead of DB on every call
+  console.log(`[evaluatePolicy] Org: ${organizationId}, Agent: ${agent}, Action: ${action}`);
   const policies = await getCachedPolicies(organizationId);
+  console.log(`[evaluatePolicy] Total policies fetched: ${policies.length}`);
+  policies.forEach(p => {
+    console.log(`[evaluatePolicy]   Policy: "${p.name}", Scope: ${JSON.stringify(p.scope)}, Conditions: ${JSON.stringify(p.conditions)}`);
+  });
 
-  // Find a policy that matches this agent
-  const policy = policies.find(p => {
+  // Find all policies that match this agent
+  const matchedPolicies = policies.filter(p => {
     const scope = (p.scope as any) || {};
     
     // 1. Check explicit agent_ids in scope
@@ -104,53 +109,168 @@ export const evaluatePolicy = async (agent: string, action: string, organization
     return p.name.toLowerCase() === lowercaseAgent;
   });
 
-  if (!policy) {
+  if (matchedPolicies.length === 0) {
     return { allowed: true }; 
   }
 
-  // Check conditions (L1 Hard Rules)
-  const rule = (policy.rule as any) || {};
-  const conditions = (policy.conditions as any) || {};
-  
-  const blockedActions = [
-    ...(rule.conditions?.blocked_actions || []),
-    ...(conditions.blocked_actions || [])
-  ].map(a => a.toLowerCase());
+  const firstMatchedPolicyName = matchedPolicies[0].name;
+  const firstMatchedExplanation = (matchedPolicies[0] as any).explanation;
+  const firstMatchedCompliance = (matchedPolicies[0] as any).compliance;
+  const firstMatchedImpact = (matchedPolicies[0] as any).impact;
 
-  const allowedActions = [
-    ...(rule.conditions?.allowed_actions || []),
-    ...(conditions.allowed_actions || [])
-  ].map(a => a.toLowerCase());
+  for (const policy of matchedPolicies) {
+    // Check conditions (L1 Hard Rules)
+    const rule = (policy.rule as any) || {};
+    const conditions = (policy.conditions as any) || {};
+    
+    const blockedActions = [
+      ...(rule.conditions?.blocked_actions || []),
+      ...(conditions.blocked_actions || [])
+    ].map(a => a.toLowerCase());
 
-  // Explicit Block
-  if (blockedActions.includes(lowercaseAction)) {
-    return { 
-      allowed: false, 
-      reason: `Policy Violation: ${policy.name}`,
-      matchedPolicy: policy.name,
-      explanation: (policy as any).explanation,
-      compliance: (policy as any).compliance,
-      impact: (policy as any).impact
-    };
-  }
+    const allowedActions = [
+      ...(rule.conditions?.allowed_actions || []),
+      ...(conditions.allowed_actions || [])
+    ].map(a => a.toLowerCase());
 
-  // Allowed List Enforcement (if defined)
-  if (allowedActions.length > 0 && !allowedActions.includes(lowercaseAction)) {
-    return { 
-      allowed: false, 
-      reason: `Action not authorized for ${agent} under policy "${policy.name}"`,
-      matchedPolicy: policy.name,
-      explanation: (policy as any).explanation,
-      compliance: (policy as any).compliance,
-      impact: (policy as any).impact
-    };
+    const effectUpper = (policy.effect || 'deny').toUpperCase();
+    const isBlockPolicy = effectUpper === 'BLOCK' || effectUpper === 'DENY';
+
+    // Explicit Block (Backwards compatibility for exact string match)
+    if (blockedActions.includes(lowercaseAction)) {
+      return { 
+        allowed: false, 
+        reason: `Policy Violation: ${policy.name}`,
+        matchedPolicy: policy.name,
+        explanation: (policy as any).explanation || 'Action blocked by policy',
+        compliance: (policy as any).compliance || [],
+        impact: (policy as any).impact || 'Action prevented'
+      };
+    }
+
+    // Allowed List Enforcement (Backwards compatibility for exact string match)
+    if (allowedActions.length > 0 && !allowedActions.includes(lowercaseAction)) {
+      return { 
+        allowed: false, 
+        reason: `Action not authorized for ${agent} under policy "${policy.name}"`,
+        matchedPolicy: policy.name,
+        explanation: (policy as any).explanation || 'Action not in allowed actions list',
+        compliance: (policy as any).compliance || [],
+        impact: (policy as any).impact || 'Action prevented'
+      };
+    }
+
+    // Conceptual/Abstract Conditions Evaluation
+    if (isBlockPolicy) {
+      // 1. GDPR Cross-Border Data Transfer
+      if (conditions.framework === 'GDPR' && conditions.type === 'cross-border-transfer') {
+        const isTransfer = ['send', 'transfer', 'export', 'share', 'transmit', 'upload', 'move', 'disclose'].some(w => lowercaseAction.includes(w));
+        const isEUData = /\b(eu|europe|european|french|spanish|italian|polish|romanian|dutch|belgian|greek|swedish|austrian|portuguese)\b/i.test(lowercaseAction) || 
+                         /\bgerman\s+(?:user|resident|customer|record|data|db|database)\b/i.test(lowercaseAction);
+        
+        if (isTransfer && isEUData) {
+          const requireAdequacy = conditions.require_adequacy === true;
+          const requireScc = conditions.require_scc === true;
+          
+          if (requireAdequacy || requireScc) {
+            const hasScc = lowercaseAction.includes('scc');
+            const hasAdequacy = lowercaseAction.includes('adequacy');
+            const lacksSafeguards = ['without', 'no ', 'missing', 'lack', 'none', "haven't", "don't"].some(neg => lowercaseAction.includes(neg));
+            
+            if ((!hasScc && !hasAdequacy) || lacksSafeguards) {
+              return {
+                allowed: false,
+                reason: `Policy Violation: ${policy.name}`,
+                matchedPolicy: policy.name,
+                explanation: 'Cross-border transfer of EU customer data to non-adequate jurisdiction without adequacy or SCC safeguards is blocked.',
+                compliance: ['GDPR'],
+                impact: 'Prevents unauthorized EU data exfiltration'
+              };
+            }
+          }
+        }
+      }
+
+      // 2. HIPAA PHI sharing without BAA
+      if (conditions.framework === 'HIPAA' && conditions.type === 'phi-disclosure') {
+        const shares = ['share', 'email', 'send', 'disclose', 'export', 'give', 'provide', 'access', 'expose'].some(w => lowercaseAction.includes(w));
+        const hasPHI = ['phi', 'patient', 'medical', 'diagnosis', 'treatment', 'health', 'ssn', 'clinical'].some(w => lowercaseAction.includes(w));
+        const isThirdParty = ['third-party', 'third party', 'vendor', 'partner', 'processor', 'diagnostics', 'analytics', 'external', 'outsourc'].some(w => lowercaseAction.includes(w));
+
+        if (shares && hasPHI && isThirdParty) {
+          if (conditions.require_baa === true) {
+            const hasBaaMention = lowercaseAction.includes('baa');
+            const hasAgreementMention = ['agreement', 'contract', 'signed'].some(w => lowercaseAction.includes(w));
+            const lacksBaa = ['without', 'no ', 'missing', 'lack', 'none', "haven't", "don't"].some(neg => lowercaseAction.includes(neg));
+            
+            if ((!hasBaaMention && !hasAgreementMention) || lacksBaa) {
+              return {
+                allowed: false,
+                reason: `Policy Violation: ${policy.name}`,
+                matchedPolicy: policy.name,
+                explanation: 'Sharing patient PHI with a third-party vendor without a signed Business Associate Agreement (BAA) is prohibited.',
+                compliance: ['HIPAA'],
+                impact: 'Prevents HIPAA compliance violation'
+              };
+            }
+          }
+        }
+      }
+
+      // 3. DPDP Minor Biometric Consent
+      if (conditions.framework === 'DPDP' && conditions.type === 'minor-biometric-processing') {
+        const processes = ['process', 'use', 'collect', 'save', 'analyze', 'turn on', 'enable', 'register', 'capture'].some(w => lowercaseAction.includes(w));
+        const isMinor = ['minor', 'child', 'under 18', 'underage', 'kid', 'teen', 'under 15', 'under 16', 'under 14', 'age 14', 'age 15'].some(w => lowercaseAction.includes(w));
+        const isBiometric = ['biometric', 'fingerprint', 'face', 'facial', 'iris', 'retina', 'voiceprint', 'dna'].some(w => lowercaseAction.includes(w));
+
+        if (processes && isMinor && isBiometric) {
+          if (conditions.require_parental_consent === true) {
+            const hasConsent = ['consent', 'permission', 'approval'].some(w => lowercaseAction.includes(w));
+            const hasParents = ['parents', 'parental', 'guardian'].some(w => lowercaseAction.includes(w));
+            const lacksConsent = ['without', 'no ', "don't", 'not ', 'missing', "haven't", 'lack'].some(neg => lowercaseAction.includes(neg));
+            
+            const isConsentValid = (hasConsent || hasParents) && !lacksConsent;
+            
+            if (!isConsentValid) {
+              return {
+                allowed: false,
+                reason: `Policy Violation: ${policy.name}`,
+                matchedPolicy: policy.name,
+                explanation: 'Processing minor\'s biometric data without verified parental consent is prohibited under DPDP.',
+                compliance: ['DPDP'],
+                impact: 'Prevents DPDP child privacy violation'
+              };
+            }
+          }
+        }
+      }
+
+      // 4. Regex Pattern Matches (for Security Templates)
+      if (conditions.type === 'regex' && conditions.value) {
+        try {
+          const regex = new RegExp(conditions.value, 'i');
+          if (regex.test(action)) {
+            return {
+              allowed: false,
+              reason: `Policy Violation: ${policy.name}`,
+              matchedPolicy: policy.name,
+              explanation: `Action matches security pattern: ${conditions.value}`,
+              compliance: ['Security'],
+              impact: 'Prevents adversarial alignment breach'
+            };
+          }
+        } catch (e) {
+          // Skip invalid regex
+        }
+      }
+    }
   }
 
   return { 
     allowed: true, 
-    matchedPolicy: policy.name,
-    explanation: (policy as any).explanation,
-    compliance: (policy as any).compliance,
-    impact: (policy as any).impact
+    matchedPolicy: firstMatchedPolicyName,
+    explanation: firstMatchedExplanation,
+    compliance: firstMatchedCompliance,
+    impact: firstMatchedImpact
   };
 };

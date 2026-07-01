@@ -23,6 +23,11 @@ router.post('/:id/rollback', authenticate, async (req: any, res) => {
     const { version } = req.body;
     if (!version) return res.status(400).json({ error: 'version number required' });
     const updated = await PolicyVersioningService.rollback(req.params.id, Number(version), organizationId);
+    
+    // Invalidate policy cache for L1 engine
+    const { cacheService } = require('../services/cache.service');
+    await cacheService.invalidate(`policies:org:${organizationId}`);
+    
     res.json({ success: true, data: updated });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
