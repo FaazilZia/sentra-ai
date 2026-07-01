@@ -4,6 +4,7 @@ import { resolveOrganizationId } from '../utils/company';
 import { asyncHandler, sendSuccess, sendError } from '../utils/controllerHelpers';
 import { ChangeHistoryService } from '../services/changeHistory.service';
 import { parseCursorPagination } from '../utils/pagination';
+import { cacheService } from '../services/cache.service';
 
 export const getPolicies = asyncHandler(async (req: any, res: Response) => {
   let limit: number;
@@ -141,6 +142,9 @@ export const createPolicy = asyncHandler(async (req: any, res: Response) => {
     'Policy created'
   );
 
+  // Invalidate policy cache for L1 engine
+  await cacheService.invalidate(`policies:org:${organizationId}`);
+
   return sendSuccess(res, policy, 201);
 });
 
@@ -230,6 +234,9 @@ export const duplicatePolicy = asyncHandler(async (req: any, res: Response) => {
     `Duplicated from policy ID ${policyId}`
   );
 
+  // Invalidate policy cache for L1 engine
+  await cacheService.invalidate(`policies:org:${orgId}`);
+
   return sendSuccess(res, newPolicy, 201);
 });
 
@@ -272,6 +279,9 @@ export const updatePolicy = asyncHandler(async (req: any, res: Response) => {
     'Policy updated'
   );
 
+  // Invalidate policy cache for L1 engine
+  await cacheService.invalidate(`policies:org:${orgId}`);
+
   return sendSuccess(res, updated);
 });
 
@@ -300,6 +310,9 @@ export const deletePolicy = asyncHandler(async (req: any, res: Response) => {
     null,
     'Policy deleted'
   );
+
+  // Invalidate policy cache for L1 engine
+  await cacheService.invalidate(`policies:org:${orgId}`);
 
   return res.status(204).send();
 });

@@ -203,6 +203,26 @@ export const evaluateRisk = (action: string, metadata: any = {}): RiskEvaluation
       score = 'high';
       triggers.push('Risk Escalation: Intent to exfiltrate sensitive data detected');
     }
+
+    // Governance Compliance Heuristics
+    // 1. Consent withdrawal violation check
+    if (/consent.*(?:withdrawn|revoked|withdrew)/i.test(target)) {
+      score = 'high';
+      triggers.push('Governance: Processing data after consent withdrawal is blocked');
+    }
+
+    // 2. Training model without consent check
+    if (/train.*without.*consent/i.test(target)) {
+      score = 'high';
+      triggers.push('Governance: Training models without consent is blocked');
+    }
+
+    // 3. Sharing patient PHI/SSN on Slack/chat check
+    if (/(?:slack|teams|discord|channel|chat).*(?:ssn|patient|diagnosis|medical|treatment)/i.test(target) ||
+        /(?:ssn|patient|diagnosis|medical|treatment).*(?:slack|teams|discord|channel|chat)/i.test(target)) {
+      score = 'high';
+      triggers.push('Governance: Sharing patient PHI/SSN on chat channels is blocked');
+    }
   }
 
   // Fallback to medium if keywords found but no high-risk intent
