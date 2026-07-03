@@ -18,7 +18,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: FRONTEND_URL
-        value: https://sentra-ai-tau.vercel.app,https://sentra-ai.vercel.app,http://localhost:5173
+        value: https://sentra-ai-tau.vercel.app,https://sentra-ai.vercel.app,http://localhost:5173,https://sentraatech.info,https://www.sentraatech.info
       - key: BACKEND_URL
         value: https://sentra-backend-node.onrender.com
       - key: PORT

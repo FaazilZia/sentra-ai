@@ -22,7 +22,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: FRONTEND_URL
-        value: https://sentra-ai-tau.vercel.app,https://sentra-ai.vercel.app,http://localhost:5173
+        value: https://sentra-ai-tau.vercel.app,https://sentra-ai.vercel.app,http://localhost:5173,https://sentraatech.info,https://www.sentraatech.info
       - key: PORT
         value: 10000
       - key: ENCRYPTION_KEY
