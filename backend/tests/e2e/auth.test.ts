@@ -24,6 +24,29 @@ describe('Auth Flow', () => {
     // Clean up would typically go here or be handled by an external script
   });
 
+  test('POST /api/v1/auth/register - rejects weak password with 400 validation error', async () => {
+    const res = await request(TEST_BASE_URL)
+      .post('/api/v1/auth/register')
+      .send({
+        email: `weak-${Date.now()}@sentra-test.com`,
+        password: 'weak',
+        fullName: 'Weak User',
+        organizationName: 'Weak Org'
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toBe('Validation failed');
+    expect(res.body.errors).toBeDefined();
+    expect(Array.isArray(res.body.errors)).toBe(true);
+    
+    const messages = res.body.errors.map((e: any) => e.message);
+    expect(messages).toContain('Password must be at least 8 characters');
+    expect(messages).toContain('Password must contain at least one uppercase letter');
+    expect(messages).toContain('Password must contain at least one number');
+    expect(messages).toContain('Password must contain at least one special character');
+  });
+
   test('POST /api/v1/auth/register - creates org and user', async () => {
     const res = await request(TEST_BASE_URL)
       .post('/api/v1/auth/register')

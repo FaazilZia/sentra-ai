@@ -23,7 +23,7 @@ export default function LoginPage({ defaultIsSignUp = false }: { defaultIsSignUp
 
   const calculateStrength = (pass: string) => {
     let score = 0;
-    if (pass.length > 8) score += 25;
+    if (pass.length >= 8) score += 25;
     if (/[A-Z]/.test(pass)) score += 25;
     if (/[0-9]/.test(pass)) score += 25;
     if (/[^A-Za-z0-9]/.test(pass)) score += 25;
@@ -285,6 +285,39 @@ export default function LoginPage({ defaultIsSignUp = false }: { defaultIsSignUp
                       passwordStrength <= 75 ? "bg-blue-500" : "bg-emerald-500"
                     )}
                   />
+                </div>
+              )}
+              {isSignUp && (
+                <div className="mt-3 space-y-1.5 text-xs text-slate-500">
+                  <p className="font-semibold text-slate-600 mb-1 text-[10px] uppercase tracking-wider">Password Requirements:</p>
+                  <div className="flex items-center gap-1.5 transition-colors duration-200">
+                    <span className={cn(
+                      "h-1.5 w-1.5 rounded-full transition-all",
+                      password.length >= 8 ? "bg-emerald-500 scale-125" : "bg-slate-300"
+                    )} />
+                    <span className={password.length >= 8 ? "text-slate-800 font-medium" : ""}>At least 8 characters</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 transition-colors duration-200">
+                    <span className={cn(
+                      "h-1.5 w-1.5 rounded-full transition-all",
+                      /[A-Z]/.test(password) ? "bg-emerald-500 scale-125" : "bg-slate-300"
+                    )} />
+                    <span className={/[A-Z]/.test(password) ? "text-slate-800 font-medium" : ""}>At least one uppercase letter</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 transition-colors duration-200">
+                    <span className={cn(
+                      "h-1.5 w-1.5 rounded-full transition-all",
+                      /[0-9]/.test(password) ? "bg-emerald-500 scale-125" : "bg-slate-300"
+                    )} />
+                    <span className={/[0-9]/.test(password) ? "text-slate-800 font-medium" : ""}>At least one number</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 transition-colors duration-200">
+                    <span className={cn(
+                      "h-1.5 w-1.5 rounded-full transition-all",
+                      /[^A-Za-z0-9]/.test(password) ? "bg-emerald-500 scale-125" : "bg-slate-300"
+                    )} />
+                    <span className={/[^A-Za-z0-9]/.test(password) ? "text-slate-800 font-medium" : ""}>At least one special character</span>
+                  </div>
                 </div>
               )}
             </label>

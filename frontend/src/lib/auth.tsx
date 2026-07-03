@@ -6,7 +6,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { fetchCurrentUser, loginRequest, registerRequest, apiRequest } from './api';
+import { fetchCurrentUser, loginRequest, registerRequest, apiRequest, ApiError } from './api';
 
 export interface AppUser {
   id: string;
@@ -156,7 +156,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       await login(email, password);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to sign up';
+      let message = 'Unable to sign up';
+      if (error instanceof ApiError) {
+        if (error.data?.errors && Array.isArray(error.data.errors)) {
+          message = error.data.errors.map((e: any) => e.message).join('. ');
+        } else {
+          message = error.message;
+        }
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
       setLoginError(message);
       throw error;
     } finally {
