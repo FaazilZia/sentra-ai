@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "dev:e2e": "IS_E2E_TEST=true ts-node-dev --respawn --transpile-only src/server.ts",
-    "build": "prisma generate && rm -rf dist && node --max-old-space-size=440 ./node_modules/.bin/tsc --noCheck",
+    "build": "prisma generate && rm -rf dist && node scripts/build.js",
     "start": "node dist/src/server.js",
     "start:render": "node dist/src/server.js",
     "seed": "ts-node prisma/seed.ts",
@@ -127,6 +127,7 @@
     "@types/swagger-ui-express": "^4.1.8",
     "@types/uuid": "^10.0.0",
     "artillery": "^2.0.32",
+    "esbuild": "^0.28.1",
     "eslint": "^10.4.0",
     "globals": "^17.6.0",
     "jest": "^30.4.2",
