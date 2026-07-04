@@ -103,7 +103,8 @@
     "typescript": "^6.0.2",
     "uuid": "^13.0.0",
     "winston": "^3.19.0",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "esbuild": "^0.28.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -127,7 +128,6 @@
     "@types/swagger-ui-express": "^4.1.8",
     "@types/uuid": "^10.0.0",
     "artillery": "^2.0.32",
-    "esbuild": "^0.28.1",
     "eslint": "^10.4.0",
     "globals": "^17.6.0",
     "jest": "^30.4.2",
