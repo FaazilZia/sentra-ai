@@ -1,4 +1,3 @@
-import { chromium } from 'playwright';
 import * as docxModule from 'docx';
 const { Document, Packer, Paragraph, TextRun, Table: DocxTable, TableRow: DocxTableRow, TableCell: DocxTableCell, WidthType, HeadingLevel } = docxModule as any;
 import prisma from '../config/db';
@@ -179,6 +178,7 @@ export class ReportGenerationService {
         </html>
       `;
 
+      const { chromium } = await import('playwright');
       const browser = await chromium.launch({ headless: true });
       const page = await browser.newPage();
       await page.setContent(htmlContent);
