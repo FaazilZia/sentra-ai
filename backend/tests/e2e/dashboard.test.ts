@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const TEST_FRONTEND_URL = process.env.TEST_FRONTEND_URL || 'https://sentra-ai-tau.vercel.app';
+const TEST_FRONTEND_URL = process.env.TEST_FRONTEND_URL || 'https://sentraatech.info';
 const TEST_BASE_URL = process.env.TEST_BASE_URL || 'https://sentra-backend-node.onrender.com';
 
 const testOrg = `test-org-dash-${Date.now()}`;
