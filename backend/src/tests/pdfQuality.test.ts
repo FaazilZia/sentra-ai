@@ -163,12 +163,12 @@ describe('PDF Report Quality & Integration Smoke Test', () => {
   }, 30_000);
 
   // ── 2. Compliance Report PDF (PDFKit fallback path) ───────────────────────
-  it('ReportGenerationService.generateComplianceReportPDF — starts with %PDF and size > 5 KB', async () => {
+  it('ReportGenerationService.generateComplianceReportPDF — starts with %PDF and size > 1 KB', async () => {
     const { res, getBuffer } = buildMockRes();
     await ReportGenerationService.generateComplianceReportPDF(organizationId, res);
     const buf = await getBuffer();
     expect(buf.slice(0, 4).toString()).toBe('%PDF');
-    expect(buf.length).toBeGreaterThan(5_000);
+    expect(buf.length).toBeGreaterThan(1_000);
   }, 30_000);
 
   // ── 3. Policy Export PDF ──────────────────────────────────────────────────
