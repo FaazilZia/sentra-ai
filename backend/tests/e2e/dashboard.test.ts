@@ -10,6 +10,8 @@ const testPassword = 'TestPass123!'; // NOSONAR - test credential, not a real se
 async function login(page: any) {
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto(`${TEST_FRONTEND_URL}/login`);
+  // Set localStorage item to bypass onboarding wizard for new registration
+  await page.evaluate(() => localStorage.setItem('sentra_onboarded', 'true'));
   await page.fill('input[type="email"]', testEmail);
   await page.fill('input[type="password"]', testPassword);
   await page.click('button[type="submit"]');
@@ -40,6 +42,7 @@ test.describe('Dashboard E2E', () => {
   // "Agents" page maps to /app/inventory in the sidebar (Inventory page shows agent table)
   test('Agents page shows registered agents', async ({ page }) => {
     await login(page);
+    await page.click('button:has-text("AI SYSTEMS"), button:has-text("AI Systems")');
     await page.click('aside a[href="/app/inventory"]');
     await expect(page).toHaveURL(/inventory/, { timeout: 10000 });
     await expect(page.locator('table')).toBeVisible({ timeout: 10000 });
@@ -65,8 +68,11 @@ test.describe('Dashboard E2E', () => {
   // Settings test — match actual heading "API Authentication"
   test('Settings page - API key visible', async ({ page }) => {
     await login(page);
+    await page.click('button:has-text("SETTINGS"), button:has-text("Settings")');
     await page.click('aside a[href="/app/settings"]');
     await expect(page).toHaveURL(/settings/, { timeout: 10000 });
+    // Click the General & Alerts tab to make API key section visible
+    await page.click('text=General & Alerts');
     // The settings page renders "API Authentication" as the section heading
     await expect(page.locator('text=API Authentication')).toBeVisible({ timeout: 10000 });
   });

@@ -1,0 +1,1026 @@
+[
+  {
+    "file_line": "frontend/src/lib/api.ts:308",
+    "symbol": "fetchPolicyTemplates",
+    "classification": "D",
+    "evidence": "Defined in frontend/src/lib/api.ts:308. TODO/stub comment found in context.",
+    "recommendation": "Needs Faazil's call",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:312",
+    "symbol": "duplicatePolicyTemplate",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:312 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:322",
+    "symbol": "fetchPolicyById",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:322 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:333",
+    "symbol": "createPolicy",
+    "classification": "B",
+    "evidence": "Referenced in 3 prod file(s): backend/src/routes/policy.routes.ts:4, backend/src/routes/policy.routes.ts:5, backend/src/routes/policy.routes.ts:91",
+    "recommendation": "Keep \u2014 dynamically or statically used in production",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:340",
+    "symbol": "fetchPolicyVersions",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:340 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:350",
+    "symbol": "fetchPolicyHealth",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:350 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:357",
+    "symbol": "fetchViolations",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:357 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:365",
+    "symbol": "updateIncidentStatus",
+    "classification": "B",
+    "evidence": "Referenced in 4 prod file(s): backend/src/routes/incident.routes.ts:5, backend/src/routes/incident.routes.ts:16, backend/src/routes/incident.routes.ts:30",
+    "recommendation": "Keep \u2014 dynamically or statically used in production",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:391",
+    "symbol": "fetchAIActivityLogs",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:391 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:395",
+    "symbol": "replayAction",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:395 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:409",
+    "symbol": "createAIAgent",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:409 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:416",
+    "symbol": "deleteAIAgent",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:416 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:430",
+    "symbol": "fetchAuditProof",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:430 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:450",
+    "symbol": "fetchFixTasks",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:450 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:454",
+    "symbol": "createFixTasks",
+    "classification": "B",
+    "evidence": "Referenced in 1 prod file(s): backend/src/services/compliance.service.ts:105",
+    "recommendation": "Keep \u2014 dynamically or statically used in production",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:461",
+    "symbol": "uploadEvidence",
+    "classification": "B",
+    "evidence": "Referenced in 6 prod file(s): backend/src/routes/evidence.routes.ts:4, backend/src/routes/evidence.routes.ts:22, backend/src/routes/fileIngestion.routes.ts:8",
+    "recommendation": "Keep \u2014 dynamically or statically used in production",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:468",
+    "symbol": "reEvaluateCompliance",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:468 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:484",
+    "symbol": "fetchComplianceHistory",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:484 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:497",
+    "symbol": "fetchAuditLogs",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:497 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:511",
+    "symbol": "createAlertRule",
+    "classification": "B",
+    "evidence": "Referenced in 2 prod file(s): backend/src/routes/alert.routes.ts:2, backend/src/routes/alert.routes.ts:8",
+    "recommendation": "Keep \u2014 dynamically or statically used in production",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:518",
+    "symbol": "fetchAlertRules",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:518 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:532",
+    "symbol": "fetchAlerts",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:532 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:536",
+    "symbol": "markAlertRead",
+    "classification": "B",
+    "evidence": "Referenced in 2 prod file(s): backend/src/controllers/compliance.controller.ts:117, backend/src/services/compliance.service.ts:197",
+    "recommendation": "Keep \u2014 dynamically or statically used in production",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:543",
+    "symbol": "exportComplianceReport",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:543 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:585",
+    "symbol": "sendAIRequest",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:585 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:592",
+    "symbol": "fetchGuardrailLogs",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:592 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:597",
+    "symbol": "exportGuardrailLogs",
+    "classification": "B",
+    "evidence": "Referenced in 2 prod file(s): backend/src/routes/guardrail.routes.ts:7, backend/src/routes/guardrail.routes.ts:108",
+    "recommendation": "Keep \u2014 dynamically or statically used in production",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:626",
+    "symbol": "fetchGuardrailOverrides",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:626 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:630",
+    "symbol": "requestGuardrailOverride",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:630 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:637",
+    "symbol": "approveGuardrailOverride",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:637 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:651",
+    "symbol": "fetchSecurityScore",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:651 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:655",
+    "symbol": "askAI",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:655 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:663",
+    "symbol": "chatWithCopilot",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:663 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:673",
+    "symbol": "fetchBackendHealth",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:673 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:686",
+    "symbol": "createApiKey",
+    "classification": "B",
+    "evidence": "Referenced in 3 prod file(s): backend/src/routes/admin.routes.ts:4, backend/src/routes/admin.routes.ts:5, backend/src/routes/admin.routes.ts:84",
+    "recommendation": "Keep \u2014 dynamically or statically used in production",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:693",
+    "symbol": "deleteApiKey",
+    "classification": "B",
+    "evidence": "Referenced in 2 prod file(s): backend/src/routes/admin.routes.ts:5, backend/src/routes/admin.routes.ts:91",
+    "recommendation": "Keep \u2014 dynamically or statically used in production",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/pages/IncidentManagement.tsx:131",
+    "symbol": "triggerScan",
+    "classification": "B",
+    "evidence": "Referenced in 5 prod file(s): backend/src/routes/incident.routes.ts:7, backend/src/routes/incident.routes.ts:18, backend/src/routes/incident.routes.ts:39",
+    "recommendation": "Keep \u2014 dynamically or statically used in production",
+    "blame_date": "2026-06-08"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:704",
+    "symbol": "fetchScanStatus",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:704 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:708",
+    "symbol": "fetchConnectors",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:708 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:716",
+    "symbol": "fetchScans",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:716 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:722",
+    "symbol": "fetchRiskData",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:722 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:726",
+    "symbol": "fetchExecutiveMetrics",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:726 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:730",
+    "symbol": "fetchTopAttackPatterns",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:730 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:734",
+    "symbol": "fetchRiskTrend",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:734 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:738",
+    "symbol": "createConnector",
+    "classification": "B",
+    "evidence": "Referenced in 3 prod file(s): backend/src/routes/connector.routes.ts:4, backend/src/routes/connector.routes.ts:5, backend/src/routes/connector.routes.ts:11",
+    "recommendation": "Keep \u2014 dynamically or statically used in production",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:761",
+    "symbol": "fetchExecutiveOverview",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:761 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:791",
+    "symbol": "updateAlertSettings",
+    "classification": "B",
+    "evidence": "Referenced in 2 prod file(s): backend/src/routes/organization.routes.ts:3, backend/src/routes/organization.routes.ts:8",
+    "recommendation": "Keep \u2014 dynamically or statically used in production",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:798",
+    "symbol": "testAlert",
+    "classification": "B",
+    "evidence": "Referenced in 4 prod file(s): backend/src/routes/admin.routes.ts:94, backend/src/routes/admin.routes.ts:95, backend/src/routes/organization.routes.ts:3",
+    "recommendation": "Keep \u2014 dynamically or statically used in production",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:1057",
+    "symbol": "fetchAgentRiskScore",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:1057 with no references. Blame date: 2026-05-24.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-24"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:1167",
+    "symbol": "uploadEuAiActEvidence",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:1167 with no references. Blame date: 2026-05-25.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-25"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:1362",
+    "symbol": "fetchLifecycleInfo",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:1362 with no references. Blame date: 2026-05-26.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-26"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:1366",
+    "symbol": "transitionModelStage",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:1366 with no references. Blame date: 2026-05-26.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-26"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:854",
+    "symbol": "fetchFriaAssessments",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:854 with no references. Blame date: 2026-05-27.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-27"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:855",
+    "symbol": "fetchFriaAssessment",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:855 with no references. Blame date: 2026-05-27.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-27"
+  },
+  {
+    "file_line": "frontend/src/lib/api.ts:856",
+    "symbol": "createFriaAssessment",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/api.ts:856 with no references. Blame date: 2026-05-27.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-27"
+  },
+  {
+    "file_line": "frontend/src/components/executive/AuditSnapshot.tsx:13",
+    "symbol": "AuditSnapshot",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/components/executive/AuditSnapshot.tsx:13 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/components/executive/GlobalControlPanel.tsx:11",
+    "symbol": "GlobalControlPanel",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/components/executive/GlobalControlPanel.tsx:11 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/components/executive/SystemModeIndicator.tsx:8",
+    "symbol": "SystemModeIndicator",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/components/executive/SystemModeIndicator.tsx:8 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/components/risk/ActiveRiskEvents.tsx:29",
+    "symbol": "ActiveRiskEvents",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/components/risk/ActiveRiskEvents.tsx:29 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/components/risk/RiskExposurePanel.tsx:9",
+    "symbol": "RiskExposurePanel",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/components/risk/RiskExposurePanel.tsx:9 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/components/risk/RiskHeatmap.tsx:31",
+    "symbol": "RiskHeatmap",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/components/risk/RiskHeatmap.tsx:31 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/components/risk/RiskOwnership.tsx:8",
+    "symbol": "RiskOwnership",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/components/risk/RiskOwnership.tsx:8 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/components/risk/RiskPosture.tsx:12",
+    "symbol": "RiskPosture",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/components/risk/RiskPosture.tsx:12 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/components/shared/GaugeChart.tsx:11",
+    "symbol": "GaugeChart",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/components/shared/GaugeChart.tsx:11 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/components/shared/ProgressBar.tsx:11",
+    "symbol": "ProgressBar",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/components/shared/ProgressBar.tsx:11 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/components/ui/AnimatedCounter.tsx:8",
+    "symbol": "AnimatedCounter",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/components/ui/AnimatedCounter.tsx:8 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/components/ui/AtomBackground.tsx:18",
+    "symbol": "AtomBackground",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/components/ui/AtomBackground.tsx:18 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/components/ui/BackgroundLayer.tsx:3",
+    "symbol": "BackgroundLayer",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/components/ui/BackgroundLayer.tsx:3 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/components/ui/DataChartEmpty.tsx:8",
+    "symbol": "DataChartEmpty",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/components/ui/DataChartEmpty.tsx:8 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/components/ui/EmptyStateList.tsx:13",
+    "symbol": "EmptyStateList",
+    "classification": "B",
+    "evidence": "Referenced in 1 prod file(s): frontend/src/components/ui/EmptyStateList.tsx:20",
+    "recommendation": "Keep \u2014 dynamically or statically used in production",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/components/ui/FloatingMolecules.tsx:105",
+    "symbol": "FloatingMolecules",
+    "classification": "B",
+    "evidence": "Referenced in 2 prod file(s): .sonarcloud.properties:33, sonar-project.properties:34",
+    "recommendation": "Keep \u2014 dynamically or statically used in production",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/components/ui/FloatingParticles.tsx:23",
+    "symbol": "FloatingParticles",
+    "classification": "B",
+    "evidence": "Referenced in 2 prod file(s): .sonarcloud.properties:34, sonar-project.properties:35",
+    "recommendation": "Keep \u2014 dynamically or statically used in production",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/components/ui/GooeyNav.tsx:390",
+    "symbol": "GooeyNav",
+    "classification": "B",
+    "evidence": "Referenced in 3 prod file(s): .sonarcloud.properties:35, frontend/src/components/ui/GooeyNav.tsx:23, sonar-project.properties:36",
+    "recommendation": "Keep \u2014 dynamically or statically used in production",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/components/ui/NeuralBackground.tsx:245",
+    "symbol": "NeuralBackground",
+    "classification": "B",
+    "evidence": "Referenced in 2 prod file(s): .sonarcloud.properties:36, sonar-project.properties:37",
+    "recommendation": "Keep \u2014 dynamically or statically used in production",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/components/ui/NeuralCore.tsx:128",
+    "symbol": "NeuralCore",
+    "classification": "B",
+    "evidence": "Referenced in 2 prod file(s): .sonarcloud.properties:37, sonar-project.properties:38",
+    "recommendation": "Keep \u2014 dynamically or statically used in production",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/components/ui/SidebarItem.tsx:15",
+    "symbol": "SidebarItem",
+    "classification": "B",
+    "evidence": "Referenced in 2 prod file(s): frontend/src/components/layout/Sidebar.tsx:44, frontend/src/components/layout/Sidebar.tsx:49",
+    "recommendation": "Keep \u2014 dynamically or statically used in production",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/components/ui/StatCard.tsx:36",
+    "symbol": "StatCard",
+    "classification": "B",
+    "evidence": "Referenced in 1 prod file(s): frontend/src/components/ui/StatCard.tsx:46",
+    "recommendation": "Keep \u2014 dynamically or statically used in production",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/hooks/useDashboardData.ts:56",
+    "symbol": "useDashboardData",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/hooks/useDashboardData.ts:56 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/hooks/use3DTilt.ts:4",
+    "symbol": "use3DTilt",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/hooks/use3DTilt.ts:4 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "frontend/src/lib/permissions.ts:69",
+    "symbol": "hasPermission",
+    "classification": "B",
+    "evidence": "Referenced in 2 prod file(s): backend/src/services/rbac.service.ts:258, frontend/src/components/rbac/PermissionGate.tsx:68",
+    "recommendation": "Keep \u2014 dynamically or statically used in production",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "file_line": "frontend/src/lib/governanceUtils.ts:36",
+    "symbol": "MODAL_INPUT_CLASS",
+    "classification": "A",
+    "evidence": "Defined in frontend/src/lib/governanceUtils.ts:36 with no references. Blame date: 2026-05-26.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-26"
+  },
+  {
+    "file_line": "backend/src/config/telemetry.ts:33",
+    "symbol": "authFailuresTotal",
+    "classification": "A",
+    "evidence": "Defined in backend/src/config/telemetry.ts:33 with no references. Blame date: 2026-05-21.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "file_line": "backend/src/config/telemetry.ts:40",
+    "symbol": "activeSessionsGauge",
+    "classification": "A",
+    "evidence": "Defined in backend/src/config/telemetry.ts:40 with no references. Blame date: 2026-05-21.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "file_line": "backend/src/config/telemetry.ts:46",
+    "symbol": "queueJobsTotal",
+    "classification": "A",
+    "evidence": "Defined in backend/src/config/telemetry.ts:46 with no references. Blame date: 2026-05-21.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "file_line": "backend/src/config/telemetry.ts:53",
+    "symbol": "policyViolationsTotal",
+    "classification": "A",
+    "evidence": "Defined in backend/src/config/telemetry.ts:53 with no references. Blame date: 2026-05-21.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "file_line": "backend/src/config/telemetry.ts:60",
+    "symbol": "driftAlertsTotal",
+    "classification": "A",
+    "evidence": "Defined in backend/src/config/telemetry.ts:60 with no references. Blame date: 2026-05-21.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "file_line": "backend/src/config/telemetry.ts:67",
+    "symbol": "governanceScoreGauge",
+    "classification": "A",
+    "evidence": "Defined in backend/src/config/telemetry.ts:67 with no references. Blame date: 2026-05-21.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "file_line": "backend/src/config/telemetry.ts:74",
+    "symbol": "evaluationRunsTotal",
+    "classification": "A",
+    "evidence": "Defined in backend/src/config/telemetry.ts:74 with no references. Blame date: 2026-05-21.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "file_line": "backend/src/config/telemetry.ts:81",
+    "symbol": "auditLogEntriesTotal",
+    "classification": "A",
+    "evidence": "Defined in backend/src/config/telemetry.ts:81 with no references. Blame date: 2026-05-21.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "file_line": "backend/src/config/telemetry.ts:88",
+    "symbol": "mfaAttempts",
+    "classification": "A",
+    "evidence": "Defined in backend/src/config/telemetry.ts:88 with no references. Blame date: 2026-05-21.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "file_line": "backend/src/middleware/idempotency.middleware.ts:6",
+    "symbol": "idempotencyMiddleware",
+    "classification": "A",
+    "evidence": "Defined in backend/src/middleware/idempotency.middleware.ts:6 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "backend/src/middleware/security.middleware.ts:109",
+    "symbol": "validateRequest",
+    "classification": "A",
+    "evidence": "Defined in backend/src/middleware/security.middleware.ts:109 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "backend/src/middleware/tenant.middleware.ts:35",
+    "symbol": "resolveWorkspace",
+    "classification": "A",
+    "evidence": "Defined in backend/src/middleware/tenant.middleware.ts:35 with no references. Blame date: 2026-05-21.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "file_line": "backend/src/middleware/tenant.middleware.ts:72",
+    "symbol": "requireTenantIsolation",
+    "classification": "B",
+    "evidence": "Referenced in 1 prod file(s): backend/src/middleware/tenant.middleware.ts:70",
+    "recommendation": "Keep \u2014 dynamically or statically used in production",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "file_line": "backend/src/middleware/tenant.middleware.ts:95",
+    "symbol": "enforceIpAllowlist",
+    "classification": "A",
+    "evidence": "Defined in backend/src/middleware/tenant.middleware.ts:95 with no references. Blame date: 2026-05-21.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "file_line": "backend/src/services/queue.service.ts:165",
+    "symbol": "MonitoringService",
+    "classification": "B",
+    "evidence": "Referenced in 6 prod file(s): backend/src/controllers/postMarketMonitoring.controller.ts:2, backend/src/controllers/postMarketMonitoring.controller.ts:28, backend/src/routes/postMarketMonitoring.routes.ts:3",
+    "recommendation": "Keep \u2014 dynamically or statically used in production",
+    "blame_date": "N/A (definition line not matched)"
+  },
+  {
+    "file_line": "backend/src/services/outcome.service.ts:5",
+    "symbol": "OutcomeService",
+    "classification": "C",
+    "evidence": "Referenced only in 3 test file(s): backend/src/__tests__/services/outcome.service.test.ts:1, backend/src/__tests__/services/outcome.service.test.ts:82, backend/src/__tests__/services/outcome.service.test.ts:84",
+    "recommendation": "Remove from test files and delete, or keep if test-only code is desired",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "backend/src/services/session.service.ts:10",
+    "symbol": "SessionService",
+    "classification": "C",
+    "evidence": "Referenced only in 3 test file(s): backend/src/__tests__/services/session.service.test.ts:1, backend/src/__tests__/services/session.service.test.ts:82, backend/src/__tests__/services/session.service.test.ts:84",
+    "recommendation": "Remove from test files and delete, or keep if test-only code is desired",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "file_line": "backend/src/services/policy.service.ts:10",
+    "symbol": "checkPermission",
+    "classification": "C",
+    "evidence": "Referenced only in 11 test file(s): backend/src/__tests__/services/policy.service.test.ts:1, backend/src/__tests__/services/policy.service.test.ts:82, backend/src/__tests__/services/policy.service.test.ts:84",
+    "recommendation": "Remove from test files and delete, or keep if test-only code is desired",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "backend/src/services/tenant.service.ts:23",
+    "symbol": "resolveTenantContext",
+    "classification": "C",
+    "evidence": "Referenced only in 8 test file(s): backend/src/__tests__/services/tenant.service.test.ts:89, backend/src/__tests__/services/tenant.service.test.ts:95, backend/src/__tests__/services/tenant.service.test.ts:107",
+    "recommendation": "Remove from test files and delete, or keep if test-only code is desired",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "file_line": "backend/src/services/queue.service.ts:564",
+    "symbol": "triggerAnomalyScan",
+    "classification": "C",
+    "evidence": "Referenced only in 8 test file(s): backend/src/__tests__/services/queue.service.test.ts:289, backend/src/__tests__/services/queue.service.test.ts:295, backend/src/__tests__/services/queue.service.test.ts:307",
+    "recommendation": "Remove from test files and delete, or keep if test-only code is desired",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "backend/src/workers/gdrive.worker.ts:9",
+    "symbol": "GDriveGovernanceConnector",
+    "classification": "A",
+    "evidence": "Defined in backend/src/workers/gdrive.worker.ts:9 with no references. Blame date: 2026-05-27.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-27"
+  },
+  {
+    "file_line": "backend/src/workers/langchain.worker.ts:7",
+    "symbol": "LangChainGovernanceHandler",
+    "classification": "B",
+    "evidence": "Referenced in 1 prod file(s): README.md:261",
+    "recommendation": "Keep \u2014 dynamically or statically used in production",
+    "blame_date": "2026-05-23"
+  },
+  {
+    "file_line": "backend/src/workers/openai.worker.ts:6",
+    "symbol": "wrapOpenAIChatCompletion",
+    "classification": "B",
+    "evidence": "Referenced in 1 prod file(s): README.md:272",
+    "recommendation": "Keep \u2014 dynamically or statically used in production",
+    "blame_date": "2026-05-23"
+  },
+  {
+    "file_line": "backend/src/validations/organization.validation.ts:10",
+    "symbol": "emptySchema",
+    "classification": "A",
+    "evidence": "Defined in backend/src/validations/organization.validation.ts:10 with no references. Blame date: 2026-05-12.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-12"
+  },
+  {
+    "file_line": "backend/src/validations/guardrail.validation.ts:3",
+    "symbol": "processAIRequestSchema",
+    "classification": "A",
+    "evidence": "Defined in backend/src/validations/guardrail.validation.ts:3 with no references. Blame date: 2026-05-12.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-12"
+  },
+  {
+    "file_line": "backend/src/validations/guardrail.validation.ts:8",
+    "symbol": "checkActionSchema",
+    "classification": "B",
+    "evidence": "Referenced in 3 prod file(s): backend/src/controllers/ai.controller.ts:7, backend/src/routes/ai.routes.ts:5, backend/src/routes/ai.routes.ts:13",
+    "recommendation": "Keep \u2014 dynamically or statically used in production",
+    "blame_date": "2026-05-12"
+  },
+  {
+    "file_line": "backend/src/validations/guardrail.validation.ts:14",
+    "symbol": "processDemoRequestSchema",
+    "classification": "A",
+    "evidence": "Defined in backend/src/validations/guardrail.validation.ts:14 with no references. Blame date: 2026-05-12.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-12"
+  },
+  {
+    "file_line": "backend/src/validations/guardrail.validation.ts:18",
+    "symbol": "postRequestOverrideSchema",
+    "classification": "A",
+    "evidence": "Defined in backend/src/validations/guardrail.validation.ts:18 with no references. Blame date: 2026-05-12.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-12"
+  },
+  {
+    "file_line": "backend/src/validations/guardrail.validation.ts:23",
+    "symbol": "postApproveOverrideSchema",
+    "classification": "A",
+    "evidence": "Defined in backend/src/validations/guardrail.validation.ts:23 with no references. Blame date: 2026-05-12.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-12"
+  },
+  {
+    "file_line": "backend/src/validations/inventory.validation.ts:3",
+    "symbol": "agentSchema",
+    "classification": "A",
+    "evidence": "Defined in backend/src/validations/inventory.validation.ts:3 with no references. Blame date: 2026-05-12.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-12"
+  },
+  {
+    "file_line": "backend/src/validations/organization.validation.ts:3",
+    "symbol": "updateAlertSettingsSchema",
+    "classification": "A",
+    "evidence": "Defined in backend/src/validations/organization.validation.ts:3 with no references. Blame date: 2026-05-12.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-12"
+  },
+  {
+    "file_line": "backend/src/validations/alert.validation.ts:3",
+    "symbol": "createAlertRuleSchema",
+    "classification": "A",
+    "evidence": "Defined in backend/src/validations/alert.validation.ts:3 with no references. Blame date: 2026-05-12.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-12"
+  },
+  {
+    "file_line": "backend/src/validations/compliance.validation.ts:3",
+    "symbol": "postFixTasksSchema",
+    "classification": "A",
+    "evidence": "Defined in backend/src/validations/compliance.validation.ts:3 with no references. Blame date: 2026-05-12.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-12"
+  },
+  {
+    "file_line": "backend/src/validations/compliance.validation.ts:8",
+    "symbol": "postEvidenceSchema",
+    "classification": "A",
+    "evidence": "Defined in backend/src/validations/compliance.validation.ts:8 with no references. Blame date: 2026-05-12.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-12"
+  },
+  {
+    "file_line": "backend/src/validations/compliance.validation.ts:15",
+    "symbol": "postReEvaluateSchema",
+    "classification": "A",
+    "evidence": "Defined in backend/src/validations/compliance.validation.ts:15 with no references. Blame date: 2026-05-12.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-12"
+  },
+  {
+    "file_line": "backend/src/validations/compliance.validation.ts:19",
+    "symbol": "postMarkAlertReadSchema",
+    "classification": "A",
+    "evidence": "Defined in backend/src/validations/compliance.validation.ts:19 with no references. Blame date: 2026-05-12.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-12"
+  },
+  {
+    "file_line": "backend/src/utils/crypto.ts:9",
+    "symbol": "secureRandom",
+    "classification": "A",
+    "evidence": "Defined in backend/src/utils/crypto.ts:9 with no references. Blame date: 2026-05-20.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-20"
+  },
+  {
+    "file_line": "backend/src/utils/crypto.ts:6",
+    "symbol": "secureRandomInt",
+    "classification": "A",
+    "evidence": "Defined in backend/src/utils/crypto.ts:6 with no references. Blame date: 2026-05-20.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-20"
+  },
+  {
+    "file_line": "backend/src/utils/crypto.ts:9",
+    "symbol": "secureRandomHex",
+    "classification": "A",
+    "evidence": "Defined in backend/src/utils/crypto.ts:9 with no references. Blame date: 2026-05-20.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-20"
+  },
+  {
+    "file_line": "backend/src/utils/controllerHelpers.ts:56",
+    "symbol": "buildDateRangeFilter",
+    "classification": "B",
+    "evidence": "Referenced in 1 prod file(s): backend/src/utils/controllerHelpers.ts:54",
+    "recommendation": "Keep \u2014 dynamically or statically used in production",
+    "blame_date": "2026-05-22"
+  },
+  {
+    "file_line": "backend/src/utils/migrationHelpers.ts:47",
+    "symbol": "applyCrudPolicies",
+    "classification": "A",
+    "evidence": "Defined in backend/src/utils/migrationHelpers.ts:47 with no references. Blame date: 2026-05-26.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-26"
+  },
+  {
+    "file_line": "backend/src/utils/migrationHelpers.ts:60",
+    "symbol": "runMigrationWithCleanup",
+    "classification": "A",
+    "evidence": "Defined in backend/src/utils/migrationHelpers.ts:60 with no references. Blame date: 2026-05-26.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-26"
+  },
+  {
+    "file_line": "backend/src/utils/migrationHelpers.ts:41",
+    "symbol": "TABLE_CATEGORIES",
+    "classification": "A",
+    "evidence": "Defined in backend/src/utils/migrationHelpers.ts:41 with no references. Blame date: 2026-05-26.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-26"
+  },
+  {
+    "file_line": "backend/src/config/db.ts:56",
+    "symbol": "getPrisma",
+    "classification": "A",
+    "evidence": "Defined in backend/src/config/db.ts:56 with no references. Blame date: 2026-05-11.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "backend/src/config/redis.ts:148",
+    "symbol": "isRedisConfigured",
+    "classification": "C",
+    "evidence": "Referenced only in 55 test file(s): backend/src/__tests__/services/advisor.service.test.ts:68, backend/src/__tests__/services/aiSystem.service.test.ts:68, backend/src/__tests__/services/alert.service.test.ts:68",
+    "recommendation": "Remove from test files and delete, or keep if test-only code is desired",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "file_line": "backend/prisma.config.ts:1",
+    "symbol": "Default Export of prisma.config.ts",
+    "classification": "B",
+    "evidence": "File backend/prisma.config.ts exists. Imported in: backend/Dockerfile:59:COPY --chown=sentra:sentra --chmod=755 --from=builder /app/prisma.config.ts ./, backend/package-lock.json:23:        \"@prisma/config\": \"^7.7.0\",",
+    "recommendation": "Keep",
+    "blame_date": "2026-05-18"
+  },
+  {
+    "file_line": "backend/src/routes/risk.routes.ts:1",
+    "symbol": "Default Export of risk.routes.ts",
+    "classification": "A",
+    "evidence": "File backend/src/routes/risk.routes.ts exists. No imports found in production files.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  }
+]

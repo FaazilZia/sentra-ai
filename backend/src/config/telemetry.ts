@@ -30,67 +30,6 @@ export const httpRequestDuration = new Histogram({
   registers: [metricsRegistry],
 });
 
-export const authFailuresTotal = new Counter({
-  name: 'auth_failures_total',
-  help: 'Total number of authentication failures',
-  labelNames: ['reason', 'ip'],
-  registers: [metricsRegistry],
-});
-
-export const activeSessionsGauge = new Gauge({
-  name: 'active_sessions_total',
-  help: 'Number of currently active user sessions',
-  registers: [metricsRegistry],
-});
-
-export const queueJobsTotal = new Counter({
-  name: 'queue_jobs_total',
-  help: 'Total queue jobs processed',
-  labelNames: ['queue_name', 'status'],
-  registers: [metricsRegistry],
-});
-
-export const policyViolationsTotal = new Counter({
-  name: 'policy_violations_total',
-  help: 'Total AI policy violations detected',
-  labelNames: ['organization_id', 'severity'],
-  registers: [metricsRegistry],
-});
-
-export const driftAlertsTotal = new Counter({
-  name: 'drift_alerts_total',
-  help: 'Total drift alerts triggered',
-  labelNames: ['organization_id', 'severity'],
-  registers: [metricsRegistry],
-});
-
-export const governanceScoreGauge = new Gauge({
-  name: 'governance_score',
-  help: 'Current governance score per organization (0-100)',
-  labelNames: ['organization_id'],
-  registers: [metricsRegistry],
-});
-
-export const evaluationRunsTotal = new Counter({
-  name: 'evaluation_runs_total',
-  help: 'Total AI evaluation runs executed',
-  labelNames: ['organization_id', 'status', 'run_type'],
-  registers: [metricsRegistry],
-});
-
-export const auditLogEntriesTotal = new Counter({
-  name: 'audit_log_entries_total',
-  help: 'Total audit log entries written',
-  labelNames: ['organization_id', 'event_type', 'severity'],
-  registers: [metricsRegistry],
-});
-
-export const mfaAttempts = new Counter({
-  name: 'mfa_attempts_total',
-  help: 'MFA verification attempts',
-  labelNames: ['outcome'],
-  registers: [metricsRegistry],
-});
 
 // ─────────────────────────────────────────────
 // HTTP Instrumentation Middleware

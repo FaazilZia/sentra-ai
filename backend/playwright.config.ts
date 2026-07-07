@@ -9,7 +9,7 @@ export default defineConfig({
   },
   fullyParallel: true,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: 1,
   reporter: 'html',
   use: {
     actionTimeout: 0,

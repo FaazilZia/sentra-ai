@@ -1,0 +1,1181 @@
+[
+  {
+    "symbol": "fetchPolicyTemplates",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:308",
+    "classification": "D",
+    "evidence": "Comment indicates stub/future: 'POLICY ENDPOINTS (Future Node implementation)' (defined at frontend/src/lib/api.ts:308)",
+    "recommendation": "Needs Faazil's call",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "duplicatePolicyTemplate",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:312",
+    "classification": "D",
+    "evidence": "Comment indicates stub/future: 'POLICY ENDPOINTS (Future Node implementation)' (defined at frontend/src/lib/api.ts:312)",
+    "recommendation": "Needs Faazil's call",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "fetchPolicyById",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:322",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:322, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "createPolicy",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:333",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:333, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "fetchPolicyVersions",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:340",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:340, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "fetchPolicyHealth",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:350",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:350, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "fetchViolations",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:357",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:357, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "updateIncidentStatus",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:365",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:365, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "fetchAIActivityLogs",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:391",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:391, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "replayAction",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:395",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:395, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "createAIAgent",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:409",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:409, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "deleteAIAgent",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:416",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:416, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "fetchAuditProof",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:430",
+    "classification": "D",
+    "evidence": "Comment indicates stub/future: 'We'll implement this on the backend soon, for now it might 404' (defined at frontend/src/lib/api.ts:430)",
+    "recommendation": "Needs Faazil's call",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "fetchFixTasks",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:450",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:450, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "createFixTasks",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:454",
+    "classification": "C",
+    "evidence": "Referenced only in tests at: backend/src/tests/compliance.service.test.ts:211, backend/src/tests/compliance.service.test.ts:213, backend/src/tests/compliance.service.test.ts:227",
+    "recommendation": "Remove tests and delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "uploadEvidence",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:461",
+    "classification": "C",
+    "evidence": "Referenced only in tests at: backend/src/tests/wave1.services.test.ts:241, backend/src/tests/wave1.services.test.ts:245",
+    "recommendation": "Remove tests and delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "reEvaluateCompliance",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:468",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:468, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "fetchComplianceHistory",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:484",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:484, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "fetchAuditLogs",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:497",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:497, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "createAlertRule",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:511",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:511, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "fetchAlertRules",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:518",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:518, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "fetchAlerts",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:532",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:532, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "markAlertRead",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:536",
+    "classification": "C",
+    "evidence": "Referenced only in tests at: backend/src/tests/compliance.service.test.ts:254, backend/src/tests/compliance.service.test.ts:273, backend/src/tests/compliance.service.test.ts:277",
+    "recommendation": "Remove tests and delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "exportComplianceReport",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:543",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:543, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "sendAIRequest",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:585",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:585, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "fetchGuardrailLogs",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:592",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:592, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "exportGuardrailLogs",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:597",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:597, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "fetchGuardrailOverrides",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:626",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:626, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "requestGuardrailOverride",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:630",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:630, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "approveGuardrailOverride",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:637",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:637, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "fetchSecurityScore",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:651",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:651, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "askAI",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:655",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:655, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "chatWithCopilot",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:663",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:663, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "fetchBackendHealth",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:673",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:673, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "createApiKey",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:686",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:686, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "deleteApiKey",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:693",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:693, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "triggerScan",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:697",
+    "classification": "B",
+    "evidence": "Referenced in production code at: frontend/src/pages/IncidentManagement.tsx:131, frontend/src/pages/IncidentManagement.tsx:272",
+    "recommendation": "Keep \u2014 in use",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "fetchScanStatus",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:704",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:704, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "fetchConnectors",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:708",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:708, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "fetchScans",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:716",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:716, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "fetchRiskData",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:722",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:722, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "fetchExecutiveMetrics",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:726",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:726, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "fetchTopAttackPatterns",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:730",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:730, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "fetchRiskTrend",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:734",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:734, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "createConnector",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:738",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:738, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "fetchExecutiveOverview",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:761",
+    "classification": "D",
+    "evidence": "Comment indicates stub/future: 'CONSENT ENDPOINTS (stub \u2014 pending Node.js migration)' (defined at frontend/src/lib/api.ts:761)",
+    "recommendation": "Needs Faazil's call",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "updateAlertSettings",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:791",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:791, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "testAlert",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:798",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:798, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "fetchAgentRiskScore",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:1057",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:1057, last modified on 2026-05-24)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-24"
+  },
+  {
+    "symbol": "uploadEuAiActEvidence",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:1167",
+    "classification": "D",
+    "evidence": "Comment indicates stub/future: 'return apiRequest<any>(`/compliance/eu-ai-act/controls/${controlCode}/implementation`, {' (defined at frontend/src/lib/api.ts:1167)",
+    "recommendation": "Needs Faazil's call",
+    "blame_date": "2026-05-25"
+  },
+  {
+    "symbol": "fetchLifecycleInfo",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:1362",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:1362, last modified on 2026-05-26)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-26"
+  },
+  {
+    "symbol": "transitionModelStage",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:1366",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:1366, last modified on 2026-05-26)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-26"
+  },
+  {
+    "symbol": "fetchFriaAssessments",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:854",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:854, last modified on 2026-05-27)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-27"
+  },
+  {
+    "symbol": "fetchFriaAssessment",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:855",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:855, last modified on 2026-05-27)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-27"
+  },
+  {
+    "symbol": "createFriaAssessment",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/api.ts:856",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/api.ts:856, last modified on 2026-05-27)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-27"
+  },
+  {
+    "symbol": "AuditSnapshot",
+    "category": "mapped",
+    "file_line": "frontend/src/components/executive/AuditSnapshot.tsx:13",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/components/executive/AuditSnapshot.tsx:13, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "GlobalControlPanel",
+    "category": "mapped",
+    "file_line": "frontend/src/components/executive/GlobalControlPanel.tsx:11",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/components/executive/GlobalControlPanel.tsx:11, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "SystemModeIndicator",
+    "category": "mapped",
+    "file_line": "frontend/src/components/executive/SystemModeIndicator.tsx:8",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/components/executive/SystemModeIndicator.tsx:8, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "ActiveRiskEvents",
+    "category": "mapped",
+    "file_line": "frontend/src/components/risk/ActiveRiskEvents.tsx:29",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/components/risk/ActiveRiskEvents.tsx:29, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "RiskExposurePanel",
+    "category": "mapped",
+    "file_line": "frontend/src/components/risk/RiskExposurePanel.tsx:9",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/components/risk/RiskExposurePanel.tsx:9, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "RiskHeatmap",
+    "category": "mapped",
+    "file_line": "frontend/src/components/risk/RiskHeatmap.tsx:31",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/components/risk/RiskHeatmap.tsx:31, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "RiskOwnership",
+    "category": "mapped",
+    "file_line": "frontend/src/components/risk/RiskOwnership.tsx:8",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/components/risk/RiskOwnership.tsx:8, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "RiskPosture",
+    "category": "mapped",
+    "file_line": "frontend/src/components/risk/RiskPosture.tsx:12",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/components/risk/RiskPosture.tsx:12, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "GaugeChart",
+    "category": "mapped",
+    "file_line": "frontend/src/components/shared/GaugeChart.tsx:11",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/components/shared/GaugeChart.tsx:11, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "ProgressBar",
+    "category": "mapped",
+    "file_line": "frontend/src/components/shared/ProgressBar.tsx:11",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/components/shared/ProgressBar.tsx:11, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "AnimatedCounter",
+    "category": "mapped",
+    "file_line": "frontend/src/components/ui/AnimatedCounter.tsx:8",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/components/ui/AnimatedCounter.tsx:8, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "AtomBackground",
+    "category": "mapped",
+    "file_line": "frontend/src/components/ui/AtomBackground.tsx:18",
+    "classification": "B",
+    "evidence": "Referenced in production code at: frontend/src/components/ui/AnimatedBackground.tsx:71, frontend/src/components/ui/AnimatedBackground.tsx:129",
+    "recommendation": "Keep \u2014 in use",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "BackgroundLayer",
+    "category": "mapped",
+    "file_line": "frontend/src/components/ui/BackgroundLayer.tsx:3",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/components/ui/BackgroundLayer.tsx:3, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "DataChartEmpty",
+    "category": "mapped",
+    "file_line": "frontend/src/components/ui/DataChartEmpty.tsx:8",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/components/ui/DataChartEmpty.tsx:8, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "EmptyStateList",
+    "category": "mapped",
+    "file_line": "frontend/src/components/ui/EmptyStateList.tsx:13",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/components/ui/EmptyStateList.tsx:13, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "FloatingMolecules",
+    "category": "mapped",
+    "file_line": "frontend/src/components/ui/FloatingMolecules.tsx:105",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/components/ui/FloatingMolecules.tsx:105, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "FloatingParticles",
+    "category": "mapped",
+    "file_line": "frontend/src/components/ui/FloatingParticles.tsx:23",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/components/ui/FloatingParticles.tsx:23, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "GooeyNav",
+    "category": "mapped",
+    "file_line": "frontend/src/components/ui/GooeyNav.tsx:26",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/components/ui/GooeyNav.tsx:26, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "NeuralBackground",
+    "category": "mapped",
+    "file_line": "frontend/src/components/ui/NeuralBackground.tsx:33",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/components/ui/NeuralBackground.tsx:33, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "NeuralCore",
+    "category": "mapped",
+    "file_line": "frontend/src/components/ui/NeuralCore.tsx:5",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/components/ui/NeuralCore.tsx:5, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "SidebarItem",
+    "category": "mapped",
+    "file_line": "frontend/src/components/ui/SidebarItem.tsx:15",
+    "classification": "B",
+    "evidence": "Referenced in production code at: frontend/src/components/layout/Sidebar.tsx:40, frontend/src/components/layout/Sidebar.tsx:44, frontend/src/components/layout/Sidebar.tsx:49",
+    "recommendation": "Keep \u2014 in use",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "StatCard",
+    "category": "mapped",
+    "file_line": "frontend/src/components/ui/StatCard.tsx:36",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/components/ui/StatCard.tsx:36, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "useDashboardData",
+    "category": "mapped",
+    "file_line": "frontend/src/hooks/useDashboardData.ts:56",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/hooks/useDashboardData.ts:56, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "use3DTilt",
+    "category": "mapped",
+    "file_line": "frontend/src/hooks/use3DTilt.ts:4",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/hooks/use3DTilt.ts:4, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "hasPermission",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/permissions.ts:69",
+    "classification": "B",
+    "evidence": "Referenced in production code at: frontend/src/components/rbac/PermissionGate.tsx:67, frontend/src/components/rbac/PermissionGate.tsx:68",
+    "recommendation": "Keep \u2014 in use",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "symbol": "MODAL_INPUT_CLASS",
+    "category": "mapped",
+    "file_line": "frontend/src/lib/governanceUtils.ts:36",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at frontend/src/lib/governanceUtils.ts:36, last modified on 2026-05-26)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-26"
+  },
+  {
+    "symbol": "authFailuresTotal",
+    "category": "mapped",
+    "file_line": "backend/src/config/telemetry.ts:33",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/config/telemetry.ts:33, last modified on 2026-05-21)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "symbol": "activeSessionsGauge",
+    "category": "mapped",
+    "file_line": "backend/src/config/telemetry.ts:40",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/config/telemetry.ts:40, last modified on 2026-05-21)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "symbol": "queueJobsTotal",
+    "category": "mapped",
+    "file_line": "backend/src/config/telemetry.ts:46",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/config/telemetry.ts:46, last modified on 2026-05-21)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "symbol": "policyViolationsTotal",
+    "category": "mapped",
+    "file_line": "backend/src/config/telemetry.ts:53",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/config/telemetry.ts:53, last modified on 2026-05-21)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "symbol": "driftAlertsTotal",
+    "category": "mapped",
+    "file_line": "backend/src/config/telemetry.ts:60",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/config/telemetry.ts:60, last modified on 2026-05-21)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "symbol": "governanceScoreGauge",
+    "category": "mapped",
+    "file_line": "backend/src/config/telemetry.ts:67",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/config/telemetry.ts:67, last modified on 2026-05-21)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "symbol": "evaluationRunsTotal",
+    "category": "mapped",
+    "file_line": "backend/src/config/telemetry.ts:74",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/config/telemetry.ts:74, last modified on 2026-05-21)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "symbol": "auditLogEntriesTotal",
+    "category": "mapped",
+    "file_line": "backend/src/config/telemetry.ts:81",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/config/telemetry.ts:81, last modified on 2026-05-21)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "symbol": "mfaAttempts",
+    "category": "mapped",
+    "file_line": "backend/src/config/telemetry.ts:88",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/config/telemetry.ts:88, last modified on 2026-05-21)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "symbol": "idempotencyMiddleware",
+    "category": "mapped",
+    "file_line": "backend/src/middleware/idempotency.middleware.ts:6",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/middleware/idempotency.middleware.ts:6, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "validateRequest",
+    "category": "mapped",
+    "file_line": "backend/src/middleware/security.middleware.ts:109",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/middleware/security.middleware.ts:109, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "resolveWorkspace",
+    "category": "mapped",
+    "file_line": "backend/src/middleware/tenant.middleware.ts:35",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/middleware/tenant.middleware.ts:35, last modified on 2026-05-21)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "symbol": "requireTenantIsolation",
+    "category": "mapped",
+    "file_line": "backend/src/middleware/tenant.middleware.ts:72",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/middleware/tenant.middleware.ts:72, last modified on 2026-05-21)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "symbol": "enforceIpAllowlist",
+    "category": "mapped",
+    "file_line": "backend/src/middleware/tenant.middleware.ts:95",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/middleware/tenant.middleware.ts:95, last modified on 2026-05-21)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "symbol": "MonitoringService",
+    "category": "mapped",
+    "file_line": "backend/src/services/monitoring.service.ts:5",
+    "classification": "C",
+    "evidence": "Referenced only in tests at: backend/src/__tests__/services/monitoring.service.test.ts:1, backend/src/__tests__/services/monitoring.service.test.ts:82, backend/src/__tests__/services/monitoring.service.test.ts:84",
+    "recommendation": "Remove tests and delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "OutcomeService",
+    "category": "mapped",
+    "file_line": "backend/src/services/outcome.service.ts:5",
+    "classification": "C",
+    "evidence": "Referenced only in tests at: backend/src/__tests__/services/outcome.service.test.ts:1, backend/src/__tests__/services/outcome.service.test.ts:82, backend/src/__tests__/services/outcome.service.test.ts:84",
+    "recommendation": "Remove tests and delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "SessionService",
+    "category": "mapped",
+    "file_line": "backend/src/services/session.service.ts:10",
+    "classification": "C",
+    "evidence": "Referenced only in tests at: backend/src/__tests__/services/session.service.test.ts:1, backend/src/__tests__/services/session.service.test.ts:82, backend/src/__tests__/services/session.service.test.ts:84",
+    "recommendation": "Remove tests and delete",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "symbol": "checkPermission",
+    "category": "mapped",
+    "file_line": "backend/src/services/policy.service.ts:10",
+    "classification": "C",
+    "evidence": "Referenced only in tests at: backend/src/__tests__/services/policy.service.test.ts:1, backend/src/__tests__/services/policy.service.test.ts:82, backend/src/__tests__/services/policy.service.test.ts:84",
+    "recommendation": "Remove tests and delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "resolveTenantContext",
+    "category": "mapped",
+    "file_line": "backend/src/services/tenant.service.ts:23",
+    "classification": "C",
+    "evidence": "Referenced only in tests at: backend/src/__tests__/services/tenant.service.test.ts:89, backend/src/__tests__/services/tenant.service.test.ts:95, backend/src/__tests__/services/tenant.service.test.ts:97",
+    "recommendation": "Remove tests and delete",
+    "blame_date": "2026-05-21"
+  },
+  {
+    "symbol": "triggerAnomalyScan",
+    "category": "mapped",
+    "file_line": "backend/src/services/queue.service.ts:564",
+    "classification": "C",
+    "evidence": "Referenced only in tests at: backend/src/__tests__/services/queue.service.test.ts:289, backend/src/__tests__/services/queue.service.test.ts:295, backend/src/__tests__/services/queue.service.test.ts:297",
+    "recommendation": "Remove tests and delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "GDriveGovernanceConnector",
+    "category": "mapped",
+    "file_line": "backend/src/workers/gdrive.worker.ts:9",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/workers/gdrive.worker.ts:9, last modified on 2026-05-27)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-27"
+  },
+  {
+    "symbol": "LangChainGovernanceHandler",
+    "category": "mapped",
+    "file_line": "backend/src/workers/langchain.worker.ts:7",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/workers/langchain.worker.ts:7, last modified on 2026-05-23)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-23"
+  },
+  {
+    "symbol": "wrapOpenAIChatCompletion",
+    "category": "mapped",
+    "file_line": "backend/src/workers/openai.worker.ts:6",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/workers/openai.worker.ts:6, last modified on 2026-05-23)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-23"
+  },
+  {
+    "symbol": "checkActionSchema",
+    "category": "mapped",
+    "file_line": "backend/src/validations/ai.validation.ts:3",
+    "classification": "B",
+    "evidence": "Referenced in production code at: backend/src/controllers/ai.controller.ts:7, backend/src/routes/ai.routes.ts:5, backend/src/routes/ai.routes.ts:13",
+    "recommendation": "Keep \u2014 in use",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "processAIRequestSchema",
+    "category": "mapped",
+    "file_line": "backend/src/validations/guardrail.validation.ts:3",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/validations/guardrail.validation.ts:3, last modified on 2026-05-12)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-12"
+  },
+  {
+    "symbol": "processDemoRequestSchema",
+    "category": "mapped",
+    "file_line": "backend/src/validations/guardrail.validation.ts:14",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/validations/guardrail.validation.ts:14, last modified on 2026-05-12)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-12"
+  },
+  {
+    "symbol": "postRequestOverrideSchema",
+    "category": "mapped",
+    "file_line": "backend/src/validations/guardrail.validation.ts:18",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/validations/guardrail.validation.ts:18, last modified on 2026-05-12)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-12"
+  },
+  {
+    "symbol": "postApproveOverrideSchema",
+    "category": "mapped",
+    "file_line": "backend/src/validations/guardrail.validation.ts:23",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/validations/guardrail.validation.ts:23, last modified on 2026-05-12)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-12"
+  },
+  {
+    "symbol": "agentSchema",
+    "category": "mapped",
+    "file_line": "backend/src/validations/inventory.validation.ts:3",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/validations/inventory.validation.ts:3, last modified on 2026-05-12)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-12"
+  },
+  {
+    "symbol": "updateAlertSettingsSchema",
+    "category": "mapped",
+    "file_line": "backend/src/validations/organization.validation.ts:3",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/validations/organization.validation.ts:3, last modified on 2026-05-12)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-12"
+  },
+  {
+    "symbol": "createAlertRuleSchema",
+    "category": "mapped",
+    "file_line": "backend/src/validations/alert.validation.ts:3",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/validations/alert.validation.ts:3, last modified on 2026-05-12)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-12"
+  },
+  {
+    "symbol": "postFixTasksSchema",
+    "category": "mapped",
+    "file_line": "backend/src/validations/compliance.validation.ts:3",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/validations/compliance.validation.ts:3, last modified on 2026-05-12)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-12"
+  },
+  {
+    "symbol": "postEvidenceSchema",
+    "category": "mapped",
+    "file_line": "backend/src/validations/compliance.validation.ts:8",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/validations/compliance.validation.ts:8, last modified on 2026-05-12)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-12"
+  },
+  {
+    "symbol": "postReEvaluateSchema",
+    "category": "mapped",
+    "file_line": "backend/src/validations/compliance.validation.ts:15",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/validations/compliance.validation.ts:15, last modified on 2026-05-12)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-12"
+  },
+  {
+    "symbol": "postMarkAlertReadSchema",
+    "category": "mapped",
+    "file_line": "backend/src/validations/compliance.validation.ts:19",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/validations/compliance.validation.ts:19, last modified on 2026-05-12)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-12"
+  },
+  {
+    "symbol": "secureRandom",
+    "category": "mapped",
+    "file_line": "backend/src/utils/crypto.ts:3",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/utils/crypto.ts:3, last modified on 2026-05-20)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-20"
+  },
+  {
+    "symbol": "secureRandomInt",
+    "category": "mapped",
+    "file_line": "backend/src/utils/crypto.ts:6",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/utils/crypto.ts:6, last modified on 2026-05-20)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-20"
+  },
+  {
+    "symbol": "secureRandomHex",
+    "category": "mapped",
+    "file_line": "backend/src/utils/crypto.ts:9",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/utils/crypto.ts:9, last modified on 2026-05-20)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-20"
+  },
+  {
+    "symbol": "buildDateRangeFilter",
+    "category": "mapped",
+    "file_line": "backend/src/utils/controllerHelpers.ts:56",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/utils/controllerHelpers.ts:56, last modified on 2026-05-22)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-22"
+  },
+  {
+    "symbol": "applyCrudPolicies",
+    "category": "mapped",
+    "file_line": "backend/src/utils/migrationHelpers.ts:47",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/utils/migrationHelpers.ts:47, last modified on 2026-05-26)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-26"
+  },
+  {
+    "symbol": "runMigrationWithCleanup",
+    "category": "mapped",
+    "file_line": "backend/src/utils/migrationHelpers.ts:60",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/utils/migrationHelpers.ts:60, last modified on 2026-05-26)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-26"
+  },
+  {
+    "symbol": "TABLE_CATEGORIES",
+    "category": "mapped",
+    "file_line": "backend/src/utils/migrationHelpers.ts:41",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/utils/migrationHelpers.ts:41, last modified on 2026-05-26)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-26"
+  },
+  {
+    "symbol": "getPrisma",
+    "category": "mapped",
+    "file_line": "backend/src/config/db.ts:56",
+    "classification": "A",
+    "evidence": "No references found outside its defining file (defined at backend/src/config/db.ts:56, last modified on 2026-05-11)",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "isRedisConfigured",
+    "category": "mapped",
+    "file_line": "backend/src/config/redis.ts:148",
+    "classification": "C",
+    "evidence": "Referenced only in tests at: backend/src/__tests__/services/advisor.service.test.ts:68, backend/src/__tests__/services/aiSystem.service.test.ts:68, backend/src/__tests__/services/alert.service.test.ts:68",
+    "recommendation": "Remove tests and delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "emptySchema (from consent.validation)",
+    "category": "backend_validations",
+    "file_line": "backend/src/validations/consent.validation.ts:3",
+    "classification": "A",
+    "evidence": "No imports from this validation file found.",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-12"
+  },
+  {
+    "symbol": "emptySchema (from organization.validation)",
+    "category": "backend_validations",
+    "file_line": "backend/src/validations/organization.validation.ts:10",
+    "classification": "A",
+    "evidence": "No imports from this validation file found.",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-12"
+  },
+  {
+    "symbol": "emptySchema (from drift.validation)",
+    "category": "backend_validations",
+    "file_line": "backend/src/validations/drift.validation.ts:3",
+    "classification": "A",
+    "evidence": "No imports from this validation file found.",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-12"
+  },
+  {
+    "symbol": "checkActionSchema (from guardrail.validation.ts)",
+    "category": "backend_validations",
+    "file_line": "backend/src/validations/guardrail.validation.ts:8",
+    "classification": "A",
+    "evidence": "No imports from guardrail.validation.ts found for checkActionSchema.",
+    "recommendation": "Delete now",
+    "blame_date": "2026-05-12"
+  },
+  {
+    "symbol": "Default Export of risk.routes.ts",
+    "category": "backend_other",
+    "file_line": "backend/src/routes/risk.routes.ts:1",
+    "classification": "A",
+    "evidence": "No imports of risk.routes.ts found in production.",
+    "recommendation": "Delete",
+    "blame_date": "2026-05-11"
+  },
+  {
+    "symbol": "Default Export of prisma.config.ts",
+    "category": "backend_other",
+    "file_line": "backend/prisma.config.ts:1",
+    "classification": "B",
+    "evidence": "Referenced in: backend/Dockerfile:59:COPY --chown=sentra:sentra --chmod=755 --from=builder /app/prisma.config.ts ./, backend/package-lock.json:23:        \"@prisma/config\": \"^7.7.0\",",
+    "recommendation": "Keep",
+    "blame_date": "2026-05-18"
+  }
+]

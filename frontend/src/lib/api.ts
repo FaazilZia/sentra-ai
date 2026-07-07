@@ -79,37 +79,9 @@ export interface PolicyResponse {
   created_at?: string;
 }
 
-export interface BackendHealthResponse {
-  status: 'healthy' | 'unknown';
-}
 
-export interface PolicyHealthResponse {
-  status: 'healthy' | 'degraded' | 'failing';
-  evaluator?: string;
-  checks: Array<Record<string, unknown>>;
-}
 
-export interface CompanyResponse {
-  id: string;
-  name: string;
-  slug: string;
-  is_active: boolean;
-  created_at: string;
-}
 
-export interface IncidentResponse {
-  id: string;
-  agent_id: string;
-  policy_id: string | null;
-  severity: number;
-  action: string;
-  details: string;
-  status: string;
-  prompt_excerpt: string;
-  response_excerpt: string;
-  metadata: any;
-  created_at: string;
-}
 
 export interface AIAgent {
   id: string;
@@ -147,20 +119,8 @@ export interface ComplianceFeature {
 }
 
 
-export interface IncidentListResponse {
-  data: IncidentResponse[];
-}
 
 /** Unwrapped from GET /incidents/scan/status (`apiRequest` returns `data`) */
-export interface ScanStatusPayload {
-  status: 'IDLE' | 'PROCESSING' | 'SUCCESS';
-  progress: number;
-  result: {
-    incidents_detected: number;
-    sources_scanned: number;
-    timestamp: string;
-  } | null;
-}
 
 export class ApiError extends Error {
   status: number;
@@ -319,9 +279,6 @@ export function fetchPolicies(): Promise<PolicyResponse[]> {
   return apiRequest<PolicyResponse[]>('/policies');
 }
 
-export function fetchPolicyById(id: string): Promise<PolicyResponse> {
-  return apiRequest<PolicyResponse>(`/policies/${id}`);
-}
 
 export function patchPolicy(id: string, payload: Partial<PolicyResponse>): Promise<PolicyResponse> {
   return apiRequest<PolicyResponse>(`/policies/${id}`, {
@@ -330,16 +287,7 @@ export function patchPolicy(id: string, payload: Partial<PolicyResponse>): Promi
   });
 }
 
-export function createPolicy(payload: any): Promise<PolicyResponse> {
-  return apiRequest<PolicyResponse>('/policies', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
-}
 
-export function fetchPolicyVersions(policyId: string): Promise<any[]> {
-  return apiRequest<any[]>(`/policies/${policyId}/versions`);
-}
 
 export function deletePolicy(id: string): Promise<void> {
   return apiRequest<void>(`/policies/${id}`, {
@@ -347,57 +295,17 @@ export function deletePolicy(id: string): Promise<void> {
   });
 }
 
-export function fetchPolicyHealth(): Promise<any> {
-  return apiRequest<any>('/policies/health');
-}
 
 /**
  * INCIDENT ENDPOINTS
  */
-export function fetchViolations(limit: number = 50, status?: string): Promise<IncidentResponse[]> {
-  let url = `/incidents?limit=${limit}`;
-  if (status) {
-    url += `&status=${status}`;
-  }
-  return apiRequest<IncidentResponse[]>(url);
-}
 
-export function updateIncidentStatus(incidentId: string, status: string): Promise<IncidentResponse> {
-  return apiRequest<IncidentResponse>(`/incidents/${incidentId}`, {
-    method: 'PATCH',
-    body: JSON.stringify({ status }),
-  });
-}
 
-export interface AIActivityLog {
-  id: string;
-  agent_id: string;
-  action: string;
-  status: 'allowed' | 'blocked';
-  risk_score: 'low' | 'medium' | 'high';
-  reason?: string;
-  impact?: string;
-  explanation?: string;
-  confidence?: number;
-  timeline?: any;
-  compliance?: string[];
-  metadata?: any;
-  created_at: string;
-}
 
 /**
  * AI & COPILOT
  */
-export async function fetchAIActivityLogs(): Promise<AIActivityLog[]> {
-  return apiRequest<AIActivityLog[]>('/ai/logs');
-}
 
-export async function replayAction(logId: string): Promise<any> {
-  return apiRequest<any>('/ai/replay', {
-    method: 'POST',
-    body: JSON.stringify({ logId })
-  });
-}
 
 /**
  * INVENTORY
@@ -406,18 +314,7 @@ export async function fetchAIAgents(): Promise<AIAgent[]> {
   return apiRequest<AIAgent[]>('/inventory/agents');
 }
 
-export async function createAIAgent(payload: any): Promise<AIAgent> {
-  return apiRequest<AIAgent>('/inventory/agents', {
-    method: 'POST',
-    body: JSON.stringify(payload)
-  });
-}
 
-export async function deleteAIAgent(id: string): Promise<void> {
-  return apiRequest<void>(`/inventory/agents/${id}`, {
-    method: 'DELETE',
-  });
-}
 
 /**
  * COMPLIANCE
@@ -447,9 +344,6 @@ export interface ComplianceFixTask {
   }>;
 }
 
-export async function fetchFixTasks(featureId: string): Promise<ComplianceFixTask[]> {
-  return apiRequest<ComplianceFixTask[]>(`/compliance/fix-tasks/${featureId}`);
-}
 
 export async function createFixTasks(featureId: string, actionPlan: any): Promise<ComplianceFixTask[]> {
   return apiRequest<ComplianceFixTask[]>('/compliance/fix-tasks', {
@@ -465,73 +359,15 @@ export async function uploadEvidence(taskId: string, type: string, value: string
   });
 }
 
-export async function reEvaluateCompliance(featureId: string): Promise<any> {
-  return apiRequest<any>('/compliance/re-evaluate', {
-    method: 'POST',
-    body: JSON.stringify({ featureId })
-  });
-}
 
-export interface ComplianceSnapshot {
-  id: string;
-  gdpr_score: number;
-  dpdp_score: number;
-  hipaa_score: number;
-  risk_level: string;
-  created_at: string;
-}
 
-export async function fetchComplianceHistory(featureId: string): Promise<ComplianceSnapshot[]> {
-  return apiRequest<ComplianceSnapshot[]>(`/compliance/history/${featureId}`);
-}
 
-export interface AuditLog {
-  id: string;
-  user_id: string;
-  action: string;
-  feature_id: string | null;
-  metadata: any;
-  timestamp: string;
-}
 
-export async function fetchAuditLogs(featureId?: string): Promise<AuditLog[]> {
-  const query = featureId ? `?featureId=${featureId}` : '';
-  return apiRequest<AuditLog[]>(`/compliance/audit-logs${query}`);
-}
 
-export interface AlertRule {
-  id: string;
-  organizationId: string;
-  threshold_count: number;
-  time_window_minutes: number;
-  webhook_url: string;
-  created_at: string;
-}
 
-export async function createAlertRule(data: { threshold_count: number, time_window_minutes: number, webhook_url: string }): Promise<AlertRule> {
-  return apiRequest<AlertRule>('/alerts/rules', {
-    method: 'POST',
-    body: JSON.stringify(data)
-  });
-}
 
-export async function fetchAlertRules(): Promise<AlertRule[]> {
-  return apiRequest<AlertRule[]>('/alerts/rules');
-}
 
-export interface Alert {
-  id: string;
-  feature_id: string | null;
-  type: string;
-  message: string;
-  severity: string;
-  is_read: boolean;
-  created_at: string;
-}
 
-export async function fetchAlerts(): Promise<Alert[]> {
-  return apiRequest<Alert[]>('/compliance/alerts');
-}
 
 export async function markAlertRead(alertId: string): Promise<void> {
   return apiRequest<void>('/compliance/alerts/mark-read', {
@@ -540,36 +376,8 @@ export async function markAlertRead(alertId: string): Promise<void> {
   });
 }
 
-export async function exportComplianceReport(featureId: string): Promise<Blob> {
-  const response = await fetch(`${apiBaseUrl}/compliance/export/${featureId}`, {
-    credentials: 'include'
-  });
-  if (!response.ok) throw new Error('Failed to export report');
-  return response.blob();
-}
 
-export interface InterceptionLog {
-  id: string;
-  user_id: string;
-  input_text: string;
-  output_text: string | null;
-  decision: 'ALLOW' | 'MODIFY' | 'BLOCK';
-  confidence: 'High' | 'Medium' | 'Low';
-  override_status: 'none' | 'pending' | 'approved' | 'rejected';
-  reason: string | null;
-  policy_triggered: string | null;
-  timestamp: string;
-}
 
-export interface GuardrailOverride {
-  id: string;
-  log_id: string;
-  requested_by: string;
-  approved_by: string | null;
-  status: 'pending' | 'approved' | 'rejected';
-  reason: string;
-  timestamp: string;
-}
 
 export interface GuardrailMetrics {
   total: number;
@@ -582,64 +390,13 @@ export interface GuardrailMetrics {
 }
 
 
-export async function sendAIRequest(prompt: string): Promise<any> {
-  return apiRequest<any>('/guardrails/proxy', {
-    method: 'POST',
-    body: JSON.stringify({ prompt })
-  });
-}
 
-export async function fetchGuardrailLogs(params?: any): Promise<{ data: InterceptionLog[]; meta: any }> {
-  const query = new URLSearchParams(params || {}).toString();
-  return apiRequest<{ data: InterceptionLog[]; meta: any }>(`/guardrails/logs${query ? `?${query}` : ''}`);
-}
 
-export async function exportGuardrailLogs(format: 'csv' | 'json' = 'csv', params?: any) {
-  const query = new URLSearchParams({ ...params, format }).toString();
-  
-  try {
-    const response = await fetch(`${apiBaseUrl}/guardrails/logs/export?${query}`, {
-      credentials: 'include'
-    });
-
-    if (!response.ok) throw new Error('Export failed');
-
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `audit-logs-${new Date().getTime()}.${format}`;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
-  } catch (err) {
-    console.error('Audit Log Export Error:', err);
-    alert('Failed to export logs. Please try again.');
-  }
-}
 
 export async function fetchGuardrailMetrics(): Promise<GuardrailMetrics> {
   return apiRequest<GuardrailMetrics>('/guardrails/metrics');
 }
 
-export async function fetchGuardrailOverrides(): Promise<GuardrailOverride[]> {
-  return apiRequest<GuardrailOverride[]>('/guardrails/overrides');
-}
-
-export async function requestGuardrailOverride(logId: string, reason: string): Promise<any> {
-  return apiRequest<any>('/guardrails/override/request', {
-    method: 'POST',
-    body: JSON.stringify({ logId, reason })
-  });
-}
-
-export async function approveGuardrailOverride(overrideId: string, status: 'approved' | 'rejected'): Promise<any> {
-  return apiRequest<any>('/guardrails/override/approve', {
-    method: 'POST',
-    body: JSON.stringify({ overrideId, status })
-  });
-}
 
 
 
@@ -648,31 +405,14 @@ export async function approveGuardrailOverride(overrideId: string, status: 'appr
 
 
 
-export async function fetchSecurityScore(): Promise<{ score: number }> {
-  return apiRequest<{ score: number }>('/ai/security-score');
-}
 
-export async function askAI(prompt: string): Promise<string> {
-  const data = await apiRequest<{ response: string }>('/ai/chat', {
-    method: 'POST',
-    body: JSON.stringify({ message: prompt })
-  });
-  return data.response;
-}
 
-export async function chatWithCopilot(message: string): Promise<{ response: string }> {
-  return apiRequest<{ response: string }>('/ai/chat', {
-    method: 'POST',
-    body: JSON.stringify({ message })
-  });
-}
+
+
 
 /**
  * HEALTH CHECKS
  */
-export function fetchBackendHealth(): Promise<BackendHealthResponse> {
-  return apiRequest<BackendHealthResponse>('/health');
-}
 
 /**
  * NOTE: For connectors and API keys, we point them to the same routes.
@@ -683,63 +423,28 @@ export function fetchApiKeys(): Promise<any[]> {
   return apiRequest<any[]>('/admin/api-keys');
 }
 
-export function createApiKey(name: string): Promise<any> {
-  return apiRequest<any>('/admin/api-keys', {
-    method: 'POST',
-    body: JSON.stringify({ name }),
-  });
-}
 
-export function deleteApiKey(keyId: string): Promise<void> {
-  return apiRequest<void>(`/admin/api-keys/${keyId}`, { method: 'DELETE' });
-}
 
-export async function triggerScan(): Promise<{ message: string }> {
-  return apiRequest<{ message: string }>('/incidents/scan', {
-    method: 'POST',
-    body: JSON.stringify({}),
-  });
-}
 
-export async function fetchScanStatus(): Promise<ScanStatusPayload> {
-  return apiRequest<ScanStatusPayload>('/incidents/scan/status');
-}
 
-export async function fetchConnectors(): Promise<any> {
-  return apiRequest<any>('/connectors', { method: 'GET' });
-}
 
 export async function fetchDashboardStats(): Promise<any> {
   return apiRequest<any>('/ai/dashboard-stats');
 }
 
-export async function fetchScans(): Promise<{ count: number }> {
-  // Map to intelligence metrics for now
-  const metrics = await apiRequest<any>('/intelligence/metrics');
-  return { count: metrics.totalActions || 0 };
-}
 
-export async function fetchRiskData(): Promise<any> {
-  return apiRequest<any>('/risk');
-}
 
-export async function fetchExecutiveMetrics(): Promise<any> {
-  return apiRequest<any>('/intelligence/metrics');
-}
 
-export async function fetchTopAttackPatterns(): Promise<any[]> {
-  return apiRequest<any[]>('/intelligence/patterns');
-}
 
-export async function fetchRiskTrend(days: number = 7): Promise<any[]> {
-  return apiRequest<any[]>(`/intelligence/trend?days=${days}`);
-}
 
-export async function createConnector(payload: any): Promise<any> {
-  return apiRequest<any>('/connectors', {
-    method: 'POST',
-    body: JSON.stringify(payload)
-  });
+
+export interface AuditLog {
+  id: string;
+  user_id: string;
+  action: string;
+  feature_id: string | null;
+  metadata: any;
+  timestamp: string;
 }
 
 export interface ExecutiveOverview {
@@ -788,16 +493,7 @@ export async function withdrawConsent(): Promise<void> {
 /**
  * ALERT SETTINGS
  */
-export async function updateAlertSettings(payload: { alertEmail?: string; slackWebhookUrl?: string }): Promise<any> {
-  return apiRequest<any>('/organizations/alert-settings', {
-    method: 'PATCH',
-    body: JSON.stringify(payload)
-  });
-}
 
-export async function testAlert(): Promise<any> {
-  return apiRequest<any>('/organizations/test-alert', { method: 'POST' });
-}
 
 export async function rotateApiKey(): Promise<{ api_key: string }> {
   return apiRequest<{ api_key: string }>('/api-keys/rotate', { method: 'POST' });
@@ -851,10 +547,6 @@ export async function resolveDriftAlert(id: string): Promise<DriftAlert> {
   return apiRequest<DriftAlert>(`/drift/alerts/${id}/resolve`, { method: 'PATCH' });
 }
 
-export const fetchFriaAssessments = () => apiRequest<any>('/fria/assessments');
-export const fetchFriaAssessment = (id: string) => apiRequest<any>(`/fria/assessments/${id}`);
-export const createFriaAssessment = (aiSystemId: string) =>
-  apiRequest<any>('/fria/assessments', { method: 'POST', body: JSON.stringify({ aiSystemId }) });
 
 /**
  * SLACK INTEGRATION ENDPOINTS
@@ -1009,20 +701,6 @@ export interface RiskPortfolioResponse {
   }>;
 }
 
-export interface AgentRiskScoreResponse {
-  current: {
-    composite: number;
-    likelihood: number;
-    impact: number;
-    lastUpdated: string;
-  };
-  history: Array<{
-    date: string;
-    composite?: number;
-    likelihood?: number;
-    impact?: number;
-  }>;
-}
 
 export interface ShareLink {
   id: string;
@@ -1054,9 +732,6 @@ export async function fetchRiskPortfolio(): Promise<RiskPortfolioResponse> {
   return apiRequest<RiskPortfolioResponse>('/risk/portfolio');
 }
 
-export async function fetchAgentRiskScore(agentId: string): Promise<AgentRiskScoreResponse> {
-  return apiRequest<AgentRiskScoreResponse>(`/risk/agent/${agentId}/score`);
-}
 
 export async function updateAgentRiskScore(
   agentId: string,
@@ -1344,35 +1019,9 @@ export async function linkDatasetToSystem(id: string, aiSystemId: string | null)
 /**
  * MODEL LIFECYCLE ENDPOINTS
  */
-export interface LifecycleEvent {
-  id: string;
-  ai_system_id: string;
-  stage: string;
-  notes?: string | null;
-  changed_by: string;
-  effective_date: string;
-  created_at: string;
-}
 
-export interface LifecycleInfo {
-  currentStage: string;
-  history: LifecycleEvent[];
-}
 
-export async function fetchLifecycleInfo(aiSystemId: string): Promise<LifecycleInfo> {
-  return apiRequest<LifecycleInfo>(`/model-lifecycle/${aiSystemId}`);
-}
 
-export async function transitionModelStage(
-  aiSystemId: string,
-  stage: string,
-  notes?: string
-): Promise<any> {
-  return apiRequest<any>(`/model-lifecycle/${aiSystemId}/transition`, {
-    method: 'POST',
-    body: JSON.stringify({ stage, notes })
-  });
-}
 
 /**
  * TRAINING REGISTER ENDPOINTS

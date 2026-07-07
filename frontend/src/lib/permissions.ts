@@ -66,8 +66,3 @@ export const PERMISSION_MATRIX: Record<string, string[]> = {
   ],
 };
 
-export function hasPermission(role: string, resource: string, action: string): boolean {
-  const perms = PERMISSION_MATRIX[role] || [];
-  if (perms.includes('*')) return true;
-  return perms.includes(`${resource}:${action}`) || perms.includes(`${resource}:*`);
-}

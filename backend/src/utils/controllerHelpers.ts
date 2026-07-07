@@ -48,23 +48,3 @@ export const getOrgId = (req: any): string => {
   }
   return String(orgId);
 };
-
-/**
- * 4. Date range filtering - repeated date query building:
- * buildDateRangeFilter(query) helper
- */
-export const buildDateRangeFilter = (query: any, fieldName: string = 'created_at') => {
-  const from = query.fromDate || query.startDate || query.from;
-  const to = query.toDate || query.endDate || query.to;
-  
-  if (!from && !to) return undefined;
-  
-  const filter: any = {};
-  if (from) {
-    filter.gte = new Date(from as string);
-  }
-  if (to) {
-    filter.lte = new Date(to as string);
-  }
-  return { [fieldName]: filter };
-};
