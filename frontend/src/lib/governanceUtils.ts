@@ -32,5 +32,3 @@ export const SEARCH_INPUT_CLASS = 'w-full bg-[#111827]/60 border border-gray-800
 /** Common filter select class string used across governance pages */
 export const SELECT_FILTER_CLASS = 'bg-[#111827]/60 border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500';
 
-/** Common modal form input class string */
-export const MODAL_INPUT_CLASS = 'bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 text-xs';

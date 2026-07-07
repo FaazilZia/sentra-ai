@@ -49,16 +49,6 @@ export const initializePrisma = async () => {
   }
 };
 
-/**
- * Fail-Safe Prisma Getter
- * Always ensures initialization before access.
- */
-export const getPrisma = async (): Promise<PrismaClient> => {
-  if (!prismaContainer.instance) {
-    return await initializePrisma();
-  }
-  return prismaContainer.instance;
-};
 
 // Default export for backward compatibility
 // Uses a proxy to ensure prisma is initialized before access

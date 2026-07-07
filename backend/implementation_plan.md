@@ -1,6 +1,6 @@
 # Real-Time Testing Suite Implementation Plan
 
-This plan details the creation of a comprehensive real-time testing suite (Tier 1 and Tier 2) for the Sentra AI project, targeting the live backend (`https://sentra-backend-node.onrender.com`) and frontend (`https://sentra-ai-tau.vercel.app`).
+This plan details the creation of a comprehensive real-time testing suite (Tier 1 and Tier 2) for the Sentra AI project, targeting the live backend (`https://sentra-backend-node.onrender.com`) and frontend (`https://sentraatech.info`).
 
 ## Open Questions
 

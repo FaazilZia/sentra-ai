@@ -13,7 +13,7 @@
 
   <br/>
 
-  [![Live Dashboard](https://img.shields.io/badge/Live-Dashboard-brightgreen?style=for-the-badge&logo=vercel)](https://sentra-ai-tau.vercel.app)
+  [![Live Dashboard](https://img.shields.io/badge/Live-Dashboard-brightgreen?style=for-the-badge&logo=vercel)](https://sentraatech.info)
   &nbsp;
   [![npm SDK](https://img.shields.io/badge/npm-%40sentra--ai%2Fsdk-red?style=for-the-badge&logo=npm)](https://www.npmjs.com/package/@sentra-ai/sdk)
 
@@ -25,7 +25,7 @@
 
 ## Quick links
 
-- [🚀 Live Dashboard](https://sentra-ai-tau.vercel.app) — Try Sentraa AI without signing up
+- [🚀 Live Dashboard](https://sentraatech.info) — Try Sentraa AI without signing up
 - [📦 SDK on npm](https://www.npmjs.com/package/@sentra-ai/sdk) — `npm install @sentra-ai/sdk`
 - [📁 Project Structure](#-project-structure) — Full file tree
 - [🔌 API Reference](#-api-reference) — All 55 route modules
@@ -37,13 +37,13 @@
 
 | Governance Dashboard | Guardrail Pipeline |
 |---|---|
-| ![Dashboard](https://sentra-ai-tau.vercel.app/og-dashboard.png) | ![Guardrails](https://sentra-ai-tau.vercel.app/og-guardrails.png) |
+| ![Dashboard](https://sentraatech.info/og-dashboard.png) | ![Guardrails](https://sentraatech.info/og-guardrails.png) |
 
 | Compliance Center | Risk Intelligence |
 |---|---|
 | Coming soon | Coming soon |
 
-> **Try it live:** [sentra-ai-tau.vercel.app](https://sentra-ai-tau.vercel.app)
+> **Try it live:** [sentraatech.info](https://sentraatech.info)
 
 ---
 
@@ -290,7 +290,7 @@ The `render.yaml` in the root configures the backend as a Render web service. Se
 
 The frontend is configured for Vercel deployment. Set `VITE_API_BASE_URL` to your Render backend URL.
 
-Current live deployment: [sentra-ai-tau.vercel.app](https://sentra-ai-tau.vercel.app)
+Current live deployment: [sentraatech.info](https://sentraatech.info)
 
 ---
 

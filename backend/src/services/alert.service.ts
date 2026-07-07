@@ -65,7 +65,7 @@ class AlertService {
         return;
       }
 
-      const dashboardUrl = (process.env.FRONTEND_URL || 'https://sentra-ai-tau.vercel.app').split(',')[0];
+      const dashboardUrl = (process.env.FRONTEND_URL || 'https://sentraatech.info').split(',')[0];
       
       const mailOptions = {
         from: process.env.SMTP_FROM || '"Sentraa AI Alerts" <alerts@sentraatech.com>',
@@ -128,7 +128,7 @@ class AlertService {
 
       if (!org?.slackWebhookUrl) return;
 
-      const dashboardUrl = (process.env.FRONTEND_URL || 'https://sentra-ai-tau.vercel.app').split(',')[0];
+      const dashboardUrl = (process.env.FRONTEND_URL || 'https://sentraatech.info').split(',')[0];
 
       const slackMessage = {
         blocks: [

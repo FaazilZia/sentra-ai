@@ -4,7 +4,6 @@ import logger from '../utils/logger';
 import prisma from '../config/db';
 import { processS3Scan } from './s3.worker';
 import { processSqlScan } from './sql.worker';
-import { processGDriveScan } from './gdrive.worker';
 import { buildRedisOptions, getRedisUrl } from '../config/redis';
 import { DriftAlertService } from '../services/driftAlert.service';
 import { EvaluationService } from '../services/evaluation.service';
@@ -59,7 +58,7 @@ export function setupConnectorWorkers() {
         switch (type) {
           case 's3': await processS3Scan(connectorId); break;
           case 'sql': await processSqlScan(connectorId); break;
-          case 'gdrive': await processGDriveScan(connectorId); break;
+          case 'gdrive': logger.warn(`GDrive scan skipped - worker deactivated for connector ${connectorId}`); break;
         }
 
         // 4. Success Health Update

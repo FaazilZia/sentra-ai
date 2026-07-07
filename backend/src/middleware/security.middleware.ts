@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../config/db';
 import logger from '../utils/logger';
-import { z } from 'zod';
 
 const ALERT_CACHE_MAX_SIZE = 10_000;
 const ALERT_DEBOUNCE_MS = 60_000;
@@ -104,29 +103,4 @@ export const securityObservability = async (req: Request, res: Response, next: N
   });
 
   next();
-};
-
-export const validateRequest = (schema: z.ZodObject<any, any>) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      await schema.parseAsync({
-        body: req.body,
-        query: req.query,
-        params: req.params,
-      });
-      return next();
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        // Trigger a 403 or 400 for bad validation. 
-        // Returning 403 will trigger our security anomaly hook.
-        res.status(400).json({
-          success: false,
-          message: 'Invalid request payload.',
-          errors: error.issues
-        });
-      } else {
-        next(error);
-      }
-    }
-  };
 };

@@ -1,0 +1,692 @@
+{
+  "fetchPolicyTemplates": [
+    "frontend/src/lib/api.ts:308:export function fetchPolicyTemplates(): Promise<any[]> {"
+  ],
+  "duplicatePolicyTemplate": [
+    "frontend/src/lib/api.ts:312:export function duplicatePolicyTemplate(policyId: string): Promise<PolicyResponse> {"
+  ],
+  "fetchPolicyById": [
+    "frontend/src/lib/api.ts:322:export function fetchPolicyById(id: string): Promise<PolicyResponse> {"
+  ],
+  "createPolicy": [
+    "backend/src/controllers/policy.controller.ts:91:export const createPolicy = asyncHandler(async (req: any, res: Response) => {",
+    "backend/src/routes/policy.routes.ts:4:import { getPolicies, getPolicyHealth, getPolicyVersions, createPolicy, getPolicyTemplates, duplicatePolicy, updatePolicy, deletePolicy, getPolicy } from '../controllers/policy.controller';",
+    "backend/src/routes/policy.routes.ts:5:import { policyIdVersionsParamSchema, createPolicySchema } from '../validations/policy.validation';",
+    "backend/src/routes/policy.routes.ts:91:router.post('/', authenticate, enforcePolicyLimit, validate(createPolicySchema), createPolicy);",
+    "backend/src/validations/policy.validation.ts:8:export const createPolicySchema = z.object({",
+    "frontend/src/lib/api.ts:333:export function createPolicy(payload: any): Promise<PolicyResponse> {"
+  ],
+  "fetchPolicyVersions": [
+    "frontend/src/lib/api.ts:340:export function fetchPolicyVersions(policyId: string): Promise<any[]> {"
+  ],
+  "fetchPolicyHealth": [
+    "frontend/src/lib/api.ts:350:export function fetchPolicyHealth(): Promise<any> {"
+  ],
+  "fetchViolations": [
+    "frontend/src/lib/api.ts:357:export function fetchViolations(limit: number = 50, status?: string): Promise<IncidentResponse[]> {"
+  ],
+  "updateIncidentStatus": [
+    "backend/src/controllers/incident.controller.ts:147:export const updateIncidentStatus = asyncHandler(async (req: any, res: Response) => {",
+    "backend/src/routes/incident.routes.ts:5:  updateIncidentStatus, ",
+    "backend/src/routes/incident.routes.ts:16:  updateIncidentStatusSchema, ",
+    "backend/src/routes/incident.routes.ts:30:router.patch('/:id', authenticate, authorizeRoles('ADMIN'), validate(updateIncidentStatusSchema), updateIncidentStatus);",
+    "backend/src/routes/incident.routes.ts:31:router.patch('/:id/status', authenticate, validate(updateIncidentStatusSchema), updateIncidentStatus);",
+    "backend/src/validations/incident.validation.ts:16:export const updateIncidentStatusSchema = z.object({",
+    "frontend/src/lib/api.ts:365:export function updateIncidentStatus(incidentId: string, status: string): Promise<IncidentResponse> {"
+  ],
+  "fetchAIActivityLogs": [
+    "frontend/src/lib/api.ts:391:export async function fetchAIActivityLogs(): Promise<AIActivityLog[]> {"
+  ],
+  "replayAction": [
+    "frontend/src/lib/api.ts:395:export async function replayAction(logId: string): Promise<any> {"
+  ],
+  "createAIAgent": [
+    "frontend/src/lib/api.ts:409:export async function createAIAgent(payload: any): Promise<AIAgent> {"
+  ],
+  "deleteAIAgent": [
+    "frontend/src/lib/api.ts:416:export async function deleteAIAgent(id: string): Promise<void> {"
+  ],
+  "fetchAuditProof": [
+    "frontend/src/lib/api.ts:430:export async function fetchAuditProof(): Promise<ComplianceFeature[]> {"
+  ],
+  "fetchFixTasks": [
+    "frontend/src/lib/api.ts:450:export async function fetchFixTasks(featureId: string): Promise<ComplianceFixTask[]> {"
+  ],
+  "createFixTasks": [
+    "backend/src/controllers/compliance.controller.ts:36:  const tasks = await ComplianceService.createFixTasks(featureId, actionPlan, organizationId);",
+    "backend/src/services/compliance.service.ts:105:  static async createFixTasks(featureId: string, actionPlan: any, organizationId: string) {",
+    "backend/src/tests/compliance.service.test.ts:211://  createFixTasks",
+    "backend/src/tests/compliance.service.test.ts:213:describe('ComplianceService.createFixTasks()', () => {",
+    "backend/src/tests/compliance.service.test.ts:227:    await ComplianceService.createFixTasks(FEATURE_ID, ACTION_PLAN, ORG_ID);",
+    "backend/src/tests/compliance.service.test.ts:233:    await ComplianceService.createFixTasks(FEATURE_ID, ACTION_PLAN, ORG_ID);",
+    "backend/src/tests/compliance.service.test.ts:243:    await ComplianceService.createFixTasks(FEATURE_ID, ACTION_PLAN, ORG_ID);",
+    "frontend/src/lib/api.ts:454:export async function createFixTasks(featureId: string, actionPlan: any): Promise<ComplianceFixTask[]> {"
+  ],
+  "uploadEvidence": [
+    "backend/src/__tests__/services/fileIngestion.service.test.ts:89:  describe('uploadEvidenceFile', () => {",
+    "backend/src/__tests__/services/fileIngestion.service.test.ts:95:      if (typeof service['uploadEvidenceFile'] === 'function') {",
+    "backend/src/__tests__/services/fileIngestion.service.test.ts:97:          const res = await service['uploadEvidenceFile']({});",
+    "backend/src/__tests__/services/fileIngestion.service.test.ts:107:      if (typeof service['uploadEvidenceFile'] === 'function') {",
+    "backend/src/__tests__/services/fileIngestion.service.test.ts:109:          await service['uploadEvidenceFile']({ id: 'non-existent' });",
+    "backend/src/__tests__/services/fileIngestion.service.test.ts:118:      if (typeof service['uploadEvidenceFile'] === 'function') {",
+    "backend/src/__tests__/services/fileIngestion.service.test.ts:120:          await service['uploadEvidenceFile'](null);",
+    "backend/src/__tests__/services/fileIngestion.service.test.ts:129:      if (typeof service['uploadEvidenceFile'] === 'function') {",
+    "backend/src/__tests__/services/fileIngestion.service.test.ts:131:          await service['uploadEvidenceFile']({ userId: 'unauthorized', role: 'VIEWER' });",
+    "backend/src/controllers/evidence.controller.ts:7:export const uploadEvidenceFile = asyncHandler(async (req: any, res: Response) => {",
+    "backend/src/controllers/evidence.controller.ts:44:  const record = await EvidenceService.uploadEvidence(file, metadata, organizationId, userId);",
+    "backend/src/controllers/fileIngestion.controller.ts:5:export const uploadEvidenceFile = asyncHandler(async (req: any, res: Response) => {",
+    "backend/src/controllers/fileIngestion.controller.ts:18:    const record = await FileIngestionService.uploadEvidenceFile(",
+    "backend/src/routes/evidence.routes.ts:4:  uploadEvidenceFile,",
+    "backend/src/routes/evidence.routes.ts:22:router.post('/', authenticate, upload.single('file'), validateFileUpload({ maxSizeBytes: 50 * 1024 * 1024 }), uploadEvidenceFile);",
+    "backend/src/routes/fileIngestion.routes.ts:8:  uploadEvidenceFile,",
+    "backend/src/routes/fileIngestion.routes.ts:45:router.post('/upload', upload.single('file'), validateFileUpload(), uploadEvidenceFile);",
+    "backend/src/services/evidence.service.ts:42:  async uploadEvidence(",
+    "backend/src/services/fileIngestion.service.ts:10:  static async uploadEvidenceFile(",
+    "backend/src/tests/wave1.services.test.ts:241:    describe('uploadEvidence', () => {",
+    "backend/src/tests/wave1.services.test.ts:245:        const result = await EvidenceService.uploadEvidence(mockFile, mockMetadata, ORG_ID, USER_ID);",
+    "frontend/src/lib/api.ts:461:export async function uploadEvidence(taskId: string, type: string, value: string): Promise<any> {"
+  ],
+  "reEvaluateCompliance": [
+    "frontend/src/lib/api.ts:468:export async function reEvaluateCompliance(featureId: string): Promise<any> {"
+  ],
+  "fetchComplianceHistory": [
+    "frontend/src/lib/api.ts:484:export async function fetchComplianceHistory(featureId: string): Promise<ComplianceSnapshot[]> {"
+  ],
+  "fetchAuditLogs": [
+    "frontend/src/lib/api.ts:497:export async function fetchAuditLogs(featureId?: string): Promise<AuditLog[]> {"
+  ],
+  "createAlertRule": [
+    "backend/src/controllers/alert.controller.ts:6:export const createAlertRule = asyncHandler(async (req: any, res: Response) => {",
+    "backend/src/routes/alert.routes.ts:2:import { createAlertRule, getAlertRules } from '../controllers/alert.controller';",
+    "backend/src/routes/alert.routes.ts:8:router.post('/rules', authenticate, authorizeRoles('ADMIN'), createAlertRule);",
+    "backend/src/validations/alert.validation.ts:3:export const createAlertRuleSchema = z.object({",
+    "frontend/src/lib/api.ts:511:export async function createAlertRule(data: { threshold_count: number, time_window_minutes: number, webhook_url: string }): Promise<AlertRule> {"
+  ],
+  "fetchAlertRules": [
+    "frontend/src/lib/api.ts:518:export async function fetchAlertRules(): Promise<AlertRule[]> {"
+  ],
+  "fetchAlerts": [
+    "frontend/src/lib/api.ts:532:export async function fetchAlerts(): Promise<Alert[]> {"
+  ],
+  "markAlertRead": [
+    "backend/src/controllers/compliance.controller.ts:117:  await ComplianceService.markAlertRead(alertId);",
+    "backend/src/services/compliance.service.ts:197:  static async markAlertRead(alertId: string) {",
+    "backend/src/tests/compliance.service.test.ts:254://  getAlerts / markAlertRead",
+    "backend/src/tests/compliance.service.test.ts:273:  it('markAlertRead() updates the alert to is_read: true', async () => {",
+    "backend/src/tests/compliance.service.test.ts:277:    await ComplianceService.markAlertRead(ALERT_ID);",
+    "frontend/src/lib/api.ts:536:export async function markAlertRead(alertId: string): Promise<void> {"
+  ],
+  "exportComplianceReport": [
+    "frontend/src/lib/api.ts:543:export async function exportComplianceReport(featureId: string): Promise<Blob> {"
+  ],
+  "sendAIRequest": [
+    "frontend/src/lib/api.ts:585:export async function sendAIRequest(prompt: string): Promise<any> {"
+  ],
+  "fetchGuardrailLogs": [
+    "frontend/src/lib/api.ts:592:export async function fetchGuardrailLogs(params?: any): Promise<{ data: InterceptionLog[]; meta: any }> {"
+  ],
+  "exportGuardrailLogs": [
+    "backend/src/controllers/guardrail.controller.ts:195:export const exportGuardrailLogs = asyncHandler(async (req: any, res: Response) => {",
+    "backend/src/routes/guardrail.routes.ts:7:  exportGuardrailLogs,",
+    "backend/src/routes/guardrail.routes.ts:108:router.get('/logs/export', authenticate, authorizeRoles('ADMIN', 'AUDITOR'), exportGuardrailLogs);",
+    "frontend/src/lib/api.ts:597:export async function exportGuardrailLogs(format: 'csv' | 'json' = 'csv', params?: any) {"
+  ],
+  "fetchGuardrailOverrides": [
+    "frontend/src/lib/api.ts:626:export async function fetchGuardrailOverrides(): Promise<GuardrailOverride[]> {"
+  ],
+  "requestGuardrailOverride": [
+    "frontend/src/lib/api.ts:630:export async function requestGuardrailOverride(logId: string, reason: string): Promise<any> {"
+  ],
+  "approveGuardrailOverride": [
+    "frontend/src/lib/api.ts:637:export async function approveGuardrailOverride(overrideId: string, status: 'approved' | 'rejected'): Promise<any> {"
+  ],
+  "fetchSecurityScore": [
+    "frontend/src/lib/api.ts:651:export async function fetchSecurityScore(): Promise<{ score: number }> {"
+  ],
+  "askAI": [
+    "frontend/src/lib/api.ts:655:export async function askAI(prompt: string): Promise<string> {"
+  ],
+  "chatWithCopilot": [
+    "frontend/src/lib/api.ts:663:export async function chatWithCopilot(message: string): Promise<{ response: string }> {"
+  ],
+  "fetchBackendHealth": [
+    "frontend/src/lib/api.ts:673:export function fetchBackendHealth(): Promise<BackendHealthResponse> {"
+  ],
+  "createApiKey": [
+    "backend/src/controllers/apiKey.controller.ts:52:export const createApiKey = asyncHandler(async (req: any, res: Response) => {",
+    "backend/src/routes/admin.routes.ts:4:import { createApiKeySchema, apiKeyIdParamSchema } from '../validations/admin.validation';",
+    "backend/src/routes/admin.routes.ts:5:import { listApiKeys, createApiKey, deleteApiKey } from '../controllers/apiKey.controller';",
+    "backend/src/routes/admin.routes.ts:84:router.post('/api-keys', authenticate, authorizeRoles('ADMIN'), authRateLimiter, validate(createApiKeySchema), createApiKey);",
+    "backend/src/validations/admin.validation.ts:3:export const createApiKeySchema = z.object({",
+    "frontend/src/lib/api.ts:686:export function createApiKey(name: string): Promise<any> {"
+  ],
+  "deleteApiKey": [
+    "backend/src/controllers/apiKey.controller.ts:84:export const deleteApiKey = asyncHandler(async (req: any, res: Response) => {",
+    "backend/src/routes/admin.routes.ts:5:import { listApiKeys, createApiKey, deleteApiKey } from '../controllers/apiKey.controller';",
+    "backend/src/routes/admin.routes.ts:91:  deleteApiKey",
+    "frontend/src/lib/api.ts:693:export function deleteApiKey(keyId: string): Promise<void> {"
+  ],
+  "triggerScan": [
+    "backend/src/controllers/incident.controller.ts:292:export const triggerScan = asyncHandler(async (req: any, res: Response) => {",
+    "backend/src/routes/incident.routes.ts:7:  triggerScan, ",
+    "backend/src/routes/incident.routes.ts:18:  triggerScanSchema ",
+    "backend/src/routes/incident.routes.ts:39:  validate(triggerScanSchema),",
+    "backend/src/routes/incident.routes.ts:40:  triggerScan",
+    "backend/src/validations/incident.validation.ts:31:export const triggerScanSchema = z.object({",
+    "frontend/src/lib/api.ts:697:export async function triggerScan(): Promise<{ message: string }> {",
+    "frontend/src/pages/IncidentManagement.tsx:131:  const triggerScan = async () => {",
+    "frontend/src/pages/IncidentManagement.tsx:272:            onClick={triggerScan}"
+  ],
+  "fetchScanStatus": [
+    "frontend/src/lib/api.ts:704:export async function fetchScanStatus(): Promise<ScanStatusPayload> {"
+  ],
+  "fetchConnectors": [
+    "frontend/src/lib/api.ts:708:export async function fetchConnectors(): Promise<any> {"
+  ],
+  "fetchScans": [
+    "frontend/src/lib/api.ts:716:export async function fetchScans(): Promise<{ count: number }> {"
+  ],
+  "fetchRiskData": [
+    "frontend/src/lib/api.ts:722:export async function fetchRiskData(): Promise<any> {"
+  ],
+  "fetchExecutiveMetrics": [
+    "frontend/src/lib/api.ts:726:export async function fetchExecutiveMetrics(): Promise<any> {"
+  ],
+  "fetchTopAttackPatterns": [
+    "frontend/src/lib/api.ts:730:export async function fetchTopAttackPatterns(): Promise<any[]> {"
+  ],
+  "fetchRiskTrend": [
+    "frontend/src/lib/api.ts:734:export async function fetchRiskTrend(days: number = 7): Promise<any[]> {"
+  ],
+  "createConnector": [
+    "backend/src/controllers/connector.controller.ts:100:export const createConnector = asyncHandler(async (req: any, res: Response) => {",
+    "backend/src/routes/connector.routes.ts:4:import { createConnectorSchema } from '../validations/connector.validation';",
+    "backend/src/routes/connector.routes.ts:5:import { listConnectors, createConnector, getExecutiveOverview } from '../controllers/connector.controller';",
+    "backend/src/routes/connector.routes.ts:11:router.post('/', authenticate, validate(createConnectorSchema), createConnector);",
+    "backend/src/validations/connector.validation.ts:3:export const createConnectorSchema = z.object({",
+    "frontend/src/lib/api.ts:738:export async function createConnector(payload: any): Promise<any> {"
+  ],
+  "fetchExecutiveOverview": [
+    "frontend/src/lib/api.ts:761:export async function fetchExecutiveOverview(): Promise<ExecutiveOverview> {"
+  ],
+  "updateAlertSettings": [
+    "backend/src/controllers/organization.controller.ts:25:export const updateAlertSettings = asyncHandler(async (req: any, res: Response) => {",
+    "backend/src/routes/organization.routes.ts:3:import { getOrganizationById, updateAlertSettings, testAlert } from '../controllers/organization.controller';",
+    "backend/src/routes/organization.routes.ts:8:router.patch('/alert-settings', authenticate, authorizeRoles('ADMIN'), updateAlertSettings);",
+    "backend/src/validations/organization.validation.ts:3:export const updateAlertSettingsSchema = z.object({",
+    "frontend/src/lib/api.ts:791:export async function updateAlertSettings(payload: { alertEmail?: string; slackWebhookUrl?: string }): Promise<any> {"
+  ],
+  "testAlert": [
+    "backend/src/controllers/organization.controller.ts:63:export const testAlert = asyncHandler(async (req: any, res: Response) => {",
+    "backend/src/routes/admin.routes.ts:94:import { testAlert } from '../controllers/organization.controller';",
+    "backend/src/routes/admin.routes.ts:95:router.post('/alerts/test', authenticate, authorizeRoles('ADMIN'), testAlert);",
+    "backend/src/routes/organization.routes.ts:3:import { getOrganizationById, updateAlertSettings, testAlert } from '../controllers/organization.controller';",
+    "backend/src/routes/organization.routes.ts:9:router.post('/test-alert', authenticate, authorizeRoles('ADMIN'), testAlert);",
+    "frontend/src/lib/api.ts:798:export async function testAlert(): Promise<any> {"
+  ],
+  "fetchAgentRiskScore": [
+    "frontend/src/lib/api.ts:1057:export async function fetchAgentRiskScore(agentId: string): Promise<AgentRiskScoreResponse> {"
+  ],
+  "uploadEuAiActEvidence": [
+    "frontend/src/lib/api.ts:1167:export async function uploadEuAiActEvidence("
+  ],
+  "fetchLifecycleInfo": [
+    "frontend/src/lib/api.ts:1362:export async function fetchLifecycleInfo(aiSystemId: string): Promise<LifecycleInfo> {"
+  ],
+  "transitionModelStage": [
+    "frontend/src/lib/api.ts:1366:export async function transitionModelStage("
+  ],
+  "fetchFriaAssessments": [
+    "frontend/src/lib/api.ts:854:export const fetchFriaAssessments = () => apiRequest<any>('/fria/assessments');"
+  ],
+  "fetchFriaAssessment": [
+    "frontend/src/lib/api.ts:854:export const fetchFriaAssessments = () => apiRequest<any>('/fria/assessments');",
+    "frontend/src/lib/api.ts:855:export const fetchFriaAssessment = (id: string) => apiRequest<any>(`/fria/assessments/${id}`);"
+  ],
+  "createFriaAssessment": [
+    "frontend/src/lib/api.ts:856:export const createFriaAssessment = (aiSystemId: string) =>"
+  ],
+  "AuditSnapshot": [
+    "frontend/src/components/executive/AuditSnapshot.tsx:4:interface AuditSnapshotProps {",
+    "frontend/src/components/executive/AuditSnapshot.tsx:13:export const AuditSnapshot: React.FC<AuditSnapshotProps> = ({"
+  ],
+  "GlobalControlPanel": [
+    "frontend/src/components/executive/GlobalControlPanel.tsx:4:interface GlobalControlPanelProps {",
+    "frontend/src/components/executive/GlobalControlPanel.tsx:11:export const GlobalControlPanel: React.FC<GlobalControlPanelProps> = ({"
+  ],
+  "SystemModeIndicator": [
+    "frontend/src/components/executive/SystemModeIndicator.tsx:4:interface SystemModeIndicatorProps {",
+    "frontend/src/components/executive/SystemModeIndicator.tsx:8:export const SystemModeIndicator: React.FC<SystemModeIndicatorProps> = ({ mode }) => {"
+  ],
+  "ActiveRiskEvents": [
+    "frontend/src/components/risk/ActiveRiskEvents.tsx:5:interface ActiveRiskEventsProps {",
+    "frontend/src/components/risk/ActiveRiskEvents.tsx:29:export function ActiveRiskEvents({ violations = [] }: ActiveRiskEventsProps) {"
+  ],
+  "RiskExposurePanel": [
+    "frontend/src/components/risk/RiskExposurePanel.tsx:4:interface RiskExposurePanelProps {",
+    "frontend/src/components/risk/RiskExposurePanel.tsx:9:export function RiskExposurePanel({ riskData }: RiskExposurePanelProps) {"
+  ],
+  "RiskHeatmap": [
+    "frontend/src/components/risk/RiskHeatmap.tsx:4:interface RiskHeatmapProps {",
+    "frontend/src/components/risk/RiskHeatmap.tsx:31:export function RiskHeatmap({ riskData }: RiskHeatmapProps) {"
+  ],
+  "RiskOwnership": [
+    "frontend/src/components/risk/RiskOwnership.tsx:4:interface RiskOwnershipProps {",
+    "frontend/src/components/risk/RiskOwnership.tsx:8:export function RiskOwnership({ agents }: RiskOwnershipProps) {"
+  ],
+  "RiskPosture": [
+    "frontend/src/components/risk/RiskPosture.tsx:5:interface RiskPostureProps {",
+    "frontend/src/components/risk/RiskPosture.tsx:12:export function RiskPosture({ riskData, violations, scans, executiveMetrics }: RiskPostureProps) {"
+  ],
+  "GaugeChart": [
+    "frontend/src/components/shared/GaugeChart.tsx:3:interface GaugeChartProps {",
+    "frontend/src/components/shared/GaugeChart.tsx:11:export function GaugeChart({ value, max = 100, size = 240, strokeWidth = 14, className }: GaugeChartProps) {"
+  ],
+  "ProgressBar": [
+    "frontend/src/components/shared/ProgressBar.tsx:4:interface ProgressBarProps {",
+    "frontend/src/components/shared/ProgressBar.tsx:11:export function ProgressBar({ current, total, className, color = 'var(--primary-500)' }: ProgressBarProps) {"
+  ],
+  "AnimatedCounter": [
+    "frontend/src/components/ui/AnimatedCounter.tsx:3:interface AnimatedCounterProps {",
+    "frontend/src/components/ui/AnimatedCounter.tsx:8:export function AnimatedCounter({ value, duration = 1500 }: AnimatedCounterProps) {"
+  ],
+  "AtomBackground": [
+    "frontend/src/components/ui/AnimatedBackground.tsx:71:const AtomBackground: React.FC = () => {",
+    "frontend/src/components/ui/AnimatedBackground.tsx:129:export default AtomBackground;",
+    "frontend/src/components/ui/AtomBackground.tsx:18:export function AtomBackground() {"
+  ],
+  "BackgroundLayer": [
+    "frontend/src/components/ui/BackgroundLayer.tsx:3:export const BackgroundLayer = () => {"
+  ],
+  "DataChartEmpty": [
+    "frontend/src/components/ui/DataChartEmpty.tsx:3:interface DataChartEmptyProps {",
+    "frontend/src/components/ui/DataChartEmpty.tsx:8:export function DataChartEmpty({ title, description }: DataChartEmptyProps) {"
+  ],
+  "EmptyStateList": [
+    "frontend/src/components/ui/EmptyStateList.tsx:4:interface EmptyStateListProps {",
+    "frontend/src/components/ui/EmptyStateList.tsx:13:export function EmptyStateList({",
+    "frontend/src/components/ui/EmptyStateList.tsx:20:}: EmptyStateListProps) {"
+  ],
+  "FloatingMolecules": [
+    ".sonarcloud.properties:33:  frontend/src/components/ui/FloatingMolecules.tsx,\\",
+    "frontend/src/components/ui/FloatingMolecules.tsx:105:export const FloatingMolecules = () => {",
+    "sonar-project.properties:34:  frontend/src/components/ui/FloatingMolecules.tsx,\\"
+  ],
+  "FloatingParticles": [
+    ".sonarcloud.properties:34:  frontend/src/components/ui/FloatingParticles.tsx,\\",
+    "frontend/src/components/ui/FloatingParticles.tsx:23:export const FloatingParticles = () => {",
+    "sonar-project.properties:35:  frontend/src/components/ui/FloatingParticles.tsx,\\"
+  ],
+  "GooeyNav": [
+    ".sonarcloud.properties:35:  frontend/src/components/ui/GooeyNav.tsx,\\",
+    "frontend/src/components/ui/GooeyNav.tsx:10:interface GooeyNavProps {",
+    "frontend/src/components/ui/GooeyNav.tsx:23: * GooeyNav Component - Stable Version",
+    "frontend/src/components/ui/GooeyNav.tsx:26:const GooeyNav: React.FC<GooeyNavProps> = ({",
+    "frontend/src/components/ui/GooeyNav.tsx:390:export default GooeyNav;",
+    "sonar-project.properties:36:  frontend/src/components/ui/GooeyNav.tsx,\\"
+  ],
+  "NeuralBackground": [
+    ".sonarcloud.properties:36:  frontend/src/components/ui/NeuralBackground.tsx,\\",
+    "frontend/src/components/ui/NeuralBackground.tsx:33:const NeuralBackground: React.FC = () => {",
+    "frontend/src/components/ui/NeuralBackground.tsx:245:export default NeuralBackground;",
+    "sonar-project.properties:37:  frontend/src/components/ui/NeuralBackground.tsx,\\"
+  ],
+  "NeuralCore": [
+    ".sonarcloud.properties:37:  frontend/src/components/ui/NeuralCore.tsx",
+    "frontend/src/components/ui/NeuralCore.tsx:5:const NeuralCore = () => {",
+    "frontend/src/components/ui/NeuralCore.tsx:128:export default NeuralCore;",
+    "sonar-project.properties:38:  frontend/src/components/ui/NeuralCore.tsx"
+  ],
+  "SidebarItem": [
+    "frontend/src/components/layout/Sidebar.tsx:40:interface SidebarItem {",
+    "frontend/src/components/layout/Sidebar.tsx:44:  items?: SidebarItem[];",
+    "frontend/src/components/layout/Sidebar.tsx:49:  items: SidebarItem[];",
+    "frontend/src/components/ui/SidebarItem.tsx:5:interface SidebarItemProps {",
+    "frontend/src/components/ui/SidebarItem.tsx:15:export function SidebarItem({ name, href, icon: Icon, collapsed = false, indicator, indicatorValue, onClick }: SidebarItemProps) {"
+  ],
+  "StatCard": [
+    "frontend/src/components/ui/StatCard.tsx:6:interface StatCardProps {",
+    "frontend/src/components/ui/StatCard.tsx:36:export function StatCard({",
+    "frontend/src/components/ui/StatCard.tsx:46:}: StatCardProps) {"
+  ],
+  "useDashboardData": [
+    "frontend/src/hooks/useDashboardData.ts:56:export function useDashboardData() {"
+  ],
+  "use3DTilt": [
+    "frontend/src/hooks/use3DTilt.ts:4:export const use3DTilt = (strength = 15) => {"
+  ],
+  "hasPermission": [
+    "backend/src/services/rbac.service.ts:257:    const hasPermission = RBACService.roleHasPermission(req.user.role, resource, action);",
+    "backend/src/services/rbac.service.ts:258:    if (hasPermission) return next();",
+    "frontend/src/components/rbac/PermissionGate.tsx:67:    const hasPermission = perms.includes('*') || perms.includes(`${resource}:${action}`) || perms.includes(`${resource}:*`);",
+    "frontend/src/components/rbac/PermissionGate.tsx:68:    if (!hasPermission) return <>{fallback}</>;",
+    "frontend/src/lib/permissions.ts:69:export function hasPermission(role: string, resource: string, action: string): boolean {"
+  ],
+  "MODAL_INPUT_CLASS": [
+    "frontend/src/lib/governanceUtils.ts:36:export const MODAL_INPUT_CLASS = 'bg-black/30 border border-gray-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 text-xs';"
+  ],
+  "authFailuresTotal": [
+    "backend/src/config/telemetry.ts:33:export const authFailuresTotal = new Counter({"
+  ],
+  "activeSessionsGauge": [
+    "backend/src/config/telemetry.ts:40:export const activeSessionsGauge = new Gauge({"
+  ],
+  "queueJobsTotal": [
+    "backend/src/config/telemetry.ts:46:export const queueJobsTotal = new Counter({"
+  ],
+  "policyViolationsTotal": [
+    "backend/src/config/telemetry.ts:53:export const policyViolationsTotal = new Counter({"
+  ],
+  "driftAlertsTotal": [
+    "backend/src/config/telemetry.ts:60:export const driftAlertsTotal = new Counter({"
+  ],
+  "governanceScoreGauge": [
+    "backend/src/config/telemetry.ts:67:export const governanceScoreGauge = new Gauge({"
+  ],
+  "evaluationRunsTotal": [
+    "backend/src/config/telemetry.ts:74:export const evaluationRunsTotal = new Counter({"
+  ],
+  "auditLogEntriesTotal": [
+    "backend/src/config/telemetry.ts:81:export const auditLogEntriesTotal = new Counter({"
+  ],
+  "mfaAttempts": [
+    "backend/src/config/telemetry.ts:88:export const mfaAttempts = new Counter({"
+  ],
+  "idempotencyMiddleware": [
+    "backend/src/middleware/idempotency.middleware.ts:6:export const idempotencyMiddleware = async (req: Request, res: Response, next: NextFunction) => {"
+  ],
+  "validateRequest": [
+    "backend/src/middleware/security.middleware.ts:109:export const validateRequest = (schema: z.ZodObject<any, any>) => {"
+  ],
+  "resolveWorkspace": [
+    "backend/src/middleware/tenant.middleware.ts:35:export const resolveWorkspace = async (req: any, res: Response, next: NextFunction) => {"
+  ],
+  "requireTenantIsolation": [
+    "backend/src/middleware/tenant.middleware.ts:70: * Use on parameterized routes: requireTenantIsolation('organizationId')",
+    "backend/src/middleware/tenant.middleware.ts:72:export const requireTenantIsolation = (orgIdField: string = 'organizationId') => {"
+  ],
+  "enforceIpAllowlist": [
+    "backend/src/middleware/tenant.middleware.ts:95:export const enforceIpAllowlist = async (req: any, res: Response, next: NextFunction) => {"
+  ],
+  "MonitoringService": [
+    "backend/src/__tests__/services/monitoring.service.test.ts:1:// Auto-generated test suite for MonitoringService",
+    "backend/src/__tests__/services/monitoring.service.test.ts:82:import { MonitoringService } from '../../services/monitoring.service';",
+    "backend/src/__tests__/services/monitoring.service.test.ts:84:describe('MonitoringService unit tests', () => {",
+    "backend/src/__tests__/services/monitoring.service.test.ts:94:      const service = MonitoringService as any;",
+    "backend/src/__tests__/services/monitoring.service.test.ts:106:      const service = MonitoringService as any;",
+    "backend/src/__tests__/services/monitoring.service.test.ts:117:      const service = MonitoringService as any;",
+    "backend/src/__tests__/services/monitoring.service.test.ts:128:      const service = MonitoringService as any;",
+    "backend/src/__tests__/services/postMarketMonitoring.service.test.ts:1:// Auto-generated test suite for PostMarketMonitoringService",
+    "backend/src/__tests__/services/postMarketMonitoring.service.test.ts:82:import { PostMarketMonitoringService } from '../../services/postMarketMonitoring.service';",
+    "backend/src/__tests__/services/postMarketMonitoring.service.test.ts:84:describe('PostMarketMonitoringService unit tests', () => {",
+    "backend/src/__tests__/services/postMarketMonitoring.service.test.ts:94:      const service = PostMarketMonitoringService as any;",
+    "backend/src/__tests__/services/postMarketMonitoring.service.test.ts:106:      const service = PostMarketMonitoringService as any;",
+    "backend/src/__tests__/services/postMarketMonitoring.service.test.ts:117:      const service = PostMarketMonitoringService as any;",
+    "backend/src/__tests__/services/postMarketMonitoring.service.test.ts:128:      const service = PostMarketMonitoringService as any;",
+    "backend/src/__tests__/services/postMarketMonitoring.service.test.ts:144:      const service = PostMarketMonitoringService as any;",
+    "backend/src/__tests__/services/postMarketMonitoring.service.test.ts:156:      const service = PostMarketMonitoringService as any;",
+    "backend/src/__tests__/services/postMarketMonitoring.service.test.ts:167:      const service = PostMarketMonitoringService as any;",
+    "backend/src/__tests__/services/postMarketMonitoring.service.test.ts:178:      const service = PostMarketMonitoringService as any;",
+    "backend/src/__tests__/services/postMarketMonitoring.service.test.ts:194:      const service = PostMarketMonitoringService as any;",
+    "backend/src/__tests__/services/postMarketMonitoring.service.test.ts:206:      const service = PostMarketMonitoringService as any;",
+    "backend/src/__tests__/services/postMarketMonitoring.service.test.ts:217:      const service = PostMarketMonitoringService as any;",
+    "backend/src/__tests__/services/postMarketMonitoring.service.test.ts:228:      const service = PostMarketMonitoringService as any;",
+    "backend/src/__tests__/services/postMarketMonitoring.service.test.ts:244:      const service = PostMarketMonitoringService as any;",
+    "backend/src/__tests__/services/postMarketMonitoring.service.test.ts:256:      const service = PostMarketMonitoringService as any;",
+    "backend/src/__tests__/services/postMarketMonitoring.service.test.ts:267:      const service = PostMarketMonitoringService as any;",
+    "backend/src/__tests__/services/postMarketMonitoring.service.test.ts:278:      const service = PostMarketMonitoringService as any;",
+    "backend/src/controllers/postMarketMonitoring.controller.ts:2:import { PostMarketMonitoringService } from '../services/postMarketMonitoring.service';",
+    "backend/src/controllers/postMarketMonitoring.controller.ts:8:    const dashboard = await PostMarketMonitoringService.getMonitoringDashboard(organizationId);",
+    "backend/src/controllers/postMarketMonitoring.controller.ts:18:    const report = await PostMarketMonitoringService.generateMonitoringReport(organizationId);",
+    "backend/src/controllers/postMarketMonitoring.controller.ts:28:    await PostMarketMonitoringService.scheduleMonitoringCheck(organizationId);",
+    "backend/src/routes/postMarketMonitoring.routes.ts:3:import { PostMarketMonitoringService } from '../services/postMarketMonitoring.service';",
+    "backend/src/routes/postMarketMonitoring.routes.ts:19:    const report = await PostMarketMonitoringService.generateMonitoringReport(organizationId);",
+    "backend/src/services/monitoring.service.ts:5:export class MonitoringService {",
+    "backend/src/services/postMarketMonitoring.service.ts:28:export class PostMarketMonitoringService {",
+    "backend/src/services/queue.service.ts:14:import { PostMarketMonitoringService } from './postMarketMonitoring.service';",
+    "backend/src/services/queue.service.ts:165:        const report = await PostMarketMonitoringService.generateMonitoringReport(organizationId);",
+    "backend/src/workers/postMarket.worker.ts:3:import { PostMarketMonitoringService } from '../services/postMarketMonitoring.service';",
+    "backend/src/workers/postMarket.worker.ts:33:        await PostMarketMonitoringService.generateMonitoringReport(org.id);"
+  ],
+  "OutcomeService": [
+    "backend/src/__tests__/services/outcome.service.test.ts:1:// Auto-generated test suite for OutcomeService",
+    "backend/src/__tests__/services/outcome.service.test.ts:82:import { OutcomeService } from '../../services/outcome.service';",
+    "backend/src/__tests__/services/outcome.service.test.ts:84:describe('OutcomeService unit tests', () => {",
+    "backend/src/__tests__/services/outcome.service.test.ts:94:      const service = OutcomeService as any;",
+    "backend/src/__tests__/services/outcome.service.test.ts:106:      const service = OutcomeService as any;",
+    "backend/src/__tests__/services/outcome.service.test.ts:117:      const service = OutcomeService as any;",
+    "backend/src/__tests__/services/outcome.service.test.ts:128:      const service = OutcomeService as any;",
+    "backend/src/__tests__/services/outcome.service.test.ts:144:      const service = OutcomeService as any;",
+    "backend/src/__tests__/services/outcome.service.test.ts:156:      const service = OutcomeService as any;",
+    "backend/src/__tests__/services/outcome.service.test.ts:167:      const service = OutcomeService as any;",
+    "backend/src/__tests__/services/outcome.service.test.ts:178:      const service = OutcomeService as any;",
+    "backend/src/services/outcome.service.ts:5:export class OutcomeService {"
+  ],
+  "SessionService": [
+    "backend/src/__tests__/services/session.service.test.ts:1:// Auto-generated test suite for SessionService",
+    "backend/src/__tests__/services/session.service.test.ts:82:import { SessionService } from '../../services/session.service';",
+    "backend/src/__tests__/services/session.service.test.ts:84:describe('SessionService unit tests', () => {",
+    "backend/src/__tests__/services/session.service.test.ts:94:      const service = SessionService as any;",
+    "backend/src/__tests__/services/session.service.test.ts:106:      const service = SessionService as any;",
+    "backend/src/__tests__/services/session.service.test.ts:117:      const service = SessionService as any;",
+    "backend/src/__tests__/services/session.service.test.ts:128:      const service = SessionService as any;",
+    "backend/src/__tests__/services/session.service.test.ts:144:      const service = SessionService as any;",
+    "backend/src/__tests__/services/session.service.test.ts:156:      const service = SessionService as any;",
+    "backend/src/__tests__/services/session.service.test.ts:167:      const service = SessionService as any;",
+    "backend/src/__tests__/services/session.service.test.ts:178:      const service = SessionService as any;",
+    "backend/src/__tests__/services/session.service.test.ts:194:      const service = SessionService as any;",
+    "backend/src/__tests__/services/session.service.test.ts:206:      const service = SessionService as any;",
+    "backend/src/__tests__/services/session.service.test.ts:217:      const service = SessionService as any;",
+    "backend/src/__tests__/services/session.service.test.ts:228:      const service = SessionService as any;",
+    "backend/src/__tests__/services/session.service.test.ts:244:      const service = SessionService as any;",
+    "backend/src/__tests__/services/session.service.test.ts:256:      const service = SessionService as any;",
+    "backend/src/__tests__/services/session.service.test.ts:267:      const service = SessionService as any;",
+    "backend/src/__tests__/services/session.service.test.ts:278:      const service = SessionService as any;",
+    "backend/src/__tests__/services/session.service.test.ts:294:      const service = SessionService as any;",
+    "backend/src/__tests__/services/session.service.test.ts:306:      const service = SessionService as any;",
+    "backend/src/__tests__/services/session.service.test.ts:317:      const service = SessionService as any;",
+    "backend/src/__tests__/services/session.service.test.ts:328:      const service = SessionService as any;",
+    "backend/src/__tests__/services/session.service.test.ts:344:      const service = SessionService as any;",
+    "backend/src/__tests__/services/session.service.test.ts:356:      const service = SessionService as any;",
+    "backend/src/__tests__/services/session.service.test.ts:367:      const service = SessionService as any;",
+    "backend/src/__tests__/services/session.service.test.ts:378:      const service = SessionService as any;",
+    "backend/src/services/session.service.ts:10:export const SessionService = {"
+  ],
+  "checkPermission": [
+    "backend/src/__tests__/services/policy.service.test.ts:1:// Auto-generated test suite for checkPermission",
+    "backend/src/__tests__/services/policy.service.test.ts:82:import { checkPermission } from '../../services/policy.service';",
+    "backend/src/__tests__/services/policy.service.test.ts:84:describe('checkPermission unit tests', () => {",
+    "backend/src/__tests__/services/policy.service.test.ts:89:  describe('checkPermission', () => {",
+    "backend/src/__tests__/services/policy.service.test.ts:94:      const service = checkPermission as any;",
+    "backend/src/__tests__/services/policy.service.test.ts:95:      if (typeof service['checkPermission'] === 'function') {",
+    "backend/src/__tests__/services/policy.service.test.ts:97:          const res = await service['checkPermission']({});",
+    "backend/src/__tests__/services/policy.service.test.ts:106:      const service = checkPermission as any;",
+    "backend/src/__tests__/services/policy.service.test.ts:107:      if (typeof service['checkPermission'] === 'function') {",
+    "backend/src/__tests__/services/policy.service.test.ts:109:          await service['checkPermission']({ id: 'non-existent' });",
+    "backend/src/__tests__/services/policy.service.test.ts:117:      const service = checkPermission as any;",
+    "backend/src/__tests__/services/policy.service.test.ts:118:      if (typeof service['checkPermission'] === 'function') {",
+    "backend/src/__tests__/services/policy.service.test.ts:120:          await service['checkPermission'](null);",
+    "backend/src/__tests__/services/policy.service.test.ts:128:      const service = checkPermission as any;",
+    "backend/src/__tests__/services/policy.service.test.ts:129:      if (typeof service['checkPermission'] === 'function') {",
+    "backend/src/__tests__/services/policy.service.test.ts:131:          await service['checkPermission']({ userId: 'unauthorized', role: 'VIEWER' });",
+    "backend/src/__tests__/services/policy.service.test.ts:144:      const service = checkPermission as any;",
+    "backend/src/__tests__/services/policy.service.test.ts:156:      const service = checkPermission as any;",
+    "backend/src/__tests__/services/policy.service.test.ts:167:      const service = checkPermission as any;",
+    "backend/src/__tests__/services/policy.service.test.ts:178:      const service = checkPermission as any;",
+    "backend/src/__tests__/services/policy.service.test.ts:194:      const service = checkPermission as any;",
+    "backend/src/__tests__/services/policy.service.test.ts:206:      const service = checkPermission as any;",
+    "backend/src/__tests__/services/policy.service.test.ts:217:      const service = checkPermission as any;",
+    "backend/src/__tests__/services/policy.service.test.ts:228:      const service = checkPermission as any;",
+    "backend/src/services/policy.service.ts:10:export const checkPermission = async (agent: string, action: string, organizationId: string, metadata: any = {}): Promise<CheckPermissionResult> => {"
+  ],
+  "resolveTenantContext": [
+    "backend/src/__tests__/services/tenant.service.test.ts:89:  describe('resolveTenantContext', () => {",
+    "backend/src/__tests__/services/tenant.service.test.ts:95:      if (typeof service['resolveTenantContext'] === 'function') {",
+    "backend/src/__tests__/services/tenant.service.test.ts:97:          const res = await service['resolveTenantContext']({});",
+    "backend/src/__tests__/services/tenant.service.test.ts:107:      if (typeof service['resolveTenantContext'] === 'function') {",
+    "backend/src/__tests__/services/tenant.service.test.ts:109:          await service['resolveTenantContext']({ id: 'non-existent' });",
+    "backend/src/__tests__/services/tenant.service.test.ts:118:      if (typeof service['resolveTenantContext'] === 'function') {",
+    "backend/src/__tests__/services/tenant.service.test.ts:120:          await service['resolveTenantContext'](null);",
+    "backend/src/__tests__/services/tenant.service.test.ts:129:      if (typeof service['resolveTenantContext'] === 'function') {",
+    "backend/src/__tests__/services/tenant.service.test.ts:131:          await service['resolveTenantContext']({ userId: 'unauthorized', role: 'VIEWER' });",
+    "backend/src/services/tenant.service.ts:23:export async function resolveTenantContext(req: any): Promise<TenantContext | null> {"
+  ],
+  "triggerAnomalyScan": [
+    "backend/src/__tests__/services/queue.service.test.ts:289:  describe('triggerAnomalyScan', () => {",
+    "backend/src/__tests__/services/queue.service.test.ts:295:      if (typeof service['triggerAnomalyScan'] === 'function') {",
+    "backend/src/__tests__/services/queue.service.test.ts:297:          const res = await service['triggerAnomalyScan']({});",
+    "backend/src/__tests__/services/queue.service.test.ts:307:      if (typeof service['triggerAnomalyScan'] === 'function') {",
+    "backend/src/__tests__/services/queue.service.test.ts:309:          await service['triggerAnomalyScan']({ id: 'non-existent' });",
+    "backend/src/__tests__/services/queue.service.test.ts:318:      if (typeof service['triggerAnomalyScan'] === 'function') {",
+    "backend/src/__tests__/services/queue.service.test.ts:320:          await service['triggerAnomalyScan'](null);",
+    "backend/src/__tests__/services/queue.service.test.ts:329:      if (typeof service['triggerAnomalyScan'] === 'function') {",
+    "backend/src/__tests__/services/queue.service.test.ts:331:          await service['triggerAnomalyScan']({ userId: 'unauthorized', role: 'VIEWER' });",
+    "backend/src/services/queue.service.ts:564:export const triggerAnomalyScan = async (connectorId: string, reason: string) => {"
+  ],
+  "GDriveGovernanceConnector": [
+    "backend/src/workers/gdrive.worker.ts:9:export class GDriveGovernanceConnector {"
+  ],
+  "LangChainGovernanceHandler": [
+    "README.md:261:import { LangChainGovernanceHandler } from '@sentra-ai/sdk';",
+    "README.md:263:const handler = new LangChainGovernanceHandler(organizationId, 'my-langchain-agent');",
+    "backend/src/workers/langchain.worker.ts:7:export class LangChainGovernanceHandler {"
+  ],
+  "wrapOpenAIChatCompletion": [
+    "README.md:272:import { wrapOpenAIChatCompletion } from '@sentra-ai/sdk';",
+    "README.md:274:const response = await wrapOpenAIChatCompletion(",
+    "backend/src/workers/openai.worker.ts:6:export const wrapOpenAIChatCompletion = async ("
+  ],
+  "emptySchema": [
+    "backend/src/validations/consent.validation.ts:3:export const emptySchema = z.object({});",
+    "backend/src/validations/drift.validation.ts:3:export const emptySchema = z.object({});",
+    "backend/src/validations/organization.validation.ts:10:export const emptySchema = z.object({});"
+  ],
+  "processAIRequestSchema": [
+    "backend/src/validations/guardrail.validation.ts:3:export const processAIRequestSchema = z.object({"
+  ],
+  "checkActionSchema": [
+    "backend/src/controllers/ai.controller.ts:7:import { checkActionSchema } from '../validations/ai.validation';",
+    "backend/src/routes/ai.routes.ts:5:import { aiChatSchema, checkActionSchema } from '../validations/ai.validation';",
+    "backend/src/routes/ai.routes.ts:13:router.post('/check-action', authenticate, validate(checkActionSchema), aiActionRateLimiter, aiDailyRateLimiter, postCheckAction);",
+    "backend/src/validations/ai.validation.ts:3:export const checkActionSchema = z.object({",
+    "backend/src/validations/ai.validation.ts:17:export type CheckActionInput = z.infer<typeof checkActionSchema>['body'];",
+    "backend/src/validations/guardrail.validation.ts:8:export const checkActionSchema = z.object({"
+  ],
+  "processDemoRequestSchema": [
+    "backend/src/validations/guardrail.validation.ts:14:export const processDemoRequestSchema = z.object({"
+  ],
+  "postRequestOverrideSchema": [
+    "backend/src/validations/guardrail.validation.ts:18:export const postRequestOverrideSchema = z.object({"
+  ],
+  "postApproveOverrideSchema": [
+    "backend/src/validations/guardrail.validation.ts:23:export const postApproveOverrideSchema = z.object({"
+  ],
+  "agentSchema": [
+    "backend/src/validations/inventory.validation.ts:3:export const agentSchema = z.object({"
+  ],
+  "updateAlertSettingsSchema": [
+    "backend/src/validations/organization.validation.ts:3:export const updateAlertSettingsSchema = z.object({"
+  ],
+  "createAlertRuleSchema": [
+    "backend/src/validations/alert.validation.ts:3:export const createAlertRuleSchema = z.object({"
+  ],
+  "postFixTasksSchema": [
+    "backend/src/validations/compliance.validation.ts:3:export const postFixTasksSchema = z.object({"
+  ],
+  "postEvidenceSchema": [
+    "backend/src/validations/compliance.validation.ts:8:export const postEvidenceSchema = z.object({"
+  ],
+  "postReEvaluateSchema": [
+    "backend/src/validations/compliance.validation.ts:15:export const postReEvaluateSchema = z.object({"
+  ],
+  "postMarkAlertReadSchema": [
+    "backend/src/validations/compliance.validation.ts:19:export const postMarkAlertReadSchema = z.object({"
+  ],
+  "secureRandom": [
+    "backend/src/utils/crypto.ts:3:export const secureRandom = (): number => ",
+    "backend/src/utils/crypto.ts:6:export const secureRandomInt = (min: number, max: number): number =>",
+    "backend/src/utils/crypto.ts:9:export const secureRandomHex = (bytes: number = 16): string =>"
+  ],
+  "secureRandomInt": [
+    "backend/src/utils/crypto.ts:6:export const secureRandomInt = (min: number, max: number): number =>"
+  ],
+  "secureRandomHex": [
+    "backend/src/utils/crypto.ts:9:export const secureRandomHex = (bytes: number = 16): string =>"
+  ],
+  "buildDateRangeFilter": [
+    "backend/src/utils/controllerHelpers.ts:54: * buildDateRangeFilter(query) helper",
+    "backend/src/utils/controllerHelpers.ts:56:export const buildDateRangeFilter = (query: any, fieldName: string = 'created_at') => {"
+  ],
+  "applyCrudPolicies": [
+    "backend/src/utils/migrationHelpers.ts:47:export async function applyCrudPolicies("
+  ],
+  "runMigrationWithCleanup": [
+    "backend/src/utils/migrationHelpers.ts:60:export async function runMigrationWithCleanup("
+  ],
+  "TABLE_CATEGORIES": [
+    "backend/src/utils/migrationHelpers.ts:41:export const TABLE_CATEGORIES = {"
+  ],
+  "getPrisma": [
+    "backend/prisma/seed.ts:25:async function getPrisma() {",
+    "backend/prisma/seed.ts:44:  const prisma = await getPrisma();",
+    "backend/src/config/db.ts:56:export const getPrisma = async (): Promise<PrismaClient> => {"
+  ],
+  "isRedisConfigured": [
+    "backend/src/__tests__/services/advisor.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/aiSystem.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/alert.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/automation.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/cache.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/ccpa.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/ceMarking.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/dataset.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/dora.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/drift.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/driftAlert.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/driftBaseline.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/driftDetection.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/driftScoring.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/euAiAct.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/evaluation.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/eventTrigger.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/executiveReport.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/featureFlag.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/fileIngestion.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/frameworkMapper.service.test.ts:74:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/fria.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/ftc.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/governance.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/governanceEventBus.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/governanceHealth.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/guardrail.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/intakeLLM.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/inventory.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/iso27001.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/iso42001.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/mcpAgentKey.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/mfa.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/modelLifecycle.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/monitoring.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/nistAiRmf.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/nistEvidence.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/oecd.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/outcome.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/piiScanner.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/policy.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/policyVersioning.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/postMarketMonitoring.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/quantitativeRisk.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/queue.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/rbac.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/report.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/reportGeneration.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/session.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/shadowAI.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/shareLink.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/tenant.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/training.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/vendor.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/__tests__/services/workflow.service.test.ts:68:  isRedisConfigured: true,",
+    "backend/src/config/redis.ts:148:export const isRedisConfigured = !!REDIS_URL;"
+  ]
+}
