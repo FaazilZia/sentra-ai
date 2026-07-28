@@ -3,6 +3,7 @@ import { AISystemService } from '../services/aiSystem.service';
 import { resolveOrganizationId } from '../utils/company';
 import { asyncHandler, sendSuccess, sendError } from '../utils/controllerHelpers';
 import { ChangeHistoryService } from '../services/changeHistory.service';
+import { AgentDiscoveryService } from '../services/agentDiscovery.service';
 
 export const listAISystems = asyncHandler(async (req: any, res: Response) => {
   const organizationId = await resolveOrganizationId(req);
@@ -111,53 +112,31 @@ export const syncConnectorAgents = asyncHandler(async (req: any, res: Response) 
     return sendError(res, 400, 'Company context required');
   }
 
-  const mockDiscovered = [
-    {
-      id: "disc-1",
-      name: "Customer Support Auto-Responder",
-      description: "Unregistered GPT-4o integration scanning client support channels on Slack.",
-      source: "Slack Connector",
-      risk_level: "HIGH",
-      risk_score: 78,
-      found_at: new Date(Date.now() - 3600000 * 2).toISOString(),
-      status: "DISCOVERED",
-      reviewStatus: null
-    },
-    {
-      id: "disc-2",
-      name: "Shadow Finance Model",
-      description: "Replicate-hosted Llama-3 instance used by finance team to analyze quarterly earnings sheets.",
-      source: "AWS VPC Flow Logs",
-      risk_level: "CRITICAL",
-      risk_score: 92,
-      found_at: new Date(Date.now() - 3600000 * 6).toISOString(),
-      status: "DISCOVERED",
-      reviewStatus: "confirmed"
-    },
-    {
-      id: "disc-3",
-      name: "Developer Code Assistant",
-      description: "Ollama local server running Codellama accessed across dev subnets without authorization.",
-      source: "GitHub Audit Logs",
-      risk_level: "MEDIUM",
-      risk_score: 45,
-      found_at: new Date(Date.now() - 3600000 * 24).toISOString(),
-      status: "DISCOVERED",
-      reviewStatus: null
-    },
-    {
-      id: "disc-4",
-      name: "HR Talent screener",
-      description: "Anthropic Claude Claude-3-haiku powered resumes parser script.",
-      source: "Google Workspace Sync",
-      risk_level: "LOW",
-      risk_score: 25,
-      found_at: new Date(Date.now() - 3600000 * 48).toISOString(),
-      status: "DISCOVERED",
-      reviewStatus: "rejected"
-    }
-  ];
+  const agents = await AgentDiscoveryService.discoverAgents(organizationId);
 
-  return sendSuccess(res, mockDiscovered);
+  const discovered = agents.map((agent: any) => {
+    const riskLevel = 
+      agent.accessLevel === 'FULL_ACCESS' ? 'HIGH' :
+      agent.accessLevel === 'TOOL_BOUND' ? 'MEDIUM' :
+      agent.accessLevel === 'READ_WRITE' ? 'MEDIUM' : 'LOW';
+      
+    const riskScore = 
+      riskLevel === 'HIGH' ? 75 :
+      riskLevel === 'MEDIUM' ? 50 : 25;
+
+    return {
+      id: agent.id,
+      name: agent.name,
+      description: `Discovered agent on ${agent.source || 'connected platform'} with ${agent.accessLevel || 'standard'} access level.`,
+      source: agent.source || 'Connected Platform',
+      risk_level: riskLevel,
+      risk_score: riskScore,
+      found_at: agent.discoveredAt ? agent.discoveredAt.toISOString() : new Date().toISOString(),
+      status: 'DISCOVERED',
+      reviewStatus: null,
+    };
+  });
+
+  return sendSuccess(res, discovered);
 });
 

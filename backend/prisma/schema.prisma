@@ -2429,11 +2429,16 @@ model Agent {
   organizationId String   @default("00000000-0000-0000-0000-000000000001") @map("organization_id")
   name           String
   type           String
+  source         String?
+  accessLevel    String?  @map("access_level")
+  permissions    Json?
+  metadata       Json?
   status         String   @default("active")
   discoveredAt   DateTime @default(now()) @map("discovered_at")
 
   organization organizations @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
+  @@unique([organizationId, name, source])
   @@index([organizationId])
   @@map("agents")
 }
