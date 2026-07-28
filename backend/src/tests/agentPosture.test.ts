@@ -1,6 +1,7 @@
 import prisma, { initializePrisma } from '../config/db';
 import { AgentPostureService } from '../services/agentPosture.service';
 import { AgentDiscoveryService } from '../services/agentDiscovery.service';
+import { AgentPostureController } from '../controllers/agentPosture.controller';
 
 describe('AgentPostureService Unit & Integration Tests', () => {
   const TEST_ORG_ID = 'test-org-agent-posture-001';
@@ -375,6 +376,44 @@ describe('AgentPostureService Unit & Integration Tests', () => {
       const batchRes = await AgentPostureService.scanAllAgents(TEST_ORG_ID);
       expect(batchRes.totalAgentsScanned).toBe(1);
       expect(batchRes.results[0].agentId).toBe(agentOrg1.id);
+    });
+  });
+
+  describe('4. Controller 401 Authorization Tests', () => {
+    test('all posture endpoints should return 401 when organizationId cannot be resolved', async () => {
+      const mockReq: any = { params: { id: 'some-agent-id' } };
+      let statusCode = 0;
+      let responseBody: any = null;
+
+      const mockRes: any = {
+        status: (code: number) => {
+          statusCode = code;
+          return mockRes;
+        },
+        json: (body: any) => {
+          responseBody = body;
+          return mockRes;
+        },
+      };
+
+      // 1. scanAgentPosture
+      await AgentPostureController.scanAgentPosture(mockReq, mockRes);
+      expect(statusCode).toBe(401);
+      expect(responseBody?.message).toContain('Unauthorized');
+
+      // 2. scanAllAgentsPosture
+      statusCode = 0;
+      responseBody = null;
+      await AgentPostureController.scanAllAgentsPosture(mockReq, mockRes);
+      expect(statusCode).toBe(401);
+      expect(responseBody?.message).toContain('Unauthorized');
+
+      // 3. getAgentPostureFindings
+      statusCode = 0;
+      responseBody = null;
+      await AgentPostureController.getAgentPostureFindings(mockReq, mockRes);
+      expect(statusCode).toBe(401);
+      expect(responseBody?.message).toContain('Unauthorized');
     });
   });
 });
