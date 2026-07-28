@@ -100,6 +100,7 @@ model organizations {
   pci_controls                 PciControl[]
   dpdp_chapters                DpdpChapter[]
   dpdp_controls                DpdpControl[]
+  agent_posture_findings       agent_posture_findings[]
 
 
   // Feature Relations
@@ -2431,16 +2432,39 @@ model Agent {
   type           String
   source         String?
   accessLevel    String?  @map("access_level")
-  permissions    Json?
-  metadata       Json?
-  status         String   @default("active")
-  discoveredAt   DateTime @default(now()) @map("discovered_at")
+  permissions       Json?
+  metadata          Json?
+  status            String   @default("active")
+  postureScore      Int?     @map("posture_score")
+  lastPostureScanAt DateTime? @map("last_posture_scan_at")
+  discoveredAt      DateTime @default(now()) @map("discovered_at")
 
-  organization organizations @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization     organizations            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  postureFindings agent_posture_findings[]
 
   @@unique([organizationId, name, source])
   @@index([organizationId])
   @@map("agents")
+}
+
+model agent_posture_findings {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  agentId        String   @map("agent_id")
+  framework      String   // DPDP | GDPR | HIPAA | PCI_DSS | EU_AI_ACT
+  ruleId         String   @map("rule_id")
+  severity       String   // CRITICAL | HIGH | MEDIUM | LOW
+  title          String
+  description    String
+  remediation    String?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organization organizations @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agent        Agent         @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([agentId])
+  @@map("agent_posture_findings")
 }
 
 model jwt_blacklist {
