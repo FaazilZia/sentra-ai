@@ -396,22 +396,24 @@ describe('AgentPostureService Unit & Integration Tests', () => {
         },
       };
 
+      const mockNext = jest.fn();
+
       // 1. scanAgentPosture
-      await AgentPostureController.scanAgentPosture(mockReq, mockRes);
+      await AgentPostureController.scanAgentPosture(mockReq, mockRes, mockNext);
       expect(statusCode).toBe(401);
       expect(responseBody?.message).toContain('Unauthorized');
 
       // 2. scanAllAgentsPosture
       statusCode = 0;
       responseBody = null;
-      await AgentPostureController.scanAllAgentsPosture(mockReq, mockRes);
+      await AgentPostureController.scanAllAgentsPosture(mockReq, mockRes, mockNext);
       expect(statusCode).toBe(401);
       expect(responseBody?.message).toContain('Unauthorized');
 
       // 3. getAgentPostureFindings
       statusCode = 0;
       responseBody = null;
-      await AgentPostureController.getAgentPostureFindings(mockReq, mockRes);
+      await AgentPostureController.getAgentPostureFindings(mockReq, mockRes, mockNext);
       expect(statusCode).toBe(401);
       expect(responseBody?.message).toContain('Unauthorized');
     });
