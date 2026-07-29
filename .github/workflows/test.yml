@@ -73,7 +73,7 @@ jobs:
           retention-days: 7
 
       - name: Install Playwright browsers
-        run: npx playwright@1.44.0 install chromium --with-deps
+        run: npx playwright install chromium --with-deps
 
       - name: Seed Database for E2E
         run: npm run seed
@@ -286,7 +286,7 @@ jobs:
         run: node --max-old-space-size=4096 node_modules/.bin/tsc --noEmit
 
       - name: Install Playwright + Chromium
-        run: npx playwright@1.44.0 install chromium --with-deps
+        run: npx playwright install chromium --with-deps
 
       - name: Run accessibility audit (WCAG 2.1 AA)
         run: npx playwright test e2e/accessibility.spec.ts --reporter=list
