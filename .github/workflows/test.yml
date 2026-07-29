@@ -165,7 +165,7 @@ jobs:
           retention-days: 7
 
       - name: SonarCloud Scan
-        if: secrets.SONAR_TOKEN != ''
+        if: env.SONAR_TOKEN != ''
         uses: SonarSource/sonarqube-scan-action@2f77a1ec69fb1d595b06f35ab27e97605bdef703 # v5
         with:
           projectBaseDir: .
