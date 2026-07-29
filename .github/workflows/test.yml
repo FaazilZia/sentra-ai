@@ -37,7 +37,9 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Generate Prisma client
-        run: npx --ignore-scripts prisma@5.14.0 generate
+        run: npx --ignore-scripts prisma generate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sentra_test
 
       - name: Run TypeScript compile checks (backend)
         run: node --max-old-space-size=4096 node_modules/.bin/tsc --noEmit
@@ -46,7 +48,7 @@ jobs:
         run: node -e "require('./src/config/swagger')"
 
       - name: Initialize Database
-        run: npx --ignore-scripts prisma@5.14.0 db push --accept-data-loss
+        run: npx --ignore-scripts prisma db push --accept-data-loss
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sentra_test
 
@@ -227,11 +229,13 @@ jobs:
 
       - name: Generate Prisma client
         working-directory: backend
-        run: npx --ignore-scripts prisma@5.14.0 generate
+        run: npx --ignore-scripts prisma generate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sentra_test
 
       - name: Initialize Backend Database
         working-directory: backend
-        run: npx --ignore-scripts prisma@5.14.0 db push --accept-data-loss
+        run: npx --ignore-scripts prisma db push --accept-data-loss
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sentra_test
 
