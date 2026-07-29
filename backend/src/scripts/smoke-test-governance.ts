@@ -32,8 +32,6 @@ async function main() {
 
   async function cleanupOrg(orgId: string) {
     try {
-      await prisma.iso27001_implementations.deleteMany({ where: { organizationId: orgId } }).catch(() => {});
-      await prisma.iso42001_implementations.deleteMany({ where: { organizationId: orgId } }).catch(() => {});
       await prisma.control_implementations.deleteMany({ where: { organizationId: orgId } }).catch(() => {});
       await prisma.compliance_obligations.deleteMany({ where: { organizationId: orgId } }).catch(() => {});
       await prisma.controls.deleteMany({ where: { organizationId: orgId } }).catch(() => {});

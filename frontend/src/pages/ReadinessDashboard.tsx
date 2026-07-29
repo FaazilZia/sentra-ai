@@ -7,8 +7,7 @@ import {
   RefreshCw, 
   Zap, 
   ArrowRight,
-  TrendingUp,
-  FileCheck
+  TrendingUp
 } from 'lucide-react';
 import { apiRequest } from '@/lib/api';
 import { useStore } from '@/store/useStore';
@@ -36,19 +35,11 @@ interface FrameworkInfo {
 }
 
 const FRAMEWORKS: FrameworkInfo[] = [
-  { id: 'gdpr', name: 'GDPR', endpoint: '/gdpr', icon: Shield, description: 'General Data Protection Regulation AI Governance & Privacy Controls.' },
-  { id: 'hipaa', name: 'HIPAA', endpoint: '/hipaa', icon: Shield, description: 'Health Insurance Portability and Accountability Act Security & Privacy Safeguards.' },
-  { id: 'soc2', name: 'SOC2', endpoint: '/soc2', icon: Shield, description: 'System and Organization Controls Trust Services Criteria.' },
-  { id: 'pci', name: 'PCI-DSS', endpoint: '/pci', icon: Shield, description: 'Payment Card Industry Data Security Standard technical controls.' },
-  { id: 'dpdp', name: 'DPDP', endpoint: '/dpdp', icon: Shield, description: 'India Digital Personal Data Protection Act compliance controls.' },
-  { id: 'eu-ai-act', name: 'EU AI Act', endpoint: '/compliance/eu-ai-act', icon: Shield, description: 'Compliance status under the European Union AI Act risk frameworks.' },
   { id: 'nist-ai-rmf', name: 'NIST AI RMF 1.0', endpoint: '/compliance/nist-ai-rmf', icon: Zap, description: 'National Institute of Standards & Technology AI Risk Management Framework.' },
-  { id: 'iso-42001', name: 'ISO/IEC 42001', endpoint: '/iso42001', icon: FileCheck, description: 'Artificial Intelligence Management System (AIMS) standard.' },
-  { id: 'iso-27001', name: 'ISO/IEC 27001', endpoint: '/iso27001', icon: Shield, description: 'Information Security Management System standard.' },
-  { id: 'ccpa', name: 'CCPA', endpoint: '/ccpa', icon: FileCheck, description: 'California Consumer Privacy Act AI regulations.' },
-  { id: 'dora', name: 'DORA', endpoint: '/dora', icon: Zap, description: 'Digital Operational Resilience Act for financial entities.' },
-  { id: 'oecd', name: 'OECD AI Principles', endpoint: '/oecd', icon: Shield, description: 'OECD principles for trustworthy artificial intelligence.' },
-  { id: 'ftc', name: 'FTC AI Guidelines', endpoint: '/ftc', icon: AlertTriangle, description: 'Federal Trade Commission regulatory guidance on AI truthfulness.' }
+  { id: 'gdpr', name: 'GDPR', endpoint: '/gdpr', icon: Shield, description: 'General Data Protection Regulation AI Governance & Privacy Controls.' },
+  { id: 'dpdp', name: 'DPDP', endpoint: '/dpdp', icon: Shield, description: 'India Digital Personal Data Protection Act compliance controls.' },
+  { id: 'hipaa', name: 'HIPAA', endpoint: '/hipaa', icon: Shield, description: 'Health Insurance Portability and Accountability Act Security & Privacy Safeguards.' },
+  { id: 'pci', name: 'PCI-DSS', endpoint: '/pci', icon: Shield, description: 'Payment Card Industry Data Security Standard technical controls.' }
 ];
 
 export default function ReadinessDashboard() {

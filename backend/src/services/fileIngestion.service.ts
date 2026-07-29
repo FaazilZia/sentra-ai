@@ -14,7 +14,7 @@ export class FileIngestionService {
     file: Express.Multer.File,
     userId: string
   ) {
-    if (!['EU_AI_ACT', 'NIST', 'ISO42001', 'ISO27001'].includes(controlType)) {
+    if (!['GDPR', 'DPDP', 'HIPAA', 'PCI_DSS', 'NIST_AI_RMF'].includes(controlType)) {
       throw new Error(`Invalid control type: ${controlType}`);
     }
 

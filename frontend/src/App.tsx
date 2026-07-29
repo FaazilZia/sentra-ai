@@ -33,11 +33,6 @@ const GovernanceOSPage = lazy(() => import('./pages/GovernanceOS'));
 const AIRegistryPage = lazy(() => import('./pages/AIRegistry'));
 const RiskAssessmentPage = lazy(() => import('./pages/RiskAssessment'));
 const ImpactAssessmentsPage = lazy(() => import('./pages/ImpactAssessments'));
-const CEMarkingPage = lazy(() => import('./pages/CEMarking'));
-const CCPAPage = lazy(() => import('./pages/CCPA'));
-const DORAPage = lazy(() => import('./pages/DORA'));
-const OECDPage = lazy(() => import('./pages/OECD'));
-const FTCPage  = lazy(() => import('./pages/FTC'));
 const ControlsPage = lazy(() => import('./pages/Controls'));
 const VendorRiskPage = lazy(() => import('./pages/VendorRisk'));
 const ObligationsPage = lazy(() => import('./pages/Obligations'));
@@ -61,7 +56,6 @@ const AuditExplorerPage = lazy(() => import('./pages/AuditExplorer'));
 const LiveBlockFeedPage = lazy(() => import('./pages/LiveBlockFeed'));
 const GDPRPage = lazy(() => import('./pages/GDPR'));
 const HIPAAPage = lazy(() => import('./pages/HIPAA'));
-const SOC2Page = lazy(() => import('./pages/SOC2'));
 const PCIDSSPage = lazy(() => import('./pages/PCIDSS'));
 const DPDPPage = lazy(() => import('./pages/DPDP'));
 
@@ -180,30 +174,7 @@ function AppRoutes() {
               element={user ? <AppLayout><ImpactAssessmentsPage /></AppLayout> : <Navigate to="/login" replace />}
             />
 
-            <Route 
-              path="/app/ce-marking" 
-              element={user ? <AppLayout><CEMarkingPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
 
-            <Route 
-              path="/app/ccpa" 
-              element={user ? <AppLayout><CCPAPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/dora" 
-              element={user ? <AppLayout><DORAPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/oecd" 
-              element={user ? <AppLayout><OECDPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/ftc" 
-              element={user ? <AppLayout><FTCPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
 
             <Route 
               path="/app/controls" 
@@ -294,10 +265,7 @@ function AppRoutes() {
               element={user ? <AppLayout><HIPAAPage /></AppLayout> : <Navigate to="/login" replace />}
             />
 
-            <Route 
-              path="/app/soc2" 
-              element={user ? <AppLayout><SOC2Page /></AppLayout> : <Navigate to="/login" replace />}
-            />
+
 
             <Route 
               path="/app/pci" 

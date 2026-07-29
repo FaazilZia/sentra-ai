@@ -127,7 +127,7 @@ describe('PDF Report Quality & Integration Smoke Test', () => {
       organizationId = org.id;
     } else {
       const newOrg = await (prisma as any).organizations.create({
-        data: { name: 'Smoke Test Org', slug: `smoke-test-org-${Date.now()}` },
+        data: { name: 'Smoke Test Org', slug: `smoke-test-org-${Date.now()}`, is_active: true },
       });
       organizationId = newOrg.id;
     }

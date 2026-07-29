@@ -84,14 +84,12 @@ export default function ImpactAssessments() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [assRes, sysRes, friaRes] = await Promise.all([
+      const [assRes, sysRes] = await Promise.all([
         apiRequest<{ items: ImpactAssessment[] }>('/governance/impact-assessments'),
-        apiRequest<{ items: AISystem[] }>('/ai-systems'),
-        apiRequest<FriaAssessment[]>('/fria/assessments')
+        apiRequest<{ items: AISystem[] }>('/ai-systems')
       ]);
       setAssessments(assRes.items || []);
       setSystems(sysRes.items || []);
-      setFriaAssessments(friaRes || []);
     } catch (err) {
       console.error('Failed to load assessments:', err);
     } finally {

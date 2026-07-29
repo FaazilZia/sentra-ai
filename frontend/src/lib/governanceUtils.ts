@@ -6,10 +6,11 @@
 /** Map framework codes to human-readable labels */
 export function getFrameworkLabel(fw: string): string {
   switch (fw) {
-    case 'EU_AI_ACT': return 'EU AI Act';
-    case 'NIST_AI_RMF': return 'NIST AI RMF';
-    case 'ISO_42001': return 'ISO/IEC 42001';
-    case 'ISO_27001': return 'ISO/IEC 27001';
+    case 'GDPR': return 'GDPR';
+    case 'DPDP': return 'DPDP Act';
+    case 'HIPAA': return 'HIPAA';
+    case 'PCI_DSS': return 'PCI-DSS';
+    case 'NIST_AI_RMF': return 'NIST AI RMF 1.0';
     default: return fw.replaceAll('_', ' ');
   }
 }

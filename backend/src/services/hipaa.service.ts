@@ -85,7 +85,7 @@ export class HipaaService {
         gdpr_score: 0,
         dpdp_score: 0,
         hipaa_score: score,
-        eu_ai_act_score: 0,
+        pci_dss_score: 0,
         nist_ai_rmf_score: 0,
         governance_posture_score: score,
         framework_version: '1.0.0',

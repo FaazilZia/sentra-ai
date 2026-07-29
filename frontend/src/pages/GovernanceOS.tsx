@@ -14,7 +14,7 @@ export default function GovernanceOS() {
 
   const filteredMappings = mappings.filter(m => {
     if (statusFilter === 'ALL') return true;
-    return m.status?.toLowerCase() === statusFilter.toLowerCase();
+    return m.overallStatus?.toLowerCase() === statusFilter.toLowerCase();
   });
 
   useEffect(() => {
@@ -66,10 +66,11 @@ export default function GovernanceOS() {
   // Get dynamic direct navigation anchors for the Compliance.tsx tab lists
   const getComplianceAnchor = (framework: string) => {
     const formatted = framework?.toUpperCase();
-    if (formatted.includes('EU')) return '/app/compliance?tab=eu-ai-act';
+    if (formatted.includes('GDPR')) return '/app/compliance?tab=gdpr';
+    if (formatted.includes('DPDP')) return '/app/compliance?tab=dpdp';
+    if (formatted.includes('HIPAA')) return '/app/compliance?tab=hipaa';
+    if (formatted.includes('PCI')) return '/app/compliance?tab=pci-dss';
     if (formatted.includes('NIST')) return '/app/compliance?tab=nist-ai-rmf';
-    if (formatted.includes('42001')) return '/app/compliance?tab=iso-42001';
-    if (formatted.includes('27001')) return '/app/compliance?tab=iso-27001';
     return '/app/compliance';
   };
 
@@ -84,7 +85,7 @@ export default function GovernanceOS() {
           </div>
           <div>
             <h2 className="text-[22px] font-semibold text-[var(--text-primary)] tracking-tight">GovernanceOS Framework Mapper</h2>
-            <p className="text-[10px] text-[var(--text-secondary)] font-medium">Harmonize controls between NIST AI RMF, EU AI Act, ISO 42001, and ISO 27001 to resolve double-work gaps</p>
+            <p className="text-[10px] text-[var(--text-secondary)] font-medium">Harmonize concern domains between GDPR, DPDP, HIPAA, PCI-DSS, and NIST AI RMF to resolve compliance gaps</p>
           </div>
         </div>
         <button
@@ -136,7 +137,7 @@ export default function GovernanceOS() {
               </div>
 
               <p className="text-[10px] text-[var(--text-secondary)] font-medium leading-relaxed max-w-xs">
-                Your consistent posture index reflects control overlap coverage across all 4 frameworks.
+                Your consistent posture index reflects control overlap coverage across all 5 supported frameworks.
               </p>
             </div>
 
@@ -149,7 +150,7 @@ export default function GovernanceOS() {
                 </div>
                 <div className="text-[10px] text-slate-400 font-medium flex items-center gap-1 mt-4">
                   <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                  NIST AI RMF mapped cleanly to EU AI Act & ISO 42001
+                  GDPR, DPDP, HIPAA, PCI-DSS & NIST AI RMF mapped cleanly
                 </div>
               </div>
 
@@ -216,48 +217,56 @@ export default function GovernanceOS() {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-100">
-                      <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400 sticky top-0 bg-slate-50 z-10">Concern area</th>
-                      <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400 sticky top-0 bg-slate-50 z-10">NIST AI RMF</th>
-                      <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400 sticky top-0 bg-slate-50 z-10">EU AI Act</th>
-                      <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400 sticky top-0 bg-slate-50 z-10">ISO/IEC 42001</th>
-                      <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400 sticky top-0 bg-slate-50 z-10">ISO/IEC 27001</th>
-                      <th className="px-6 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400 sticky top-0 bg-slate-50 z-10">Unified status</th>
+                      <th className="px-4 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400 sticky top-0 bg-slate-50 z-10">Concern Domain</th>
+                      <th className="px-4 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400 sticky top-0 bg-slate-50 z-10">GDPR</th>
+                      <th className="px-4 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400 sticky top-0 bg-slate-50 z-10">DPDP</th>
+                      <th className="px-4 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400 sticky top-0 bg-slate-50 z-10">HIPAA</th>
+                      <th className="px-4 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400 sticky top-0 bg-slate-50 z-10">PCI-DSS</th>
+                      <th className="px-4 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400 sticky top-0 bg-slate-50 z-10">NIST AI RMF</th>
+                      <th className="px-4 py-3.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400 sticky top-0 bg-slate-50 z-10">Overall Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {filteredMappings.map((m) => (
                       <tr key={m.id} className="hover:bg-[var(--bg-hover)] transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="font-bold text-[12px] text-slate-800 leading-normal">{m.concernArea}</div>
+                        <td className="px-4 py-4">
+                          <div className="font-bold text-[12px] text-slate-800 leading-normal">{m.concernDomain}</div>
+                          <div className="text-[10px] text-slate-400 font-medium">{m.description}</div>
                         </td>
                         
-                        {/* NIST */}
-                        <td className="px-6 py-4">
-                          <span className="font-mono font-bold text-[10px] text-slate-600 block">{m.nistCode}</span>
-                          <span className="text-[9px] text-slate-400 font-medium block truncate max-w-[120px]">{m.nistTitle}</span>
+                        {/* GDPR */}
+                        <td className="px-4 py-4">
+                          <span className="font-mono text-[9px] text-slate-600 block">{m.citations?.GDPR}</span>
+                          {getStatusBadge(m.frameworkStatuses?.GDPR)}
                         </td>
 
-                        {/* EU */}
-                        <td className="px-6 py-4">
-                          <span className="font-mono font-bold text-[10px] text-indigo-600 block">{m.euArticle}</span>
-                          <span className="text-[9px] text-slate-400 font-medium block truncate max-w-[120px]">{m.euTitle}</span>
+                        {/* DPDP */}
+                        <td className="px-4 py-4">
+                          <span className="font-mono text-[9px] text-indigo-600 block">{m.citations?.DPDP}</span>
+                          {getStatusBadge(m.frameworkStatuses?.DPDP)}
                         </td>
 
-                        {/* ISO 42001 */}
-                        <td className="px-6 py-4">
-                          <span className="font-mono font-bold text-[10px] text-purple-600 block">{m.iso42001Control}</span>
-                          <span className="text-[9px] text-slate-400 font-medium block truncate max-w-[120px]">{m.iso42001Title}</span>
+                        {/* HIPAA */}
+                        <td className="px-4 py-4">
+                          <span className="font-mono text-[9px] text-purple-600 block">{m.citations?.HIPAA}</span>
+                          {getStatusBadge(m.frameworkStatuses?.HIPAA)}
                         </td>
 
-                        {/* ISO 27001 */}
-                        <td className="px-6 py-4">
-                          <span className="font-mono font-bold text-[10px] text-teal-600 block">{m.iso27001Control}</span>
-                          <span className="text-[9px] text-slate-400 font-medium block truncate max-w-[120px]">{m.iso27001Title}</span>
+                        {/* PCI-DSS */}
+                        <td className="px-4 py-4">
+                          <span className="font-mono text-[9px] text-teal-600 block">{m.citations?.PCI_DSS}</span>
+                          {getStatusBadge(m.frameworkStatuses?.PCI_DSS)}
+                        </td>
+
+                        {/* NIST AI RMF */}
+                        <td className="px-4 py-4">
+                          <span className="font-mono text-[9px] text-emerald-600 block">{m.citations?.NIST_AI_RMF}</span>
+                          {getStatusBadge(m.frameworkStatuses?.NIST_AI_RMF)}
                         </td>
 
                         {/* Status */}
-                        <td className="px-6 py-4">
-                          {getStatusBadge(m.status)}
+                        <td className="px-4 py-4">
+                          {getStatusBadge(m.overallStatus)}
                         </td>
                       </tr>
                     ))}

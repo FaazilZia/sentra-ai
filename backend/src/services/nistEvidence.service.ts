@@ -203,7 +203,7 @@ export class NistEvidenceService {
   }
 
   /**
-   * Propagate evidence to mapped framework controls (GDPR, EU AI Act)
+   * Propagate evidence to mapped framework controls (GDPR, DPDP, HIPAA, PCI-DSS)
    */
   private static async propagateEvidence(sourceEvidence: any): Promise<void> {
     try {

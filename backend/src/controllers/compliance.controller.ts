@@ -4,21 +4,14 @@ import { ReportService } from '../services/report.service';
 import { resolveOrganizationId } from '../utils/company';
 import prisma from '../config/db';
 import { asyncHandler, sendSuccess, sendError } from '../utils/controllerHelpers';
+import { SUPPORTED_FRAMEWORKS, SupportedFramework } from '../constants/frameworks';
 
-// Import all 13 framework service classes
+// Import 5 supported framework service classes
 import { GdprService } from '../services/gdpr.service';
-import { CcpaService } from '../services/ccpa.service';
 import { HipaaService } from '../services/hipaa.service';
 import { DpdpService } from '../services/dpdp.service';
-import { EuAiActService } from '../services/euAiAct.service';
 import { NistAiRmfService } from '../services/nistAiRmf.service';
-import { Iso42001Service } from '../services/iso42001.service';
-import { Iso27001Service } from '../services/iso27001.service';
-import { Soc2Service } from '../services/soc2.service';
 import { PciService } from '../services/pci.service';
-import { DoraService } from '../services/dora.service';
-import { OecdService } from '../services/oecd.service';
-import { FtcService } from '../services/ftc.service';
 
 export const getAuditProof = asyncHandler(async (req: any, res: Response) => {
   const organizationId = await resolveOrganizationId(req);
@@ -136,7 +129,6 @@ export const getComplianceStats = asyncHandler(async (req: any, res: Response) =
     select: { created_at: true, details: true }
   });
 
-  // Query PII action logs with PostgreSQL JSON path filtering and SQLite fallback
   let piiLogs: any[] = [];
   try {
     piiLogs = await prisma.logs.findMany({
@@ -148,12 +140,10 @@ export const getComplianceStats = asyncHandler(async (req: any, res: Response) =
         },
       },
     });
-    // Fall back if query returns 0 results unexpectedly
     if (piiLogs.length === 0) {
       throw new Error('Zero results unexpectedly from JSON path query');
     }
   } catch (err) {
-    // SQLite dev fallback: query active organization's logs and filter in-memory
     const allLogs = await prisma.logs.findMany({
       where: { organizationId },
       orderBy: { timestamp: 'desc' },
@@ -164,9 +154,7 @@ export const getComplianceStats = asyncHandler(async (req: any, res: Response) =
     });
   }
 
-  const frameworkKeys = [
-    'GDPR', 'CCPA', 'HIPAA', 'DPDP', 'EU AI Act', 'NIST AI RMF', 'ISO 42001', 'ISO 27001', 'SOC2', 'PCI-DSS', 'DORA', 'OECD', 'FTC'
-  ];
+  const frameworkKeys = ['GDPR', 'DPDP', 'HIPAA', 'PCI_DSS', 'NIST_AI_RMF'];
 
   const breakdown: Record<string, number> = {};
   const piiBreakdown: Record<string, number> = {};
@@ -175,38 +163,20 @@ export const getComplianceStats = asyncHandler(async (req: any, res: Response) =
     piiBreakdown[k] = 0;
   });
 
-  // Count incidents violations
   violations.forEach((v: any) => {
     const d = String(v.details || '').toUpperCase();
     frameworkKeys.forEach(k => {
-      const keyUpper = k.toUpperCase();
-      if (d.includes(keyUpper) || 
-          (keyUpper === 'EU AI ACT' && (d.includes('EU-AIA') || d.includes('EU AI'))) ||
-          (keyUpper === 'NIST AI RMF' && (d.includes('NIST') || d.includes('NIST-AI'))) ||
-          (keyUpper === 'ISO 42001' && d.includes('ISO-42001')) ||
-          (keyUpper === 'ISO 27001' && d.includes('ISO-27001')) ||
-          (keyUpper === 'PCI-DSS' && (d.includes('PCI') || d.includes('PCI-DSS')))) {
-        breakdown[k]++;
-      }
+      if (d.includes(k)) breakdown[k]++;
     });
   });
 
-  // Count PII violations
   piiLogs.forEach((log: any) => {
     const meta = log.metadata ? (typeof log.metadata === 'string' ? JSON.parse(log.metadata) : log.metadata) : null;
     if (meta && Array.isArray(meta.violatedFrameworks)) {
       meta.violatedFrameworks.forEach((fw: string) => {
         const upperFw = fw.toUpperCase();
         frameworkKeys.forEach(k => {
-          const keyUpper = k.toUpperCase();
-          if (upperFw === keyUpper || 
-              (keyUpper === 'EU AI ACT' && (upperFw.includes('EU-AIA') || upperFw.includes('EU AI'))) ||
-              (keyUpper === 'NIST AI RMF' && (upperFw.includes('NIST') || upperFw.includes('NIST-AI'))) ||
-              (keyUpper === 'ISO 42001' && upperFw.includes('ISO-42001')) ||
-              (keyUpper === 'ISO 27001' && upperFw.includes('ISO-27001')) ||
-              (keyUpper === 'PCI-DSS' && (upperFw.includes('PCI') || upperFw.includes('PCI-DSS')))) {
-            piiBreakdown[k]++;
-          }
+          if (upperFw.includes(k)) piiBreakdown[k]++;
         });
       });
     }
@@ -227,35 +197,18 @@ export const getComplianceStats = asyncHandler(async (req: any, res: Response) =
 
   const riskTrends = Object.entries(trendMap).map(([date, risk]) => ({ date, risk }));
 
-  // Parallel fetch for all framework stats
   const [
     gdprStats,
-    ccpaOverview,
     hipaaStats,
     dpdpStats,
-    euAiActOverview,
     nistAiRmfOverview,
-    iso42001Overview,
-    iso27001Overview,
-    soc2Stats,
     pciStats,
-    doraOverview,
-    oecdOverview,
-    ftcOverview
   ] = await Promise.all([
     GdprService.getStats(organizationId).catch(() => null),
-    CcpaService.getFrameworkOverview(organizationId).catch(() => null),
     HipaaService.getStats(organizationId).catch(() => null),
     DpdpService.getStats(organizationId).catch(() => null),
-    EuAiActService.getFrameworkOverview(organizationId).catch(() => null),
     NistAiRmfService.getFrameworkOverview(organizationId).catch(() => null),
-    Iso42001Service.getFrameworkOverview(organizationId).catch(() => null),
-    Iso27001Service.getFrameworkOverview(organizationId).catch(() => null),
-    Soc2Service.getStats(organizationId).catch(() => null),
     PciService.getStats(organizationId).catch(() => null),
-    DoraService.getFrameworkOverview(organizationId).catch(() => null),
-    OecdService.getFrameworkOverview(organizationId).catch(() => null),
-    FtcService.getFrameworkOverview(organizationId).catch(() => null),
   ]);
 
   const frameworkList = [
@@ -271,14 +224,14 @@ export const getComplianceStats = asyncHandler(async (req: any, res: Response) =
       }
     },
     {
-      name: 'CCPA',
-      score: ccpaOverview?.summary?.compliance_score ?? 0,
+      name: 'DPDP',
+      score: dpdpStats?.compliance_score ?? 100,
       controls: {
-        total_controls: ccpaOverview?.summary?.total_controls ?? 0,
-        implemented: ccpaOverview?.summary?.implemented ?? 0,
-        in_progress: ccpaOverview?.summary?.in_progress ?? 0,
-        not_started: ccpaOverview?.summary?.not_started ?? 0,
-        not_applicable: ccpaOverview?.summary?.not_applicable ?? 0
+        total_controls: dpdpStats?.total_controls ?? 0,
+        implemented: dpdpStats?.implemented ?? 0,
+        in_progress: dpdpStats?.in_progress ?? 0,
+        not_started: dpdpStats?.not_started ?? 0,
+        not_applicable: dpdpStats?.not_applicable ?? 0
       }
     },
     {
@@ -293,73 +246,7 @@ export const getComplianceStats = asyncHandler(async (req: any, res: Response) =
       }
     },
     {
-      name: 'DPDP',
-      score: dpdpStats?.compliance_score ?? 100,
-      controls: {
-        total_controls: dpdpStats?.total_controls ?? 0,
-        implemented: dpdpStats?.implemented ?? 0,
-        in_progress: dpdpStats?.in_progress ?? 0,
-        not_started: dpdpStats?.not_started ?? 0,
-        not_applicable: dpdpStats?.not_applicable ?? 0
-      }
-    },
-    {
-      name: 'EU AI Act',
-      score: euAiActOverview?.summary?.compliance_score ?? 0,
-      controls: {
-        total_controls: euAiActOverview?.summary?.total_controls ?? 0,
-        implemented: euAiActOverview?.summary?.implemented ?? 0,
-        in_progress: euAiActOverview?.summary?.in_progress ?? 0,
-        not_started: euAiActOverview?.summary?.not_started ?? 0,
-        not_applicable: euAiActOverview?.summary?.not_applicable ?? 0
-      }
-    },
-    {
-      name: 'NIST AI RMF',
-      score: nistAiRmfOverview?.score ?? 0,
-      controls: {
-        total_controls: nistAiRmfOverview?.summary?.total_subcategories ?? 0,
-        implemented: nistAiRmfOverview?.summary?.implemented ?? 0,
-        in_progress: nistAiRmfOverview?.summary?.in_progress ?? 0,
-        not_started: nistAiRmfOverview?.summary?.not_started ?? 0,
-        not_applicable: nistAiRmfOverview?.summary?.not_applicable ?? 0
-      }
-    },
-    {
-      name: 'ISO 42001',
-      score: iso42001Overview?.summary?.compliance_score ?? 0,
-      controls: {
-        total_controls: iso42001Overview?.summary?.total_controls ?? 0,
-        implemented: iso42001Overview?.summary?.implemented ?? 0,
-        in_progress: iso42001Overview?.summary?.in_progress ?? 0,
-        not_started: iso42001Overview?.summary?.not_started ?? 0,
-        not_applicable: iso42001Overview?.summary?.not_applicable ?? 0
-      }
-    },
-    {
-      name: 'ISO 27001',
-      score: iso27001Overview?.summary?.compliance_score ?? 0,
-      controls: {
-        total_controls: iso27001Overview?.summary?.total_controls ?? 0,
-        implemented: iso27001Overview?.summary?.implemented ?? 0,
-        in_progress: iso27001Overview?.summary?.in_progress ?? 0,
-        not_started: iso27001Overview?.summary?.not_started ?? 0,
-        not_applicable: iso27001Overview?.summary?.not_applicable ?? 0
-      }
-    },
-    {
-      name: 'SOC2',
-      score: soc2Stats?.compliance_score ?? 100,
-      controls: {
-        total_controls: soc2Stats?.total_controls ?? 0,
-        implemented: soc2Stats?.implemented ?? 0,
-        in_progress: soc2Stats?.in_progress ?? 0,
-        not_started: soc2Stats?.not_started ?? 0,
-        not_applicable: soc2Stats?.not_applicable ?? 0
-      }
-    },
-    {
-      name: 'PCI-DSS',
+      name: 'PCI_DSS',
       score: pciStats?.compliance_score ?? 100,
       controls: {
         total_controls: pciStats?.total_controls ?? 0,
@@ -370,38 +257,16 @@ export const getComplianceStats = asyncHandler(async (req: any, res: Response) =
       }
     },
     {
-      name: 'DORA',
-      score: doraOverview?.summary?.compliance_score ?? 0,
+      name: 'NIST_AI_RMF',
+      score: nistAiRmfOverview?.score ?? 100,
       controls: {
-        total_controls: doraOverview?.summary?.total_controls ?? 0,
-        implemented: doraOverview?.summary?.implemented ?? 0,
-        in_progress: doraOverview?.summary?.in_progress ?? 0,
-        not_started: doraOverview?.summary?.not_started ?? 0,
-        not_applicable: doraOverview?.summary?.not_applicable ?? 0
+        total_controls: nistAiRmfOverview?.summary?.total_subcategories ?? 0,
+        implemented: nistAiRmfOverview?.summary?.implemented ?? 0,
+        in_progress: nistAiRmfOverview?.summary?.in_progress ?? 0,
+        not_started: nistAiRmfOverview?.summary?.not_started ?? 0,
+        not_applicable: nistAiRmfOverview?.summary?.not_applicable ?? 0
       }
     },
-    {
-      name: 'OECD',
-      score: oecdOverview?.summary?.compliance_score ?? 0,
-      controls: {
-        total_controls: oecdOverview?.summary?.total_controls ?? 0,
-        implemented: oecdOverview?.summary?.implemented ?? 0,
-        in_progress: oecdOverview?.summary?.in_progress ?? 0,
-        not_started: oecdOverview?.summary?.not_started ?? 0,
-        not_applicable: oecdOverview?.summary?.not_applicable ?? 0
-      }
-    },
-    {
-      name: 'FTC',
-      score: ftcOverview?.summary?.compliance_score ?? 0,
-      controls: {
-        total_controls: ftcOverview?.summary?.total_controls ?? 0,
-        implemented: ftcOverview?.summary?.implemented ?? 0,
-        in_progress: ftcOverview?.summary?.in_progress ?? 0,
-        not_started: ftcOverview?.summary?.not_started ?? 0,
-        not_applicable: ftcOverview?.summary?.not_applicable ?? 0
-      }
-    }
   ];
 
   return sendSuccess(res, {
@@ -410,5 +275,42 @@ export const getComplianceStats = asyncHandler(async (req: any, res: Response) =
     piiViolations: piiBreakdown,
     riskTrends,
     frameworks: frameworkList
+  });
+});
+
+/**
+ * Unified Per-Framework View: Aggregates static AISPM posture findings and live AIDR runtime blocks.
+ */
+export const getUnifiedFrameworkView = asyncHandler(async (req: any, res: Response) => {
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) return sendError(res, 401, 'Unauthorized');
+
+  const { framework } = req.params;
+  const targetFw = String(framework).toUpperCase().replace('-', '_');
+
+  if (!SUPPORTED_FRAMEWORKS.includes(targetFw as SupportedFramework)) {
+    return sendError(res, 400, `Unsupported framework '${framework}'. Must be one of: ${SUPPORTED_FRAMEWORKS.join(', ')}`);
+  }
+
+  // Fetch AISPM static posture findings for this framework
+  const postureFindings = await prisma.agent_posture_findings.findMany({
+    where: { organizationId, framework: targetFw },
+    include: { agent: { select: { id: true, name: true, type: true } } },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  // Fetch AIDR runtime block events for this framework
+  const runtimeBlocks = await prisma.blockEvent.findMany({
+    where: { organizationId, frameworks: { has: targetFw } },
+    orderBy: { timestamp: 'desc' },
+    take: 100,
+  });
+
+  return sendSuccess(res, {
+    framework: targetFw,
+    aispmPostureFindingsCount: postureFindings.length,
+    aidrRuntimeBlocksCount: runtimeBlocks.length,
+    postureFindings,
+    runtimeBlocks,
   });
 });

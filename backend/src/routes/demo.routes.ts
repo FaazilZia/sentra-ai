@@ -25,7 +25,7 @@ router.post('/simulate-attack', authenticate, authorizeRoles('ADMIN'), async (re
           risk: 'high',
           reason: 'Heuristic pattern match for bulk data exfiltration',
           explanation: 'The agent attempted to query the client database and fetch full Social Security Numbers for over 1,000 users without tokenization constraints.',
-          compliance: ['GDPR', 'CCPA']
+          compliance: ['GDPR', 'DPDP']
         },
         {
           agent: 'DataExtractorAgent',
@@ -34,7 +34,7 @@ router.post('/simulate-attack', authenticate, authorizeRoles('ADMIN'), async (re
           risk: 'high',
           reason: 'Exfiltration threat vector: s3 egress to non-whitelisted bucket',
           explanation: 'The agent initiated a direct multi-part upload/copy request to an S3 bucket residing outside the corporate firewall policies.',
-          compliance: ['GDPR', 'ISO-27001']
+          compliance: ['GDPR', 'HIPAA']
         }
       ];
     } else if (scenario === 'prompt_injection') {
@@ -46,7 +46,7 @@ router.post('/simulate-attack', authenticate, authorizeRoles('ADMIN'), async (re
           risk: 'high',
           reason: 'Prompt injection attack signature matched: system override attempt',
           explanation: 'User input matched known adversarial pattern attempting to reset the LLM system prompt boundaries and extract system secrets.',
-          compliance: ['EU-AI-ACT', 'NIST-AI-RMF']
+          compliance: ['NIST-AI-RMF', 'PCI-DSS']
         },
         {
           agent: 'CustomerFacingAgent',
@@ -55,7 +55,7 @@ router.post('/simulate-attack', authenticate, authorizeRoles('ADMIN'), async (re
           risk: 'high',
           reason: 'Prompt injection: direct leak query on application environment credentials',
           explanation: 'Adversarial jailbreak payload attempting to trigger a memory leak or variable inspection.',
-          compliance: ['EU-AI-ACT', 'ISO-27001']
+          compliance: ['NIST-AI-RMF', 'PCI-DSS']
         }
       ];
     } else if (scenario === 'unauthorized_agent') {
@@ -67,7 +67,7 @@ router.post('/simulate-attack', authenticate, authorizeRoles('ADMIN'), async (re
           risk: 'high',
           reason: 'Unauthorized agent access: Agent identity signature verification failed',
           explanation: 'An agent running from an unrecognized client token attempted to perform workspace configuration changes.',
-          compliance: ['GDPR', 'ISO-27001']
+          compliance: ['GDPR', 'PCI-DSS']
         }
       ];
     } else {
@@ -80,7 +80,7 @@ router.post('/simulate-attack', authenticate, authorizeRoles('ADMIN'), async (re
           risk: 'high',
           reason: 'Heuristic pattern match for brute force credentials harvesting',
           explanation: 'High frequency authorization calls targeting authentication routes.',
-          compliance: ['ISO-27001']
+          compliance: ['PCI-DSS']
         },
         {
           agent: 'FinancialAdvisorAgent',
@@ -89,7 +89,7 @@ router.post('/simulate-attack', authenticate, authorizeRoles('ADMIN'), async (re
           risk: 'high',
           reason: 'Guardrail violation: Financial transaction exceeds agent limit ($5,000)',
           explanation: 'The agent attempted to authorize a wire transfer exceeding its pre-approved limit without human-in-the-loop validation.',
-          compliance: ['DORA']
+          compliance: ['PCI-DSS']
         }
       ];
     }

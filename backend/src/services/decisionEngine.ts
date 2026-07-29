@@ -65,8 +65,6 @@ export const makeDecision = async (agent: string, action: string, organizationId
         3600 // 1 hour TTL
       );
 
-      // If the engine itself returned a failure result (fail-closed by default in evaluateSemanticRisk)
-      // we want to fall back to L2 for actual governance if we want "degraded" mode.
       if (semanticRisk.categories?.includes('ENGINE_FAILURE')) {
         throw new Error('Semantic Engine returned failure');
       }
@@ -74,7 +72,7 @@ export const makeDecision = async (agent: string, action: string, organizationId
       logger.warn('[GOVERNANCE] L3 Semantic Engine unavailable, falling back to L2:', error.message);
       degraded = true;
       semanticRisk = { 
-        score: localRisk.score, // Fallback to L2
+        score: localRisk.score,
         explanation: 'Semantic analysis unavailable (Degraded Mode). Fallback to pattern matching.',
         confidence: 0.5,
         categories: ['DEGRADED']
@@ -144,4 +142,3 @@ const buildBlockedResponse = (type: string, policyResult: any, startTime: number
     ]
   };
 };
-

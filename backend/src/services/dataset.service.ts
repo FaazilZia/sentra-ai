@@ -117,28 +117,27 @@ export class DatasetService {
         where: { id: aiSystemId }
       });
 
-      // Link to EU AI Act Art 10 if linked to a HIGH_RISK system
+      // Link to NIST AI RMF Data Governance if linked to a HIGH_RISK system
       if (system && system.risk_tier === 'HIGH') {
-        logger.info(`System ${system.name} is HIGH risk. Auto-linking EU AI Act Art 10 (Data Governance) control to IN_PROGRESS.`);
+        logger.info(`System ${system.name} is HIGH risk. Auto-linking NIST AI RMF Data Governance control to IN_PROGRESS.`);
         
-        const control = await prisma.eu_ai_act_controls.findFirst({
-          where: { control_code: { contains: 'EU-AIA-10' } }
+        const subcategory = await prisma.nist_ai_rmf_subcategories.findFirst({
+          where: { subcategory_code: 'GV-1.1' }
         });
 
-        if (control) {
-          await prisma.eu_ai_act_implementations.upsert({
+        if (subcategory) {
+          await prisma.nist_ai_rmf_implementations.upsert({
             where: {
-              organizationId_control_id: {
+              organizationId_subcategory_id: {
                 organizationId,
-                control_id: control.id
+                subcategory_id: subcategory.id
               }
             },
             update: { status: 'IN_PROGRESS', last_reviewed: new Date() },
             create: {
               organizationId,
-              control_id: control.id,
+              subcategory_id: subcategory.id,
               status: 'IN_PROGRESS',
-              evidence_links: [],
               last_reviewed: new Date()
             }
           });

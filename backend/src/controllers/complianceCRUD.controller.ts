@@ -3,20 +3,12 @@ import prisma from '../config/db';
 import { asyncHandler, sendError } from '../utils/controllerHelpers';
 import { resolveOrganizationId } from '../utils/company';
 
-// Import all 13 framework service classes
+// Import supported 5 framework service classes
 import { GdprService } from '../services/gdpr.service';
-import { CcpaService } from '../services/ccpa.service';
 import { HipaaService } from '../services/hipaa.service';
 import { DpdpService } from '../services/dpdp.service';
-import { EuAiActService } from '../services/euAiAct.service';
 import { NistAiRmfService } from '../services/nistAiRmf.service';
-import { Iso42001Service } from '../services/iso42001.service';
-import { Iso27001Service } from '../services/iso27001.service';
-import { Soc2Service } from '../services/soc2.service';
 import { PciService } from '../services/pci.service';
-import { DoraService } from '../services/dora.service';
-import { OecdService } from '../services/oecd.service';
-import { FtcService } from '../services/ftc.service';
 
 const ALLOWED_STATUSES = ['NOT_STARTED', 'IN_PROGRESS', 'COMPLIANT', 'NON_COMPLIANT'];
 
@@ -93,51 +85,27 @@ export const getReadiness = asyncHandler(async (req: any, res: Response) => {
   const organizationId = await resolveOrganizationId(req);
   if (!organizationId) return sendError(res, 401, 'Unauthorized');
 
-  // Parallel fetch for all framework stats
+  // Parallel fetch for 5 supported framework stats
   const [
     gdprStats,
-    ccpaOverview,
     hipaaStats,
     dpdpStats,
-    euAiActOverview,
     nistAiRmfOverview,
-    iso42001Overview,
-    iso27001Overview,
-    soc2Stats,
     pciStats,
-    doraOverview,
-    oecdOverview,
-    ftcOverview
   ] = await Promise.all([
     GdprService.getStats(organizationId).catch(() => null),
-    CcpaService.getFrameworkOverview(organizationId).catch(() => null),
     HipaaService.getStats(organizationId).catch(() => null),
     DpdpService.getStats(organizationId).catch(() => null),
-    EuAiActService.getFrameworkOverview(organizationId).catch(() => null),
     NistAiRmfService.getFrameworkOverview(organizationId).catch(() => null),
-    Iso42001Service.getFrameworkOverview(organizationId).catch(() => null),
-    Iso27001Service.getFrameworkOverview(organizationId).catch(() => null),
-    Soc2Service.getStats(organizationId).catch(() => null),
     PciService.getStats(organizationId).catch(() => null),
-    DoraService.getFrameworkOverview(organizationId).catch(() => null),
-    OecdService.getFrameworkOverview(organizationId).catch(() => null),
-    FtcService.getFrameworkOverview(organizationId).catch(() => null),
   ]);
 
   const scores: Record<string, number> = {
     'GDPR': gdprStats?.compliance_score ?? 100,
-    'CCPA': ccpaOverview?.summary?.compliance_score ?? 0,
-    'HIPAA': hipaaStats?.compliance_score ?? 100,
     'DPDP': dpdpStats?.compliance_score ?? 100,
-    'EU AI Act': euAiActOverview?.summary?.compliance_score ?? 0,
-    'NIST AI RMF': nistAiRmfOverview?.score ?? 0,
-    'ISO 42001': iso42001Overview?.summary?.compliance_score ?? 0,
-    'ISO 27001': iso27001Overview?.summary?.compliance_score ?? 0,
-    'SOC2': soc2Stats?.compliance_score ?? 100,
-    'PCI-DSS': pciStats?.compliance_score ?? 100,
-    'DORA': doraOverview?.summary?.compliance_score ?? 0,
-    'OECD': oecdOverview?.summary?.compliance_score ?? 0,
-    'FTC': ftcOverview?.summary?.compliance_score ?? 0
+    'HIPAA': hipaaStats?.compliance_score ?? 100,
+    'PCI_DSS': pciStats?.compliance_score ?? 100,
+    'NIST_AI_RMF': nistAiRmfOverview?.score ?? 100,
   };
 
   const getReadinessStatus = (score: number): 'ready' | 'partial' | 'not_ready' => {

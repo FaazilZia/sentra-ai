@@ -75,27 +75,16 @@ model organizations {
   intake_submissions           intake_submissions[]
   risk_scores                  risk_scores[]
   share_links                  share_links[]
-  eu_ai_act_implementations    eu_ai_act_implementations[]
   nist_ai_rmf_implementations  nist_ai_rmf_implementations[]
   governance_evidence          governance_evidence[]
   governance_posture_snapshots governance_posture_snapshots[]
   governance_incidents         governance_incidents[]
-  fria_assessments             fria_assessments[]
   vendor_risk_assessments      vendor_risk_assessments[]
-  iso42001_implementations     iso42001_implementations[]
-  iso27001_implementations     iso27001_implementations[]
   evidence_files               evidence_files[]
-  ce_marking_records           ce_marking_records[]
-  ccpa_implementations         ccpa_implementations[]
-  dora_implementations         dora_implementations[]
-  oecd_implementations         oecd_implementations[]
-  ftc_implementations          ftc_implementations[]
   gdpr_chapters                gdpr_chapters[]
   gdpr_controls                gdpr_controls[]
   hipaa_chapters               HipaaChapter[]
   hipaa_controls               HipaaControl[]
-  soc2_chapters                Soc2Chapter[]
-  soc2_controls                Soc2Control[]
   pci_chapters                 PciChapter[]
   pci_controls                 PciControl[]
   dpdp_chapters                DpdpChapter[]
@@ -732,7 +721,7 @@ model compliance_snapshots {
   gdpr_score               Int
   dpdp_score               Int
   hipaa_score              Int
-  eu_ai_act_score          Int            @default(0)
+  pci_dss_score            Int            @default(0)
   nist_ai_rmf_score        Float          @default(0)
   governance_posture_score Float          @default(0)
   framework_version        String         @default("1.0.0")
@@ -999,10 +988,8 @@ model ai_systems {
   model_card         model_cards?
   risk_assessments   risk_assessments[]
   impact_assessments impact_assessments[]
-  fria_assessments   fria_assessments[]
   datasets           datasets[]
   model_lifecycle_events model_lifecycle_events[]
-  ce_marking_records ce_marking_records[]
 
   @@index([organizationId])
   @@map("ai_systems")
@@ -1062,8 +1049,8 @@ model impact_assessments {
 model controls {
   id             String   @id @default(uuid())
   organizationId String   @map("organization_id")
-  framework      String   // EU_AI_ACT | NIST_AI_RMF | ISO_42001 | GDPR
-  control_id     String   // e.g. EU-AIA-9
+  framework      String   // GDPR | DPDP | HIPAA | PCI_DSS | NIST_AI_RMF
+  control_id     String   // e.g. GDPR-ART-5
   title          String
   description    String
   category       String
@@ -1137,8 +1124,8 @@ model model_cards {
 model compliance_obligations {
   id             String    @id @default(uuid())
   organizationId String    @map("organization_id")
-  framework      String    // EU_AI_ACT | NIST_AI_RMF
-  article_or_task String    // e.g. "EU AI Act Art. 13 — Transparency"
+  framework      String    // GDPR | DPDP | HIPAA | PCI_DSS | NIST_AI_RMF
+  article_or_task String    // e.g. "GDPR Art. 5 — Data Minimization"
   description    String
   status         String    @default("PENDING") // PENDING | IN_PROGRESS | MET | NOT_APPLICABLE
   owner_user_id  String?   @map("owner_user_id")
@@ -1380,52 +1367,6 @@ model share_links {
   @@map("share_links")
 }
 
-model eu_ai_act_articles {
-  id               String   @id @default(uuid())
-  article_number   String   @unique  // e.g. "Art. 9"
-  title            String             // e.g. "Risk Management System"
-  chapter          String             // e.g. "Chapter III - High-Risk AI Systems"
-  risk_tier        String             // PROHIBITED | HIGH_RISK | LIMITED_RISK | GPAI | ALL
-  obligation_type  String             // PROVIDER | DEPLOYER | BOTH
-  description      String
-  is_active        Boolean  @default(true)
-  controls         eu_ai_act_controls[]
-  @@map("eu_ai_act_articles")
-}
-
-model eu_ai_act_controls {
-  id               String   @id @default(uuid())
-  article_id       String   @map("article_id")
-  control_code     String   @unique  // e.g. "EU-AIA-9-1"
-  title            String
-  description      String
-  evidence_required String[]  // list of what documents prove compliance
-  checklist_items  String[]  // actionable items to implement
-  is_structural    Boolean  @default(false)  // true = framework-level, false = org-specific
-  article          eu_ai_act_articles @relation(fields: [article_id], references: [id])
-  implementations  eu_ai_act_implementations[]
-  @@map("eu_ai_act_controls")
-}
-
-model eu_ai_act_implementations {
-  id             String    @id @default(uuid())
-  organizationId String    @map("organization_id")
-  control_id     String    @map("control_id")
-  status         String    @default("NOT_STARTED")  // NOT_STARTED | IN_PROGRESS | IMPLEMENTED | NOT_APPLICABLE | EXEMPTED
-  evidence_links Json      @default("[]")   // array of { type, url, description, uploaded_at }
-  notes          String?
-  owner_user_id  String?   @map("owner_user_id")
-  due_date       DateTime?
-  last_reviewed  DateTime?
-  created_at     DateTime  @default(now())
-  updated_at     DateTime  @updatedAt
-  organization   organizations @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  control        eu_ai_act_controls @relation(fields: [control_id], references: [id])
-  @@unique([organizationId, control_id])
-  @@index([organizationId])
-  @@map("eu_ai_act_implementations")
-}
-
 model framework_control_mappings {
   id                    String   @id @default(uuid())
   source_framework      String   @map("source_framework")
@@ -1443,7 +1384,7 @@ model framework_control_mappings {
 model governance_evidence {
   id                  String    @id @default(uuid())
   organizationId      String    @map("organization_id")
-  framework           String    // GDPR | EU_AI_ACT | NIST_AI_RMF | ISO_42001
+  framework           String    // GDPR | DPDP | HIPAA | PCI_DSS | NIST_AI_RMF
   control_code        String    @map("control_code")
   framework_version   String    @default("1.0.0") @map("framework_version")
   
@@ -1495,7 +1436,7 @@ model governance_posture_snapshots {
   organizationId           String   @map("organization_id")
   governance_posture_score Float    @map("governance_posture_score")
   nist_ai_rmf_score        Float    @map("nist_ai_rmf_score")
-  eu_ai_act_score          Float    @map("eu_ai_act_score")
+  dpdp_score               Float    @default(100.0) @map("dpdp_score")
   telemetry_coverage       Float    @map("telemetry_coverage")
   interception_coverage    Float    @map("interception_coverage")
   maturity_level           Int      @map("maturity_level")
@@ -1608,39 +1549,6 @@ model nist_ai_rmf_implementations {
   @@map("nist_ai_rmf_implementations")
 }
 
-// FRIA Assessments (EU AI Act Art. 27)
-model fria_assessments {
-  id             String           @id @default(uuid())
-  organizationId String           @map("organization_id")
-  ai_system_id   String           @map("ai_system_id")
-  status         String           @default("DRAFT") // DRAFT | IN_PROGRESS | COMPLETED
-  created_at     DateTime         @default(now())
-  updated_at     DateTime         @updatedAt
-
-  organization   organizations    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  ai_system      ai_systems       @relation(fields: [ai_system_id], references: [id], onDelete: Cascade)
-  responses      fria_responses[]
-
-  @@index([organizationId])
-  @@index([ai_system_id])
-  @@map("fria_assessments")
-}
-
-model fria_responses {
-  id            String           @id @default(uuid())
-  fria_id       String           @map("fria_id")
-  question_code String           @map("question_code")
-  question_text String           @map("question_text")
-  answer        String           @default("")
-  risk_flag     Boolean          @default(false) @map("risk_flag")
-  notes         String?
-
-  assessment    fria_assessments @relation(fields: [fria_id], references: [id], onDelete: Cascade)
-
-  @@unique([fria_id, question_code])
-  @@map("fria_responses")
-}
-
 // Vendor Risk Assessments
 model vendor_risk_assessments {
   id                    String        @id @default(uuid())
@@ -1663,100 +1571,11 @@ model vendor_risk_assessments {
   @@map("vendor_risk_assessments")
 }
 
-// ISO 42001 Models
-model iso42001_clauses {
-  id           String             @id @default(uuid())
-  clause_code  String             @unique @map("clause_code")
-  title        String
-  description  String
-  clause_type  String             @map("clause_type") // CLAUSE | ANNEX
-  is_active    Boolean            @default(true) @map("is_active")
-  controls     iso42001_controls[]
-
-  @@map("iso42001_clauses")
-}
-
-model iso42001_controls {
-  id                String                    @id @default(uuid())
-  clause_id         String                    @map("clause_id")
-  control_code      String                    @unique @map("control_code")
-  title             String
-  description       String
-  evidence_required String[]                  @map("evidence_required")
-  checklist_items   String[]                  @map("checklist_items")
-
-  clause            iso42001_clauses          @relation(fields: [clause_id], references: [id], onDelete: Cascade)
-  implementations   iso42001_implementations[]
-
-  @@map("iso42001_controls")
-}
-
-model iso42001_implementations {
-  id             String            @id @default(uuid())
-  organizationId String            @map("organization_id")
-  control_id     String            @map("control_id")
-  status         String            @default("NOT_STARTED") // NOT_STARTED | IN_PROGRESS | IMPLEMENTED | NOT_APPLICABLE
-  notes          String?
-  due_date       DateTime?         @map("due_date")
-  last_reviewed  DateTime?         @map("last_reviewed")
-
-  organization   organizations     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  control        iso42001_controls @relation(fields: [control_id], references: [id], onDelete: Cascade)
-
-  @@unique([organizationId, control_id])
-  @@index([organizationId])
-  @@map("iso42001_implementations")
-}
-
-// ISO 27001 Models
-model iso27001_clauses {
-  id           String             @id @default(uuid())
-  clause_code  String             @unique @map("clause_code")
-  title        String
-  description  String
-  is_active    Boolean            @default(true) @map("is_active")
-  controls     iso27001_controls[]
-
-  @@map("iso27001_clauses")
-}
-
-model iso27001_controls {
-  id                String                    @id @default(uuid())
-  clause_id         String                    @map("clause_id")
-  control_code      String                    @unique @map("control_code")
-  title             String
-  description       String
-  evidence_required String[]                  @map("evidence_required")
-  checklist_items   String[]                  @map("checklist_items")
-
-  clause            iso27001_clauses          @relation(fields: [clause_id], references: [id], onDelete: Cascade)
-  implementations   iso27001_implementations[]
-
-  @@map("iso27001_controls")
-}
-
-model iso27001_implementations {
-  id             String            @id @default(uuid())
-  organizationId String            @map("organization_id")
-  control_id     String            @map("control_id")
-  status         String            @default("NOT_STARTED") // NOT_STARTED | IN_PROGRESS | IMPLEMENTED | NOT_APPLICABLE
-  notes          String?
-  due_date       DateTime?         @map("due_date")
-  last_reviewed  DateTime?         @map("last_reviewed")
-
-  organization   organizations     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  control        iso27001_controls @relation(fields: [control_id], references: [id], onDelete: Cascade)
-
-  @@unique([organizationId, control_id])
-  @@index([organizationId])
-  @@map("iso27001_implementations")
-}
-
 // File Ingestion Evidence
 model evidence_files {
   id             String        @id @default(uuid())
   organizationId String        @map("organization_id")
-  control_type   String        @map("control_type") // EU_AI_ACT | NIST | ISO42001 | ISO27001
+  control_type   String        @map("control_type") // GDPR | DPDP | HIPAA | PCI_DSS | NIST_AI_RMF
   control_id     String        @map("control_id")
   original_name  String        @map("original_name")
   mime_type      String        @map("mime_type")
@@ -1939,223 +1758,6 @@ model mcp_audit_logs {
   @@map("mcp_audit_logs")
 }
 
-model ce_marking_records {
-  id              String        @id @default(uuid())
-  organizationId  String        @map("organization_id")
-  ai_system_id    String        @map("ai_system_id")
-  classification  String        @default("LIMITED_RISK") // UNACCEPTABLE | HIGH_RISK | LIMITED_RISK | MINIMAL_RISK
-  scope_notes     String?       @map("scope_notes")
-
-  // 7 conformity steps
-  step1_conformity_assessment  String @default("NOT_STARTED") // NOT_STARTED | IN_PROGRESS | COMPLETED
-  step2_technical_documentation String @default("NOT_STARTED")
-  step3_quality_management      String @default("NOT_STARTED")
-  step4_declaration_of_conformity String @default("NOT_STARTED")
-  step5_eu_database_registration String @default("NOT_STARTED")
-  step6_ce_mark_affixing        String @default("NOT_STARTED")
-  step7_post_market_monitoring  String @default("NOT_STARTED")
-
-  step1_notes   String?
-  step2_notes   String?
-  step3_notes   String?
-  step4_notes   String?
-  step5_notes   String?
-  step6_notes   String?
-  step7_notes   String?
-
-  overall_status  String        @default("NOT_STARTED") // NOT_STARTED | IN_PROGRESS | CERTIFIED
-  certified_at    DateTime?
-  created_at      DateTime      @default(now())
-  updated_at      DateTime      @updatedAt
-
-  organization  organizations @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  ai_system     ai_systems    @relation(fields: [ai_system_id], references: [id], onDelete: Cascade)
-
-  @@unique([organizationId, ai_system_id])
-  @@index([organizationId])
-  @@map("ce_marking_records")
-}
-
-model ccpa_sections {
-  id           String          @id @default(uuid())
-  section_code String          @unique
-  title        String
-  description  String
-  section_type String          @default("SECTION") // SECTION | CATEGORY
-  is_active    Boolean         @default(true)
-  created_at   DateTime        @default(now())
-  controls     ccpa_controls[]
-  @@map("ccpa_sections")
-}
-
-model ccpa_controls {
-  id               String                 @id @default(uuid())
-  section_id       String
-  control_code     String                 @unique
-  title            String
-  description      String
-  evidence_required String[]
-  checklist_items  String[]
-  is_active        Boolean                @default(true)
-  created_at       DateTime               @default(now())
-  section          ccpa_sections          @relation(fields: [section_id], references: [id])
-  implementations  ccpa_implementations[]
-  @@map("ccpa_controls")
-}
-
-model ccpa_implementations {
-  id             String        @id @default(uuid())
-  organizationId String        @map("organization_id")
-  control_id     String        @map("control_id")
-  status         String        @default("NOT_STARTED") // NOT_STARTED | IN_PROGRESS | IMPLEMENTED | NOT_APPLICABLE
-  notes          String?
-  owner_user_id  String?       @map("owner_user_id")
-  due_date       DateTime?     @map("due_date")
-  evidence_links Json          @default("[]") @map("evidence_links")
-  last_reviewed  DateTime?     @map("last_reviewed")
-  created_at     DateTime      @default(now())
-  updated_at     DateTime      @updatedAt
-  organization   organizations @relation(fields: [organizationId], references: [id])
-  control        ccpa_controls @relation(fields: [control_id], references: [id])
-  @@unique([organizationId, control_id])
-  @@map("ccpa_implementations")
-}
-
-model dora_sections {
-  id           String           @id @default(uuid())
-  section_code String           @unique
-  title        String
-  description  String
-  section_type String           @default("SECTION")
-  is_active    Boolean          @default(true)
-  created_at   DateTime         @default(now())
-  controls     dora_controls[]
-  @@map("dora_sections")
-}
-
-model dora_controls {
-  id               String                 @id @default(uuid())
-  section_id       String
-  control_code     String                 @unique
-  title            String
-  description      String
-  evidence_required String[]
-  checklist_items  String[]
-  is_active        Boolean                @default(true)
-  created_at       DateTime               @default(now())
-  section          dora_sections          @relation(fields: [section_id], references: [id])
-  implementations  dora_implementations[]
-  @@map("dora_controls")
-}
-
-model dora_implementations {
-  id             String        @id @default(uuid())
-  organizationId String        @map("organization_id")
-  control_id     String        @map("control_id")
-  status         String        @default("NOT_STARTED")
-  notes          String?
-  owner_user_id  String?       @map("owner_user_id")
-  due_date       DateTime?     @map("due_date")
-  evidence_links Json          @default("[]") @map("evidence_links")
-  last_reviewed  DateTime?     @map("last_reviewed")
-  created_at     DateTime      @default(now())
-  updated_at     DateTime      @updatedAt
-  organization   organizations @relation(fields: [organizationId], references: [id])
-  control        dora_controls @relation(fields: [control_id], references: [id])
-  @@unique([organizationId, control_id])
-  @@map("dora_implementations")
-}
-
-model oecd_sections {
-  id           String           @id @default(uuid())
-  section_code String           @unique
-  title        String
-  description  String
-  section_type String           @default("SECTION")
-  is_active    Boolean          @default(true)
-  created_at   DateTime         @default(now())
-  controls     oecd_controls[]
-  @@map("oecd_sections")
-}
-
-model oecd_controls {
-  id               String                 @id @default(uuid())
-  section_id       String
-  control_code     String                 @unique
-  title            String
-  description      String
-  evidence_required String[]
-  checklist_items  String[]
-  is_active        Boolean                @default(true)
-  created_at       DateTime               @default(now())
-  section          oecd_sections          @relation(fields: [section_id], references: [id])
-  implementations  oecd_implementations[]
-  @@map("oecd_controls")
-}
-
-model oecd_implementations {
-  id             String        @id @default(uuid())
-  organizationId String        @map("organization_id")
-  control_id     String        @map("control_id")
-  status         String        @default("NOT_STARTED")
-  notes          String?
-  owner_user_id  String?       @map("owner_user_id")
-  due_date       DateTime?     @map("due_date")
-  evidence_links Json          @default("[]") @map("evidence_links")
-  last_reviewed  DateTime?     @map("last_reviewed")
-  created_at     DateTime      @default(now())
-  updated_at     DateTime      @updatedAt
-  organization   organizations @relation(fields: [organizationId], references: [id])
-  control        oecd_controls @relation(fields: [control_id], references: [id])
-  @@unique([organizationId, control_id])
-  @@map("oecd_implementations")
-}
-
-model ftc_sections {
-  id           String          @id @default(uuid())
-  section_code String          @unique
-  title        String
-  description  String
-  section_type String          @default("SECTION")
-  is_active    Boolean         @default(true)
-  created_at   DateTime        @default(now())
-  controls     ftc_controls[]
-  @@map("ftc_sections")
-}
-
-model ftc_controls {
-  id               String                @id @default(uuid())
-  section_id       String
-  control_code     String                @unique
-  title            String
-  description      String
-  evidence_required String[]
-  checklist_items  String[]
-  is_active        Boolean               @default(true)
-  created_at       DateTime              @default(now())
-  section          ftc_sections          @relation(fields: [section_id], references: [id])
-  implementations  ftc_implementations[]
-  @@map("ftc_controls")
-}
-
-model ftc_implementations {
-  id             String        @id @default(uuid())
-  organizationId String        @map("organization_id")
-  control_id     String        @map("control_id")
-  status         String        @default("NOT_STARTED")
-  notes          String?
-  owner_user_id  String?       @map("owner_user_id")
-  due_date       DateTime?     @map("due_date")
-  evidence_links Json          @default("[]") @map("evidence_links")
-  last_reviewed  DateTime?     @map("last_reviewed")
-  created_at     DateTime      @default(now())
-  updated_at     DateTime      @updatedAt
-  organization   organizations @relation(fields: [organizationId], references: [id])
-  control        ftc_controls  @relation(fields: [control_id], references: [id])
-  @@unique([organizationId, control_id])
-  @@map("ftc_implementations")
-}
-
 model llm_keys {
   id             String        @id @default(uuid())
   organizationId String        @map("organization_id")
@@ -2211,6 +1813,7 @@ model gdpr_implementations {
   control     gdpr_controls @relation(fields: [controlId], references: [id])
   @@map("gdpr_implementations")
 }
+
 model HipaaChapter {
   id             String   @id @default(uuid())
   organizationId String   @map("organization_id")
@@ -2251,48 +1854,6 @@ model HipaaImplementation {
   createdAt   DateTime @default(now()) @map("created_at")
   control     HipaaControl @relation(fields: [controlId], references: [id])
   @@map("hipaa_implementations")
-}
-
-model Soc2Chapter {
-  id             String   @id @default(uuid())
-  organizationId String   @map("organization_id")
-  chapterNumber  String   @map("chapter_number")
-  title          String
-  description    String?
-  createdAt      DateTime @default(now()) @map("created_at")
-  organizations  organizations @relation(fields: [organizationId], references: [id])
-  controls       Soc2Control[]
-  @@map("soc2_chapters")
-}
-
-model Soc2Control {
-  id             String   @id @default(uuid())
-  organizationId String   @map("organization_id")
-  chapterId      String   @map("chapter_id")
-  articleNumber  String   @map("article_number")
-  title          String
-  description    String?
-  requirement    String?
-  status         String   @default("NOT_STARTED")
-  notes          String?
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
-  organizations  organizations @relation(fields: [organizationId], references: [id])
-  chapter        Soc2Chapter @relation(fields: [chapterId], references: [id])
-  implementations Soc2Implementation[]
-  @@map("soc2_controls")
-}
-
-model Soc2Implementation {
-  id          String   @id @default(uuid())
-  controlId   String   @map("control_id")
-  title       String
-  description String?
-  status      String   @default("NOT_STARTED")
-  dueDate     DateTime? @map("due_date")
-  createdAt   DateTime @default(now()) @map("created_at")
-  control     Soc2Control @relation(fields: [controlId], references: [id])
-  @@map("soc2_implementations")
 }
 
 model PciChapter {
@@ -2402,6 +1963,7 @@ model BlockEvent {
   action         String
   resource       String
   status         String   @default("BLOCKED")
+  frameworks     String[] @default([])
   timestamp      DateTime @default(now())
 
   organization organizations @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -2451,7 +2013,7 @@ model agent_posture_findings {
   id             String   @id @default(uuid())
   organizationId String   @map("organization_id")
   agentId        String   @map("agent_id")
-  framework      String   // DPDP | GDPR | HIPAA | PCI_DSS | EU_AI_ACT
+  framework      String   // DPDP | GDPR | HIPAA | PCI_DSS | NIST_AI_RMF
   ruleId         String   @map("rule_id")
   severity       String   // CRITICAL | HIGH | MEDIUM | LOW
   title          String

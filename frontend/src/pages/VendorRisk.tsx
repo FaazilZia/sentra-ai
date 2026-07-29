@@ -52,9 +52,11 @@ export default function VendorRisk() {
   const [logsShared, setLogsShared] = useState(false);
 
   // Frameworks checklist
-  const [iso42001, setIso42001] = useState(false);
-  const [iso27001, setIso27001] = useState(false);
-  const [soc2, setSoc2] = useState(false);
+  const [gdpr, setGdpr] = useState(false);
+  const [dpdp, setDpdp] = useState(false);
+  const [hipaa, setHipaa] = useState(false);
+  const [pciDss, setPciDss] = useState(false);
+  const [nistRmf, setNistRmf] = useState(false);
 
   useEffect(() => {
     loadVendors();
@@ -96,9 +98,11 @@ export default function VendorRisk() {
     if (logsShared) dataAccess.push('Server Logs');
 
     const frameworks: string[] = [];
-    if (iso42001) frameworks.push('ISO 42001');
-    if (iso27001) frameworks.push('ISO 27001');
-    if (soc2) frameworks.push('SOC 2 Type II');
+    if (gdpr) frameworks.push('GDPR');
+    if (dpdp) frameworks.push('DPDP');
+    if (hipaa) frameworks.push('HIPAA');
+    if (pciDss) frameworks.push('PCI-DSS');
+    if (nistRmf) frameworks.push('NIST AI RMF');
 
     // Auto calculate risk level based on score
     let calculatedLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
@@ -136,9 +140,11 @@ export default function VendorRisk() {
       setFinancialsShared(false);
       setCodeShared(false);
       setLogsShared(false);
-      setIso42001(false);
-      setIso27001(false);
-      setSoc2(false);
+      setGdpr(false);
+      setDpdp(false);
+      setHipaa(false);
+      setPciDss(false);
+      setNistRmf(false);
     } catch (err) {
       console.error('Failed to register vendor:', err);
     }
@@ -525,38 +531,60 @@ export default function VendorRisk() {
                     Security Frameworks Verified
                   </span>
                   
-                  <div className="grid grid-cols-3 gap-3 mt-2">
-                    <label htmlFor="chk-iso4" className="flex items-center gap-2 cursor-pointer bg-black/20 border border-[var(--border-default)] p-2.5 rounded-xl hover:border-[var(--border-default)] select-none">
+                  <div className="grid grid-cols-5 gap-2 mt-2">
+                    <label htmlFor="chk-gdpr" className="flex items-center gap-2 cursor-pointer bg-black/20 border border-[var(--border-default)] p-2 rounded-xl hover:border-[var(--border-default)] select-none">
                       <input
-                        id="chk-iso4"
+                        id="chk-gdpr"
                         type="checkbox"
-                        checked={iso42001}
-                        onChange={(e) => setIso42001(e.target.checked)}
+                        checked={gdpr}
+                        onChange={(e) => setGdpr(e.target.checked)}
                         className="rounded border-[var(--border-default)] text-purple-600 bg-black/40 focus:ring-purple-500 h-3.5 w-3.5"
                       />
-                      <span className="text-[10px]">ISO 42001</span>
+                      <span className="text-[10px]">GDPR</span>
                     </label>
 
-                    <label htmlFor="chk-iso2" className="flex items-center gap-2 cursor-pointer bg-black/20 border border-[var(--border-default)] p-2.5 rounded-xl hover:border-[var(--border-default)] select-none">
+                    <label htmlFor="chk-dpdp" className="flex items-center gap-2 cursor-pointer bg-black/20 border border-[var(--border-default)] p-2 rounded-xl hover:border-[var(--border-default)] select-none">
                       <input
-                        id="chk-iso2"
+                        id="chk-dpdp"
                         type="checkbox"
-                        checked={iso27001}
-                        onChange={(e) => setIso27001(e.target.checked)}
+                        checked={dpdp}
+                        onChange={(e) => setDpdp(e.target.checked)}
                         className="rounded border-[var(--border-default)] text-purple-600 bg-black/40 focus:ring-purple-500 h-3.5 w-3.5"
                       />
-                      <span className="text-[10px]">ISO 27001</span>
+                      <span className="text-[10px]">DPDP</span>
                     </label>
 
-                    <label htmlFor="chk-soc2" className="flex items-center gap-2 cursor-pointer bg-black/20 border border-[var(--border-default)] p-2.5 rounded-xl hover:border-[var(--border-default)] select-none">
+                    <label htmlFor="chk-hipaa" className="flex items-center gap-2 cursor-pointer bg-black/20 border border-[var(--border-default)] p-2 rounded-xl hover:border-[var(--border-default)] select-none">
                       <input
-                        id="chk-soc2"
+                        id="chk-hipaa"
                         type="checkbox"
-                        checked={soc2}
-                        onChange={(e) => setSoc2(e.target.checked)}
+                        checked={hipaa}
+                        onChange={(e) => setHipaa(e.target.checked)}
                         className="rounded border-[var(--border-default)] text-purple-600 bg-black/40 focus:ring-purple-500 h-3.5 w-3.5"
                       />
-                      <span className="text-[10px]">SOC 2 II</span>
+                      <span className="text-[10px]">HIPAA</span>
+                    </label>
+
+                    <label htmlFor="chk-pci" className="flex items-center gap-2 cursor-pointer bg-black/20 border border-[var(--border-default)] p-2 rounded-xl hover:border-[var(--border-default)] select-none">
+                      <input
+                        id="chk-pci"
+                        type="checkbox"
+                        checked={pciDss}
+                        onChange={(e) => setPciDss(e.target.checked)}
+                        className="rounded border-[var(--border-default)] text-purple-600 bg-black/40 focus:ring-purple-500 h-3.5 w-3.5"
+                      />
+                      <span className="text-[10px]">PCI-DSS</span>
+                    </label>
+
+                    <label htmlFor="chk-nist" className="flex items-center gap-2 cursor-pointer bg-black/20 border border-[var(--border-default)] p-2 rounded-xl hover:border-[var(--border-default)] select-none">
+                      <input
+                        id="chk-nist"
+                        type="checkbox"
+                        checked={nistRmf}
+                        onChange={(e) => setNistRmf(e.target.checked)}
+                        className="rounded border-[var(--border-default)] text-purple-600 bg-black/40 focus:ring-purple-500 h-3.5 w-3.5"
+                      />
+                      <span className="text-[10px]">NIST AI RMF</span>
                     </label>
                   </div>
                 </div>

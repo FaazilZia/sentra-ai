@@ -3,17 +3,9 @@ import bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 import dotenv from 'dotenv';
 import { seedOrganizationGovernance } from '../src/services/governanceSeed.service';
-import { seedEuAiActControls } from '../src/services/euAiActSeed.service';
 import { seedNistAiRmf } from '../src/services/nistAiRmfSeed.service';
-import { seedIso42001 } from '../src/services/iso42001Seed.service';
-import { seedIso27001 } from '../src/services/iso27001Seed.service';
-import { seedCcpa } from '../src/services/ccpaSeed.service';
-import { seedDora } from '../src/services/doraSeed.service';
-import { seedOecd } from '../src/services/oecdSeed.service';
-import { seedFtc } from '../src/services/ftcSeed.service';
 import { seedGdpr } from '../src/services/gdprSeed.service';
 import { seedHipaa } from '../src/services/hipaaSeed.service';
-import { seedSoc2 } from '../src/services/soc2Seed.service';
 import { seedPci } from '../src/services/pciSeed.service';
 import { seedDpdp } from '../src/services/dpdpSeed.service';
 
@@ -74,10 +66,7 @@ async function main() {
       organizationId: DEFAULT_ORGANIZATION_ID,
     },
   });
-  console.log(`✅ Admin user: ${user.email} (password ${process.env.SEED_ADMIN_PASSWORD ? 'from env' : 'auto-generated — set SEED_ADMIN_PASSWORD to control'})`);
-  if (!process.env.SEED_ADMIN_PASSWORD) {
-    console.log(`   Generated password: ${seedPassword}`);
-  }
+  console.log(`✅ Admin user: ${user.email}`);
 
   // 3. AI Governance Policies
   console.log('🤖 Seeding AI Governance Policies...');
@@ -146,10 +135,7 @@ async function main() {
       is_active: true,
     },
   });
-  console.log(`✅ Demo API Key seeded (Prefix: demo, source: ${process.env.SEED_DEMO_API_KEY ? 'env' : 'auto-generated'})`);
-  if (!process.env.SEED_DEMO_API_KEY) {
-    console.log(`   Generated API Key: ${demoApiKey}`);
-  }
+  console.log(`✅ Demo API Key seeded`);
 
   // 5. Seed baseline controls & obligations for all companies
   console.log('🌱 Seeding baseline controls and obligations for all organizations...');
@@ -163,79 +149,27 @@ async function main() {
     }
   }
 
-  // 6. Seed EU AI Act Controls
-  console.log('🇪🇺 Seeding EU AI Act Controls...');
-  try {
-    await seedEuAiActControls(prisma);
-  } catch (e: any) {
-    console.error('❌ Failed to seed EU AI Act Controls:', e.message);
-  }
-
-  // 7. Seed NIST AI RMF 1.0 Controls
+  // 6. Seed NIST AI RMF 1.0 Controls
   console.log('🇺🇸 Seeding NIST AI RMF 1.0 Controls...');
-  try {
-    await seedNistAiRmf(prisma);
-  } catch (e: any) {
-    console.error('❌ Failed to seed NIST AI RMF 1.0 Controls:', e.message);
-  }
+  try { await seedNistAiRmf(prisma); } catch (e: any) { console.error('❌ Failed to seed NIST AI RMF 1.0 Controls:', e.message); }
 
-  // 8. Seed ISO 42001 Controls
-  console.log('🌐 Seeding ISO 42001 Controls...');
-  try {
-    await seedIso42001(prisma);
-  } catch (e: any) {
-    console.error('❌ Failed to seed ISO 42001 Controls:', e.message);
-  }
-
-  // 9. Seed ISO 27001 Controls
-  console.log('🔒 Seeding ISO 27001 Controls...');
-  try {
-    await seedIso27001(prisma);
-  } catch (e: any) {
-    console.error('❌ Failed to seed ISO 27001 Controls:', e.message);
-  }
-
-  // 10. Seed CCPA Controls
-  console.log('🐻 Seeding CCPA Controls...');
-  try {
-    await seedCcpa(prisma);
-  } catch (e: any) {
-    console.error('❌ Failed to seed CCPA Controls:', e.message);
-  }
-
-  // 11. Seed DORA
-  console.log('🌍 Seeding DORA Controls...');
-  try { await seedDora(prisma); } catch (e: any) { console.error('❌ Failed to seed DORA:', e.message); }
-
-  // 12. Seed OECD
-  console.log('🌐 Seeding OECD AI Principles...');
-  try { await seedOecd(prisma); } catch (e: any) { console.error('❌ Failed to seed OECD:', e.message); }
-
-  // 13. Seed FTC
-  console.log('⚖️ Seeding FTC AI Guidelines...');
-  try { await seedFtc(prisma); } catch (e: any) { console.error('❌ Failed to seed FTC:', e.message); }
-
-  // 14. Seed GDPR
+  // 7. Seed GDPR
   console.log('🇪🇺 Seeding GDPR Controls...');
   try { await seedGdpr(DEFAULT_ORGANIZATION_ID, prisma); } catch (e: any) { console.error('❌ Failed to seed GDPR:', e.message); }
 
-  // 15. Seed HIPAA
+  // 8. Seed HIPAA
   console.log('🏥 Seeding HIPAA Controls...');
   try { await seedHipaa(DEFAULT_ORGANIZATION_ID, prisma); } catch (e: any) { console.error('❌ Failed to seed HIPAA:', e.message); }
 
-  // 16. Seed SOC2
-  console.log('🔐 Seeding SOC2 Controls...');
-  try { await seedSoc2(DEFAULT_ORGANIZATION_ID, prisma); } catch (e: any) { console.error('❌ Failed to seed SOC2:', e.message); }
-
-  // 17. Seed PCI-DSS
+  // 9. Seed PCI-DSS
   console.log('💳 Seeding PCI-DSS Controls...');
   try { await seedPci(DEFAULT_ORGANIZATION_ID, prisma); } catch (e: any) { console.error('❌ Failed to seed PCI:', e.message); }
 
-  // 18. Seed DPDP
+  // 10. Seed DPDP
   console.log('🇮🇳 Seeding DPDP Controls...');
   try { await seedDpdp(DEFAULT_ORGANIZATION_ID, prisma); } catch (e: any) { console.error('❌ Failed to seed DPDP:', e.message); }
 
-  console.log('\n🎉 Seed completed!');
+  console.log('\n🎉 Seed completed for 5 supported frameworks!');
   await prisma.$disconnect();
 }
 

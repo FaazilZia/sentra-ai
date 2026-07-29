@@ -3,42 +3,46 @@ import logger from '../utils/logger';
 
 export interface SearchResult {
   id: string;
-  type: 'agent' | 'policy' | 'risk' | 'incident' | 'guardrail' | 'compliance';
+  type: 'agent' | 'policy' | 'risk' | 'incident' | 'compliance' | 'guardrail';
   title: string;
-  subtitle: string;
-  url: string;
+  subtitle?: string;
+  url?: string;
 }
 
-// Static guardrails definition matching guardrail.service.ts
 const STATIC_GUARDRAILS = [
-  { id: 'NO_PII_EXPOSURE', name: 'PII Exposure Redaction', description: 'Masks or blocks personal identifiable information (emails, phone numbers, SSNs)' },
-  { id: 'NO_PHI_EXPOSURE', name: 'PHI Exposure Prevention', description: 'Blocks health insurance details and patient health records' },
-  { id: 'PROMPT_INJECTION_DETECT', name: 'Prompt Injection Detection', description: 'Detects and blocks adversarial prompt injection attempts' },
-  { id: 'OS_COMMAND_INJECTION', name: 'OS Command Injection Prevention', description: 'Blocks OS command execution, bash injections, and shell pipelines' },
-  { id: 'PATH_TRAVERSAL_DETECT', name: 'Path Traversal Detection', description: 'Blocks directory path traversal attempts (../, /etc/passwd, .env)' },
-  { id: 'RISK_ADAPTIVE_CONTROL', name: 'Risk Adaptive Control', description: 'Contextual risk-based blocking of anomalous actions' },
-  { id: 'SEMANTIC_ADVERSARIAL_DETECT', name: 'Semantic Adversarial Detection', description: 'Machine learning semantic intent analysis blocking' }
+  { id: 'GR-001', name: 'PII Exfiltration Guardrail', description: 'Blocks transfer of personal data to non-whitelisted domains.' },
+  { id: 'GR-002', name: 'Prompt Injection Defense', description: 'Detects and neutralizes malicious instruction override strings.' },
+  { id: 'GR-003', name: 'Hallucination Mitigation Layer', description: 'Ensures structured response verification against reference knowledge bases.' },
+  { id: 'GR-004', name: 'Production Deletion Barrier', description: 'Prevents destructive operations against production databases.' }
 ];
 
-export const SearchService = {
+export class SearchService {
   /**
-   * Search across multiple models in parallel scoped to the organization
+   * Search across multiple entities for a given query term
    */
-  async searchAll(orgId: string, query: string, limit: number = 20): Promise<SearchResult[]> {
-    if (!query || query.trim().length < 2) return [];
-    
-    const term = query.trim();
-    logger.info(`[Search] Querying database for "${term}" in organization ${orgId}`);
+  static async search(orgId: string, term: string, limit: number = 5): Promise<SearchResult[]> {
+    if (!term || term.trim().length === 0) {
+      return [];
+    }
 
     try {
-      const [agents, policies, riskAssessments, incidents, controls, dora, ccpa, oecd, ftc] = await Promise.all([
+      // Execute parallel DB queries
+      const [
+        agents,
+        policies,
+        riskAssessments,
+        incidents,
+        controls,
+        nistSubcategories
+      ] = await Promise.all([
         // 1. AI Agents
         prisma.ai_agents.findMany({
           where: {
             organizationId: orgId,
             OR: [
               { name: { contains: term, mode: 'insensitive' } },
-              { model: { contains: term, mode: 'insensitive' } }
+              { model: { contains: term, mode: 'insensitive' } },
+              { owner: { contains: term, mode: 'insensitive' } }
             ]
           },
           take: limit
@@ -104,47 +108,11 @@ export const SearchService = {
           take: limit
         }),
 
-        // 6. DORA Controls (Global Catalog)
-        prisma.dora_controls.findMany({
+        // 6. NIST AI RMF Subcategories
+        prisma.nist_ai_rmf_subcategories.findMany({
           where: {
             OR: [
-              { control_code: { contains: term, mode: 'insensitive' } },
-              { title: { contains: term, mode: 'insensitive' } },
-              { description: { contains: term, mode: 'insensitive' } }
-            ]
-          },
-          take: limit
-        }),
-
-        // 7. CCPA Controls (Global Catalog)
-        prisma.ccpa_controls.findMany({
-          where: {
-            OR: [
-              { control_code: { contains: term, mode: 'insensitive' } },
-              { title: { contains: term, mode: 'insensitive' } },
-              { description: { contains: term, mode: 'insensitive' } }
-            ]
-          },
-          take: limit
-        }),
-
-        // 8. OECD Controls (Global Catalog)
-        prisma.oecd_controls.findMany({
-          where: {
-            OR: [
-              { control_code: { contains: term, mode: 'insensitive' } },
-              { title: { contains: term, mode: 'insensitive' } },
-              { description: { contains: term, mode: 'insensitive' } }
-            ]
-          },
-          take: limit
-        }),
-
-        // 9. FTC Controls (Global Catalog)
-        prisma.ftc_controls.findMany({
-          where: {
-            OR: [
-              { control_code: { contains: term, mode: 'insensitive' } },
+              { subcategory_code: { contains: term, mode: 'insensitive' } },
               { title: { contains: term, mode: 'insensitive' } },
               { description: { contains: term, mode: 'insensitive' } }
             ]
@@ -156,7 +124,7 @@ export const SearchService = {
       const results: SearchResult[] = [];
 
       // Map AI Agents
-      agents.forEach(agent => {
+      agents.forEach((agent: any) => {
         results.push({
           id: agent.id,
           type: 'agent',
@@ -167,7 +135,7 @@ export const SearchService = {
       });
 
       // Map Policies
-      policies.forEach(policy => {
+      policies.forEach((policy: any) => {
         results.push({
           id: policy.id,
           type: 'policy',
@@ -178,7 +146,7 @@ export const SearchService = {
       });
 
       // Map Risks (Risk Assessments)
-      riskAssessments.forEach(risk => {
+      riskAssessments.forEach((risk: any) => {
         results.push({
           id: risk.id,
           type: 'risk',
@@ -189,7 +157,7 @@ export const SearchService = {
       });
 
       // Map Incidents
-      incidents.forEach(inc => {
+      incidents.forEach((inc: any) => {
         results.push({
           id: inc.id,
           type: 'incident',
@@ -200,7 +168,7 @@ export const SearchService = {
       });
 
       // Map Compliance Controls
-      controls.forEach(ctrl => {
+      controls.forEach((ctrl: any) => {
         results.push({
           id: ctrl.id,
           type: 'compliance',
@@ -210,51 +178,18 @@ export const SearchService = {
         });
       });
 
-      // Map DORA
-      dora.forEach(ctrl => {
+      // Map NIST Subcategories
+      nistSubcategories.forEach((sub: any) => {
         results.push({
-          id: ctrl.id,
+          id: sub.id,
           type: 'compliance',
-          title: `${ctrl.control_code}: ${ctrl.title}`,
-          subtitle: `Framework: DORA • ${ctrl.description}`,
-          url: '/app/dora'
+          title: `${sub.subcategory_code}: ${sub.title}`,
+          subtitle: `Framework: NIST AI RMF • ${sub.description}`,
+          url: '/app/controls'
         });
       });
 
-      // Map CCPA
-      ccpa.forEach(ctrl => {
-        results.push({
-          id: ctrl.id,
-          type: 'compliance',
-          title: `${ctrl.control_code}: ${ctrl.title}`,
-          subtitle: `Framework: CCPA Compliance • ${ctrl.description}`,
-          url: '/app/ccpa'
-        });
-      });
-
-      // Map OECD
-      oecd.forEach(ctrl => {
-        results.push({
-          id: ctrl.id,
-          type: 'compliance',
-          title: `${ctrl.control_code}: ${ctrl.title}`,
-          subtitle: `Framework: OECD AI Principles • ${ctrl.description}`,
-          url: '/app/oecd'
-        });
-      });
-
-      // Map FTC
-      ftc.forEach(ctrl => {
-        results.push({
-          id: ctrl.id,
-          type: 'compliance',
-          title: `${ctrl.control_code}: ${ctrl.title}`,
-          subtitle: `Framework: FTC AI Guidelines • ${ctrl.description}`,
-          url: '/app/ftc'
-        });
-      });
-
-      // 10. Search static guardrails in memory
+      // 7. Search static guardrails in memory
       STATIC_GUARDRAILS.forEach(gr => {
         const matchesName = gr.name.toLowerCase().includes(term.toLowerCase());
         const matchesDesc = gr.description.toLowerCase().includes(term.toLowerCase());
@@ -279,5 +214,4 @@ export const SearchService = {
       return [];
     }
   }
-
-};
+}

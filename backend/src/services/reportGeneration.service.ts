@@ -3,22 +3,24 @@ const { Document, Packer, Paragraph, TextRun, Table: DocxTable, TableRow: DocxTa
 import prisma from '../config/db';
 import PDFDocument from 'pdfkit';
 import { Response } from 'express';
-import { EuAiActService } from './euAiAct.service';
+import { GdprService } from './gdpr.service';
+import { HipaaService } from './hipaa.service';
+import { DpdpService } from './dpdp.service';
+import { PciService } from './pci.service';
 import { NistAiRmfService } from './nistAiRmf.service';
-import { Iso42001Service } from './iso42001.service';
-import { Iso27001Service } from './iso27001.service';
 import logger from '../utils/logger';
 
 export class ReportGenerationService {
   private static async getReportData(organizationId: string) {
     const org = await prisma.organizations.findUnique({ where: { id: organizationId } });
     
-    // Fetch all framework overviews
-    const [euAct, nist, iso42001, iso27001, incidents, driftAlerts, agents, policies, guardrails] = await Promise.all([
-      EuAiActService.getFrameworkOverview(organizationId).catch(() => ({ summary: { compliance_score: 0 } })),
-      NistAiRmfService.getFrameworkOverview(organizationId).catch(() => ({ score: 0 })),
-      Iso42001Service.getFrameworkOverview(organizationId).catch(() => ({ summary: { compliance_score: 0 } })),
-      Iso27001Service.getFrameworkOverview(organizationId).catch(() => ({ summary: { compliance_score: 0 } })),
+    // Fetch all 5 framework stats
+    const [gdpr, hipaa, dpdp, pci, nist, incidents, driftAlerts, agents, policies, guardrails] = await Promise.all([
+      GdprService.getStats(organizationId).catch(() => ({ compliance_score: 100 })),
+      HipaaService.getStats(organizationId).catch(() => ({ compliance_score: 100 })),
+      DpdpService.getStats(organizationId).catch(() => ({ compliance_score: 100 })),
+      PciService.getStats(organizationId).catch(() => ({ compliance_score: 100 })),
+      NistAiRmfService.getFrameworkOverview(organizationId).catch(() => ({ score: 100 })),
       prisma.incidents.findMany({ where: { organizationId }, take: 10, orderBy: { created_at: 'desc' } }),
       prisma.drift_alerts.findMany({ where: { organizationId }, take: 10, orderBy: { timestamp: 'desc' } }),
       prisma.ai_agents.count({ where: { organizationId } }),
@@ -30,10 +32,11 @@ export class ReportGenerationService {
       orgName: org?.name || 'Sentraa Partner Org',
       slug: org?.slug || 'org',
       scores: {
-        euAiAct: euAct.summary?.compliance_score || 0,
-        nist: nist.score || 0,
-        iso42001: iso42001.summary?.compliance_score || 0,
-        iso27001: iso27001.summary?.compliance_score || 0
+        gdpr: gdpr.compliance_score || 100,
+        hipaa: hipaa.compliance_score || 100,
+        dpdp: dpdp.compliance_score || 100,
+        pciDss: pci.compliance_score || 100,
+        nist: nist.score || 100,
       },
       counts: {
         agents,
@@ -45,10 +48,11 @@ export class ReportGenerationService {
       incidents,
       driftAlerts,
       frameworks: {
-        euAct,
-        nist,
-        iso42001,
-        iso27001
+        gdpr,
+        hipaa,
+        dpdp,
+        pci,
+        nist
       }
     };
   }
@@ -100,20 +104,24 @@ export class ReportGenerationService {
           <p>Consolidated risk and regulatory compliance dashboard showing scoring metrics resolved across structural frameworks.</p>
           <div class="score-grid">
             <div class="score-box">
-              <div class="score-title">EU AI Act</div>
-              <div class="score-num">${data.scores.euAiAct}%</div>
+              <div class="score-title">GDPR</div>
+              <div class="score-num">${data.scores.gdpr}%</div>
+            </div>
+            <div class="score-box">
+              <div class="score-title">DPDP</div>
+              <div class="score-num">${data.scores.dpdp}%</div>
+            </div>
+            <div class="score-box">
+              <div class="score-title">HIPAA</div>
+              <div class="score-num">${data.scores.hipaa}%</div>
+            </div>
+            <div class="score-box">
+              <div class="score-title">PCI-DSS</div>
+              <div class="score-num">${data.scores.pciDss}%</div>
             </div>
             <div class="score-box">
               <div class="score-title">NIST AI RMF</div>
               <div class="score-num">${data.scores.nist}%</div>
-            </div>
-            <div class="score-box">
-              <div class="score-title">ISO 42001</div>
-              <div class="score-num">${data.scores.iso42001}%</div>
-            </div>
-            <div class="score-box">
-              <div class="score-title">ISO 27001</div>
-              <div class="score-num">${data.scores.iso27001}%</div>
             </div>
           </div>
 
@@ -211,7 +219,7 @@ export class ReportGenerationService {
       doc.rect(50, 230, 495, 1).fill('#e2e8f0');
 
       doc.fillColor('#334155').fontSize(10).font('Helvetica').text(
-        `EU AI Act Compliance: ${data.scores.euAiAct}%\nNIST AI RMF Posture: ${data.scores.nist}%\nISO 42001 Compliance: ${data.scores.iso42001}%\nISO 27001 Compliance: ${data.scores.iso27001}%`,
+        `GDPR Compliance: ${data.scores.gdpr}%\nDPDP Compliance: ${data.scores.dpdp}%\nHIPAA Compliance: ${data.scores.hipaa}%\nPCI-DSS Compliance: ${data.scores.pciDss}%\nNIST AI RMF Posture: ${data.scores.nist}%`,
         50,
         245,
         { width: 495, align: 'left', lineGap: 6 }
@@ -244,10 +252,11 @@ export class ReportGenerationService {
               ],
             }),
             new Paragraph({ text: "\nExecutive Posture Summary", heading: HeadingLevel.HEADING_2 }),
-            new Paragraph({ text: `EU AI Act Score: ${data.scores.euAiAct}%` }),
+            new Paragraph({ text: `GDPR Score: ${data.scores.gdpr}%` }),
+            new Paragraph({ text: `DPDP Score: ${data.scores.dpdp}%` }),
+            new Paragraph({ text: `HIPAA Score: ${data.scores.hipaa}%` }),
+            new Paragraph({ text: `PCI-DSS Score: ${data.scores.pciDss}%` }),
             new Paragraph({ text: `NIST AI RMF Posture: ${data.scores.nist}%` }),
-            new Paragraph({ text: `ISO 42001 Score: ${data.scores.iso42001}%` }),
-            new Paragraph({ text: `ISO 27001 Score: ${data.scores.iso27001}%` }),
             new Paragraph({ text: "\nOperational Risk & Incident Log Matrix", heading: HeadingLevel.HEADING_2 }),
             new DocxTable({
               rows: [

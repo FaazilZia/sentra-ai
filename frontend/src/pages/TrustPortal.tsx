@@ -13,12 +13,11 @@ interface PublicSystem {
 }
 
 interface PublicScores {
-  euAiActScore: number;
-  iso42001Score: number;
-  iso27001Score: number;
   gdprScore: number;
-  hipaaScore: number;
   dpdpScore: number;
+  hipaaScore: number;
+  pciDssScore: number;
+  nistAiRmfScore: number;
 }
 
 interface PublicTrustResponse {
@@ -226,12 +225,11 @@ export default function TrustPortal() {
                 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {[
-                    { key: 'eu', label: 'EU AI Act obligations', score: data.scores.euAiActScore },
-                    { key: 'iso42', label: 'ISO 42001 (AIMS)', score: data.scores.iso42001Score },
-                    { key: 'iso27', label: 'ISO 27001 (ISMS)', score: data.scores.iso27001Score },
                     { key: 'gdpr', label: 'GDPR Privacy Assurance', score: data.scores.gdprScore },
-                    { key: 'hipaa', label: 'HIPAA Health Security', score: data.scores.hipaaScore },
                     { key: 'dpdp', label: 'DPDP Data Protection', score: data.scores.dpdpScore },
+                    { key: 'hipaa', label: 'HIPAA Health Security', score: data.scores.hipaaScore },
+                    { key: 'pci', label: 'PCI-DSS Data Security', score: data.scores.pciDssScore },
+                    { key: 'nist', label: 'NIST AI RMF Posture', score: data.scores.nistAiRmfScore },
                   ].map(badge => (
                     <div 
                       key={badge.key} 

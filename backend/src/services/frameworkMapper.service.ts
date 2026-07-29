@@ -1,264 +1,171 @@
 import prisma from '../config/db';
-import logger from '../utils/logger';
+import { SUPPORTED_FRAMEWORKS, SupportedFramework } from '../constants/frameworks';
 
-export interface CrossMapping {
-  concern: string;
-  domain: 'risk' | 'transparency' | 'data' | 'oversight' | 'audit';
-  euAiActCode: string;
-  nistCode: string;
-  iso42001Code: string;
-  iso27001Code: string;
+/**
+ * Explicit 25 Legal & Regulatory Citations Across 5 Concern Domains
+ * Standardized constants for auditing, validation, and maintenance.
+ */
+export const CITATIONS = {
+  DATA_MINIMIZATION: {
+    GDPR: 'Art. 5(1)(c) — Data Minimization Principle',
+    DPDP: 'Sec. 6(1) — Purpose Limitation & Scoping',
+    HIPAA: '45 CFR § 164.312(a) — PHI Storage & Access Scope',
+    PCI_DSS: 'Req 3.1 — Cardholder Data Storage Minimization',
+    NIST_AI_RMF: 'MAP-1.1 — Context & System Boundaries Mapping',
+  },
+  ACCESS_CONTROL: {
+    GDPR: 'Art. 32(1)(b) — Confidentiality & Access Security',
+    DPDP: 'Sec. 8(5) — Reasonable Security Safeguards',
+    HIPAA: '45 CFR § 164.312(a)(1) — Access Control & Authentication',
+    PCI_DSS: 'Req 7.1 — Restrict Access to Need-to-Know',
+    NIST_AI_RMF: 'GV-2.1 — Governance Scoping & Roles',
+  },
+  AUDIT_LOGGING: {
+    GDPR: 'Art. 30/32 — Processing Records & Auditability',
+    DPDP: 'Sec. 8(4) — Activity Verification & Records',
+    HIPAA: '45 CFR § 164.312(b) — Audit Controls & Telemetry',
+    PCI_DSS: 'Req 10.1 — System Logging & Audit Review',
+    NIST_AI_RMF: 'MEASURE-2.3 — Model Telemetry & Event Logging',
+  },
+  THIRD_PARTY_SHARING: {
+    GDPR: 'Art. 28 — Data Processor Agreements (DPA)',
+    DPDP: 'Sec. 8(2) — Data Fiduciary & Processor Scoping',
+    HIPAA: '45 CFR § 164.502 — Business Associate Agreement (BAA)',
+    PCI_DSS: 'Req 12.8 — Service Provider Risk Management',
+    NIST_AI_RMF: 'GOVERN-6.1 — Third-Party AI Risk Management',
+  },
+  INCIDENT_RESPONSE: {
+    GDPR: 'Art. 33/34 — Personal Data Breach Notification',
+    DPDP: 'Sec. 8(6) — Data Breach Intimation & Reporting',
+    HIPAA: '45 CFR § 164.404 — Breach Notification Rule',
+    PCI_DSS: 'Req 12.10 — Incident Response Plan & Recovery',
+    NIST_AI_RMF: 'MANAGE-4.1 — Incident Mitigation & Response',
+  },
+} as const;
+
+export interface ConcernDomainMapping {
+  id: string;
+  concernDomain: string;
+  description: string;
+  citations: Record<SupportedFramework, string>;
+  frameworkStatuses: Record<SupportedFramework, 'IMPLEMENTED' | 'IN_PROGRESS' | 'NOT_STARTED'>;
+  overallStatus: 'implemented' | 'in_progress' | 'not_started';
 }
 
 export class FrameworkMapperService {
-  // Static 15 point cross-framework mapping
-  private static MAPPINGS: CrossMapping[] = [
+  /**
+   * Domain Concerns Matrix mapping all 5 supported frameworks across 5 core governance domains.
+   */
+  private static DOMAIN_DEFINITIONS = [
     {
-      concern: "Human Oversight",
-      domain: "oversight",
-      euAiActCode: "EU-AIA-14-1",
-      nistCode: "GV-2.1",
-      iso42001Code: "ISO-42001-8-3",
-      iso27001Code: "ISO-27001-8-1"
+      id: 'domain-data-minimization',
+      domain: 'Data Minimization & Storage Scope',
+      description: 'Limits data ingestion, persistence, and storage duration across AI and storage layers to the minimum required.',
+      citations: CITATIONS.DATA_MINIMIZATION,
     },
     {
-      concern: "Data Governance & Quality",
-      domain: "data",
-      euAiActCode: "EU-AIA-10-1",
-      nistCode: "MAP-1.1",
-      iso42001Code: "ISO-42001-A10-1",
-      iso27001Code: "ISO-27001-A5-2"
+      id: 'domain-access-control',
+      domain: 'Access Control & Least Privilege',
+      description: 'Restricts AI agent execution, API scopes, and database access to authenticated, authorized least-privilege roles.',
+      citations: CITATIONS.ACCESS_CONTROL,
     },
     {
-      concern: "System Transparency",
-      domain: "transparency",
-      euAiActCode: "EU-AIA-13-1",
-      nistCode: "GV-2.1",
-      iso42001Code: "ISO-42001-A11-1",
-      iso27001Code: "ISO-27001-A5-1"
+      id: 'domain-audit-logging',
+      domain: 'Audit Logging & Activity Traceability',
+      description: 'Maintains tamper-evident audit trails and telemetry logs for all AI model decisions, tool calls, and data accesses.',
+      citations: CITATIONS.AUDIT_LOGGING,
     },
     {
-      concern: "Risk Management",
-      domain: "risk",
-      euAiActCode: "EU-AIA-9-1",
-      nistCode: "GV-1.1",
-      iso42001Code: "ISO-42001-6-1",
-      iso27001Code: "ISO-27001-6-1"
+      id: 'domain-third-party-sharing',
+      domain: 'Third-Party & Vendor Data Sharing',
+      description: 'Enforces strict contractual agreements (BAA/DPA) and data protection boundaries for third-party LLMs and tools.',
+      citations: CITATIONS.THIRD_PARTY_SHARING,
     },
     {
-      concern: "Incident Response",
-      domain: "audit",
-      euAiActCode: "EU-AIA-9-1",
-      nistCode: "GV-2.1",
-      iso42001Code: "ISO-42001-10-1",
-      iso27001Code: "ISO-27001-10-1"
+      id: 'domain-incident-response',
+      domain: 'Incident Response & Breach Notification',
+      description: 'Provides real-time runtime detection, automated interception, and immediate escalation workflows for security incidents.',
+      citations: CITATIONS.INCIDENT_RESPONSE,
     },
-    {
-      concern: "Access Control Scopes",
-      domain: "data",
-      euAiActCode: "EU-AIA-10-1",
-      nistCode: "MAP-1.1",
-      iso42001Code: "ISO-42001-A7-2",
-      iso27001Code: "ISO-27001-A8-2"
-    },
-    {
-      concern: "Audit Trail Logging",
-      domain: "audit",
-      euAiActCode: "EU-AIA-12-1",
-      nistCode: "GV-2.1",
-      iso42001Code: "ISO-42001-7-3",
-      iso27001Code: "ISO-27001-7-3"
-    },
-    {
-      concern: "Staff Safety Training",
-      domain: "oversight",
-      euAiActCode: "EU-AIA-14-1",
-      nistCode: "GV-2.1",
-      iso42001Code: "ISO-42001-7-2",
-      iso27001Code: "ISO-27001-7-1"
-    },
-    {
-      concern: "Cyber Security & Robustness",
-      domain: "risk",
-      euAiActCode: "EU-AIA-15-1",
-      nistCode: "MAP-1.1",
-      iso42001Code: "ISO-42001-A7-1",
-      iso27001Code: "ISO-27001-A8-1"
-    },
-    {
-      concern: "Impact Assessments",
-      domain: "risk",
-      euAiActCode: "EU-AIA-27-1",
-      nistCode: "GV-1.1",
-      iso42001Code: "ISO-42001-A8-1",
-      iso27001Code: "ISO-27001-6-2"
-    },
-    {
-      concern: "Continuous Quality Checks",
-      domain: "audit",
-      euAiActCode: "EU-AIA-9-1",
-      nistCode: "GV-2.1",
-      iso42001Code: "ISO-42001-9-1",
-      iso27001Code: "ISO-27001-9-1"
-    },
-    {
-      concern: "Management Policy Alignment",
-      domain: "transparency",
-      euAiActCode: "EU-AIA-13-1",
-      nistCode: "GV-1.1",
-      iso42001Code: "ISO-42001-5-2",
-      iso27001Code: "ISO-27001-5-2"
-    },
-    {
-      concern: "Third Party Governance",
-      domain: "risk",
-      euAiActCode: "EU-AIA-10-1",
-      nistCode: "GV-2.1",
-      iso42001Code: "ISO-42001-A13-1",
-      iso27001Code: "ISO-27001-A6-1"
-    },
-    {
-      concern: "Data Provenance Lineage",
-      domain: "data",
-      euAiActCode: "EU-AIA-10-1",
-      nistCode: "MAP-1.1",
-      iso42001Code: "ISO-42001-A10-2",
-      iso27001Code: "ISO-27001-A5-2"
-    },
-    {
-      concern: "Record Keeping & Retention",
-      domain: "audit",
-      euAiActCode: "EU-AIA-12-1",
-      nistCode: "GV-2.1",
-      iso42001Code: "ISO-42001-7-3",
-      iso27001Code: "ISO-27001-7-3"
-    }
   ];
 
-  private static async getRawCrossFrameworkMap(organizationId: string) {
-    // Fetch all control implementation statuses across frameworks
-    const [euImpl, nistImpl, iso42Impl, iso27Impl] = await Promise.all([
-      prisma.eu_ai_act_implementations.findMany({ where: { organizationId }, include: { control: true } }),
-      prisma.nist_ai_rmf_implementations.findMany({ where: { organizationId }, include: { subcategory: true } }),
-      prisma.iso42001_implementations.findMany({ where: { organizationId }, include: { control: true } }),
-      prisma.iso27001_implementations.findMany({ where: { organizationId }, include: { control: true } })
+  /**
+   * Computes domain-level cross-framework mapping status for an organization.
+   */
+  static async getCrossFrameworkMap(organizationId: string): Promise<ConcernDomainMapping[]> {
+    const [gdprImpl, dpdpImpl, hipaaImpl, pciImpl, nistImpl] = await Promise.all([
+      prisma.controls.findMany({ where: { organizationId, framework: 'GDPR' } }),
+      prisma.controls.findMany({ where: { organizationId, framework: 'DPDP' } }),
+      prisma.controls.findMany({ where: { organizationId, framework: 'HIPAA' } }),
+      prisma.controls.findMany({ where: { organizationId, framework: 'PCI_DSS' } }),
+      prisma.nist_ai_rmf_implementations.findMany({ where: { organizationId } }),
     ]);
 
-    const euMap = new Map(euImpl.map(i => [i.control.control_code, i.status]));
-    const nistMap = new Map(nistImpl.map(i => [i.subcategory.subcategory_code, i.status]));
-    const iso42Map = new Map(iso42Impl.map(i => [i.control.control_code, i.status]));
-    const iso27Map = new Map(iso27Impl.map(i => [i.control.control_code, i.status]));
+    const getStatusForFramework = (fw: SupportedFramework): 'IMPLEMENTED' | 'IN_PROGRESS' | 'NOT_STARTED' => {
+      switch (fw) {
+        case 'GDPR': return gdprImpl.length > 0 ? 'IMPLEMENTED' : 'NOT_STARTED';
+        case 'DPDP': return dpdpImpl.length > 0 ? 'IMPLEMENTED' : 'NOT_STARTED';
+        case 'HIPAA': return hipaaImpl.length > 0 ? 'IMPLEMENTED' : 'NOT_STARTED';
+        case 'PCI_DSS': return pciImpl.length > 0 ? 'IMPLEMENTED' : 'NOT_STARTED';
+        case 'NIST_AI_RMF': {
+          if (nistImpl.length === 0) return 'NOT_STARTED';
+          const implemented = nistImpl.filter(i => i.status === 'IMPLEMENTED').length;
+          return implemented > 0 ? 'IMPLEMENTED' : 'IN_PROGRESS';
+        }
+      }
+    };
 
-    return this.MAPPINGS.map(m => {
-      const euStatus = euMap.get(m.euAiActCode) || 'NOT_STARTED';
-      const nistStatus = nistMap.get(m.nistCode) || 'NOT_STARTED';
-      const iso42Status = iso42Map.get(m.iso42001Code) || 'NOT_STARTED';
-      const iso27Status = iso27Map.get(m.iso27001Code) || 'NOT_STARTED';
-
-      return {
-        concern: m.concern,
-        domain: m.domain,
-        euAiAct: { code: m.euAiActCode, status: euStatus },
-        nist: { code: m.nistCode, status: nistStatus },
-        iso42001: { code: m.iso42001Code, status: iso42Status },
-        iso27001: { code: m.iso27001Code, status: iso27Status }
+    return this.DOMAIN_DEFINITIONS.map(def => {
+      const frameworkStatuses: Record<SupportedFramework, 'IMPLEMENTED' | 'IN_PROGRESS' | 'NOT_STARTED'> = {
+        GDPR: getStatusForFramework('GDPR'),
+        DPDP: getStatusForFramework('DPDP'),
+        HIPAA: getStatusForFramework('HIPAA'),
+        PCI_DSS: getStatusForFramework('PCI_DSS'),
+        NIST_AI_RMF: getStatusForFramework('NIST_AI_RMF'),
       };
-    });
-  }
 
-  static async getCrossFrameworkMap(organizationId: string) {
-    const [rawMap, euControls, nistSubcategories, iso42Controls, iso27Controls] = await Promise.all([
-      this.getRawCrossFrameworkMap(organizationId),
-      prisma.eu_ai_act_controls.findMany({ select: { control_code: true, title: true } }),
-      prisma.nist_ai_rmf_subcategories.findMany({ select: { subcategory_code: true, title: true } }),
-      prisma.iso42001_controls.findMany({ select: { control_code: true, title: true } }),
-      prisma.iso27001_controls.findMany({ select: { control_code: true, title: true } })
-    ]);
-
-    const euTitleMap = new Map(euControls.map(c => [c.control_code, c.title]));
-    const nistTitleMap = new Map(nistSubcategories.map(s => [s.subcategory_code, s.title]));
-    const iso42TitleMap = new Map(iso42Controls.map(c => [c.control_code, c.title]));
-    const iso27TitleMap = new Map(iso27Controls.map(c => [c.control_code, c.title]));
-
-    return rawMap.map(m => {
-      const euStatus = m.euAiAct.status;
-      const nistStatus = m.nist.status;
-      const iso42Status = m.iso42001.status;
-      const iso27Status = m.iso27001.status;
-
-      const statuses = [euStatus, nistStatus, iso42Status, iso27Status];
+      const statuses = Object.values(frameworkStatuses);
       const implementedCount = statuses.filter(s => s === 'IMPLEMENTED').length;
       const progressCount = statuses.filter(s => s === 'IN_PROGRESS').length;
 
-      let finalStatus: 'implemented' | 'in_progress' | 'not_started' | 'not_applicable' = 'not_started';
-      if (implementedCount === 4) {
-        finalStatus = 'implemented';
+      let overallStatus: 'implemented' | 'in_progress' | 'not_started' = 'not_started';
+      if (implementedCount === 5) {
+        overallStatus = 'implemented';
       } else if (implementedCount > 0 || progressCount > 0) {
-        finalStatus = 'in_progress';
+        overallStatus = 'in_progress';
       }
 
-      const orig = this.MAPPINGS.find(x => x.concern === m.concern)!;
-
       return {
-        id: `${m.domain}-${orig.nistCode}-${orig.euAiActCode}`,
-        concernArea: m.concern,
-        nistCode: orig.nistCode,
-        nistTitle: nistTitleMap.get(orig.nistCode) || "NIST Control",
-        euArticle: orig.euAiActCode,
-        euTitle: euTitleMap.get(orig.euAiActCode) || "EU AI Act Article",
-        iso42001Control: orig.iso42001Code,
-        iso42001Title: iso42TitleMap.get(orig.iso42001Code) || "ISO 42001 Control",
-        iso27001Control: orig.iso27001Code,
-        iso27001Title: iso27TitleMap.get(orig.iso27001Code) || "ISO 27001 Control",
-        status: finalStatus
+        id: def.id,
+        concernDomain: def.domain,
+        description: def.description,
+        citations: def.citations,
+        frameworkStatuses,
+        overallStatus,
       };
     });
   }
 
+  /**
+   * Identifies compliance gaps where some frameworks are implemented but others remain unaddressed.
+   */
   static async getGapAnalysis(organizationId: string) {
-    const [rawMap, euControls, nistSubcategories, iso42Controls, iso27Controls] = await Promise.all([
-      this.getRawCrossFrameworkMap(organizationId),
-      prisma.eu_ai_act_controls.findMany({ select: { control_code: true, title: true } }),
-      prisma.nist_ai_rmf_subcategories.findMany({ select: { subcategory_code: true, title: true } }),
-      prisma.iso42001_controls.findMany({ select: { control_code: true, title: true } }),
-      prisma.iso27001_controls.findMany({ select: { control_code: true, title: true } })
-    ]);
-
-    const euTitleMap = new Map(euControls.map(c => [c.control_code, c.title]));
-    const nistTitleMap = new Map(nistSubcategories.map(s => [s.subcategory_code, s.title]));
-    const iso42TitleMap = new Map(iso42Controls.map(c => [c.control_code, c.title]));
-    const iso27TitleMap = new Map(iso27Controls.map(c => [c.control_code, c.title]));
-
+    const mappings = await this.getCrossFrameworkMap(organizationId);
     const gaps: any[] = [];
 
-    for (const m of rawMap) {
-      const euStatus = m.euAiAct.status;
-      const nistStatus = m.nist.status;
-      const iso42Status = m.iso42001.status;
-      const iso27Status = m.iso27001.status;
-
-      const orig = this.MAPPINGS.find(x => x.concern === m.concern)!;
-
-      const frameworks = [
-        { name: 'EU AI Act', code: orig.euAiActCode, status: euStatus, title: euTitleMap.get(orig.euAiActCode) || "EU AI Act Article" },
-        { name: 'NIST AI RMF', code: orig.nistCode, status: nistStatus, title: nistTitleMap.get(orig.nistCode) || "NIST Control" },
-        { name: 'ISO 42001', code: orig.iso42001Code, status: iso42Status, title: iso42TitleMap.get(orig.iso42001Code) || "ISO 42001 Control" },
-        { name: 'ISO 27001', code: orig.iso27001Code, status: iso27Status, title: iso27TitleMap.get(orig.iso27001Code) || "ISO 27001 Control" }
-      ];
-
-      const implemented = frameworks.filter(f => f.status === 'IMPLEMENTED');
-      const lagging = frameworks.filter(f => f.status === 'NOT_STARTED');
+    for (const m of mappings) {
+      const implemented = SUPPORTED_FRAMEWORKS.filter(fw => m.frameworkStatuses[fw] === 'IMPLEMENTED');
+      const lagging = SUPPORTED_FRAMEWORKS.filter(fw => m.frameworkStatuses[fw] === 'NOT_STARTED');
 
       if (implemented.length > 0 && lagging.length > 0) {
         for (const lag of lagging) {
           gaps.push({
-            framework: lag.name,
-            controlCode: lag.code,
-            controlTitle: lag.title,
-            mappedFrom: implemented[0].name,
-            mappedControl: implemented[0].code,
-            gapType: 'missing_implementation',
-            severity: lagging.length > 2 ? 'high' : 'medium'
+            domain: m.concernDomain,
+            laggingFramework: lag,
+            citation: m.citations[lag],
+            implementedFramework: implemented[0],
+            gapType: 'missing_framework_alignment',
+            severity: lagging.length >= 3 ? 'high' : 'medium',
           });
         }
       }
@@ -267,57 +174,28 @@ export class FrameworkMapperService {
     return gaps;
   }
 
+  /**
+   * Calculates overall consistency score across the 5 supported frameworks.
+   */
   static async getOverlapScore(organizationId: string) {
-    const fullMap = await this.getRawCrossFrameworkMap(organizationId);
-    let totalConsistency = 0;
-    const domainScores: Record<string, { total: number; consistent: number }> = {
-      risk: { total: 0, consistent: 0 },
-      transparency: { total: 0, consistent: 0 },
-      data: { total: 0, consistent: 0 },
-      oversight: { total: 0, consistent: 0 },
-      audit: { total: 0, consistent: 0 }
-    };
+    const mappings = await this.getCrossFrameworkMap(organizationId);
+    if (mappings.length === 0) return { score: 100, domainScores: [] };
 
-    fullMap.forEach(m => {
-      const statuses = [m.euAiAct.status, m.nist.status, m.iso42001.status, m.iso27001.status];
-      
-      // Calculate how consistent the implementation is across all 4 frameworks
-      const implementedCount = statuses.filter(s => s === 'IMPLEMENTED').length;
-      const progressCount = statuses.filter(s => s === 'IN_PROGRESS').length;
-      const notStartedCount = statuses.filter(s => s === 'NOT_STARTED').length;
-
-      let score = 0;
-      if (implementedCount === 4 || notStartedCount === 4) {
-        score = 100; // Consistent state
-      } else if (implementedCount > 0 && notStartedCount > 0) {
-        // High gap penalty
-        score = 40;
-      } else if (implementedCount > 0 || progressCount > 0) {
-        score = 70;
-      }
-
-      totalConsistency += score;
-
-      const domain = m.domain;
-      if (domainScores[domain]) {
-        domainScores[domain].total += 100;
-        domainScores[domain].consistent += score;
-      }
-    });
-
-    const overallScore = fullMap.length > 0 ? Math.round(totalConsistency / fullMap.length) : 100;
-    
-    const formattedDomainScores = Object.keys(domainScores).map(k => {
-      const d = domainScores[k];
+    let totalScore = 0;
+    const domainScores = mappings.map(m => {
+      const statuses = Object.values(m.frameworkStatuses);
+      const implemented = statuses.filter(s => s === 'IMPLEMENTED').length;
+      const score = Math.round((implemented / 5) * 100);
+      totalScore += score;
       return {
-        domain: k,
-        score: d.total > 0 ? Math.round((d.consistent / d.total) * 100) : 100
+        domain: m.concernDomain,
+        score,
       };
     });
 
     return {
-      score: overallScore,
-      domainScores: formattedDomainScores
+      score: Math.round(totalScore / mappings.length),
+      domainScores,
     };
   }
 }

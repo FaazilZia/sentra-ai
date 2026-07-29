@@ -105,7 +105,7 @@ export const ExecutiveReportService = {
     doc.rect(50, 230, 495, 1).fill('#e2e8f0');
 
     doc.fillColor('#334155').fontSize(10).font('Helvetica').text(
-      'This report provides a consolidated overview of artificial intelligence systems, operational risk assessments, compliance frameworks tracking, and active control libraries across the organization. The metrics present real-time compliance audits powered by the Sentraa AI Governance engine, mapped directly against standards including the EU AI Act, NIST AI RMF 1.0, ISO 42001, and ISO 27001.',
+      'This report provides a consolidated overview of artificial intelligence systems, operational risk assessments, compliance frameworks tracking, and active control libraries across the organization. The metrics present real-time compliance audits powered by the Sentraa AI Governance engine, mapped directly against standards including GDPR, DPDP, HIPAA, PCI-DSS, and NIST AI RMF 1.0.',
       50,
       245,
       { width: 495, align: 'justify', lineGap: 4 }
@@ -224,10 +224,10 @@ export const ExecutiveReportService = {
     doc.fillColor('#0f172a').fontSize(14).font('Helvetica-Bold').text('Regulatory Standards Reference & Context', 50, 50);
     doc.rect(50, 70, 495, 1).fill('#e2e8f0');
 
-    // EU AI Act Deep Dive
-    doc.fillColor('#334155').fontSize(10).font('Helvetica-Bold').text('1. European Union AI Act (Regulation EU 2024/1689)', 50, 85);
+    // GDPR & Data Protection
+    doc.fillColor('#334155').fontSize(10).font('Helvetica-Bold').text('1. General Data Protection Regulation (GDPR)', 50, 85);
     doc.fillColor('#64748b').fontSize(9).font('Helvetica').text(
-      'The EU AI Act classifies AI systems based on risk level. Prohibited systems include cognitive behavioral manipulation and untargeted scraping of facial images. High-risk systems (e.g. biometrics, critical infrastructure, employment scoring) must undergo fundamental rights impact assessments, maintain technical documentation, and ensure high levels of cybersecurity and human oversight. Limited risk systems are subject to lighter transparency obligations, such as disclosing that the user is interacting with an AI system. Sentraa AI facilitates compliance by mapping data streams and registering systems under appropriate risk classifications.',
+      'Data protection regulations mandate strict security measures when processing personal data. Automated profiling and decision-making systems are highly restricted. Users maintain the right to receive an explanation of decisions reached via automated processing. Additionally, systems must support data minimization, purpose limitation, and dynamic consent mechanisms. Sentraa AI implements inline PII scanners and real-time consent managers to ensure data processing activities respect individual privacy rights.',
       50,
       100,
       { width: 495, align: 'justify', lineGap: 3 }
@@ -242,19 +242,19 @@ export const ExecutiveReportService = {
       { width: 495, align: 'justify', lineGap: 3 }
     );
 
-    // ISO/IEC 42001 Deep Dive
-    doc.fillColor('#334155').fontSize(10).font('Helvetica-Bold').text('3. ISO/IEC 42001 Artificial Intelligence Management System (AIMS)', 50, 305);
+    // HIPAA Deep Dive
+    doc.fillColor('#334155').fontSize(10).font('Helvetica-Bold').text('3. HIPAA (Health Insurance Portability and Accountability Act)', 50, 305);
     doc.fillColor('#64748b').fontSize(9).font('Helvetica').text(
-      'ISO/IEC 42001 specifies requirements for establishing, implementing, maintaining, and continually improving an AI management system within organizations. It addresses structural aspects such as AI policy alignment, organizational roles, risk assessments, operational controls, and performance evaluations. The standard covers key topics including the design, development, and deployment of AI models, data quality governance, system transparency, and supplier relationships. Sentraa AI acts as an automated management hub tracking the compliance of all organizational AI assets.',
+      'HIPAA establishes national standards to protect sensitive patient health information from being disclosed without patient consent or knowledge. AI systems processing protected health information (PHI) must implement administrative, physical, and technical safeguards. Sentraa AI enforces HIPAA compliance through automated PHI scanning, access logging, encryption verification, and breach notification workflows.',
       50,
       320,
       { width: 495, align: 'justify', lineGap: 3 }
     );
 
-    // GDPR & Data Protection laws mapping
-    doc.fillColor('#334155').fontSize(10).font('Helvetica-Bold').text('4. General Data Protection Regulation (GDPR) & Data Privacy Laws', 50, 415);
+    // PCI-DSS & DPDP
+    doc.fillColor('#334155').fontSize(10).font('Helvetica-Bold').text('4. PCI-DSS & DPDP (Digital Personal Data Protection Act)', 50, 415);
     doc.fillColor('#64748b').fontSize(9).font('Helvetica').text(
-      'Data protection regulations mandate strict security measures when processing personal data. Automated profiling and decision-making systems are highly restricted. Users maintain the right to receive an explanation of decisions reached via automated processing. Additionally, systems must support data minimization, purpose limitation, and dynamic consent mechanisms. Sentraa AI implements inline PII scanners and real-time consent managers to ensure data processing activities respect individual privacy rights.',
+      'PCI-DSS mandates security standards for organizations that handle branded credit cards. DPDP establishes comprehensive data protection obligations in India. Together with GDPR and HIPAA, these frameworks require strict access controls, encryption, audit trails, and data minimization. Sentraa AI provides unified compliance tracking across all five frameworks to ensure consistent security posture.',
       50,
       430,
       { width: 495, align: 'justify', lineGap: 3 }

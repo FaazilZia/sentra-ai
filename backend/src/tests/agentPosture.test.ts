@@ -243,8 +243,8 @@ describe('AgentPostureService Unit & Integration Tests', () => {
       expect(findings2.some(f => f.ruleId === 'PCI-RULE-2')).toBe(false);
     });
 
-    // EU-AIA-RULE-1: AI Registry with CRITICAL riskTier or HIGH_RISK_MONITORED
-    test('EU-AIA-RULE-1 should fire on AI System Registry with CRITICAL riskTier', () => {
+    // NIST-RMF-RULE-1: AI Registry with CRITICAL riskTier or HIGH_RISK_MONITORED
+    test('NIST-RMF-RULE-1 should fire on AI System Registry with CRITICAL riskTier', () => {
       const matchingAgent = {
         id: 'agent-1',
         organizationId: TEST_ORG_ID,
@@ -265,12 +265,12 @@ describe('AgentPostureService Unit & Integration Tests', () => {
       const findings1 = AgentPostureService.evaluateAgentPosture(matchingAgent);
       const findings2 = AgentPostureService.evaluateAgentPosture(nonMatchingAgent);
 
-      expect(findings1.some(f => f.ruleId === 'EU-AIA-RULE-1')).toBe(true);
-      expect(findings2.some(f => f.ruleId === 'EU-AIA-RULE-1')).toBe(false);
+      expect(findings1.some(f => f.ruleId === 'NIST-RMF-RULE-1')).toBe(true);
+      expect(findings2.some(f => f.ruleId === 'NIST-RMF-RULE-1')).toBe(false);
     });
 
-    // EU-AIA-RULE-2: AI System Registry missing riskTier
-    test('EU-AIA-RULE-2 should fire on AI System Registry without riskTier', () => {
+    // NIST-RMF-RULE-2: AI System Registry missing riskTier
+    test('NIST-RMF-RULE-2 should fire on AI System Registry without riskTier', () => {
       const matchingAgent = {
         id: 'agent-1',
         organizationId: TEST_ORG_ID,
@@ -291,8 +291,8 @@ describe('AgentPostureService Unit & Integration Tests', () => {
       const findings1 = AgentPostureService.evaluateAgentPosture(matchingAgent);
       const findings2 = AgentPostureService.evaluateAgentPosture(nonMatchingAgent);
 
-      expect(findings1.some(f => f.ruleId === 'EU-AIA-RULE-2')).toBe(true);
-      expect(findings2.some(f => f.ruleId === 'EU-AIA-RULE-2')).toBe(false);
+      expect(findings1.some(f => f.ruleId === 'NIST-RMF-RULE-2')).toBe(true);
+      expect(findings2.some(f => f.ruleId === 'NIST-RMF-RULE-2')).toBe(false);
     });
   });
 
@@ -304,15 +304,15 @@ describe('AgentPostureService Unit & Integration Tests', () => {
       expect(scores.frameworkScores.gdpr).toBe(100);
       expect(scores.frameworkScores.hipaa).toBe(100);
       expect(scores.frameworkScores.pciDss).toBe(100);
-      expect(scores.frameworkScores.euAiAct).toBe(100);
+      expect(scores.frameworkScores.nistAiRmf).toBe(100);
     });
 
-    test('Moderate Score (62) — 1 HIGH (-15), 2 MEDIUM (-16), 1 LOW (-7) -> 100 - 38 = 62', () => {
+    test('Moderate Score (66) — 1 HIGH (-15), 2 MEDIUM (-16), 1 LOW (-3) -> 100 - 34 = 66', () => {
       const findings: any[] = [
         { framework: 'DPDP', severity: 'HIGH' },    // -15
         { framework: 'GDPR', severity: 'MEDIUM' },  // -8
         { framework: 'PCI_DSS', severity: 'MEDIUM' },// -8
-        { framework: 'EU_AI_ACT', severity: 'LOW' },// -7 (wait, LOW is -3 in formula! Let's check 15 + 8 + 8 + 3 = 34 -> score 66 or 62 depending on findings)
+        { framework: 'NIST_AI_RMF', severity: 'LOW' },// -3
       ];
       const scores = AgentPostureService.calculateScores(findings);
       expect(scores.postureScore).toBe(66);

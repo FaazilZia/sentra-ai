@@ -409,13 +409,13 @@ export default function Datasets() {
                       </select>
                     </td>
 
-                    {/* EU AI Act autolinker details */}
+                    {/* NIST AI RMF autolinker details */}
                     <td className="px-6 py-4">
                       {d.ai_system_id ? (
                         <div className="flex items-center gap-1.5 text-indigo-600">
                           <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-500" />
                           <div className="text-[9px] font-bold uppercase tracking-wide">
-                            Art 10 Linked
+                            NIST Data Governance Linked
                           </div>
                         </div>
                       ) : (

@@ -44,6 +44,16 @@ describe('Cursor-Based Pagination Integration', () => {
 
   beforeAll(async () => {
     userId = randomUUID();
+    const existingOrg = await prisma.organizations.findFirst();
+    if (existingOrg) {
+      orgId = existingOrg.id;
+    } else {
+      const created = await prisma.organizations.create({
+        data: { id: orgId, name: 'Pagination Org', slug: `pag-org-${Date.now()}`, is_active: true }
+      });
+      orgId = created.id;
+    }
+
     // Create a mock user
     await prisma.users.create({
       data: {

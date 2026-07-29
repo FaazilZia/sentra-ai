@@ -39,7 +39,7 @@ export interface SOCHubProps {
 export interface CrossFrameworkImpactProps {
   subcategoryCode: string;
   mappings: Array<{
-    targetFramework: string; // e.g. "GDPR" | "EU_AI_ACT"
+    targetFramework: string; // e.g. "GDPR" | "HIPAA" | "DPDP" | "PCI_DSS" | "NIST_AI_RMF"
     targetControlCode: string; // e.g. "EU-AIA-9-1"
     mappingStrength: number; // 0.0 to 1.0
     description: string;

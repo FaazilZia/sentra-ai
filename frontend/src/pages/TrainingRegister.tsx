@@ -24,7 +24,7 @@ export default function TrainingRegister() {
   const [newDesc, setNewDesc] = useState('');
   const [newDuration, setNewDuration] = useState(60);
   const [newMandatory, setNewMandatory] = useState(true);
-  const [newTagsString, setNewTagsString] = useState('ISO-42001');
+  const [newTagsString, setNewTagsString] = useState('NIST-AI-RMF');
 
   useEffect(() => {
     loadData();
@@ -95,7 +95,7 @@ export default function TrainingRegister() {
       setNewDesc('');
       setNewDuration(60);
       setNewMandatory(true);
-      setNewTagsString('ISO-42001');
+      setNewTagsString('NIST-AI-RMF');
 
       loadData();
     } catch (err) {
@@ -303,7 +303,7 @@ export default function TrainingRegister() {
                   type="text" 
                   value={newTagsString}
                   onChange={(e) => setNewTagsString(e.target.value)}
-                  placeholder="e.g. ISO-42001, EU-AI-ACT, NIST"
+                  placeholder="e.g. GDPR, HIPAA, NIST-AI-RMF"
                   className="w-full text-xs bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:border-[var(--royal-indigo)]"
                 />
               </div>
@@ -336,7 +336,7 @@ export default function TrainingRegister() {
           </div>
           <div>
             <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--text-primary)]">Mandatory Training Register</h2>
-            <p className="text-[10px] text-[var(--text-secondary)] font-medium">Verify employee competence checklists to automatically fulfill ISO 42001 competence controls</p>
+            <p className="text-[10px] text-[var(--text-secondary)] font-medium">Verify employee competence checklists to automatically fulfill NIST AI RMF competence controls</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -437,7 +437,7 @@ export default function TrainingRegister() {
           {status && status.pendingGaps === 0 && (
             <div className="flex items-center gap-1 text-[9px] font-bold text-emerald-600 uppercase tracking-widest bg-emerald-50 px-2.5 py-1 rounded">
               <CheckCircle className="h-3.5 w-3.5" />
-              ISO 42001 Clause 7.2 Compliant
+              NIST AI RMF GV-2.1 Compliant
             </div>
           )}
         </div>
@@ -519,7 +519,7 @@ export default function TrainingRegister() {
                   {status && status.gaps.length === 0 ? (
                     <tr>
                       <td colSpan={4} className="p-12 text-center text-slate-400 text-xs font-medium">
-                        No outstanding compliance training gaps detected. ISO 42001 competence check fully satisfied!
+                        No outstanding compliance training gaps detected. NIST AI RMF competence check fully satisfied!
                       </td>
                     </tr>
                   ) : (

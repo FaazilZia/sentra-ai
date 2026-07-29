@@ -1,6 +1,6 @@
 /**
  * Shared compliance utilities used across framework services
- * (ISO 27001, ISO 42001, EU AI Act, NIST AI RMF).
+ * (GDPR, DPDP, HIPAA, PCI-DSS, NIST AI RMF).
  * Eliminates duplicated status-counting and implementation logic.
  */
 export interface ComplianceStatusCounts {
@@ -76,7 +76,7 @@ export async function seedMissingImplementations(
 
 /**
  * Find a control by code, then upsert its implementation for the org.
- * Shared between ISO and EU AI Act updateImplementation methods.
+ * Shared between framework updateImplementation methods.
  */
 export async function findControlOrThrow(
   db: any,

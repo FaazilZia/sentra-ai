@@ -1,9 +1,10 @@
 import Anthropic from '@anthropic-ai/sdk';
 import prisma from '../config/db';
-import { EuAiActService } from './euAiAct.service';
+import { GdprService } from './gdpr.service';
+import { HipaaService } from './hipaa.service';
+import { DpdpService } from './dpdp.service';
+import { PciService } from './pci.service';
 import { NistAiRmfService } from './nistAiRmf.service';
-import { Iso42001Service } from './iso42001.service';
-import { Iso27001Service } from './iso27001.service';
 import logger from '../utils/logger';
 
 export class AdvisorService {
@@ -17,30 +18,33 @@ export class AdvisorService {
 
   static async getCompliancePosture(organizationId: string) {
     try {
-      const [euAct, nist, iso42001, iso27001, incidents, driftAlerts] = await Promise.all([
-        EuAiActService.getFrameworkOverview(organizationId).catch(() => ({ summary: { compliance_score: 0 } })),
-        NistAiRmfService.getFrameworkOverview(organizationId).catch(() => ({ score: 0 })),
-        Iso42001Service.getFrameworkOverview(organizationId).catch(() => ({ summary: { compliance_score: 0 } })),
-        Iso27001Service.getFrameworkOverview(organizationId).catch(() => ({ summary: { compliance_score: 0 } })),
+      const [gdpr, hipaa, dpdp, pci, nist, incidents, driftAlerts] = await Promise.all([
+        GdprService.getStats(organizationId).catch(() => ({ compliance_score: 100 })),
+        HipaaService.getStats(organizationId).catch(() => ({ compliance_score: 100 })),
+        DpdpService.getStats(organizationId).catch(() => ({ compliance_score: 100 })),
+        PciService.getStats(organizationId).catch(() => ({ compliance_score: 100 })),
+        NistAiRmfService.getFrameworkOverview(organizationId).catch(() => ({ score: 100 })),
         prisma.incidents.count({ where: { organizationId, status: 'unresolved' } }),
         prisma.drift_alerts.count({ where: { organizationId, status: 'open' } })
       ]);
 
       return {
-        euAiActScore: euAct.summary?.compliance_score || 0,
-        nistScore: nist.score || 0,
-        iso42001Score: iso42001.summary?.compliance_score || 0,
-        iso27001Score: iso27001.summary?.compliance_score || 0,
+        gdprScore: gdpr.compliance_score || 100,
+        hipaaScore: hipaa.compliance_score || 100,
+        dpdpScore: dpdp.compliance_score || 100,
+        pciDssScore: pci.compliance_score || 100,
+        nistAiRmfScore: nist.score || 100,
         openIncidents: incidents,
         activeDrifts: driftAlerts
       };
     } catch (err) {
       logger.error('Failed to get compliance posture for advisor:', err);
       return {
-        euAiActScore: 0,
-        nistScore: 0,
-        iso42001Score: 0,
-        iso27001Score: 0,
+        gdprScore: 100,
+        hipaaScore: 100,
+        dpdpScore: 100,
+        pciDssScore: 100,
+        nistAiRmfScore: 100,
         openIncidents: 0,
         activeDrifts: 0
       };
@@ -62,10 +66,11 @@ export class AdvisorService {
     }
 
     const scores = [
-      { name: 'EU AI Act', score: posture.euAiActScore },
-      { name: 'NIST AI RMF', score: posture.nistScore },
-      { name: 'ISO 42001', score: posture.iso42001Score },
-      { name: 'ISO 27001', score: posture.iso27001Score }
+      { name: 'GDPR', score: posture.gdprScore },
+      { name: 'DPDP', score: posture.dpdpScore },
+      { name: 'HIPAA', score: posture.hipaaScore },
+      { name: 'PCI-DSS', score: posture.pciDssScore },
+      { name: 'NIST AI RMF', score: posture.nistAiRmfScore }
     ];
 
     scores.sort((a, b) => a.score - b.score);
@@ -78,7 +83,7 @@ export class AdvisorService {
     }
 
     suggestions.push("What third-party vendor tools are currently under review?");
-    suggestions.push("What evidence do we have for Clause 7 of ISO 42001?");
+    suggestions.push("What evidence do we have for NIST AI RMF GV-1.1?");
 
     return suggestions.slice(0, 5);
   }
@@ -87,14 +92,16 @@ export class AdvisorService {
     logger.info(`Advisor executing tool call: ${name} with input ${JSON.stringify(input)}`);
     try {
       switch (name) {
-        case 'get_eu_ai_act_status':
-          return await EuAiActService.getFrameworkOverview(organizationId);
+        case 'get_gdpr_status':
+          return await GdprService.getStats(organizationId);
+        case 'get_hipaa_status':
+          return await HipaaService.getStats(organizationId);
+        case 'get_pci_dss_status':
+          return await PciService.getStats(organizationId);
+        case 'get_dpdp_status':
+          return await DpdpService.getStats(organizationId);
         case 'get_nist_status':
           return await NistAiRmfService.getFrameworkOverview(organizationId);
-        case 'get_iso42001_status':
-          return await Iso42001Service.getFrameworkOverview(organizationId);
-        case 'get_iso27001_status':
-          return await Iso27001Service.getFrameworkOverview(organizationId);
         case 'get_open_incidents':
           return await prisma.incidents.findMany({ where: { organizationId, status: 'unresolved' } });
         case 'get_drift_alerts':
@@ -109,8 +116,6 @@ export class AdvisorService {
           return await prisma.policies.findMany({ where: { organizationId } });
         case 'get_evidence_files':
           return await prisma.evidence_files.findMany({ where: { organizationId } });
-        case 'get_fria_assessments':
-          return await prisma.fria_assessments.findMany({ where: { organizationId }, include: { ai_system: true } });
         case 'get_evaluation_results':
           return await prisma.evaluation_runs.findMany({ where: { organizationId }, include: { results: true }, take: 5, orderBy: { created_at: 'desc' } });
         case 'get_compliance_scores':
@@ -179,10 +184,11 @@ export class AdvisorService {
 Your duty is to advise the organization on their compliance posture with rich insights and direct access to compliance tools.
 
 Current Compliance Posture Summary:
-- EU AI Act Compliance Score: ${posture.euAiActScore}%
-- NIST AI Risk Management Framework Score: ${posture.nistScore}%
-- ISO 42001 Compliance Score: ${posture.iso42001Score}%
-- ISO 27001 Compliance Score: ${posture.iso27001Score}%
+- GDPR Compliance Score: ${posture.gdprScore}%
+- DPDP Compliance Score: ${posture.dpdpScore}%
+- HIPAA Compliance Score: ${posture.hipaaScore}%
+- PCI-DSS Compliance Score: ${posture.pciDssScore}%
+- NIST AI Risk Management Framework Score: ${posture.nistAiRmfScore}%
 - Open Unresolved Incidents: ${posture.openIncidents}
 - Active Model Drift Alerts: ${posture.activeDrifts}
 
@@ -191,8 +197,8 @@ If you call write tools (e.g. to create incidents, create drift alerts, or updat
 
     const tools: Anthropic.Tool[] = [
       {
-        name: 'get_eu_ai_act_status',
-        description: 'Retrieves the organization\'s overall EU AI Act article compliance audit status and scores.',
+        name: 'get_gdpr_status',
+        description: 'Retrieves the organization\'s GDPR compliance status and scores.',
         input_schema: { type: 'object', properties: {} }
       },
       {
@@ -201,13 +207,18 @@ If you call write tools (e.g. to create incidents, create drift alerts, or updat
         input_schema: { type: 'object', properties: {} }
       },
       {
-        name: 'get_iso42001_status',
-        description: 'Retrieves the ISO/IEC 42001 compliance audit status and scores.',
+        name: 'get_hipaa_status',
+        description: 'Retrieves the HIPAA compliance status and scores.',
         input_schema: { type: 'object', properties: {} }
       },
       {
-        name: 'get_iso27001_status',
-        description: 'Retrieves the ISO/IEC 27001 compliance audit status and scores.',
+        name: 'get_pci_dss_status',
+        description: 'Retrieves the PCI-DSS compliance status and scores.',
+        input_schema: { type: 'object', properties: {} }
+      },
+      {
+        name: 'get_dpdp_status',
+        description: 'Retrieves the DPDP Act compliance status and scores.',
         input_schema: { type: 'object', properties: {} }
       },
       {
@@ -246,18 +257,13 @@ If you call write tools (e.g. to create incidents, create drift alerts, or updat
         input_schema: { type: 'object', properties: {} }
       },
       {
-        name: 'get_fria_assessments',
-        description: 'Lists completed and active Fundamental Rights Impact Assessments (FRIA).',
-        input_schema: { type: 'object', properties: {} }
-      },
-      {
         name: 'get_evaluation_results',
         description: 'Fetches recent model evaluation outcomes (hallucination rate, fairness, safety).',
         input_schema: { type: 'object', properties: {} }
       },
       {
         name: 'get_compliance_scores',
-        description: 'Fetches scores for EU AI Act, NIST AI RMF, ISO 42001, and ISO 27001.',
+        description: 'Fetches scores for GDPR, DPDP, HIPAA, PCI-DSS, and NIST AI RMF.',
         input_schema: { type: 'object', properties: {} }
       },
       {

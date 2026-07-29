@@ -22,15 +22,16 @@ interface EvidenceFile {
 }
 
 const FRAMEWORK_FOLDERS = [
-  { key: 'EU_AI_ACT', label: 'EU AI Act Compliance', desc: 'Evidence for high-risk AI obligations, safety logs, and auditing.' },
-  { key: 'NIST', label: 'NIST AI Risk Management', desc: 'Evidence for NIST AI RMF framework profiles, risk maps, and tests.' },
-  { key: 'ISO42001', label: 'ISO/IEC 42001 Standard', desc: 'Evidence for AI Management System standards, baselines, and controls.' },
-  { key: 'ISO27001', label: 'ISO/IEC 27001 Security', desc: 'Evidence for Information Security Management systems and annexes.' }
+  { key: 'GDPR', label: 'GDPR Compliance', desc: 'Evidence for GDPR data protection obligations, DPIAs, and consent management.' },
+  { key: 'DPDP', label: 'DPDP Act Compliance', desc: 'Evidence for Digital Personal Data Protection Act obligations.' },
+  { key: 'HIPAA', label: 'HIPAA Compliance', desc: 'Evidence for PHI safeguards, security rules, and breach notification.' },
+  { key: 'PCI_DSS', label: 'PCI-DSS Security', desc: 'Evidence for payment card data security standards and access controls.' },
+  { key: 'NIST_AI_RMF', label: 'NIST AI Risk Management', desc: 'Evidence for NIST AI RMF framework profiles, risk maps, and tests.' }
 ];
 
 export default function FileManager() {
   const addToast = useStore((state) => state.addToast);
-  const [activeFolder, setActiveFolder] = useState<string>('EU_AI_ACT');
+  const [activeFolder, setActiveFolder] = useState<string>('GDPR');
   const [files, setFiles] = useState<EvidenceFile[]>([]);
   const [folderStats, setFolderStats] = useState<Record<string, { count: number; lastUploaded: string | null }>>({});
   const [loading, setLoading] = useState(true);

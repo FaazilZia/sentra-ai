@@ -3,7 +3,6 @@ import { randomUUID } from 'crypto';
 import logger from '../utils/logger';
 import { seedGdpr } from './gdprSeed.service';
 import { seedHipaa } from './hipaaSeed.service';
-import { seedSoc2 } from './soc2Seed.service';
 import { seedPci } from './pciSeed.service';
 import { seedDpdp } from './dpdpSeed.service';
 
@@ -133,7 +132,6 @@ export async function seedOrganizationGovernance(organizationId: string, txClien
       await runSeeding(txClient);
       await seedGdpr(organizationId, txClient);
       await seedHipaa(organizationId, txClient);
-      await seedSoc2(organizationId, txClient);
       await seedPci(organizationId, txClient);
       await seedDpdp(organizationId, txClient);
     } else {
@@ -141,7 +139,6 @@ export async function seedOrganizationGovernance(organizationId: string, txClien
         await runSeeding(tx);
         await seedGdpr(organizationId, tx);
         await seedHipaa(organizationId, tx);
-        await seedSoc2(organizationId, tx);
         await seedPci(organizationId, tx);
         await seedDpdp(organizationId, tx);
       }, { timeout: 120000 });

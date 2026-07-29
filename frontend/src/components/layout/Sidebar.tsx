@@ -23,8 +23,6 @@ import {
   Layers,
   Sparkles,
   FlaskConical,
-  Globe,
-  Scale,
   AlertTriangle,
   Network,
   Cpu,
@@ -73,16 +71,10 @@ const SIDEBAR_GROUPS: SidebarGroup[] = [
         icon: ShieldCheck,
         label: 'Frameworks',
         items: [
-          { icon: ShieldCheck, label: 'CCPA Compliance', path: '/app/ccpa' },
-          { icon: Shield, label: 'DPDP Compliance', path: '/app/dpdp' },
-          { icon: ShieldCheck, label: 'DORA', path: '/app/dora' },
-          { icon: Scale, label: 'FTC AI Guidelines', path: '/app/ftc' },
           { icon: Shield, label: 'GDPR Compliance', path: '/app/gdpr' },
+          { icon: Shield, label: 'DPDP Compliance', path: '/app/dpdp' },
           { icon: Shield, label: 'HIPAA Compliance', path: '/app/hipaa' },
-          { icon: Globe, label: 'OECD AI Principles', path: '/app/oecd' },
           { icon: ShieldCheck, label: 'PCI-DSS Compliance', path: '/app/pci' },
-          { icon: ShieldCheck, label: 'SOC2 Compliance', path: '/app/soc2' },
-          { icon: Award, label: 'CE Marking', path: '/app/ce-marking' },
           { icon: ShieldCheck, label: 'Consent', path: '/app/consent' },
         ]
       }

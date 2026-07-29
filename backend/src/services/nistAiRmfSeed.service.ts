@@ -24,7 +24,7 @@ export const NIST_AI_RMF_SEED_DATA = {
               subcategory_code: "GV-1.1",
               title: "Legal & Regulatory Alignment",
               description: "AI policies align with applicable laws, regulations, and organizational values.",
-              implementation_examples: ["Incorporate GDPR and EU AI Act compliance checks into system design rules.", "Conduct legal compliance assessments for generative AI agents."],
+              implementation_examples: ["Incorporate GDPR and NIST AI RMF compliance checks into system design rules.", "Conduct legal compliance assessments for generative AI agents."],
               suggested_evidence: ["Legal compliance review document", "Regulatory alignment registry entry"],
               telemetry_sources: ["audit_logs", "workflow_approvals"],
               severity_weight: 8,
@@ -240,7 +240,7 @@ export const NIST_AI_RMF_SEED_DATA = {
               subcategory_code: "MP-2.1",
               title: "Risk-tier Assignment",
               description: "The system is evaluated against compliance benchmarks and assigned an appropriate risk tier.",
-              implementation_examples: ["Categorize agents into High Risk, Prohibited, or Limited tiers per EU AI Act guidelines.", "Enforce stricter guardrails on High-Risk systems."],
+              implementation_examples: ["Categorize agents into High Risk, Medium, or Low tiers per NIST AI RMF risk assessment guidelines.", "Enforce stricter guardrails on High-Risk systems."],
               suggested_evidence: ["Risk-tier registry database entries", "Guardrail configuration schema"],
               telemetry_sources: ["audit_logs"],
               severity_weight: 8,
@@ -593,13 +593,11 @@ export const NIST_AI_RMF_SEED_DATA = {
     }
   ],
   frameworkMappings: [
-    { source_control_code: "ME-4.1", target_framework: "EU_AI_ACT", target_control_code: "EU-AIA-15-2", mapping_strength: 0.9 },
-    { source_control_code: "GV-2.1", target_framework: "EU_AI_ACT", target_control_code: "EU-AIA-14-1", mapping_strength: 1.0 },
-    { source_control_code: "GV-2.1", target_framework: "EU_AI_ACT", target_control_code: "EU-AIA-14-2", mapping_strength: 0.8 },
-    { source_control_code: "GV-5.1", target_framework: "EU_AI_ACT", target_control_code: "EU-AIA-10-3", mapping_strength: 0.95 },
     { source_control_code: "GV-5.1", target_framework: "GDPR", target_control_code: "GDPR-Art-32", mapping_strength: 0.9 },
-    { source_control_code: "MG-2.1", target_framework: "EU_AI_ACT", target_control_code: "EU-AIA-72-2", mapping_strength: 0.85 },
-    { source_control_code: "MP-2.1", target_framework: "EU_AI_ACT", target_control_code: "EU-AIA-9-1", mapping_strength: 0.9 }
+    { source_control_code: "ME-4.1", target_framework: "HIPAA", target_control_code: "HIPAA-164.312(a)", mapping_strength: 0.85 },
+    { source_control_code: "GV-2.1", target_framework: "PCI_DSS", target_control_code: "PCI-DSS-Req-12.1", mapping_strength: 0.8 },
+    { source_control_code: "MG-2.1", target_framework: "DPDP", target_control_code: "DPDP-Sec-8", mapping_strength: 0.85 },
+    { source_control_code: "MP-2.1", target_framework: "GDPR", target_control_code: "GDPR-Art-25", mapping_strength: 0.9 }
   ]
 };
 

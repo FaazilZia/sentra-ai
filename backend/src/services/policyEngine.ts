@@ -62,7 +62,7 @@ export const evaluatePolicy = async (agent: string, action: string, organization
       allowed: false,
       reason: 'Policy Violation: Unauthorized Data Exfiltration',
       explanation: 'Bulk export of customer PII to unauthorized external domains is blocked.',
-      compliance: ['GDPR', 'HIPAA', 'ISO27001-A12.4.1'],
+      compliance: ['GDPR', 'HIPAA', 'NIST_AI_RMF'],
       impact: 'Prevents customer PII leak'
     };
   }
@@ -74,7 +74,7 @@ export const evaluatePolicy = async (agent: string, action: string, organization
       allowed: false,
       reason: 'Policy Violation: Unauthorized Production Deletion',
       explanation: 'Permanent deletion of data under production environments is prohibited.',
-      compliance: ['ISO-27001-9-1', 'GDPR-DELETION-LIMIT'],
+      compliance: ['NIST_AI_RMF', 'GDPR'],
       impact: 'Prevents data loss in production'
     };
   }

@@ -461,7 +461,7 @@ export class NistAiRmfService {
         organizationId,
         governance_posture_score: overview.score,
         nist_ai_rmf_score: overview.score,
-        eu_ai_act_score: 0, // Injected via propagation later
+        pci_dss_score: 0,
         telemetry_coverage: 0.8, // Static indicator fallback
         interception_coverage: 0.95,
         maturity_level: overview.score >= 80 ? 4 : overview.score >= 50 ? 3 : 2,
@@ -478,7 +478,7 @@ export class NistAiRmfService {
         gdpr_score: 0,
         dpdp_score: 0,
         hipaa_score: 0,
-        eu_ai_act_score: 0,
+        pci_dss_score: 0,
         nist_ai_rmf_score: overview.score,
         governance_posture_score: overview.score,
         framework_version: '1.0.0',

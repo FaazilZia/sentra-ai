@@ -11,15 +11,9 @@ import {
   getExportReport,
   getAlerts,
   postMarkAlertRead,
-  getComplianceStats
+  getComplianceStats,
+  getUnifiedFrameworkView,
 } from '../controllers/compliance.controller';
-import {
-  getEuAiActOverview,
-  getEuAiActArticle,
-  getEuAiActControls,
-  updateEuAiActImplementation,
-  addEuAiActEvidence
-} from '../controllers/euAiAct.controller';
 import {
   getNistAiRmfOverview,
   getNistAiRmfControls,
@@ -44,12 +38,8 @@ router.get('/export/:featureId', authenticate, getExportReport);
 router.get('/alerts', authenticate, getAlerts);
 router.post('/alerts/mark-read', authenticate, postMarkAlertRead);
 
-// EU AI Act Routes
-router.get('/eu-ai-act/overview', authenticate, getEuAiActOverview);
-router.get('/eu-ai-act/articles/:articleNumber', authenticate, getEuAiActArticle);
-router.get('/eu-ai-act/controls', authenticate, getEuAiActControls);
-router.patch('/eu-ai-act/controls/:controlCode/implementation', authenticate, authorizeRoles('ADMIN', 'ENGINEER'), updateEuAiActImplementation);
-router.post('/eu-ai-act/evidence/:controlCode', authenticate, authorizeRoles('ADMIN', 'ENGINEER'), addEuAiActEvidence);
+// Unified Per-Framework View (AISPM Posture Findings + AIDR Runtime Blocks)
+router.get('/unified/:framework', authenticate, getUnifiedFrameworkView);
 
 // NIST AI RMF 1.0 Routes
 router.get('/nist-ai-rmf/overview', authenticate, getNistAiRmfOverview);
@@ -60,4 +50,3 @@ router.get('/nist-ai-rmf/export', authenticate, authorizeRoles('ADMIN', 'AUDITOR
 router.get('/nist-ai-rmf/health', authenticate, getNistAiRmfHealth);
 
 export default router;
-

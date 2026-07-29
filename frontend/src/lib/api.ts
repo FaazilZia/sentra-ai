@@ -1099,16 +1099,11 @@ export async function fetchTrainingStatus(): Promise<TrainingStatus> {
  */
 export interface FrameworkMappingItem {
   id: string;
-  concernArea: string;
-  nistCode: string;
-  nistTitle: string;
-  euArticle: string;
-  euTitle: string;
-  iso42001Control: string;
-  iso42001Title: string;
-  iso27001Control: string;
-  iso27001Title: string;
-  status: 'implemented' | 'in_progress' | 'not_started' | 'not_applicable';
+  concernDomain: string;
+  description: string;
+  citations: Record<string, string>;
+  frameworkStatuses: Record<string, 'IMPLEMENTED' | 'IN_PROGRESS' | 'NOT_STARTED'>;
+  overallStatus: 'implemented' | 'in_progress' | 'not_started';
 }
 
 export interface GapAnalysisItem {

@@ -24,7 +24,7 @@ export class IntakeLLMService {
       let llmResult: any = null;
 
       if (client) {
-        const prompt = `Analyze this AI Agent Intake Form submission for safety, compliance, and privacy risks under the EU AI Act and standard security practices:
+        const prompt = `Analyze this AI Agent Intake Form submission for safety, compliance, and privacy risks under the NIST AI RMF and standard security practices:
         
         Agent Name: ${submission.agentName}
         Purpose: ${submission.agentDescription}
@@ -37,7 +37,7 @@ export class IntakeLLMService {
         - risk_score: number between 0 and 100
         - risk_factors: string[] (key risk triggers found)
         - recommended_controls: string[] (how to secure this agent)
-        - eu_ai_act_classification: "NOT_HIGH_RISK" | "HIGH_RISK" | "PROHIBITED"
+        - nist_risk_classification: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
         - suggested_review_notes: string (summary review memo for compliance officers)
 
         Return ONLY the raw JSON block without formatting, markdown boxes, or explanation.`;
@@ -71,7 +71,7 @@ export class IntakeLLMService {
             'Enforce zero-data-retention parameters on LLM gateway',
             'Route all outputs through real-time Sentraa PII scanner'
           ],
-          eu_ai_act_classification: containsHighRiskKeywords ? 'HIGH_RISK' : 'NOT_HIGH_RISK',
+          nist_risk_classification: containsHighRiskKeywords ? 'HIGH' : 'LOW',
           suggested_review_notes: 'Automated governance overlay review is suggested before deploying this model to production environments.'
         };
       }

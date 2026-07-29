@@ -16,6 +16,6 @@ export const executeGlobalSearch = asyncHandler(async (req: any, res: Response) 
 
   const limit = limitQuery ? Number.parseInt(String(limitQuery), 10) : 20;
 
-  const results = await SearchService.searchAll(organizationId, q, limit);
+  const results = await SearchService.search(organizationId, q, limit);
   return sendSuccess(res, results, 200);
 });

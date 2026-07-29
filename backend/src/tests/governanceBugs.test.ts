@@ -103,26 +103,27 @@ describe('Governance & Security QA Stress Tests (Failing First)', () => {
           organizationId: orgBId,
           email_verified: true
         }
-      ]
+      ],
+      skipDuplicates: true
     });
 
     // 3. Create at least one implementation in Org A to trigger gaps
-    const euControl = await prisma.eu_ai_act_controls.findFirst({
-      where: { control_code: 'EU-AIA-14-1' }
+    const nistSub = await prisma.nist_ai_rmf_subcategories.findFirst({
+      where: { subcategory_code: 'GV-1.1' }
     });
-    if (euControl) {
-      await prisma.eu_ai_act_implementations.upsert({
+    if (nistSub) {
+      await prisma.nist_ai_rmf_implementations.upsert({
         where: {
-          organizationId_control_id: {
+          organizationId_subcategory_id: {
             organizationId: orgAId,
-            control_id: euControl.id
+            subcategory_id: nistSub.id
           }
         },
         update: { status: 'IMPLEMENTED' },
         create: {
           id: randomUUID(),
           organizationId: orgAId,
-          control_id: euControl.id,
+          subcategory_id: nistSub.id,
           status: 'IMPLEMENTED'
         }
       });
@@ -135,12 +136,12 @@ describe('Governance & Security QA Stress Tests (Failing First)', () => {
 
   afterAll(async () => {
     // Cleanup implementations
-    const euControl = await prisma.eu_ai_act_controls.findFirst({
-      where: { control_code: 'EU-AIA-14-1' }
+    const nistSubcategory = await prisma.nist_ai_rmf_subcategories.findFirst({
+      where: { subcategory_code: 'GV-2.1' }
     });
-    if (euControl) {
-      await prisma.eu_ai_act_implementations.deleteMany({
-        where: { organizationId: orgAId, control_id: euControl.id }
+    if (nistSubcategory) {
+      await prisma.nist_ai_rmf_implementations.deleteMany({
+        where: { organizationId: orgAId, subcategory_id: nistSubcategory.id }
       }).catch(() => {});
     }
 
@@ -164,22 +165,11 @@ describe('Governance & Security QA Stress Tests (Failing First)', () => {
       
       if (response.body.data.length > 0) {
         const item = response.body.data[0];
-        // Flat mapping interface keys MUST exist
-        expect(item).toHaveProperty('concernArea');
-        expect(item).toHaveProperty('nistCode');
-        expect(item).toHaveProperty('nistTitle');
-        expect(item).toHaveProperty('euArticle');
-        expect(item).toHaveProperty('euTitle');
-        expect(item).toHaveProperty('iso42001Control');
-        expect(item).toHaveProperty('iso42001Title');
-        expect(item).toHaveProperty('iso27001Control');
-        expect(item).toHaveProperty('iso27001Title');
-        expect(item).toHaveProperty('status');
-        
-        // Nested representation structure must NOT exist (mismatch prevention)
-        expect(item).not.toHaveProperty('euAiAct');
-        expect(item).not.toHaveProperty('nist');
-        expect(item).not.toHaveProperty('iso42001');
+        expect(item).toHaveProperty('concernDomain');
+        expect(item).toHaveProperty('description');
+        expect(item).toHaveProperty('citations');
+        expect(item).toHaveProperty('frameworkStatuses');
+        expect(item).toHaveProperty('overallStatus');
       }
     });
 
@@ -194,18 +184,12 @@ describe('Governance & Security QA Stress Tests (Failing First)', () => {
       
       if (response.body.data.length > 0) {
         const gap = response.body.data[0];
-        // Gap checklist flat interface keys
-        expect(gap).toHaveProperty('framework');
-        expect(gap).toHaveProperty('controlCode');
-        expect(gap).toHaveProperty('controlTitle');
-        expect(gap).toHaveProperty('mappedFrom');
-        expect(gap).toHaveProperty('mappedControl');
+        expect(gap).toHaveProperty('domain');
+        expect(gap).toHaveProperty('implementedFramework');
+        expect(gap).toHaveProperty('laggingFramework');
         expect(gap).toHaveProperty('gapType');
         expect(gap).toHaveProperty('severity');
-        
-        // Old lagging/implemented framework array fields must NOT exist
-        expect(gap).not.toHaveProperty('laggingFrameworks');
-        expect(gap).not.toHaveProperty('implementedFrameworks');
+        expect(gap).toHaveProperty('citation');
       }
     });
   });

@@ -203,7 +203,7 @@ export default function Automations() {
                       <option value="DRIFT_ALERT_CREATED">🚨 MODEL DRIFT DETECTED</option>
                       <option value="INCIDENT_CREATED">🔥 NEW GOVERNANCE INCIDENT CREATED</option>
                       <option value="COMPLIANCE_SCORE_BELOW_THRESHOLD">📉 FRAMEWORK COMPLIANCE DEGRADATION</option>
-                      <option value="FRIA_COMPLETED">📋 FRIA ASSESSMENT APPROVED</option>
+                      <option value="IMPACT_ASSESSMENT_COMPLETED">📋 IMPACT ASSESSMENT APPROVED</option>
                     </select>
                   </div>
                   

@@ -14,8 +14,8 @@ export default function Evidence() {
   const addToast = useStore(state => state.addToast);
 
   // Selector States
-  const [selectedFramework, setSelectedFramework] = useState<'EU_AI_ACT' | 'NIST' | 'ISO42001' | 'ISO27001'>('EU_AI_ACT');
-  const [selectedControlId, setSelectedControlId] = useState('EU-AIA-15-1');
+  const [selectedFramework, setSelectedFramework] = useState<'GDPR' | 'DPDP' | 'HIPAA' | 'PCI_DSS' | 'NIST'>('GDPR');
+  const [selectedControlId, setSelectedControlId] = useState('GDPR-ART-5');
 
   // List States
   const [evidenceList, setEvidenceList] = useState<any[]>([]);
@@ -28,11 +28,12 @@ export default function Evidence() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const FRAMEWORK_CONTROLS = {
-    EU_AI_ACT: ['EU-AIA-15-1', 'EU-AIA-15-2', 'EU-AIA-15-3', 'EU-AIA-27-1', 'EU-AIA-72-1', 'EU-AIA-72-2'],
-    NIST: ['NIST-GOVERN-1', 'NIST-MEASURE-2.5', 'NIST-MAP-1.1', 'NIST-PR-AT-1'],
-    ISO42001: ['ISO-42001-A5.1', 'ISO-42001-A6.1', 'ISO-42001-A7.2', 'ISO-42001-A8.1'],
-    ISO27001: ['ISO-27001-A5.1', 'ISO-27001-A6.1', 'ISO-27001-A7.1', 'ISO-27001-A8.1']
+  const FRAMEWORK_CONTROLS: Record<string, string[]> = {
+    GDPR: ['GDPR-ART-5', 'GDPR-ART-6', 'GDPR-ART-32'],
+    DPDP: ['DPDP-SEC-4', 'DPDP-SEC-6', 'DPDP-SEC-8'],
+    HIPAA: ['HIPAA-164.308', 'HIPAA-164.312'],
+    PCI_DSS: ['PCI-REQ-3', 'PCI-REQ-7', 'PCI-REQ-10'],
+    NIST: ['NIST-GOVERN-1', 'NIST-MAP-1.1', 'NIST-MEASURE-2.5', 'NIST-MANAGE-3.1']
   };
 
   // Reset control selection when framework changes
@@ -162,10 +163,11 @@ export default function Evidence() {
             onChange={e => setSelectedFramework(e.target.value as any)}
             className="w-full bg-black/30 border border-[var(--border-default)] rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500 text-xs font-bold"
           >
-            <option value="EU_AI_ACT">EU AI Act Obligations</option>
-            <option value="NIST">NIST AI RMF 1.0 Dashboard</option>
-            <option value="ISO42001">ISO/IEC 42001:2023 AIMS</option>
-            <option value="ISO27001">ISO/IEC 27001:2022 ISMS</option>
+            <option value="GDPR">GDPR Compliance</option>
+            <option value="DPDP">DPDP Act (India)</option>
+            <option value="HIPAA">HIPAA Security Rule</option>
+            <option value="PCI_DSS">PCI-DSS 4.0 Standard</option>
+            <option value="NIST">NIST AI RMF 1.0</option>
           </select>
         </div>
 

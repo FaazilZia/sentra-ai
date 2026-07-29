@@ -17,7 +17,6 @@ jest.mock('../server', () => ({
 import prisma from '../config/db';
 import { GdprService } from '../services/gdpr.service';
 import { HipaaService } from '../services/hipaa.service';
-import { Soc2Service } from '../services/soc2.service';
 import { PciService } from '../services/pci.service';
 import { DpdpService } from '../services/dpdp.service';
 import { logActivity } from '../services/policy.service';
@@ -41,9 +40,6 @@ jest.mock('../config/db', () => ({
       findMany: jest.fn(),
       findFirst: jest.fn(),
       update: jest.fn(),
-    },
-    soc2Control: {
-      findMany: jest.fn(),
     },
     pciControl: {
       findMany: jest.fn(),
@@ -176,23 +172,7 @@ describe('Wave 3 Smoke Test Suite', () => {
     });
   });
 
-  describe('Soc2Service', () => {
-    it('getStats — assert compliance_score equals 100', async () => {
-      const mockControls = [
-        { id: 'c1', status: 'IMPLEMENTED' },
-        { id: 'c2', status: 'IMPLEMENTED' },
-        { id: 'c3', status: 'IMPLEMENTED' },
-        { id: 'c4', status: 'IMPLEMENTED' },
-      ];
-      db.soc2Control.findMany.mockResolvedValue(mockControls);
 
-      const stats = await Soc2Service.getStats(ORG_ID);
-      expect(db.soc2Control.findMany).toHaveBeenCalledWith({
-        where: { organizationId: ORG_ID },
-      });
-      expect(stats.compliance_score).toBe(100);
-    });
-  });
 
   describe('PciService', () => {
     it('getStats — assert compliance_score equals 67', async () => {

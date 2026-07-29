@@ -5,8 +5,6 @@ import logger from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
 import { seedOrganizationGovernance } from './governanceSeed.service';
 import { seedDefaultIntakeForm } from './intakeForm.service';
-import { Iso42001Service } from './iso42001.service';
-import { Iso27001Service } from './iso27001.service';
 
 // ─────────────────────────────────────────────
 // Tenant Context
@@ -90,8 +88,6 @@ export const TenantService = {
       // Seed baseline controls and obligations
       await seedOrganizationGovernance(createdOrg.id, tx);
       await seedDefaultIntakeForm(createdOrg.id, tx);
-      await Iso42001Service.seedImplementations(createdOrg.id);
-      await Iso27001Service.seedImplementations(createdOrg.id);
 
       // Seed default training courses
       await tx.training_courses.createMany({
@@ -99,9 +95,9 @@ export const TenantService = {
           {
             id: randomUUID(),
             organizationId: createdOrg.id,
-            title: 'EU AI Act Fundamentals',
-            description: 'Core legal obligations, risk classification tiers, and conformity requirements under the EU AI Act.',
-            framework_tags: ['EU_AI_ACT'],
+            title: 'GDPR & Data Privacy Fundamentals',
+            description: 'Foundational privacy principles, user consent workflows, and secure processing pipelines under GDPR.',
+            framework_tags: ['GDPR'],
             duration_minutes: 60,
             is_mandatory: true
           },
@@ -110,34 +106,34 @@ export const TenantService = {
             organizationId: createdOrg.id,
             title: 'AI Risk Management Basics',
             description: 'Mapping, measuring, and managing structural risks using the NIST AI RMF framework.',
-            framework_tags: ['NIST'],
+            framework_tags: ['NIST_AI_RMF'],
             duration_minutes: 45,
             is_mandatory: true
           },
           {
             id: randomUUID(),
             organizationId: createdOrg.id,
-            title: 'Data Privacy & GDPR',
-            description: 'Foundational privacy principles, user consent workflows, and secure processing pipelines.',
-            framework_tags: ['GDPR'],
+            title: 'HIPAA Compliance for AI Systems',
+            description: 'Protecting patient health information and enforcing PHI safeguards in AI-driven workflows.',
+            framework_tags: ['HIPAA'],
             duration_minutes: 30,
             is_mandatory: true
           },
           {
             id: randomUUID(),
             organizationId: createdOrg.id,
-            title: 'ISO 42001 Overview',
-            description: 'Structural overview of the ISO/IEC 42001 artificial intelligence management system.',
-            framework_tags: ['ISO_42001'],
+            title: 'PCI-DSS Security Overview',
+            description: 'Payment card data security standards, encryption requirements, and access control for AI systems.',
+            framework_tags: ['PCI_DSS'],
             duration_minutes: 45,
             is_mandatory: false
           },
           {
             id: randomUUID(),
             organizationId: createdOrg.id,
-            title: 'Responsible AI Principles',
-            description: 'Core concepts in transparency, explainability, robustness, and fairness in machine learning.',
-            framework_tags: ['EU_AI_ACT', 'ISO_42001'],
+            title: 'DPDP Act & Responsible AI Principles',
+            description: 'Digital personal data protection obligations and core concepts in transparency, explainability, and fairness.',
+            framework_tags: ['DPDP', 'NIST_AI_RMF'],
             duration_minutes: 30,
             is_mandatory: false
           }

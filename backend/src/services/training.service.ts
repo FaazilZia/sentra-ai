@@ -130,40 +130,33 @@ export class TrainingService {
     try {
       const gaps = await this.getMandatoryComplianceGap(organizationId);
       
-      // If there is zero compliance gap in mandatory courses, update ISO 42001 Clause 7 control status
+      // If there is zero compliance gap in mandatory courses, update NIST AI RMF GV-2.1 to IMPLEMENTED
       if (gaps.length === 0) {
-        logger.info(`Mandatory training courses complete with zero gaps in org ${organizationId}. Marking ISO 42001 Clause 7 (Support/Competence) to IMPLEMENTED.`);
+        logger.info(`Mandatory training courses complete with zero gaps in org ${organizationId}. Marking NIST AI RMF GV-2.1 to IMPLEMENTED.`);
         
-        const control = await prisma.iso42001_controls.findFirst({
-          where: { control_code: { contains: 'Clause-7' } }
-        }) || await prisma.iso42001_controls.findFirst({
-          where: { control_code: { contains: '7' } }
+        const subcategory = await prisma.nist_ai_rmf_subcategories.findFirst({
+          where: { subcategory_code: 'GV-2.1' }
         });
 
-        if (control) {
-          await prisma.iso42001_implementations.upsert({
+        if (subcategory) {
+          await prisma.nist_ai_rmf_implementations.upsert({
             where: {
-              organizationId_control_id: {
+              organizationId_subcategory_id: {
                 organizationId,
-                control_id: control.id
+                subcategory_id: subcategory.id
               }
             },
             update: { status: 'IMPLEMENTED' },
             create: {
               organizationId,
-              control_id: control.id,
-              status: 'IMPLEMENTED',
-              notes: 'Auto-implemented by Sentraa Training Register (zero mandatory compliance gaps).'
+              subcategory_id: subcategory.id,
+              status: 'IMPLEMENTED'
             }
           });
-          
-          // Re-sync standard posture snap
-          const { Iso42001Service } = require('./iso42001.service');
-          await Iso42001Service.syncComplianceSnapshot(organizationId);
         }
       }
-    } catch (err) {
-      logger.error('Failed to trigger ISO 42001 competence autolink:', err);
+    } catch (err: any) {
+      logger.error('Failed to trigger NIST competence autolink:', err);
     }
   }
 }

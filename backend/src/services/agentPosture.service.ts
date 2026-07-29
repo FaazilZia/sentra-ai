@@ -1,7 +1,8 @@
 import prisma from '../config/db';
+import { SUPPORTED_FRAMEWORKS, SupportedFramework } from '../constants/frameworks';
 
 export interface PostureFindingCandidate {
-  framework: 'DPDP' | 'GDPR' | 'HIPAA' | 'PCI_DSS' | 'EU_AI_ACT';
+  framework: SupportedFramework;
   ruleId: string;
   severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
   title: string;
@@ -20,7 +21,7 @@ export interface PostureScanResult {
     gdpr: number;
     hipaa: number;
     pciDss: number;
-    euAiAct: number;
+    nistAiRmf: number;
   };
   findings: PostureFindingCandidate[];
 }
@@ -142,31 +143,31 @@ const POSTURE_EVALUATION_RULES: PostureRuleDefinition[] = [
           }
         : null,
   },
-  // EU-AIA-RULE-1 (HIGH): AI System Registry with CRITICAL risk tier or HIGH_RISK_MONITORED
+  // NIST-RMF-RULE-1 (HIGH): AI Agent with CRITICAL risk tier or HIGH_RISK_MONITORED without human oversight
   {
     evaluate: (source, accessLevel, permissions) =>
       source.endsWith('Registry') && (permissions.riskTier === 'CRITICAL' || accessLevel === 'HIGH_RISK_MONITORED')
         ? {
-            framework: 'EU_AI_ACT',
-            ruleId: 'EU-AIA-RULE-1',
+            framework: 'NIST_AI_RMF',
+            ruleId: 'NIST-RMF-RULE-1',
             severity: 'HIGH',
-            title: 'EU AI Act Art. 14 High-Risk Human Oversight Missing',
+            title: 'NIST AI RMF GV-2.1 High-Risk Governance Oversight Missing',
             description: 'Critical tier AI system is registered without mandatory human-in-the-loop oversight configuration.',
             remediation: 'Configure human approval workflows for high-risk AI system invocation.',
           }
         : null,
   },
-  // EU-AIA-RULE-2 (MEDIUM): AI System Registry missing riskTier
+  // NIST-RMF-RULE-2 (MEDIUM): AI Agent missing riskTier metadata
   {
     evaluate: (source, _accessLevel, permissions) =>
       source.endsWith('Registry') && !permissions.riskTier
         ? {
-            framework: 'EU_AI_ACT',
-            ruleId: 'EU-AIA-RULE-2',
+            framework: 'NIST_AI_RMF',
+            ruleId: 'NIST-RMF-RULE-2',
             severity: 'MEDIUM',
-            title: 'EU AI Act Art. 10 Missing Risk Tier Classification',
-            description: 'Registered AI system lacks risk tier classification metadata.',
-            remediation: 'Assign a formal risk tier (LOW, MEDIUM, HIGH, CRITICAL) to the registered AI system.',
+            title: 'NIST AI RMF MAP-1.1 Missing Context & Risk Classification',
+            description: 'Registered AI agent lacks risk tier classification metadata.',
+            remediation: 'Assign a formal risk tier (LOW, MEDIUM, HIGH, CRITICAL) to the registered AI agent.',
           }
         : null,
   },
@@ -230,7 +231,7 @@ export class AgentPostureService {
         gdpr: getFrameworkScore('GDPR'),
         hipaa: getFrameworkScore('HIPAA'),
         pciDss: getFrameworkScore('PCI_DSS'),
-        euAiAct: getFrameworkScore('EU_AI_ACT'),
+        nistAiRmf: getFrameworkScore('NIST_AI_RMF'),
       },
     };
   }
@@ -253,7 +254,6 @@ export class AgentPostureService {
 
     const now = new Date();
 
-    // Transaction: delete old findings for this agent, create new ones, update Agent score
     await prisma.$transaction([
       prisma.agent_posture_findings.deleteMany({
         where: { organizationId, agentId },

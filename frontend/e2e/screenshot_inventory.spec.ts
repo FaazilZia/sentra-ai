@@ -46,11 +46,6 @@ test('Capture full visual inventory of all dashboard pages', async ({ page }) =>
     { path: '/app/ai-registry', baseName: '12-ai-registry', pageName: 'AI Model Registry' },
     { path: '/app/risk-assessment', baseName: '13-risk-assessment', pageName: 'Risk Assessment' },
     { path: '/app/impact-assessments', baseName: '14-impact-assessments', pageName: 'Impact Assessments' },
-    { path: '/app/ce-marking', baseName: '15-ce-marking', pageName: 'CE Marking Compliance' },
-    { path: '/app/ccpa', baseName: '16-ccpa', pageName: 'CCPA Compliance' },
-    { path: '/app/dora', baseName: '17-dora', pageName: 'DORA Compliance' },
-    { path: '/app/oecd', baseName: '18-oecd', pageName: 'OECD Principles' },
-    { path: '/app/ftc', baseName: '19-ftc', pageName: 'FTC Guidelines' },
     { path: '/app/controls', baseName: '20-controls', pageName: 'Governance Controls' },
     { path: '/app/vendor-risk', baseName: '21-vendor-risk', pageName: 'Vendor Risk Assessment' },
     { path: '/app/obligations', baseName: '22-obligations', pageName: 'Regulatory Obligations' },
@@ -70,7 +65,6 @@ test('Capture full visual inventory of all dashboard pages', async ({ page }) =>
     { path: '/app/live-feed', baseName: '36-live-feed', pageName: 'Live Block Feed' },
     { path: '/app/gdpr', baseName: '37-gdpr', pageName: 'GDPR Compliance' },
     { path: '/app/hipaa', baseName: '38-hipaa', pageName: 'HIPAA Compliance' },
-    { path: '/app/soc2', baseName: '39-soc2', pageName: 'SOC2 Readiness' },
     { path: '/app/pci', baseName: '40-pci', pageName: 'PCI-DSS Compliance' },
     { path: '/app/dpdp', baseName: '41-dpdp', pageName: 'DPDP Act Compliance' },
     { path: '/app/entity-graph', baseName: '42-entity-graph', pageName: 'Data Flow Entity Graph' },
@@ -141,11 +135,11 @@ test('Capture full visual inventory of all dashboard pages', async ({ page }) =>
         }
       } else if (route.hasTabs === 'compliance') {
         const tabs = [
-          { key: 'eu-ai-act', text: 'EU AI Act' },
           { key: 'nist-ai-rmf', text: 'NIST AI RMF' },
-          { key: 'iso-42001', text: 'ISO 42001' },
-          { key: 'iso-27001', text: 'ISO 27001' },
-          { key: 'ccpa', text: 'CCPA' }
+          { key: 'gdpr', text: 'GDPR' },
+          { key: 'dpdp', text: 'DPDP' },
+          { key: 'hipaa', text: 'HIPAA' },
+          { key: 'pci-dss', text: 'PCI-DSS' }
         ];
 
         for (const tab of tabs) {

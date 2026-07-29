@@ -71,11 +71,11 @@ export class PostMarketMonitoringService {
       ? Math.round(evaluationRuns.reduce((sum, r) => sum + (r.governance_score || 0), 0) / evaluationRuns.length * 10) / 10
       : 75.0; // Standard baseline fallback
 
-    // 4. Query EU AI Act Art. 15 status (Accuracy, Robustness, Cybersecurity)
-    const art15Controls = await prisma.eu_ai_act_controls.findMany({
+    // 4. Query NIST AI RMF status
+    const nistControls = await prisma.nist_ai_rmf_subcategories.findMany({
       where: {
-        control_code: {
-          in: ['EU-AIA-15-1', 'EU-AIA-15-2', 'EU-AIA-15-3']
+        subcategory_code: {
+          in: ['ME-1.1', 'ME-2.5', 'MN-3.1']
         }
       },
       include: {
@@ -85,11 +85,11 @@ export class PostMarketMonitoringService {
       }
     });
 
-    const art15Total = art15Controls.length;
-    const art15Implemented = art15Controls.filter(c => c.implementations[0]?.status === 'IMPLEMENTED').length;
+    const art15Total = nistControls.length;
+    const art15Implemented = nistControls.filter((c: any) => c.implementations[0]?.status === 'IMPLEMENTED').length;
 
-    // 5. Auto-update EU AI Act Art. 72 implementation status to IN_PROGRESS
-    await this.updateArt72ComplianceStatus(organizationId, 'IN_PROGRESS');
+    // 5. Auto-update NIST compliance status to IN_PROGRESS
+    await this.updateNistComplianceStatus(organizationId, 'IN_PROGRESS');
 
     return {
       organizationId,
@@ -166,33 +166,32 @@ export class PostMarketMonitoringService {
   }
 
   /**
-   * Helper to set EU AI Act Art. 72 control implementation status.
+   * Helper to set NIST AI RMF MN-3.1 subcategory implementation status.
    */
-  private static async updateArt72ComplianceStatus(organizationId: string, status: 'IN_PROGRESS' | 'IMPLEMENTED') {
+  private static async updateNistComplianceStatus(organizationId: string, status: 'IN_PROGRESS' | 'IMPLEMENTED') {
     try {
-      const controls = await prisma.eu_ai_act_controls.findMany({
+      const subcategories = await prisma.nist_ai_rmf_subcategories.findMany({
         where: {
-          control_code: {
-            in: ['EU-AIA-72-1', 'EU-AIA-72-2']
+          subcategory_code: {
+            in: ['MN-3.1']
           }
         }
       });
 
-      for (const ctrl of controls) {
-        // Upsert to status unless already marked IMPLEMENTED
-        const existing = await prisma.eu_ai_act_implementations.findFirst({
-          where: { organizationId, control_id: ctrl.id }
+      for (const ctrl of subcategories) {
+        const existing = await prisma.nist_ai_rmf_implementations.findFirst({
+          where: { organizationId, subcategory_id: ctrl.id }
         });
 
         if (existing?.status === 'IMPLEMENTED') {
-          continue; // Keep implemented
+          continue;
         }
 
-        await prisma.eu_ai_act_implementations.upsert({
+        await prisma.nist_ai_rmf_implementations.upsert({
           where: {
-            organizationId_control_id: {
+            organizationId_subcategory_id: {
               organizationId,
-              control_id: ctrl.id
+              subcategory_id: ctrl.id
             }
           },
           update: {
@@ -201,15 +200,14 @@ export class PostMarketMonitoringService {
           },
           create: {
             organizationId,
-            control_id: ctrl.id,
+            subcategory_id: ctrl.id,
             status,
-            evidence_links: [],
             last_reviewed: new Date()
           }
         });
       }
     } catch (err: any) {
-      logger.warn(`[PostMarketMonitoring] Failed to update Art. 72 compliance row status:`, err.message);
+      logger.warn(`[PostMarketMonitoring] Failed to update NIST compliance status:`, err.message);
     }
   }
 }
