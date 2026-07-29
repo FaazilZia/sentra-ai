@@ -34,7 +34,10 @@ jobs:
           cache-dependency-path: backend/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
+
+      - name: Generate Prisma client
+        run: npx --ignore-scripts prisma@5.14.0 generate
 
       - name: Run TypeScript compile checks (backend)
         run: node --max-old-space-size=4096 node_modules/.bin/tsc --noEmit
@@ -43,7 +46,7 @@ jobs:
         run: node -e "require('./src/config/swagger')"
 
       - name: Initialize Database
-        run: npx prisma db push --accept-data-loss
+        run: npx --ignore-scripts prisma@5.14.0 db push --accept-data-loss
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sentra_test
 
@@ -67,7 +70,7 @@ jobs:
           retention-days: 7
 
       - name: Install Playwright browsers
-        run: npx playwright install chromium --with-deps
+        run: npx --ignore-scripts playwright@1.44.0 install chromium --with-deps
 
       - name: Seed Database for E2E
         run: npm run seed
@@ -106,7 +109,7 @@ jobs:
 
       - name: Install Frontend Dependencies
         working-directory: frontend
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Build Frontend
         working-directory: frontend
@@ -116,7 +119,7 @@ jobs:
 
       - name: Start Frontend Preview
         working-directory: frontend
-        run: npx vite preview --port 4173 &
+        run: npx --ignore-scripts vite@5.2.0 preview --port 4173 &
 
       - name: Wait for Frontend to be Ready
         run: |
@@ -132,7 +135,7 @@ jobs:
           exit 1
 
       - name: Run Playwright E2E tests
-        run: npx playwright test tests/e2e/dashboard.test.ts
+        run: npx --ignore-scripts playwright@1.44.0 test tests/e2e/dashboard.test.ts
         env:
           TEST_FRONTEND_URL: http://localhost:4173
           TEST_BASE_URL: http://localhost:10000
@@ -220,11 +223,15 @@ jobs:
 
       - name: Install backend dependencies
         working-directory: backend
-        run: npm ci
+        run: npm ci --ignore-scripts
+
+      - name: Generate Prisma client
+        working-directory: backend
+        run: npx --ignore-scripts prisma@5.14.0 generate
 
       - name: Initialize Backend Database
         working-directory: backend
-        run: npx prisma db push --accept-data-loss
+        run: npx --ignore-scripts prisma@5.14.0 db push --accept-data-loss
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sentra_test
 
@@ -266,16 +273,16 @@ jobs:
           exit 1
 
       - name: Install frontend dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Run TypeScript compile checks (frontend)
         run: node --max-old-space-size=4096 node_modules/.bin/tsc --noEmit
 
       - name: Install Playwright + Chromium
-        run: npx playwright install chromium --with-deps
+        run: npx --ignore-scripts playwright@1.44.0 install chromium --with-deps
 
       - name: Run accessibility audit (WCAG 2.1 AA)
-        run: npx playwright test e2e/accessibility.spec.ts --reporter=list
+        run: npx --ignore-scripts playwright@1.44.0 test e2e/accessibility.spec.ts --reporter=list
         env:
           PLAYWRIGHT_BASE_URL: http://localhost:5173
           VITE_API_URL: http://localhost:10000/api/v1

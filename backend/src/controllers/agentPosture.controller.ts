@@ -9,7 +9,7 @@ export class AgentPostureController {
    * POST /api/v1/agents/:id/posture-scan
    * Runs posture evaluation on a single agent.
    */
-  static scanAgentPosture = asyncHandler(async (req: any, res: Response) => {
+  static readonly scanAgentPosture = asyncHandler(async (req: any, res: Response) => {
     const organizationId = await resolveOrganizationId(req);
     if (!organizationId) return sendError(res, 401, 'Unauthorized');
 
@@ -38,7 +38,7 @@ export class AgentPostureController {
    * POST /api/v1/agents/posture-scan-all
    * Runs posture evaluation on all discovered agents in batch for the tenant.
    */
-  static scanAllAgentsPosture = asyncHandler(async (req: any, res: Response) => {
+  static readonly scanAllAgentsPosture = asyncHandler(async (req: any, res: Response) => {
     const organizationId = await resolveOrganizationId(req);
     if (!organizationId) return sendError(res, 401, 'Unauthorized');
 
@@ -59,7 +59,7 @@ export class AgentPostureController {
    * GET /api/v1/agents/:id/posture-findings
    * Retrieves stored posture findings for a single agent.
    */
-  static getAgentPostureFindings = asyncHandler(async (req: any, res: Response) => {
+  static readonly getAgentPostureFindings = asyncHandler(async (req: any, res: Response) => {
     const organizationId = await resolveOrganizationId(req);
     if (!organizationId) return sendError(res, 401, 'Unauthorized');
 

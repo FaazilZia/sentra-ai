@@ -1,5 +1,4 @@
 import prisma from '../config/db';
-import logger from '../utils/logger';
 
 export interface PostureFindingCandidate {
   framework: 'DPDP' | 'GDPR' | 'HIPAA' | 'PCI_DSS' | 'EU_AI_ACT';
@@ -26,6 +25,153 @@ export interface PostureScanResult {
   findings: PostureFindingCandidate[];
 }
 
+interface PostureRuleDefinition {
+  evaluate: (source: string, accessLevel: string, permissions: any) => PostureFindingCandidate | null;
+}
+
+const POSTURE_EVALUATION_RULES: PostureRuleDefinition[] = [
+  // DPDP-RULE-1 (HIGH): READ_WRITE on storage/DB connectors
+  {
+    evaluate: (source, accessLevel) =>
+      accessLevel === 'READ_WRITE' && ['AWS S3 Connector', 'Google Drive Connector', 'SQL Database Connector'].includes(source)
+        ? {
+            framework: 'DPDP',
+            ruleId: 'DPDP-RULE-1',
+            severity: 'HIGH',
+            title: 'DPDP Sec. 6(1) Data Minimization Risk',
+            description: 'Agent has READ_WRITE access to personal data storage/database connectors without least-privilege scoping.',
+            remediation: 'Restrict connector access status to RESTRICTED or read-only scopes.',
+          }
+        : null,
+  },
+  // DPDP-RULE-2 (MEDIUM): Custom API Connector with READ_WRITE
+  {
+    evaluate: (source, accessLevel) =>
+      source === 'Custom API Connector' && accessLevel === 'READ_WRITE'
+        ? {
+            framework: 'DPDP',
+            ruleId: 'DPDP-RULE-2',
+            severity: 'MEDIUM',
+            title: 'DPDP Sec. 5 Unrestricted API Access',
+            description: 'Custom API connector has broad read/write access without explicit processing bounds.',
+            remediation: 'Scope API endpoints and enforce data principal consent verification.',
+          }
+        : null,
+  },
+  // GDPR-RULE-1 (HIGH): Custom API Connector with READ_WRITE
+  {
+    evaluate: (source, accessLevel) =>
+      source === 'Custom API Connector' && accessLevel === 'READ_WRITE'
+        ? {
+            framework: 'GDPR',
+            ruleId: 'GDPR-RULE-1',
+            severity: 'HIGH',
+            title: 'GDPR Art. 5(1)(c) Excessive Data Access',
+            description: 'Custom API agent has active READ_WRITE status exceeding data minimization requirements.',
+            remediation: 'Reduce connector access privileges to restricted read-only mode.',
+          }
+        : null,
+  },
+  // GDPR-RULE-2 (MEDIUM): MCP Protocol with FULL_ACCESS
+  {
+    evaluate: (source, accessLevel) =>
+      source === 'MCP Protocol' && accessLevel === 'FULL_ACCESS'
+        ? {
+            framework: 'GDPR',
+            ruleId: 'GDPR-RULE-2',
+            severity: 'MEDIUM',
+            title: 'GDPR Art. 32 Unbounded MCP Execution',
+            description: 'MCP agent key has FULL_ACCESS without defined tool boundaries.',
+            remediation: 'Configure allowed_tools list on MCP key to restrict execution scope.',
+          }
+        : null,
+  },
+  // HIPAA-RULE-1 (CRITICAL): READ_WRITE on S3 or SQL connectors
+  {
+    evaluate: (source, accessLevel) =>
+      accessLevel === 'READ_WRITE' && ['AWS S3 Connector', 'SQL Database Connector'].includes(source)
+        ? {
+            framework: 'HIPAA',
+            ruleId: 'HIPAA-RULE-1',
+            severity: 'CRITICAL',
+            title: 'HIPAA 45 CFR § 164.312(a)(1) PHI Access Risk',
+            description: 'Agent has READ_WRITE access to storage/database connectors capable of storing Protected Health Information (PHI).',
+            remediation: 'Enforce Minimum Necessary Standard by restricting database and S3 connector access levels.',
+          }
+        : null,
+  },
+  // HIPAA-RULE-2 (HIGH): Google Drive Connector with READ_WRITE
+  {
+    evaluate: (source, accessLevel) =>
+      source === 'Google Drive Connector' && accessLevel === 'READ_WRITE'
+        ? {
+            framework: 'HIPAA',
+            ruleId: 'HIPAA-RULE-2',
+            severity: 'HIGH',
+            title: 'HIPAA 45 CFR § 164.312(b) Unrestricted Cloud Storage Access',
+            description: 'Google Drive connector has active READ_WRITE access to cloud files without audit controls.',
+            remediation: 'Configure access restrictions and audit logging for cloud document repositories.',
+          }
+        : null,
+  },
+  // PCI-RULE-1 (CRITICAL): READ_WRITE on SQL or Custom API connectors
+  {
+    evaluate: (source, accessLevel) =>
+      accessLevel === 'READ_WRITE' && ['SQL Database Connector', 'Custom API Connector'].includes(source)
+        ? {
+            framework: 'PCI_DSS',
+            ruleId: 'PCI-RULE-1',
+            severity: 'CRITICAL',
+            title: 'PCI-DSS Req 7 Cardholder Data Boundary Violation',
+            description: 'Agent has active READ_WRITE access to SQL databases or custom APIs within potential cardholder data environment.',
+            remediation: 'Segment database/API permissions and enforce strict PCI-DSS access controls.',
+          }
+        : null,
+  },
+  // PCI-RULE-2 (HIGH): MCP Protocol without blocked_tools
+  {
+    evaluate: (source, _accessLevel, permissions) =>
+      source === 'MCP Protocol' && (!permissions.blocked_tools || !Array.isArray(permissions.blocked_tools) || permissions.blocked_tools.length === 0)
+        ? {
+            framework: 'PCI_DSS',
+            ruleId: 'PCI-RULE-2',
+            severity: 'HIGH',
+            title: 'PCI-DSS Req 2 Unconstrained MCP Tool Execution',
+            description: 'MCP agent key lacks blocked tool restrictions, allowing potential execution of dangerous system calls.',
+            remediation: 'Populate blocked_tools list for MCP agent keys.',
+          }
+        : null,
+  },
+  // EU-AIA-RULE-1 (HIGH): AI System Registry with CRITICAL risk tier or HIGH_RISK_MONITORED
+  {
+    evaluate: (source, accessLevel, permissions) =>
+      source.endsWith('Registry') && (permissions.riskTier === 'CRITICAL' || accessLevel === 'HIGH_RISK_MONITORED')
+        ? {
+            framework: 'EU_AI_ACT',
+            ruleId: 'EU-AIA-RULE-1',
+            severity: 'HIGH',
+            title: 'EU AI Act Art. 14 High-Risk Human Oversight Missing',
+            description: 'Critical tier AI system is registered without mandatory human-in-the-loop oversight configuration.',
+            remediation: 'Configure human approval workflows for high-risk AI system invocation.',
+          }
+        : null,
+  },
+  // EU-AIA-RULE-2 (MEDIUM): AI System Registry missing riskTier
+  {
+    evaluate: (source, _accessLevel, permissions) =>
+      source.endsWith('Registry') && !permissions.riskTier
+        ? {
+            framework: 'EU_AI_ACT',
+            ruleId: 'EU-AIA-RULE-2',
+            severity: 'MEDIUM',
+            title: 'EU AI Act Art. 10 Missing Risk Tier Classification',
+            description: 'Registered AI system lacks risk tier classification metadata.',
+            remediation: 'Assign a formal risk tier (LOW, MEDIUM, HIGH, CRITICAL) to the registered AI system.',
+          }
+        : null,
+  },
+];
+
 export class AgentPostureService {
   /**
    * Evaluates an agent's permissions, accessLevel, source, and metadata against 10 compliance rules.
@@ -39,161 +185,17 @@ export class AgentPostureService {
     permissions?: any;
     metadata?: any;
   }): PostureFindingCandidate[] {
-    const findings: PostureFindingCandidate[] = [];
     const source = agent.source || '';
     const accessLevel = agent.accessLevel || '';
     const permissions = agent.permissions || {};
 
-    // -------------------------------------------------------------
-    // DPDP RULES (Digital Personal Data Protection Act - India)
-    // -------------------------------------------------------------
-    // DPDP-RULE-1 (HIGH): READ_WRITE on storage/DB connectors
-    if (
-      accessLevel === 'READ_WRITE' &&
-      ['AWS S3 Connector', 'Google Drive Connector', 'SQL Database Connector'].includes(source)
-    ) {
-      findings.push({
-        framework: 'DPDP',
-        ruleId: 'DPDP-RULE-1',
-        severity: 'HIGH',
-        title: 'DPDP Sec. 6(1) Data Minimization Risk',
-        description: 'Agent has READ_WRITE access to personal data storage/database connectors without least-privilege scoping.',
-        remediation: 'Restrict connector access status to RESTRICTED or read-only scopes.',
-      });
+    const findings: PostureFindingCandidate[] = [];
+    for (const rule of POSTURE_EVALUATION_RULES) {
+      const finding = rule.evaluate(source, accessLevel, permissions);
+      if (finding) {
+        findings.push(finding);
+      }
     }
-
-    // DPDP-RULE-2 (MEDIUM): Custom API Connector with READ_WRITE
-    if (source === 'Custom API Connector' && accessLevel === 'READ_WRITE') {
-      findings.push({
-        framework: 'DPDP',
-        ruleId: 'DPDP-RULE-2',
-        severity: 'MEDIUM',
-        title: 'DPDP Sec. 5 Unrestricted API Access',
-        description: 'Custom API connector has broad read/write access without explicit processing bounds.',
-        remediation: 'Scope API endpoints and enforce data principal consent verification.',
-      });
-    }
-
-    // -------------------------------------------------------------
-    // GDPR RULES (General Data Protection Regulation - EU)
-    // -------------------------------------------------------------
-    // GDPR-RULE-1 (HIGH): Custom API Connector with READ_WRITE
-    if (source === 'Custom API Connector' && accessLevel === 'READ_WRITE') {
-      findings.push({
-        framework: 'GDPR',
-        ruleId: 'GDPR-RULE-1',
-        severity: 'HIGH',
-        title: 'GDPR Art. 5(1)(c) Excessive Data Access',
-        description: 'Custom API agent has active READ_WRITE status exceeding data minimization requirements.',
-        remediation: 'Reduce connector access privileges to restricted read-only mode.',
-      });
-    }
-
-    // GDPR-RULE-2 (MEDIUM): MCP Protocol with FULL_ACCESS
-    if (source === 'MCP Protocol' && accessLevel === 'FULL_ACCESS') {
-      findings.push({
-        framework: 'GDPR',
-        ruleId: 'GDPR-RULE-2',
-        severity: 'MEDIUM',
-        title: 'GDPR Art. 32 Unbounded MCP Execution',
-        description: 'MCP agent key has FULL_ACCESS without defined tool boundaries.',
-        remediation: 'Configure allowed_tools list on MCP key to restrict execution scope.',
-      });
-    }
-
-    // -------------------------------------------------------------
-    // HIPAA RULES (Health Insurance Portability and Accountability Act)
-    // -------------------------------------------------------------
-    // HIPAA-RULE-1 (CRITICAL): READ_WRITE on S3 or SQL connectors
-    if (
-      accessLevel === 'READ_WRITE' &&
-      ['AWS S3 Connector', 'SQL Database Connector'].includes(source)
-    ) {
-      findings.push({
-        framework: 'HIPAA',
-        ruleId: 'HIPAA-RULE-1',
-        severity: 'CRITICAL',
-        title: 'HIPAA 45 CFR § 164.312(a)(1) PHI Access Risk',
-        description: 'Agent has READ_WRITE access to storage/database connectors capable of storing Protected Health Information (PHI).',
-        remediation: 'Enforce Minimum Necessary Standard by restricting database and S3 connector access levels.',
-      });
-    }
-
-    // HIPAA-RULE-2 (HIGH): Google Drive Connector with READ_WRITE
-    if (source === 'Google Drive Connector' && accessLevel === 'READ_WRITE') {
-      findings.push({
-        framework: 'HIPAA',
-        ruleId: 'HIPAA-RULE-2',
-        severity: 'HIGH',
-        title: 'HIPAA 45 CFR § 164.312(b) Unrestricted Cloud Storage Access',
-        description: 'Google Drive connector has active READ_WRITE access to cloud files without audit controls.',
-        remediation: 'Configure access restrictions and audit logging for cloud document repositories.',
-      });
-    }
-
-    // -------------------------------------------------------------
-    // PCI-DSS RULES (Payment Card Industry Data Security Standard)
-    // -------------------------------------------------------------
-    // PCI-RULE-1 (CRITICAL): READ_WRITE on SQL or Custom API connectors
-    if (
-      accessLevel === 'READ_WRITE' &&
-      ['SQL Database Connector', 'Custom API Connector'].includes(source)
-    ) {
-      findings.push({
-        framework: 'PCI_DSS',
-        ruleId: 'PCI-RULE-1',
-        severity: 'CRITICAL',
-        title: 'PCI-DSS Req 7 Cardholder Data Boundary Violation',
-        description: 'Agent has active READ_WRITE access to SQL databases or custom APIs within potential cardholder data environment.',
-        remediation: 'Segment database/API permissions and enforce strict PCI-DSS access controls.',
-      });
-    }
-
-    // PCI-RULE-2 (HIGH): MCP Protocol without blocked_tools
-    if (
-      source === 'MCP Protocol' &&
-      (!permissions.blocked_tools || !Array.isArray(permissions.blocked_tools) || permissions.blocked_tools.length === 0)
-    ) {
-      findings.push({
-        framework: 'PCI_DSS',
-        ruleId: 'PCI-RULE-2',
-        severity: 'HIGH',
-        title: 'PCI-DSS Req 2 Unconstrained MCP Tool Execution',
-        description: 'MCP agent key lacks blocked tool restrictions, allowing potential execution of dangerous system calls.',
-        remediation: 'Populate blocked_tools list for MCP agent keys.',
-      });
-    }
-
-    // -------------------------------------------------------------
-    // EU AI ACT RULES (Regulation (EU) 2024/1689)
-    // -------------------------------------------------------------
-    // EU-AIA-RULE-1 (HIGH): AI System Registry with CRITICAL risk tier or HIGH_RISK_MONITORED
-    if (
-      source.endsWith('Registry') &&
-      (permissions.riskTier === 'CRITICAL' || accessLevel === 'HIGH_RISK_MONITORED')
-    ) {
-      findings.push({
-        framework: 'EU_AI_ACT',
-        ruleId: 'EU-AIA-RULE-1',
-        severity: 'HIGH',
-        title: 'EU AI Act Art. 14 High-Risk Human Oversight Missing',
-        description: 'Critical tier AI system is registered without mandatory human-in-the-loop oversight configuration.',
-        remediation: 'Configure human approval workflows for high-risk AI system invocation.',
-      });
-    }
-
-    // EU-AIA-RULE-2 (MEDIUM): AI System Registry missing riskTier
-    if (source.endsWith('Registry') && !permissions.riskTier) {
-      findings.push({
-        framework: 'EU_AI_ACT',
-        ruleId: 'EU-AIA-RULE-2',
-        severity: 'MEDIUM',
-        title: 'EU AI Act Art. 10 Missing Risk Tier Classification',
-        description: 'Registered AI system lacks risk tier classification metadata.',
-        remediation: 'Assign a formal risk tier (LOW, MEDIUM, HIGH, CRITICAL) to the registered AI system.',
-      });
-    }
-
     return findings;
   }
 
