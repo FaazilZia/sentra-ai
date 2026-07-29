@@ -343,3 +343,45 @@ export const acceptInviteAndRegister = asyncHandler(async (req: any, res: Respon
 
   return sendSuccess(res, { success: true, message: 'Account created successfully' }, 201);
 });
+
+export const getAidrEnforcementModeController = asyncHandler(async (req: any, res: Response) => {
+  const orgId = getOrgId(req);
+  const org = await prisma.organizations.findUnique({
+    where: { id: orgId },
+    select: { aidrEnforcementMode: true }
+  });
+  return sendSuccess(res, { mode: org?.aidrEnforcementMode || 'BLOCK' });
+});
+
+export const updateAidrEnforcementModeController = asyncHandler(async (req: any, res: Response) => {
+  const orgId = getOrgId(req);
+  const { mode } = req.body;
+
+  if (!['FLAG_ONLY', 'BLOCK'].includes(mode)) {
+    return sendError(res, 400, 'Invalid mode. Must be FLAG_ONLY or BLOCK.');
+  }
+
+  const existingOrg = await prisma.organizations.findUnique({
+    where: { id: orgId },
+    select: { aidrEnforcementMode: true }
+  });
+
+  const previousMode = existingOrg?.aidrEnforcementMode || 'BLOCK';
+
+  const updatedOrg = await prisma.organizations.update({
+    where: { id: orgId },
+    data: { aidrEnforcementMode: mode },
+    select: { id: true, aidrEnforcementMode: true }
+  });
+
+  await auditLogger.log({
+    organizationId: orgId,
+    userId: req.user?.id || 'system',
+    action: 'UPDATE_AIDR_ENFORCEMENT_MODE',
+    resourceType: 'organizations',
+    eventType: 'SECURITY',
+    metadata: { previousMode, newMode: mode }
+  });
+
+  return sendSuccess(res, { mode: updatedOrg.aidrEnforcementMode, previousMode });
+});

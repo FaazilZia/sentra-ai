@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
-import { Activity, CheckCircle2, ChevronRight, RefreshCw, Landmark } from 'lucide-react';
+import { Activity, CheckCircle2, ChevronRight, RefreshCw, Landmark, Shield, ShieldAlert } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { fetchFrameworkMap, fetchGapAnalysis, fetchOverlapScore, FrameworkMappingItem, GapAnalysisItem } from '@/lib/api';
+import { fetchFrameworkMap, fetchGapAnalysis, fetchOverlapScore, fetchAidrEnforcementMode, updateAidrEnforcementMode, FrameworkMappingItem, GapAnalysisItem } from '@/lib/api';
 import { NodePulseLoader } from '@/components/ui/NodePulseLoader';
 
 export default function GovernanceOS() {
   const [mappings, setMappings] = useState<FrameworkMappingItem[]>([]);
   const [gaps, setGaps] = useState<GapAnalysisItem[]>([]);
   const [overlap, setOverlap] = useState<{ score: number; totalMapped: number; totalImplemented: number } | null>(null);
+  const [enforcementMode, setEnforcementMode] = useState<'FLAG_ONLY' | 'BLOCK'>('BLOCK');
+  const [isUpdatingMode, setIsUpdatingMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'mapper' | 'gaps'>('mapper');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
@@ -24,18 +26,32 @@ export default function GovernanceOS() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [mapData, gapData, overlapData] = await Promise.all([
+      const [mapData, gapData, overlapData, modeData] = await Promise.all([
         fetchFrameworkMap(),
         fetchGapAnalysis(),
-        fetchOverlapScore()
+        fetchOverlapScore(),
+        fetchAidrEnforcementMode().catch(() => ({ mode: 'BLOCK' as const }))
       ]);
       setMappings(mapData);
       setGaps(gapData);
       setOverlap(overlapData);
+      if (modeData?.mode) setEnforcementMode(modeData.mode);
     } catch (err) {
       console.error('Failed to load GovernanceOS mapper data', err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleToggleMode = async (newMode: 'FLAG_ONLY' | 'BLOCK') => {
+    setIsUpdatingMode(true);
+    try {
+      const result = await updateAidrEnforcementMode(newMode);
+      setEnforcementMode(result.mode);
+    } catch (err) {
+      console.error('Failed to update AIDR enforcement mode', err);
+    } finally {
+      setIsUpdatingMode(false);
     }
   };
 
@@ -95,6 +111,57 @@ export default function GovernanceOS() {
           <RefreshCw className="h-3.5 w-3.5" />
           Reload Mapper
         </button>
+      </div>
+
+      {/* AIDR Runtime Enforcement Mode Control Card */}
+      <div className="bg-white border border-slate-200 rounded-[var(--radius)] p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <div className={`p-2.5 rounded-xl ${enforcementMode === 'BLOCK' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'}`}>
+            {enforcementMode === 'BLOCK' ? <ShieldAlert className="h-5 w-5" /> : <Shield className="h-5 w-5" />}
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-slate-900">AIDR Runtime Interception Mode</h3>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                enforcementMode === 'BLOCK' 
+                  ? 'bg-rose-100 text-rose-700 border border-rose-200' 
+                  : 'bg-amber-100 text-amber-700 border border-amber-200'
+              }`}>
+                {enforcementMode === 'BLOCK' ? 'Active Blocking' : 'Passive Flag-Only'}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {enforcementMode === 'BLOCK' 
+                ? 'Strict Interception: High-risk prompt injections and PII leaks are intercepted and blocked in real time.' 
+                : 'Passive Monitoring: Policy violations and high risks are flagged in audit logs without blocking agent execution.'}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200 self-start md:self-auto">
+          <button
+            disabled={isUpdatingMode}
+            onClick={() => handleToggleMode('FLAG_ONLY')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              enforcementMode === 'FLAG_ONLY' 
+                ? 'bg-amber-500 text-white shadow-sm font-bold' 
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            FLAG ONLY
+          </button>
+          <button
+            disabled={isUpdatingMode}
+            onClick={() => handleToggleMode('BLOCK')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              enforcementMode === 'BLOCK' 
+                ? 'bg-rose-600 text-white shadow-sm font-bold' 
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            BLOCK ENFORCE
+          </button>
+        </div>
       </div>
 
       {isLoading ? (

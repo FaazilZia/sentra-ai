@@ -1185,6 +1185,22 @@ export async function saveSsoConfig(idpMetadataXml: string, ssoProvider?: string
   });
 }
 
+/**
+ * AIDR ENFORCEMENT MODE ENDPOINTS
+ */
+export async function fetchAidrEnforcementMode(): Promise<{ mode: 'FLAG_ONLY' | 'BLOCK' }> {
+  const res = await apiRequest<{ success: boolean; data: { mode: 'FLAG_ONLY' | 'BLOCK' } }>('/tenant/aidr-enforcement-mode');
+  return res.data || res;
+}
+
+export async function updateAidrEnforcementMode(mode: 'FLAG_ONLY' | 'BLOCK'): Promise<{ mode: 'FLAG_ONLY' | 'BLOCK'; previousMode: string }> {
+  const res = await apiRequest<{ success: boolean; data: { mode: 'FLAG_ONLY' | 'BLOCK'; previousMode: string } }>('/tenant/aidr-enforcement-mode', {
+    method: 'PATCH',
+    body: JSON.stringify({ mode }),
+  });
+  return res.data || res;
+}
+
 
 
 

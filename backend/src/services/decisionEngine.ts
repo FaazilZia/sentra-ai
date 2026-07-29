@@ -5,12 +5,14 @@ import { evaluateSemanticRisk } from './semanticRiskEngine';
 import { maskPII } from '../utils/masking';
 import logger from '../utils/logger';
 import { cacheService } from './cache.service';
+import prisma from '../config/db';
 
 const getNow = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
 export interface Decision {
   status: 'allowed' | 'blocked';
   risk: 'low' | 'medium' | 'high';
+  mode?: 'FLAG_ONLY' | 'BLOCK';
   reason: string;
   impact: string;
   compliance: string[];
@@ -21,14 +23,47 @@ export interface Decision {
   degraded?: boolean;
 }
 
+export const getAidrEnforcementMode = async (organizationId: string): Promise<'FLAG_ONLY' | 'BLOCK'> => {
+  try {
+    if (!organizationId) return 'BLOCK';
+    const org = await prisma.organizations.findUnique({
+      where: { id: organizationId },
+      select: { aidrEnforcementMode: true }
+    });
+    return (org?.aidrEnforcementMode as 'FLAG_ONLY' | 'BLOCK') || 'BLOCK';
+  } catch (err) {
+    logger.warn('[GOVERNANCE] Failed to fetch aidrEnforcementMode, defaulting to BLOCK:', err);
+    return 'BLOCK';
+  }
+};
+
 export const makeDecision = async (agent: string, action: string, organizationId: string, metadata: any = {}): Promise<Decision> => {
   const startTime = getNow();
   
   try {
+    const enforcementMode = await getAidrEnforcementMode(organizationId);
+
     // 1. Level 1: Policy Engine (Hard Rules)
     const policyResult = await evaluatePolicy(agent, action, organizationId);
     if (!policyResult.allowed) {
-      return buildBlockedResponse('Policy Violation', policyResult, startTime, agent, action);
+      if (enforcementMode === 'FLAG_ONLY') {
+        logger.info(`[GOVERNANCE] FLAG_ONLY mode active: Flagging policy violation without blocking.`);
+        return {
+          status: 'allowed',
+          risk: 'high',
+          mode: 'FLAG_ONLY',
+          reason: `[FLAG_ONLY MODE] Policy violation flagged: ${policyResult.reason || 'Policy violation detected'}`,
+          impact: policyResult.impact || 'Policy violation flagged for review',
+          compliance: policyResult.compliance || ['General Policy'],
+          explanation: maskPII(policyResult.explanation || 'Action flagged in FLAG_ONLY mode.'),
+          confidence: 1.0,
+          degraded: false,
+          timeline: [
+            { step: 'L1: Policy', status: 'warning', icon: 'shield', description: 'Flagged (FLAG_ONLY)' }
+          ]
+        };
+      }
+      return buildBlockedResponse('Policy Violation', policyResult, startTime, agent, action, enforcementMode);
     }
 
     // 0. Safe-Action Short-circuit: If allowlist matched in L1, skip L2 and L3
@@ -36,6 +71,7 @@ export const makeDecision = async (agent: string, action: string, organizationId
       return {
         status: 'allowed',
         risk: 'low',
+        mode: enforcementMode,
         reason: 'Safe action: bypassed governance evaluation',
         impact: 'None',
         compliance: [],
@@ -88,17 +124,25 @@ export const makeDecision = async (agent: string, action: string, organizationId
     let isPendingApproval = false;
 
     if (riskScore === 'high') {
-      status = 'blocked';
-      isPendingApproval = true;
-      reason = semanticRisk.score === 'high' ? `Blocked: ${semanticRisk.explanation}` : 'Blocked: High-risk pattern detected';
+      if (enforcementMode === 'FLAG_ONLY') {
+        status = 'allowed';
+        reason = semanticRisk.score === 'high' 
+          ? `[FLAG_ONLY MODE] High risk detected: ${semanticRisk.explanation}` 
+          : '[FLAG_ONLY MODE] High-risk pattern detected';
+      } else {
+        status = 'blocked';
+        isPendingApproval = true;
+        reason = semanticRisk.score === 'high' ? `Blocked: ${semanticRisk.explanation}` : 'Blocked: High-risk pattern detected';
+      }
     }
 
     const duration = getNow() - startTime;
-    logger.info(`[GOVERNANCE] Decision: ${status.toUpperCase()} | Risk: ${riskScore} | Latency: ${duration.toFixed(2)}ms`);
+    logger.info(`[GOVERNANCE] Decision: ${status.toUpperCase()} | Risk: ${riskScore} | Mode: ${enforcementMode} | Latency: ${duration.toFixed(2)}ms`);
 
     return {
       status,
       risk: riskScore,
+      mode: enforcementMode,
       reason,
       impact: policyResult.impact || 'Protects system integrity',
       compliance: policyResult.compliance || ['Internal Policy'],
@@ -119,6 +163,7 @@ export const makeDecision = async (agent: string, action: string, organizationId
     return {
       status: 'blocked',
       risk: 'high',
+      mode: 'BLOCK',
       reason: 'Governance Failure: Internal Engine Error',
       impact: 'Critical System Protection',
       compliance: ['FAIL_SAFE'],
@@ -127,10 +172,11 @@ export const makeDecision = async (agent: string, action: string, organizationId
   }
 };
 
-const buildBlockedResponse = (type: string, policyResult: any, startTime: number, agent: string, action: string): Decision => {
+const buildBlockedResponse = (type: string, policyResult: any, startTime: number, agent: string, action: string, mode: 'FLAG_ONLY' | 'BLOCK' = 'BLOCK'): Decision => {
   return {
     status: 'blocked',
     risk: 'high',
+    mode,
     reason: policyResult.reason || `${type}: Violation detected`,
     impact: policyResult.impact || 'Prevents unauthorized execution',
     compliance: policyResult.compliance || ['General Policy'],

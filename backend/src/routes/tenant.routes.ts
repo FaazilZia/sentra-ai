@@ -7,6 +7,7 @@ import {
   inviteUser, listInvitations, acceptInvitation, revokeInvitation, getInvitationInfo,
   getOrgSettings, updateOrgSettings,
   getInviteVerify, acceptInviteAndRegister,
+  getAidrEnforcementModeController, updateAidrEnforcementModeController,
 } from '../controllers/tenant.controller';
 
 const router = Router();
@@ -36,5 +37,9 @@ router.post('/invitations/accept/:token', acceptInvitation); // Accepts requires
 // ── Org Settings ──────────────────────────────
 router.get('/settings', getOrgSettings);
 router.patch('/settings', requireRole('ADMIN'), updateOrgSettings);
+
+// ── AIDR Enforcement Mode ─────────────────────
+router.get('/aidr-enforcement-mode', getAidrEnforcementModeController);
+router.patch('/aidr-enforcement-mode', requireRole('ADMIN'), updateAidrEnforcementModeController);
 
 export default router;

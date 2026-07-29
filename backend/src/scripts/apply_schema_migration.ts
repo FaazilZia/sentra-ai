@@ -59,9 +59,16 @@ async function runMigration() {
       }
     }
 
-    console.log('✨ Adding frameworks column to block_events table...');
+    console.log('✨ Adding frameworks and mode columns to block_events table...');
     await client.query(`ALTER TABLE "block_events" ADD COLUMN IF NOT EXISTS "frameworks" text[] DEFAULT ARRAY[]::text[];`);
-    console.log('   ✅ Added frameworks column to block_events');
+    await client.query(`ALTER TABLE "block_events" ADD COLUMN IF NOT EXISTS "mode" text NOT NULL DEFAULT 'BLOCK';`);
+    console.log('   ✅ Added frameworks and mode columns to block_events');
+
+    console.log('✨ Adding aidr_enforcement_mode column to companies table...');
+    await client.query(`ALTER TABLE "companies" ADD COLUMN IF NOT EXISTS "aidr_enforcement_mode" text NOT NULL DEFAULT 'BLOCK';`).catch(err => {
+      console.warn(`   ⚠️ Warning altering companies table: ${err.message}`);
+    });
+    console.log('   ✅ Handled aidr_enforcement_mode column on companies');
 
     console.log('🔄 Replacing eu_ai_act_score with pci_dss_score in compliance_snapshots...');
     await client.query(`ALTER TABLE "compliance_snapshots" DROP COLUMN IF EXISTS "eu_ai_act_score";`).catch(() => {});

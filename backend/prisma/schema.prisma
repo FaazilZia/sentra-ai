@@ -30,6 +30,7 @@ model organizations {
   sso_provider   String?
   saml_metadata  Json?
   custom_domain  String? @unique
+  aidrEnforcementMode String @default("BLOCK") @map("aidr_enforcement_mode")
 
   // Relations
   ai_agents            ai_agents[]
@@ -1963,6 +1964,7 @@ model BlockEvent {
   action         String
   resource       String
   status         String   @default("BLOCKED")
+  mode           String   @default("BLOCK") @map("mode")
   frameworks     String[] @default([])
   timestamp      DateTime @default(now())
 
