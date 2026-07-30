@@ -62,6 +62,20 @@ class CacheService {
     return freshData;
   }
 
+  async set<T>(key: string, value: T, ttl = this.DEFAULT_TTL): Promise<void> {
+    const redis = await ensureRedisConnection();
+    try {
+      const serialized = JSON.stringify(value);
+      if (redis) {
+        await redis.set(key, serialized, 'EX', ttl);
+      } else {
+        this.setMemory(key, serialized, ttl);
+      }
+    } catch (error) {
+      logger.warn(`Cache set error for key ${key}:`, error);
+    }
+  }
+
   async invalidate(key: string) {
     const redis = await ensureRedisConnection();
 

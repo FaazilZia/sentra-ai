@@ -22,7 +22,7 @@ export interface Decision {
   timeline?: any[];
   isPendingApproval?: boolean;
   degraded?: boolean;
-  detectionSource?: 'session_pattern' | 'single_action';
+  detectionSource?: 'session_pattern' | 'behavioral_deviation' | 'memory_anomaly_heuristic' | 'multi_agent_correlation' | 'single_action';
   sessionRule?: string;
 }
 
@@ -133,7 +133,7 @@ export const makeDecision = async (agent: string, action: string, organizationId
           explanation: maskPII(sessionDetection.reason || 'Cross-action threat sequence flagged.'),
           confidence: 0.95,
           degraded: false,
-          detectionSource: 'session_pattern',
+          detectionSource: sessionDetection.detectionSource || 'session_pattern',
           sessionRule: sessionDetection.rule,
           timeline: [
             { step: 'Session Pattern Analysis', status: 'warning', icon: 'activity', description: `${sessionDetection.rule} (FLAG_ONLY)` }
@@ -152,7 +152,7 @@ export const makeDecision = async (agent: string, action: string, organizationId
         confidence: 0.95,
         isPendingApproval: true,
         degraded: false,
-        detectionSource: 'session_pattern',
+        detectionSource: sessionDetection.detectionSource || 'session_pattern',
         sessionRule: sessionDetection.rule,
         timeline: [
           { step: 'Session Pattern Analysis', status: 'blocked', icon: 'activity', description: `Blocked: ${sessionDetection.rule}` }

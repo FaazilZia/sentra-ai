@@ -48,11 +48,20 @@ jest.mock('../services/semanticRiskEngine', () => ({
     explanation: 'Mocked safe semantic result',
     confidence: 0.95,
   }),
+  evaluateMemoryWriteAnomaly: jest.fn().mockImplementation(async (content: string) => {
+    if (!content) return { isAnomaly: false };
+    const lower = content.toLowerCase();
+    if (lower.includes('system instruction') || lower.includes('ignore all previous') || lower.includes('bypass security')) {
+      return { isAnomaly: true, reason: 'Memory write contains indirect prompt injection signature.' };
+    }
+    return { isAnomaly: false };
+  }),
 }));
 
 jest.mock('../services/cache.service', () => ({
   cacheService: {
     getOrSet: jest.fn().mockImplementation((key, fetchFn) => fetchFn()),
+    set: jest.fn().mockResolvedValue(undefined),
     invalidate: jest.fn().mockResolvedValue(undefined),
     invalidatePattern: jest.fn().mockResolvedValue(undefined),
     ping: jest.fn().mockResolvedValue(true),

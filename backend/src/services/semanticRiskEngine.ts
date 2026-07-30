@@ -156,3 +156,52 @@ Output nothing except the raw JSON block without markdown formatting or conversa
     };
   }
 };
+
+/**
+ * Memory-write anomaly heuristic (lite)
+ * Evaluates memory updates for system-prompt instructions or prompt injection signatures.
+ */
+export const evaluateMemoryWriteAnomaly = async (memoryContent: string): Promise<{ isAnomaly: boolean; reason?: string }> => {
+  if (!memoryContent || memoryContent.trim().length === 0) {
+    return { isAnomaly: false };
+  }
+
+  const lower = memoryContent.toLowerCase();
+  const injectionPatterns = [
+    'system instruction',
+    'system prompt',
+    'ignore all previous',
+    'ignore previous instructions',
+    'ignore all rules',
+    'bypass security',
+    'admin override',
+    'you are now',
+    'developer mode',
+    'new instructions:',
+    'do not follow earlier'
+  ];
+
+  const matchedPattern = injectionPatterns.find(p => lower.includes(p));
+  if (matchedPattern) {
+    return {
+      isAnomaly: true,
+      reason: `Memory write contains indirect prompt injection signature ("${matchedPattern}").`
+    };
+  }
+
+  // Also check general L3 semantic evaluation
+  try {
+    const semanticRes = await evaluateSemanticRisk(memoryContent);
+    if (semanticRes.score === 'high' && semanticRes.categories?.includes('PROMPT_INJECTION')) {
+      return {
+        isAnomaly: true,
+        reason: semanticRes.explanation || 'Semantic analysis detected prompt injection in memory write.'
+      };
+    }
+  } catch (err) {
+    logger.warn('[GOVERNANCE] Semantic memory evaluation error:', err);
+  }
+
+  return { isAnomaly: false };
+};
+
