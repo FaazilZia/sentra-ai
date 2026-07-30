@@ -12,17 +12,11 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { 
   ShieldAlert, 
-  Activity, 
   Database, 
   Key, 
   Cpu, 
   RefreshCw, 
   Search, 
-  Filter, 
-  Zap, 
-  CheckCircle,
-  XCircle,
-  ExternalLink,
   Layers
 } from 'lucide-react';
 import { apiRequest } from '@/lib/api';
@@ -146,7 +140,6 @@ export default function AttackGraphVisual() {
 
       connectors.forEach((node, index) => {
         const isDb = node.type === 'CONNECTOR';
-        const isKey = node.type === 'LLM_KEY';
 
         formattedNodes.push({
           id: node.id,
