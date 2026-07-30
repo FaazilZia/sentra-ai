@@ -68,10 +68,10 @@ const STATUS_COLORS: Record<string, string> = {
 
 const BIAS_PRESETS = [
   {
-    key: 'EU_AI_ACT_BIAS',
-    name: 'EU AI Act Bias Preset',
-    description: 'Demographic bias measurement and equity auditing per EU AI Act Article 10 guidelines.',
-    tags: ['EU AI Act', 'Article 10', 'High-Risk AI']
+    key: 'NIST_AI_RMF_BIAS',
+    name: 'NIST AI RMF Bias Preset',
+    description: 'Demographic bias measurement and equity auditing per NIST AI RMF guidelines.',
+    tags: ['NIST AI RMF', 'Bias & Equity', 'Fairness']
   },
   {
     key: 'NIST_MS_2_5',

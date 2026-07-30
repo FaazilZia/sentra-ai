@@ -336,7 +336,7 @@ export default function RiskAssessment() {
                 
                 <div className="flex flex-col gap-3 text-xs text-[var(--text-secondary)] leading-relaxed">
                   <p>
-                    Sentraa AI utilizes a standardized point-based risk scoring framework aligned with standard EU AI Act use case classifications.
+                    Sentraa AI utilizes a standardized point-based risk scoring framework aligned with NIST AI RMF, GDPR, DPDP, HIPAA, and PCI-DSS use case classifications.
                   </p>
                   
                   <div className="flex flex-col gap-2 bg-[var(--bg-secondary)] p-3.5 rounded-xl border border-[var(--border-default)]/60 mt-1">

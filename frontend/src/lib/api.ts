@@ -1128,6 +1128,18 @@ export async function fetchOverlapScore(): Promise<{ score: number; totalMapped:
   return apiRequest<{ score: number; totalMapped: number; totalImplemented: number }>('/framework-mapper/overlap-score');
 }
 
+export interface UnifiedFrameworkViewResponse {
+  framework: string;
+  aispmPostureFindingsCount: number;
+  aidrRuntimeBlocksCount: number;
+  postureFindings: any[];
+  runtimeBlocks: any[];
+}
+
+export async function fetchUnifiedFrameworkView(framework: string): Promise<UnifiedFrameworkViewResponse> {
+  return apiRequest<UnifiedFrameworkViewResponse>(`/compliance/unified/${framework}`);
+}
+
 /**
  * AI INTAKE SUGGESTIONS & RISK SCORING
  */

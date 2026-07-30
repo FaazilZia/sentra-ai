@@ -380,7 +380,7 @@ export const updateAidrEnforcementModeController = asyncHandler(async (req: any,
     action: 'UPDATE_AIDR_ENFORCEMENT_MODE',
     resourceType: 'organizations',
     eventType: 'SECURITY',
-    metadata: { previousMode, newMode: mode }
+    metadata: { previousMode, newMode: mode, updatedBy: req.user?.id || req.user?.email || 'system' }
   });
 
   return sendSuccess(res, { mode: updatedOrg.aidrEnforcementMode, previousMode });

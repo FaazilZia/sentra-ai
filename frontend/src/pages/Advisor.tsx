@@ -12,7 +12,7 @@ export default function Advisor() {
   const [messages, setMessages] = useState<AdvisorMessage[]>([
     {
       role: 'assistant',
-      content: "Hello! I am your **Sentraa AI Compliance Advisor**. I have real-time access to your organization's EU AI Act posture, NIST AI RMF score, ISO 42001/27001 checklists, and unresolved drift incidents. How can I help secure your AI pipelines today?"
+      content: "Hello! I am your **Sentraa AI Compliance Advisor**. I have real-time access to your organization's GDPR, DPDP, HIPAA, PCI-DSS, and NIST AI RMF scores, posture scans, and unresolved drift incidents. How can I help secure your AI pipelines today?"
     }
   ]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -40,7 +40,7 @@ export default function Advisor() {
         } else {
           setSuggestions([
             "How do we resolve our active drift incidents?",
-            "How can we improve our ISO 42001 score?",
+            "How can we improve our HIPAA posture score?",
             "Summarize my open compliance gaps.",
             "List all third-party AI vendors under review."
           ]);
@@ -48,7 +48,7 @@ export default function Advisor() {
       })
       .catch(() => setSuggestions([
         "How do we resolve our active drift incidents?",
-        "How can we improve our ISO 42001 score?",
+        "How can we improve our HIPAA posture score?",
         "Summarize my open compliance gaps.",
         "List all third-party AI vendors under review."
       ]));
@@ -252,7 +252,7 @@ export default function Advisor() {
               <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--text-primary)]">AI Governance Advisor</h2>
               <span className="badge-pill bg-indigo-100 text-[var(--royal-indigo)] font-bold text-[9px] uppercase tracking-tighter">CLAUDE SONNET 4</span>
             </div>
-            <p className="text-[10px] text-[var(--text-secondary)] font-medium">Real-time context of EU AI Act, NIST AI RMF & ISO frameworks</p>
+            <p className="text-[10px] text-[var(--text-secondary)] font-medium">Real-time context of GDPR, DPDP, HIPAA, PCI-DSS & NIST AI RMF</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -276,7 +276,7 @@ export default function Advisor() {
             onClick={() => setMessages([
               {
                 role: 'assistant',
-                content: "Hello! I am your **Sentraa AI Compliance Advisor**. I have real-time access to your organization's EU AI Act posture, NIST AI RMF score, ISO 42001/27001 checklists, and unresolved drift incidents. How can I help secure your AI pipelines today?"
+                content: "Hello! I am your **Sentraa AI Compliance Advisor**. I have real-time access to your organization's GDPR, DPDP, HIPAA, PCI-DSS, and NIST AI RMF scores, posture scans, and unresolved drift incidents. How can I help secure your AI pipelines today?"
               }
             ])}
             className="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 rounded-lg text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:bg-slate-50 active:bg-slate-100"
@@ -393,7 +393,7 @@ export default function Advisor() {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               disabled={isLoading}
-              placeholder="Ask anything about EU AI Act status, NIST scores, ISO controls, or unresolved incidents..."
+              placeholder="Ask anything about GDPR, DPDP, HIPAA, PCI-DSS, or NIST AI RMF controls..."
               className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:border-[var(--royal-indigo)] focus:ring-1 focus:ring-[var(--royal-indigo)]"
             />
             <button
@@ -423,7 +423,7 @@ export default function Advisor() {
             
             <div className="space-y-3 pt-2">
               <div className="flex items-center gap-2 justify-between border-b border-indigo-800/40 pb-2">
-                <span className="text-[10px] text-indigo-200 font-bold uppercase tracking-wider">EU AI Act Assessment</span>
+                <span className="text-[10px] text-indigo-200 font-bold uppercase tracking-wider">GDPR / DPDP Controls</span>
                 <span className="badge-pill bg-indigo-500/30 text-indigo-200 font-bold">READY</span>
               </div>
               <div className="flex items-center gap-2 justify-between border-b border-indigo-800/40 pb-2">
@@ -431,7 +431,7 @@ export default function Advisor() {
                 <span className="badge-pill bg-indigo-500/30 text-indigo-200 font-bold">CONNECTED</span>
               </div>
               <div className="flex items-center gap-2 justify-between border-b border-indigo-800/40 pb-2">
-                <span className="text-[10px] text-indigo-200 font-bold uppercase tracking-wider">ISO 42001 Clause List</span>
+                <span className="text-[10px] text-indigo-200 font-bold uppercase tracking-wider">HIPAA / PCI-DSS Rules</span>
                 <span className="badge-pill bg-indigo-500/30 text-indigo-200 font-bold">ACTIVE</span>
               </div>
             </div>

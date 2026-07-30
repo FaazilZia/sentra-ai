@@ -93,6 +93,34 @@ export const makeDecision = async (agent: string, action: string, organizationId
       // Record action into window before returning
       await SessionDetectionService.recordAction(agent, organizationId, action, metadata);
 
+      // Determine framework compliance tags from agent posture findings & sensitive data classification
+      const frameworkSet = new Set<string>(['AIDR_SESSION_SECURITY', 'AIDR_SEQUENCE_DETECTION']);
+      try {
+        const foundAgent = await prisma.agent.findFirst({
+          where: { organizationId, OR: [{ id: agent }, { name: agent }] },
+          include: { postureFindings: { select: { framework: true } } }
+        });
+        if (foundAgent && foundAgent.postureFindings.length > 0) {
+          foundAgent.postureFindings.forEach(f => frameworkSet.add(f.framework));
+        }
+      } catch (err) {
+        logger.warn('[GOVERNANCE] Failed to fetch agent posture findings for session detection compliance tags:', err);
+      }
+
+      const actLower = (action + ' ' + (sessionDetection.reason || '')).toLowerCase();
+      if (actLower.includes('phi') || actLower.includes('patient') || actLower.includes('medical') || actLower.includes('health')) {
+        frameworkSet.add('HIPAA');
+      }
+      if (actLower.includes('pii') || actLower.includes('customer') || actLower.includes('gdpr')) {
+        frameworkSet.add('GDPR');
+        frameworkSet.add('DPDP');
+      }
+      if (actLower.includes('card') || actLower.includes('pci')) {
+        frameworkSet.add('PCI_DSS');
+      }
+
+      const sessionCompliance = Array.from(frameworkSet);
+
       if (enforcementMode === 'FLAG_ONLY') {
         logger.info(`[GOVERNANCE] Session pattern threat detected in FLAG_ONLY mode: ${sessionDetection.title}`);
         return {
@@ -101,7 +129,7 @@ export const makeDecision = async (agent: string, action: string, organizationId
           mode: 'FLAG_ONLY',
           reason: `[FLAG_ONLY MODE] ${sessionDetection.reason}`,
           impact: 'Session-sequence threat flagged for review',
-          compliance: ['AIDR_SESSION_SECURITY'],
+          compliance: sessionCompliance,
           explanation: maskPII(sessionDetection.reason || 'Cross-action threat sequence flagged.'),
           confidence: 0.95,
           degraded: false,
@@ -119,7 +147,7 @@ export const makeDecision = async (agent: string, action: string, organizationId
         mode: 'BLOCK',
         reason: sessionDetection.reason || 'Blocked by session sequence threat rule',
         impact: 'Prevents multi-action exfiltration or scope probing sequence',
-        compliance: ['AIDR_SESSION_SECURITY', 'AIDR_SEQUENCE_DETECTION'],
+        compliance: sessionCompliance,
         explanation: maskPII(`Sequence-Based Detection: ${sessionDetection.title}. Action blocked to interrupt potential attack path.`),
         confidence: 0.95,
         isPendingApproval: true,

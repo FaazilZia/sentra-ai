@@ -67,7 +67,7 @@ function renderModalContent(type: string | null, data: any) {
             Select a regulatory framework to baseline your governance pipeline. This action will initialize automated assessment trails.
           </p>
           <div className="grid grid-cols-1 gap-3">
-            {['EU AI Act', 'NIST AI RMF', 'ISO/IEC 42001', 'HIPAA'].map(f => (
+            {['GDPR', 'DPDP', 'HIPAA', 'PCI-DSS', 'NIST AI RMF'].map(f => (
               <button 
                 key={f} 
                 onClick={() => useStore.getState().addToast({ message: `INITIALIZING ${f.toUpperCase()}`, type: 'info' })}

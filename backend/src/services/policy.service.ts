@@ -139,6 +139,56 @@ export const logActivity = async (data: LogActivityData) => {
     );
   }
 
+  // Persist BlockEvent to prisma.blockEvent for unified compliance view tracking
+  const isBlockedOrFlagged = data.status === 'blocked' || 
+    data.metadata?.mode === 'FLAG_ONLY' || 
+    (data.reason && data.reason.includes('[FLAG_ONLY MODE]'));
+
+  if (isBlockedOrFlagged) {
+    try {
+      let complianceFrameworks: string[] = [];
+      if (Array.isArray(data.compliance)) {
+        complianceFrameworks = data.compliance;
+      } else if (data.compliance && typeof data.compliance === 'object') {
+        if (Array.isArray(data.compliance.frameworks)) {
+          complianceFrameworks = data.compliance.frameworks;
+        } else {
+          complianceFrameworks = Object.keys(data.compliance);
+        }
+      }
+
+      // Check if agent exists in Agent table to fetch agent UUID & posture frameworks
+      let resolvedAgentId = data.agent;
+      const foundAgent = await prisma.agent.findFirst({
+        where: {
+          organizationId: data.organizationId,
+          OR: [{ id: data.agent }, { name: data.agent }]
+        },
+        include: { postureFindings: { select: { framework: true } } }
+      });
+
+      if (foundAgent) {
+        resolvedAgentId = foundAgent.id;
+        const postureFws = foundAgent.postureFindings.map(f => f.framework);
+        complianceFrameworks = Array.from(new Set([...complianceFrameworks, ...postureFws]));
+      }
+
+      await prisma.blockEvent.create({
+        data: {
+          organizationId: data.organizationId,
+          agentId: resolvedAgentId,
+          action: data.action,
+          resource: data.metadata?.resource || data.metadata?.path || 'API_GATEWAY',
+          status: data.status === 'blocked' ? 'BLOCKED' : 'FLAGGED',
+          mode: data.metadata?.mode || (data.status === 'blocked' ? 'BLOCK' : 'FLAG_ONLY'),
+          frameworks: complianceFrameworks,
+        }
+      });
+    } catch (blockErr) {
+      logger.error('[POLICY-SERVICE] Failed to create BlockEvent:', blockErr);
+    }
+  }
+
   return log;
 };
 

@@ -67,6 +67,23 @@ export default function AgentDiscovery() {
   // Review modal states for Registered Agents
   const [selectedRegisteredAgent, setSelectedRegisteredAgent] = useState<RegisteredAgent | null>(null);
   const [updatingRegistered, setUpdatingRegistered] = useState(false);
+  const [agentPostureData, setAgentPostureData] = useState<any | null>(null);
+  const [loadingPosture, setLoadingPosture] = useState(false);
+
+  useEffect(() => {
+    if (selectedRegisteredAgent) {
+      setLoadingPosture(true);
+      apiRequest<any>(`/agents/${selectedRegisteredAgent.id}/posture-findings`)
+        .then(res => setAgentPostureData(res))
+        .catch(err => {
+          console.warn('Failed to fetch posture findings for agent:', err);
+          setAgentPostureData(null);
+        })
+        .finally(() => setLoadingPosture(false));
+    } else {
+      setAgentPostureData(null);
+    }
+  }, [selectedRegisteredAgent]);
 
   // Fetch / Sync function
   const handleSync = async () => {
@@ -621,6 +638,54 @@ export default function AgentDiscovery() {
               <div className="space-y-1">
                 <h4 className="text-xs font-semibold uppercase text-[var(--text-muted)] tracking-wider">Current Status</h4>
                 <div>{getStatusBadge(selectedRegisteredAgent.status)}</div>
+              </div>
+
+              {/* AISPM Posture Findings Section for Agent */}
+              <div className="space-y-2 border-t border-[var(--border-default)] pt-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-semibold uppercase text-[var(--text-muted)] tracking-wider flex items-center gap-1.5">
+                    <ShieldAlert className="h-3.5 w-3.5 text-amber-500" />
+                    AISPM Posture Findings
+                  </h4>
+                  {agentPostureData?.postureScore !== undefined && (
+                    <span className="text-[10px] font-mono font-bold text-indigo-400">
+                      Score: {agentPostureData.postureScore}/100
+                    </span>
+                  )}
+                </div>
+                {loadingPosture ? (
+                  <div className="text-[10px] text-[var(--text-muted)] italic">Loading posture findings...</div>
+                ) : agentPostureData?.findings && agentPostureData.findings.length > 0 ? (
+                  <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                    {agentPostureData.findings.map((f: any, idx: number) => (
+                      <div key={idx} className="p-2 bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded text-[10px]">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-indigo-400 font-mono">{f.ruleId} ({f.framework})</span>
+                          <span className="text-[8px] font-bold text-rose-500 uppercase">{f.severity}</span>
+                        </div>
+                        <p className="text-[var(--text-secondary)] mt-0.5">{f.title}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-[10px] text-[var(--text-muted)] italic bg-[var(--bg-secondary)] p-2 rounded">
+                    No posture scan findings recorded for this agent.
+                  </div>
+                )}
+              </div>
+
+              {/* Quick Link Actions */}
+              <div className="flex gap-2 text-[10px] pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedRegisteredAgent(null);
+                    setActiveTab('ATTACK_GRAPH');
+                  }}
+                  className="flex-1 py-1.5 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded font-semibold uppercase tracking-wider text-[9px] hover:bg-indigo-500/20 transition"
+                >
+                  View Attack Graph Node
+                </button>
               </div>
 
               <div className="bg-[var(--bg-secondary)] border border-[var(--border-default)] p-3.5 rounded-xl text-[10px] text-[var(--text-secondary)] leading-relaxed">

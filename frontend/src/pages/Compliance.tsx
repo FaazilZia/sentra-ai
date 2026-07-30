@@ -25,7 +25,9 @@ import {
   updateNistAiRmfImplementation,
   fetchNistAiRmfCrossFrameworkImpact,
   fetchNistAiRmfHealth,
-  exportNistAiRmfSignedConformity
+  exportNistAiRmfSignedConformity,
+  fetchUnifiedFrameworkView,
+  UnifiedFrameworkViewResponse
 } from '@/lib/api';
 
 export default function Compliance() {
@@ -81,9 +83,22 @@ export default function Compliance() {
     }
   }, []);
 
+  // Unified framework view states
+  const [unifiedData, setUnifiedData] = useState<UnifiedFrameworkViewResponse | null>(null);
+  const [unifiedLoading, setUnifiedLoading] = useState(false);
+
   useEffect(() => {
     if (activeTab === 'nist-ai-rmf') {
       loadNistData();
+    } else {
+      setUnifiedLoading(true);
+      fetchUnifiedFrameworkView(activeTab)
+        .then(res => setUnifiedData(res))
+        .catch(err => {
+          console.error('Failed to fetch unified view:', err);
+          setUnifiedData(null);
+        })
+        .finally(() => setUnifiedLoading(false));
     }
   }, [activeTab, loadNistData]);
 
@@ -276,14 +291,14 @@ export default function Compliance() {
           UNIFIED FRAMEWORK VIEW TAB (GDPR, DPDP, HIPAA, PCI-DSS)
           ======================================================= */}
       {activeTab !== 'nist-ai-rmf' && (
-        <div className="card-base bg-white p-6 flex flex-col gap-4">
+        <div className="card-base bg-white p-6 flex flex-col gap-6">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div>
               <h3 className="text-base font-bold text-slate-800 uppercase tracking-tight">
                 {activeTab.toUpperCase()} Compliance & Security Posture
               </h3>
               <p className="text-xs text-slate-500">
-                Unified posture findings and runtime AIDR block events for {activeTab.toUpperCase()}
+                Unified static AISPM posture findings and runtime AIDR block events for {activeTab.toUpperCase()}
               </p>
             </div>
             <span className="badge-pill bg-emerald-50 text-emerald-600 border border-emerald-100 font-mono text-xs">
@@ -291,20 +306,124 @@ export default function Compliance() {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
               <div className="text-[10px] font-bold uppercase text-slate-400">Target Framework</div>
               <div className="text-xl font-bold text-slate-800 mt-1 uppercase">{activeTab}</div>
             </div>
-            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-100">
-              <div className="text-[10px] font-bold uppercase text-emerald-600">Framework Status</div>
-              <div className="text-xl font-bold text-emerald-700 mt-1">ENFORCED</div>
+            <div className="p-4 rounded-xl bg-amber-50 border border-amber-100">
+              <div className="text-[10px] font-bold uppercase text-amber-600">AISPM Posture Findings</div>
+              <div className="text-xl font-bold text-amber-700 mt-1">
+                {unifiedData?.aispmPostureFindingsCount ?? 0}
+              </div>
             </div>
-            <div className="p-4 rounded-xl bg-indigo-50 border border-indigo-100">
-              <div className="text-[10px] font-bold uppercase text-indigo-600">Interception Mode</div>
-              <div className="text-xl font-bold text-indigo-700 mt-1">REAL-TIME AIDR</div>
+            <div className="p-4 rounded-xl bg-rose-50 border border-rose-100">
+              <div className="text-[10px] font-bold uppercase text-rose-600">AIDR Runtime Block Events</div>
+              <div className="text-xl font-bold text-rose-700 mt-1">
+                {unifiedData?.aidrRuntimeBlocksCount ?? 0}
+              </div>
             </div>
           </div>
+
+          {unifiedLoading ? (
+            <div className="p-8 text-center text-xs text-slate-400">Loading unified compliance view data...</div>
+          ) : (
+            <div className="space-y-6">
+              {/* AISPM Posture Findings Section */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                  <ShieldAlert className="h-4 w-4 text-amber-500" />
+                  AISPM Static Posture Findings ({unifiedData?.postureFindings?.length || 0})
+                </h4>
+                {unifiedData?.postureFindings && unifiedData.postureFindings.length > 0 ? (
+                  <div className="overflow-x-auto border border-slate-100 rounded-xl">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="bg-slate-50 border-b border-slate-100 text-[10px] uppercase font-bold text-slate-400">
+                          <th className="p-3">Rule ID</th>
+                          <th className="p-3">Severity</th>
+                          <th className="p-3">Agent</th>
+                          <th className="p-3">Title & Description</th>
+                          <th className="p-3">Remediation</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {unifiedData.postureFindings.map((f: any) => (
+                          <tr key={f.id} className="hover:bg-slate-50/50">
+                            <td className="p-3 font-mono font-bold text-[10px] text-indigo-600">{f.ruleId}</td>
+                            <td className="p-3 font-bold text-[10px]">
+                              <span className={`px-2 py-0.5 rounded text-[9px] font-semibold ${
+                                f.severity === 'CRITICAL' ? 'bg-rose-50 text-rose-600 border border-rose-200' :
+                                f.severity === 'HIGH' ? 'bg-amber-50 text-amber-600 border border-amber-200' : 'bg-slate-100 text-slate-600'
+                              }`}>
+                                {f.severity}
+                              </span>
+                            </td>
+                            <td className="p-3 font-semibold text-slate-800">{f.agent?.name || f.agentId}</td>
+                            <td className="p-3">
+                              <div className="font-bold text-slate-800">{f.title}</div>
+                              <p className="text-[10px] text-slate-500 mt-0.5">{f.description}</p>
+                            </td>
+                            <td className="p-3 text-[10px] text-slate-600">{f.remediation || 'N/A'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="p-6 text-center text-xs text-slate-400 bg-slate-50 border border-dashed border-slate-200 rounded-xl">
+                    No posture scan findings recorded for {activeTab.toUpperCase()}.
+                  </div>
+                )}
+              </div>
+
+              {/* AIDR Runtime Block Events Section */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-rose-500" />
+                  AIDR Live Runtime Interceptions ({unifiedData?.runtimeBlocks?.length || 0})
+                </h4>
+                {unifiedData?.runtimeBlocks && unifiedData.runtimeBlocks.length > 0 ? (
+                  <div className="overflow-x-auto border border-slate-100 rounded-xl">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="bg-slate-50 border-b border-slate-100 text-[10px] uppercase font-bold text-slate-400">
+                          <th className="p-3">Timestamp</th>
+                          <th className="p-3">Agent</th>
+                          <th className="p-3">Action Payload</th>
+                          <th className="p-3">Status</th>
+                          <th className="p-3">Mode</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {unifiedData.runtimeBlocks.map((b: any) => (
+                          <tr key={b.id} className="hover:bg-slate-50/50">
+                            <td className="p-3 font-mono text-[10px] text-slate-400">
+                              {new Date(b.timestamp).toLocaleString()}
+                            </td>
+                            <td className="p-3 font-semibold text-slate-800">{b.agentId}</td>
+                            <td className="p-3 font-mono text-[10px] text-slate-600">{b.action}</td>
+                            <td className="p-3">
+                              <span className={`px-2 py-0.5 rounded text-[9px] font-semibold border ${
+                                b.status === 'BLOCKED' ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-amber-50 text-amber-600 border-amber-200'
+                              }`}>
+                                {b.status}
+                              </span>
+                            </td>
+                            <td className="p-3 text-[10px] font-bold text-slate-500">{b.mode}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="p-6 text-center text-xs text-slate-400 bg-slate-50 border border-dashed border-slate-200 rounded-xl">
+                    No runtime block events recorded for {activeTab.toUpperCase()}.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

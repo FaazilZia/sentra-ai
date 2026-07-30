@@ -228,7 +228,7 @@ export default function ImpactAssessments() {
       {/* Header section */}
       <PageHeader 
         title="Impact Assessments"
-        description="Conduct comprehensive Data Protection (DPIA), Algorithmic (AIA), and EU AI Act Art. 27 Fundamental Rights Impact Assessments (FRIA)."
+        description="Conduct comprehensive Data Protection (DPIA), Algorithmic (AIA), and GDPR / DPDP Compliance Impact Assessments."
         action={
           activeTab === 'DPIA_AIA' ? (
             <button

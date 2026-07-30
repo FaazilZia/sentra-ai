@@ -262,9 +262,9 @@ export default function Drift() {
             
             <div>
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-semibold text-purple-400 uppercase tracking-widest">EU AI Act Post-Market</span>
+                <span className="text-[10px] font-semibold text-purple-400 uppercase tracking-widest">NIST AI RMF Post-Market</span>
                 <span className="text-[9px] font-semibold uppercase text-purple-400 bg-purple-950/20 px-2 py-0.5 rounded border border-purple-500/10">
-                  Article 72
+                  MONITOR 1.1
                 </span>
               </div>
               
@@ -568,8 +568,8 @@ export default function Drift() {
                     
                     <div className="bg-[var(--bg-secondary)] border border-[var(--border-default)] p-4 rounded-2xl flex items-center justify-between">
                       <div>
-                        <span className="text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-widest block">EU AI Act Art. 15 Status</span>
-                        <span className="text-xs text-[var(--text-secondary)] mt-1 block">Accuracy, Cyber, and Robustness</span>
+                        <span className="text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-widest block">NIST RMF Accuracy & Robustness</span>
+                        <span className="text-xs text-[var(--text-secondary)] mt-1 block">Accuracy, Cyber, and Model Stability</span>
                       </div>
                       <span className="text-sm font-semibold text-indigo-400 bg-indigo-950/20 px-3 py-1 rounded-xl border border-indigo-500/15 uppercase font-mono">
                         {postMarketReport.compliance.art15Status}
@@ -578,8 +578,8 @@ export default function Drift() {
 
                     <div className="bg-[var(--bg-secondary)] border border-[var(--border-default)] p-4 rounded-2xl flex items-center justify-between">
                       <div>
-                        <span className="text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-widest block">EU AI Act Art. 72 Status</span>
-                        <span className="text-xs text-[var(--text-secondary)] mt-1 block">Post-Market Monitoring Obligations</span>
+                        <span className="text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-widest block">NIST RMF Post-Market Monitoring</span>
+                        <span className="text-xs text-[var(--text-secondary)] mt-1 block">Continuous Operational Risk Monitoring</span>
                       </div>
                       <span className="text-sm font-semibold text-purple-400 bg-purple-950/20 px-3 py-1 rounded-xl border border-purple-500/15 uppercase font-mono">
                         {postMarketReport.compliance.art72Status}
