@@ -124,6 +124,8 @@ export async function interceptAction(input: any, callback: () => Promise<any>) 
       compliance: decision.compliance,
       metadata: redactMetadata({
         ...metadata,
+        detectionSource: decision.detectionSource || 'single_action',
+        sessionRule: decision.sessionRule,
         ...(piiResult.piiDetected ? {
           piiDetected: true,
           violatedFrameworks: piiResult.violatedFrameworks,

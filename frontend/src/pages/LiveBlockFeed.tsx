@@ -57,8 +57,12 @@ export default function LiveBlockFeed() {
     addToast({ message: 'Code snippet copied to clipboard!', type: 'success' });
   };
 
-  const getTier = (reason: string) => {
+  const getTier = (reason: string, metadata?: any) => {
     const lower = (reason || '').toLowerCase();
+    const metaStr = JSON.stringify(metadata || {}).toLowerCase();
+    if (lower.includes('session detected') || lower.includes('session_pattern') || metaStr.includes('session_pattern') || lower.includes('exfiltration pattern')) {
+      return 'Session Pattern (Sequence)';
+    }
     if (lower.includes('pii')) return 'PII Scanner';
     if (lower.includes('policy')) return 'L1 Policy';
     if (lower.includes('semantic')) return 'L3 Semantic';

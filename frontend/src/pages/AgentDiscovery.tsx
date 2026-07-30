@@ -10,11 +10,13 @@ import {
   ShieldAlert, 
   Radio, 
   Plus,
-  Eye
+  Eye,
+  Network
 } from 'lucide-react';
 import { apiRequest } from '@/lib/api';
 import { useStore } from '@/store/useStore';
 import { cn } from '@/lib/utils';
+import AttackGraphVisual from '@/components/agents/AttackGraphVisual';
 
 interface DiscoveredAgent {
   id: string;
@@ -49,7 +51,7 @@ export default function AgentDiscovery() {
   const [filterSource, setFilterSource] = useState<string>('ALL');
 
   // Tabs state
-  const [activeTab, setActiveTab] = useState<'SHADOW' | 'REGISTERED'>('SHADOW');
+  const [activeTab, setActiveTab] = useState<'SHADOW' | 'REGISTERED' | 'ATTACK_GRAPH'>('SHADOW');
   const [registeredAgents, setRegisteredAgents] = useState<RegisteredAgent[]>([]);
   const [loadingRegistered, setLoadingRegistered] = useState(false);
 
@@ -350,9 +352,25 @@ export default function AgentDiscovery() {
             <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--royal-indigo)]" />
           )}
         </button>
+        <button
+          onClick={() => setActiveTab('ATTACK_GRAPH')}
+          className={cn(
+            "pb-3 text-xs font-semibold uppercase tracking-widest transition-all relative flex items-center gap-1.5",
+            activeTab === 'ATTACK_GRAPH' ? "text-[var(--text-primary)]" : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+          )}
+        >
+          <Network className="h-3.5 w-3.5 text-indigo-400" />
+          Attack Graph
+          {activeTab === 'ATTACK_GRAPH' && (
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--royal-indigo)]" />
+          )}
+        </button>
       </div>
 
-      {/* Main List */}
+      {activeTab === 'ATTACK_GRAPH' ? (
+        <AttackGraphVisual />
+      ) : (
+      /* Main List */
       <div className="card-base p-6 space-y-6 bg-[var(--bg-card)] border-[var(--border-default)]">
         {/* Filters and search panel */}
         <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
@@ -498,6 +516,7 @@ export default function AgentDiscovery() {
           )
         )}
       </div>
+      )}
 
       {/* Review & Promotion Dialog Modal */}
       {selectedAgent && (

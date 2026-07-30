@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { evaluateRisk } from './riskEngine';
 import { evaluatePolicy } from './policyEngine';
 import { evaluateSemanticRisk } from './semanticRiskEngine';
+import { SessionDetectionService } from './sessionDetection.service';
 import { maskPII } from '../utils/masking';
 import logger from '../utils/logger';
 import { cacheService } from './cache.service';
@@ -21,6 +22,8 @@ export interface Decision {
   timeline?: any[];
   isPendingApproval?: boolean;
   degraded?: boolean;
+  detectionSource?: 'session_pattern' | 'single_action';
+  sessionRule?: string;
 }
 
 export const getAidrEnforcementMode = async (organizationId: string): Promise<'FLAG_ONLY' | 'BLOCK'> => {
@@ -66,7 +69,7 @@ export const makeDecision = async (agent: string, action: string, organizationId
       return buildBlockedResponse('Policy Violation', policyResult, startTime, agent, action, enforcementMode);
     }
 
-    // 0. Safe-Action Short-circuit: If allowlist matched in L1, skip L2 and L3
+    // 0. Safe-Action Short-circuit: If allowlist matched in L1, skip L2, L3, and session rules
     if (policyResult.reason === 'Action is on safe allowlist') {
       return {
         status: 'allowed',
@@ -83,6 +86,54 @@ export const makeDecision = async (agent: string, action: string, organizationId
         ]
       };
     }
+
+    // 2. Session Pattern & Sequence Detection (Detection Depth Lite)
+    const sessionDetection = await SessionDetectionService.evaluateSessionPattern(agent, action, organizationId, metadata);
+    if (sessionDetection && sessionDetection.detected) {
+      // Record action into window before returning
+      await SessionDetectionService.recordAction(agent, organizationId, action, metadata);
+
+      if (enforcementMode === 'FLAG_ONLY') {
+        logger.info(`[GOVERNANCE] Session pattern threat detected in FLAG_ONLY mode: ${sessionDetection.title}`);
+        return {
+          status: 'allowed',
+          risk: 'high',
+          mode: 'FLAG_ONLY',
+          reason: `[FLAG_ONLY MODE] ${sessionDetection.reason}`,
+          impact: 'Session-sequence threat flagged for review',
+          compliance: ['AIDR_SESSION_SECURITY'],
+          explanation: maskPII(sessionDetection.reason || 'Cross-action threat sequence flagged.'),
+          confidence: 0.95,
+          degraded: false,
+          detectionSource: 'session_pattern',
+          sessionRule: sessionDetection.rule,
+          timeline: [
+            { step: 'Session Pattern Analysis', status: 'warning', icon: 'activity', description: `${sessionDetection.rule} (FLAG_ONLY)` }
+          ]
+        };
+      }
+
+      return {
+        status: 'blocked',
+        risk: 'high',
+        mode: 'BLOCK',
+        reason: sessionDetection.reason || 'Blocked by session sequence threat rule',
+        impact: 'Prevents multi-action exfiltration or scope probing sequence',
+        compliance: ['AIDR_SESSION_SECURITY', 'AIDR_SEQUENCE_DETECTION'],
+        explanation: maskPII(`Sequence-Based Detection: ${sessionDetection.title}. Action blocked to interrupt potential attack path.`),
+        confidence: 0.95,
+        isPendingApproval: true,
+        degraded: false,
+        detectionSource: 'session_pattern',
+        sessionRule: sessionDetection.rule,
+        timeline: [
+          { step: 'Session Pattern Analysis', status: 'blocked', icon: 'activity', description: `Blocked: ${sessionDetection.rule}` }
+        ]
+      };
+    }
+
+    // Record action into rolling window for future sequence evaluation
+    await SessionDetectionService.recordAction(agent, organizationId, action, metadata);
 
     // 2. Level 2: Local Risk Engine (Keyword/Pattern Pre-filter)
     const localRisk = evaluateRisk(action, metadata);
@@ -150,6 +201,7 @@ export const makeDecision = async (agent: string, action: string, organizationId
       confidence: semanticRisk.confidence,
       isPendingApproval,
       degraded,
+      detectionSource: 'single_action',
       timeline: [
         { step: 'L1: Policy', status: 'complete', icon: 'shield' },
         { step: 'L2: Pattern', status: 'complete', icon: 'zap' },

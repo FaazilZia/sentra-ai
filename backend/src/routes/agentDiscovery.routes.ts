@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.middleware';
-import { scanAgents, getAgents } from '../controllers/agentDiscovery.controller';
+import { scanAgents, getAgents, getAttackGraph } from '../controllers/agentDiscovery.controller';
 import { AgentPostureController } from '../controllers/agentPosture.controller';
 
 const router = Router();
 
 router.post('/scan', authenticate, scanAgents);
+router.get('/attack-graph', authenticate, getAttackGraph);
 router.get('/', authenticate, getAgents);
 
 // Agent Config Posture Scanning routes

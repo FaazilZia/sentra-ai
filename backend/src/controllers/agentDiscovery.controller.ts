@@ -3,6 +3,7 @@ import prisma from '../config/db';
 import { asyncHandler, sendError } from '../utils/controllerHelpers';
 import { resolveOrganizationId } from '../utils/company';
 import { AgentDiscoveryService } from '../services/agentDiscovery.service';
+import { AttackGraphService } from '../services/attackGraph.service';
 
 export const scanAgents = asyncHandler(async (req: any, res: Response) => {
   const organizationId = await resolveOrganizationId(req);
@@ -26,4 +27,12 @@ export const getAgents = asyncHandler(async (req: any, res: Response) => {
     orderBy: { discoveredAt: 'desc' },
   });
   return res.status(200).json(agents);
+});
+
+export const getAttackGraph = asyncHandler(async (req: any, res: Response) => {
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) return sendError(res, 401, 'Unauthorized');
+
+  const graph = await AttackGraphService.buildGraph(organizationId);
+  return res.status(200).json(graph);
 });
