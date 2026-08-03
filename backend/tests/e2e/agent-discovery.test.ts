@@ -18,9 +18,8 @@ describe('Agent Discovery Engine E2E', () => {
       .set('Authorization', `Bearer ${tokenOrgA}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-    expect(res.body.data).toBeDefined();
-    expect(Array.isArray(res.body.data.agents)).toBe(true);
+    expect(res.body.status).toBe('scan_completed');
+    expect(Array.isArray(res.body.agents)).toBe(true);
   });
 
   test('Deduplication: scanning twice creates no duplicate agent rows', async () => {
@@ -29,28 +28,40 @@ describe('Agent Discovery Engine E2E', () => {
       .post('/api/v1/agents/scan')
       .set('Authorization', `Bearer ${tokenOrgA}`);
     expect(scan1.status).toBe(200);
-    const count1 = scan1.body.data.agents.length;
+    const count1 = scan1.body.agents.length;
 
     // Run scan #2 immediately
     const scan2 = await request(TEST_BASE_URL)
       .post('/api/v1/agents/scan')
       .set('Authorization', `Bearer ${tokenOrgA}`);
     expect(scan2.status).toBe(200);
-    const count2 = scan2.body.data.agents.length;
+    const count2 = scan2.body.agents.length;
 
     expect(count2).toBe(count1);
   });
 
   test('Multi-tenant isolation: Org A discovery scan never surfaces Org B agents', async () => {
-    // Register agent under Org B
-    await request(TEST_BASE_URL)
-      .post('/api/v1/inventory/agents')
+    // Precondition 1: Create AI System under Org B & assert 201 Created
+    const createAiSystemRes = await request(TEST_BASE_URL)
+      .post('/api/v1/ai-systems')
       .set('Authorization', `Bearer ${tokenOrgB}`)
       .send({
-        name: 'Org B Secret Discovery Agent',
-        description: 'Org B agent for isolation test',
-        permissions: ['read']
+        name: 'Org B Secret Discovery AI System',
+        description: 'Org B AI system for isolation test',
+        model_name: 'gpt-4o',
+        model_version: '2026-05',
+        vendor: 'OpenAI',
+        use_case: 'Multi-Tenant Isolation Testing',
+        risk_tier: 'CRITICAL',
+        status: 'ACTIVE'
       });
+    expect(createAiSystemRes.status).toBe(201);
+
+    // Precondition 2: Run Discovery Scan for Org B & assert 200 OK
+    const scanOrgBRes = await request(TEST_BASE_URL)
+      .post('/api/v1/agents/scan')
+      .set('Authorization', `Bearer ${tokenOrgB}`);
+    expect(scanOrgBRes.status).toBe(200);
 
     // Run scan for Org A
     const resA = await request(TEST_BASE_URL)
@@ -58,8 +69,8 @@ describe('Agent Discovery Engine E2E', () => {
       .set('Authorization', `Bearer ${tokenOrgA}`);
 
     expect(resA.status).toBe(200);
-    const agentsA = resA.body.data?.agents || resA.body.data || [];
-    const orgBAgentInA = agentsA.find((a: any) => a.name === 'Org B Secret Discovery Agent');
+    const agentsA = Array.isArray(resA.body) ? resA.body : resA.body.data || [];
+    const orgBAgentInA = agentsA.find((a: any) => a.name === 'Org B Secret Discovery AI System');
     expect(orgBAgentInA).toBeUndefined();
   });
 
@@ -69,7 +80,7 @@ describe('Agent Discovery Engine E2E', () => {
       .set('Authorization', `Bearer ${tokenOrgA}`);
 
     expect(res.status).toBe(200);
-    const agents = res.body.data.agents || [];
+    const agents = res.body.agents || [];
     const seedNames = ['Customer Support Bot', 'Financial Analyst Agent', 'Security Auditing Agent'];
     const fakeSeedFound = agents.find((a: any) => seedNames.includes(a.name) && a.source === 'seed');
     expect(fakeSeedFound).toBeUndefined();
