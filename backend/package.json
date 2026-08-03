@@ -19,8 +19,8 @@
     "postinstall": "prisma generate",
     "test:unit": "jest --testPathIgnorePatterns='tests/e2e/'",
     "test:e2e": "playwright test",
-    "test:e2e:jest": "jest --testPathPatterns='tests/e2e/' --globalSetup='<rootDir>/src/tests/globalSetup.ts'",
-    "test:load": "artillery run tests/load/artillery.config.yml",
+    "test:e2e:jest": "jest --testPathPatterns='tests/e2e/' --testPathIgnorePatterns='/node_modules/|/dist/|.*\\.spec\\.ts' --runInBand",
+    "test:load": "bash tests/load/run.sh",
     "test:all": "npm run test:unit && npm run test:e2e",
     "test:ci": "jest --coverage --ci --testPathIgnorePatterns='tests/e2e/'",
     "test": "node --max-old-space-size=4096 ./node_modules/.bin/jest --coverage --maxWorkers=2"
