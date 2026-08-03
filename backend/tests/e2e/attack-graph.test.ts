@@ -6,48 +6,70 @@ const TEST_BASE_URL = process.env.TEST_BASE_URL || 'https://sentra-backend-node.
 describe('Attack Graph Lite E2E', () => {
   let tokenOrgA: string;
   let tokenOrgB: string;
-  let broadAgentId: string;
-  let narrowAgentId: string;
 
   beforeAll(async () => {
     tokenOrgA = await setupE2ETestToken('graph-orga');
     tokenOrgB = await setupE2ETestToken('graph-orgb');
 
-    // Create broad permission agent in Org A (READ_WRITE on S3 connector)
+    // 1. Create Broad Permission AI System under Org A & assert 201 Created
     const broadRes = await request(TEST_BASE_URL)
-      .post('/api/v1/inventory/agents')
+      .post('/api/v1/ai-systems')
       .set('Authorization', `Bearer ${tokenOrgA}`)
       .send({
         name: 'Broad Permission Agent',
         description: 'Broad access to production databases and storage',
-        source: 'AWS S3 Connector',
-        accessLevel: 'READ_WRITE',
-        permissions: { scope: 'all', privileges: ['admin', 'write', 'read', 'delete'] }
+        model_name: 'gpt-4o',
+        model_version: '2026-05',
+        vendor: 'OpenAI',
+        use_case: 'Broad Access Storage',
+        risk_tier: 'CRITICAL',
+        status: 'ACTIVE'
       });
-    broadAgentId = broadRes.body.data?.id || broadRes.body.id;
+    expect(broadRes.status).toBe(201);
 
-    // Create narrow permission agent in Org A
+    // 2. Create Narrow Permission AI System under Org A & assert 201 Created
     const narrowRes = await request(TEST_BASE_URL)
-      .post('/api/v1/inventory/agents')
+      .post('/api/v1/ai-systems')
       .set('Authorization', `Bearer ${tokenOrgA}`)
       .send({
         name: 'Narrow Permission Agent',
         description: 'Restricted access agent',
-        source: 'Custom API Connector',
-        accessLevel: 'RESTRICTED',
-        permissions: { scope: 'read-only' }
+        model_name: 'gpt-4o-mini',
+        model_version: '2026-05',
+        vendor: 'OpenAI',
+        use_case: 'Restricted Access API',
+        risk_tier: 'LOW',
+        status: 'ACTIVE'
       });
-    narrowAgentId = narrowRes.body.data?.id || narrowRes.body.id;
+    expect(narrowRes.status).toBe(201);
 
-    // Register agent in Org B for isolation check
-    await request(TEST_BASE_URL)
-      .post('/api/v1/inventory/agents')
+    // 3. Trigger Discovery Scan for Org A to populate Agent table & assert 200 OK
+    const scanOrgARes = await request(TEST_BASE_URL)
+      .post('/api/v1/agents/scan')
+      .set('Authorization', `Bearer ${tokenOrgA}`);
+    expect(scanOrgARes.status).toBe(200);
+
+    // 4. Create Isolated AI System under Org B & assert 201 Created
+    const orgBRes = await request(TEST_BASE_URL)
+      .post('/api/v1/ai-systems')
       .set('Authorization', `Bearer ${tokenOrgB}`)
       .send({
         name: 'Org B Isolated Agent',
         description: 'Secret agent for Org B',
-        permissions: ['read']
+        model_name: 'gpt-4o',
+        model_version: '2026-05',
+        vendor: 'OpenAI',
+        use_case: 'Isolated Org B Testing',
+        risk_tier: 'LOW',
+        status: 'ACTIVE'
       });
+    expect(orgBRes.status).toBe(201);
+
+    // 5. Trigger Discovery Scan for Org B to populate Agent table & assert 200 OK
+    const scanOrgBRes = await request(TEST_BASE_URL)
+      .post('/api/v1/agents/scan')
+      .set('Authorization', `Bearer ${tokenOrgB}`);
+    expect(scanOrgBRes.status).toBe(200);
   });
 
   test('GET /api/v1/agents/attack-graph - returns nodes, edges, privilegePaths and summary', async () => {
@@ -56,8 +78,7 @@ describe('Attack Graph Lite E2E', () => {
       .set('Authorization', `Bearer ${tokenOrgA}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-    const data = res.body.data;
+    const data = res.body.data || res.body;
     expect(data).toHaveProperty('nodes');
     expect(data).toHaveProperty('edges');
     expect(data).toHaveProperty('privilegePaths');
@@ -72,14 +93,14 @@ describe('Attack Graph Lite E2E', () => {
       .set('Authorization', `Bearer ${tokenOrgA}`);
 
     expect(res.status).toBe(200);
-    const nodes = res.body.data?.nodes || [];
+    const nodes = res.body.nodes || res.body.data?.nodes || [];
 
-    const broadNode = nodes.find((n: any) => n.label === 'Broad Permission Agent' || n.id === broadAgentId);
-    const narrowNode = nodes.find((n: any) => n.label === 'Narrow Permission Agent' || n.id === narrowAgentId);
+    const broadNode = nodes.find((n: any) => n.label === 'Broad Permission Agent');
+    const narrowNode = nodes.find((n: any) => n.label === 'Narrow Permission Agent');
 
-    if (broadNode && narrowNode) {
-      expect(broadNode.blastRadiusScore).toBeGreaterThanOrEqual(narrowNode.blastRadiusScore);
-    }
+    expect(broadNode).toBeDefined();
+    expect(narrowNode).toBeDefined();
+    expect(broadNode.blastRadiusScore).toBeGreaterThan(narrowNode.blastRadiusScore);
   });
 
   test('Multi-tenant isolation on attack graph endpoint — Org A graph never contains Org B nodes', async () => {
@@ -88,7 +109,7 @@ describe('Attack Graph Lite E2E', () => {
       .set('Authorization', `Bearer ${tokenOrgA}`);
 
     expect(resA.status).toBe(200);
-    const nodesA = resA.body.data?.nodes || [];
+    const nodesA = resA.body.nodes || resA.body.data?.nodes || [];
     const orgBNodeInA = nodesA.find((n: any) => n.label === 'Org B Isolated Agent');
     expect(orgBNodeInA).toBeUndefined();
   });
