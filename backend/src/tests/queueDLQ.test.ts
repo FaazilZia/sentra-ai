@@ -32,7 +32,7 @@ jest.mock('../services/queue.service', () => {
 
 // Mock database to provide a REAL Prisma client connected to the test DB directly, bypassing lazy initialization proxy
 jest.mock('../config/db', () => {
-  const TEST_URL = process.env.TEST_DATABASE_URL || 'postgresql://mohammadfaazilzia@localhost:5432/sentra_jest_test';
+  const TEST_URL = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/sentra_test';
   const { PrismaClient } = require('@prisma/client');
   const { PrismaPg } = require('@prisma/adapter-pg');
   const { Pool } = require('pg');
