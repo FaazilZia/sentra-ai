@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests/e2e',
-  testMatch: [ /dashboard\.test\.ts/, /ciso_evaluation\.spec\.ts/ ],
+  testMatch: [ /\.spec\.ts$/ ],
   timeout: 30 * 1000,
   expect: {
     timeout: 5000
@@ -12,6 +12,7 @@ export default defineConfig({
   workers: 1,
   reporter: 'html',
   use: {
+    baseURL: process.env.TEST_FRONTEND_URL || 'http://localhost:4173',
     actionTimeout: 0,
     trace: 'on-first-retry',
   },

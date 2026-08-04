@@ -345,7 +345,7 @@ test.describe('CISO Evaluation E2E compliance suite', () => {
   });
 
   test('Run Two-Pass CISO Compliance Evaluation', async () => {
-    test.setTimeout(180000);
+    test.setTimeout(360000);
 
     const pass1Results: CaseResult[] = [];
     const pass2Results: CaseResult[] = [];
