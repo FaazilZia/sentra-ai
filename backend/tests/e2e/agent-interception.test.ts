@@ -49,6 +49,10 @@ describe('Agent Interception Engine', () => {
       
     expect(res.status).toBe(200);
     expect(res.body.data?.status).toBe('allowed');
+
+    const latency = performance.now() - start;
+    // Allow up to 5000ms threshold for high-load CI environments while retaining regression coverage on the interception decision path
+    expect(latency).toBeLessThan(5000);
   });
 
   test('MEDIUM risk action - flagged with reason', async () => {

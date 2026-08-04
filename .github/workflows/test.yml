@@ -142,7 +142,7 @@ jobs:
 
       - name: Build @sentra-ai/sdk
         working-directory: packages/sdk
-        run: npm install --ignore-scripts && npm run build
+        run: npm ci --ignore-scripts && npm run build
 
       - name: Run Jest E2E API tests
         run: npm run test:e2e:jest
