@@ -69,7 +69,7 @@ describe('BullMQ DLQ Configuration & Superadmin APIs', () => {
       // 1. Resolve or seed a SUPER_ADMIN user
       let superAdmin = await prisma.users.findFirst({ where: { role: 'SUPER_ADMIN', is_active: true } });
       if (!superAdmin) {
-        const org = await prisma.organizations.findFirst();
+        const org = await prisma.organizations.findFirst({ where: { is_active: true } });
         superAdmin = await prisma.users.create({
           data: {
             id: 'test-superadmin-id',
@@ -87,7 +87,7 @@ describe('BullMQ DLQ Configuration & Superadmin APIs', () => {
       // 2. Resolve or seed a MEMBER user
       let normalUser = await prisma.users.findFirst({ where: { role: 'MEMBER', is_active: true } });
       if (!normalUser) {
-        const org = await prisma.organizations.findFirst();
+        const org = await prisma.organizations.findFirst({ where: { is_active: true } });
         normalUser = await prisma.users.create({
           data: {
             id: 'test-member-id',

@@ -44,7 +44,7 @@ describe('Cursor-Based Pagination Integration', () => {
 
   beforeAll(async () => {
     userId = randomUUID();
-    const existingOrg = await prisma.organizations.findFirst();
+    const existingOrg = await prisma.organizations.findFirst({ where: { is_active: true } });
     if (existingOrg) {
       orgId = existingOrg.id;
     } else {
