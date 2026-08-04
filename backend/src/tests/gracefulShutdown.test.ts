@@ -1,7 +1,3 @@
-import { shutdown } from '../server';
-import logger from '../utils/logger';
-import prisma from '../config/db';
-
 jest.mock('../utils/logger', () => {
   const info = jest.fn();
   const error = jest.fn();
@@ -42,6 +38,10 @@ jest.mock('http-terminator', () => ({
     terminate: jest.fn().mockResolvedValue(undefined),
   }),
 }));
+
+import { shutdown } from '../server';
+import logger from '../utils/logger';
+import prisma from '../config/db';
 
 describe('Graceful Shutdown Sequence', () => {
   let processExitMock: jest.SpyInstance;

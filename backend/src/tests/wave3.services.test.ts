@@ -14,13 +14,6 @@ jest.mock('../server', () => ({
   io: { to: jest.fn().mockReturnThis(), emit: jest.fn() },
 }));
 
-import prisma from '../config/db';
-import { GdprService } from '../services/gdpr.service';
-import { HipaaService } from '../services/hipaa.service';
-import { PciService } from '../services/pci.service';
-import { DpdpService } from '../services/dpdp.service';
-import { logActivity } from '../services/policy.service';
-
 // Mock database
 jest.mock('../config/db', () => ({
   __esModule: true,
@@ -58,6 +51,13 @@ jest.mock('../config/db', () => ({
     },
   },
 }));
+
+import prisma from '../config/db';
+import { GdprService } from '../services/gdpr.service';
+import { HipaaService } from '../services/hipaa.service';
+import { PciService } from '../services/pci.service';
+import { DpdpService } from '../services/dpdp.service';
+import { logActivity } from '../services/policy.service';
 
 const db = prisma as any;
 
