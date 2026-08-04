@@ -50,6 +50,7 @@ backend/scratch/
 update-render-env.sh
 *.sh
 !backend/docker-entrypoint.sh
+!backend/tests/load/run.sh
 
 # Playwright test artifacts
 frontend/test-results/
@@ -71,3 +72,5 @@ fix_*.py
 replace_*.py
 complete_prompt.txt
 screenshots/
+
+backend/prisma/backups/
