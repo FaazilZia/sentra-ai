@@ -20,6 +20,7 @@ jobs:
       JWT_SECRET: test-secret-for-ci
       JWT_REFRESH_SECRET: test-refresh-secret-for-ci
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      REDIS_URL: redis://localhost:6379
 
     steps:
       - uses: actions/checkout@v4
@@ -97,6 +98,7 @@ jobs:
           SEED_ADMIN_PASSWORD: ${{ secrets.TEST_ADMIN_PASSWORD }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY || 'sk-ant-test-key-for-ci' }}
           IS_E2E_TEST: "true"
+          REDIS_URL: redis://localhost:6379
 
       - name: Wait for Backend to be Healthy
         run: |
@@ -137,6 +139,10 @@ jobs:
           done
           echo "Frontend failed to become healthy within 60 seconds"
           exit 1
+
+      - name: Build @sentra-ai/sdk
+        working-directory: packages/sdk
+        run: npm install --ignore-scripts && npm run build
 
       - name: Run Jest E2E API tests
         run: npm run test:e2e:jest
@@ -195,6 +201,15 @@ jobs:
           - 5432:5432
         options: >-
           --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
