@@ -15,6 +15,7 @@ export const getBaseSocketUrl = () => {
 
 export const socket: Socket = io(getBaseSocketUrl(), {
   transports: ['polling', 'websocket'],
+  withCredentials: true,
   reconnection: true,
   reconnectionAttempts: Infinity,
   reconnectionDelay: 1000,
