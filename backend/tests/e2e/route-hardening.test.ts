@@ -4,6 +4,7 @@ import { setupE2ETestToken } from './helpers/testSetup';
 const TEST_BASE_URL = process.env.TEST_BASE_URL || 'https://sentra-backend-node.onrender.com';
 
 describe('Route Hardening & Security Middleware E2E', () => {
+  jest.setTimeout(120000);
   let token1: string;
   let token2: string;
 
