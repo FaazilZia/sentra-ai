@@ -56,7 +56,7 @@ jest.mock('../server', () => ({
 // import() calls in initializePrisma() which Jest's CommonJS runtime rejects.
 // We intercept ../config/db to return a Prisma client connected to the test DB.
 jest.mock('../config/db', () => {
-  const TEST_URL = process.env.TEST_DATABASE_URL;
+  const TEST_URL = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL_TEST || process.env.DATABASE_URL;
   if (!TEST_URL) {
     // Return a stub when no test DB is configured (unit test runs)
     return { __esModule: true, default: {}, initializePrisma: jest.fn(), prismaRaw: null };

@@ -252,7 +252,9 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
         organizationName: result.org.name,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
+    console.error('[REGISTER_EXCEPT_DEBUG]:', error?.stack || error);
+    logger.error('[REGISTER_EXCEPT_DEBUG]:', error);
     next(error);
   }
 };
