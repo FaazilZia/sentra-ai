@@ -122,7 +122,7 @@ describe('PDF Report Quality & Integration Smoke Test', () => {
 
   beforeAll(async () => {
     // Prefer the seeded fixture org
-    const org = await (prisma as any).organizations.findFirst();
+    const org = await (prisma as any).organizations.findFirst({ where: { is_active: true } });
     if (org) {
       organizationId = org.id;
     } else {

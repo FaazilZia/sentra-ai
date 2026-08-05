@@ -20,6 +20,7 @@ jobs:
       JWT_SECRET: test-secret-for-ci
       JWT_REFRESH_SECRET: test-refresh-secret-for-ci
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      REDIS_URL: redis://localhost:6379
 
     steps:
       - uses: actions/checkout@v4
@@ -59,9 +60,11 @@ jobs:
           JWT_SECRET: test-secret-for-ci
           REFRESH_SECRET: test-refresh-secret-for-ci
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sentra_test
+          TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sentra_test
+          DATABASE_URL_TEST: postgresql://postgres:postgres@localhost:5432/sentra_test
           OPENAI_API_KEY: sk-test-key-for-ci
           ENCRYPTION_KEY: a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
-        run: npm test -- --coverage --maxWorkers=2
+        run: npm test
 
       - name: Upload coverage report
         if: always()
@@ -95,7 +98,10 @@ jobs:
           OPENAI_API_KEY: sk-test-key-for-ci
           ENCRYPTION_KEY: a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
           SEED_ADMIN_PASSWORD: ${{ secrets.TEST_ADMIN_PASSWORD }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY || 'dummy-anthropic-key-for-ci' }}
           IS_E2E_TEST: "true"
+          REDIS_URL: redis://localhost:6379
+          FRONTEND_URL: http://localhost:4173
 
       - name: Wait for Backend to be Healthy
         run: |
@@ -137,14 +143,27 @@ jobs:
           echo "Frontend failed to become healthy within 60 seconds"
           exit 1
 
+      - name: Build @sentra-ai/sdk
+        working-directory: packages/sdk
+        run: npm ci --ignore-scripts && npm run build
+
+      - name: Run Jest E2E API tests
+        run: npm run test:e2e:jest
+        env:
+          TEST_BASE_URL: http://localhost:10000
+          IS_E2E_TEST: "true"
+          TEST_PASSWORD: TestPass123!
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY || 'dummy-anthropic-key-for-ci' }}
+
       - name: Run Playwright E2E tests
-        run: npx --ignore-scripts @playwright/test@1.60.0 test tests/e2e/dashboard.test.ts
+        run: npx --ignore-scripts @playwright/test@1.60.0 test
         env:
           TEST_FRONTEND_URL: http://localhost:4173
           TEST_BASE_URL: http://localhost:10000
           IS_E2E_TEST: "true"
+          TEST_PASSWORD: TestPass123!
           TEST_ADMIN_PASSWORD: ${{ secrets.TEST_ADMIN_PASSWORD }}
-        continue-on-error: true # Don't fail CI on E2E flakiness
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY || 'dummy-anthropic-key-for-ci' }}
 
       - name: Upload Playwright report
         if: always()
@@ -186,6 +205,15 @@ jobs:
           - 5432:5432
         options: >-
           --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -265,6 +293,7 @@ jobs:
           ENCRYPTION_KEY: a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
           SEED_ADMIN_PASSWORD: ${{ secrets.TEST_ADMIN_PASSWORD }}
           IS_E2E_TEST: "true"
+          FRONTEND_URL: http://localhost:4173
 
       - name: Wait for Backend to be Healthy
         run: |

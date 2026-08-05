@@ -56,7 +56,10 @@ const prismaProxy = new Proxy({} as PrismaClient, {
   get: (target, prop) => {
     if (prop === 'then' || prop === 'catch' || prop === 'finally') return undefined;
     if (!prismaContainer.instance) {
-      throw new Error("Prisma accessed before initialization. Call initializePrisma() first.");
+      const databaseUrl = process.env.DATABASE_URL || process.env.TEST_DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/sentra_test';
+      const pool = new Pool({ connectionString: databaseUrl });
+      const adapter = new PrismaPg(pool);
+      prismaContainer.instance = new PrismaClient({ adapter });
     }
     return (prismaContainer.instance as any)[prop];
   }

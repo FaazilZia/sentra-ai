@@ -5,7 +5,7 @@ const TEST_BASE_URL = process.env.TEST_BASE_URL || 'https://sentra-backend-node.
 
 const testOrg = `test-org-dash-${Date.now()}`;
 const testEmail = `test-dash-${Date.now()}@sentra-test.com`;
-const testPassword = 'TestPass123!'; // NOSONAR - test credential, not a real secret
+const testPassword = process.env.TEST_PASSWORD || process.env.TEST_ADMIN_PASSWORD || 'TestPassword123!';
 
 async function login(page: any) {
   await page.setViewportSize({ width: 1280, height: 720 });
@@ -13,7 +13,7 @@ async function login(page: any) {
   // Set localStorage item to bypass onboarding wizard for new registration
   await page.evaluate(() => localStorage.setItem('sentra_onboarded', 'true'));
   await page.fill('input[type="email"]', testEmail);
-  await page.fill('input[type="password"]', testPassword);
+  await page.fill('input[type="password"]', testPassword!);
   await page.click('button[type="submit"]');
   await expect(page).toHaveURL(/(?:dashboard|app)/, { timeout: 15000 });
   await expect(page.locator('aside')).toBeVisible({ timeout: 10000 });
@@ -21,10 +21,48 @@ async function login(page: any) {
 
 test.describe('Dashboard E2E', () => {
 
-  test.beforeAll(async ({ request }) => {
-    await request.post(`${TEST_BASE_URL}/api/v1/auth/register`, {
-      data: { email: testEmail, password: testPassword, fullName: 'Dash Test', organizationName: testOrg }
+  test.beforeAll(async () => {
+    if (!testPassword) {
+      throw new Error('TEST_PASSWORD environment variable is required for dashboard E2E tests.');
+    }
+
+    const registerPayload = {
+      email: testEmail,
+      password: testPassword,
+      fullName: 'Dash Test',
+      organizationName: testOrg,
+    };
+
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+
+    let res = await fetch(`${TEST_BASE_URL}/api/v1/auth/register`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(registerPayload),
     });
+
+    if (res.status === 403) {
+      const resBody = await res.clone().json().catch(() => ({}));
+      if (resBody?.error === 'CSRF_INVALID') {
+        const csrfToken = res.headers.get('x-csrf-token');
+        const setCookie = res.headers.get('set-cookie');
+        if (csrfToken) headers['x-csrf-token'] = csrfToken;
+        if (setCookie) {
+          const rawCookie = Array.isArray(setCookie) ? setCookie[0] : setCookie;
+          headers['Cookie'] = rawCookie.split(';')[0].trim();
+        }
+
+        res = await fetch(`${TEST_BASE_URL}/api/v1/auth/register`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(registerPayload),
+        });
+      }
+    }
+
+    if (res.status !== 201 && res.status !== 200) {
+      throw new Error(`Failed to register dashboard test user. Status: ${res.status}, Body: ${await res.text()}`);
+    }
   });
 
   test('Full login flow renders dashboard', async ({ page }) => {

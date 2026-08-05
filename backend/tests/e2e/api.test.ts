@@ -1,5 +1,6 @@
 import request from 'supertest';
 import { getAuthToken } from './helpers/getAuthToken';
+import { setupE2ETestToken } from './helpers/testSetup';
 
 const AUTH_TOKEN = getAuthToken();
 const TEST_BASE_URL = process.env.TEST_BASE_URL || 'https://sentra-backend-node.onrender.com';
@@ -9,17 +10,8 @@ describe('Core API Routes', () => {
   let agentId: string;
 
   beforeAll(async () => {
-    // If no token is loaded, fallback to registering locally
     if (!token) {
-      const testOrg = `test-org-api-${Date.now()}`;
-      const testEmail = `test-api-${Date.now()}@sentra-test.com`;
-      await request(TEST_BASE_URL).post('/api/v1/auth/register').send({
-        email: testEmail, password: 'TestPass123!', fullName: 'Test', organizationName: testOrg
-      });
-      const loginRes = await request(TEST_BASE_URL).post('/api/v1/auth/login').send({
-        email: testEmail, password: 'TestPass123!'
-      });
-      token = loginRes.body.data?.accessToken;
+      token = await setupE2ETestToken('api');
     }
   });
 

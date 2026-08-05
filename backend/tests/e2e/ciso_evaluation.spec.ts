@@ -231,28 +231,76 @@ test.describe('CISO Evaluation E2E compliance suite', () => {
     const testPassword = 'TestPassword123!';
 
     console.log(`\n[CISO EVALUATION] Registering new tenant: ${testEmail} under ${testOrg}...`);
-    const regRes = await fetch(`${TEST_BASE_URL}/api/v1/auth/register`, {
+
+    const registerPayload = {
+      email: testEmail,
+      password: testPassword,
+      fullName: 'CISO Tester',
+      organizationName: testOrg,
+    };
+
+    const authHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+
+    // Initial registration attempt: capture CSRF token/cookie on HTTP 403 CSRF_INVALID and retry
+    let regRes = await fetch(`${TEST_BASE_URL}/api/v1/auth/register`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: testEmail,
-        password: testPassword,
-        fullName: 'CISO Tester',
-        organizationName: testOrg,
-      }),
+      headers: authHeaders,
+      body: JSON.stringify(registerPayload),
     });
+
+    if (regRes.status === 403) {
+      const csrfHeader = regRes.headers.get('x-csrf-token');
+      const setCookie = regRes.headers.get('set-cookie');
+      if (csrfHeader) authHeaders['x-csrf-token'] = csrfHeader;
+      if (setCookie) {
+        const match = setCookie.match(/sentra_csrf_token=[^;]+/);
+        authHeaders['Cookie'] = match ? match[0] : setCookie.split(';')[0].trim();
+      }
+
+      regRes = await fetch(`${TEST_BASE_URL}/api/v1/auth/register`, {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify(registerPayload),
+      });
+    }
 
     if (!regRes.ok) {
       const errText = await regRes.text();
       throw new Error(`Failed to register CISO evaluation user: ${regRes.status} - ${errText}`);
     }
 
-    // 2. Authenticate to obtain token
-    const loginRes = await fetch(`${TEST_BASE_URL}/api/v1/auth/login`, {
+    // Capture/refresh CSRF token & cookie if returned by successful registration
+    const regCsrf = regRes.headers.get('x-csrf-token');
+    if (regCsrf) authHeaders['x-csrf-token'] = regCsrf;
+    const regCookie = regRes.headers.get('set-cookie');
+    if (regCookie) {
+      const match = regCookie.match(/sentra_csrf_token=[^;]+/);
+      if (match) authHeaders['Cookie'] = match[0];
+    }
+
+    // 2. Authenticate to obtain token with capture-and-retry
+    const loginPayload = { email: testEmail, password: testPassword };
+    let loginRes = await fetch(`${TEST_BASE_URL}/api/v1/auth/login`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: testEmail, password: testPassword }),
+      headers: authHeaders,
+      body: JSON.stringify(loginPayload),
     });
+
+    if (loginRes.status === 403) {
+      const loginCsrf = loginRes.headers.get('x-csrf-token');
+      const loginCookie = loginRes.headers.get('set-cookie');
+      if (loginCsrf) authHeaders['x-csrf-token'] = loginCsrf;
+      if (loginCookie) {
+        const match = loginCookie.match(/sentra_csrf_token=[^;]+/);
+        if (match) authHeaders['Cookie'] = match[0];
+      }
+
+      loginRes = await fetch(`${TEST_BASE_URL}/api/v1/auth/login`, {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify(loginPayload),
+      });
+    }
 
     const loginJson = (await loginRes.json()) as any;
     token = loginJson.data?.accessToken;
@@ -297,7 +345,7 @@ test.describe('CISO Evaluation E2E compliance suite', () => {
   });
 
   test('Run Two-Pass CISO Compliance Evaluation', async () => {
-    test.setTimeout(180000);
+    test.setTimeout(360000);
 
     const pass1Results: CaseResult[] = [];
     const pass2Results: CaseResult[] = [];

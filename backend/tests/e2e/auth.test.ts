@@ -4,11 +4,45 @@ import { getAuthToken } from './helpers/getAuthToken';
 const AUTH_TOKEN = getAuthToken();
 const TEST_BASE_URL = process.env.TEST_BASE_URL || 'https://sentra-backend-node.onrender.com';
 
+const testPassword = process.env.TEST_PASSWORD;
 const testEmail = `ci-e2e-${Date.now()}@sentra-test.com`;
 const testOrg = `ci-org-${Date.now()}`;
-const testPassword = 'TestPass123!';
 const testEmail2 = `ci-e2e2-${Date.now()}@sentra-test.com`;
 const testOrg2 = `ci-org2-${Date.now()}`;
+
+let cachedCsrfToken = '';
+let cachedCookie = '';
+
+async function postWithCsrf(path: string, body: object) {
+  let req = request(TEST_BASE_URL).post(path);
+  if (cachedCsrfToken) req = req.set('x-csrf-token', cachedCsrfToken);
+  if (cachedCookie) req = req.set('Cookie', cachedCookie);
+
+  let res = await req.send(body);
+
+  if (res.status === 403 && res.body?.error === 'CSRF_INVALID') {
+    const extractedToken = res.headers['x-csrf-token'];
+    const setCookieHeader = res.headers['set-cookie'];
+    const rawCookie = Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader;
+
+    if (extractedToken) cachedCsrfToken = extractedToken;
+    if (rawCookie) cachedCookie = rawCookie.split(';')[0].trim();
+
+    let retryReq = request(TEST_BASE_URL).post(path);
+    if (cachedCsrfToken) retryReq = retryReq.set('x-csrf-token', cachedCsrfToken);
+    if (cachedCookie) retryReq = retryReq.set('Cookie', cachedCookie);
+    res = await retryReq.send(body);
+  } else {
+    const extractedToken = res.headers['x-csrf-token'];
+    const setCookieHeader = res.headers['set-cookie'];
+    const rawCookie = Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader;
+
+    if (extractedToken) cachedCsrfToken = extractedToken;
+    if (rawCookie) cachedCookie = rawCookie.split(';')[0].trim();
+  }
+
+  return res;
+}
 
 describe('Auth Flow', () => {
   let authToken: string = AUTH_TOKEN;
@@ -17,22 +51,18 @@ describe('Auth Flow', () => {
   let orgId2: string;
 
   beforeAll(async () => {
-    // Server warm-up handled by globalSetup — no sleep needed here
-  });
-
-  afterAll(async () => {
-    // Clean up would typically go here or be handled by an external script
+    if (!testPassword) {
+      throw new Error('TEST_PASSWORD is required in environment variables for auth E2E tests.');
+    }
   });
 
   test('POST /api/v1/auth/register - rejects weak password with 400 validation error', async () => {
-    const res = await request(TEST_BASE_URL)
-      .post('/api/v1/auth/register')
-      .send({
-        email: `weak-${Date.now()}@sentra-test.com`,
-        password: 'weak',
-        fullName: 'Weak User',
-        organizationName: 'Weak Org'
-      });
+    const res = await postWithCsrf('/api/v1/auth/register', {
+      email: `weak-${Date.now()}@sentra-test.com`,
+      password: 'weak',
+      fullName: 'Weak User',
+      organizationName: 'Weak Org'
+    });
 
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
@@ -48,14 +78,12 @@ describe('Auth Flow', () => {
   });
 
   test('POST /api/v1/auth/register - creates org and user', async () => {
-    const res = await request(TEST_BASE_URL)
-      .post('/api/v1/auth/register')
-      .send({
-        email: testEmail,
-        password: testPassword,
-        fullName: 'Test User',
-        organizationName: testOrg
-      });
+    const res = await postWithCsrf('/api/v1/auth/register', {
+      email: testEmail,
+      password: testPassword!,
+      fullName: 'Test User',
+      organizationName: testOrg
+    });
       
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);
@@ -63,12 +91,10 @@ describe('Auth Flow', () => {
   });
 
   test('POST /api/v1/auth/login - returns JWT', async () => {
-    const res = await request(TEST_BASE_URL)
-      .post('/api/v1/auth/login')
-      .send({
-        email: testEmail,
-        password: testPassword
-      });
+    const res = await postWithCsrf('/api/v1/auth/login', {
+      email: testEmail,
+      password: testPassword!
+    });
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -81,18 +107,17 @@ describe('Auth Flow', () => {
 
   test('Org isolation - user cannot access another org data', async () => {
     // Create second org
-    await request(TEST_BASE_URL)
-      .post('/api/v1/auth/register')
-      .send({
-        email: testEmail2,
-        password: testPassword,
-        fullName: 'Test User 2',
-        organizationName: testOrg2
-      });
+    await postWithCsrf('/api/v1/auth/register', {
+      email: testEmail2,
+      password: testPassword!,
+      fullName: 'Test User 2',
+      organizationName: testOrg2
+    });
 
-    const loginRes = await request(TEST_BASE_URL)
-      .post('/api/v1/auth/login')
-      .send({ email: testEmail2, password: testPassword });
+    const loginRes = await postWithCsrf('/api/v1/auth/login', {
+      email: testEmail2,
+      password: testPassword!
+    });
       
     authToken2 = loginRes.body.data.accessToken;
     orgId2 = loginRes.body.data.user.organizationId;

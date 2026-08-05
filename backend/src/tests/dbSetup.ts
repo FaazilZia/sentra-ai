@@ -4,8 +4,8 @@ import path from 'path';
 export default async function dbSetup(): Promise<void> {
   console.log('\n[dbSetup] Starting Test Database Setup...');
   
-  // 1. Point to DATABASE_URL_TEST env var or fall back to default PG test DB
-  const testDbUrl = process.env.DATABASE_URL_TEST || 'postgresql://mohammadfaazilzia@localhost:5432/sentra_jest_test';
+  // 1. Point to DATABASE_URL_TEST env var, DATABASE_URL, or fall back to default PG test DB
+  const testDbUrl = process.env.DATABASE_URL_TEST || process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/sentra_test';
   
   // Set DATABASE_URL, DIRECT_URL, and TEST_DATABASE_URL to DATABASE_URL_TEST so migrations and prisma use the test DB
   process.env.DATABASE_URL = testDbUrl;

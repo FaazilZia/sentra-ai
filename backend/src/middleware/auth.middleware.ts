@@ -163,8 +163,8 @@ async function handleJwtToken(token: string, req: any, res: Response): Promise<{
       Sentry.setTag('organizationId', req.user.organizationId);
       return { handled: true };
     }
-  } catch {
-    // invalid JWT
+  } catch (error) {
+    logger.warn('handleJwtToken failed:', error);
   }
   return { handled: false };
 }

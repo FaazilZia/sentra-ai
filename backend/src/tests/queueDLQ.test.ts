@@ -1,38 +1,50 @@
-// Mock queue.service queues to control the jobs they return
-jest.mock('../services/queue.service', () => {
-  const actual = jest.requireActual('../services/queue.service');
+// Mock bullmq module to control Queue instances across all services
+jest.mock('bullmq', () => {
+  const actual = jest.requireActual('bullmq');
+  class MockQueue {
+    name: string;
+    constructor(name: string) {
+      this.name = name;
+    }
+    getWaitingCount = jest.fn().mockResolvedValue(1);
+    getActiveCount = jest.fn().mockResolvedValue(0);
+    getCompletedCount = jest.fn().mockResolvedValue(5);
+    getFailedCount = jest.fn().mockResolvedValue(2);
+    getJobCounts = jest.fn().mockResolvedValue({ waiting: 1, active: 0, completed: 5, failed: 2, delayed: 0 });
+    getFailed = jest.fn().mockResolvedValue([
+      {
+        id: 'test-job-1',
+        name: 'log',
+        data: { test: 'data' },
+        failedReason: 'Some error message',
+        attemptsMade: 3,
+        timestamp: 1622548800000,
+        retry: jest.fn().mockResolvedValue(undefined),
+      }
+    ]);
+    getJob = jest.fn().mockImplementation((id: string) => {
+      if (id === 'test-job-1') {
+        return Promise.resolve({
+          id: 'test-job-1',
+          retry: jest.fn().mockResolvedValue(undefined),
+        });
+      }
+      return Promise.resolve(null);
+    });
+    clean = jest.fn().mockResolvedValue([]);
+    on = jest.fn();
+    add = jest.fn().mockResolvedValue({ id: 'job-added' });
+  }
+
   return {
     ...actual,
-    activityQueue: {
-      getJobCounts: jest.fn().mockResolvedValue({ waiting: 1, active: 0, completed: 5, failed: 2, delayed: 0 }),
-      getFailed: jest.fn().mockResolvedValue([
-        {
-          id: 'test-job-1',
-          name: 'log',
-          data: { test: 'data' },
-          failedReason: 'Some error message',
-          attemptsMade: 3,
-          timestamp: 1622548800000,
-          retry: jest.fn().mockResolvedValue(undefined),
-        }
-      ]),
-      getJob: jest.fn().mockImplementation((id) => {
-        if (id === 'test-job-1') {
-          return {
-            id: 'test-job-1',
-            retry: jest.fn().mockResolvedValue(undefined),
-          };
-        }
-        return null;
-      }),
-      clean: jest.fn().mockResolvedValue([]),
-    },
+    Queue: MockQueue,
   };
 });
 
 // Mock database to provide a REAL Prisma client connected to the test DB directly, bypassing lazy initialization proxy
 jest.mock('../config/db', () => {
-  const TEST_URL = process.env.TEST_DATABASE_URL || 'postgresql://mohammadfaazilzia@localhost:5432/sentra_jest_test';
+  const TEST_URL = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/sentra_test';
   const { PrismaClient } = require('@prisma/client');
   const { PrismaPg } = require('@prisma/adapter-pg');
   const { Pool } = require('pg');
@@ -69,7 +81,7 @@ describe('BullMQ DLQ Configuration & Superadmin APIs', () => {
       // 1. Resolve or seed a SUPER_ADMIN user
       let superAdmin = await prisma.users.findFirst({ where: { role: 'SUPER_ADMIN', is_active: true } });
       if (!superAdmin) {
-        const org = await prisma.organizations.findFirst();
+        const org = await prisma.organizations.findFirst({ where: { is_active: true } });
         superAdmin = await prisma.users.create({
           data: {
             id: 'test-superadmin-id',
@@ -87,7 +99,7 @@ describe('BullMQ DLQ Configuration & Superadmin APIs', () => {
       // 2. Resolve or seed a MEMBER user
       let normalUser = await prisma.users.findFirst({ where: { role: 'MEMBER', is_active: true } });
       if (!normalUser) {
-        const org = await prisma.organizations.findFirst();
+        const org = await prisma.organizations.findFirst({ where: { is_active: true } });
         normalUser = await prisma.users.create({
           data: {
             id: 'test-member-id',

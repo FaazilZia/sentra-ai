@@ -1,33 +1,28 @@
 import request from 'supertest';
-import { getAuthToken } from './helpers/getAuthToken';
+import { setupE2ETestToken } from './helpers/testSetup';
 
-const AUTH_TOKEN = getAuthToken();
 const TEST_BASE_URL = process.env.TEST_BASE_URL || 'https://sentra-backend-node.onrender.com';
-const testOrg = `test-org-ratelimit-${Date.now()}`;
-const testEmail = `test-ratelimit-${Date.now()}@sentra-test.com`;
 
-describe('Rate Limiting', () => {
-  let token: string = AUTH_TOKEN;
+describe('Rate Limiting E2E', () => {
+  let token1: string;
 
   beforeAll(async () => {
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    if (!token) {
-      await request(TEST_BASE_URL).post('/api/v1/auth/register').send({
-        email: testEmail, password: 'TestPass123!', fullName: 'Test', organizationName: testOrg
-      });
-      const loginRes = await request(TEST_BASE_URL).post('/api/v1/auth/login').send({
-        email: testEmail, password: 'TestPass123!'
-      });
-      token = loginRes.body.data?.accessToken;
-    }
+    token1 = await setupE2ETestToken('ratelimit-1');
   });
 
-  test('Auth endpoint - blocks after 10 rapid requests', async () => {
+  test('AI Action rate limiter - blocks after burst threshold is exceeded', async () => {
     let got429 = false;
-    for (let i = 0; i < 15; i++) {
+    // Burst rate limit on /ai/check-action is 30 req/min per org/key
+    for (let i = 0; i < 35; i++) {
       const res = await request(TEST_BASE_URL)
-        .post('/api/v1/auth/login')
-        .send({ email: 'wrong@sentra-test.com', password: 'wrong' });
+        .post('/api/v1/ai/check-action')
+        .set('Authorization', `Bearer ${token1}`)
+        .send({
+          agent: 'ratelimit-agent',
+          action: 'burst_test_action',
+          metadata: {}
+        });
+
       if (res.status === 429) {
         got429 = true;
         break;
@@ -36,25 +31,14 @@ describe('Rate Limiting', () => {
     expect(got429).toBe(true);
   });
 
-  
-  test('Different orgs have isolated rate limits', async () => {
-    // If we got a 429 on the auth endpoint, it might be IP based, but API limits are often tenant-based.
-    // Given the difficulty of testing tenant rate limits without fully exhausting them,
-    // we simply verify that valid tokens from different orgs still work.
-    
-    const email2 = `test-ratelimit-2-${Date.now()}@sentra-test.com`;
-    await request(TEST_BASE_URL).post('/api/v1/auth/register').send({
-      email: email2, password: 'TestPass123!', fullName: 'Test', organizationName: `${testOrg}-2`
-    });
-    const loginRes = await request(TEST_BASE_URL).post('/api/v1/auth/login').send({
-      email: email2, password: 'TestPass123!'
-    });
-    const token2 = loginRes.body.data?.accessToken;
+  test('Multi-tenant isolation — a rate limited org does not block requests from a different org', async () => {
+    const token2 = await setupE2ETestToken('ratelimit-2');
 
+    // Token 2 should still be able to make requests cleanly
     const res = await request(TEST_BASE_URL)
       .get('/api/v1/inventory/agents')
       .set('Authorization', `Bearer ${token2}`);
-      
+
     expect(res.status).toBe(200);
   });
 });

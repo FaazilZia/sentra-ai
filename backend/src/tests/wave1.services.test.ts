@@ -14,12 +14,6 @@ jest.mock('../server', () => ({
   io: { to: jest.fn().mockReturnThis(), emit: jest.fn() },
 }));
 
-import prisma from '../config/db';
-import { NotificationService } from '../services/notification.service';
-import { EvidenceService } from '../services/evidence.service';
-import { SearchService } from '../services/search.service';
-import { NotificationType, EvidenceType } from '@prisma/client';
-
 // Mock database
 jest.mock('../config/db', () => ({
   __esModule: true,
@@ -60,6 +54,12 @@ jest.mock('../config/db', () => ({
     },
   },
 }));
+
+import prisma from '../config/db';
+import { NotificationService } from '../services/notification.service';
+import { EvidenceService } from '../services/evidence.service';
+import { SearchService } from '../services/search.service';
+import { NotificationType, EvidenceType } from '@prisma/client';
 
 // Cast prisma as any to override mock values easily
 const db = prisma as any;

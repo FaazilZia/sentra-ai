@@ -16,7 +16,7 @@ jest.mock('../server', () => ({
 
 // Mock database to provide a REAL Prisma client connected to the test DB
 jest.mock('../config/db', () => {
-  const TEST_URL = process.env.TEST_DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/sentra_test';
+  const TEST_URL = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL_TEST || process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/sentra_test';
   const { PrismaClient } = require('@prisma/client');
   const { PrismaPg } = require('@prisma/adapter-pg');
   const { Pool } = require('pg');
@@ -35,6 +35,14 @@ import request from 'supertest';
 import app from '../app';
 
 describe('Auth Rate Limiting Integration Test', () => {
+  beforeAll(() => {
+    process.env.TEST_STRICT_LOGIN_LIMIT = '10';
+  });
+
+  afterAll(() => {
+    delete process.env.TEST_STRICT_LOGIN_LIMIT;
+  });
+
   it('should return 429 after 10 login attempts', async () => {
     // Send 10 requests which should be allowed (even if they fail with 401 or pass with 200, rate limiting counts them)
     for (let i = 0; i < 10; i++) {

@@ -1,10 +1,3 @@
-import { processConnectorScan } from '../services/queue.service';
-import prisma from '../config/db';
-import { S3Client } from '@aws-sdk/client-s3';
-import { google } from 'googleapis';
-import { Client as PgClient } from 'pg';
-import { decrypt } from '../utils/encryption';
-
 jest.mock('../config/db', () => ({
   connectors: {
     findUnique: jest.fn(),
@@ -26,6 +19,13 @@ jest.mock('@aws-sdk/client-s3');
 jest.mock('googleapis');
 jest.mock('pg');
 jest.mock('../utils/encryption');
+
+import { processConnectorScan } from '../services/queue.service';
+import prisma from '../config/db';
+import { S3Client } from '@aws-sdk/client-s3';
+import { google } from 'googleapis';
+import { Client as PgClient } from 'pg';
+import { decrypt } from '../utils/encryption';
 
 describe('Connector Scanning Logic', () => {
   const orgId = 'test-org-123';

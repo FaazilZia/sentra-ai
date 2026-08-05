@@ -59,24 +59,45 @@ process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
 
 // Use the same CORS origins as Express — never wildcard in production
-const allowedOrigins = process.env.FRONTEND_URL
-  ? process.env.FRONTEND_URL.split(',').map(o => o.trim())
-  : [];
-
-const socketOrigins = [
-  ...allowedOrigins,
-  'http://localhost:5173',
-  'http://localhost:3000'
-];
+const isProduction = process.env.NODE_ENV === 'production';
+const corsOrigins = process.env.CORS_ALLOWED_ORIGINS || process.env.FRONTEND_URL;
+const allowedOrigins = corsOrigins
+  ? corsOrigins.split(',').map(o => o.trim())
+  : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:4173'];
 
 const io = new Server(httpServer, {
   cors: {
-    origin: socketOrigins,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      const isAllowed = allowedOrigins.includes(origin) ||
+                        (!isProduction && origin.includes('localhost')) ||
+                        origin.endsWith('.vercel.app');
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
     methods: ['GET', 'POST']
   },
   pingInterval: process.env.IS_E2E_TEST === 'true' ? 2000 : 25000,
   pingTimeout: process.env.IS_E2E_TEST === 'true' ? 2000 : 20000,
 });
+
+function parseCookieHeader(cookieHeader?: string): Record<string, string> {
+  if (!cookieHeader) return {};
+  const cookies: Record<string, string> = {};
+  cookieHeader.split(';').forEach(pair => {
+    const idx = pair.indexOf('=');
+    if (idx > 0) {
+      const key = pair.substring(0, idx).trim();
+      const value = pair.substring(idx + 1).trim();
+      cookies[key] = decodeURIComponent(value);
+    }
+  });
+  return cookies;
+}
 
 io.use(async (socket, next) => {
   try {
@@ -87,7 +108,11 @@ io.use(async (socket, next) => {
     const bearerToken = typeof headerValue === 'string' && headerValue.startsWith('Bearer ')
       ? headerValue.slice(7)
       : undefined;
-    const token = authToken || bearerToken;
+    const cookieHeader = socket.handshake.headers.cookie;
+    const cookies = parseCookieHeader(cookieHeader);
+    const cookieToken = cookies.accessToken || cookies.token;
+
+    const token = authToken || bearerToken || cookieToken;
 
     if (!token) {
       return next(new Error('Socket authentication required'));
