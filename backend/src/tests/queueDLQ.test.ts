@@ -1,13 +1,17 @@
-// Mock queue.service queues to control the jobs they return
-jest.mock('../services/queue.service', () => {
-  const actual = jest.requireActual('../services/queue.service');
-  const createMockQueue = () => ({
-    getWaitingCount: jest.fn().mockResolvedValue(1),
-    getActiveCount: jest.fn().mockResolvedValue(0),
-    getCompletedCount: jest.fn().mockResolvedValue(5),
-    getFailedCount: jest.fn().mockResolvedValue(2),
-    getJobCounts: jest.fn().mockResolvedValue({ waiting: 1, active: 0, completed: 5, failed: 2, delayed: 0 }),
-    getFailed: jest.fn().mockResolvedValue([
+// Mock bullmq module to control Queue instances across all services
+jest.mock('bullmq', () => {
+  const actual = jest.requireActual('bullmq');
+  class MockQueue {
+    name: string;
+    constructor(name: string) {
+      this.name = name;
+    }
+    getWaitingCount = jest.fn().mockResolvedValue(1);
+    getActiveCount = jest.fn().mockResolvedValue(0);
+    getCompletedCount = jest.fn().mockResolvedValue(5);
+    getFailedCount = jest.fn().mockResolvedValue(2);
+    getJobCounts = jest.fn().mockResolvedValue({ waiting: 1, active: 0, completed: 5, failed: 2, delayed: 0 });
+    getFailed = jest.fn().mockResolvedValue([
       {
         id: 'test-job-1',
         name: 'log',
@@ -17,25 +21,24 @@ jest.mock('../services/queue.service', () => {
         timestamp: 1622548800000,
         retry: jest.fn().mockResolvedValue(undefined),
       }
-    ]),
-    getJob: jest.fn().mockImplementation((id) => {
+    ]);
+    getJob = jest.fn().mockImplementation((id: string) => {
       if (id === 'test-job-1') {
-        return {
+        return Promise.resolve({
           id: 'test-job-1',
           retry: jest.fn().mockResolvedValue(undefined),
-        };
+        });
       }
-      return null;
-    }),
-    clean: jest.fn().mockResolvedValue([]),
-  });
+      return Promise.resolve(null);
+    });
+    clean = jest.fn().mockResolvedValue([]);
+    on = jest.fn();
+    add = jest.fn().mockResolvedValue({ id: 'job-added' });
+  }
 
   return {
     ...actual,
-    activityQueue: createMockQueue(),
-    connectorQueue: createMockQueue(),
-    driftQueue: createMockQueue(),
-    retentionQueue: createMockQueue(),
+    Queue: MockQueue,
   };
 });
 
