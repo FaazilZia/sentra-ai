@@ -5,6 +5,7 @@ process.env.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'mock_jwt_ref
 jest.mock('ioredis', () => {
   const { EventEmitter } = require('events');
   class MockRedis extends EventEmitter {
+    connect = jest.fn().mockResolvedValue(undefined);
     get = jest.fn().mockResolvedValue(null);
     set = jest.fn().mockResolvedValue('OK');
     del = jest.fn().mockResolvedValue(1);

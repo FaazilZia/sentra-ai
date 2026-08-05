@@ -73,9 +73,11 @@ function createClient(name: string, overrides: Partial<RedisOptions> = {}): Redi
     logger.info(`[Redis:${name}] Ready.`);
   });
 
-  client.connect().catch((err) => {
-    logger.warn(`[Redis:${name}] Initial connect failed: ${err.message}`);
-  });
+  if (typeof client.connect === 'function') {
+    client.connect().catch((err) => {
+      logger.warn(`[Redis:${name}] Initial connect failed: ${err.message}`);
+    });
+  }
 
   return client;
 }
