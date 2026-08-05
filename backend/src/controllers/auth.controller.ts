@@ -212,7 +212,11 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
     // Save JTI reference in Redis if available
     const redis = getRedisClient();
     if (redis) {
-      await redis.set(`email-verification:last-jti:${result.user.id}`, tokenJti, 'EX', 86400);
+      try {
+        await redis.set(`email-verification:last-jti:${result.user.id}`, tokenJti, 'EX', 86400);
+      } catch (redisErr: any) {
+        logger.warn(`Failed to store email verification JTI in Redis for user ${result.user.id}: ${redisErr.message}`);
+      }
     }
 
     // Send verification email link
@@ -557,7 +561,11 @@ export const forgotPassword = async (req: Request, res: Response, next: NextFunc
     // Save JTI in Redis with 1h TTL to track token use
     const redis = getRedisClient();
     if (redis) {
-      await redis.set(`password-reset:last-jti:${user.id}`, jti, 'EX', 3600);
+      try {
+        await redis.set(`password-reset:last-jti:${user.id}`, jti, 'EX', 3600);
+      } catch (redisErr: any) {
+        logger.warn(`Failed to store password reset JTI in Redis for user ${user.id}: ${redisErr.message}`);
+      }
     }
 
     const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').split(',')[0];
@@ -629,7 +637,11 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
 
     // Mark the reset token as used (store used JTI in Redis with TTL matching token expiry)
     if (redis) {
-      await redis.set(`jti:used:${decoded.jti}`, '1', 'EX', 3600);
+      try {
+        await redis.set(`jti:used:${decoded.jti}`, '1', 'EX', 3600);
+      } catch (redisErr: any) {
+        logger.warn(`Failed to mark reset token JTI as used in Redis: ${redisErr.message}`);
+      }
     }
 
     res.status(200).json({ success: true, message: 'Password reset successfully' });
@@ -669,7 +681,11 @@ export const verifyEmail = async (req: Request, res: Response, next: NextFunctio
     });
 
     if (redis) {
-      await redis.set(`jti:used:${decoded.jti}`, '1', 'EX', 86400);
+      try {
+        await redis.set(`jti:used:${decoded.jti}`, '1', 'EX', 86400);
+      } catch (redisErr: any) {
+        logger.warn(`Failed to mark verification token JTI as used in Redis: ${redisErr.message}`);
+      }
     }
 
     const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').split(',')[0];
@@ -694,12 +710,16 @@ export const resendVerification = async (req: Request, res: Response, next: Next
     const tokenJti = randomUUID();
     const redis = getRedisClient();
     if (redis) {
-      // Invalidate previous verification tokens
-      const previousJti = await redis.get(`email-verification:last-jti:${user.id}`);
-      if (previousJti) {
-        await redis.set(`jti:used:${previousJti}`, '1', 'EX', 86400);
+      try {
+        // Invalidate previous verification tokens
+        const previousJti = await redis.get(`email-verification:last-jti:${user.id}`);
+        if (previousJti) {
+          await redis.set(`jti:used:${previousJti}`, '1', 'EX', 86400);
+        }
+        await redis.set(`email-verification:last-jti:${user.id}`, tokenJti, 'EX', 86400);
+      } catch (redisErr: any) {
+        logger.warn(`Failed to update email verification JTI in Redis for user ${user.id}: ${redisErr.message}`);
       }
-      await redis.set(`email-verification:last-jti:${user.id}`, tokenJti, 'EX', 86400);
     }
 
     const verificationToken = generateCustomToken(
