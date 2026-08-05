@@ -1,32 +1,41 @@
 // Mock queue.service queues to control the jobs they return
 jest.mock('../services/queue.service', () => {
   const actual = jest.requireActual('../services/queue.service');
+  const createMockQueue = () => ({
+    getWaitingCount: jest.fn().mockResolvedValue(1),
+    getActiveCount: jest.fn().mockResolvedValue(0),
+    getCompletedCount: jest.fn().mockResolvedValue(5),
+    getFailedCount: jest.fn().mockResolvedValue(2),
+    getJobCounts: jest.fn().mockResolvedValue({ waiting: 1, active: 0, completed: 5, failed: 2, delayed: 0 }),
+    getFailed: jest.fn().mockResolvedValue([
+      {
+        id: 'test-job-1',
+        name: 'log',
+        data: { test: 'data' },
+        failedReason: 'Some error message',
+        attemptsMade: 3,
+        timestamp: 1622548800000,
+        retry: jest.fn().mockResolvedValue(undefined),
+      }
+    ]),
+    getJob: jest.fn().mockImplementation((id) => {
+      if (id === 'test-job-1') {
+        return {
+          id: 'test-job-1',
+          retry: jest.fn().mockResolvedValue(undefined),
+        };
+      }
+      return null;
+    }),
+    clean: jest.fn().mockResolvedValue([]),
+  });
+
   return {
     ...actual,
-    activityQueue: {
-      getJobCounts: jest.fn().mockResolvedValue({ waiting: 1, active: 0, completed: 5, failed: 2, delayed: 0 }),
-      getFailed: jest.fn().mockResolvedValue([
-        {
-          id: 'test-job-1',
-          name: 'log',
-          data: { test: 'data' },
-          failedReason: 'Some error message',
-          attemptsMade: 3,
-          timestamp: 1622548800000,
-          retry: jest.fn().mockResolvedValue(undefined),
-        }
-      ]),
-      getJob: jest.fn().mockImplementation((id) => {
-        if (id === 'test-job-1') {
-          return {
-            id: 'test-job-1',
-            retry: jest.fn().mockResolvedValue(undefined),
-          };
-        }
-        return null;
-      }),
-      clean: jest.fn().mockResolvedValue([]),
-    },
+    activityQueue: createMockQueue(),
+    connectorQueue: createMockQueue(),
+    driftQueue: createMockQueue(),
+    retentionQueue: createMockQueue(),
   };
 });
 
