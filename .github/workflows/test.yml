@@ -161,6 +161,7 @@ jobs:
           TEST_FRONTEND_URL: http://localhost:4173
           TEST_BASE_URL: http://localhost:10000
           IS_E2E_TEST: "true"
+          TEST_PASSWORD: TestPass123!
           TEST_ADMIN_PASSWORD: ${{ secrets.TEST_ADMIN_PASSWORD }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY || 'dummy-anthropic-key-for-ci' }}
 

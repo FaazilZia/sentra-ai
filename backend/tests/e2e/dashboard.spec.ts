@@ -5,7 +5,7 @@ const TEST_BASE_URL = process.env.TEST_BASE_URL || 'https://sentra-backend-node.
 
 const testOrg = `test-org-dash-${Date.now()}`;
 const testEmail = `test-dash-${Date.now()}@sentra-test.com`;
-const testPassword = process.env.TEST_PASSWORD;
+const testPassword = process.env.TEST_PASSWORD || process.env.TEST_ADMIN_PASSWORD || 'TestPassword123!';
 
 async function login(page: any) {
   await page.setViewportSize({ width: 1280, height: 720 });
