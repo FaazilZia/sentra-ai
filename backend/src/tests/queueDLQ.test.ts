@@ -61,16 +61,9 @@ jest.mock('../config/db', () => {
 
 import request from 'supertest';
 import app from '../app';
-import { Queue } from 'bullmq';
 import { defaultJobOptions } from '../services/queue.service';
 import { generateAccessToken } from '../utils/jwt';
 import prisma from '../config/db';
-
-jest.spyOn(Queue.prototype, 'getWaitingCount').mockResolvedValue(1);
-jest.spyOn(Queue.prototype, 'getActiveCount').mockResolvedValue(0);
-jest.spyOn(Queue.prototype, 'getCompletedCount').mockResolvedValue(5);
-jest.spyOn(Queue.prototype, 'getFailedCount').mockResolvedValue(2);
-jest.spyOn(Queue.prototype, 'getJobCounts').mockResolvedValue({ waiting: 1, active: 0, completed: 5, failed: 2, delayed: 0 } as any);
 
 describe('BullMQ DLQ Configuration & Superadmin APIs', () => {
   it('should have the correct defaultJobOptions defined on BullMQ', () => {
