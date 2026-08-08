@@ -4,6 +4,7 @@ import { validate } from '../middleware/validate.middleware';
 import { getPolicies, getPolicyHealth, getPolicyVersions, createPolicy, getPolicyTemplates, duplicatePolicy, updatePolicy, deletePolicy, getPolicy } from '../controllers/policy.controller';
 import { policyIdVersionsParamSchema, createPolicySchema } from '../validations/policy.validation';
 import { enforcePolicyLimit } from '../middleware/plan.middleware';
+import { requirePermission } from '../services/rbac.service';
 
 const router = Router();
 
@@ -17,7 +18,7 @@ router.get(
 
 import { PolicyVersioningService } from '../services/policyVersioning.service';
 
-router.post('/:id/rollback', authenticate, async (req: any, res) => {
+router.post('/:id/rollback', authenticate, requirePermission('policies', 'update'), async (req: any, res) => {
   try {
     const organizationId = req.user.organizationId;
     const { version } = req.body;
@@ -87,10 +88,10 @@ router.get('/templates', authenticate, getPolicyTemplates);
 router.get('/', authenticate, getPolicies);
 router.get('/:id', authenticate, getPolicy);
 
-router.post('/:id/duplicate', authenticate, duplicatePolicy);
-router.post('/', authenticate, enforcePolicyLimit, validate(createPolicySchema), createPolicy);
-router.put('/:id', authenticate, updatePolicy);
-router.patch('/:id', authenticate, updatePolicy);
-router.delete('/:id', authenticate, deletePolicy);
+router.post('/:id/duplicate', authenticate, requirePermission('policies', 'create'), duplicatePolicy);
+router.post('/', authenticate, requirePermission('policies', 'create'), enforcePolicyLimit, validate(createPolicySchema), createPolicy);
+router.put('/:id', authenticate, requirePermission('policies', 'update'), updatePolicy);
+router.patch('/:id', authenticate, requirePermission('policies', 'update'), updatePolicy);
+router.delete('/:id', authenticate, requirePermission('policies', 'delete'), deletePolicy);
 
 export default router;

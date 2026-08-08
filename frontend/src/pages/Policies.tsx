@@ -20,6 +20,11 @@ import { fetchPolicies, PolicyResponse, apiBaseUrl, apiRequest, patchPolicy, del
 import { EvidenceSection } from '../components/shared/EvidenceSection';
 import { ChangeHistoryTimeline } from '../components/shared/ChangeHistoryTimeline';
 import RichPolicyEditor from '../components/shared/RichPolicyEditor';
+import DOMPurify from 'dompurify';
+
+const SANITIZE_CONFIG: DOMPurify.Config = {
+  ADD_ATTR: ['target', 'style', 'class', 'data-type', 'data-checked'],
+};
 
 
 export default function Policies() {
@@ -396,7 +401,7 @@ export default function Policies() {
               ) : (
                 <div 
                   className="text-[var(--text-xs)] text-[var(--text-secondary)] leading-relaxed prose prose-invert max-w-none break-words"
-                  dangerouslySetInnerHTML={{ __html: selectedPolicy.description || 'No description provided.' }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedPolicy.description || 'No description provided.', SANITIZE_CONFIG) }}
                 />
               )}
             </div>
