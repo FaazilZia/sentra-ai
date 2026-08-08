@@ -14,10 +14,9 @@ async function loginAsAdmin(page: Page) {
 }
 
 async function getToken(page: Page): Promise<string> {
-  const token = await page.evaluate(() =>
-    localStorage.getItem('sentra_access_token') ?? localStorage.getItem('accessToken')
-  );
-  if (!token) throw new Error('Access token missing from localStorage');
+  const cookies = await page.context().cookies();
+  const token = cookies.find(c => c.name === 'sentra_access_token')?.value;
+  if (!token) throw new Error('Access token missing from cookies');
   return token;
 }
 
@@ -52,12 +51,6 @@ test.describe('Authentication', () => {
 
   test('logout clears session and redirects to /login', async ({ page, context }) => {
     await loginAsAdmin(page);
-    await page.evaluate(() => {
-      localStorage.removeItem('sentra_access_token');
-      localStorage.removeItem('sentra_refresh_token');
-      localStorage.removeItem('accessToken');
-      sessionStorage.clear();
-    });
     await context.clearCookies();
     await page.goto('/app');
     await expect(page).toHaveURL(/\/login/, { timeout: 10_000 });
@@ -282,14 +275,9 @@ test.describe('Compliance', () => {
 });
 
 test.describe('Security & Edge Cases', () => {
-  test('protected routes redirect to login when token is cleared', async ({ page }) => {
+  test('protected routes redirect to login when token is cleared', async ({ page, context }) => {
     await loginAsAdmin(page);
-    await page.evaluate(() => {
-      localStorage.removeItem('sentra_access_token');
-      localStorage.removeItem('sentra_refresh_token');
-      localStorage.removeItem('accessToken');
-      sessionStorage.clear();
-    });
+    await context.clearCookies();
     // Hard reload forces the auth check
     await page.goto('/app/risk', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(2000); // allow React to process auth state

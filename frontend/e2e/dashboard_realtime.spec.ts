@@ -36,9 +36,10 @@ test.describe('Sentraa AI Real-time Dashboard', () => {
     const initialCount = Number.parseInt(initialText.replaceAll(',', ''), 10) || 0;
     console.log(`Initial blocked count: ${initialCount}`);
 
-    // 4. Retrieve auth token from localStorage
-    const token = await page.evaluate(() => localStorage.getItem('sentra_access_token'));
-    if (!token) throw new Error('No access token found in localStorage after login');
+    // 4. Retrieve auth token from cookies
+    const cookies = await page.context().cookies();
+    const token = cookies.find(c => c.name === 'sentra_access_token')?.value;
+    if (!token) throw new Error('No access token found in cookies after login');
     
     // 5. Fire a malicious prompt: "export" + "password" triggers multi-signal BLOCK
     console.log('Sending malicious prompt to trigger guardrail...');

@@ -135,6 +135,11 @@ export class ApiError extends Error {
 }
 
 let memoryCsrfToken: string | null = null;
+let inMemoryImpersonationToken: string | null = null;
+
+export function setImpersonationToken(token: string | null) {
+  inMemoryImpersonationToken = token;
+}
 
 export function getCsrfToken(): string | null {
   if (memoryCsrfToken) return memoryCsrfToken;
@@ -181,12 +186,8 @@ export async function apiRequest<T>(
     }
   }
 
-  const impersonationToken = localStorage.getItem('sentra_impersonation_token');
-  const accessToken = localStorage.getItem('sentra_access_token');
-  if (impersonationToken) {
-    headers.set('Authorization', `Bearer ${impersonationToken}`);
-  } else if (accessToken) {
-    headers.set('Authorization', `Bearer ${accessToken}`);
+  if (inMemoryImpersonationToken) {
+    headers.set('Authorization', `Bearer ${inMemoryImpersonationToken}`);
   }
 
   const response = await fetch(`${apiBaseUrl}${path}`, {
@@ -206,8 +207,7 @@ export async function apiRequest<T>(
 
   // Handle Token Refresh on 401
   if (response.status === 401 && retry) {
-    const tokenUsed = impersonationToken || accessToken || '';
-    window.dispatchEvent(new CustomEvent('auth:expired', { detail: { token: tokenUsed } }));
+    window.dispatchEvent(new CustomEvent('auth:expired', { detail: { token: inMemoryImpersonationToken || '' } }));
   }
 
   const responseData = await response.text();
@@ -255,7 +255,7 @@ export function registerRequest(payload: any): Promise<any> {
  */
 export function fetchCurrentUser(): Promise<AuthUser> {
   // Points to our new Node /user/me route
-  return apiRequest<AuthUser>('/user/me');
+  return apiRequest<AuthUser>('/user/me', {}, false);
 }
 
 export function fetchCompany(organizationId: string): Promise<any> {

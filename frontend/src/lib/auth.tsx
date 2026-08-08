@@ -6,7 +6,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { fetchCurrentUser, loginRequest, registerRequest, apiRequest, ApiError } from './api';
+import { fetchCurrentUser, loginRequest, registerRequest, apiRequest, ApiError, setImpersonationToken } from './api';
 
 export interface AppUser {
   id: string;
@@ -48,37 +48,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Listen for auth expiration events from api.ts
-    const handleAuthExpired = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const expiredToken = customEvent.detail?.token;
-      const currentToken = localStorage.getItem('sentra_impersonation_token') || localStorage.getItem('sentra_access_token');
-      
-      if (!expiredToken || expiredToken === currentToken) {
-        logout();
-      } else {
-        console.warn('⚠️ auth:expired ignored because the expired token does not match the active token.');
-      }
+    const handleAuthExpired = () => {
+      logout();
     };
     window.addEventListener('auth:expired', handleAuthExpired as EventListener);
-
-    // Impersonation check
-    const impToken = localStorage.getItem('sentra_impersonation_token');
-    const impUserRaw = localStorage.getItem('sentra_impersonated_user');
-    const origUserRaw = localStorage.getItem('sentra_original_user');
-
-    if (impToken && impUserRaw && origUserRaw) {
-      try {
-        setUser(JSON.parse(impUserRaw));
-        setAccessToken(impToken);
-        setOriginalUser(JSON.parse(origUserRaw));
-        setLoading(false);
-        return;
-      } catch (e) {
-        localStorage.removeItem('sentra_original_user');
-        localStorage.removeItem('sentra_impersonation_token');
-        localStorage.removeItem('sentra_impersonated_user');
-      }
-    }
 
     // Auth Bypass for local development/demo
     if (import.meta.env.VITE_BYPASS_AUTH === 'true') {
@@ -101,8 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fetchCurrentUser()
       .then((currentUser) => {
         setUser(currentUser);
-        const storedToken = localStorage.getItem('sentra_access_token');
-        setAccessToken(storedToken);
+        setAccessToken(null);
       })
       .catch(() => {
         setUser(null);
@@ -123,13 +95,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       const result = await loginRequest(email, password);
-      localStorage.setItem('sentra_access_token', result.accessToken);
-      setAccessToken(result.accessToken);
+      setAccessToken(result.accessToken || null);
       setUser(result.user);
       setOriginalUser(null);
-      localStorage.removeItem('sentra_original_user');
-      localStorage.removeItem('sentra_impersonation_token');
-      localStorage.removeItem('sentra_impersonated_user');
+      setImpersonationToken(null);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to sign in';
       setLoginError(message);
@@ -181,10 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Logout request failed:', error);
     }
-    localStorage.removeItem('sentra_access_token');
-    localStorage.removeItem('sentra_original_user');
-    localStorage.removeItem('sentra_impersonation_token');
-    localStorage.removeItem('sentra_impersonated_user');
+    setImpersonationToken(null);
     setAccessToken(null);
     setUser(null);
     setOriginalUser(null);
@@ -196,16 +162,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await apiRequest<{ token: string; user: AppUser }>(`/superadmin/impersonate/${userId}`, {
         method: 'POST',
       });
-      // Store original admin user
-      localStorage.setItem('sentra_original_user', JSON.stringify(user));
-      // Store impersonated token & user
-      localStorage.setItem('sentra_impersonation_token', res.token);
-      localStorage.setItem('sentra_impersonated_user', JSON.stringify(res.user));
-
+      setImpersonationToken(res.token);
       setOriginalUser(user);
       setUser(res.user);
       setAccessToken(res.token);
-      window.location.href = '/app';
     } catch (err: any) {
       console.error('Impersonation failed:', err);
       throw err;
@@ -213,17 +173,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   function exitImpersonation() {
-    localStorage.removeItem('sentra_original_user');
-    localStorage.removeItem('sentra_impersonation_token');
-    localStorage.removeItem('sentra_impersonated_user');
-
+    setImpersonationToken(null);
     if (originalUser) {
       setUser(originalUser);
-      const storedToken = localStorage.getItem('sentra_access_token');
-      setAccessToken(storedToken);
+      setAccessToken(null);
       setOriginalUser(null);
     }
-    window.location.href = '/app';
   }
 
   const value = useMemo(() => ({
