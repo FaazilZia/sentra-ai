@@ -23,7 +23,8 @@ import RichPolicyEditor from '../components/shared/RichPolicyEditor';
 import DOMPurify from 'dompurify';
 
 const SANITIZE_CONFIG: DOMPurify.Config = {
-  ADD_ATTR: ['target', 'style', 'class', 'data-type', 'data-checked'],
+  ALLOW_ARIA_ATTR: true,
+  ADD_ATTR: ['target', 'style', 'class', 'data-type', 'data-checked', 'role', 'alt'],
 };
 
 
@@ -230,10 +231,7 @@ export default function Policies() {
           {policies.map((policy) => (
             <div 
               key={policy.id}
-              role="button"
-              tabIndex={0}
               onClick={() => setSelectedPolicy(policy)}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedPolicy(policy); } }}
               className="card-base p-6 group hover:border-[var(--royal-indigo)] transition-all cursor-pointer relative overflow-hidden"
             >
               <div className="flex items-start justify-between mb-6">
@@ -253,10 +251,10 @@ export default function Policies() {
                 {policy.name}
               </h3>
               <div className="flex items-center gap-3 mb-6">
-                <button onClick={(e) => { e.stopPropagation(); openVersionHistory(policy); }} className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest hover:text-indigo-400 transition-colors flex items-center gap-1">
+                <span onClick={(e) => { e.stopPropagation(); openVersionHistory(policy); }} className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest hover:text-indigo-400 transition-colors flex items-center gap-1 cursor-pointer">
                   <History className="h-3 w-3" />
                   v{policy.current_version || 1}
-                </button>
+                </span>
                 <span className="h-1 w-1 rounded-full bg-[var(--border-default)]" />
                 <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{policy.effect}</span>
               </div>
