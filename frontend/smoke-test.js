@@ -349,10 +349,11 @@ async function run() {
       const inviteCell = page.locator(`td:has-text("${testEmail}")`);
       await expectToBeVisible(inviteCell, 'Invited email not visible in invitations history table');
 
-      // Call GET /tenant/invitations via backend api
-      const token = await page.evaluate(() => localStorage.getItem('sentra_access_token'));
+      // Call GET /tenant/invitations via backend api using session cookies
+      const cookies = await page.context().cookies();
+      const cookieHeader = cookies.map(c => `${c.name}=${c.value}`).join('; ');
       const apiInvitationsRes = await fetch(`${BACKEND_URL}/api/v1/tenant/invitations`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Cookie': cookieHeader }
       });
       
       const apiInvitations = await apiInvitationsRes.json();

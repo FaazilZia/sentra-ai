@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { apiRequest } from '@/lib/api';
 import { 
   AreaChart, 
   Area, 
@@ -34,29 +35,13 @@ export default function ShadowAI() {
   useEffect(() => {
     async function loadShadowData() {
       try {
-        const token = localStorage.getItem('sentra_access_token') || localStorage.getItem('accessToken');
-        const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-        const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:10000/api/v1';
-
-        const res = await fetch(`${base}/shadow-ai/detections`, { headers });
-        const json = await res.json();
-        
-        if (json.success) {
-          setTimelineData(json.timelineData || []);
-          setDeptData(json.deptData || []);
-          setIncidents(json.incidents || []);
-          setUnauthorizedToolsCount(json.unauthorizedToolsCount || 0);
-          setUniqueUsersCount(json.uniqueUsersCount || 0);
-          setSecurityInterceptionsCount(json.securityInterceptionsCount || 0);
-        } else {
-          console.error('[ShadowAI] API responded with failure:', json.error);
-          setTimelineData([]);
-          setDeptData([]);
-          setIncidents([]);
-          setUnauthorizedToolsCount(0);
-          setUniqueUsersCount(0);
-          setSecurityInterceptionsCount(0);
-        }
+        const res = await apiRequest<any>('/shadow-ai/detections');
+        setTimelineData(res.timelineData || []);
+        setDeptData(res.deptData || []);
+        setIncidents(res.incidents || []);
+        setUnauthorizedToolsCount(res.unauthorizedToolsCount || 0);
+        setUniqueUsersCount(res.uniqueUsersCount || 0);
+        setSecurityInterceptionsCount(res.securityInterceptionsCount || 0);
       } catch (err) {
         console.error('[ShadowAI] Failed to load data:', err);
         setTimelineData([]);
@@ -69,6 +54,7 @@ export default function ShadowAI() {
         setLoading(false);
       }
     }
+
     loadShadowData();
   }, []);
 

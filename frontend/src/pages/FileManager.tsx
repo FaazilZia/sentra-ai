@@ -100,20 +100,11 @@ export default function FileManager() {
       formData.append('controlType', activeFolder);
       formData.append('controlId', 'general');
 
-      // Use fetch instead of apiRequest for FormData upload
-      const impersonationToken = localStorage.getItem('sentra_impersonation_token');
-      const accessToken = localStorage.getItem('sentra_access_token');
-      const headers: Record<string, string> = {};
-      if (impersonationToken) {
-        headers['Authorization'] = `Bearer ${impersonationToken}`;
-      } else if (accessToken) {
-        headers['Authorization'] = `Bearer ${accessToken}`;
-      }
-
+      // Use fetch with credentials: 'include' for FormData upload
       const response = await fetch(`${apiBaseUrl}/file-ingestion/upload`, {
         method: 'POST',
-        headers,
-        body: formData
+        body: formData,
+        credentials: 'include',
       });
 
       const result = await response.json();

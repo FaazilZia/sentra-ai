@@ -244,13 +244,10 @@ export default function Settings() {
 
     setUploadingAvatar(true);
     try {
-      const token = localStorage.getItem('sentra_access_token');
       const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:10000/api/v1'}/user/me/avatar`, {
         method: 'PUT',
-        headers: {
-          ...(token && { 'Authorization': `Bearer ${token}` }),
-        },
         body: formData,
+        credentials: 'include',
       });
 
       const data = await res.json();

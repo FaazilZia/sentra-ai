@@ -60,8 +60,9 @@ test.describe('Sentraa AI - Full Production Audit Flow', () => {
     const initialCount = Number.parseInt(initialText.replaceAll(',', ''), 10) || 0;
     console.log(`Initial blocked count: ${initialCount}`);
 
-    const token = await page.evaluate(() => localStorage.getItem('sentra_access_token'));
-    if (!token) throw new Error('Auth token missing from localStorage');
+    const cookies = await page.context().cookies();
+    const token = cookies.find(c => c.name === 'sentra_access_token')?.value;
+    if (!token) throw new Error('Auth token missing from cookies');
     
     // Trigger malicious prompt — "export" + "password" triggers multi-signal BLOCK
     console.log('Simulating attack...');

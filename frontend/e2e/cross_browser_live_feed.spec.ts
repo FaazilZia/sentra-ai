@@ -49,8 +49,9 @@ test.describe('Socket.io Connection Status - Cross-Browser', () => {
     console.log(`[${test.info().project.name}] Starting auth setup...`);
     await loginAsAdmin(page);
 
-    const token = await page.evaluate(() => localStorage.getItem('sentra_access_token'));
-    console.log(`[DEBUG] auth token in localStorage: ${token}`);
+    const cookies = await page.context().cookies();
+    const token = cookies.find(c => c.name === 'sentra_access_token')?.value;
+    console.log(`[DEBUG] auth token in cookie: ${token}`);
 
     console.log(`[${test.info().project.name}] Navigating to Live Block Feed...`);
     await page.goto('/app/live-feed', { waitUntil: 'domcontentloaded' });
