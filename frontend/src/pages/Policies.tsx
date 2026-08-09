@@ -20,6 +20,11 @@ import { fetchPolicies, PolicyResponse, apiBaseUrl, apiRequest, patchPolicy, del
 import { EvidenceSection } from '../components/shared/EvidenceSection';
 import { ChangeHistoryTimeline } from '../components/shared/ChangeHistoryTimeline';
 import RichPolicyEditor from '../components/shared/RichPolicyEditor';
+import DOMPurify from 'dompurify';
+
+const SANITIZE_CONFIG = {
+  ADD_ATTR: ['target', 'style', 'class', 'data-type', 'data-checked', 'role', 'alt'],
+};
 
 
 export default function Policies() {
@@ -223,13 +228,13 @@ export default function Policies() {
       {policies.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {policies.map((policy) => (
-            <div 
+            <article 
               key={policy.id}
-              role="button"
               tabIndex={0}
               onClick={() => setSelectedPolicy(policy)}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedPolicy(policy); } }}
-              className="card-base p-6 group hover:border-[var(--royal-indigo)] transition-all cursor-pointer relative overflow-hidden"
+              className="card-base p-6 group hover:border-[var(--royal-indigo)] transition-all cursor-pointer relative overflow-hidden text-left"
+              aria-label={`Policy document: ${policy.name}`}
             >
               <div className="flex items-start justify-between mb-6">
                 <div className="h-10 w-10 rounded-lg bg-[var(--bg-page)] flex items-center justify-center text-[var(--royal-indigo)]">
@@ -248,7 +253,13 @@ export default function Policies() {
                 {policy.name}
               </h3>
               <div className="flex items-center gap-3 mb-6">
-                <button onClick={(e) => { e.stopPropagation(); openVersionHistory(policy); }} className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest hover:text-indigo-400 transition-colors flex items-center gap-1">
+                <button 
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); openVersionHistory(policy); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); openVersionHistory(policy); } }}
+                  className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest hover:text-indigo-400 transition-colors flex items-center gap-1 cursor-pointer"
+                  aria-label={`View version history for ${policy.name}`}
+                >
                   <History className="h-3 w-3" />
                   v{policy.current_version || 1}
                 </button>
@@ -276,7 +287,7 @@ export default function Policies() {
               <div className="absolute bottom-4 right-4 translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all">
                 <ArrowRight className="h-4 w-4 text-[var(--royal-indigo)]" />
               </div>
-            </div>
+            </article>
           ))}
 
           {/* Create Placeholder */}
@@ -396,7 +407,7 @@ export default function Policies() {
               ) : (
                 <div 
                   className="text-[var(--text-xs)] text-[var(--text-secondary)] leading-relaxed prose prose-invert max-w-none break-words"
-                  dangerouslySetInnerHTML={{ __html: selectedPolicy.description || 'No description provided.' }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedPolicy.description || 'No description provided.', SANITIZE_CONFIG) }}
                 />
               )}
             </div>
