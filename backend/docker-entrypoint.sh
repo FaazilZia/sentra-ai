@@ -2,10 +2,10 @@
 echo "[EP] v4 starting. PORT=$PORT"
 
 echo "[EP] Checking migration status..."
-npx prisma migrate status 2>&1 || true
+npx --ignore-scripts prisma migrate status 2>&1 || true
 
 echo "[EP] Running migrations..."
-npx prisma migrate deploy 2>&1
+npx --ignore-scripts prisma migrate deploy 2>&1
 MIGRATION_EXIT=$?
 echo "[EP] Migration exit code: $MIGRATION_EXIT"
 
@@ -16,7 +16,7 @@ if [ $MIGRATION_EXIT -ne 0 ]; then
   node scripts/resolve-failed-migration.js 2>&1 || true
   
   echo "[EP] Retrying migration..."
-  npx prisma migrate deploy 2>&1
+  npx --ignore-scripts prisma migrate deploy 2>&1
   RETRY_EXIT=$?
   echo "[EP] Retry exit code: $RETRY_EXIT"
   
