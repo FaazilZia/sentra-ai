@@ -22,8 +22,7 @@ import { ChangeHistoryTimeline } from '../components/shared/ChangeHistoryTimelin
 import RichPolicyEditor from '../components/shared/RichPolicyEditor';
 import DOMPurify from 'dompurify';
 
-const SANITIZE_CONFIG: DOMPurify.Config = {
-  ALLOW_ARIA_ATTR: true,
+const SANITIZE_CONFIG = {
   ADD_ATTR: ['target', 'style', 'class', 'data-type', 'data-checked', 'role', 'alt'],
 };
 
@@ -229,10 +228,13 @@ export default function Policies() {
       {policies.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {policies.map((policy) => (
-            <div 
+            <article 
               key={policy.id}
+              tabIndex={0}
               onClick={() => setSelectedPolicy(policy)}
-              className="card-base p-6 group hover:border-[var(--royal-indigo)] transition-all cursor-pointer relative overflow-hidden"
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedPolicy(policy); } }}
+              className="card-base p-6 group hover:border-[var(--royal-indigo)] transition-all cursor-pointer relative overflow-hidden text-left"
+              aria-label={`Policy document: ${policy.name}`}
             >
               <div className="flex items-start justify-between mb-6">
                 <div className="h-10 w-10 rounded-lg bg-[var(--bg-page)] flex items-center justify-center text-[var(--royal-indigo)]">
@@ -251,10 +253,16 @@ export default function Policies() {
                 {policy.name}
               </h3>
               <div className="flex items-center gap-3 mb-6">
-                <span onClick={(e) => { e.stopPropagation(); openVersionHistory(policy); }} className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest hover:text-indigo-400 transition-colors flex items-center gap-1 cursor-pointer">
+                <button 
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); openVersionHistory(policy); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); openVersionHistory(policy); } }}
+                  className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest hover:text-indigo-400 transition-colors flex items-center gap-1 cursor-pointer"
+                  aria-label={`View version history for ${policy.name}`}
+                >
                   <History className="h-3 w-3" />
                   v{policy.current_version || 1}
-                </span>
+                </button>
                 <span className="h-1 w-1 rounded-full bg-[var(--border-default)]" />
                 <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{policy.effect}</span>
               </div>
@@ -279,7 +287,7 @@ export default function Policies() {
               <div className="absolute bottom-4 right-4 translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all">
                 <ArrowRight className="h-4 w-4 text-[var(--royal-indigo)]" />
               </div>
-            </div>
+            </article>
           ))}
 
           {/* Create Placeholder */}
