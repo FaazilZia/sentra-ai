@@ -11,6 +11,7 @@
     "start:render": "node dist/src/server.js",
     "seed": "ts-node prisma/seed.ts",
     "seed:enterprise": "ts-node --project tsconfig.json src/scripts/seed-enterprise.ts",
+    "seed:demo": "ts-node --project tsconfig.json src/scripts/seed-demo-account.ts",
     "verify:seed": "ts-node --project tsconfig.json src/scripts/verify-seed.ts",
     "reindex": "ts-node --project tsconfig.json src/scripts/reindex-frameworks.ts",
     "validate:db": "ts-node --project tsconfig.json src/scripts/validate-db.ts",
