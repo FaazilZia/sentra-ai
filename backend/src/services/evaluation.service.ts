@@ -559,7 +559,8 @@ export const EvaluationService = {
     let passed = 0;
     let failed = 0;
     
-    const OpenAI = (await import('openai')).default;
+    const OpenAIModule = await import('openai');
+    const OpenAI = (OpenAIModule as any).default || OpenAIModule;
     const client = new OpenAI({ apiKey: resolvedKey });
     
     for (const tc of dataset.test_cases) {

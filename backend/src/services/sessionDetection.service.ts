@@ -72,6 +72,26 @@ export class SessionDetectionService {
     return action.split(' ')[0].toLowerCase();
   }
 
+  public static isReadOnlyAction(action: string): boolean {
+    const lower = action.toLowerCase();
+    const toolName = this.extractToolName(lower);
+    return (
+      lower.startsWith('read_') ||
+      lower.startsWith('get_') ||
+      lower.startsWith('list_') ||
+      lower.startsWith('fetch_') ||
+      lower.startsWith('view_') ||
+      lower.startsWith('check_') ||
+      lower.startsWith('search_') ||
+      toolName.startsWith('read_') ||
+      toolName.startsWith('get_') ||
+      toolName.startsWith('list_') ||
+      toolName.startsWith('fetch_') ||
+      toolName.startsWith('view_') ||
+      ['health_check', 'ping', 'status', 'get_time', 'fetch_time', 'get_weather', 'fetch_weather'].includes(lower)
+    );
+  }
+
   /**
    * Retrieves or initializes Redis-backed agent behavioral baseline.
    */
@@ -349,22 +369,26 @@ export class SessionDetectionService {
       }
 
       // Rule 4c: Rapid Scope Probing
-      const recentTwoMinActions = windowActions.filter(item => now - item.timestamp <= 120000);
-      const distinctTools = new Set(
-        recentTwoMinActions.map(item => this.extractToolName(item.action))
-      );
+      // Exclude read-only/low-risk actions from scope probing block and active tool counting
+      if (!SessionDetectionService.isReadOnlyAction(action)) {
+        const recentTwoMinActions = windowActions.filter(item => now - item.timestamp <= 120000);
+        const nonReadActions = recentTwoMinActions.filter(item => !SessionDetectionService.isReadOnlyAction(item.action));
+        const distinctNonReadTools = new Set(
+          nonReadActions.map(item => this.extractToolName(item.action))
+        );
 
-      if (recentTwoMinActions.length >= 3 && distinctTools.size >= 3) {
-        await this.recordSuspiciousAction(agent, organizationId, action, metadata);
-        return {
-          detected: true,
-          rule: 'SCOPE_PROBING',
-          title: 'Rapid Permission Scope Probing Detected',
-          reason: `[SESSION DETECTED] Rapid multi-connector permission probing detected (${distinctTools.size} distinct scopes touched in < 2 mins).`,
-          risk: 'high',
-          detectionSource: 'session_pattern',
-          sessionWindowCount,
-        };
+        if (nonReadActions.length >= 5 && distinctNonReadTools.size >= 5) {
+          await this.recordSuspiciousAction(agent, organizationId, action, metadata);
+          return {
+            detected: true,
+            rule: 'SCOPE_PROBING',
+            title: 'Rapid Permission Scope Probing Detected',
+            reason: `[SESSION DETECTED] Rapid multi-connector permission probing detected (${distinctNonReadTools.size} distinct active scopes touched in < 2 mins).`,
+            risk: 'high',
+            detectionSource: 'session_pattern',
+            sessionWindowCount,
+          };
+        }
       }
     }
 

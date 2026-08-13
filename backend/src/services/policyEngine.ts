@@ -8,6 +8,7 @@ export interface PolicyEvaluation {
   explanation?: string;
   compliance?: any;
   impact?: string;
+  isPendingApproval?: boolean;
 }
 
 /**
@@ -42,7 +43,7 @@ const getCachedPolicies = async (organizationId: string) => {
   );
 };
 
-export const evaluatePolicy = async (agent: string, action: string, organizationId: string): Promise<PolicyEvaluation> => {
+export const evaluatePolicy = async (agent: string, action: string, organizationId: string, metadata: any = {}): Promise<PolicyEvaluation> => {
   const lowercaseAction = action.toLowerCase();
   const lowercaseAgent = agent.toLowerCase();
 
@@ -76,6 +77,37 @@ export const evaluatePolicy = async (agent: string, action: string, organization
       explanation: 'Permanent deletion of data under production environments is prohibited.',
       compliance: ['NIST_AI_RMF', 'GDPR'],
       impact: 'Prevents data loss in production'
+    };
+  }
+
+  // L1 Check 3: PII Export / Sensitive Metadata Flag Violation
+  const hasPiiFlag = metadata?.contains_pii === true || metadata?.containsPII === true || metadata?.contains_PII === true || metadata?.pii === true;
+  const fileStr = String(metadata?.file || metadata?.filename || metadata?.path || metadata?.resource || '').toLowerCase();
+  const hasPiiFilePattern = /\bssn\b|customer_ssn|pii|personal_data|patient_record|credit_card/i.test(fileStr);
+  const isExportOrDataMovement = /export|write|send|upload|exfiltrate|transfer|outbound|share|dump|store|save|s3/i.test(lowercaseAction);
+
+  if (hasPiiFlag || (hasPiiFilePattern && (isExportOrDataMovement || hasPiiFlag))) {
+    return {
+      allowed: false,
+      reason: 'Policy Violation: Unauthorized PII Data Export',
+      explanation: 'Exporting or transmitting data flagged as containing PII (contains_pii: true or sensitive PII file pattern) is prohibited by policy.',
+      compliance: ['GDPR', 'HIPAA', 'DPDP', 'NIST_AI_RMF'],
+      impact: 'Prevents customer PII exfiltration and privacy compliance breach'
+    };
+  }
+
+  // L1 Check 4: High-Value Financial Threshold Breach ($10,000+)
+  const amount = Number(metadata?.amount || metadata?.value || metadata?.total || metadata?.price || 0);
+  const isFinancialAction = /payment|transfer|withdraw|payout|wire|disburse|process_payment/i.test(lowercaseAction);
+
+  if (isFinancialAction && amount >= 10000) {
+    return {
+      allowed: false,
+      reason: `Policy Violation: High-Value Financial Threshold Breach ($${amount.toLocaleString()})`,
+      explanation: `Payment processing or financial disbursement of $${amount.toLocaleString()} exceeds automated approval threshold ($10,000). Action flagged for mandatory human approval.`,
+      compliance: ['PCI_DSS', 'SOX', 'FINANCIAL_COMPLIANCE'],
+      impact: 'Requires human-in-the-loop approval before financial disbursement',
+      isPendingApproval: true
     };
   }
 

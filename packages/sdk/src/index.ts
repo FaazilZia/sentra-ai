@@ -12,13 +12,14 @@ export interface ActionRequest {
 }
 
 export interface ActionResponse {
-  status: 'allowed' | 'blocked';
+  status: 'allowed' | 'blocked' | 'flagged';
   risk: 'low' | 'medium' | 'high';
   reason: string;
   impact: string;
   compliance: string[];
   explanation?: string;
   confidence?: number;
+  isPendingApproval?: boolean;
 }
 
 export class SentraError extends Error {
@@ -70,17 +71,31 @@ export class SentraClient {
         }
 
         const json = await response.json();
-        const rawDecision = json.decision || json.data?.decision || json.data?.status || 'ALLOWED';
-        const decision = rawDecision.toUpperCase();
-        const reason = json.reason || json.data?.reason || 'Processed by Sentraa AI';
-        // Backend returns { success, decision, reason } or wrapped in data
-        const isAllowed = decision === 'ALLOW' || decision === 'ALLOWED';
+        const resData = json.data || json;
+        const rawDecision = resData.status || resData.decision || json.decision || json.status || 'ALLOWED';
+        const decisionStr = String(rawDecision).toLowerCase();
+        
+        let status: 'allowed' | 'blocked' | 'flagged' = 'allowed';
+        if (decisionStr === 'blocked' || decisionStr === 'block') {
+          status = 'blocked';
+        } else if (decisionStr === 'flagged' || decisionStr === 'flag' || resData.isPendingApproval) {
+          status = 'flagged';
+        } else if (decisionStr === 'allowed' || decisionStr === 'allow') {
+          status = 'allowed';
+        }
+
+        const isAllowed = status === 'allowed';
+        const isFlagged = status === 'flagged';
+
         return {
-          status: isAllowed ? 'allowed' : 'blocked',
+          status,
           risk: isAllowed ? 'low' : 'high',
-          reason: reason,
-          impact: isAllowed ? 'None' : 'Action prevented',
-          compliance: []
+          reason: resData.reason || json.reason || 'Processed by Sentraa AI',
+          impact: resData.impact || json.impact || (isAllowed ? 'None' : (isFlagged ? 'Requires human-in-the-loop review' : 'Action prevented')),
+          compliance: resData.compliance || json.compliance || [],
+          explanation: resData.explanation || json.explanation,
+          confidence: resData.confidence || json.confidence,
+          isPendingApproval: resData.isPendingApproval || isFlagged
         };
       } catch (error: any) {
         clearTimeout(timeoutId);

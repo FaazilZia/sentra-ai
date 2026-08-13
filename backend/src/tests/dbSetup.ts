@@ -2,6 +2,10 @@ import { execSync } from 'child_process';
 import path from 'path';
 
 export default async function dbSetup(): Promise<void> {
+  if (process.env.SKIP_DB_SETUP === 'true') {
+    console.log('[dbSetup] SKIP_DB_SETUP is true, skipping DB push & seed.');
+    return;
+  }
   console.log('\n[dbSetup] Starting Test Database Setup...');
   
   // 1. Point to DATABASE_URL_TEST env var, DATABASE_URL, or fall back to default PG test DB

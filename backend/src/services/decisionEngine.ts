@@ -11,7 +11,7 @@ import prisma from '../config/db';
 const getNow = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
 export interface Decision {
-  status: 'allowed' | 'blocked';
+  status: 'allowed' | 'blocked' | 'flagged';
   risk: 'low' | 'medium' | 'high';
   mode?: 'FLAG_ONLY' | 'BLOCK';
   reason: string;
@@ -47,7 +47,7 @@ export const makeDecision = async (agent: string, action: string, organizationId
     const enforcementMode = await getAidrEnforcementMode(organizationId);
 
     // 1. Level 1: Policy Engine (Hard Rules)
-    const policyResult = await evaluatePolicy(agent, action, organizationId);
+    const policyResult = await evaluatePolicy(agent, action, organizationId, metadata);
     if (!policyResult.allowed) {
       if (enforcementMode === 'FLAG_ONLY') {
         logger.info(`[GOVERNANCE] FLAG_ONLY mode active: Flagging policy violation without blocking.`);
@@ -253,18 +253,21 @@ export const makeDecision = async (agent: string, action: string, organizationId
 };
 
 const buildBlockedResponse = (type: string, policyResult: any, startTime: number, agent: string, action: string, mode: 'FLAG_ONLY' | 'BLOCK' = 'BLOCK'): Decision => {
+  const isPendingApproval = policyResult.isPendingApproval === true;
+  const status: 'blocked' | 'flagged' = isPendingApproval ? 'flagged' : 'blocked';
   return {
-    status: 'blocked',
+    status,
     risk: 'high',
     mode,
     reason: policyResult.reason || `${type}: Violation detected`,
     impact: policyResult.impact || 'Prevents unauthorized execution',
     compliance: policyResult.compliance || ['General Policy'],
-    explanation: maskPII(policyResult.explanation || 'Action blocked by policy.'),
+    explanation: maskPII(policyResult.explanation || 'Action blocked or flagged by policy.'),
     confidence: 1.0,
+    isPendingApproval,
     timeline: [
-      { step: 'L1: Policy', status: 'blocked', icon: 'shield' },
-      { step: 'Governance Engine', status: 'complete', icon: 'layers', description: 'Final Decision: BLOCKED' }
+      { step: 'L1: Policy', status: isPendingApproval ? 'warning' : 'blocked', icon: 'shield' },
+      { step: 'Governance Engine', status: 'complete', icon: 'layers', description: `Final Decision: ${status.toUpperCase()}` }
     ]
   };
 };
