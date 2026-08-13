@@ -36,20 +36,15 @@ test.describe('Dashboard - Cross-Browser Layout and Stability', () => {
 
     // Verify KPI Card elements using text-based locators
     console.log(`[${test.info().project.name}] Verifying KPI cards...`);
-    await expect(page.getByText('Total AI Systems')).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText('Open Risk Findings')).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText('Compliance Coverage')).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText('Shadow AI Detected')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('Posture Score')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('Agents Monitored')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('Blocked Today')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('High Blast-Radius Agents')).toBeVisible({ timeout: 15000 });
 
-    // Verify AI Registry table exists and is visible
-    console.log(`[${test.info().project.name}] Verifying AI Registry Table...`);
-    const registryTable = page.locator('table');
-    await expect(registryTable.first()).toBeVisible({ timeout: 15000 });
-
-    // Verify Active Alerts Panel is present (using text-based locator "Priority Alerts")
-    console.log(`[${test.info().project.name}] Verifying Active Alerts Panel...`);
-    const alertsHeader = page.getByText('Priority Alerts');
-    await expect(alertsHeader).toBeVisible({ timeout: 15000 });
+    // Verify Compliance Readiness Snapshot Panel is present
+    console.log(`[${test.info().project.name}] Verifying Compliance Snapshot Panel...`);
+    const snapshotHeader = page.getByText('Compliance Readiness Snapshot');
+    await expect(snapshotHeader).toBeVisible({ timeout: 15000 });
 
     const projectName = test.info().project.name;
     

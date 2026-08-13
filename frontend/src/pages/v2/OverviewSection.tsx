@@ -266,6 +266,7 @@ export default function OverviewSection() {
           subtitle="Adversarial & PII violations"
           status="danger"
           icon={Ban}
+          testId="threats-prevented-count"
           trend={{ value: '+18% threat burst', direction: 'up', isGood: false }}
         />
         <MetricCard

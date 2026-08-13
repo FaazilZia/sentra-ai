@@ -13,6 +13,7 @@ export interface MetricCardProps {
   };
   icon: LucideIcon;
   status?: 'success' | 'warning' | 'danger' | 'info' | 'primary';
+  testId?: string;
   className?: string;
 }
 
@@ -23,6 +24,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   trend,
   icon: Icon,
   status = 'primary',
+  testId,
   className
 }) => {
   const getStatusStyles = () => {
@@ -75,7 +77,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
       </div>
 
       <div className="mt-3">
-        <div className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white font-mono">
+        <div data-testid={testId} className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white font-mono">
           {value}
         </div>
 

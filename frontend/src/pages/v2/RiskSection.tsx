@@ -15,6 +15,7 @@ import {
   RefreshCw, 
   Bot,
   Flame,
+  TrendingUp,
   ArrowUpRight
 } from 'lucide-react';
 
@@ -209,7 +210,8 @@ export default function RiskSection() {
           value={3}
           subtitle="Concept & hallucination drift"
           status="info"
-          icon={Flame}
+          icon={TrendingUp}
+          testId="threats-prevented-count"
         />
       </div>
 

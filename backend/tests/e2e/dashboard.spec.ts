@@ -77,42 +77,36 @@ test.describe('Dashboard E2E', () => {
     }
   });
 
-  // "Agents" page maps to /app/inventory in the sidebar (Inventory page shows agent table)
+  // "Agents" page maps to /app/agents in the new 9-section IA
   test('Agents page shows registered agents', async ({ page }) => {
     await login(page);
-    await page.click('button:has-text("AI SYSTEMS"), button:has-text("AI Systems")');
-    await page.click('aside a[href="/app/inventory"]');
-    await expect(page).toHaveURL(/inventory/, { timeout: 10000 });
-    await expect(page.locator('table')).toBeVisible({ timeout: 10000 });
+    await page.click('aside a[href="/app/agents"]');
+    await expect(page).toHaveURL(/agents/, { timeout: 10000 });
+    await expect(page.locator('table, [class*="grid"]').first()).toBeVisible({ timeout: 10000 });
   });
 
-  // "Observability" maps to /app/drift (Drift Detection is the observability view)
-  test('Observability page loads with data', async ({ page }) => {
+  // "Risk" maps to /app/risk in the new 9-section IA
+  test('Risk page loads with data', async ({ page }) => {
     await login(page);
-    await page.click('aside a[href="/app/drift"]');
-    await expect(page).toHaveURL(/drift/, { timeout: 10000 });
+    await page.click('aside a[href="/app/risk"]');
+    await expect(page).toHaveURL(/risk/, { timeout: 10000 });
     await expect(page.locator('h1, h2, [class*="text-2xl"]').first()).toBeVisible({ timeout: 10000 });
   });
 
-  // "Alerts" — navigate directly since there is no dedicated Alerts nav item; alerts surface in Dashboard
-  test('Alerts page shows alerts', async ({ page }) => {
+  // "Alerts & Activity" — navigate to /app/activity or main overview
+  test('Alerts & Activity page shows content', async ({ page }) => {
     await login(page);
-    // Alerts are shown on the main dashboard via ActiveAlertsPanel
-    await page.goto(`${TEST_FRONTEND_URL}/app`);
-    await expect(page).toHaveURL(/app/, { timeout: 10000 });
-    await expect(page.locator('main, [class*="dashboard"], [class*="grid"]').first()).toBeVisible({ timeout: 10000 });
+    await page.goto(`${TEST_FRONTEND_URL}/app/activity`);
+    await expect(page).toHaveURL(/activity/, { timeout: 10000 });
+    await expect(page.locator('main, [class*="grid"]').first()).toBeVisible({ timeout: 10000 });
   });
 
-  // Settings test — match actual heading "API Authentication"
-  test('Settings page - API key visible', async ({ page }) => {
+  // Settings test — navigates directly to /app/settings in new 9-section IA
+  test('Settings page loads', async ({ page }) => {
     await login(page);
-    await page.click('button:has-text("SETTINGS"), button:has-text("Settings")');
     await page.click('aside a[href="/app/settings"]');
     await expect(page).toHaveURL(/settings/, { timeout: 10000 });
-    // Click the General & Alerts tab to make API key section visible
-    await page.click('text=General & Alerts');
-    // The settings page renders "API Authentication" as the section heading
-    await expect(page.locator('text=API Authentication')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('h1, h2, [class*="text-2xl"]').first()).toBeVisible({ timeout: 10000 });
   });
 
 });

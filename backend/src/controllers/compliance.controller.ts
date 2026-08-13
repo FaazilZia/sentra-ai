@@ -129,7 +129,7 @@ export const getComplianceStats = asyncHandler(async (req: any, res: Response) =
     select: { created_at: true, details: true }
   });
 
-  let piiLogs: any[] = [];
+  let piiLogs: any[];
   try {
     piiLogs = await prisma.logs.findMany({
       where: {
