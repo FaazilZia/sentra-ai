@@ -53,12 +53,12 @@ export default function AgentsSection() {
         apiRequest<any>('/datasets').catch(() => ({ data: [] }))
       ]);
 
-      const registered = (sysRes?.items || sysRes || []).map((sys: any) => ({
-        id: sys.id || `sys-${Math.random()}`,
+      const registered = (sysRes?.items || sysRes || []).map((sys: any, idx: number) => ({
+        id: sys.id || `sys-${idx + 1}`,
         name: sys.name,
         source: sys.vendor || 'MCP / Custom SDK',
         riskLevel: (sys.risk_tier || 'LOW').toUpperCase(),
-        actionsToday: Math.floor(Math.random() * 200) + 12,
+        actionsToday: ((idx + 1) * 17) % 180 + 12,
         status: (sys.status || 'ACTIVE').toUpperCase(),
         isShadow: false,
         owner: sys.owner?.full_name || 'AI Engineering'
@@ -71,7 +71,7 @@ export default function AgentsSection() {
         name: inc.tool || `Unregistered Agent #${idx + 1}`,
         source: `${inc.dept || 'Engineering'} (${inc.user || 'Unknown User'})`,
         riskLevel: 'SHADOW' as const,
-        actionsToday: Math.floor(Math.random() * 55) + 5,
+        actionsToday: ((idx + 1) * 19) % 50 + 5,
         status: 'UNDER_REVIEW' as const,
         isShadow: true,
         department: inc.dept,

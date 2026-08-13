@@ -167,10 +167,15 @@ export default function SettingsSection() {
   };
 
   const handleCreateApiKey = () => {
+    const randomBytes = new Uint8Array(4);
+    if (typeof window !== 'undefined' && window.crypto) {
+      window.crypto.getRandomValues(randomBytes);
+    }
+    const hexSuffix = Array.from(randomBytes).map(b => b.toString(16).padStart(2, '0')).join('');
     const newK = {
       id: `key-${Date.now()}`,
       name: `New API Key #${apiKeys.length + 1}`,
-      prefix: `sen_live_${Math.random().toString(36).substring(2, 8)}...`,
+      prefix: `sen_live_${hexSuffix}...`,
       createdAt: 'Today',
       lastUsed: 'Never'
     };

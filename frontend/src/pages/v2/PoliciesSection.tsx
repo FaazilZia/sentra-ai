@@ -125,7 +125,7 @@ export default function PoliciesSection() {
           enforcementMode: p.effect === 'deny' ? 'blocking' : 'flag-and-review',
           actionType: p.effect === 'deny' ? 'BLOCK' : 'FLAG',
           isEnabled: p.status === 'ACTIVE',
-          blockedCountToday: Math.floor(Math.random() * 20),
+          blockedCountToday: ((idx + 1) * 7) % 20,
           updatedAt: 'Recently'
         });
       });
