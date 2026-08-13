@@ -157,6 +157,26 @@ export class SessionDetectionService {
   }
 
   /**
+   * Retrieves current session history, prioritizing in-memory map for process consistency with Redis fallback.
+   */
+  private static async getSessionHistory(key: string): Promise<ActionLogEntry[]> {
+    const inMem = this.memorySessionMap.get(key);
+    if (inMem && Array.isArray(inMem)) {
+      return [...inMem];
+    }
+    try {
+      const cached = await cacheService.get<ActionLogEntry[]>(key);
+      if (cached && Array.isArray(cached)) {
+        this.memorySessionMap.set(key, cached);
+        return [...cached];
+      }
+    } catch (err) {
+      logger.warn(`[SESSION-DETECTION] Cache retrieval error for ${key}:`, err);
+    }
+    return [];
+  }
+
+  /**
    * Records an agent's action entry into the session context sliding window.
    */
   static async recordAction(agent: string, organizationId: string, action: string, metadata: any = {}): Promise<void> {
@@ -169,22 +189,15 @@ export class SessionDetectionService {
     };
 
     try {
-      let history: ActionLogEntry[] = [];
-      const cached = await cacheService.getOrSet<ActionLogEntry[]>(
-        key,
-        async () => this.memorySessionMap.get(key) || [],
-        this.WINDOW_TTL_SECONDS
-      );
-
-      history = Array.isArray(cached) ? cached : [];
+      const history = await this.getSessionHistory(key);
       history.push(entry);
 
-      if (history.length > this.MAX_WINDOW_SIZE) {
-        history = history.slice(history.length - this.MAX_WINDOW_SIZE);
-      }
+      const trimmedHistory = history.length > this.MAX_WINDOW_SIZE
+        ? history.slice(history.length - this.MAX_WINDOW_SIZE)
+        : history;
 
-      this.memorySessionMap.set(key, history);
-      await cacheService.set(key, history, this.WINDOW_TTL_SECONDS);
+      this.memorySessionMap.set(key, trimmedHistory);
+      await cacheService.set(key, trimmedHistory, this.WINDOW_TTL_SECONDS);
 
       // Accumulate baseline
       await this.updateAgentBaseline(agent, organizationId, action);
@@ -203,19 +216,7 @@ export class SessionDetectionService {
     metadata: any = {}
   ): Promise<SessionDetectionResult | null> {
     const key = this.getSessionKey(agent, organizationId, metadata);
-    let history: ActionLogEntry[] = [];
-
-    try {
-      const cached = await cacheService.getOrSet<ActionLogEntry[]>(
-        key,
-        async () => this.memorySessionMap.get(key) || [],
-        this.WINDOW_TTL_SECONDS
-      );
-      history = Array.isArray(cached) ? cached : [];
-    } catch (err) {
-      logger.warn(`[SESSION-DETECTION] Cache retrieval error, using memory map:`, err);
-      history = this.memorySessionMap.get(key) || [];
-    }
+    const history = await this.getSessionHistory(key);
 
     const windowActions = [...history, { timestamp: Date.now(), agent, action, metadata }];
     const sessionWindowCount = windowActions.length;
@@ -377,7 +378,7 @@ export class SessionDetectionService {
           nonReadActions.map(item => this.extractToolName(item.action))
         );
 
-        if (nonReadActions.length >= 5 && distinctNonReadTools.size >= 5) {
+        if (nonReadActions.length >= 3 && distinctNonReadTools.size >= 3) {
           await this.recordSuspiciousAction(agent, organizationId, action, metadata);
           return {
             detected: true,

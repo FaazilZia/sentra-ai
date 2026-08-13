@@ -27,6 +27,26 @@ class CacheService {
     });
   }
 
+  async get<T>(key: string): Promise<T | null> {
+    const redis = await ensureRedisConnection();
+    try {
+      if (redis) {
+        const cached = await redis.get(key);
+        if (cached) {
+          return JSON.parse(cached);
+        }
+      } else {
+        const cached = this.getMemory(key);
+        if (cached) {
+          return JSON.parse(cached);
+        }
+      }
+    } catch (error) {
+      logger.warn(`Cache read error for key ${key}:`, error);
+    }
+    return null;
+  }
+
   async getOrSet<T>(key: string, fetchFn: () => Promise<T>, ttl = this.DEFAULT_TTL): Promise<T> {
     const redis = await ensureRedisConnection();
 
