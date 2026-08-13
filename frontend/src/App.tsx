@@ -5,20 +5,22 @@ import { AppLayout } from './components/layout/AppLayout';
 import { AuthProvider, useAuth } from './lib/auth';
 import { SidebarProvider } from './context/SidebarContext';
 
-const DashboardPage = lazy(() => import('./pages/Dashboard'));
+const DashboardPage = lazy(() => import('./pages/v2/OverviewSection'));
+const AgentsPage = lazy(() => import('./pages/v2/AgentsSection'));
+const CompliancePage = lazy(() => import('./pages/v2/ComplianceSection'));
+const ActivityPage = lazy(() => import('./pages/v2/ActivitySection'));
+const PoliciesPage = lazy(() => import('./pages/v2/PoliciesSection'));
+const RiskCenterPage = lazy(() => import('./pages/v2/RiskSection'));
+const EvidencePage = lazy(() => import('./pages/v2/EvidenceSection'));
 const IncidentManagementPage = lazy(() => import('./pages/IncidentManagement'));
-const PoliciesPage = lazy(() => import('./pages/Policies'));
 const GuardrailsPage = lazy(() => import('./pages/Guardrails'));
 const LoginPage = lazy(() => import('./pages/Login'));
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPassword'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPassword'));
 const AcceptInvitePage = lazy(() => import('./pages/AcceptInvite'));
-const RiskCenterPage = lazy(() => import('./pages/RiskCenter'));
-const CompliancePage = lazy(() => import('./pages/Compliance'));
-const EvidencePage = lazy(() => import('./pages/Evidence'));
 const ShadowAIPage = lazy(() => import('./pages/ShadowAI'));
 const InventoryPage = lazy(() => import('./pages/Inventory'));
-const SettingsPage = lazy(() => import('./pages/Settings'));
+const SettingsPage = lazy(() => import('./pages/v2/SettingsSection'));
 const DriftPage = lazy(() => import('./pages/Drift'));
 const ConsentManagerPage = lazy(() => import('./pages/ConsentManager'));
 
@@ -26,7 +28,6 @@ const ConsentManagerPage = lazy(() => import('./pages/ConsentManager'));
 const AdvisorPage = lazy(() => import('./pages/Advisor'));
 const AutomationsPage = lazy(() => import('./pages/Automations'));
 const DatasetsPage = lazy(() => import('./pages/Datasets'));
-const TrainingRegisterPage = lazy(() => import('./pages/TrainingRegister'));
 const GovernanceOSPage = lazy(() => import('./pages/GovernanceOS'));
 
 // Governance pages
@@ -106,6 +107,16 @@ function AppRoutes() {
             <Route 
               path="/app" 
               element={user ? <AppLayout><DashboardPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/agents" 
+              element={user ? <AppLayout><AgentsPage /></AppLayout> : <Navigate to="/login" replace />}
+            />
+
+            <Route 
+              path="/app/activity" 
+              element={user ? <AppLayout><ActivityPage /></AppLayout> : <Navigate to="/login" replace />}
             />
             
             <Route 
@@ -229,11 +240,6 @@ function AppRoutes() {
             <Route 
               path="/app/datasets" 
               element={user ? <AppLayout><DatasetsPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/training" 
-              element={user ? <AppLayout><TrainingRegisterPage /></AppLayout> : <Navigate to="/login" replace />}
             />
 
             <Route 
