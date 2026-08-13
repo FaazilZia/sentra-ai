@@ -25,11 +25,19 @@ describe('4-Stage Pipeline (Scan → Detect → Flag → Block) E2E', () => {
         status: 'ACTIVE'
       });
     expect(agentRes.status).toBe(201);
-    agentId = agentRes.body.data?.id || agentRes.body.id;
-    if (!agentId) {
-      throw new Error('Precondition setup failed: agentId was undefined after creation.');
-    }
-  });
+      agentId = agentRes.body.data?.id || agentRes.body.id;
+      if (!agentId) {
+        throw new Error('Precondition setup failed: agentId was undefined after creation.');
+      }
+    });
+
+    afterAll(async () => {
+      // Restore default BLOCK mode so parallel/subsequent test suites are not affected
+      await request(TEST_BASE_URL)
+        .patch('/api/v1/tenant/aidr-enforcement-mode')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ mode: 'BLOCK' });
+    });
 
   test('FLAG_ONLY mode: violating action is flagged and logged, but NOT blocked', async () => {
     // 1. Set mode to FLAG_ONLY

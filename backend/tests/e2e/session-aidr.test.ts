@@ -29,6 +29,12 @@ describe('Session-Based AIDR Detection E2E', () => {
     if (!agentId) {
       throw new Error('Precondition setup failed: agentId was undefined after creation.');
     }
+
+    // Explicitly enforce BLOCK mode for session AIDR tests
+    await request(TEST_BASE_URL)
+      .patch('/api/v1/tenant/aidr-enforcement-mode')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ mode: 'BLOCK' });
   });
 
   test('Benign session (True Negative) — normal single read action is NOT flagged by AIDR detector', async () => {
