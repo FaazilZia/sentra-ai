@@ -62,9 +62,10 @@ describe('Session-Based AIDR Detection E2E', () => {
       .send({
         agent: agentId,
         action: 'read_s3_phi_data',
-        metadata: { sessionId, pii: true }
+        metadata: { sessionId, sensitive: true }
       });
     expect(resRead.status).toBe(200);
+    expect(resRead.body.data?.status).toBe('allowed');
 
     // 2. Outbound HTTP post attempt
     const resExfil = await request(TEST_BASE_URL)
