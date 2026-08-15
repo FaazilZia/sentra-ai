@@ -91,11 +91,11 @@ export function Sidebar() {
         )}
       >
         {/* Brand Header */}
-        <div className="flex h-[var(--topbar-height)] items-center justify-between px-5 border-b border-slate-800 bg-[#090d16]">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-md shadow-indigo-600/30">
-              <svg viewBox="55 5 120 125" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" xmlns="http://www.w3.org/2000/svg">
-                <g stroke="currentColor" strokeWidth="3">
+        <div className="flex h-[var(--topbar-height)] items-center justify-between px-4 border-b border-slate-800 bg-[#090d16]">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-md shadow-indigo-600/30">
+              <svg viewBox="60 5 110 125" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" xmlns="http://www.w3.org/2000/svg">
+                <g fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
                   <line x1="152" y1="30" x2="132" y2="18"/>
                   <line x1="132" y1="18" x2="104" y2="13"/>
                   <line x1="104" y1="13" x2="78" y2="30"/>
@@ -104,19 +104,35 @@ export function Sidebar() {
                   <line x1="108" y1="66" x2="128" y2="47"/>
                   <line x1="108" y1="66" x2="95" y2="86"/>
                   <line x1="108" y1="66" x2="150" y2="73"/>
+                  <line x1="150" y1="73" x2="146" y2="104"/>
+                  <line x1="146" y1="104" x2="163" y2="99"/>
+                  <line x1="146" y1="104" x2="162" y2="119"/>
+                  <line x1="146" y1="104" x2="119" y2="121"/>
+                  <line x1="119" y1="121" x2="90" y2="112"/>
+                  <line x1="90" y1="112" x2="66" y2="104"/>
                 </g>
                 <g fill="currentColor">
-                  <circle cx="152" cy="30" r="4"/>
-                  <circle cx="132" cy="18" r="8"/>
+                  <circle cx="152" cy="30" r="3"/>
+                  <circle cx="132" cy="18" r="10"/>
                   <circle cx="104" cy="13" r="6"/>
-                  <circle cx="78" cy="30" r="7"/>
-                  <circle cx="108" cy="66" r="8"/>
+                  <circle cx="78" cy="30" r="9"/>
+                  <circle cx="74" cy="58" r="7"/>
+                  <circle cx="128" cy="47" r="3"/>
+                  <circle cx="95" cy="86" r="3"/>
+                  <circle cx="150" cy="73" r="7"/>
+                  <circle cx="146" cy="104" r="10"/>
+                  <circle cx="163" cy="99" r="3"/>
+                  <circle cx="162" cy="119" r="3"/>
+                  <circle cx="119" cy="121" r="6"/>
+                  <circle cx="90" cy="112" r="10"/>
+                  <circle cx="66" cy="104" r="3"/>
                 </g>
+                <circle cx="108" cy="66" r="11" fill="none" stroke="currentColor" strokeWidth="7"/>
               </svg>
             </div>
-            <div>
-              <span className="text-sm font-black uppercase tracking-widest text-white block">Sentraa AI</span>
-              <span className="text-[9px] font-extrabold text-indigo-400 uppercase tracking-tight block -mt-0.5">Governance OS</span>
+            <div className="min-w-0 flex-1">
+              <span className="text-sm font-black uppercase tracking-wider text-white block whitespace-nowrap truncate">Sentraa AI</span>
+              <span className="text-[9px] font-extrabold text-indigo-400 uppercase tracking-tight block -mt-0.5 whitespace-nowrap truncate">Governance OS</span>
             </div>
           </div>
 

@@ -24,7 +24,7 @@ export const PageContainer: React.FC<PageContainerProps> = ({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white uppercase">
+            <h1 className="text-xl font-extrabold tracking-tight text-[var(--text-primary)] dark:text-slate-100 opacity-100 uppercase">
               {title}
             </h1>
             {badge}

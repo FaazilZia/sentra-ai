@@ -225,7 +225,7 @@ export function Header() {
             return (
               <div key={name} className="flex items-center gap-2">
                 <ChevronRight className="h-3 w-3 text-[var(--text-muted)]" />
-                <span className={isLast ? "text-[var(--text-primary)] font-bold" : ""}>
+                <span className={isLast ? "text-[var(--text-primary)] dark:text-slate-100 font-bold opacity-100" : ""}>
                   {label}
                 </span>
               </div>
