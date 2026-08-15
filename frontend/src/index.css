@@ -12,13 +12,13 @@
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-semibold tracking-tight text-[var(--text-primary)];
-    opacity: 1 !important;
   }
 
-  h1 {
+  .page-title-heading {
     font-size: 22px;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--text-primary);
+    opacity: 1;
   }
 
   * {
