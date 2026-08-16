@@ -71,6 +71,23 @@ backend/src/scratch/
 fix_*.py
 replace_*.py
 complete_prompt.txt
-screenshots/
+screenshots/*
+screenshots/dashboard/*
+!screenshots/dashboard/overview.png
+!screenshots/dashboard/agents.png
+!screenshots/dashboard/policies-guardrails.png
+!screenshots/dashboard/compliance.png
+!screenshots/dashboard/risk.png
+!screenshots/dashboard/activity.png
+!screenshots/dashboard/evidence-reports.png
+!screenshots/dashboard/ai-advisor.png
+!screenshots/dashboard/settings.png
+
 
 backend/prisma/backups/
+
+# Staging & Local Postgres Data
+.staging/
+**/pgdata/
+*.pgdata
+

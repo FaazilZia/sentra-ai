@@ -35,13 +35,25 @@
 
 ## Screenshots
 
-| Governance Dashboard | Guardrail Pipeline |
+| Overview | Agents |
 |---|---|
-| ![Dashboard](https://sentraatech.info/og-dashboard.png) | ![Guardrails](https://sentraatech.info/og-guardrails.png) |
+| ![Overview](./screenshots/dashboard/overview.png) | ![Agents](./screenshots/dashboard/agents.png) |
 
-| Compliance Center | Risk Intelligence |
+| Policies & Guardrails | Compliance |
 |---|---|
-| Coming soon | Coming soon |
+| ![Policies & Guardrails](./screenshots/dashboard/policies-guardrails.png) | ![Compliance](./screenshots/dashboard/compliance.png) |
+
+| Risk | Activity |
+|---|---|
+| ![Risk](./screenshots/dashboard/risk.png) | ![Activity](./screenshots/dashboard/activity.png) |
+
+| Evidence & Reports | AI Advisor |
+|---|---|
+| ![Evidence & Reports](./screenshots/dashboard/evidence-reports.png) | ![AI Advisor](./screenshots/dashboard/ai-advisor.png) |
+
+| Settings | |
+|---|---|
+| ![Settings](./screenshots/dashboard/settings.png) | |
 
 > **Try it live:** [sentraatech.info](https://sentraatech.info)
 
@@ -72,8 +84,8 @@ Think of it as a **security checkpoint** for every `agent.run()` call in your st
 - **LangChain & OpenAI wrappers** — Drop-in governance for existing agent code
 
 ### 📊 Compliance Center
-- **GDPR / HIPAA / DPDP mapping** — Every governance decision maps to regulatory frameworks
-- **EU AI Act & ISO 42001 / NIST AI RMF / ISO 27001** — Framework controls and obligations
+- **5 Supported Regulatory Frameworks** — Native evaluation engines for GDPR, DPDP, HIPAA, PCI-DSS, and NIST AI RMF
+- **Automated Framework Mapping** — Governance decisions & posture findings mapped directly to controls
 - **FRIA (Fundamental Rights Impact Assessment)** — Built-in assessment workflows
 - **Cryptographic evidence chain** — Audit-proof evidence for compliance reviews
 - **Automated re-evaluation** — AI-driven compliance score recalculation after remediation
@@ -365,8 +377,6 @@ sentra-ai/
 ├── docs/
 │   └── BACKUP_AND_RESTORE.md         # DR procedures
 │
-├── helm/sentra/                      # Kubernetes Helm chart
-├── k8s/                              # Kubernetes manifests
 ├── observability/                    # Observability configs
 ├── .github/                          # CI/CD + SonarCloud workflows
 └── render.yaml                       # Render deployment config
@@ -576,7 +586,6 @@ Control AI access to production APIs, internal systems, and customer data with o
 | **SDK** | `@sentra-ai/sdk` v1.0.3 (npm) |
 | **CI/CD** | GitHub Actions + SonarCloud |
 | **Deployment** | Render (backend) + Vercel (frontend) |
-| **K8s** | Helm chart included |
 
 ---
 
