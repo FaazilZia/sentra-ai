@@ -26,7 +26,8 @@ export default async function dbSetup(): Promise<void> {
       env: { 
         ...process.env, 
         DATABASE_URL: process.env.DATABASE_URL_TEST || testDbUrl, 
-        DIRECT_URL: process.env.DATABASE_URL_TEST || testDbUrl 
+        DIRECT_URL: process.env.DATABASE_URL_TEST || testDbUrl,
+        PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION: process.env.PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION || 'yes'
       },
       stdio: 'inherit'
     });
@@ -43,7 +44,8 @@ export default async function dbSetup(): Promise<void> {
       env: { 
         ...process.env, 
         DATABASE_URL: process.env.DATABASE_URL_TEST || testDbUrl, 
-        DIRECT_URL: process.env.DATABASE_URL_TEST || testDbUrl 
+        DIRECT_URL: process.env.DATABASE_URL_TEST || testDbUrl,
+        PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION: process.env.PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION || 'yes'
       },
       stdio: 'inherit'
     });

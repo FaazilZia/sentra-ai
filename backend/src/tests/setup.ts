@@ -1,5 +1,6 @@
 console.log('--- TEST SETUP LOADED ---');
 process.env.DATABASE_URL = process.env.DATABASE_URL || process.env.DATABASE_URL_TEST || 'postgresql://postgres:postgres@localhost:5432/sentra_test';
+process.env.REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'mock_jwt_secret_1234567890';
 process.env.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'mock_jwt_refresh_secret_1234567890';
 jest.mock('ioredis', () => {
