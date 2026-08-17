@@ -1,3 +1,5 @@
+> **RESOLVED** — pure HTTP-only cookie-based authentication implemented in Sentraa AI frontend/backend. Auth tokens are no longer stored in client-side `localStorage`.
+
 # Backlog: Transition to Pure HTTP-Only Cookie Authentication
 
 ## Summary & Threat Model

@@ -17,7 +17,9 @@
     "validate:db": "ts-node --project tsconfig.json src/scripts/validate-db.ts",
     "migrate:create": "npx prisma migrate dev",
     "migrate:deploy": "npx prisma migrate deploy",
-    "postinstall": "prisma generate",
+    "test:db:up": "docker compose -f ../docker-compose.test.yml up -d",
+    "test:db:down": "docker compose -f ../docker-compose.test.yml down",
+    "test:db:status": "docker compose -f ../docker-compose.test.yml ps",
     "test:unit": "jest --testPathIgnorePatterns='tests/e2e/'",
     "test:e2e": "playwright test",
     "test:e2e:jest": "jest --testPathPatterns='tests/e2e/' --testPathIgnorePatterns='/node_modules/|/dist/|.*\\.spec\\.ts' --runInBand",
@@ -42,8 +44,8 @@
     "@langchain/core": "^1.1.48",
     "@langchain/openai": "^1.4.7",
     "@opentelemetry/auto-instrumentations-node": "^0.76.0",
-    "@opentelemetry/exporter-prometheus": "^0.218.0",
-    "@opentelemetry/sdk-node": "^0.218.0",
+    "@opentelemetry/exporter-prometheus": "^0.221.0",
+    "@opentelemetry/sdk-node": "^0.221.0",
     "@prisma/adapter-better-sqlite3": "^7.7.0",
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.7.0",
@@ -67,6 +69,7 @@
     "date-fns": "^4.1.0",
     "docx": "^9.7.0",
     "dotenv": "^17.4.2",
+    "esbuild": "^0.28.1",
     "express": "^5.2.1",
     "express-rate-limit": "^8.3.2",
     "file-type": "^22.0.1",
@@ -80,7 +83,7 @@
     "morgan": "^1.10.1",
     "multer": "^2.1.1",
     "node-fetch": "^2.7.0",
-    "nodemailer": "^8.0.6",
+    "nodemailer": "^9.0.5",
     "openai": "^6.34.0",
     "p-queue": "^6.6.2",
     "passport": "^0.7.0",
@@ -104,8 +107,7 @@
     "typescript": "^6.0.2",
     "uuid": "^13.0.0",
     "winston": "^3.19.0",
-    "zod": "^4.3.6",
-    "esbuild": "^0.28.1"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -121,7 +123,7 @@
     "@types/multer": "^2.1.0",
     "@types/node": "^20.19.41",
     "@types/node-fetch": "^2.6.11",
-    "@types/nodemailer": "^8.0.0",
+    "@types/nodemailer": "^8.0.1",
     "@types/pg": "^8.20.0",
     "@types/socket.io": "^3.0.1",
     "@types/supertest": "^7.2.0",
@@ -138,5 +140,8 @@
     "ts-jest": "^29.4.10",
     "ts-node-dev": "^2.0.0",
     "typescript-eslint": "^8.59.3"
+  },
+  "overrides": {
+    "deepmerge-ts": "^8.0.1"
   }
 }
