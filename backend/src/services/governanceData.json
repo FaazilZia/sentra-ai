@@ -111,13 +111,6 @@
       "title": "Automated Decision Protections",
       "description": "Enforce safeguards against automated profiling and decisions without explicit human review mechanisms.",
       "category": "OVERSIGHT"
-    },
-    {
-      "framework": "GDPR",
-      "control_id": "GDPR-ART-35",
-      "title": "DPIA Requirements",
-      "description": "Mandate and track Data Protection Impact Assessments for AI applications handling sensitive demographic information.",
-      "category": "PRIVACY"
     }
   ],
   "obligations": [
@@ -257,7 +250,7 @@
       "framework": "GDPR",
       "article_or_task": "GDPR Art. 35 — AIA / DPIA Masking Verification",
       "description": "Enforce and log strict PII redaction (masking emails, names, SSNs) before payload transfer to cloud LLMs.",
-      "linked_control_code": "GDPR-ART-35"
+      "linked_control_code": "GDPR-ART-22"
     }
   ]
 }
