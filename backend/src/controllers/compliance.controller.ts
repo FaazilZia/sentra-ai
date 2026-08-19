@@ -211,59 +211,28 @@ export const getComplianceStats = asyncHandler(async (req: any, res: Response) =
     PciService.getStats(organizationId).catch(() => null),
   ]);
 
+  const formatFrameworkStats = (name: string, stats: any) => {
+    const total = stats?.total_controls ?? 0;
+    return {
+      name,
+      score: total > 0 ? stats.compliance_score : 0,
+      status: total > 0 ? 'configured' : 'not_configured',
+      configured: Boolean(stats && total > 0),
+      controls: {
+        total_controls: total,
+        implemented: stats?.implemented ?? 0,
+        in_progress: stats?.in_progress ?? 0,
+        not_started: stats?.not_started ?? 0,
+        not_applicable: stats?.not_applicable ?? 0
+      }
+    };
+  };
+
   const frameworkList = [
-    {
-      name: 'GDPR',
-      score: gdprStats?.total_controls ? gdprStats.compliance_score : 0,
-      status: (gdprStats && gdprStats.total_controls > 0) ? 'configured' : 'not_configured',
-      configured: Boolean(gdprStats && gdprStats.total_controls > 0),
-      controls: {
-        total_controls: gdprStats?.total_controls ?? 0,
-        implemented: gdprStats?.implemented ?? 0,
-        in_progress: gdprStats?.in_progress ?? 0,
-        not_started: gdprStats?.not_started ?? 0,
-        not_applicable: gdprStats?.not_applicable ?? 0
-      }
-    },
-    {
-      name: 'DPDP',
-      score: dpdpStats?.total_controls ? dpdpStats.compliance_score : 0,
-      status: (dpdpStats && dpdpStats.total_controls > 0) ? 'configured' : 'not_configured',
-      configured: Boolean(dpdpStats && dpdpStats.total_controls > 0),
-      controls: {
-        total_controls: dpdpStats?.total_controls ?? 0,
-        implemented: dpdpStats?.implemented ?? 0,
-        in_progress: dpdpStats?.in_progress ?? 0,
-        not_started: dpdpStats?.not_started ?? 0,
-        not_applicable: dpdpStats?.not_applicable ?? 0
-      }
-    },
-    {
-      name: 'HIPAA',
-      score: hipaaStats?.total_controls ? hipaaStats.compliance_score : 0,
-      status: (hipaaStats && hipaaStats.total_controls > 0) ? 'configured' : 'not_configured',
-      configured: Boolean(hipaaStats && hipaaStats.total_controls > 0),
-      controls: {
-        total_controls: hipaaStats?.total_controls ?? 0,
-        implemented: hipaaStats?.implemented ?? 0,
-        in_progress: hipaaStats?.in_progress ?? 0,
-        not_started: hipaaStats?.not_started ?? 0,
-        not_applicable: hipaaStats?.not_applicable ?? 0
-      }
-    },
-    {
-      name: 'PCI_DSS',
-      score: pciStats?.total_controls ? pciStats.compliance_score : 0,
-      status: (pciStats && pciStats.total_controls > 0) ? 'configured' : 'not_configured',
-      configured: Boolean(pciStats && pciStats.total_controls > 0),
-      controls: {
-        total_controls: pciStats?.total_controls ?? 0,
-        implemented: pciStats?.implemented ?? 0,
-        in_progress: pciStats?.in_progress ?? 0,
-        not_started: pciStats?.not_started ?? 0,
-        not_applicable: pciStats?.not_applicable ?? 0
-      }
-    },
+    formatFrameworkStats('GDPR', gdprStats),
+    formatFrameworkStats('DPDP', dpdpStats),
+    formatFrameworkStats('HIPAA', hipaaStats),
+    formatFrameworkStats('PCI_DSS', pciStats),
     {
       name: 'NIST_AI_RMF',
       score: (nistAiRmfOverview?.summary?.total_subcategories) ? nistAiRmfOverview.score : 0,
