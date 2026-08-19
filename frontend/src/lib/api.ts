@@ -1023,76 +1023,7 @@ export async function linkDatasetToSystem(id: string, aiSystemId: string | null)
 
 
 
-/**
- * TRAINING REGISTER ENDPOINTS
- */
-export interface TrainingCourse {
-  id: string;
-  title: string;
-  description?: string | null;
-  framework_tags: string[];
-  duration_minutes: number;
-  is_mandatory: boolean;
-  created_at: string;
-  completions?: TrainingCompletion[];
-}
 
-export interface TrainingCompletion {
-  id: string;
-  course_id: string;
-  user_id: string;
-  completed_at: string;
-  score?: number | null;
-  passed: boolean;
-  notes?: string | null;
-  user?: {
-    id: string;
-    full_name: string;
-    email: string;
-  };
-}
-
-export interface TrainingStatus {
-  totalCourses: number;
-  mandatoryCourses: number;
-  completionsCount: number;
-  completionRate: number;
-  pendingGaps: number;
-  gaps: Array<{
-    userId: string;
-    userName: string;
-    userEmail: string;
-    courseId: string;
-    courseTitle: string;
-  }>;
-}
-
-export async function fetchTrainingCourses(): Promise<TrainingCourse[]> {
-  return apiRequest<TrainingCourse[]>('/training/courses');
-}
-
-export async function createTrainingCourse(payload: any): Promise<TrainingCourse> {
-  return apiRequest<TrainingCourse>('/training/courses', {
-    method: 'POST',
-    body: JSON.stringify(payload)
-  });
-}
-
-export async function recordTrainingCompletion(courseId: string, payload: {
-  userId: string;
-  score?: number;
-  passed?: boolean;
-  notes?: string;
-}): Promise<TrainingCompletion> {
-  return apiRequest<TrainingCompletion>(`/training/courses/${courseId}/complete`, {
-    method: 'POST',
-    body: JSON.stringify(payload)
-  });
-}
-
-export async function fetchTrainingStatus(): Promise<TrainingStatus> {
-  return apiRequest<TrainingStatus>('/training/status');
-}
 
 /**
  * CROSS-FRAMEWORK MAPPER (GovernanceOS) ENDPOINTS

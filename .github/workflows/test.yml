@@ -309,15 +309,19 @@ jobs:
           exit 1
 
       - name: Install frontend dependencies
+        working-directory: frontend
         run: npm ci --ignore-scripts
 
       - name: Run TypeScript compile checks (frontend)
+        working-directory: frontend
         run: node --max-old-space-size=4096 node_modules/.bin/tsc --noEmit
 
       - name: Install Playwright + Chromium
+        working-directory: frontend
         run: ./node_modules/.bin/playwright install chromium --with-deps
 
       - name: Run accessibility audit (WCAG 2.1 AA)
+        working-directory: frontend
         run: ./node_modules/.bin/playwright test e2e/accessibility.spec.ts --reporter=list
         env:
           PLAYWRIGHT_BASE_URL: http://localhost:5173
