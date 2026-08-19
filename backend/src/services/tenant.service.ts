@@ -89,57 +89,6 @@ export const TenantService = {
       await seedOrganizationGovernance(createdOrg.id, tx);
       await seedDefaultIntakeForm(createdOrg.id, tx);
 
-      // Seed default training courses
-      await tx.training_courses.createMany({
-        data: [
-          {
-            id: randomUUID(),
-            organizationId: createdOrg.id,
-            title: 'GDPR & Data Privacy Fundamentals',
-            description: 'Foundational privacy principles, user consent workflows, and secure processing pipelines under GDPR.',
-            framework_tags: ['GDPR'],
-            duration_minutes: 60,
-            is_mandatory: true
-          },
-          {
-            id: randomUUID(),
-            organizationId: createdOrg.id,
-            title: 'AI Risk Management Basics',
-            description: 'Mapping, measuring, and managing structural risks using the NIST AI RMF framework.',
-            framework_tags: ['NIST_AI_RMF'],
-            duration_minutes: 45,
-            is_mandatory: true
-          },
-          {
-            id: randomUUID(),
-            organizationId: createdOrg.id,
-            title: 'HIPAA Compliance for AI Systems',
-            description: 'Protecting patient health information and enforcing PHI safeguards in AI-driven workflows.',
-            framework_tags: ['HIPAA'],
-            duration_minutes: 30,
-            is_mandatory: true
-          },
-          {
-            id: randomUUID(),
-            organizationId: createdOrg.id,
-            title: 'PCI-DSS Security Overview',
-            description: 'Payment card data security standards, encryption requirements, and access control for AI systems.',
-            framework_tags: ['PCI_DSS'],
-            duration_minutes: 45,
-            is_mandatory: false
-          },
-          {
-            id: randomUUID(),
-            organizationId: createdOrg.id,
-            title: 'DPDP Act & Responsible AI Principles',
-            description: 'Digital personal data protection obligations and core concepts in transparency, explainability, and fairness.',
-            framework_tags: ['DPDP', 'NIST_AI_RMF'],
-            duration_minutes: 30,
-            is_mandatory: false
-          }
-        ]
-      });
-
       return createdOrg;
     }, { timeout: 120000 });
 

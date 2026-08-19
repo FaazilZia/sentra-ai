@@ -46,7 +46,6 @@ import advisorRoutes from './routes/advisor.routes';
 import automationRoutes from './routes/automation.routes';
 import datasetRoutes from './routes/dataset.routes';
 import modelLifecycleRoutes from './routes/modelLifecycle.routes';
-import trainingRoutes from './routes/training.routes';
 import frameworkMapperRoutes from './routes/frameworkMapper.routes';
 import reportsRoutes from './routes/reports.routes';
 
@@ -416,7 +415,6 @@ v1Router.use('/advisor', advisorRoutes);
 v1Router.use('/automations', automationRoutes);
 v1Router.use('/datasets', datasetRoutes);
 v1Router.use('/model-lifecycle', modelLifecycleRoutes);
-v1Router.use('/training', trainingRoutes);
 v1Router.use('/framework-mapper', frameworkMapperRoutes);
 v1Router.use('/reports', reportsRoutes);
 v1Router.use('/reports', reportCRUDRoutes);

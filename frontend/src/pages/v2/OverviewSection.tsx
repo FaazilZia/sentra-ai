@@ -40,11 +40,11 @@ export default function OverviewSection() {
   const [complianceFrameworks, setComplianceFrameworks] = useState<
     { name: string; score: number; status: 'compliant' | 'warning' | 'critical' }[]
   >([
-    { name: 'GDPR', score: 92, status: 'compliant' },
-    { name: 'DPDP', score: 85, status: 'compliant' },
-    { name: 'HIPAA', score: 78, status: 'warning' },
-    { name: 'PCI-DSS', score: 94, status: 'compliant' },
-    { name: 'NIST AI RMF', score: 81, status: 'compliant' }
+    { name: 'GDPR', score: 0, status: 'warning' },
+    { name: 'DPDP', score: 0, status: 'warning' },
+    { name: 'HIPAA', score: 0, status: 'warning' },
+    { name: 'PCI-DSS', score: 0, status: 'warning' },
+    { name: 'NIST AI RMF', score: 0, status: 'warning' }
   ]);
 
   // Graph state
@@ -75,21 +75,13 @@ export default function OverviewSection() {
       });
 
       if (compRes?.frameworks) {
-        const BASELINES: Record<string, number> = {
-          'GDPR': 92,
-          'DPDP': 85,
-          'HIPAA': 78,
-          'PCI-DSS': 94,
-          'NIST AI RMF': 81
-        };
-
         const activeNames = ['GDPR', 'DPDP', 'HIPAA', 'PCI-DSS', 'NIST AI RMF'];
         const mapped = activeNames.map(name => {
           const found = compRes.frameworks.find((f: any) => 
             f.name.toUpperCase().includes(name.replace('-', '').replace(/\s+/g, ''))
           );
           const rawScore = found?.score;
-          const score = (typeof rawScore === 'number' && rawScore > 0) ? rawScore : (BASELINES[name] || 88);
+          const score = typeof rawScore === 'number' ? rawScore : 0;
           return {
             name,
             score,

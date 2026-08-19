@@ -46,46 +46,46 @@ const FIVE_FRAMEWORKS: FrameworkSummary[] = [
   {
     id: 'GDPR',
     name: 'GDPR (EU General Data Protection Regulation)',
-    readinessScore: 92,
-    totalControls: 28,
-    passedControls: 26,
-    openFindings: 2,
+    readinessScore: 0,
+    totalControls: 0,
+    passedControls: 0,
+    openFindings: 0,
     description: 'Data protection, consent verification, and right-to-erasure compliance for EU user data processed by AI agents.'
   },
   {
     id: 'DPDP',
     name: 'DPDP (India Digital Personal Data Protection Act)',
-    readinessScore: 85,
-    totalControls: 22,
-    passedControls: 19,
-    openFindings: 3,
+    readinessScore: 0,
+    totalControls: 0,
+    passedControls: 0,
+    openFindings: 0,
     description: 'Consent manager alignment, purpose limitation, and data fiduciary obligations for Indian digital data.'
   },
   {
     id: 'HIPAA',
     name: 'HIPAA (Health Insurance Portability & Accountability)',
-    readinessScore: 78,
-    totalControls: 34,
-    passedControls: 27,
-    openFindings: 7,
+    readinessScore: 0,
+    totalControls: 0,
+    passedControls: 0,
+    openFindings: 0,
     description: 'Protected Health Information (PHI) encryption, access logging, and prompt masking guardrails.'
   },
   {
     id: 'PCI-DSS',
     name: 'PCI-DSS v4.0 (Payment Card Industry Data Standard)',
-    readinessScore: 94,
-    totalControls: 20,
-    passedControls: 19,
-    openFindings: 1,
+    readinessScore: 0,
+    totalControls: 0,
+    passedControls: 0,
+    openFindings: 0,
     description: 'Primary Account Number (PAN) and CVV redaction across agent memory and vector stores.'
   },
   {
     id: 'NIST AI RMF',
     name: 'NIST AI RMF (Risk Management Framework 1.0)',
-    readinessScore: 81,
-    totalControls: 30,
-    passedControls: 24,
-    openFindings: 6,
+    readinessScore: 0,
+    totalControls: 0,
+    passedControls: 0,
+    openFindings: 0,
     description: 'GOVERN, MAP, MEASURE, and MANAGE functions for trustworthy and accountable AI deployments.'
   }
 ];
@@ -107,11 +107,15 @@ export default function ComplianceSection() {
             f.name.toUpperCase().includes(fw.id.replace('-', ''))
           );
           if (apiFw) {
+            const total = apiFw.controls?.total_controls ?? 0;
+            const implemented = apiFw.controls?.implemented ?? 0;
+            const open = (apiFw.controls?.in_progress ?? 0) + (apiFw.controls?.not_started ?? 0);
             return {
               ...fw,
-              readinessScore: apiFw.score || fw.readinessScore,
-              passedControls: apiFw.passedControls || fw.passedControls,
-              openFindings: apiFw.openFindings || fw.openFindings
+              readinessScore: apiFw.score ?? 0,
+              totalControls: total,
+              passedControls: implemented,
+              openFindings: open
             };
           }
           return fw;
@@ -145,6 +149,12 @@ export default function ComplianceSection() {
 
   const currentFw = frameworks.find(f => f.id === activeTab) || frameworks[0];
   const currentControls = controls.filter(c => c.framework === activeTab);
+
+  const getFwScoreDisplay = (id: ActiveFramework) => {
+    const fw = frameworks.find(f => f.id === id);
+    if (!fw || fw.totalControls === 0) return '0%';
+    return `${fw.readinessScore}%`;
+  };
 
   const controlColumns: Column<ControlItem>[] = [
     {
@@ -222,11 +232,11 @@ export default function ComplianceSection() {
       {/* 5 Framework Tabs */}
       <TabBar
         tabs={[
-          { id: 'GDPR', label: 'GDPR', count: '92%', icon: Lock },
-          { id: 'DPDP', label: 'DPDP', count: '85%', icon: ShieldCheck },
-          { id: 'HIPAA', label: 'HIPAA', count: '78%', icon: AlertTriangle },
-          { id: 'PCI-DSS', label: 'PCI-DSS', count: '94%', icon: CheckCircle2 },
-          { id: 'NIST AI RMF', label: 'NIST AI RMF', count: '81%', icon: ClipboardCheck },
+          { id: 'GDPR', label: 'GDPR', count: getFwScoreDisplay('GDPR'), icon: Lock },
+          { id: 'DPDP', label: 'DPDP', count: getFwScoreDisplay('DPDP'), icon: ShieldCheck },
+          { id: 'HIPAA', label: 'HIPAA', count: getFwScoreDisplay('HIPAA'), icon: AlertTriangle },
+          { id: 'PCI-DSS', label: 'PCI-DSS', count: getFwScoreDisplay('PCI-DSS'), icon: CheckCircle2 },
+          { id: 'NIST AI RMF', label: 'NIST AI RMF', count: getFwScoreDisplay('NIST AI RMF'), icon: ClipboardCheck },
           { id: 'GOVERNANCE_OS', label: 'GovernanceOS Matrix', icon: Layers }
         ]}
         activeTab={activeTab}

@@ -34,7 +34,7 @@ export class PciService {
     // Standard scoring: implemented + not_applicable + 0.5 * in_progress
     const compliance_score = total > 0 
       ? Math.round(((implemented + notApplicable + inProgress * 0.5) / total) * 100)
-      : 100;
+      : 0;
 
     return {
       total_controls: total,

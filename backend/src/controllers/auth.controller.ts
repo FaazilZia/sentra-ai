@@ -9,6 +9,7 @@ import { auditLogger } from '../utils/auditLogger';
 import { OAuth2Client } from 'google-auth-library';
 import { getRedisClient } from '../config/redis';
 import { sendEmail } from '../config/email';
+import { seedOrganizationGovernance } from '../services/governanceSeed.service';
 
 const googleClient = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -198,6 +199,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
       });
 
       await seedDefaultPolicy(tx, org.id);
+      await seedOrganizationGovernance(org.id, tx);
 
       return { org, user };
     });
@@ -350,6 +352,7 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
           },
         });
         await seedDefaultPolicy(tx, org.id);
+        await seedOrganizationGovernance(org.id, tx);
         return newUser;
       });
       user = result;
