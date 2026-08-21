@@ -127,7 +127,7 @@ export class PIIScannerService {
       risk: 'medium'
     },
     HINGLISH_PII_PHRASE: {
-      regex: /\b(?:aadhaar|pan|ssn|phone|email)\s*(?:card|number|details)?\s*(?:update|link|verify|submit|par|pe|ko)\b/gi,
+      regex: /\b(?:aadhaar|pan|ssn|phone|email)(?:\s+(?:card|number|details))?\s+(?:update|link|verify|submit|par|pe|ko)\b/gi,
       redactedLabel: '[HINGLISH_PII_TRIGGER_REDACTED]',
       frameworks: ['DPDP', 'GDPR'],
       risk: 'medium'
@@ -141,13 +141,13 @@ export class PIIScannerService {
     if (!text) return text;
     let normalized = text;
     // Collapse spaces around parentheses e.g. "(4 1 5)" => "(415)"
-    normalized = normalized.replace(/\(\s*/g, '(').replace(/\s*\)/g, ')');
+    normalized = normalized.replace(/\(\s+/g, '(').replace(/\s+\)/g, ')');
     // Collapse spaces around punctuation e.g. "1 2 3 - 4 5" => "123-45", "(415) - 555" => "(415)-555"
-    normalized = normalized.replace(/([a-zA-Z0-9)])\s*([-.:])\s*(?=[a-zA-Z0-9])/g, '$1$2');
+    normalized = normalized.replace(/([a-z0-9)])\s*([-.:])\s*(?=[a-z0-9])/gi, '$1$2');
     // Collapse single-character or single-digit spaced sequences
-    normalized = normalized.replace(/\b([a-zA-Z0-9])\s+(?=[a-zA-Z0-9]\b)/gi, '$1');
+    normalized = normalized.replace(/\b([a-z0-9])\s+(?=[a-z0-9]\b)/gi, '$1');
     // Collapse multi-char spaced sequences e.g. "A B C D E 1 2 3 4 F" => "ABCDE1234F"
-    normalized = normalized.replace(/(?:\b[a-zA-Z0-9]\s+)+[a-zA-Z0-9]\b/gi, (m) => m.replace(/\s+/g, ''));
+    normalized = normalized.replace(/(?:\b[a-z0-9]\s+)+[a-z0-9]\b/gi, (m) => m.replace(/\s+/g, ''));
     return normalized;
   }
 
@@ -170,8 +170,8 @@ export class PIIScannerService {
             subScan.violatedFrameworks.forEach(f => extraFrameworks.add(f));
           }
         }
-      } catch (e) {
-        // Ignore invalid base64
+      } catch (_ignoredErr) {
+        // Ignore non-UTF8 or invalid Base64 decoding attempts
       }
     }
 
