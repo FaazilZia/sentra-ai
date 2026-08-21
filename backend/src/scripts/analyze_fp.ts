@@ -6,91 +6,120 @@ import { makeDecision } from '../services/decisionEngine';
 import { evaluateRisk } from '../services/riskEngine';
 import { evaluatePolicy } from '../services/policyEngine';
 
-async function analyzeFalsePositives() {
-  const jsonPath = path.resolve(__dirname, '../../../tests/pii-benchmark/results/latest-report.json');
-  const report = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
+interface ReportDetail {
+  id: string;
+  input: string;
+  category: string;
+  resultType: string;
+}
 
-  const fpCases = report.details.filter((d: any) => d.category === 'clean' && d.resultType === 'FP');
+interface AnalyzedResult {
+  id: string;
+  input: string;
+  engines: string;
+  matchedRules: string;
+}
 
-  const results: any[] = [];
+const KEYWORDS = [
+  'password', 'account', 'personal', 'credential', 'secret', 'confidential', 'pii', 'ssn', 'credit_card', 'api_key', 'token',
+  'medical', 'financial', 'audit', 'payment', 'revenue', 'private', 'message', 'email', 'phone', 'address',
+  'proxy', 'scrape', 'manipulate', 'elderly', 'targeting', 'aws', 'key', 'master'
+];
 
-  for (const c of fpCases) {
-    const text = c.input;
-    const engines: string[] = [];
-    const matchedRules: string[] = [];
+const HIGH_RISK_ACTIONS = [
+  'export_csv', 'delete_record', 'external_share', 'bypass_auth',
+  'export_data', 'master_key', 'admin_access', 'pii_export', 'security_bypass', 'jailbreak', 'unfiltered',
+  'delete_all', 'drop_table', 'truncate_table'
+];
 
-    // 1. Check PIIScannerService
-    const scanRes = PIIScannerService.scanPayload(text, {});
-    if (scanRes.piiDetected) {
-      engines.push('PIIScannerService');
-      matchedRules.push(`PIIScanner:[${scanRes.detectedCategories.join(', ')}]`);
-    }
+const MEDIUM_RISK_ACTIONS = [
+  'read_database', 'read_pii', 'access_logs', 'modify_record'
+];
 
-    // 2. Check GuardrailService
-    const guardrailRes = await GuardrailService.evaluateInput(text);
-    if (guardrailRes.decision === 'BLOCK' || guardrailRes.decision === 'MODIFY') {
-      engines.push('GuardrailService');
-      matchedRules.push(`Guardrail:[${guardrailRes.policy_triggered || guardrailRes.reason}]`);
-    }
+function findMatches(textLower: string, list: string[]): string[] {
+  return list.filter((item) => textLower.includes(item));
+}
 
-    // 3. Check DecisionEngine / Policy / RiskEngine
-    const decisionRes = await makeDecision(`agent-${c.id}`, text, `org-${c.id}`, {});
-    if (decisionRes.status === 'blocked' || decisionRes.status === 'flagged' || decisionRes.risk === 'high') {
-      engines.push('DecisionEngine');
-      
-      const policyRes = await evaluatePolicy(`agent-${c.id}`, text, `org-${c.id}`, {});
-      const riskRes = evaluateRisk(text, {});
+async function analyzeDecisionTriggers(id: string, text: string): Promise<string[]> {
+  const policyRes = await evaluatePolicy(`agent-${id}`, text, `org-${id}`, {});
+  const riskRes = evaluateRisk(text, {});
+  const textLower = text.toLowerCase();
 
-      const triggers: string[] = [];
-      if (!policyRes.allowed) {
-        triggers.push(`Policy:${policyRes.reason}`);
-      }
-
-      const lowercase = text.toLowerCase();
-      const keywords = [
-        'password', 'account', 'personal', 'credential', 'secret', 'confidential', 'pii', 'ssn', 'credit_card', 'api_key', 'token',
-        'medical', 'financial', 'audit', 'payment', 'revenue', 'private', 'message', 'email', 'phone', 'address',
-        'proxy', 'scrape', 'manipulate', 'elderly', 'targeting', 'aws', 'key', 'master'
-      ];
-      const matchedKeywords = keywords.filter(k => lowercase.includes(k));
-
-      const highRiskActions = [
-        'export_csv', 'delete_record', 'external_share', 'bypass_auth',
-        'export_data', 'master_key', 'admin_access', 'pii_export', 'security_bypass', 'jailbreak', 'unfiltered',
-        'delete_all', 'drop_table', 'truncate_table'
-      ];
-      const matchedHighRisk = highRiskActions.filter(a => lowercase.includes(a));
-
-      const mediumRiskActions = [
-        'read_database', 'read_pii', 'access_logs', 'modify_record'
-      ];
-      const matchedMediumRisk = mediumRiskActions.filter(a => lowercase.includes(a));
-
-      if (matchedKeywords.length > 0) triggers.push(`RiskKeyword:[${matchedKeywords.join(', ')}]`);
-      if (matchedHighRisk.length > 0) triggers.push(`HighRiskAction:[${matchedHighRisk.join(', ')}]`);
-      if (matchedMediumRisk.length > 0) triggers.push(`MediumRiskAction:[${matchedMediumRisk.join(', ')}]`);
-      if (riskRes.triggers.length > 0) triggers.push(`RiskTriggers:[${riskRes.triggers.join(', ')}]`);
-      if (riskRes.score === 'high') triggers.push(`RiskScore:HIGH`);
-
-      matchedRules.push(`DecisionEngine(${triggers.join('; ') || decisionRes.reason})`);
-    }
-
-    results.push({
-      id: c.id,
-      input: text,
-      engines: engines.join(', '),
-      matchedRules: matchedRules.join(' | ')
-    });
+  const triggers: string[] = [];
+  if (!policyRes.allowed) {
+    triggers.push(`Policy:${policyRes.reason}`);
   }
 
-  // Print as Markdown Table
+  const matchedKeywords = findMatches(textLower, KEYWORDS);
+  const matchedHighRisk = findMatches(textLower, HIGH_RISK_ACTIONS);
+  const matchedMediumRisk = findMatches(textLower, MEDIUM_RISK_ACTIONS);
+
+  if (matchedKeywords.length > 0) triggers.push(`RiskKeyword:[${matchedKeywords.join(', ')}]`);
+  if (matchedHighRisk.length > 0) triggers.push(`HighRiskAction:[${matchedHighRisk.join(', ')}]`);
+  if (matchedMediumRisk.length > 0) triggers.push(`MediumRiskAction:[${matchedMediumRisk.join(', ')}]`);
+  if (riskRes.triggers.length > 0) triggers.push(`RiskTriggers:[${riskRes.triggers.join(', ')}]`);
+  if (riskRes.score === 'high') triggers.push(`RiskScore:HIGH`);
+
+  return triggers;
+}
+
+async function analyzeCase(c: ReportDetail): Promise<AnalyzedResult> {
+  const text = c.input;
+  const engines: string[] = [];
+  const matchedRules: string[] = [];
+
+  const scanRes = PIIScannerService.scanPayload(text, {});
+  if (scanRes.piiDetected) {
+    engines.push('PIIScannerService');
+    matchedRules.push(`PIIScanner:[${scanRes.detectedCategories.join(', ')}]`);
+  }
+
+  const guardrailRes = await GuardrailService.evaluateInput(text);
+  if (guardrailRes.decision === 'BLOCK' || guardrailRes.decision === 'MODIFY') {
+    engines.push('GuardrailService');
+    matchedRules.push(`Guardrail:[${guardrailRes.policy_triggered || guardrailRes.reason}]`);
+  }
+
+  const decisionRes = await makeDecision(`agent-${c.id}`, text, `org-${c.id}`, {});
+  if (decisionRes.status === 'blocked' || decisionRes.status === 'flagged' || decisionRes.risk === 'high') {
+    engines.push('DecisionEngine');
+    const triggers = await analyzeDecisionTriggers(c.id, text);
+    matchedRules.push(`DecisionEngine(${triggers.join('; ') || decisionRes.reason})`);
+  }
+
+  return {
+    id: c.id,
+    input: text,
+    engines: engines.join(', '),
+    matchedRules: matchedRules.join(' | '),
+  };
+}
+
+async function analyzeFalsePositives() {
+  const jsonPath = path.resolve(__dirname, '../../../tests/pii-benchmark/results/latest-report.json');
+  if (!fs.existsSync(jsonPath)) {
+    console.log('No latest-report.json found.');
+    return;
+  }
+
+  const report = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
+  const fpCases: ReportDetail[] = (report.details || []).filter(
+    (d: ReportDetail) => d.category === 'clean' && d.resultType === 'FP'
+  );
+
+  const results: AnalyzedResult[] = [];
+  for (const c of fpCases) {
+    results.push(await analyzeCase(c));
+  }
+
   console.log(`| # | Case ID | Exact Input Text | Flagging Engine(s) | Specific Matched Rule / Keyword / Trigger |`);
   console.log(`| :--- | :--- | :--- | :--- | :--- |`);
   results.forEach((r, idx) => {
     console.log(`| ${idx + 1} | \`${r.id}\` | "${r.input}" | \`${r.engines}\` | \`${r.matchedRules}\` |`);
   });
-
-  process.exit(0);
 }
 
-analyzeFalsePositives().catch(console.error);
+analyzeFalsePositives().catch((err) => {
+  console.error('Analysis error:', err);
+  process.exitCode = 1;
+});

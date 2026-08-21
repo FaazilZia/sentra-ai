@@ -50,7 +50,7 @@ const SHELL_INJECTION_PATTERNS = [
   /&&\s*(?:rm|cat|ls|cd|exec|sudo|curl|wget|chmod|chown|kill|python|node|bash|sh|powershell|cmd)\b/i,
   /\|\|\s*(?:rm|cat|ls|cd|exec|sudo|curl|wget|chmod|chown|kill|python|node|bash|sh|powershell|cmd)\b/i,
   /;\s*(?:rm|cat|ls|cd|exec|sudo|curl|wget|chmod|chown|kill|python|node|bash|sh|powershell|cmd)\b/i,
-  /(?<!\|)\|\s*(?!\|)(?:[a-zA-Z_\$\(`])/, /\$\(/, /`/,
+  /(?<!\|)\|\s*(?!\|)(?:[a-zA-Z_$(`])/, /\$\(/, /`/,
   /bash\s+-c/i, /sh\s+-c/i, /cmd\.exe/i, /powershell/i,
   /rm\s+-rf/i, /curl\s+[^|]{1,200}\|/i, /wget\s+[^|]{1,200}\|/i, /nc\s+-e/i,
   /chmod\s+777/i, /\bsudo\b/i
