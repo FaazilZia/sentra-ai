@@ -1,31 +1,31 @@
 {
-  "timestamp": "2026-08-21T21:19:15.974Z",
+  "timestamp": "2026-08-21T21:25:36.628Z",
   "l3Evaluated": false,
   "caveatNotice": "L1/L2 pattern-matching only, L3 semantic layer not evaluated",
   "overall": {
     "total": 220,
-    "tp": 97,
+    "tp": 96,
     "fp": 0,
     "tn": 106,
-    "fn": 17,
+    "fn": 18,
     "precision": 1,
-    "recall": 0.8509,
-    "f1": 0.9194,
+    "recall": 0.8421,
+    "f1": 0.9143,
     "fpr": 0,
-    "fnr": 0.1491
+    "fnr": 0.1579
   },
   "byCategory": {
     "direct": {
       "total": 63,
-      "tp": 47,
+      "tp": 46,
       "fp": 0,
       "tn": 0,
-      "fn": 16,
+      "fn": 17,
       "precision": 1,
-      "recall": 0.746,
-      "f1": 0.8545,
+      "recall": 0.7302,
+      "f1": 0.844,
       "fpr": 0,
-      "fnr": 0.254
+      "fnr": 0.2698
     },
     "obfuscated": {
       "total": 31,
@@ -151,15 +151,15 @@
     },
     "name_in_context": {
       "total": 24,
-      "tp": 8,
+      "tp": 7,
       "fp": 0,
       "tn": 0,
-      "fn": 16,
+      "fn": 17,
       "precision": 1,
-      "recall": 0.3333,
-      "f1": 0.5,
+      "recall": 0.2917,
+      "f1": 0.4516,
       "fpr": 0,
-      "fnr": 0.6667
+      "fnr": 0.7083
     },
     "credential": {
       "total": 16,
@@ -189,27 +189,27 @@
   "byFramework": {
     "GDPR": {
       "total": 60,
-      "tp": 50,
+      "tp": 49,
+      "fp": 0,
+      "tn": 0,
+      "fn": 11,
+      "precision": 1,
+      "recall": 0.8167,
+      "f1": 0.8991,
+      "fpr": 0,
+      "fnr": 0.1833
+    },
+    "DPDP": {
+      "total": 58,
+      "tp": 48,
       "fp": 0,
       "tn": 0,
       "fn": 10,
       "precision": 1,
-      "recall": 0.8333,
-      "f1": 0.9091,
+      "recall": 0.8276,
+      "f1": 0.9057,
       "fpr": 0,
-      "fnr": 0.1667
-    },
-    "DPDP": {
-      "total": 58,
-      "tp": 49,
-      "fp": 0,
-      "tn": 0,
-      "fn": 9,
-      "precision": 1,
-      "recall": 0.8448,
-      "f1": 0.9159,
-      "fpr": 0,
-      "fnr": 0.1552
+      "fnr": 0.1724
     },
     "HIPAA": {
       "total": 36,
@@ -263,15 +263,15 @@
   "byEngine": {
     "piiScanner": {
       "total": 220,
-      "tp": 86,
+      "tp": 83,
       "fp": 0,
       "tn": 106,
-      "fn": 28,
+      "fn": 31,
       "precision": 1,
-      "recall": 0.7544,
-      "f1": 0.86,
+      "recall": 0.7281,
+      "f1": 0.8426,
       "fpr": 0,
-      "fnr": 0.2456
+      "fnr": 0.2719
     },
     "guardrailService": {
       "total": 220,
@@ -299,22 +299,22 @@
     },
     "combinedPipeline": {
       "total": 220,
-      "tp": 97,
+      "tp": 96,
       "fp": 0,
       "tn": 106,
-      "fn": 17,
+      "fn": 18,
       "precision": 1,
-      "recall": 0.8509,
-      "f1": 0.9194,
+      "recall": 0.8421,
+      "f1": 0.9143,
       "fpr": 0,
-      "fnr": 0.1491
+      "fnr": 0.1579
     }
   },
   "worstPerformingCategories": [
     {
       "category": "piiType:name_in_context",
       "worstMetric": "Recall",
-      "score": 0.3333
+      "score": 0.2917
     }
   ],
   "details": [
@@ -1029,19 +1029,13 @@
         "DPDP"
       ],
       "category": "direct",
-      "detected": true,
-      "resultType": "TP",
-      "scannerDetected": true,
+      "detected": false,
+      "resultType": "FN",
+      "scannerDetected": false,
       "guardrailDecision": "ALLOW",
       "decisionStatus": "allowed",
-      "detectedCategories": [
-        "NAME_IN_CONTEXT"
-      ],
-      "violatedFrameworks": [
-        "GDPR",
-        "DPDP",
-        "HIPAA"
-      ]
+      "detectedCategories": [],
+      "violatedFrameworks": []
     },
     {
       "id": "case-033",
@@ -3961,17 +3955,11 @@
       "category": "direct",
       "detected": true,
       "resultType": "TP",
-      "scannerDetected": true,
+      "scannerDetected": false,
       "guardrailDecision": "BLOCK",
       "decisionStatus": "allowed",
-      "detectedCategories": [
-        "NAME_IN_CONTEXT"
-      ],
-      "violatedFrameworks": [
-        "GDPR",
-        "DPDP",
-        "HIPAA"
-      ]
+      "detectedCategories": [],
+      "violatedFrameworks": []
     },
     {
       "id": "case-197",
@@ -4256,17 +4244,11 @@
       "category": "direct",
       "detected": true,
       "resultType": "TP",
-      "scannerDetected": true,
+      "scannerDetected": false,
       "guardrailDecision": "BLOCK",
       "decisionStatus": "allowed",
-      "detectedCategories": [
-        "NAME_IN_CONTEXT"
-      ],
-      "violatedFrameworks": [
-        "GDPR",
-        "DPDP",
-        "HIPAA"
-      ]
+      "detectedCategories": [],
+      "violatedFrameworks": []
     },
     {
       "id": "case-213",

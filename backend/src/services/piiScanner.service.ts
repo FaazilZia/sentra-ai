@@ -121,7 +121,7 @@ export class PIIScannerService {
       risk: 'medium'
     },
     NAME_IN_CONTEXT: {
-      regex: /\b(?:[eE]mployee|[cC]ustomer|[pP]atient|[uU]ser)\s+(?:file\s*(?:for\s*)?|for\s*)?([A-Z][a-z]{2,}\s+[A-Z][a-z]{2,})/g,
+      regex: /\b(?:employee|customer|patient|user)\s+(?:file\s+for\s+|file\s+|for\s+)?([A-Z][a-z]{2,}\s+[A-Z][a-z]{2,})/g,
       redactedLabel: '[NAME_REDACTED]',
       frameworks: ['GDPR', 'DPDP', 'HIPAA'],
       risk: 'medium'
@@ -143,11 +143,11 @@ export class PIIScannerService {
     // Collapse spaces around parentheses e.g. "(4 1 5)" => "(415)"
     normalized = normalized.replace(/\(\s+/g, '(').replace(/\s+\)/g, ')');
     // Collapse spaces around punctuation e.g. "1 2 3 - 4 5" => "123-45", "(415) - 555" => "(415)-555"
-    normalized = normalized.replace(/([a-z0-9)])\s*([-.:])\s*(?=[a-z0-9])/gi, '$1$2');
+    normalized = normalized.replace(/([a-zA-Z0-9)])\s*([-.:])\s*(?=[a-zA-Z0-9])/g, '$1$2');
     // Collapse single-character or single-digit spaced sequences
-    normalized = normalized.replace(/\b([a-z0-9])\s+(?=[a-z0-9]\b)/gi, '$1');
+    normalized = normalized.replace(/\b([a-zA-Z0-9])\s+(?=[a-zA-Z0-9]\b)/g, '$1');
     // Collapse multi-char spaced sequences e.g. "A B C D E 1 2 3 4 F" => "ABCDE1234F"
-    normalized = normalized.replace(/(?:\b[a-z0-9]\s+)+[a-z0-9]\b/gi, (m) => m.replace(/\s+/g, ''));
+    normalized = normalized.replace(/(?:\b[a-zA-Z0-9]\s+)+[a-zA-Z0-9]\b/g, (m) => m.replace(/\s+/g, ''));
     return normalized;
   }
 
