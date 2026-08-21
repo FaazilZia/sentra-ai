@@ -147,6 +147,7 @@ describe('PDF Report Quality & Integration Smoke Test', () => {
           priority: 'high',
           category: 'general',
           organizationId,
+          enabled: true,
         },
       });
       policyId = newPolicy.id;

@@ -37,7 +37,7 @@ const POLICIES = [
     id: 'NO_PII_EXPOSURE',
     patterns: [
       /[a-zA-Z0-9._%+-]{1,64}@[a-zA-Z0-9-]{1,63}\.[a-zA-Z]{2,10}/g, // Email
-      /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g, // Phone (simple)
+      /\b(?:\+?\d{1,3}[- ]?)?\(?\d{3}\)?[- ]\d{3}[- ]\d{4}\b/g, // Phone (requires formatting delimiters)
       /\b\d{3}-\d{2}-\d{4}\b/g, // SSN
     ],
     action: 'BLOCK', // Redact by default, can be BLOCK
@@ -47,7 +47,7 @@ const POLICIES = [
     id: 'NO_PHI_EXPOSURE',
     patterns: [
       /\b(medical|patient|diagnosis|treatment|prescription)\b/gi,
-      /\b\d{10,}\b/g, // Potential medical record IDs
+      /(?<!\b(?:tracking|order|invoice|timestamp|epoch|build|version)\s*(?:number|id|#)?\s*:?\s*)\b\d{10,12}\b(?!\s*(?:timestamp|ms|sec|seconds))/gi, // Medical record IDs (guarded against technical terms)
     ],
     action: 'BLOCK',
     description: 'Blocks health insurance and patient records'
@@ -73,7 +73,7 @@ const POLICIES = [
   {
     id: 'PATH_TRAVERSAL_DETECT',
     patterns: [
-      /\.\.\//, /\.\.\\/, /\/etc\/passwd/i, /\.env\b/, /id_rsa/i
+      /\.\.\//, /\.\.\\/, /\/etc\/passwd/i, /\/\.env\b/i, /\.env\.(?:local|development|production|staging|test)\b/i, /id_rsa/i
     ],
     action: 'BLOCK',
     description: 'Blocks attempts to access sensitive system files'
