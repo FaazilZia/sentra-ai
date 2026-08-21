@@ -68,7 +68,7 @@ export async function setupE2ETestToken(prefix: string): Promise<string> {
     organizationName: testOrg,
   });
 
-  if (regRes.status !== 201 && regRes.status !== 200) {
+  if (regRes.status !== 201 && regRes.status !== 200 && regRes.status !== 409) {
     throw new Error(`Failed to register disposable E2E user for ${prefix}. Status: ${regRes.status}, Body: ${JSON.stringify(regRes.body)}`);
   }
 

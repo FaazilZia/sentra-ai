@@ -67,19 +67,19 @@ export class PIIScannerService {
       risk: 'high'
     },
     API_KEY: {
-      regex: /\b(?:sk_(?:live|test|prod)_[a-zA-Z0-9]{10,60}|ghp_[a-zA-Z0-9]{36}|xox[baprs]-[a-zA-Z0-9-]{10,60}|AKIA[0-9A-Z]{16}|(?:key|api|token|secret|password)[a-zA-Z0-9_-]{8,60})\b/gi,
+      regex: /\b(?:sk_(?:live|test|prod)_[a-z0-9]{10,60}|ghp_[a-z0-9]{36}|xox[baprs]-[a-z0-9-]{10,60}|AKIA[0-9A-Z]{16}|(?:key|api|token|secret|password)[a-z0-9_-]{8,60})\b/gi,
       redactedLabel: '[API_KEY_REDACTED]',
       frameworks: ['GDPR', 'DPDP', 'HIPAA', 'NIST_AI_RMF'],
       risk: 'medium'
     },
     BEARER_TOKEN: {
-      regex: /\bBearer\s+[a-zA-Z0-9._~+/-]{15,}\b/gi,
+      regex: /\bBearer\s+[a-z0-9._~+/-]{15,}\b/gi,
       redactedLabel: '[BEARER_TOKEN_REDACTED]',
       frameworks: ['NIST_AI_RMF', 'GDPR'],
       risk: 'medium'
     },
     KEY_ASSIGNMENT: {
-      regex: /\b(?:api_key|secret_key|app_secret|password|access_token|auth_token|credential)\s*[:=]\s*['"]?[a-zA-Z0-9_.-]{8,80}['"]?\b/gi,
+      regex: /\b(?:api_key|secret_key|app_secret|password|access_token|auth_token|credential)\s*[:=]\s*['"]?[a-z0-9_.-]{8,80}['"]?\b/gi,
       redactedLabel: '[CREDENTIAL_ASSIGNMENT_REDACTED]',
       frameworks: ['NIST_AI_RMF', 'GDPR'],
       risk: 'medium'
@@ -103,7 +103,7 @@ export class PIIScannerService {
       risk: 'medium'
     },
     STREET_ADDRESS: {
-      regex: /\b\d{1,6}\s{1,3}(?:[-A-Za-z0-9#'.]+\s{1,3}){1,8}(?:Street|St|Avenue|Ave|Road|Rd|Highway|Hwy|Boulevard|Blvd|Court|Ct|Drive|Dr|Lane|Ln|Way|Terrace|Ter)\b/gi,
+      regex: /\b\d{1,6}\s+(?:[-a-z0-9#'.]+\s+){1,5}(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Court|Ct|Drive|Dr|Lane|Ln|Way|Terrace|Ter)\b/gi,
       redactedLabel: '[ADDRESS_REDACTED]',
       frameworks: ['GDPR', 'DPDP', 'HIPAA'],
       risk: 'medium'
