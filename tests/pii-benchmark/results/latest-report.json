@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-21T21:35:16.306Z",
+  "timestamp": "2026-08-22T07:49:05.498Z",
   "l3Evaluated": false,
   "caveatNotice": "L1/L2 pattern-matching only, L3 semantic layer not evaluated",
   "overall": {
@@ -1053,7 +1053,7 @@
       "guardrailDecision": "ALLOW",
       "decisionStatus": "allowed",
       "detectedCategories": [
-        "API_KEY"
+        "AWS_KEY"
       ],
       "violatedFrameworks": [
         "GDPR",
@@ -1796,7 +1796,7 @@
       "guardrailDecision": "ALLOW",
       "decisionStatus": "allowed",
       "detectedCategories": [
-        "API_KEY"
+        "AWS_KEY"
       ],
       "violatedFrameworks": [
         "GDPR",
@@ -2044,7 +2044,7 @@
       "guardrailDecision": "BLOCK",
       "decisionStatus": "blocked",
       "detectedCategories": [
-        "API_KEY"
+        "AWS_KEY"
       ],
       "violatedFrameworks": [
         "GDPR",

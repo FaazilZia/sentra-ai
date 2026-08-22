@@ -67,7 +67,7 @@ export class PIIScannerService {
       risk: 'high'
     },
     API_KEY: {
-      regex: /\b(?:sk_(?:live|test|prod)_[a-z0-9]{10,60}|ghp_[a-z0-9]{36}|xox[baprs]-[a-z0-9-]{10,60}|AKIA[0-9A-Z]{16}|(?:key|api|token|secret|password)[a-z0-9_-]{8,60})\b/gi,
+      regex: /\b(?:sk_[a-z0-9_]{10,60}|ghp_[a-z0-9]{36}|xox[baprs]-[a-z0-9-]{10,60}|(?:key|api|token|secret|password)[a-z0-9_-]{8,60})\b/gi,
       redactedLabel: '[API_KEY_REDACTED]',
       frameworks: ['GDPR', 'DPDP', 'HIPAA', 'NIST_AI_RMF'],
       risk: 'medium'
