@@ -25,13 +25,13 @@ interface PIIMatch {
 export class PIIScannerService {
   private static readonly PATTERNS: Record<string, PatternRule> = {
     EMAIL: {
-      regex: /\b[-a-zA-Z0-9._%]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b|\b[-a-zA-Z0-9._%]+\s*(?:\[at\]|\(at\))\s*[a-zA-Z0-9.-]+\s*(?:\[dot\]|\(dot\)|\.)\s*[a-zA-Z]{2,}\b/gi,
+      regex: /\b[-a-zA-Z0-9._%]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b|\b[-a-zA-Z0-9._%]+\s*(?:\[at\]|\(at\))\s*[-a-zA-Z0-9._%]+\s*(?:\[dot\]|\(dot\)|\.)\s*[a-zA-Z]{2,}\b/gi,
       redactedLabel: '[EMAIL_REDACTED]',
       frameworks: ['GDPR', 'DPDP', 'HIPAA'],
       risk: 'medium'
     },
     PHONE: {
-      regex: /(?<!\b(?:tracking|order|invoice|timestamp|epoch|build|version)\s*(?:number|id|#)?\s*:?\s*)(?:\+\d{1,3}\s*)?(?:\(\d{3}\)|\d{3})[- .]\d{3}[- .]\d{4}\b/gi,
+      regex: /(?<!\b(?:tracking|order|invoice|timestamp|epoch|build|version)\s*(?:number|id|#)?\s*:?\s*)(?:\+\d{1,4}[- .]?)?\(?\d{3}\)?[- .]\d{3}[- .]\d{4}\b/gi,
       redactedLabel: '[PHONE_REDACTED]',
       frameworks: ['GDPR', 'DPDP', 'HIPAA'],
       risk: 'medium'
@@ -49,7 +49,7 @@ export class PIIScannerService {
       risk: 'high'
     },
     AADHAAR: {
-      regex: /\b[1-9]\d{3}[ -]\d{4}[ -]\d{4}\b/g,
+      regex: /(?<!tracking\s*|order\s*|id\s*|timestamp\s*:?\s*)(?!(?:19|20)\d{10}\b)\b[1-9]\d{3}[ -]?\d{4}[ -]?\d{4}\b/gi,
       redactedLabel: '[AADHAAR_REDACTED]',
       frameworks: ['DPDP'],
       risk: 'high'
@@ -109,7 +109,7 @@ export class PIIScannerService {
       risk: 'medium'
     },
     DATE_OF_BIRTH: {
-      regex: /\b(?:\d{4}[-/.]\d{2}[-/.]\d{2}|\d{2}[-/.]\d{2}[-/.]\d{4})\b/g,
+      regex: /\b(?:\d{4}[-/.]\d{2}[-/.]\d{2}|\d{2}[-/.]\d{4}|\d{2}[-/.]\d{2}[-/.]\d{4})\b/g,
       redactedLabel: '[DOB_REDACTED]',
       frameworks: ['GDPR', 'DPDP', 'HIPAA'],
       risk: 'medium'
