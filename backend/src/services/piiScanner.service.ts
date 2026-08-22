@@ -31,7 +31,7 @@ export class PIIScannerService {
       risk: 'medium'
     },
     PHONE: {
-      regex: /(?<!\b(?:tracking|order|invoice|timestamp|epoch|build|version)\s*(?:number|id|#)?\s*:?\s*)(?:\b(?:\+?\d{1,3}[- ]?)?\(?\d{3}\)?[- .]\d{3}[- .]\d{4}\b|\+\d{1,3}\s*[- .]?\d{10}\b|\b(?:\d\.){9}\d\b|(?:\b(?:phone|mobile|cell|contact)(?:[a-z0-9_.\s:]{1,30})\d{10}\b))/gi,
+      regex: /(?<!\b(?:tracking|order|invoice|timestamp|epoch|build|version)\s*(?:number|id|#)?\s*:?\s*)(?:\b(?:\+?\d{1,3}[- ]?)?\(?\d{3}\)?[- .]\d{3}[- .]\d{4}\b|(?:\+|\b)\d{1,3}\s*[- .]?\d{10,12}\b|\b(?:\d\.){9}\d\b|(?:\b(?:phone|mobile|cell|contact)(?:[a-z0-9_.\s:]{1,30})\d{10}\b))(?!\s*(?:timestamp|ms|sec|seconds))/gi,
       redactedLabel: '[PHONE_REDACTED]',
       frameworks: ['GDPR', 'DPDP', 'HIPAA'],
       risk: 'medium'
@@ -147,7 +147,7 @@ export class PIIScannerService {
     // Collapse single-character or single-digit spaced sequences
     normalized = normalized.replace(/\b([a-zA-Z0-9])\s+(?=[a-zA-Z0-9]\b)/g, '$1');
     // Collapse multi-char spaced sequences e.g. "A B C D E 1 2 3 4 F" => "ABCDE1234F"
-    normalized = normalized.replace(/(?:\b[a-zA-Z0-9]\s+)+[a-zA-Z0-9]\b/g, (m) => m.replace(/\s+/g, ''));
+    normalized = normalized.replace(/\b[a-zA-Z0-9](?:\s+[a-zA-Z0-9])+\b/g, (m) => m.replace(/\s+/g, ''));
     return normalized;
   }
 
@@ -170,7 +170,7 @@ export class PIIScannerService {
             subScan.violatedFrameworks.forEach(f => extraFrameworks.add(f));
           }
         }
-      } catch (_ignoredErr) {
+      } catch {
         // Ignore non-UTF8 or invalid Base64 decoding attempts
       }
     }
