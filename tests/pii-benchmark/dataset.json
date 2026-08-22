@@ -2063,5 +2063,21 @@
     "piiType": "clean",
     "category": "clean",
     "framework": []
+  },
+  {
+    "id": "case-221",
+    "input": "Transaction completed on batch ref 12-25-99.",
+    "shouldFlag": false,
+    "piiType": "clean",
+    "category": "clean",
+    "framework": []
+  },
+  {
+    "id": "case-222",
+    "input": "Reference serial identifier 123-45-678 assigned.",
+    "shouldFlag": false,
+    "piiType": "clean",
+    "category": "clean",
+    "framework": []
   }
 ]

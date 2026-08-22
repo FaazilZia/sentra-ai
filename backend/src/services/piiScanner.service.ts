@@ -24,13 +24,13 @@ interface PIIMatch {
 export class PIIScannerService {
   private static readonly PATTERNS: Record<string, PatternRule> = {
     EMAIL: {
-      regex: /\b[-a-z0-9._%+]+@[a-z0-9.-]+\.[a-z]{2,}\b|\b[-a-z0-9._%+]+\s*(?:\[at\]|\(at\))\s*[-a-z0-9._%+]+\s*(?:\[dot\]|\(dot\)|\.)\s*[a-z]{2,}\b/gi,
+      regex: /\b[-a-z0-9._%+]+(?:\s*@\s*[-a-z0-9.-]+|\s*(?:\[at\]|\(at\))\s*[-a-z0-9._%+]+)\s*(?:\.|\(dot\)|\[dot\])\s*[a-z]{2,}\b/gi,
       redactedLabel: '[EMAIL_REDACTED]',
       frameworks: ['GDPR', 'DPDP', 'HIPAA'],
       risk: 'medium'
     },
     PHONE: {
-      regex: /(?<!\b(?:tracking|order|invoice|timestamp|epoch|build|version)\s*(?:number|id|#)?\s*:?\s*)(?:\+\d{1,4}\s*)?(?:\(\d{3}\)|\b\d{3})[- .]\d{3}[- .]\d{4}\b/gi,
+      regex: /(?<!\b(?:tracking|order|invoice|timestamp|epoch|build|version)[^0-9]{0,10})(?:\+\d{1,4}[ \t]{0,3})?(?:\(\d{3}\)|\b\d{3})[- .]\d{3}[- .]\d{4}\b/gi,
       redactedLabel: '[PHONE_REDACTED]',
       frameworks: ['GDPR', 'DPDP', 'HIPAA'],
       risk: 'medium'
@@ -48,7 +48,7 @@ export class PIIScannerService {
       risk: 'high'
     },
     AADHAAR: {
-      regex: /(?<!\b(?:tracking|fedex|ups|dhl|order|invoice|timestamp|epoch|build|version|shipment|serial)\s*(?:number|id|#)?\s*:?\s*)(?<!\d)[1-9]\d{11}\b|\b[1-9]\d{3}[ -]\d{4}[ -]\d{4}\b/gi,
+      regex: /(?<!\b(?:t(?:racking|imestamp)|s(?:hipment|erial)|fedex|ups|dhl|order|invoice|epoch|build|version)[^0-9]{0,10})\b[1-9]\d{3}(?:[ -]?\d{4}){2}\b/gi,
       redactedLabel: '[AADHAAR_REDACTED]',
       frameworks: ['DPDP'],
       risk: 'high'
@@ -66,7 +66,7 @@ export class PIIScannerService {
       risk: 'high'
     },
     API_KEY: {
-      regex: /\b(?:sk_[a-z0-9_]{10,60}|ghp_[a-z0-9]{36}|xox[baprs]-[a-z0-9-]{10,60}|(?:key|api|token|secret|password)[a-z0-9_-]{8,60})\b/gi,
+      regex: /\b(?:sk_[a-z0-9_]{10,60}|ghp_[a-z0-9]{36}|xox[baprs]-[a-z0-9-]{10,60}|key[a-z0-9_-]{8,60}|api[a-z0-9_-]{8,60}|token[a-z0-9_-]{8,60}|secret[a-z0-9_-]{8,60}|password[a-z0-9_-]{8,60})\b/gi,
       redactedLabel: '[API_KEY_REDACTED]',
       frameworks: ['GDPR', 'DPDP', 'HIPAA', 'NIST_AI_RMF'],
       risk: 'medium'
@@ -102,13 +102,13 @@ export class PIIScannerService {
       risk: 'medium'
     },
     STREET_ADDRESS: {
-      regex: /\b\d{1,6}\s+(?:[-a-z0-9#'.]+\s+){1,5}(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Court|Ct|Drive|Dr|Lane|Ln|Way|Terrace|Ter)\b/gi,
+      regex: /\b\d{1,6}\s+(?:[-a-z0-9#'.]+\s+){1,5}(?:St(?:reet)?|Ave(?:nue)?|R(?:oad|d)|B(?:oulevard|lvd)|C(?:ourt|t)|Dr(?:ive)?|L(?:ane|n)|Way|Ter(?:race)?)\b/gi,
       redactedLabel: '[ADDRESS_REDACTED]',
       frameworks: ['GDPR', 'DPDP', 'HIPAA'],
       risk: 'medium'
     },
     DATE_OF_BIRTH: {
-      regex: /\b(?:\d{4}[-/.]\d{2}[-/.]\d{2}|\d{2}[-/.]\d{4}|\d{2}[-/.]\d{2}[-/.]\d{4})\b/g,
+      regex: /\b(?:\d{4}[-/.]\d{2}[-/.]\d{2}|\d{2}[-/.](?:\d{4}|\d{2}[-/.]\d{4}))\b/g,
       redactedLabel: '[DOB_REDACTED]',
       frameworks: ['GDPR', 'DPDP', 'HIPAA'],
       risk: 'medium'
@@ -120,7 +120,7 @@ export class PIIScannerService {
       risk: 'medium'
     },
     NAME_IN_CONTEXT: {
-      regex: /\b(?:customer|employee|patient|user|contact|person|assigned\s+to|reported\s+by|met\s+with|according\s+to|verify\s+whether|forwarded\s+(?:\w+\s+){0,4}to|signed\s+off\s+by|auditor|architect|counselor|officer|records?\s+for|account\s+created\s+for|yesterday)\s+(?:file\s+for\s+|file\s+|for\s+|is\s+|that\s+)?(?!(?:support|satisfaction|onboarding|guide|interface|feedback|survey|session|system|logs|interviews|workflow|account|record|role|permission|profile|setting|preference|data|file)\b)([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){0,3})|([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){1,2})\s+(?:arrived|attended|submitted|approved)/gi,
+      regex: /\b(?:customer|employee|patient|user|contact|person|assigned\s+to|reported\s+by|met\s+with|according\s+to|verify\s+whether|signed\s+off\s+by|auditor|architect|counselor|officer|records?\s+for|account\s+created\s+for|yesterday)\s+(?:file\s+for\s+|file\s+|for\s+|is\s+|that\s+)?([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){0,3})\b/gi,
       redactedLabel: '[NAME_REDACTED]',
       frameworks: ['GDPR', 'DPDP', 'HIPAA'],
       risk: 'medium'
@@ -133,6 +133,26 @@ export class PIIScannerService {
     }
   };
 
+  private static readonly NON_NAME_SYSTEM_TERMS = new Set<string>([
+    'support', 'satisfaction', 'onboarding', 'guide', 'interface', 'feedback',
+    'survey', 'session', 'system', 'logs', 'interviews', 'workflow',
+    'account', 'record', 'role', 'permission', 'profile', 'setting',
+    'preference', 'data', 'file'
+  ]);
+
+  private static readonly NAME_IN_CONTEXT_SUB_PATTERNS = [
+    /\b(?:account\s+created\s+for|records?\s+for|assigned\s+to|reported\s+by|met\s+with|according\s+to|verify\s+whether|signed\s+off\s+by)\s+(?:file\s+for\s+|file\s+|for\s+|is\s+|that\s+)?([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){0,3})\b/gi,
+    /\b(?:customer|employee|patient|user|contact|person|auditor|architect|counselor|officer|yesterday)\s+(?:file\s+for\s+|file\s+|for\s+|is\s+|that\s+)?(?!(?:s(?:upport|atisfaction|ession|ystem|urvey|etting)|p(?:ermission|rofile|reference)|a(?:ccount)|r(?:ecord|ole)|i(?:nterface|nterviews)|o(?:nboarding)|g(?:uide)|f(?:eedback|ile)|l(?:ogs)|w(?:orkflow)|d(?:ata))\b)([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){0,3})\b/gi,
+    /\bforwarded\s+(?:[a-z0-9_]+\s+){0,4}to\s+(?:file\s+for\s+|file\s+|for\s+|is\s+|that\s+)?([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){0,3})\b/gi,
+    /([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){1,2})\s+(?:arrived|attended|submitted|approved)\b/gi
+  ];
+
+  private static isNameCapturedValid(capturedName: string): boolean {
+    if (!capturedName) return false;
+    const firstWord = capturedName.trim().split(/\s+/)[0].toLowerCase();
+    return !PIIScannerService.NON_NAME_SYSTEM_TERMS.has(firstWord);
+  }
+
   /**
    * Collapses single-character or single-digit spaced sequences for obfuscated PII normalization.
    */
@@ -140,7 +160,7 @@ export class PIIScannerService {
     if (!text) return text;
     let normalized = text;
     // Collapse spaces around parentheses e.g. "(4 1 5)" => "(415)"
-    normalized = normalized.replace(/\(\s+/g, '(').replace(/\s+\)/g, ')');
+    normalized = normalized.replace(/\([ \t]+/g, '(').replace(/[ \t]+\)/g, ')');
     // Collapse spaces around punctuation e.g. "1 2 3 - 4 5" => "123-45", "(415) - 555" => "(415)-555"
     normalized = normalized.replace(/([a-zA-Z0-9)])\s*([-.:])\s*(?=[a-zA-Z0-9])/g, '$1$2');
     // Collapse single-character or single-digit spaced sequences
@@ -198,6 +218,29 @@ export class PIIScannerService {
 
     // 1. Gather all potential matches across all regexes on primary text
     for (const [category, rule] of Object.entries(this.PATTERNS)) {
+      if (category === 'NAME_IN_CONTEXT') {
+        for (const subRegex of PIIScannerService.NAME_IN_CONTEXT_SUB_PATTERNS) {
+          subRegex.lastIndex = 0;
+          let match;
+          while ((match = subRegex.exec(text)) !== null) {
+            const capturedName = match[1];
+            if (capturedName && PIIScannerService.isNameCapturedValid(capturedName)) {
+              const val = match[0];
+              matches.push({
+                category,
+                value: val,
+                start: match.index,
+                end: match.index + val.length,
+                redactedLabel: rule.redactedLabel,
+                frameworks: rule.frameworks
+              });
+            }
+            if (subRegex.lastIndex === match.index) subRegex.lastIndex++;
+          }
+        }
+        continue;
+      }
+
       rule.regex.lastIndex = 0; // Reset regex matching position
       let match;
       while ((match = rule.regex.exec(text)) !== null) {
@@ -221,6 +264,29 @@ export class PIIScannerService {
     const normalizedText = this.normalizeSpacedText(text);
     if (normalizedText !== text) {
       for (const [category, rule] of Object.entries(this.PATTERNS)) {
+        if (category === 'NAME_IN_CONTEXT') {
+          for (const subRegex of PIIScannerService.NAME_IN_CONTEXT_SUB_PATTERNS) {
+            subRegex.lastIndex = 0;
+            let match;
+            while ((match = subRegex.exec(normalizedText)) !== null) {
+              const capturedName = match[1];
+              if (capturedName && PIIScannerService.isNameCapturedValid(capturedName)) {
+                const val = match[0];
+                matches.push({
+                  category,
+                  value: val,
+                  start: 0,
+                  end: text.length,
+                  redactedLabel: rule.redactedLabel,
+                  frameworks: rule.frameworks
+                });
+              }
+              if (subRegex.lastIndex === match.index) subRegex.lastIndex++;
+            }
+          }
+          continue;
+        }
+
         rule.regex.lastIndex = 0;
         let match;
         while ((match = rule.regex.exec(normalizedText)) !== null) {
