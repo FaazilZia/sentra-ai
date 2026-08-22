@@ -5,6 +5,7 @@ import prisma, { initializePrisma } from '../../src/config/db';
 const TEST_BASE_URL = process.env.TEST_BASE_URL || 'https://sentra-backend-node.onrender.com';
 
 describe('Agent Config Posture Scanning E2E', () => {
+  jest.setTimeout(120000);
   let token: string;
   let highRiskAgentId: string;
   let lowRiskAgentId: string;

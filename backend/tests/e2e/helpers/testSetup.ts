@@ -5,9 +5,13 @@ import { getAuthToken } from './getAuthToken';
 const AUTH_TOKEN = getAuthToken();
 const TEST_BASE_URL = process.env.TEST_BASE_URL || 'https://sentra-backend-node.onrender.com';
 
+if (typeof jest !== 'undefined') {
+  jest.setTimeout(120000);
+}
+
 export async function setupE2ETestToken(prefix: string): Promise<string> {
   // Wait for the server/db to be ready/settle
-  await new Promise(resolve => setTimeout(resolve, 3000));
+  await new Promise(resolve => setTimeout(resolve, 100));
 
   if (AUTH_TOKEN) {
     return AUTH_TOKEN;

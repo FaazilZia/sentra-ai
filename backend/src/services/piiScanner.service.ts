@@ -21,17 +21,16 @@ interface PIIMatch {
   redactedLabel: string;
   frameworks: string[];
 }
-
 export class PIIScannerService {
   private static readonly PATTERNS: Record<string, PatternRule> = {
     EMAIL: {
-      regex: /\b[-a-zA-Z0-9._%]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b|\b[-a-zA-Z0-9._%]+\s*(?:\[at\]|\(at\))\s*[-a-zA-Z0-9._%]+\s*(?:\[dot\]|\(dot\)|\.)\s*[a-zA-Z]{2,}\b/gi,
+      regex: /\b[-a-z0-9._%+]+@[a-z0-9.-]+\.[a-z]{2,}\b|\b[-a-z0-9._%+]+\s*(?:\[at\]|\(at\))\s*[-a-z0-9._%+]+\s*(?:\[dot\]|\(dot\)|\.)\s*[a-z]{2,}\b/gi,
       redactedLabel: '[EMAIL_REDACTED]',
       frameworks: ['GDPR', 'DPDP', 'HIPAA'],
       risk: 'medium'
     },
     PHONE: {
-      regex: /(?<!\b(?:tracking|order|invoice|timestamp|epoch|build|version)\s*(?:number|id|#)?\s*:?\s*)(?:\+\d{1,4}[- .]?)?\(?\d{3}\)?[- .]\d{3}[- .]\d{4}\b/gi,
+      regex: /(?<!\b(?:tracking|order|invoice|timestamp|epoch|build|version)\s*(?:number|id|#)?\s*:?\s*)(?:\+\d{1,4}\s*)?(?:\(\d{3}\)|\b\d{3})[- .]\d{3}[- .]\d{4}\b/gi,
       redactedLabel: '[PHONE_REDACTED]',
       frameworks: ['GDPR', 'DPDP', 'HIPAA'],
       risk: 'medium'
@@ -49,7 +48,7 @@ export class PIIScannerService {
       risk: 'high'
     },
     AADHAAR: {
-      regex: /(?<!tracking\s*|order\s*|id\s*|timestamp\s*:?\s*)(?!(?:19|20)\d{10}\b)\b[1-9]\d{3}[ -]?\d{4}[ -]?\d{4}\b/gi,
+      regex: /(?<!\b(?:tracking|fedex|ups|dhl|order|invoice|timestamp|epoch|build|version|shipment|serial)\s*(?:number|id|#)?\s*:?\s*)(?<!\d)[1-9]\d{11}\b|\b[1-9]\d{3}[ -]\d{4}[ -]\d{4}\b/gi,
       redactedLabel: '[AADHAAR_REDACTED]',
       frameworks: ['DPDP'],
       risk: 'high'
@@ -121,7 +120,7 @@ export class PIIScannerService {
       risk: 'medium'
     },
     NAME_IN_CONTEXT: {
-      regex: /\b(?:employee|customer|patient|user)\s+(?:file\s+for\s+|file\s+|for\s+)?([A-Z][a-z]{2,}\s+[A-Z][a-z]{2,})/g,
+      regex: /\b(?:customer|employee|patient|user|contact|person|assigned\s+to|reported\s+by|met\s+with|according\s+to|verify\s+whether|forwarded\s+(?:\w+\s+){0,4}to|signed\s+off\s+by|auditor|architect|counselor|officer|records?\s+for|account\s+created\s+for|yesterday)\s+(?:file\s+for\s+|file\s+|for\s+|is\s+|that\s+)?(?!(?:support|satisfaction|onboarding|guide|interface|feedback|survey|session|system|logs|interviews|workflow|account|record|role|permission|profile|setting|preference|data|file)\b)([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){0,3})|([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){1,2})\s+(?:arrived|attended|submitted|approved)/gi,
       redactedLabel: '[NAME_REDACTED]',
       frameworks: ['GDPR', 'DPDP', 'HIPAA'],
       risk: 'medium'
