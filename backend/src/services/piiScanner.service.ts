@@ -31,7 +31,7 @@ export class PIIScannerService {
       risk: 'medium'
     },
     PHONE: {
-      regex: /(?<!\b(?:tracking|order|invoice|timestamp|epoch|build|version)\s*(?:number|id|#)?\s*:?\s*)(?:\b(?:\+?\d{1,3}[- ]?)?\(?\d{3}\)?[- .]\d{3}[- .]\d{4}\b|(?:\+|\b)\d{1,3}\s*[- .]?\d{10,12}\b|\b(?:\d\.){9}\d\b|(?:\b(?:phone|mobile|cell|contact)(?:[a-z0-9_.\s:]{1,30})\d{10}\b))(?!\s*(?:timestamp|ms|sec|seconds))/gi,
+      regex: /(?<!\b(?:tracking|order|invoice|timestamp|epoch|build|version)\s*(?:number|id|#)?\s*:?\s*)(?:\b(?:\+?\d{1,3}[- ]?)?\(?\d{3}\)?[- .]\d{3}[- .]\d{4}\b|\+\d{1,3}\s*[- .]?\d{10}\b|\b(?:\d\.){9}\d\b|(?:\b(?:phone|mobile|cell|contact)(?:[a-z0-9_.\s:]{1,30})\d{10}\b))/gi,
       redactedLabel: '[PHONE_REDACTED]',
       frameworks: ['GDPR', 'DPDP', 'HIPAA'],
       risk: 'medium'
@@ -49,7 +49,7 @@ export class PIIScannerService {
       risk: 'high'
     },
     AADHAAR: {
-      regex: /(?<!\b(?:tracking|order|invoice|shipment|serial)\s*(?:number|id|#)?\s*:?\s*)\b\d{4}[ -]?\d{4}[ -]?\d{4}\b/g,
+      regex: /(?<!tracking\s*|order\s*|id\s*|timestamp\s*:?\s*)(?!(?:19|20)\d{10}\b)\b[1-9]\d{3}[ -]?\d{4}[ -]?\d{4}\b/gi,
       redactedLabel: '[AADHAAR_REDACTED]',
       frameworks: ['DPDP'],
       risk: 'high'

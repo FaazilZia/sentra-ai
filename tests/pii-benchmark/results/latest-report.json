@@ -1,17 +1,17 @@
 {
-  "timestamp": "2026-08-22T07:49:05.498Z",
+  "timestamp": "2026-08-22T08:12:02.859Z",
   "l3Evaluated": false,
   "caveatNotice": "L1/L2 pattern-matching only, L3 semantic layer not evaluated",
   "overall": {
     "total": 220,
     "tp": 96,
-    "fp": 0,
-    "tn": 106,
+    "fp": 1,
+    "tn": 105,
     "fn": 18,
-    "precision": 1,
+    "precision": 0.9897,
     "recall": 0.8421,
-    "f1": 0.9143,
-    "fpr": 0,
+    "f1": 0.91,
+    "fpr": 0.0094,
     "fnr": 0.1579
   },
   "byCategory": {
@@ -54,13 +54,13 @@
     "clean": {
       "total": 106,
       "tp": 0,
-      "fp": 0,
-      "tn": 106,
+      "fp": 1,
+      "tn": 105,
       "fn": 0,
-      "precision": 1,
+      "precision": 0,
       "recall": 1,
-      "f1": 1,
-      "fpr": 0,
+      "f1": 0,
+      "fpr": 0.0094,
       "fnr": 0
     }
   },
@@ -176,13 +176,13 @@
     "clean": {
       "total": 106,
       "tp": 0,
-      "fp": 0,
-      "tn": 106,
+      "fp": 1,
+      "tn": 105,
       "fn": 0,
-      "precision": 1,
+      "precision": 0,
       "recall": 1,
-      "f1": 1,
-      "fpr": 0,
+      "f1": 0,
+      "fpr": 0.0094,
       "fnr": 0
     }
   },
@@ -250,13 +250,13 @@
     "NONE": {
       "total": 106,
       "tp": 0,
-      "fp": 0,
-      "tn": 106,
+      "fp": 1,
+      "tn": 105,
       "fn": 0,
-      "precision": 1,
+      "precision": 0,
       "recall": 1,
-      "f1": 1,
-      "fpr": 0,
+      "f1": 0,
+      "fpr": 0.0094,
       "fnr": 0
     }
   },
@@ -264,13 +264,13 @@
     "piiScanner": {
       "total": 220,
       "tp": 83,
-      "fp": 0,
-      "tn": 106,
+      "fp": 1,
+      "tn": 105,
       "fn": 31,
-      "precision": 1,
+      "precision": 0.9881,
       "recall": 0.7281,
-      "f1": 0.8426,
-      "fpr": 0,
+      "f1": 0.8384,
+      "fpr": 0.0094,
       "fnr": 0.2719
     },
     "guardrailService": {
@@ -300,17 +300,22 @@
     "combinedPipeline": {
       "total": 220,
       "tp": 96,
-      "fp": 0,
-      "tn": 106,
+      "fp": 1,
+      "tn": 105,
       "fn": 18,
-      "precision": 1,
+      "precision": 0.9897,
       "recall": 0.8421,
-      "f1": 0.9143,
-      "fpr": 0,
+      "f1": 0.91,
+      "fpr": 0.0094,
       "fnr": 0.1579
     }
   },
   "worstPerformingCategories": [
+    {
+      "category": "category:clean",
+      "worstMetric": "F1 Score",
+      "score": 0
+    },
     {
       "category": "piiType:name_in_context",
       "worstMetric": "Recall",
@@ -2667,13 +2672,17 @@
       "piiType": "clean",
       "framework": [],
       "category": "clean",
-      "detected": false,
-      "resultType": "TN",
-      "scannerDetected": false,
+      "detected": true,
+      "resultType": "FP",
+      "scannerDetected": true,
       "guardrailDecision": "ALLOW",
       "decisionStatus": "allowed",
-      "detectedCategories": [],
-      "violatedFrameworks": []
+      "detectedCategories": [
+        "AADHAAR"
+      ],
+      "violatedFrameworks": [
+        "DPDP"
+      ]
     },
     {
       "id": "case-112",
