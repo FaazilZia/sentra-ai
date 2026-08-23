@@ -24,13 +24,13 @@ interface PIIMatch {
 export class PIIScannerService {
   private static readonly PATTERNS: Record<string, PatternRule> = {
     EMAIL: {
-      regex: /\b[-a-z0-9._%+]+(?:\s*@\s*[-a-z0-9.-]+|\s*(?:\[at\]|\(at\))\s*[-a-z0-9._%+]+)\s*(?:\.|\(dot\)|\[dot\])\s*[a-z]{2,}\b/gi,
+      regex: /\b[a-z0-9._%+-]+(?:\s*@\s*[a-z0-9.-]+|\s*(?:\[at\]|\(at\))\s*[a-z0-9._%+-]+)\s*(?:\.|\(dot\)|\[dot\])\s*[a-z]{2,}\b/gi,
       redactedLabel: '[EMAIL_REDACTED]',
       frameworks: ['GDPR', 'DPDP', 'HIPAA'],
       risk: 'medium'
     },
     PHONE: {
-      regex: /(?<!\b(?:tracking|order|invoice|timestamp|epoch|build|version)[^0-9]{0,10})(?:\+\d{1,4}[ \t]{0,3})?(?:\(\d{3}\)|\b\d{3})[- .]\d{3}[- .]\d{4}\b/gi,
+      regex: /(?<!\b(?:tracking|order|invoice|timestamp|epoch|build|version)\D{0,10})(?:\+\d{1,4}[ \t]{0,3})?(?:\(\d{3}\)|\b\d{3})[- .]\d{3}[- .]\d{4}\b/gi,
       redactedLabel: '[PHONE_REDACTED]',
       frameworks: ['GDPR', 'DPDP', 'HIPAA'],
       risk: 'medium'
@@ -48,7 +48,7 @@ export class PIIScannerService {
       risk: 'high'
     },
     AADHAAR: {
-      regex: /(?<!\b(?:t(?:racking|imestamp)|s(?:hipment|erial)|fedex|ups|dhl|order|invoice|epoch|build|version)[^0-9]{0,10})\b[1-9]\d{3}(?:[ -]?\d{4}){2}\b/gi,
+      regex: /(?<!\b(?:t(?:racking|imestamp)|s(?:hipment|erial)|fedex|ups|dhl|order|invoice|epoch|build|version)\D{0,10})\b[1-9]\d{3}(?:[ -]?\d{4}){2}\b/gi,
       redactedLabel: '[AADHAAR_REDACTED]',
       frameworks: ['DPDP'],
       risk: 'high'
@@ -142,7 +142,7 @@ export class PIIScannerService {
 
   private static readonly NAME_IN_CONTEXT_SUB_PATTERNS = [
     /\b(?:account\s+created\s+for|records?\s+for|assigned\s+to|reported\s+by|met\s+with|according\s+to|verify\s+whether|signed\s+off\s+by)\s+(?:file\s+for\s+|file\s+|for\s+|is\s+|that\s+)?([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){0,3})\b/gi,
-    /\b(?:customer|employee|patient|user|contact|person|auditor|architect|counselor|officer|yesterday)\s+(?:file\s+for\s+|file\s+|for\s+|is\s+|that\s+)?(?!(?:s(?:upport|atisfaction|ession|ystem|urvey|etting)|p(?:ermission|rofile|reference)|a(?:ccount)|r(?:ecord|ole)|i(?:nterface|nterviews)|o(?:nboarding)|g(?:uide)|f(?:eedback|ile)|l(?:ogs)|w(?:orkflow)|d(?:ata))\b)([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){0,3})\b/gi,
+    /\b(?:customer|employee|patient|user|contact|person|auditor|architect|counselor|officer|yesterday)\s+(?:file\s+for\s+|file\s+|for\s+|is\s+|that\s+)?([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){0,3})\b/gi,
     /\bforwarded\s+(?:[a-z0-9_]+\s+){0,4}to\s+(?:file\s+for\s+|file\s+|for\s+|is\s+|that\s+)?([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){0,3})\b/gi,
     /([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){1,2})\s+(?:arrived|attended|submitted|approved)\b/gi
   ];
@@ -162,11 +162,11 @@ export class PIIScannerService {
     // Collapse spaces around parentheses e.g. "(4 1 5)" => "(415)"
     normalized = normalized.replace(/\([ \t]+/g, '(').replace(/[ \t]+\)/g, ')');
     // Collapse spaces around punctuation e.g. "1 2 3 - 4 5" => "123-45", "(415) - 555" => "(415)-555"
-    normalized = normalized.replace(/([a-zA-Z0-9)])\s*([-.:])\s*(?=[a-zA-Z0-9])/g, '$1$2');
+    normalized = normalized.replace(/([a-zA-Z0-9)])[ \t]*([-.:])[ \t]*(?=[a-zA-Z0-9])/g, '$1$2');
     // Collapse single-character or single-digit spaced sequences
-    normalized = normalized.replace(/\b([a-zA-Z0-9])\s+(?=[a-zA-Z0-9]\b)/g, '$1');
+    normalized = normalized.replace(/\b([a-zA-Z0-9])[ \t]+(?=[a-zA-Z0-9]\b)/g, '$1');
     // Collapse multi-char spaced sequences e.g. "A B C D E 1 2 3 4 F" => "ABCDE1234F"
-    normalized = normalized.replace(/\b[a-zA-Z0-9](?:\s+[a-zA-Z0-9])+\b/g, (m) => m.replace(/\s+/g, ''));
+    normalized = normalized.replace(/\b[a-zA-Z0-9](?:[ \t][a-zA-Z0-9])+\b/g, (m) => m.replace(/[ \t]+/g, ''));
     return normalized;
   }
 
@@ -177,7 +177,7 @@ export class PIIScannerService {
     const extraCategories = new Set<string>();
     const extraFrameworks = new Set<string>();
 
-    const b64Regex = /\b[a-zA-Z0-9+/]{16,}={0,2}\b/g;
+    const b64Regex = /(?<![a-zA-Z0-9+/])[a-zA-Z0-9+/]{16,}={0,2}(?![a-zA-Z0-9+/=])/g;
     let match;
     while ((match = b64Regex.exec(text)) !== null) {
       try {

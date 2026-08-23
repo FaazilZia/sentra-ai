@@ -47,7 +47,7 @@ const POLICIES = [
     id: 'NO_PHI_EXPOSURE',
     patterns: [
       /\b(medical|patient|diagnosis|treatment|prescription)\b/gi,
-      /(?<!\b(?:tracking|order|invoice|timestamp|epoch|build|version)[^0-9]{0,10})\b\d{10,12}\b(?!\s*(?:timestamp|ms|sec|seconds))/gi, // Medical record IDs (guarded against technical terms)
+      /(?<!\b(?:tracking|order|invoice|timestamp|epoch|build|version)\D{0,10})\b\d{10,12}\b(?!\s*(?:timestamp|ms|sec|seconds))/gi, // Medical record IDs (guarded against technical terms)
     ],
     action: 'BLOCK',
     description: 'Blocks health insurance and patient records'
