@@ -1,18 +1,18 @@
 {
-  "timestamp": "2026-08-23T18:01:23.344Z",
+  "timestamp": "2026-08-23T18:15:46.191Z",
   "l3Evaluated": false,
   "caveatNotice": "L1/L2 pattern-matching only, L3 semantic layer not evaluated",
   "overall": {
-    "total": 222,
-    "tp": 113,
+    "total": 223,
+    "tp": 114,
     "fp": 1,
     "tn": 107,
     "fn": 1,
-    "precision": 0.9912,
-    "recall": 0.9912,
-    "f1": 0.9912,
+    "precision": 0.9913,
+    "recall": 0.9913,
+    "f1": 0.9913,
     "fpr": 0.0093,
-    "fnr": 0.0088
+    "fnr": 0.0087
   },
   "byCategory": {
     "direct": {
@@ -28,16 +28,16 @@
       "fnr": 0
     },
     "obfuscated": {
-      "total": 31,
-      "tp": 30,
+      "total": 32,
+      "tp": 31,
       "fp": 0,
       "tn": 0,
       "fn": 1,
       "precision": 1,
-      "recall": 0.9677,
-      "f1": 0.9836,
+      "recall": 0.9688,
+      "f1": 0.9841,
       "fpr": 0,
-      "fnr": 0.0323
+      "fnr": 0.0313
     },
     "adversarial": {
       "total": 20,
@@ -102,8 +102,8 @@
       "fnr": 0.0769
     },
     "aadhaar": {
-      "total": 9,
-      "tp": 9,
+      "total": 10,
+      "tp": 10,
       "fp": 0,
       "tn": 0,
       "fn": 0,
@@ -200,8 +200,8 @@
       "fnr": 0
     },
     "DPDP": {
-      "total": 58,
-      "tp": 58,
+      "total": 59,
+      "tp": 59,
       "fp": 0,
       "tn": 0,
       "fn": 0,
@@ -262,52 +262,52 @@
   },
   "byEngine": {
     "piiScanner": {
-      "total": 222,
-      "tp": 107,
+      "total": 223,
+      "tp": 108,
       "fp": 1,
       "tn": 107,
       "fn": 7,
-      "precision": 0.9907,
-      "recall": 0.9386,
-      "f1": 0.964,
+      "precision": 0.9908,
+      "recall": 0.9391,
+      "f1": 0.9643,
       "fpr": 0.0093,
-      "fnr": 0.0614
+      "fnr": 0.0609
     },
     "guardrailService": {
-      "total": 222,
+      "total": 223,
       "tp": 51,
       "fp": 0,
       "tn": 108,
-      "fn": 63,
+      "fn": 64,
       "precision": 1,
-      "recall": 0.4474,
-      "f1": 0.6182,
+      "recall": 0.4435,
+      "f1": 0.6145,
       "fpr": 0,
-      "fnr": 0.5526
+      "fnr": 0.5565
     },
     "decisionEngine": {
-      "total": 222,
+      "total": 223,
       "tp": 19,
       "fp": 0,
       "tn": 108,
-      "fn": 95,
+      "fn": 96,
       "precision": 1,
-      "recall": 0.1667,
-      "f1": 0.2857,
+      "recall": 0.1652,
+      "f1": 0.2836,
       "fpr": 0,
-      "fnr": 0.8333
+      "fnr": 0.8348
     },
     "combinedPipeline": {
-      "total": 222,
-      "tp": 113,
+      "total": 223,
+      "tp": 114,
       "fp": 1,
       "tn": 107,
       "fn": 1,
-      "precision": 0.9912,
-      "recall": 0.9912,
-      "f1": 0.9912,
+      "precision": 0.9913,
+      "recall": 0.9913,
+      "f1": 0.9913,
       "fpr": 0.0093,
-      "fnr": 0.0088
+      "fnr": 0.0087
     }
   },
   "worstPerformingCategories": [
@@ -4579,6 +4579,29 @@
       "decisionStatus": "allowed",
       "detectedCategories": [],
       "violatedFrameworks": []
+    },
+    {
+      "id": "case-223",
+      "input": "User verification Aadhaar code is 2 3 4 5   6 7 8 9   0 1 2 3.",
+      "shouldFlag": true,
+      "piiType": "aadhaar",
+      "framework": [
+        "DPDP"
+      ],
+      "category": "obfuscated",
+      "detected": true,
+      "resultType": "TP",
+      "scannerDetected": true,
+      "guardrailDecision": "ALLOW",
+      "decisionStatus": "allowed",
+      "detectedCategories": [
+        "NAME_IN_CONTEXT"
+      ],
+      "violatedFrameworks": [
+        "GDPR",
+        "DPDP",
+        "HIPAA"
+      ]
     }
   ]
 }

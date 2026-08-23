@@ -66,7 +66,7 @@ export class PIIScannerService {
       risk: 'high'
     },
     API_KEY: {
-      regex: /\b(?:sk_[a-z0-9_]{10,60}|ghp_[a-z0-9]{36}|xox[baprs]-[a-z0-9-]{10,60}|key[a-z0-9_-]{8,60}|api[a-z0-9_-]{8,60}|token[a-z0-9_-]{8,60}|secret[a-z0-9_-]{8,60}|password[a-z0-9_-]{8,60})\b/gi,
+      regex: /\b(?:sk_[a-z0-9_]{10,60}|ghp_[a-z0-9]{36}|xox[baprs]-[a-z0-9-]{10,60}|(?:key|api|token|secret|password)[a-z0-9_-]{8,60})\b/gi,
       redactedLabel: '[API_KEY_REDACTED]',
       frameworks: ['GDPR', 'DPDP', 'HIPAA', 'NIST_AI_RMF'],
       risk: 'medium'
@@ -166,7 +166,7 @@ export class PIIScannerService {
     // Collapse single-character or single-digit spaced sequences
     normalized = normalized.replace(/\b([a-zA-Z0-9])[ \t]+(?=[a-zA-Z0-9]\b)/g, '$1');
     // Collapse multi-char spaced sequences e.g. "A B C D E 1 2 3 4 F" => "ABCDE1234F"
-    normalized = normalized.replace(/\b[a-zA-Z0-9](?:[ \t][a-zA-Z0-9])+\b/g, (m) => m.replace(/[ \t]+/g, ''));
+    normalized = normalized.replace(/\b[a-zA-Z0-9](?:[ \t]+[a-zA-Z0-9])+\b/g, (m) => m.replace(/[ \t]+/g, ''));
     return normalized;
   }
 
