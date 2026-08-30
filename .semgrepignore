@@ -1,0 +1,44 @@
+# ==============================================================================
+# Semgrep Ignore Rules for Sentraa AI
+# Excludes test fixtures, build outputs, scratch files, and logs
+# ==============================================================================
+
+# Test directories and files
+**/tests/**
+**/__tests__/**
+**/e2e/**
+**/*.test.ts
+**/*.test.tsx
+**/*.test.js
+**/*.test.jsx
+**/*.spec.ts
+**/*.spec.tsx
+**/*.spec.js
+**/*.spec.jsx
+eval-test/**
+
+# Build outputs, caches, and dependencies
+**/node_modules/**
+**/dist/**
+**/build/**
+**/.next/**
+**/.vercel/**
+**/coverage/**
+**/playwright-report/**
+**/test-results/**
+*.tsbuildinfo
+**/*.tsbuildinfo
+
+# Scratch, temporary and log files
+scratch/**
+**/scratch/**
+screenshots/**
+**/screenshots/**
+*.log
+**/*.log
+test-backend-log*/**
+
+# IDE & local configurations
+.vscode/**
+.claude/**
+.env*
