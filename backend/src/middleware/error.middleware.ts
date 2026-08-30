@@ -16,8 +16,25 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
 
   logger.error(`[${requestId}] Unhandled Error:`, err);
 
-  // Catch Database/Prisma specific errors
-  if (err.code?.startsWith('P') || err.message?.includes('Prisma') || err.message?.includes('ECONNREFUSED')) {
+  // Handle Prisma specific constraint & query errors
+  if (err.code === 'P2002') {
+    return res.status(409).json({
+      success: false,
+      message: 'A record with this unique identifier already exists.',
+      requestId
+    });
+  }
+
+  if (err.code === 'P2025') {
+    return res.status(404).json({
+      success: false,
+      message: 'Requested record was not found.',
+      requestId
+    });
+  }
+
+  // Catch true Database Connection outages (P1000-P1017 or ECONNREFUSED)
+  if (['P1000', 'P1001', 'P1002', 'P1003', 'P1017'].includes(err.code) || err.message?.includes('ECONNREFUSED')) {
     return res.status(503).json({
       success: false,
       message: 'Service temporarily unavailable. Our engineers are restoring connectivity.',

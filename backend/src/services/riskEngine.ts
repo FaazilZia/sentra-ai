@@ -7,15 +7,13 @@ export const SENSITIVE_PATTERNS = {
   JWT: /\beyJhbGciOi[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/
 };
 
-const SENSITIVE_KEYWORDS = [
-  'password', 'account', 'personal', 'credential', 'secret', 'confidential', 'pii', 'ssn', 'credit_card', 'api_key', 'token',
-  'medical', 'financial', 'audit', 'payment', 'revenue', 'private', 'message', 'email', 'phone', 'address',
-  'proxy', 'scrape', 'manipulate', 'elderly', 'targeting', 'aws', 'key', 'master'
+const SENSITIVE_KEYWORDS_PATTERNS = [
+  /\bpassword\b/i, /\baccount\b/i, /\bpersonal\b/i, /\bcredential\b/i, /\bsecret\b/i, /\bconfidential\b/i, /\bpii\b/i, /\bssn\b/i, /\bcredit_card\b/i, /\bapi_key\b/i, /\btoken\b/i,
+  /\bmedical\b/i, /\bfinancial\b/i, /\baudit\b/i, /\bpayment\b/i, /\brevenue\b/i, /\bprivate\b/i, /\bmessage\b/i, /\bemail\b/i, /\bphone\b/i, /\baddress\b/i,
+  /\bproxy\b/i, /\bscrape\b/i, /\bmanipulate\b/i, /\belderly\b/i, /\btargeting\b/i, /\baws\b/i, /\bkey\b/i, /\bmaster\b/i
 ];
 
 const HIGH_RISK_ACTIONS = [
-  // Removed 'send_email' and 'external_api' — too broad, legitimate actions in most contexts.
-  // The multi-signal check (intent + sensitive data) already blocks dangerous combinations.
   'export_csv', 'delete_record', 'external_share', 'bypass_auth',
   'export_data', 'master_key', 'admin_access', 'pii_export', 'security_bypass', 'jailbreak', 'unfiltered',
   'delete_all', 'drop_table', 'truncate_table'
@@ -49,7 +47,10 @@ const JAILBREAK_PATTERNS = [
 ];
 
 const SHELL_INJECTION_PATTERNS = [
-  /&&/, /\|\|/, /;/, /\|\s*(?:[a-zA-Z_\$\(`])/, /\$\(/, /`/,
+  /&&\s*(?:rm|cat|ls|cd|exec|sudo|curl|wget|chmod|chown|kill|python|node|bash|sh|powershell|cmd)\b/i,
+  /\|\|\s*(?:rm|cat|ls|cd|exec|sudo|curl|wget|chmod|chown|kill|python|node|bash|sh|powershell|cmd)\b/i,
+  /;\s*(?:rm|cat|ls|cd|exec|sudo|curl|wget|chmod|chown|kill|python|node|bash|sh|powershell|cmd)\b/i,
+  /(?<!\|)\|\s*(?!\|)(?:[a-zA-Z_$(`])/, /\$\(/, /`/,
   /bash\s+-c/i, /sh\s+-c/i, /cmd\.exe/i, /powershell/i,
   /rm\s+-rf/i, /curl\s+[^|]{1,200}\|/i, /wget\s+[^|]{1,200}\|/i, /nc\s+-e/i,
   /chmod\s+777/i, /\bsudo\b/i
@@ -57,7 +58,7 @@ const SHELL_INJECTION_PATTERNS = [
 
 const PATH_TRAVERSAL_PATTERNS = [
   /\.\.\//, /\.\.\\/, /\/etc\/passwd/i, /\/proc\/self/i,
-  /~\/\.ssh/i, /\.env/, /id_rsa/i,
+  /~\/\.ssh/i, /\/\.env\b/i, /\.env\.(?:local|development|production|staging|test)\b/i, /id_rsa/i,
   /config\s+secrets/i, /credentials\s+dump/i
 ];
 
@@ -161,7 +162,7 @@ export const evaluateRisk = (action: string, metadata: any = {}): RiskEvaluation
   
   const hasSensitiveData = (target: string) => 
     Object.values(SENSITIVE_PATTERNS).some(p => p.test(target)) || 
-    /password|secret|key|aws|master|credential|medical|ssn/i.test(target);
+    /\b(?:password|secret|key|aws|master|credential|medical|ssn)\b/i.test(target);
 
   for (const target of analysisTargets) {
     // Jailbreak Detection

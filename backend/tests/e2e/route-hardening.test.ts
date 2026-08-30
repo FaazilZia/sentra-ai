@@ -52,27 +52,19 @@ describe('Route Hardening & Security Middleware E2E', () => {
   });
 
   test('Rate Limiting Burst Guard — blocks /api/v1/ai/check-action after burst threshold (30 req/min)', async () => {
-    let got429 = false;
-    let burstTriggerReqIndex = -1;
-    for (let i = 1; i <= 35; i++) {
-      const res = await request(TEST_BASE_URL)
+    const reqs = Array.from({ length: 35 }, () =>
+      request(TEST_BASE_URL)
         .post('/api/v1/ai/check-action')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           agent: 'ratelimit-agent',
           action: 'burst_test_action',
           metadata: {}
-        });
-
-      if (res.status === 429) {
-        got429 = true;
-        burstTriggerReqIndex = i;
-        console.log(`[RATE LIMIT BURST AUDIT] 429 triggered on request #${i}`);
-        break;
-      }
-    }
+        })
+    );
+    const results = await Promise.all(reqs);
+    const got429 = results.some(res => res.status === 429);
     expect(got429).toBe(true);
-    expect(burstTriggerReqIndex).toBeGreaterThan(0);
   });
 
   test('Multi-Tenant Isolation Guard — rate-limited org does not block requests from a different org', async () => {

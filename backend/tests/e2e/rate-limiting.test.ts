@@ -11,23 +11,18 @@ describe('Rate Limiting E2E', () => {
   });
 
   test('AI Action rate limiter - blocks after burst threshold is exceeded', async () => {
-    let got429 = false;
-    // Burst rate limit on /ai/check-action is 30 req/min per org/key
-    for (let i = 0; i < 35; i++) {
-      const res = await request(TEST_BASE_URL)
+    const reqs = Array.from({ length: 35 }, () =>
+      request(TEST_BASE_URL)
         .post('/api/v1/ai/check-action')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           agent: 'ratelimit-agent',
           action: 'burst_test_action',
           metadata: {}
-        });
-
-      if (res.status === 429) {
-        got429 = true;
-        break;
-      }
-    }
+        })
+    );
+    const results = await Promise.all(reqs);
+    const got429 = results.some(res => res.status === 429);
     expect(got429).toBe(true);
   });
 

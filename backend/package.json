@@ -22,10 +22,11 @@
     "test:db:status": "docker compose -f ../docker-compose.test.yml ps",
     "test:unit": "jest --testPathIgnorePatterns='tests/e2e/'",
     "test:e2e": "playwright test",
-    "test:e2e:jest": "jest --testPathPatterns='tests/e2e/' --testPathIgnorePatterns='/node_modules/|/dist/|.*\\.spec\\.ts' --runInBand",
+    "test:e2e:jest": "jest --testPathPatterns='tests/e2e/' --testPathIgnorePatterns='/node_modules/|/dist/|.*\\.spec\\.ts' --runInBand --globalSetup='' --globalTeardown=''",
     "test:load": "bash tests/load/run.sh",
     "test:all": "npm run test:unit && npm run test:e2e",
     "test:ci": "jest --coverage --ci --testPathIgnorePatterns='tests/e2e/'",
+    "test:pii-benchmark": "ts-node -P tsconfig.json src/scripts/pii-benchmark/run-benchmark.ts",
     "test": "node --max-old-space-size=4096 ./node_modules/.bin/jest --coverage --testPathIgnorePatterns='tests/e2e/' --runInBand"
   },
   "prisma": {
