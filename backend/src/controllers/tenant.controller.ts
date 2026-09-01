@@ -122,12 +122,12 @@ export const inviteUser = asyncHandler(async (req: any, res: Response) => {
         const orgName = org?.name || 'Sentraa AI';
         // Sanitize user-controlled tenant name to prevent HTML injection in email template
         const sanitizedOrgName = orgName
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#039;');
-        const safeSubjectOrgName = orgName.replace(/[\r\n]/g, '');
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#039;');
+        const safeSubjectOrgName = orgName.replaceAll(/[\r\n]/g, '');
         // System-generated link: FRONTEND_URL + 64-char crypto hex token (safe against injection)
         const joinLink = `${(process.env.FRONTEND_URL || 'http://localhost:5173').split(',')[0]}/accept-invite?token=${invitation.token}`;
 
