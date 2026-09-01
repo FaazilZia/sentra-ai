@@ -120,16 +120,25 @@ export const inviteUser = asyncHandler(async (req: any, res: Response) => {
 
         const org = await TenantService.getOrganization(orgId);
         const orgName = org?.name || 'Sentraa AI';
+        // Sanitize user-controlled tenant name to prevent HTML injection in email template
+        const sanitizedOrgName = orgName
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#039;');
+        const safeSubjectOrgName = orgName.replaceAll(/[\r\n]/g, '');
+        // System-generated link: FRONTEND_URL + 64-char crypto hex token (safe against injection)
         const joinLink = `${(process.env.FRONTEND_URL || 'http://localhost:5173').split(',')[0]}/accept-invite?token=${invitation.token}`;
 
         await transporter.sendMail({
           from: process.env.SMTP_FROM || '"Sentraa AI" <noreply@sentraatech.com>',
           to: email,
-          subject: `You've been invited to join ${orgName} on Sentraa AI`,
+          subject: `You've been invited to join ${safeSubjectOrgName} on Sentraa AI`,
           html: `
             <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px;">
               <h2 style="color: #0f172a; margin-top: 0;">You've been invited!</h2>
-              <p>You have been invited to join <strong>${orgName}</strong> on Sentraa AI.</p>
+              <p>You have been invited to join <strong>${sanitizedOrgName}</strong> on Sentraa AI.</p>
               <p>Click the link below to accept the invitation and set up your account:</p>
               <p style="margin: 24px 0;">
                 <a href="${joinLink}" style="display: inline-block; background: #0f172a; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">Accept Invitation</a>
