@@ -1,0 +1,55 @@
+# ==============================================================================
+# Semgrep Ignore Rules for Sentraa AI
+# Excludes test fixtures, build outputs, scratch files, non-production code, and logs
+# ==============================================================================
+
+# Test directories and files
+**/tests/**
+**/__tests__/**
+**/e2e/**
+**/*.test.ts
+**/*.test.tsx
+**/*.test.js
+**/*.test.jsx
+**/*.spec.ts
+**/*.spec.tsx
+**/*.spec.js
+**/*.spec.jsx
+eval-test/**
+
+# Build outputs, caches, dependencies, and generated files
+**/node_modules/**
+**/dist/**
+**/build/**
+**/.next/**
+**/.vercel/**
+**/coverage/**
+**/playwright-report/**
+**/test-results/**
+*.tsbuildinfo
+**/*.tsbuildinfo
+**/prisma/migrations/**
+
+# Scratch, temporary and log files
+scratch/**
+**/scratch/**
+screenshots/**
+**/screenshots/**
+*.log
+**/*.log
+test-backend-log*/**
+
+# Non-production root scripts, docs, and configs
+.vscode/**
+.claude/**
+.github/**
+.env*
+docs/**
+examples/**
+observability/**
+*.py
+*.sh
+sentraa-pentest.js
+complete_prompt.txt
+docker-compose*.yml
+render.yaml
