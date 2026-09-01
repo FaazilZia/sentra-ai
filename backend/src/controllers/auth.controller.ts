@@ -573,6 +573,7 @@ export const forgotPassword = async (req: Request, res: Response, next: NextFunc
       }
     }
 
+    // System-generated link: FRONTEND_URL + cryptographically signed JWT token (safe against injection)
     const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').split(',')[0];
     const resetLink = `${frontendUrl}/reset-password?token=${token}`;
 
@@ -732,6 +733,7 @@ export const resendVerification = async (req: Request, res: Response, next: Next
       '24h'
     );
 
+    // System-generated link: BACKEND_URL + cryptographically signed JWT token (safe against injection)
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:3000';
     const verifyLink = `${backendUrl}/api/v1/auth/verify-email?token=${verificationToken}`;
 
