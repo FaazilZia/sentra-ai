@@ -1,0 +1,56 @@
+name: Semgrep SAST
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  semgrep:
+    name: Semgrep SAST Scan
+    runs-on: ubuntu-latest
+    container:
+      # Official Semgrep container (semgrep/semgrep) containing modern Semgrep CLI
+      image: semgrep/semgrep:latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep SAST Scan
+        run: |
+          semgrep scan \
+            --config "p/security-audit" \
+            --config "p/owasp-top-ten" \
+            --text \
+            --sarif \
+            --output=semgrep.sarif \
+            --no-error \
+            backend/src frontend/src packages/sdk/src
+
+      - name: Publish Step Summary
+        if: always()
+        run: |
+          echo "## 🛡️ Semgrep SAST Scan Completed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Semgrep static security analysis ran across production backend, frontend, and SDK code." >> $GITHUB_STEP_SUMMARY
+          echo "- **Rulesets Evaluated:** \`p/security-audit\`, \`p/owasp-top-ten\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Exclusions Applied:** \`.semgrepignore\` (test suites, mock harnesses, scratch files, build artifacts)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Mode:** Report-only (non-blocking for initial rollout)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Full details of any detected findings are available in the job logs and the attached SARIF report artifact." >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload SARIF Report Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-sarif-report
+          path: semgrep.sarif
+          if-no-files-found: ignore
+          retention-days: 14
