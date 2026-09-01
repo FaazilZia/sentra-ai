@@ -15,19 +15,24 @@ jobs:
   semgrep:
     name: Semgrep SAST Scan
     runs-on: ubuntu-latest
+    container:
+      # Official Semgrep container (semgrep/semgrep) containing modern Semgrep CLI
+      image: semgrep/semgrep:latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Run Semgrep SAST Scan
-        uses: returntocorp/semgrep-action@v1
-        continue-on-error: true
-        with:
-          config: >-
-            p/security-audit
-            p/owasp-top-ten
-          generateSarif: "1"
+        run: |
+          semgrep scan \
+            --config "p/security-audit" \
+            --config "p/owasp-top-ten" \
+            --text \
+            --sarif \
+            --output=semgrep.sarif \
+            --no-error \
+            backend/src frontend/src packages/sdk/src
 
       - name: Publish Step Summary
         if: always()
