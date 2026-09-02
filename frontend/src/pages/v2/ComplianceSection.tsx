@@ -114,18 +114,19 @@ export const mapControlStatus = (
   return "NON_COMPLIANT";
 };
 
-export function mapRawControlToItem(c: any, totalAgents: number): ControlItem | null {
+export function mapRawControlToItem(c: any, totalAgents: number, index = 0): ControlItem | null {
   const targetFw = mapFrameworkId(c.framework);
   if (!targetFw) return null;
 
   const implStatus = c.control_implementations?.[0]?.status || c.status;
+  const fallbackId = `ctrl-${index}`;
   return {
-    id: c.id || c.control_id || Math.random().toString(),
+    id: c.id || c.control_id || fallbackId,
     code: c.control_id || c.code || c.articleNumber || "CTRL",
     title: c.title || "Untitled Control",
     category: c.category || "Governance",
     status: mapControlStatus(implStatus),
-    mappedAgents: totalAgents > 0 ? totalAgents : 0,
+    mappedAgents: Math.max(0, totalAgents),
     framework: targetFw
   };
 }
@@ -183,8 +184,8 @@ export default function ComplianceSection() {
       const rawControls = controlsRes?.items || [];
       const mappedControls: ControlItem[] = [];
 
-      for (const rc of rawControls) {
-        const item = mapRawControlToItem(rc, totalAgents);
+      for (let i = 0; i < rawControls.length; i++) {
+        const item = mapRawControlToItem(rawControls[i], totalAgents, i);
         if (item) {
           mappedControls.push(item);
         }

@@ -290,12 +290,24 @@ export class ComplianceService {
     return {
       feature_name: "User Authentication & Data Handling",
       compliance_report: {
-        GDPR: { score: gdprScore, risk_level: gdprScore >= 80 ? 'Low' : gdprScore >= 50 ? 'Medium' : 'High' },
-        DPDP: { score: dpdpScore, risk_level: dpdpScore >= 80 ? 'Low' : dpdpScore >= 50 ? 'Medium' : 'High' },
-        HIPAA: { score: hipaaScore, risk_level: hipaaScore >= 80 ? 'Low' : hipaaScore >= 50 ? 'Medium' : 'High' }
+        GDPR: { score: gdprScore, risk_level: determineRiskLevel(gdprScore) },
+        DPDP: { score: dpdpScore, risk_level: determineRiskLevel(dpdpScore) },
+        HIPAA: { score: hipaaScore, risk_level: determineRiskLevel(hipaaScore) }
       },
-      confidence: progress > 0.9 ? 'High' : progress > 0.5 ? 'Medium' : 'Low',
+      confidence: determineConfidence(progress),
       summary: "AI evaluation based on verified framework controls and uploaded evidence integrity."
     };
   }
+}
+
+function determineRiskLevel(score: number): 'Low' | 'Medium' | 'High' {
+  if (score >= 80) return 'Low';
+  if (score >= 50) return 'Medium';
+  return 'High';
+}
+
+function determineConfidence(progress: number): 'High' | 'Medium' | 'Low' {
+  if (progress > 0.9) return 'High';
+  if (progress > 0.5) return 'Medium';
+  return 'Low';
 }

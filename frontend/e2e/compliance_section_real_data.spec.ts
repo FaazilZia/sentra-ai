@@ -28,18 +28,19 @@ export const mapControlStatus = (
   return "NON_COMPLIANT";
 };
 
-export function mapRawControlToItem(c: any, totalAgents: number) {
+export function mapRawControlToItem(c: any, totalAgents: number, index = 0) {
   const targetFw = mapFrameworkId(c.framework);
   if (!targetFw) return null;
 
   const implStatus = c.control_implementations?.[0]?.status || c.status;
+  const fallbackId = `ctrl-${index}`;
   return {
-    id: c.id || c.control_id || Math.random().toString(),
+    id: c.id || c.control_id || fallbackId,
     code: c.control_id || c.code || c.articleNumber || "CTRL",
     title: c.title || "Untitled Control",
     category: c.category || "Governance",
     status: mapControlStatus(implStatus),
-    mappedAgents: totalAgents > 0 ? totalAgents : 0,
+    mappedAgents: Math.max(0, totalAgents),
     framework: targetFw
   };
 }
