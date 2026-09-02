@@ -14,7 +14,8 @@ import {
   BarChart3, 
   RefreshCw, 
   CheckCircle2, 
-  FileCheck
+  FileCheck,
+  AlertTriangle
 } from 'lucide-react';
 
 interface ComplianceDocument {
@@ -28,72 +29,61 @@ interface ComplianceDocument {
   downloadUrl?: string;
 }
 
+const formatFileSize = (bytes?: number | string): string => {
+  if (typeof bytes === 'string' && (bytes.includes('KB') || bytes.includes('MB') || bytes.includes('B'))) {
+    return bytes;
+  }
+  const num = Number(bytes);
+  if (isNaN(num) || num <= 0) return '0 B';
+  if (num < 1024) return `${num} B`;
+  if (num < 1024 * 1024) return `${(num / 1024).toFixed(1)} KB`;
+  return `${(num / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const inferFramework = (item: any): string => {
+  const tags = Array.isArray(item.tags) ? item.tags : [];
+  const tagMatch = tags.find((t: string) => /gdpr|dpdp|hipaa|pci|nist/i.test(t));
+  if (tagMatch) return tagMatch.toUpperCase();
+  if (item.framework) return item.framework;
+  const title = String(item.title || item.fileName || '').toUpperCase();
+  if (title.includes('GDPR')) return 'GDPR';
+  if (title.includes('DPDP')) return 'DPDP';
+  if (title.includes('HIPAA')) return 'HIPAA';
+  if (title.includes('PCI')) return 'PCI-DSS';
+  if (title.includes('NIST')) return 'NIST AI RMF';
+  return item.entityType || 'General';
+};
+
 export default function EvidenceSection() {
   const { addToast } = useStore();
   const [activeTab, setActiveTab] = useState<string>('registry');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [documents, setDocuments] = useState<ComplianceDocument[]>([]);
 
   const loadEvidenceData = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      await Promise.all([
-        apiRequest<any>('/evidence').catch(() => ({ data: [] })),
-        apiRequest<any>('/files').catch(() => ({ data: [] }))
-      ]);
+      const res = await apiRequest<any>('/evidence');
+      const rawList: any[] = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
 
-      const mockDocs: ComplianceDocument[] = [
-        {
-          id: 'doc-1',
-          name: 'GDPR_Article17_VectorErasure_Audit_Export.pdf',
-          framework: 'GDPR',
-          documentType: 'Audit Evidence Bundle',
-          fileSize: '4.2 MB',
-          generatedDate: '2026-08-10',
-          status: 'VERIFIED'
-        },
-        {
-          id: 'doc-2',
-          name: 'DPDP_Consent_Hook_Verification_Log.pdf',
-          framework: 'DPDP',
-          documentType: 'Consent Audit Log',
-          fileSize: '1.8 MB',
-          generatedDate: '2026-08-12',
-          status: 'VERIFIED'
-        },
-        {
-          id: 'doc-3',
-          name: 'HIPAA_PHI_Masking_Quarterly_Assessment.pdf',
-          framework: 'HIPAA',
-          documentType: 'Quarterly Assessment',
-          fileSize: '6.5 MB',
-          generatedDate: '2026-08-01',
-          status: 'PENDING_REVIEW'
-        },
-        {
-          id: 'doc-4',
-          name: 'PCI_DSS_v4.0_Tokenization_Proof.pdf',
-          framework: 'PCI-DSS',
-          documentType: 'Tokenization Proof',
-          fileSize: '2.1 MB',
-          generatedDate: '2026-08-13',
-          status: 'VERIFIED'
-        },
-        {
-          id: 'doc-5',
-          name: 'NIST_AI_RMF_Govern_Measure_Export.pdf',
-          framework: 'NIST AI RMF',
-          documentType: 'RMF Audit Package',
-          fileSize: '8.4 MB',
-          generatedDate: '2026-08-11',
-          status: 'VERIFIED'
-        }
-      ];
+      const mappedDocs: ComplianceDocument[] = rawList.map((item: any) => ({
+        id: item.id || `evidence-${Math.random()}`,
+        name: item.fileName || item.title || 'evidence-artifact.pdf',
+        framework: inferFramework(item),
+        documentType: item.entityType ? `${item.entityType.charAt(0) + item.entityType.slice(1).toLowerCase()} Evidence` : 'Audit Evidence Bundle',
+        fileSize: formatFileSize(item.fileSize),
+        generatedDate: item.createdAt ? new Date(item.createdAt).toISOString().split('T')[0] : 'N/A',
+        status: (item.status === 'PENDING_REVIEW' || item.status === 'EXPIRED') ? item.status : 'VERIFIED',
+        downloadUrl: item.fileUrl
+      }));
 
-      setDocuments(mockDocs);
-
+      setDocuments(mappedDocs);
     } catch (err: any) {
       console.error('Error loading evidence registry:', err);
+      setError(err?.message || 'Failed to load compliance evidence documents');
+      setDocuments([]);
     } finally {
       setLoading(false);
     }
@@ -103,8 +93,17 @@ export default function EvidenceSection() {
     loadEvidenceData();
   }, [loadEvidenceData]);
 
-  const handleDownload = (docName: string) => {
-    addToast({ message: `Downloading artifact package: ${docName}`, type: 'success' });
+  const handleDownload = (doc: ComplianceDocument | string) => {
+    if (typeof doc === 'string') {
+      addToast({ message: `Downloading artifact package: ${doc}`, type: 'success' });
+      return;
+    }
+    if (doc.downloadUrl) {
+      window.open(doc.downloadUrl, '_blank');
+      addToast({ message: `Opening artifact: ${doc.name}`, type: 'success' });
+    } else {
+      addToast({ message: `Downloading artifact package: ${doc.name}`, type: 'success' });
+    }
   };
 
   const columns: Column<ComplianceDocument>[] = [
@@ -162,7 +161,7 @@ export default function EvidenceSection() {
       header: 'Download',
       cell: (item) => (
         <button
-          onClick={() => handleDownload(item.name)}
+          onClick={() => handleDownload(item)}
           className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-[10px] font-bold uppercase tracking-wider transition-all shadow-sm flex items-center gap-1"
         >
           <Download className="h-3 w-3" /> Download
@@ -170,6 +169,10 @@ export default function EvidenceSection() {
       )
     }
   ];
+
+  const verifiedCount = documents.filter(d => d.status === 'VERIFIED').length;
+  const uniqueFrameworksCount = new Set(documents.map(d => d.framework)).size;
+  const verifiedPercentage = documents.length > 0 ? `${Math.round((verifiedCount / documents.length) * 100)}%` : '0%';
 
   return (
     <PageContainer
@@ -186,6 +189,7 @@ export default function EvidenceSection() {
           <button
             onClick={loadEvidenceData}
             className="p-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg border border-slate-300 dark:border-slate-700"
+            title="Reload evidence"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
@@ -196,39 +200,56 @@ export default function EvidenceSection() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <MetricCard
           label="Total Verified Artifacts"
-          value={documents.length}
+          value={verifiedCount}
           subtitle="Audit-ready compliance packages"
           status="primary"
           icon={FolderOpen}
+          testId="total-verified-artifacts"
         />
         <MetricCard
           label="Framework Export Packages"
-          value={5}
-          subtitle="GDPR, DPDP, HIPAA, PCI, NIST"
+          value={uniqueFrameworksCount}
+          subtitle="Active compliance frameworks"
           status="success"
           icon={FileCheck}
         />
         <MetricCard
           label="Executive Reports"
-          value={4}
+          value={3}
           subtitle="Monthly executive summaries"
           status="info"
           icon={BarChart3}
         />
         <MetricCard
           label="Verified Status"
-          value="100%"
+          value={verifiedPercentage}
           subtitle="Cryptographically hashed"
           status="success"
           icon={CheckCircle2}
         />
       </div>
 
+      {/* Error alert banner */}
+      {error && (
+        <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center justify-between text-rose-600 dark:text-rose-400">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span className="text-xs font-semibold">{error}</span>
+          </div>
+          <button
+            onClick={loadEvidenceData}
+            className="px-3 py-1 bg-rose-600 text-white text-xs font-bold rounded-lg hover:bg-rose-500 transition-all"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* Sub-Tabs */}
       <TabBar
         tabs={[
           { id: 'registry', label: 'Compliance Document Registry', count: documents.length, icon: FolderOpen },
-          { id: 'executive', label: 'Executive Summary Reports', count: 4, icon: BarChart3 }
+          { id: 'executive', label: 'Executive Summary Reports', count: 3, icon: BarChart3 }
         ]}
         activeTab={activeTab}
         onChange={setActiveTab}
@@ -241,6 +262,7 @@ export default function EvidenceSection() {
           data={documents}
           keyExtractor={(item) => item.id}
           isLoading={loading}
+          emptyMessage="No compliance evidence artifacts uploaded yet."
           searchPlaceholder="Search compliance evidence documents..."
         />
       )}

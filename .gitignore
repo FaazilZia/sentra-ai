@@ -55,6 +55,7 @@ update-render-env.sh
 # Playwright test artifacts
 frontend/test-results/
 frontend/playwright-report/
+frontend/e2e/screenshots/
 backend/test-results/
 backend/playwright-report/
 test-playwright-report*/
