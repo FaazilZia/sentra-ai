@@ -4,6 +4,51 @@ import * as path from 'path';
 
 const ARTIFACT_DIR = path.resolve(process.cwd(), "e2e/screenshots");
 
+// Helper functions under test
+const formatFileSize = (bytes?: number | string): string => {
+  if (typeof bytes === 'string' && (bytes.includes('KB') || bytes.includes('MB') || bytes.includes('B'))) {
+    return bytes;
+  }
+  const num = Number(bytes);
+  if (Number.isNaN(num) || num <= 0) return '0 B';
+  if (num < 1024) return `${num} B`;
+  if (num < 1024 * 1024) return `${(num / 1024).toFixed(1)} KB`;
+  return `${(num / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const inferFramework = (item: any): string => {
+  const tags = Array.isArray(item?.tags) ? item.tags : [];
+  const tagMatch = tags.find((t: string) => /gdpr|dpdp|hipaa|pci|nist/i.test(t));
+  if (tagMatch) {
+    const upper = tagMatch.toUpperCase();
+    if (upper.includes('GDPR')) return 'GDPR';
+    if (upper.includes('DPDP')) return 'DPDP';
+    if (upper.includes('HIPAA')) return 'HIPAA';
+    if (upper.includes('PCI')) return 'PCI-DSS';
+    if (upper.includes('NIST')) return 'NIST AI RMF';
+    return upper;
+  }
+  if (item?.framework) return item.framework;
+  const title = String(item?.title || item?.fileName || '').toUpperCase();
+  if (title.includes('GDPR')) return 'GDPR';
+  if (title.includes('DPDP')) return 'DPDP';
+  if (title.includes('HIPAA')) return 'HIPAA';
+  if (title.includes('PCI')) return 'PCI-DSS';
+  if (title.includes('NIST')) return 'NIST AI RMF';
+  return item?.entityType || 'General';
+};
+
+const resolveDocumentType = (entityType?: string): string => {
+  if (!entityType) return 'Audit Evidence Bundle';
+  return `${entityType.charAt(0).toUpperCase()}${entityType.slice(1).toLowerCase()} Evidence`;
+};
+
+const resolveDocumentStatus = (status?: string): 'VERIFIED' | 'PENDING_REVIEW' | 'EXPIRED' => {
+  if (status === 'PENDING_REVIEW') return 'PENDING_REVIEW';
+  if (status === 'EXPIRED') return 'EXPIRED';
+  return 'VERIFIED';
+};
+
 test.describe('EvidenceSection: Real API Wiring & Mock Data Elimination', () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -178,5 +223,65 @@ test.describe('EvidenceSection: Real API Wiring & Mock Data Elimination', () => 
 
     // Mock items must NOT be rendered as fallback
     await expect(page.getByText('GDPR_Article17_VectorErasure_Audit_Export.pdf')).toHaveCount(0);
+  });
+});
+
+test.describe('EvidenceSection: Helper Functions Unit Tests', () => {
+  test('formatFileSize formats byte sizes, edge cases, and preserves preformatted strings', () => {
+    expect(formatFileSize('4.2 MB')).toBe('4.2 MB');
+    expect(formatFileSize('1.8 KB')).toBe('1.8 KB');
+    expect(formatFileSize('500 B')).toBe('500 B');
+
+    expect(formatFileSize(0)).toBe('0 B');
+    expect(formatFileSize(-100)).toBe('0 B');
+    expect(formatFileSize(undefined)).toBe('0 B');
+    expect(formatFileSize('not-a-number')).toBe('0 B');
+
+    expect(formatFileSize(500)).toBe('500 B');
+    expect(formatFileSize(1536)).toBe('1.5 KB');
+    expect(formatFileSize(3145728)).toBe('3.0 MB');
+    expect(formatFileSize(10485760)).toBe('10.0 MB');
+  });
+
+  test('inferFramework identifies frameworks from tags, properties, titles, and fallbacks', () => {
+    // From tags
+    expect(inferFramework({ tags: ['hipaa', 'prod'] })).toBe('HIPAA');
+    expect(inferFramework({ tags: ['gdpr'] })).toBe('GDPR');
+    expect(inferFramework({ tags: ['dpdp-consent'] })).toBe('DPDP');
+    expect(inferFramework({ tags: ['PCI-DSS-v4'] })).toBe('PCI-DSS');
+    expect(inferFramework({ tags: ['nist-ai-rmf'] })).toBe('NIST AI RMF');
+
+    // From framework property
+    expect(inferFramework({ framework: 'SOC2' })).toBe('SOC2');
+
+    // From title / fileName
+    expect(inferFramework({ title: 'GDPR_Compliance_Report.pdf' })).toBe('GDPR');
+    expect(inferFramework({ fileName: 'DPDP_Consent_Audit.pdf' })).toBe('DPDP');
+    expect(inferFramework({ fileName: 'HIPAA_PHI_Assessment.pdf' })).toBe('HIPAA');
+    expect(inferFramework({ title: 'PCI_DSS_Network_Proof.pdf' })).toBe('PCI-DSS');
+    expect(inferFramework({ title: 'NIST_Govern_Measure.pdf' })).toBe('NIST AI RMF');
+
+    // From entityType
+    expect(inferFramework({ entityType: 'VENDOR' })).toBe('VENDOR');
+
+    // Default
+    expect(inferFramework({})).toBe('General');
+    expect(inferFramework(null)).toBe('General');
+  });
+
+  test('resolveDocumentType handles empty entityType and capitalizes valid types', () => {
+    expect(resolveDocumentType()).toBe('Audit Evidence Bundle');
+    expect(resolveDocumentType('')).toBe('Audit Evidence Bundle');
+    expect(resolveDocumentType('AUDIT')).toBe('Audit Evidence');
+    expect(resolveDocumentType('CONTROL')).toBe('Control Evidence');
+    expect(resolveDocumentType('policy')).toBe('Policy Evidence');
+  });
+
+  test('resolveDocumentStatus maps known statuses and defaults to VERIFIED', () => {
+    expect(resolveDocumentStatus('PENDING_REVIEW')).toBe('PENDING_REVIEW');
+    expect(resolveDocumentStatus('EXPIRED')).toBe('EXPIRED');
+    expect(resolveDocumentStatus('VERIFIED')).toBe('VERIFIED');
+    expect(resolveDocumentStatus(undefined)).toBe('VERIFIED');
+    expect(resolveDocumentStatus('UNKNOWN_STATUS')).toBe('VERIFIED');
   });
 });

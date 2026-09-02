@@ -29,29 +29,48 @@ interface ComplianceDocument {
   downloadUrl?: string;
 }
 
-const formatFileSize = (bytes?: number | string): string => {
+export const formatFileSize = (bytes?: number | string): string => {
   if (typeof bytes === 'string' && (bytes.includes('KB') || bytes.includes('MB') || bytes.includes('B'))) {
     return bytes;
   }
   const num = Number(bytes);
-  if (isNaN(num) || num <= 0) return '0 B';
+  if (Number.isNaN(num) || num <= 0) return '0 B';
   if (num < 1024) return `${num} B`;
   if (num < 1024 * 1024) return `${(num / 1024).toFixed(1)} KB`;
   return `${(num / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-const inferFramework = (item: any): string => {
-  const tags = Array.isArray(item.tags) ? item.tags : [];
+export const inferFramework = (item: any): string => {
+  const tags = Array.isArray(item?.tags) ? item.tags : [];
   const tagMatch = tags.find((t: string) => /gdpr|dpdp|hipaa|pci|nist/i.test(t));
-  if (tagMatch) return tagMatch.toUpperCase();
-  if (item.framework) return item.framework;
-  const title = String(item.title || item.fileName || '').toUpperCase();
+  if (tagMatch) {
+    const upper = tagMatch.toUpperCase();
+    if (upper.includes('GDPR')) return 'GDPR';
+    if (upper.includes('DPDP')) return 'DPDP';
+    if (upper.includes('HIPAA')) return 'HIPAA';
+    if (upper.includes('PCI')) return 'PCI-DSS';
+    if (upper.includes('NIST')) return 'NIST AI RMF';
+    return upper;
+  }
+  if (item?.framework) return item.framework;
+  const title = String(item?.title || item?.fileName || '').toUpperCase();
   if (title.includes('GDPR')) return 'GDPR';
   if (title.includes('DPDP')) return 'DPDP';
   if (title.includes('HIPAA')) return 'HIPAA';
   if (title.includes('PCI')) return 'PCI-DSS';
   if (title.includes('NIST')) return 'NIST AI RMF';
-  return item.entityType || 'General';
+  return item?.entityType || 'General';
+};
+
+export const resolveDocumentType = (entityType?: string): string => {
+  if (!entityType) return 'Audit Evidence Bundle';
+  return `${entityType.charAt(0).toUpperCase()}${entityType.slice(1).toLowerCase()} Evidence`;
+};
+
+export const resolveDocumentStatus = (status?: string): 'VERIFIED' | 'PENDING_REVIEW' | 'EXPIRED' => {
+  if (status === 'PENDING_REVIEW') return 'PENDING_REVIEW';
+  if (status === 'EXPIRED') return 'EXPIRED';
+  return 'VERIFIED';
 };
 
 export default function EvidenceSection() {
@@ -68,15 +87,15 @@ export default function EvidenceSection() {
       const res = await apiRequest<any>('/evidence');
       const rawList: any[] = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
 
-      const mappedDocs: ComplianceDocument[] = rawList.map((item: any) => ({
-        id: item.id || `evidence-${Math.random()}`,
-        name: item.fileName || item.title || 'evidence-artifact.pdf',
+      const mappedDocs: ComplianceDocument[] = rawList.map((item: any, index: number) => ({
+        id: item?.id || `evidence-${index}`,
+        name: item?.fileName || item?.title || 'evidence-artifact.pdf',
         framework: inferFramework(item),
-        documentType: item.entityType ? `${item.entityType.charAt(0) + item.entityType.slice(1).toLowerCase()} Evidence` : 'Audit Evidence Bundle',
-        fileSize: formatFileSize(item.fileSize),
-        generatedDate: item.createdAt ? new Date(item.createdAt).toISOString().split('T')[0] : 'N/A',
-        status: (item.status === 'PENDING_REVIEW' || item.status === 'EXPIRED') ? item.status : 'VERIFIED',
-        downloadUrl: item.fileUrl
+        documentType: resolveDocumentType(item?.entityType),
+        fileSize: formatFileSize(item?.fileSize),
+        generatedDate: item?.createdAt ? new Date(item.createdAt).toISOString().split('T')[0] : 'N/A',
+        status: resolveDocumentStatus(item?.status),
+        downloadUrl: item?.fileUrl
       }));
 
       setDocuments(mappedDocs);
