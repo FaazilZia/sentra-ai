@@ -391,7 +391,7 @@ export default function Intake() {
                       <div className="flex items-center justify-between border-t border-[var(--border-default)] pt-4 mt-2">
                         <div className="flex items-center gap-1 text-[9px] font-bold text-indigo-400 uppercase tracking-widest bg-indigo-500/5 border border-indigo-500/10 px-2 py-1 rounded">
                           <HelpCircle className="h-3.5 w-3.5" />
-                          NIST Risk Tier: {riskScoreResult.nist_risk_classification || riskScoreResult.eu_ai_act_classification || 'NOT_HIGH_RISK'}
+                          NIST Risk Tier: {riskScoreResult.nist_risk_classification || 'NOT_HIGH_RISK'}
                         </div>
                         <button
                           onClick={() => setScoredResult(null)}

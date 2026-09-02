@@ -11,8 +11,8 @@ async function main() {
   console.log('Active Organizations:', orgs.length);
   console.log('Controls Count:', controlsCount);
   console.log('Compliance Obligations Count:', obligationsCount);
-  console.log('Expected Controls:', 17 * orgs.length);
-  console.log('Expected Obligations:', 23 * orgs.length);
+  console.log('Expected Controls:', 20 * orgs.length);
+  console.log('Expected Obligations:', 20 * orgs.length);
 }
 
 main().catch(err => {

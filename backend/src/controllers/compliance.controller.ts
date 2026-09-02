@@ -248,11 +248,18 @@ export const getComplianceStats = asyncHandler(async (req: any, res: Response) =
     },
   ];
 
+  const configuredFrameworks = frameworkList.filter(f => f.configured);
+  const aggregateScore = configuredFrameworks.length > 0
+    ? Math.round(configuredFrameworks.reduce((sum, f) => sum + f.score, 0) / configuredFrameworks.length)
+    : 0;
+
   return sendSuccess(res, {
     totalViolations: violations.length + piiLogs.length,
     breakdown,
     piiViolations: piiBreakdown,
     riskTrends,
+    aggregateScore,
+    overallScore: aggregateScore,
     frameworks: frameworkList
   });
 });

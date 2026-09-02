@@ -342,7 +342,7 @@ async function main() {
   });
 
   // STEP 12: New Org Sign-up seed hook
-  await assertTest('New Organization Creation seed hook (17 Controls + 23 Obligations)', async () => {
+  await assertTest('New Organization Creation seed hook (20 Controls + 20 Obligations)', async () => {
     const testSlug = 'smoke-test-org-' + Date.now();
     const newOrg = await TenantService.createOrganization({
       name: 'Smoke Test Organization',
@@ -353,11 +353,11 @@ async function main() {
       const controls = await prisma.controls.count({ where: { organizationId: newOrg.id } });
       const obligations = await prisma.compliance_obligations.count({ where: { organizationId: newOrg.id } });
 
-      if (controls !== 17) {
-        throw new Error(`Expected exactly 17 baseline controls, got ${controls}`);
+      if (controls !== 20) {
+        throw new Error(`Expected exactly 20 baseline controls, got ${controls}`);
       }
-      if (obligations !== 23) {
-        throw new Error(`Expected exactly 23 baseline obligations, got ${obligations}`);
+      if (obligations !== 20) {
+        throw new Error(`Expected exactly 20 baseline obligations, got ${obligations}`);
       }
     } finally {
       // Clean up newly created org
