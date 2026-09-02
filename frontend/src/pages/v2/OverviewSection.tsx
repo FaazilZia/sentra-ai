@@ -76,9 +76,10 @@ export default function OverviewSection() {
 
       if (compRes?.frameworks) {
         const activeNames = ['GDPR', 'DPDP', 'HIPAA', 'PCI-DSS', 'NIST AI RMF'];
+        const normalize = (s: string) => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
         const mapped = activeNames.map(name => {
           const found = compRes.frameworks.find((f: any) => 
-            f.name.toUpperCase().includes(name.replace('-', '').replace(/\s+/g, ''))
+            normalize(f.name) === normalize(name)
           );
           const rawScore = found?.score;
           const score = typeof rawScore === 'number' ? rawScore : 0;
