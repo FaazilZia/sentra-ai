@@ -41,60 +41,77 @@ const resolveTierScore = (tier?: string): number => {
   return 20;
 };
 
+const resolveScoreColor = (score: number): string => {
+  if (score >= 80) return 'text-rose-500';
+  if (score >= 60) return 'text-orange-500';
+  return 'text-amber-500';
+};
+
+const resolveFindingsCount = (details: any, score: number): number => {
+  if (Array.isArray(details?.findings)) {
+    return details.findings.length;
+  }
+  if (typeof details?.violationsCount === 'number') {
+    return details.violationsCount;
+  }
+  if (score >= 80) return 3;
+  if (score >= 60) return 1;
+  return 0;
+};
+
+const mapRiskToRankedAgent = (r: any, index: number) => {
+  const score = Number(r?.score ?? 0);
+  const findingsCount = resolveFindingsCount(r?.details, score);
+  const agentName = r?.ai_system?.name || r?.name || `Agent-${index + 1}`;
+  const source = r?.ai_system?.status ? `Status: ${r.ai_system.status}` : (r?.source || 'Risk Assessment');
+  const severity = resolveSeverity(score, r?.risk_level || r?.ai_system?.risk_tier);
+  const lastAssessed = formatRelativeTime(r?.updated_at || r?.created_at);
+
+  return {
+    id: r?.id || `risk-${index}`,
+    agentName,
+    source,
+    compositeScore: score,
+    severity,
+    openViolations: findingsCount,
+    lastAssessed
+  };
+};
+
+const mapSystemToRankedAgent = (s: any, index: number) => {
+  const defaultScore = resolveTierScore(s?.risk_tier);
+  const agentName = s?.name || `Unassessed-${index + 1}`;
+  const source = s?.vendor || s?.model_name || 'Registered AI System';
+  const severity = resolveSeverity(defaultScore, s?.risk_tier);
+  const lastAssessed = formatRelativeTime(s?.updated_at || s?.created_at);
+
+  return {
+    id: s?.id || `system-${index}`,
+    agentName,
+    source,
+    compositeScore: defaultScore,
+    severity,
+    openViolations: 0,
+    lastAssessed
+  };
+};
+
 const mergeRankedAgents = (risks: any[], systems: any[]) => {
   const assessedSystemIds = new Set<string>();
   const unranked: any[] = [];
 
-  for (let i = 0; i < risks.length; i++) {
-    const r = risks[i];
+  risks.forEach((r, idx) => {
     const sysId = r?.aiSystemId || r?.ai_system?.id;
-    if (sysId) {
-      assessedSystemIds.add(String(sysId));
-    }
+    if (sysId) assessedSystemIds.add(String(sysId));
+    unranked.push(mapRiskToRankedAgent(r, idx));
+  });
 
-    const score = Number(r?.score ?? 0);
-    const findingsCount = Array.isArray(r?.details?.findings) 
-      ? r.details.findings.length 
-      : (typeof r?.details?.violationsCount === 'number' ? r.details.violationsCount : (score >= 80 ? 3 : score >= 60 ? 1 : 0));
-    const agentName = r?.ai_system?.name || r?.name || `Agent-${i + 1}`;
-    const source = r?.ai_system?.status ? `Status: ${r.ai_system.status}` : (r?.source || 'Risk Assessment');
-    const severity = resolveSeverity(score, r?.risk_level || r?.ai_system?.risk_tier);
-    const lastAssessed = formatRelativeTime(r?.updated_at || r?.created_at);
-
-    unranked.push({
-      id: r?.id || `risk-${i}`,
-      agentName,
-      source,
-      compositeScore: score,
-      severity,
-      openViolations: findingsCount,
-      lastAssessed
-    });
-  }
-
-  for (let j = 0; j < systems.length; j++) {
-    const s = systems[j];
+  systems.forEach((s, idx) => {
     const sId = String(s?.id || '');
-    if (sId && assessedSystemIds.has(sId)) {
-      continue;
+    if (!sId || !assessedSystemIds.has(sId)) {
+      unranked.push(mapSystemToRankedAgent(s, idx));
     }
-
-    const defaultScore = resolveTierScore(s?.risk_tier);
-    const agentName = s?.name || `Unassessed-${j + 1}`;
-    const source = s?.vendor || s?.model_name || 'Registered AI System';
-    const severity = resolveSeverity(defaultScore, s?.risk_tier);
-    const lastAssessed = formatRelativeTime(s?.updated_at || s?.created_at);
-
-    unranked.push({
-      id: s?.id || `system-${j}`,
-      agentName,
-      source,
-      compositeScore: defaultScore,
-      severity,
-      openViolations: 0,
-      lastAssessed
-    });
-  }
+  });
 
   unranked.sort((a, b) => b.compositeScore - a.compositeScore);
 
@@ -458,5 +475,22 @@ test.describe('RiskSection: Helper Functions Unit Tests', () => {
     expect(ranked[2].agentName).toBe('Beta Agent');
     expect(ranked[2].compositeScore).toBe(55);
     expect(ranked[2].severity).toBe('MEDIUM');
+  });
+
+  test('resolveScoreColor maps score ranges to appropriate Tailwind color classes', () => {
+    expect(resolveScoreColor(95)).toBe('text-rose-500');
+    expect(resolveScoreColor(80)).toBe('text-rose-500');
+    expect(resolveScoreColor(75)).toBe('text-orange-500');
+    expect(resolveScoreColor(60)).toBe('text-orange-500');
+    expect(resolveScoreColor(59)).toBe('text-amber-500');
+    expect(resolveScoreColor(20)).toBe('text-amber-500');
+  });
+
+  test('resolveFindingsCount handles findings array, violationsCount, and score heuristics', () => {
+    expect(resolveFindingsCount({ findings: ['f1', 'f2'] }, 90)).toBe(2);
+    expect(resolveFindingsCount({ violationsCount: 5 }, 90)).toBe(5);
+    expect(resolveFindingsCount(null, 85)).toBe(3);
+    expect(resolveFindingsCount(null, 65)).toBe(1);
+    expect(resolveFindingsCount(null, 45)).toBe(0);
   });
 });
