@@ -19,7 +19,7 @@ import {
   ArrowUpRight
 } from 'lucide-react';
 
-interface RankedAgentRisk {
+export interface RankedAgentRisk {
   id: string;
   rank: number;
   agentName: string;
@@ -30,68 +30,158 @@ interface RankedAgentRisk {
   lastAssessed: string;
 }
 
+export interface DriftItem {
+  id: string;
+  name: string;
+  type: string;
+  shift: string;
+  status: 'warning' | 'danger' | 'active';
+}
+
+export const extractList = (res: any): any[] => {
+  if (Array.isArray(res)) return res;
+  if (Array.isArray(res?.data)) return res.data;
+  if (Array.isArray(res?.items)) return res.items;
+  if (Array.isArray(res?.alerts)) return res.alerts;
+  return [];
+};
+
+export const formatRelativeTime = (dateString?: string): string => {
+  if (!dateString) return 'Never assessed';
+  const timestamp = new Date(dateString).getTime();
+  if (Number.isNaN(timestamp)) return 'Never assessed';
+  const diffSec = Math.floor((Date.now() - timestamp) / 1000);
+  if (diffSec < 60) return 'Just now';
+  if (diffSec < 3600) return `${Math.floor(diffSec / 60)} mins ago`;
+  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)} hours ago`;
+  if (diffSec < 604800) return `${Math.floor(diffSec / 86400)} days ago`;
+  return new Date(timestamp).toISOString().split('T')[0];
+};
+
+export const resolveSeverity = (score: number, level?: string): 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' => {
+  const upper = String(level || '').toUpperCase();
+  if (upper === 'CRITICAL' || score >= 80) return 'CRITICAL';
+  if (upper === 'HIGH' || score >= 60) return 'HIGH';
+  if (upper === 'MEDIUM' || score >= 40) return 'MEDIUM';
+  return 'LOW';
+};
+
+export const resolveTierScore = (tier?: string): number => {
+  const upper = String(tier || '').toUpperCase();
+  if (upper === 'CRITICAL') return 85;
+  if (upper === 'HIGH') return 70;
+  if (upper === 'MEDIUM') return 45;
+  return 20;
+};
+
+export const mergeRankedAgents = (risks: any[], systems: any[]): RankedAgentRisk[] => {
+  const assessedSystemIds = new Set<string>();
+  const unranked: Omit<RankedAgentRisk, 'rank'>[] = [];
+
+  for (let i = 0; i < risks.length; i++) {
+    const r = risks[i];
+    const sysId = r?.aiSystemId || r?.ai_system?.id;
+    if (sysId) {
+      assessedSystemIds.add(String(sysId));
+    }
+
+    const score = Number(r?.score ?? 0);
+    const findingsCount = Array.isArray(r?.details?.findings) 
+      ? r.details.findings.length 
+      : (typeof r?.details?.violationsCount === 'number' ? r.details.violationsCount : (score >= 80 ? 3 : score >= 60 ? 1 : 0));
+    const agentName = r?.ai_system?.name || r?.name || `Agent-${i + 1}`;
+    const source = r?.ai_system?.status ? `Status: ${r.ai_system.status}` : (r?.source || 'Risk Assessment');
+    const severity = resolveSeverity(score, r?.risk_level || r?.ai_system?.risk_tier);
+    const lastAssessed = formatRelativeTime(r?.updated_at || r?.created_at);
+
+    unranked.push({
+      id: r?.id || `risk-${i}`,
+      agentName,
+      source,
+      compositeScore: score,
+      severity,
+      openViolations: findingsCount,
+      lastAssessed
+    });
+  }
+
+  for (let j = 0; j < systems.length; j++) {
+    const s = systems[j];
+    const sId = String(s?.id || '');
+    if (sId && assessedSystemIds.has(sId)) {
+      continue;
+    }
+
+    const defaultScore = resolveTierScore(s?.risk_tier);
+    const agentName = s?.name || `Unassessed-${j + 1}`;
+    const source = s?.vendor || s?.model_name || 'Registered AI System';
+    const severity = resolveSeverity(defaultScore, s?.risk_tier);
+    const lastAssessed = formatRelativeTime(s?.updated_at || s?.created_at);
+
+    unranked.push({
+      id: s?.id || `system-${j}`,
+      agentName,
+      source,
+      compositeScore: defaultScore,
+      severity,
+      openViolations: 0,
+      lastAssessed
+    });
+  }
+
+  unranked.sort((a, b) => b.compositeScore - a.compositeScore);
+
+  return unranked.map((item, index) => ({
+    ...item,
+    rank: index + 1
+  }));
+};
+
 export default function RiskSection() {
   const { addToast } = useStore();
   const [activeTab, setActiveTab] = useState<string>('ranking');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [rankedAgents, setRankedAgents] = useState<RankedAgentRisk[]>([]);
+  const [driftAlerts, setDriftAlerts] = useState<DriftItem[]>([]);
 
   const loadRiskData = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      const [_riskRes, _sysRes, _driftRes] = await Promise.all([
-        apiRequest<any>('/risks').catch(() => ({ data: [] })),
-        apiRequest<any>('/ai-systems').catch(() => ({ items: [] })),
-        apiRequest<any>('/drift').catch(() => ({ data: [] }))
+      const [riskRes, sysRes, driftRes] = await Promise.all([
+        apiRequest<any>('/risks'),
+        apiRequest<any>('/ai-systems'),
+        apiRequest<any>('/drift/alerts')
       ]);
 
-      const mockRanked: RankedAgentRisk[] = [
-        {
-          id: 'rank-1',
-          rank: 1,
-          agentName: 'Financial Analyst Bot',
-          source: 'MCP / Python SDK',
-          compositeScore: 94,
-          severity: 'CRITICAL',
-          openViolations: 5,
-          lastAssessed: '10 mins ago'
-        },
-        {
-          id: 'rank-2',
-          rank: 2,
-          agentName: 'Shadow AutoGPT Assistant',
-          source: 'Unregistered Slack Token',
-          compositeScore: 88,
-          severity: 'CRITICAL',
-          openViolations: 8,
-          lastAssessed: '1 hour ago'
-        },
-        {
-          id: 'rank-3',
-          rank: 3,
-          agentName: 'Unverified CodeLlama Extension',
-          source: 'VSCode Localhost',
-          compositeScore: 76,
-          severity: 'HIGH',
-          openViolations: 3,
-          lastAssessed: 'Yesterday'
-        },
-        {
-          id: 'rank-4',
-          rank: 4,
-          agentName: 'Customer Support Agent',
-          source: 'LangChain Framework',
-          compositeScore: 42,
-          severity: 'MEDIUM',
-          openViolations: 1,
-          lastAssessed: '2 days ago'
-        }
-      ];
+      const rawRisks = extractList(riskRes);
+      const rawSystems = extractList(sysRes);
+      const rawDrifts = extractList(driftRes);
 
-      setRankedAgents(mockRanked);
+      const ranked = mergeRankedAgents(rawRisks, rawSystems);
+      setRankedAgents(ranked);
+
+      const mappedDrifts: DriftItem[] = rawDrifts.map((d: any, idx: number) => {
+        const divergenceStr = d?.divergencePct !== undefined 
+          ? `${d.divergencePct > 0 ? '+' : ''}${d.divergencePct}%` 
+          : '+10.0%';
+        const isHighSeverity = d?.severity === 'CRITICAL' || d?.severity === 'HIGH';
+        return {
+          id: d?.id || `drift-${idx}`,
+          name: d?.agentName ? `${d.agentName} - ${d.driftType || 'Drift'}` : (d?.metricName || `Drift Event #${idx + 1}`),
+          type: d?.driftType || 'Concept Drift',
+          shift: `${divergenceStr} ${d?.metricName || 'Divergence'}`,
+          status: isHighSeverity ? 'danger' : 'warning'
+        };
+      });
+      setDriftAlerts(mappedDrifts);
 
     } catch (err: any) {
       console.error('Error loading risk center:', err);
+      setError(err?.message || 'Failed to load risk data');
+      setRankedAgents([]);
+      setDriftAlerts([]);
     } finally {
       setLoading(false);
     }
@@ -190,6 +280,7 @@ export default function RiskSection() {
           subtitle="Immediate mitigation required"
           status="danger"
           icon={ShieldAlert}
+          testId="critical-severity-count"
         />
         <MetricCard
           label="High Severity Risk"
@@ -197,6 +288,7 @@ export default function RiskSection() {
           subtitle="Elevated blast-radius access"
           status="warning"
           icon={AlertTriangle}
+          testId="high-severity-count"
         />
         <MetricCard
           label="Medium Severity Risk"
@@ -204,22 +296,39 @@ export default function RiskSection() {
           subtitle="Policy threshold warnings"
           status="warning"
           icon={Activity}
+          testId="medium-severity-count"
         />
         <MetricCard
           label="Active Drift Alerts"
-          value={3}
+          value={driftAlerts.length}
           subtitle="Concept & hallucination drift"
           status="info"
           icon={TrendingUp}
-          testId="threats-prevented-count"
+          testId="active-drift-alerts"
         />
       </div>
+
+      {/* Error alert banner */}
+      {error && (
+        <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center justify-between text-rose-600 dark:text-rose-400">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span className="text-xs font-semibold">{error}</span>
+          </div>
+          <button
+            onClick={loadRiskData}
+            className="px-3 py-1 bg-rose-600 text-white text-xs font-bold rounded-lg hover:bg-rose-500 transition-all"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Sub-Tabs */}
       <TabBar
         tabs={[
           { id: 'ranking', label: 'Ranked Highest-Risk Agents', count: rankedAgents.length, icon: ShieldAlert },
-          { id: 'drift', label: 'Drift Detection Alerts', count: 3, icon: Activity },
+          { id: 'drift', label: 'Drift Detection Alerts', count: driftAlerts.length, icon: Activity },
           { id: 'assessments', label: 'Risk Audits & Impact Boards', icon: Award }
         ]}
         activeTab={activeTab}
@@ -233,6 +342,7 @@ export default function RiskSection() {
           data={rankedAgents}
           keyExtractor={(item) => item.id}
           isLoading={loading}
+          emptyMessage="No risk assessments or monitored AI systems yet."
           searchPlaceholder="Filter risk center by agent or severity..."
         />
       )}
@@ -249,22 +359,28 @@ export default function RiskSection() {
                 Monitors statistical divergence in model embeddings, token distribution, and latency decay.
               </p>
             </div>
-            <StatusBadge status="warning" label="3 Drift Events Flagged" />
+            <StatusBadge 
+              status={driftAlerts.length > 0 ? 'warning' : 'compliant'} 
+              label={`${driftAlerts.length} Drift Events Flagged`} 
+            />
           </div>
 
           <div className="space-y-3">
-            {[
-              { name: 'Financial Analyst Bot - Embedding Drift', type: 'Concept Drift', shift: '+14.2% KL Divergence', status: 'warning' },
-              { name: 'Customer Support Agent - Hallucination Spike', type: 'Accuracy Decay', shift: '0.82% -> 2.1% Hallucination', status: 'danger' }
-            ].map((drift, i) => (
-              <div key={i} className="p-4 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between">
-                <div>
-                  <h4 className="text-xs font-bold text-slate-900 dark:text-white">{drift.name}</h4>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Type: {drift.type} • Delta: {drift.shift}</span>
-                </div>
-                <StatusBadge status={drift.status} />
+            {driftAlerts.length === 0 ? (
+              <div className="p-8 text-center text-slate-500 dark:text-slate-400 text-xs">
+                No continuous model drift alerts detected.
               </div>
-            ))}
+            ) : (
+              driftAlerts.map((drift) => (
+                <div key={drift.id} className="p-4 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between">
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900 dark:text-white">{drift.name}</h4>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Type: {drift.type} • Delta: {drift.shift}</span>
+                  </div>
+                  <StatusBadge status={drift.status} />
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
