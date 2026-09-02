@@ -3,8 +3,9 @@ import { useEffect, useState } from 'react';
 import { apiRequest } from '@/lib/api';
 import { 
   Plus, X, CheckCircle2, FileText, ShieldAlert, 
-  User, Sparkles, Building, ArrowRight, ArrowLeft,
-  AlertTriangle, HelpCircle, FileCheck
+  User, Sparkles, Building,
+  // FRIA hidden: no backend route yet, EU AI Act out of current 5-framework scope (see PR history)
+  // ArrowRight, ArrowLeft, AlertTriangle, HelpCircle, FileCheck
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 
@@ -31,7 +32,7 @@ interface ImpactAssessment {
   ai_system: AISystem;
 }
 
-interface FriaResponse {
+export interface FriaResponse {
   id: string;
   question_code: string;
   question_text: string;
@@ -40,7 +41,7 @@ interface FriaResponse {
   notes: string | null;
 }
 
-interface FriaAssessment {
+export interface FriaAssessment {
   id: string;
   ai_system_id: string;
   status: 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED';
@@ -70,12 +71,15 @@ export default function ImpactAssessments() {
   });
   const [selectedAssessment, setSelectedAssessment] = useState<ImpactAssessment | null>(null);
 
+  // FRIA hidden: no backend route yet, EU AI Act out of current 5-framework scope (see PR history)
   // FRIA State
+  /*
   const [friaAssessments, setFriaAssessments] = useState<FriaAssessment[]>([]);
   const [isFriaOpen, setIsFriaOpen] = useState(false);
   const [friaSystemId, setFriaSystemId] = useState('');
   const [currentFria, setCurrentFria] = useState<FriaAssessment | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  */
 
   useEffect(() => {
     loadData();
@@ -138,7 +142,9 @@ export default function ImpactAssessments() {
     }
   };
 
+  // FRIA hidden: no backend route yet, EU AI Act out of current 5-framework scope (see PR history)
   // --- FRIA Handlers ---
+  /*
   const handleLaunchFria = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!friaSystemId) return;
@@ -214,6 +220,7 @@ export default function ImpactAssessments() {
       console.error('Failed to save FRIA responses:', err);
     }
   };
+  */
 
   const columns: Array<{ title: string; status: ImpactAssessment['status']; color: string; border: string }> = [
     { title: 'Draft', status: 'DRAFT', color: 'bg-[var(--bg-secondary)]', border: 'border-[var(--border-strong)]' },
@@ -230,23 +237,22 @@ export default function ImpactAssessments() {
         title="Impact Assessments"
         description="Conduct comprehensive Data Protection (DPIA), Algorithmic (AIA), and GDPR / DPDP Compliance Impact Assessments."
         action={
-          activeTab === 'DPIA_AIA' ? (
-            <button
-              onClick={() => setIsOpen(true)}
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 hover:from-indigo-500 hover:to-purple-500 transition-all hover:scale-105 active:scale-95 animate-pulse-subtle"
-            >
-              <Plus className="h-5 w-5" />
-              Launch DPIA/AIA
-            </button>
-          ) : (
-            <button
-              onClick={() => setIsFriaOpen(true)}
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-pink-500/20 hover:from-purple-500 hover:to-pink-500 transition-all hover:scale-105 active:scale-95 animate-pulse-subtle"
-            >
-              <Sparkles className="h-5 w-5" />
-              Launch FRIA (Art. 27)
-            </button>
-          )
+          <button
+            onClick={() => setIsOpen(true)}
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 hover:from-indigo-500 hover:to-purple-500 transition-all hover:scale-105 active:scale-95 animate-pulse-subtle"
+          >
+            <Plus className="h-5 w-5" />
+            Launch DPIA/AIA
+          </button>
+          /* FRIA hidden: no backend route yet, EU AI Act out of current 5-framework scope (see PR history)
+          <button
+            onClick={() => setIsFriaOpen(true)}
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-pink-500/20 hover:from-purple-500 hover:to-pink-500 transition-all hover:scale-105 active:scale-95 animate-pulse-subtle"
+          >
+            <Sparkles className="h-5 w-5" />
+            Launch FRIA (Art. 27)
+          </button>
+          */
         }
       />
 
@@ -263,6 +269,8 @@ export default function ImpactAssessments() {
             <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500 rounded-full" />
           )}
         </button>
+        {/* FRIA hidden: no backend route yet, EU AI Act out of current 5-framework scope (see PR history) */}
+        {/*
         <button
           onClick={() => setActiveTab('FRIA')}
           className={`pb-3 text-sm font-bold transition-all relative ${
@@ -274,13 +282,14 @@ export default function ImpactAssessments() {
             <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500 rounded-full" />
           )}
         </button>
+        */}
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-40">
           <NodePulseLoader label="Compiling assessment workspace..." />
         </div>
-      ) : activeTab === 'DPIA_AIA' ? (
+      ) : (
         /* Kanban Board Grid */
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
           {columns.map((col) => {
@@ -340,8 +349,11 @@ export default function ImpactAssessments() {
             );
           })}
         </div>
-      ) : (
-        /* FRIA Table / Wizards View */
+      )}
+
+      {/* FRIA hidden: no backend route yet, EU AI Act out of current 5-framework scope (see PR history) */}
+      {/*
+      {activeTab === 'FRIA' && (
         <div className="flex flex-col gap-6">
           <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-2xl overflow-hidden">
             <div className="p-5 border-b border-[var(--border-default)]/80 bg-[var(--bg-page)] flex items-center justify-between">
@@ -411,6 +423,7 @@ export default function ImpactAssessments() {
           </div>
         </div>
       )}
+      */}
 
       {/* Launch DPIA/AIA Modal */}
       {isOpen && (
@@ -542,7 +555,9 @@ export default function ImpactAssessments() {
         </div>
       )}
 
+      {/* FRIA hidden: no backend route yet, EU AI Act out of current 5-framework scope (see PR history) */}
       {/* Launch FRIA Modal */}
+      {/*
       {isFriaOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-2xl max-w-md w-full overflow-hidden shadow-2xl animate-scale-in">
@@ -599,13 +614,15 @@ export default function ImpactAssessments() {
           </div>
         </div>
       )}
+      */}
 
+      {/* FRIA hidden: no backend route yet, EU AI Act out of current 5-framework scope (see PR history) */}
       {/* FRIA Wizard Drawer/Overlay */}
+      {/*
       {currentFria && (
         <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/70 backdrop-blur-md">
           <div className="bg-[var(--bg-page)] border-l border-[var(--border-default)] h-full max-w-2xl w-full flex flex-col justify-between shadow-2xl animate-slide-in text-xs">
             
-            {/* Header */}
             <div className="p-6 border-b border-[var(--border-default)]/80 bg-[var(--bg-page)] flex items-center justify-between">
               <div>
                 <span className="text-[10px] font-semibold text-purple-400 uppercase tracking-widest">EU AI ACT ARTICLE 27 FRIA</span>
@@ -622,10 +639,8 @@ export default function ImpactAssessments() {
               </button>
             </div>
 
-            {/* Questions Step-through body */}
             <div className="p-8 flex-1 overflow-y-auto flex flex-col gap-6">
               
-              {/* Progress Indicator */}
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between text-[11px]">
                   <span className="text-[var(--text-secondary)] font-bold">Progress</span>
@@ -641,7 +656,6 @@ export default function ImpactAssessments() {
                 </div>
               </div>
 
-              {/* Question block */}
               {currentFria.responses.length > 0 && (
                 <div className="flex flex-col gap-4 animate-fade-in mt-2" key={currentQuestionIndex}>
                   <div className="bg-purple-950/10 border border-purple-900/30 p-4 rounded-xl flex gap-3 items-start">
@@ -704,7 +718,6 @@ export default function ImpactAssessments() {
               )}
             </div>
 
-            {/* Bottom Actions Panel */}
             <div className="p-6 border-t border-[var(--border-default)] bg-[var(--bg-secondary)] flex items-center justify-between">
               <div className="flex gap-2">
                 <button
@@ -762,6 +775,7 @@ export default function ImpactAssessments() {
           </div>
         </div>
       )}
+      */}
 
       {/* Review / Detail Modal */}
       {selectedAssessment && (
