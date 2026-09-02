@@ -41,25 +41,16 @@ export const formatFileSize = (bytes?: number | string): string => {
 };
 
 export const inferFramework = (item: any): string => {
-  const tags = Array.isArray(item?.tags) ? item.tags : [];
-  const tagMatch = tags.find((t: string) => /gdpr|dpdp|hipaa|pci|nist/i.test(t));
-  if (tagMatch) {
-    const upper = tagMatch.toUpperCase();
-    if (upper.includes('GDPR')) return 'GDPR';
-    if (upper.includes('DPDP')) return 'DPDP';
-    if (upper.includes('HIPAA')) return 'HIPAA';
-    if (upper.includes('PCI')) return 'PCI-DSS';
-    if (upper.includes('NIST')) return 'NIST AI RMF';
-    return upper;
-  }
-  if (item?.framework) return item.framework;
-  const title = String(item?.title || item?.fileName || '').toUpperCase();
-  if (title.includes('GDPR')) return 'GDPR';
-  if (title.includes('DPDP')) return 'DPDP';
-  if (title.includes('HIPAA')) return 'HIPAA';
-  if (title.includes('PCI')) return 'PCI-DSS';
-  if (title.includes('NIST')) return 'NIST AI RMF';
-  return item?.entityType || 'General';
+  const tagsText = Array.isArray(item?.tags) ? item.tags.join(' ') : '';
+  const searchSource = `${tagsText} ${item?.title || ''} ${item?.fileName || ''}`.toUpperCase();
+
+  if (searchSource.includes('GDPR')) return 'GDPR';
+  if (searchSource.includes('DPDP')) return 'DPDP';
+  if (searchSource.includes('HIPAA')) return 'HIPAA';
+  if (searchSource.includes('PCI')) return 'PCI-DSS';
+  if (searchSource.includes('NIST')) return 'NIST AI RMF';
+
+  return item?.framework || item?.entityType || 'General';
 };
 
 export const resolveDocumentType = (entityType?: string): string => {
@@ -71,6 +62,12 @@ export const resolveDocumentStatus = (status?: string): 'VERIFIED' | 'PENDING_RE
   if (status === 'PENDING_REVIEW') return 'PENDING_REVIEW';
   if (status === 'EXPIRED') return 'EXPIRED';
   return 'VERIFIED';
+};
+
+export const extractEvidenceList = (res: any): any[] => {
+  if (Array.isArray(res)) return res;
+  if (Array.isArray(res?.data)) return res.data;
+  return [];
 };
 
 export default function EvidenceSection() {
@@ -85,7 +82,7 @@ export default function EvidenceSection() {
     setError(null);
     try {
       const res = await apiRequest<any>('/evidence');
-      const rawList: any[] = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
+      const rawList = extractEvidenceList(res);
 
       const mappedDocs: ComplianceDocument[] = rawList.map((item: any, index: number) => ({
         id: item?.id || `evidence-${index}`,

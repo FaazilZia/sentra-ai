@@ -17,25 +17,16 @@ const formatFileSize = (bytes?: number | string): string => {
 };
 
 const inferFramework = (item: any): string => {
-  const tags = Array.isArray(item?.tags) ? item.tags : [];
-  const tagMatch = tags.find((t: string) => /gdpr|dpdp|hipaa|pci|nist/i.test(t));
-  if (tagMatch) {
-    const upper = tagMatch.toUpperCase();
-    if (upper.includes('GDPR')) return 'GDPR';
-    if (upper.includes('DPDP')) return 'DPDP';
-    if (upper.includes('HIPAA')) return 'HIPAA';
-    if (upper.includes('PCI')) return 'PCI-DSS';
-    if (upper.includes('NIST')) return 'NIST AI RMF';
-    return upper;
-  }
-  if (item?.framework) return item.framework;
-  const title = String(item?.title || item?.fileName || '').toUpperCase();
-  if (title.includes('GDPR')) return 'GDPR';
-  if (title.includes('DPDP')) return 'DPDP';
-  if (title.includes('HIPAA')) return 'HIPAA';
-  if (title.includes('PCI')) return 'PCI-DSS';
-  if (title.includes('NIST')) return 'NIST AI RMF';
-  return item?.entityType || 'General';
+  const tagsText = Array.isArray(item?.tags) ? item.tags.join(' ') : '';
+  const searchSource = `${tagsText} ${item?.title || ''} ${item?.fileName || ''}`.toUpperCase();
+
+  if (searchSource.includes('GDPR')) return 'GDPR';
+  if (searchSource.includes('DPDP')) return 'DPDP';
+  if (searchSource.includes('HIPAA')) return 'HIPAA';
+  if (searchSource.includes('PCI')) return 'PCI-DSS';
+  if (searchSource.includes('NIST')) return 'NIST AI RMF';
+
+  return item?.framework || item?.entityType || 'General';
 };
 
 const resolveDocumentType = (entityType?: string): string => {
@@ -47,6 +38,12 @@ const resolveDocumentStatus = (status?: string): 'VERIFIED' | 'PENDING_REVIEW' |
   if (status === 'PENDING_REVIEW') return 'PENDING_REVIEW';
   if (status === 'EXPIRED') return 'EXPIRED';
   return 'VERIFIED';
+};
+
+const extractEvidenceList = (res: any): any[] => {
+  if (Array.isArray(res)) return res;
+  if (Array.isArray(res?.data)) return res.data;
+  return [];
 };
 
 test.describe('EvidenceSection: Real API Wiring & Mock Data Elimination', () => {
@@ -283,5 +280,13 @@ test.describe('EvidenceSection: Helper Functions Unit Tests', () => {
     expect(resolveDocumentStatus('VERIFIED')).toBe('VERIFIED');
     expect(resolveDocumentStatus(undefined)).toBe('VERIFIED');
     expect(resolveDocumentStatus('UNKNOWN_STATUS')).toBe('VERIFIED');
+  });
+
+  test('extractEvidenceList correctly unwraps array, object with data, or empty array', () => {
+    expect(extractEvidenceList([1, 2, 3])).toEqual([1, 2, 3]);
+    expect(extractEvidenceList({ data: [4, 5] })).toEqual([4, 5]);
+    expect(extractEvidenceList(null)).toEqual([]);
+    expect(extractEvidenceList(undefined)).toEqual([]);
+    expect(extractEvidenceList({})).toEqual([]);
   });
 });
