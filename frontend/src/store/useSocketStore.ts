@@ -133,3 +133,7 @@ export const useSocketStore = create<SocketState>((set) => ({
     };
   }),
 }));
+
+if (typeof window !== 'undefined') {
+  (window as any).__useSocketStore = useSocketStore;
+}
