@@ -114,21 +114,36 @@ export const mapControlStatus = (
   return "NON_COMPLIANT";
 };
 
+export function mapFrameworkControlToItem(
+  c: any,
+  framework: ActiveFramework,
+  totalAgents: number,
+  index = 0
+): ControlItem {
+  const fallbackId = `ctrl-${framework.toLowerCase().replace(/[^a-z0-9]/g, "")}-${index}`;
+  const code = c.code || c.articleNumber || c.control_id || `CTRL-${index + 1}`;
+  const title = c.title || c.name || "Untitled Control";
+  const category = c.function || c.category || c.chapter?.title || "Governance";
+  const status = mapControlStatus(
+    c.status || c.implementation?.status || c.control_implementations?.[0]?.status
+  );
+
+  return {
+    id: c.id || c.code || fallbackId,
+    code,
+    title,
+    category,
+    status,
+    mappedAgents: Math.max(0, totalAgents),
+    framework
+  };
+}
+
 export function mapRawControlToItem(c: any, totalAgents: number, index = 0): ControlItem | null {
   const targetFw = mapFrameworkId(c.framework);
   if (!targetFw) return null;
 
-  const implStatus = c.control_implementations?.[0]?.status || c.status;
-  const fallbackId = `ctrl-${index}`;
-  return {
-    id: c.id || c.control_id || fallbackId,
-    code: c.control_id || c.code || c.articleNumber || "CTRL",
-    title: c.title || "Untitled Control",
-    category: c.category || "Governance",
-    status: mapControlStatus(implStatus),
-    mappedAgents: Math.max(0, totalAgents),
-    framework: targetFw
-  };
+  return mapFrameworkControlToItem(c, targetFw, totalAgents, index);
 }
 
 export default function ComplianceSection() {
@@ -143,55 +158,118 @@ export default function ComplianceSection() {
     setLoading(true);
     setError(null);
     try {
-      const [statsRes, controlsRes, sysRes] = await Promise.all([
+      const [
+        statsRes,
+        gdprRes,
+        dpdpRes,
+        hipaaRes,
+        pciRes,
+        nistRes,
+        govControlsRes,
+        sysRes
+      ] = await Promise.all([
         apiRequest<any>("/compliance/stats").catch(() => null),
+        apiRequest<any[]>("/gdpr/controls").catch(() => []),
+        apiRequest<any[]>("/dpdp/controls").catch(() => []),
+        apiRequest<any[]>("/hipaa/controls").catch(() => []),
+        apiRequest<any[]>("/pci/controls").catch(() => []),
+        apiRequest<any[]>("/compliance/nist-ai-rmf/controls").catch(() => []),
         apiRequest<{ items: any[] }>("/governance/controls").catch(() => null),
         apiRequest<{ items: any[] }>("/ai-systems").catch(() => null)
       ]);
 
-      if (!statsRes && !controlsRes) {
+      const hasStats = Boolean(statsRes);
+      const hasGovControls = Boolean(govControlsRes?.items?.length);
+      const hasFwControls = Boolean(
+        (gdprRes && gdprRes.length > 0) ||
+        (dpdpRes && dpdpRes.length > 0) ||
+        (hipaaRes && hipaaRes.length > 0) ||
+        (pciRes && pciRes.length > 0) ||
+        (nistRes && nistRes.length > 0)
+      );
+
+      if (!hasStats && !hasGovControls && !hasFwControls) {
         throw new Error("Unable to reach compliance service. Please try again.");
       }
 
-      if (statsRes?.frameworks) {
-        setFrameworks(prev => prev.map(fw => {
-          const apiFw = statsRes.frameworks.find((f: any) => 
-            normalizeFrameworkKey(f.name) === normalizeFrameworkKey(fw.id)
-          );
-          if (apiFw) {
-            const total = apiFw.controls?.total_controls ?? 0;
-            const implemented = apiFw.controls?.implemented ?? 0;
-            const open = (apiFw.controls?.in_progress ?? 0) + (apiFw.controls?.not_started ?? 0);
-            return {
-              ...fw,
-              readinessScore: apiFw.score ?? 0,
-              totalControls: total,
-              passedControls: implemented,
-              openFindings: open
-            };
-          }
-          return {
-            ...fw,
-            readinessScore: 0,
-            totalControls: 0,
-            passedControls: 0,
-            openFindings: 0
-          };
-        }));
-      }
-
       const totalAgents = sysRes?.items?.length ?? 0;
-      const rawControls = controlsRes?.items || [];
       const mappedControls: ControlItem[] = [];
 
-      for (let i = 0; i < rawControls.length; i++) {
-        const item = mapRawControlToItem(rawControls[i], totalAgents, i);
-        if (item) {
-          mappedControls.push(item);
-        }
+      // Map GDPR controls
+      if (Array.isArray(gdprRes) && gdprRes.length > 0) {
+        gdprRes.forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "GDPR", totalAgents, idx)));
+      } else if (govControlsRes?.items) {
+        govControlsRes.items
+          .filter(c => mapFrameworkId(c.framework) === "GDPR")
+          .forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "GDPR", totalAgents, idx)));
+      }
+
+      // Map DPDP controls
+      if (Array.isArray(dpdpRes) && dpdpRes.length > 0) {
+        dpdpRes.forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "DPDP", totalAgents, idx)));
+      } else if (govControlsRes?.items) {
+        govControlsRes.items
+          .filter(c => mapFrameworkId(c.framework) === "DPDP")
+          .forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "DPDP", totalAgents, idx)));
+      }
+
+      // Map HIPAA controls
+      if (Array.isArray(hipaaRes) && hipaaRes.length > 0) {
+        hipaaRes.forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "HIPAA", totalAgents, idx)));
+      } else if (govControlsRes?.items) {
+        govControlsRes.items
+          .filter(c => mapFrameworkId(c.framework) === "HIPAA")
+          .forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "HIPAA", totalAgents, idx)));
+      }
+
+      // Map PCI-DSS controls
+      if (Array.isArray(pciRes) && pciRes.length > 0) {
+        pciRes.forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "PCI-DSS", totalAgents, idx)));
+      } else if (govControlsRes?.items) {
+        govControlsRes.items
+          .filter(c => mapFrameworkId(c.framework) === "PCI-DSS")
+          .forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "PCI-DSS", totalAgents, idx)));
+      }
+
+      // Map NIST AI RMF controls
+      if (Array.isArray(nistRes) && nistRes.length > 0) {
+        nistRes.forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "NIST AI RMF", totalAgents, idx)));
+      } else if (govControlsRes?.items) {
+        govControlsRes.items
+          .filter(c => mapFrameworkId(c.framework) === "NIST AI RMF")
+          .forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "NIST AI RMF", totalAgents, idx)));
       }
 
       setControls(mappedControls);
+
+      // Synchronize framework summaries so that totalControls strictly equals table rows length
+      setFrameworks(prev => prev.map(fw => {
+        const fwControls = mappedControls.filter(c => c.framework === fw.id);
+        const total = fwControls.length;
+        const passed = fwControls.filter(c => c.status === "COMPLIANT").length;
+        const open = total - passed;
+
+        const apiFw = statsRes?.frameworks?.find((f: any) => 
+          normalizeFrameworkKey(f.name) === normalizeFrameworkKey(fw.id)
+        );
+
+        let score = 0;
+        if (total > 0) {
+          if (typeof apiFw?.score === "number") {
+            score = apiFw.score;
+          } else {
+            score = Math.round((passed / total) * 100);
+          }
+        }
+
+        return {
+          ...fw,
+          totalControls: total,
+          passedControls: passed,
+          openFindings: open,
+          readinessScore: score
+        };
+      }));
     } catch (err: any) {
       console.error("Error loading compliance:", err);
       setError(err?.message || "Failed to load compliance data. Please verify your connection.");
@@ -348,18 +426,21 @@ export default function ComplianceSection() {
                 value={currentFw.totalControls}
                 status="primary"
                 icon={FileText}
+                testId="metric-total-controls"
               />
               <MetricCard
                 label="Passed Controls"
                 value={currentFw.passedControls}
                 status="success"
                 icon={CheckCircle2}
+                testId="metric-passed-controls"
               />
               <MetricCard
                 label="Open Findings & Obligations"
                 value={currentFw.openFindings}
                 status={currentFw.openFindings > 3 ? "danger" : "warning"}
                 icon={AlertTriangle}
+                testId="metric-open-findings"
               />
             </div>
           </div>
