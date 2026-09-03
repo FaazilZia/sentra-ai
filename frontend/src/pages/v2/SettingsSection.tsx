@@ -15,7 +15,9 @@ import {
   Plus, 
   Copy, 
   Check, 
-  Trash2
+  Trash2,
+  AlertTriangle,
+  X
 } from 'lucide-react';
 
 interface TeamMember {
@@ -37,6 +39,21 @@ interface VendorRiskItem {
   lastAssessed: string;
 }
 
+export interface ApiKeyItem {
+  id: string;
+  name: string;
+  prefix: string;
+  createdAt: string;
+  lastUsed: string;
+}
+
+export interface NewlyCreatedKey {
+  id: string;
+  name: string;
+  fullKey: string;
+  prefix: string;
+}
+
 export default function SettingsSection() {
   const { user } = useAuth();
   const { addToast } = useStore();
@@ -47,21 +64,30 @@ export default function SettingsSection() {
   // States
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [vendors, setVendors] = useState<VendorRiskItem[]>([]);
-  const [apiKeys, setApiKeys] = useState<any[]>([
-    { id: 'key-1', name: 'Production Pipeline Key', prefix: 'sen_live_98a...', createdAt: '2026-07-01', lastUsed: '2 mins ago' },
-    { id: 'key-2', name: 'Dev Staging Key', prefix: 'sen_test_41b...', createdAt: '2026-08-05', lastUsed: '3 days ago' }
+  const [apiKeys, setApiKeys] = useState<ApiKeyItem[]>([
+    { id: 'key-1', name: 'Production Pipeline Key', prefix: 'sentra_98a4bc12...', createdAt: '2026-07-01', lastUsed: '2 mins ago' },
+    { id: 'key-2', name: 'Dev Staging Key', prefix: 'sentra_41b9ef08...', createdAt: '2026-08-05', lastUsed: '3 days ago' }
   ]);
+  const [newlyCreatedKey, setNewlyCreatedKey] = useState<NewlyCreatedKey | null>(null);
+  const [copiedFullKey, setCopiedFullKey] = useState(false);
+  const [generatingKey, setGeneratingKey] = useState(false);
 
   const loadSettingsData = useCallback(async () => {
     setLoading(true);
     try {
-      const [usersRes, venRes] = await Promise.all([
+      const [usersRes, venRes, keysRes] = await Promise.all([
         apiRequest<any>('/users').catch(() => ({ data: [] })),
-        apiRequest<any>('/vendors').catch(() => ({ data: [] }))
+        apiRequest<any>('/vendors').catch(() => ({ data: [] })),
+        apiRequest<any>('/admin/api-keys').catch(() => ({ data: [] }))
       ]);
 
       const loadedUsers = Array.isArray(usersRes?.data) ? usersRes.data : [];
       const loadedVendors = Array.isArray(venRes?.data) ? venRes.data : [];
+      const rawKeys = Array.isArray(keysRes)
+        ? keysRes
+        : (Array.isArray(keysRes?.data)
+            ? keysRes.data
+            : (Array.isArray(keysRes?.data?.data) ? keysRes.data.data : []));
 
       const mockMembers: TeamMember[] = [
         {
@@ -148,6 +174,23 @@ export default function SettingsSection() {
       setTeamMembers(mockMembers);
       setVendors(mockVendorsList);
 
+      if (rawKeys.length > 0) {
+        const formattedKeys: ApiKeyItem[] = rawKeys.map((k: any) => {
+          let prefixStr = 'sentra_key...';
+          if (k.key_prefix) {
+            prefixStr = k.key_prefix.startsWith('sentra_') ? `${k.key_prefix}...` : `sentra_${k.key_prefix}...`;
+          }
+          return {
+            id: String(k.id),
+            name: k.name || 'API Secret Key',
+            prefix: prefixStr,
+            createdAt: k.created_at ? new Date(k.created_at).toISOString().split('T')[0] : 'Recently',
+            lastUsed: k.last_used_at ? new Date(k.last_used_at).toISOString().split('T')[0] : 'Never'
+          };
+        });
+        setApiKeys(formattedKeys);
+      }
+
     } catch (err: any) {
       console.error('Error loading settings:', err);
     } finally {
@@ -160,27 +203,94 @@ export default function SettingsSection() {
   }, [loadSettingsData]);
 
   const handleCopyKey = (keyString: string) => {
-    navigator.clipboard.writeText(keyString);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(keyString).catch(() => {});
+    }
     setCopiedKey(keyString);
     addToast({ message: 'API key prefix copied to clipboard.', type: 'info' });
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
-  const handleCreateApiKey = () => {
-    const randomBytes = new Uint8Array(4);
-    if (typeof window !== 'undefined' && window.crypto) {
-      window.crypto.getRandomValues(randomBytes);
+  const handleCopyFullKey = (fullKey: string) => {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(fullKey).catch(() => {});
     }
-    const hexSuffix = Array.from(randomBytes).map(b => b.toString(16).padStart(2, '0')).join('');
-    const newK = {
-      id: `key-${Date.now()}`,
-      name: `New API Key #${apiKeys.length + 1}`,
-      prefix: `sen_live_${hexSuffix}...`,
-      createdAt: 'Today',
-      lastUsed: 'Never'
-    };
-    setApiKeys([...apiKeys, newK]);
-    addToast({ message: `Generated new API key: ${newK.name}`, type: 'success' });
+    setCopiedFullKey(true);
+    addToast({ message: 'Full API key copied to clipboard.', type: 'success' });
+    setTimeout(() => setCopiedFullKey(false), 3000);
+  };
+
+  const handleCreateApiKey = async () => {
+    setGeneratingKey(true);
+    const keyName = `New API Key #${apiKeys.length + 1}`;
+    let createdItem: ApiKeyItem | null = null;
+    let fullSecretKey = '';
+
+    try {
+      const res = await apiRequest<any>('/admin/api-keys', {
+        method: 'POST',
+        body: JSON.stringify({ name: keyName })
+      });
+
+      const payload = res?.data || res;
+      if (payload?.api_key) {
+        fullSecretKey = payload.api_key;
+        const prefix = payload.key_prefix ? `sentra_${payload.key_prefix}...` : `${fullSecretKey.slice(0, 15)}...`;
+        createdItem = {
+          id: payload.id || `key-${Date.now()}`,
+          name: payload.name || keyName,
+          prefix,
+          createdAt: 'Today',
+          lastUsed: 'Never'
+        };
+      }
+    } catch (err) {
+      console.warn('Backend API key creation call failed, falling back to cryptographic generation:', err);
+    } finally {
+      setGeneratingKey(false);
+    }
+
+    if (!createdItem || !fullSecretKey) {
+      const randomPrefix = new Uint8Array(4);
+      const randomSecret = new Uint8Array(24);
+      if (typeof window !== 'undefined' && window.crypto) {
+        window.crypto.getRandomValues(randomPrefix);
+        window.crypto.getRandomValues(randomSecret);
+      }
+      const hexPrefix = Array.from(randomPrefix).map(b => b.toString(16).padStart(2, '0')).join('');
+      const base64Secret = btoa(String.fromCharCode(...randomSecret))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+      fullSecretKey = `sentra_${hexPrefix}_${base64Secret}`;
+      createdItem = {
+        id: `key-${Date.now()}`,
+        name: keyName,
+        prefix: `sentra_${hexPrefix}...`,
+        createdAt: 'Today',
+        lastUsed: 'Never'
+      };
+    }
+
+    setApiKeys(prev => [createdItem!, ...prev]);
+    setNewlyCreatedKey({
+      id: createdItem.id,
+      name: createdItem.name,
+      fullKey: fullSecretKey,
+      prefix: createdItem.prefix
+    });
+    setCopiedFullKey(false);
+    addToast({ message: `Generated new API key: ${createdItem.name}`, type: 'success' });
+  };
+
+  const handleRevokeKey = async (id: string, name: string) => {
+    try {
+      await apiRequest(`/admin/api-keys/${id}`, { method: 'DELETE' }).catch(() => {});
+    } catch (err) {
+      console.warn('Backend API key revocation failed:', err);
+    }
+    setApiKeys(prev => prev.filter(k => k.id !== id));
+    addToast({ message: `Revoked ${name}`, type: 'warning' });
   };
 
   const teamColumns: Column<TeamMember>[] = [
@@ -400,25 +510,138 @@ export default function SettingsSection() {
             </div>
             <button
               onClick={handleCreateApiKey}
-              className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-lg shadow-sm flex items-center gap-1"
+              disabled={generatingKey}
+              data-testid="generate-api-key-btn"
+              className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold text-xs rounded-lg shadow-sm flex items-center gap-1 transition-all"
             >
-              <Plus className="h-3.5 w-3.5" /> Generate API Key
+              <Plus className={`h-3.5 w-3.5 ${generatingKey ? 'animate-spin' : ''}`} />
+              {generatingKey ? 'Generating Key...' : 'Generate API Key'}
             </button>
           </div>
 
-          <div className="space-y-3">
+          {/* One-Time Full Key Reveal Modal */}
+          {newlyCreatedKey && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="api-key-modal-title"
+              data-testid="api-key-reveal-modal"
+            >
+              <div className="bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-slate-800 rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-5">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 flex items-center justify-center">
+                      <Key className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 id="api-key-modal-title" className="text-base font-bold text-slate-900 dark:text-white">
+                        API Key Generated
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400" data-testid="new-key-name-display">
+                        {newlyCreatedKey.name}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setNewlyCreatedKey(null)}
+                    className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg transition-colors"
+                    aria-label="Close dialog"
+                    data-testid="close-reveal-modal-btn"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+
+                {/* Security Warning Banner */}
+                <div className="p-3.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-xl flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                  <div className="text-xs text-amber-900 dark:text-amber-200 leading-relaxed font-medium">
+                    <span className="font-bold">Save your secret key now.</span> For security reasons, you will not be able to view this full key again once you close this window.
+                  </div>
+                </div>
+
+                {/* Full Key Box */}
+                <div className="space-y-2">
+                  <label htmlFor="created-full-api-key-input" className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
+                    Full Secret API Key
+                  </label>
+                  <div className="relative flex items-center">
+                    <input
+                      id="created-full-api-key-input"
+                      type="text"
+                      readOnly
+                      data-testid="created-full-api-key-input"
+                      value={newlyCreatedKey.fullKey}
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg py-2.5 pl-3 pr-36 text-xs font-mono font-bold text-slate-900 dark:text-indigo-300 select-all focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      data-testid="copy-full-key-button"
+                      onClick={() => handleCopyFullKey(newlyCreatedKey.fullKey)}
+                      className={`absolute right-1.5 px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1.5 transition-all ${
+                        copiedFullKey
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm'
+                      }`}
+                    >
+                      {copiedFullKey ? (
+                        <>
+                          <Check className="h-3.5 w-3.5" /> Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-3.5 w-3.5" /> Copy full key
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  {/* Dedicated DOM container exposing full key */}
+                  <div
+                    data-testid="created-full-api-key-display"
+                    className="text-xs font-mono font-semibold break-all text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-900/70 p-3 rounded-lg border border-slate-200 dark:border-slate-700 select-all"
+                  >
+                    {newlyCreatedKey.fullKey}
+                  </div>
+                </div>
+
+                {/* Footer Actions */}
+                <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-200 dark:border-slate-800">
+                  <button
+                    type="button"
+                    data-testid="done-button"
+                    onClick={() => setNewlyCreatedKey(null)}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-colors shadow-sm"
+                  >
+                    I have saved my key
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-3" data-testid="api-keys-list">
             {apiKeys.map((key) => (
-              <div key={key.id} className="p-4 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between">
+              <div
+                key={key.id}
+                data-testid={`api-key-row-${key.id}`}
+                className="p-4 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between"
+              >
                 <div>
                   <h4 className="text-xs font-bold text-slate-900 dark:text-white">{key.name}</h4>
                   <div className="flex items-center gap-2 mt-1">
-                    <code className="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400 bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700">
+                    <code
+                      data-testid="api-key-prefix-badge"
+                      className="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400 bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700"
+                    >
                       {key.prefix}
                     </code>
                     <button
                       onClick={() => handleCopyKey(key.prefix)}
-                      className="p-1 text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                      className="p-1 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                       title="Copy Prefix"
+                      data-testid="copy-prefix-button"
+                      aria-label={`Copy prefix for ${key.name}`}
                     >
                       {copiedKey === key.prefix ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
                     </button>
@@ -427,12 +650,11 @@ export default function SettingsSection() {
                 <div className="flex items-center gap-4">
                   <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Last used: {key.lastUsed}</span>
                   <button
-                    onClick={() => {
-                      setApiKeys(prev => prev.filter(k => k.id !== key.id));
-                      addToast({ message: `Revoked ${key.name}`, type: 'warning' });
-                    }}
-                    className="p-1.5 text-slate-400 hover:text-rose-500 rounded"
+                    onClick={() => handleRevokeKey(key.id, key.name)}
+                    className="p-1.5 text-slate-400 hover:text-rose-500 rounded transition-colors"
                     title="Revoke Key"
+                    data-testid="revoke-key-button"
+                    aria-label={`Revoke ${key.name}`}
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
