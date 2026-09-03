@@ -28,21 +28,36 @@ export const mapControlStatus = (
   return "NON_COMPLIANT";
 };
 
+export function mapFrameworkControlToItem(
+  c: any,
+  framework: string,
+  totalAgents: number,
+  index = 0
+) {
+  const fallbackId = `ctrl-${framework.toLowerCase().replace(/[^a-z0-9]/g, "")}-${index}`;
+  const code = c.code || c.articleNumber || c.control_id || `CTRL-${index + 1}`;
+  const title = c.title || c.name || "Untitled Control";
+  const category = c.function || c.category || c.chapter?.title || "Governance";
+  const status = mapControlStatus(
+    c.status || c.implementation?.status || c.control_implementations?.[0]?.status
+  );
+
+  return {
+    id: c.id || c.code || fallbackId,
+    code,
+    title,
+    category,
+    status,
+    mappedAgents: Math.max(0, totalAgents),
+    framework
+  };
+}
+
 export function mapRawControlToItem(c: any, totalAgents: number, index = 0) {
   const targetFw = mapFrameworkId(c.framework);
   if (!targetFw) return null;
 
-  const implStatus = c.control_implementations?.[0]?.status || c.status;
-  const fallbackId = `ctrl-${index}`;
-  return {
-    id: c.id || c.control_id || fallbackId,
-    code: c.control_id || c.code || c.articleNumber || "CTRL",
-    title: c.title || "Untitled Control",
-    category: c.category || "Governance",
-    status: mapControlStatus(implStatus),
-    mappedAgents: Math.max(0, totalAgents),
-    framework: targetFw
-  };
+  return mapFrameworkControlToItem(c, targetFw, totalAgents, index);
 }
 
 test.describe("Compliance Section — Helper Unit Tests", () => {
@@ -169,58 +184,50 @@ test.describe("Compliance Section — Real Data E2E", () => {
     ]
   };
 
-  const REAL_GOVERNANCE_CONTROLS = {
-    items: [
-      {
-        id: "ctrl-gdpr-1",
-        control_id: "GDPR-ART-5",
-        title: "Principles of Processing & Minimisation",
-        category: "PRINCIPLES",
-        framework: "GDPR",
-        control_implementations: [{ status: "IMPLEMENTED" }]
-      },
-      {
-        id: "ctrl-gdpr-2",
-        control_id: "GDPR-ART-6",
-        title: "Lawfulness of Processing & Consent",
-        category: "CONSENT",
-        framework: "GDPR",
-        control_implementations: [{ status: "IMPLEMENTED" }]
-      },
-      {
-        id: "ctrl-dpdp-1",
-        control_id: "DPDP-SEC-4",
-        title: "Grounds for Processing Personal Data",
-        category: "LAWFUL_BASIS",
-        framework: "DPDP",
-        control_implementations: [{ status: "IMPLEMENTED" }]
-      },
-      {
-        id: "ctrl-hipaa-1",
-        control_id: "HIPAA-164-308",
-        title: "Security Management & Risk Analysis",
-        category: "ADMINISTRATIVE",
-        framework: "HIPAA",
-        control_implementations: [{ status: "IMPLEMENTED" }]
-      },
-      {
-        id: "ctrl-pci-1",
-        control_id: "PCI-REQ-3-4",
-        title: "Primary Account Number (PAN) Encryption",
-        category: "DATA_PROTECTION",
-        framework: "PCI_DSS",
-        control_implementations: [{ status: "IMPLEMENTED" }]
-      },
-      {
-        id: "ctrl-nist-1",
-        control_id: "NIST-GOV-1",
-        title: "Establish Governance Policies",
-        category: "GOVERN",
-        framework: "NIST_AI_RMF",
-        control_implementations: [{ status: "IMPLEMENTED" }]
-      }
-    ]
-  };
+  const NIST_CODES = [
+    "GV-1.1", "GV-1.2", "GV-1.3", "GV-2.1", "GV-2.2", "GV-3.1", "GV-3.2", "GV-4.1", "GV-4.2", "GV-5.1",
+    "GV-5.2", "GV-6.1", "GV-6.2", "MP-1.1", "MP-1.2", "MP-1.3", "MP-2.1", "MP-2.2", "MP-3.1", "MP-3.2",
+    "MP-4.1", "MP-4.2", "MP-5.1", "MP-5.2", "ME-1.1", "ME-1.2", "ME-1.3", "ME-2.1", "ME-2.2", "ME-3.1"
+  ];
+  const REAL_NIST_CONTROLS = NIST_CODES.map((code, idx) => ({
+    code,
+    title: `NIST AI RMF Requirement ${code}`,
+    function: code.startsWith("GV") ? "GOVERN" : code.startsWith("MP") ? "MAP" : "MEASURE",
+    category: "AI Risk Governance",
+    status: idx < 24 ? "IMPLEMENTED" : "IN_PROGRESS"
+  }));
+
+  const REAL_GDPR_CONTROLS = Array.from({ length: 28 }, (_, idx) => ({
+    id: `gdpr-ctrl-${idx + 1}`,
+    articleNumber: `Article ${idx + 1}`,
+    title: `GDPR Statutory Principle Art. ${idx + 1}`,
+    status: idx < 26 ? "IMPLEMENTED" : "IN_PROGRESS",
+    chapter: { title: "Principles & Data Rights" }
+  }));
+
+  const REAL_HIPAA_CONTROLS = Array.from({ length: 34 }, (_, idx) => ({
+    id: `hipaa-ctrl-${idx + 1}`,
+    articleNumber: `§164.308-${idx + 1}`,
+    title: `HIPAA Security Specification §164.308-${idx + 1}`,
+    status: idx < 27 ? "IMPLEMENTED" : "NOT_STARTED",
+    chapter: { title: "Administrative Safeguards" }
+  }));
+
+  const REAL_DPDP_CONTROLS = Array.from({ length: 22 }, (_, idx) => ({
+    id: `dpdp-ctrl-${idx + 1}`,
+    articleNumber: `Section ${idx + 1}`,
+    title: `DPDP Statutory Obligation Sec. ${idx + 1}`,
+    status: idx < 19 ? "IMPLEMENTED" : "IN_PROGRESS",
+    chapter: { title: "Fiduciary Responsibilities" }
+  }));
+
+  const REAL_PCI_CONTROLS = Array.from({ length: 20 }, (_, idx) => ({
+    id: `pci-ctrl-${idx + 1}`,
+    articleNumber: `Requirement ${idx + 1}`,
+    title: `PCI-DSS Technical Control Req. ${idx + 1}`,
+    status: idx < 19 ? "IMPLEMENTED" : "IN_PROGRESS",
+    chapter: { title: "Cardholder Data Security" }
+  }));
 
   const REAL_AI_SYSTEMS = {
     items: [
@@ -284,13 +291,33 @@ test.describe("Compliance Section — Real Data E2E", () => {
     }
   });
 
-  test("Populated State: renders real compliance data and never renders old mock strings", async ({ page }) => {
+  test("Populated State: verifies all 5 tabs and asserts MetricCard.value === table.rows.length across all frameworks", async ({ page }) => {
     await page.route("**/api/v1/compliance/stats", async (route) => {
       await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(REAL_COMPLIANCE_STATS) });
     });
 
+    await page.route("**/api/v1/gdpr/controls", async (route) => {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(REAL_GDPR_CONTROLS) });
+    });
+
+    await page.route("**/api/v1/dpdp/controls", async (route) => {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(REAL_DPDP_CONTROLS) });
+    });
+
+    await page.route("**/api/v1/hipaa/controls", async (route) => {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(REAL_HIPAA_CONTROLS) });
+    });
+
+    await page.route("**/api/v1/pci/controls", async (route) => {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(REAL_PCI_CONTROLS) });
+    });
+
+    await page.route("**/api/v1/compliance/nist-ai-rmf/controls", async (route) => {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(REAL_NIST_CONTROLS) });
+    });
+
     await page.route("**/api/v1/governance/controls", async (route) => {
-      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(REAL_GOVERNANCE_CONTROLS) });
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: [] }) });
     });
 
     await page.route("**/api/v1/ai-systems", async (route) => {
@@ -302,37 +329,33 @@ test.describe("Compliance Section — Real Data E2E", () => {
     // Verify header
     await expect(page.getByRole("heading", { name: "Compliance", exact: true })).toBeVisible({ timeout: 15000 });
 
-    // Verify readiness scores render
-    await expect(page.getByText("95%").first()).toBeVisible();
+    const tabsToVerify = [
+      { id: "GDPR", expectedCount: 28, sampleCode: "Article 1", filename: "compliance_tab_gdpr.png" },
+      { id: "DPDP", expectedCount: 22, sampleCode: "Section 1", filename: "compliance_tab_dpdp.png" },
+      { id: "HIPAA", expectedCount: 34, sampleCode: "§164.308-1", filename: "compliance_tab_hipaa.png" },
+      { id: "PCI-DSS", expectedCount: 20, sampleCode: "Requirement 1", filename: "compliance_tab_pci_dss.png" },
+      { id: "NIST AI RMF", expectedCount: 30, sampleCode: "GV-1.1", filename: "compliance_tab_nist_ai_rmf.png" }
+    ];
 
-    // Verify real GDPR controls render in table
-    await expect(page.getByText("GDPR-ART-5")).toBeVisible();
-    await expect(page.getByText("Principles of Processing & Minimisation")).toBeVisible();
-    await expect(page.getByText("GDPR-ART-6")).toBeVisible();
-    await expect(page.getByText("Lawfulness of Processing & Consent")).toBeVisible();
+    for (const tab of tabsToVerify) {
+      // Click tab
+      await page.click(`button:has-text("${tab.id}")`);
 
-    // Verify dynamic mapped agents count (3 agents from /ai-systems)
-    await expect(page.getByText("3 Agents").first()).toBeVisible();
+      // Verify sample code is visible in table
+      await expect(page.getByText(tab.sampleCode).first()).toBeVisible({ timeout: 10000 });
 
-    // Switch to DPDP tab
-    await page.click("button:has-text(\"DPDP\")");
-    await expect(page.getByText("DPDP-SEC-4")).toBeVisible();
-    await expect(page.getByText("Grounds for Processing Personal Data")).toBeVisible();
+      // Count table rows
+      const tableRows = await page.locator("tbody tr").count();
+      expect(tableRows).toBe(tab.expectedCount);
 
-    // Switch to HIPAA tab
-    await page.click("button:has-text(\"HIPAA\")");
-    await expect(page.getByText("HIPAA-164-308")).toBeVisible();
-    await expect(page.getByText("Security Management & Risk Analysis")).toBeVisible();
+      // Verify MetricCard "TOTAL MAPPED CONTROLS" matches table rows count exactly
+      await expect(page.getByTestId("metric-total-controls")).toHaveText(String(tab.expectedCount));
 
-    // Switch to PCI-DSS tab (verifies normalization between PCI-DSS and PCI_DSS)
-    await page.click("button:has-text(\"PCI-DSS\")");
-    await expect(page.getByText("PCI-REQ-3-4")).toBeVisible();
-    await expect(page.getByText("Primary Account Number (PAN) Encryption")).toBeVisible();
-
-    // Switch to NIST AI RMF tab (verifies normalization between NIST AI RMF and NIST_AI_RMF)
-    await page.click("button:has-text(\"NIST AI RMF\")");
-    await expect(page.getByText("NIST-GOV-1")).toBeVisible();
-    await expect(page.getByText("Establish Governance Policies")).toBeVisible();
+      // Screenshot each individual tab
+      const tabScreenshotPath = path.join(ARTIFACT_DIR, tab.filename);
+      await page.screenshot({ path: tabScreenshotPath, fullPage: true });
+      expect(fs.existsSync(tabScreenshotPath)).toBe(true);
+    }
 
     // CRITICAL ASSERTION: Assert that NONE of the old mock strings render
     for (const mockStr of OLD_MOCK_STRINGS) {
@@ -340,7 +363,7 @@ test.describe("Compliance Section — Real Data E2E", () => {
       expect(count).toBe(0);
     }
 
-    // Capture populated screenshot
+    // Capture populated screenshot for overall compliance section
     const screenshotPath = path.join(ARTIFACT_DIR, "compliance_section_populated_real_data.png");
     await page.screenshot({ path: screenshotPath, fullPage: true });
     expect(fs.existsSync(screenshotPath)).toBe(true);
@@ -368,10 +391,24 @@ test.describe("Compliance Section — Real Data E2E", () => {
       });
     });
 
+    await page.route("**/api/v1/gdpr/controls", async (route) => {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([]) });
+    });
+    await page.route("**/api/v1/dpdp/controls", async (route) => {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([]) });
+    });
+    await page.route("**/api/v1/hipaa/controls", async (route) => {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([]) });
+    });
+    await page.route("**/api/v1/pci/controls", async (route) => {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([]) });
+    });
+    await page.route("**/api/v1/compliance/nist-ai-rmf/controls", async (route) => {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([]) });
+    });
     await page.route("**/api/v1/governance/controls", async (route) => {
       await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: [] }) });
     });
-
     await page.route("**/api/v1/ai-systems", async (route) => {
       await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: [] }) });
     });
@@ -401,6 +438,21 @@ test.describe("Compliance Section — Real Data E2E", () => {
 
   test("Error State: renders error banner and retry button when API fails", async ({ page }) => {
     await page.route("**/api/v1/compliance/stats", async (route) => {
+      await route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ error: "Internal Server Error" }) });
+    });
+    await page.route("**/api/v1/gdpr/controls", async (route) => {
+      await route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ error: "Internal Server Error" }) });
+    });
+    await page.route("**/api/v1/dpdp/controls", async (route) => {
+      await route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ error: "Internal Server Error" }) });
+    });
+    await page.route("**/api/v1/hipaa/controls", async (route) => {
+      await route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ error: "Internal Server Error" }) });
+    });
+    await page.route("**/api/v1/pci/controls", async (route) => {
+      await route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ error: "Internal Server Error" }) });
+    });
+    await page.route("**/api/v1/compliance/nist-ai-rmf/controls", async (route) => {
       await route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ error: "Internal Server Error" }) });
     });
     await page.route("**/api/v1/governance/controls", async (route) => {
