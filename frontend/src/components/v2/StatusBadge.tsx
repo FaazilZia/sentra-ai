@@ -58,6 +58,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
       case 'warning':
       case 'medium':
       case 'needs review':
+      case 'needs_review':
       case 'flagged':
       case 'flag-and-review':
       case 'human-in-loop':
@@ -66,19 +67,21 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
           bg: 'bg-amber-500/10 dark:bg-amber-500/15',
           border: 'border-amber-500/30',
           text: 'text-amber-700 dark:text-amber-400',
-          defaultLabel: label || status || 'Warning'
+          defaultLabel: label || 'Needs Review'
         };
       case 'critical':
       case 'high':
       case 'danger':
       case 'fail':
       case 'violating':
+      case 'non_compliant':
+      case 'non-compliant':
         return {
           icon: ShieldAlert,
           bg: 'bg-rose-500/10 dark:bg-rose-500/15',
           border: 'border-rose-500/30',
           text: 'text-rose-700 dark:text-rose-400',
-          defaultLabel: label || status || 'Critical'
+          defaultLabel: label || 'Non-Compliant'
         };
       case 'blocked':
         return {

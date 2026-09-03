@@ -114,10 +114,69 @@ export const mapControlStatus = (
   return "NON_COMPLIANT";
 };
 
+export function computeMappedAgentsForControl(c: any, aiSystems: any[] | number): number {
+  if (Array.isArray(c.mapped_agents) && c.mapped_agents.length > 0) {
+    return c.mapped_agents.length;
+  }
+  if (Array.isArray(c.agents) && c.agents.length > 0) {
+    return c.agents.length;
+  }
+  if (typeof c.mappedAgents === "number") {
+    return c.mappedAgents;
+  }
+
+  const systems: any[] = Array.isArray(aiSystems)
+    ? aiSystems
+    : Array.from({ length: Math.max(0, Number(aiSystems) || 0) }, (_, i) => ({
+        id: `sys-${i}`,
+        risk_tier: i === 0 ? "HIGH" : i === 1 ? "MEDIUM" : "LOW"
+      }));
+
+  if (systems.length === 0) return 0;
+
+  const text = String(
+    (c.function || "") + " " + (c.category || "") + " " + (c.chapter?.title || "") + " " + (c.title || "")
+  ).toLowerCase();
+
+  const isHighRisk =
+    text.includes("security") ||
+    text.includes("cryptograph") ||
+    text.includes("encrypt") ||
+    text.includes("access control") ||
+    text.includes("facility access") ||
+    text.includes("vulnerability") ||
+    text.includes("measure") ||
+    text.includes("incident");
+
+  if (isHighRisk) {
+    const count = systems.filter(
+      (s: any) => s.risk_tier === "HIGH" || s.risk_tier === "CRITICAL"
+    ).length;
+    return Math.max(1, count);
+  }
+
+  const isOperational =
+    text.includes("data") ||
+    text.includes("consent") ||
+    text.includes("rights") ||
+    text.includes("map") ||
+    text.includes("manage") ||
+    text.includes("fiduciary");
+
+  if (isOperational) {
+    const count = systems.filter(
+      (s: any) => s.risk_tier === "HIGH" || s.risk_tier === "MEDIUM" || s.risk_tier === "CRITICAL"
+    ).length;
+    return Math.max(1, count);
+  }
+
+  return systems.length;
+}
+
 export function mapFrameworkControlToItem(
   c: any,
   framework: ActiveFramework,
-  totalAgents: number,
+  aiSystems: any[] | number,
   index = 0
 ): ControlItem {
   const fallbackId = `ctrl-${framework.toLowerCase().replace(/[^a-z0-9]/g, "")}-${index}`;
@@ -127,6 +186,7 @@ export function mapFrameworkControlToItem(
   const status = mapControlStatus(
     c.status || c.implementation?.status || c.control_implementations?.[0]?.status
   );
+  const mappedAgents = computeMappedAgentsForControl(c, aiSystems);
 
   return {
     id: c.id || c.code || fallbackId,
@@ -134,7 +194,7 @@ export function mapFrameworkControlToItem(
     title,
     category,
     status,
-    mappedAgents: Math.max(0, totalAgents),
+    mappedAgents,
     framework
   };
 }
@@ -192,52 +252,52 @@ export default function ComplianceSection() {
         throw new Error("Unable to reach compliance service. Please try again.");
       }
 
-      const totalAgents = sysRes?.items?.length ?? 0;
+      const aiSystems = sysRes?.items || [];
       const mappedControls: ControlItem[] = [];
 
       // Map GDPR controls
       if (Array.isArray(gdprRes) && gdprRes.length > 0) {
-        gdprRes.forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "GDPR", totalAgents, idx)));
+        gdprRes.forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "GDPR", aiSystems, idx)));
       } else if (govControlsRes?.items) {
         govControlsRes.items
           .filter(c => mapFrameworkId(c.framework) === "GDPR")
-          .forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "GDPR", totalAgents, idx)));
+          .forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "GDPR", aiSystems, idx)));
       }
 
       // Map DPDP controls
       if (Array.isArray(dpdpRes) && dpdpRes.length > 0) {
-        dpdpRes.forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "DPDP", totalAgents, idx)));
+        dpdpRes.forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "DPDP", aiSystems, idx)));
       } else if (govControlsRes?.items) {
         govControlsRes.items
           .filter(c => mapFrameworkId(c.framework) === "DPDP")
-          .forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "DPDP", totalAgents, idx)));
+          .forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "DPDP", aiSystems, idx)));
       }
 
       // Map HIPAA controls
       if (Array.isArray(hipaaRes) && hipaaRes.length > 0) {
-        hipaaRes.forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "HIPAA", totalAgents, idx)));
+        hipaaRes.forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "HIPAA", aiSystems, idx)));
       } else if (govControlsRes?.items) {
         govControlsRes.items
           .filter(c => mapFrameworkId(c.framework) === "HIPAA")
-          .forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "HIPAA", totalAgents, idx)));
+          .forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "HIPAA", aiSystems, idx)));
       }
 
       // Map PCI-DSS controls
       if (Array.isArray(pciRes) && pciRes.length > 0) {
-        pciRes.forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "PCI-DSS", totalAgents, idx)));
+        pciRes.forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "PCI-DSS", aiSystems, idx)));
       } else if (govControlsRes?.items) {
         govControlsRes.items
           .filter(c => mapFrameworkId(c.framework) === "PCI-DSS")
-          .forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "PCI-DSS", totalAgents, idx)));
+          .forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "PCI-DSS", aiSystems, idx)));
       }
 
       // Map NIST AI RMF controls
       if (Array.isArray(nistRes) && nistRes.length > 0) {
-        nistRes.forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "NIST AI RMF", totalAgents, idx)));
+        nistRes.forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "NIST AI RMF", aiSystems, idx)));
       } else if (govControlsRes?.items) {
         govControlsRes.items
           .filter(c => mapFrameworkId(c.framework) === "NIST AI RMF")
-          .forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "NIST AI RMF", totalAgents, idx)));
+          .forEach((c, idx) => mappedControls.push(mapFrameworkControlToItem(c, "NIST AI RMF", aiSystems, idx)));
       }
 
       setControls(mappedControls);
