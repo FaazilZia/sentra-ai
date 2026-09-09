@@ -5,7 +5,6 @@ import { seedGdpr } from './gdprSeed.service';
 import { seedHipaa } from './hipaaSeed.service';
 import { seedPci } from './pciSeed.service';
 import { seedDpdp } from './dpdpSeed.service';
-import { enqueueGovernanceSeed } from './queue.service';
 
 export interface ControlSeedInput {
   framework: string;
@@ -195,17 +194,7 @@ export async function triggerGovernanceSeeding(organizationId: string): Promise<
     return;
   }
 
-  // Attempt BullMQ enqueue if available
-  try {
-    const enqueued = await enqueueGovernanceSeed(organizationId);
-    if (enqueued) {
-      return;
-    }
-  } catch (queueErr) {
-    logger.warn(`[GovernanceSeeder] BullMQ enqueue check failed for org ${organizationId}, using setImmediate fallback:`, queueErr);
-  }
-
-  // Fallback: asynchronous background execution via setImmediate
+  // Asynchronous background execution via setImmediate (decoupled from caller/response)
   activeSeedings.add(organizationId);
   setImmediate(async () => {
     try {
