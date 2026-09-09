@@ -42,6 +42,7 @@ export const evaluationQueue = connection ? new Queue('evaluation-runs', { conne
 export const automationsQueue = connection ? new Queue('automations', { connection, defaultJobOptions }) : null;
 export const intakeLLMQueue = connection ? new Queue('intake-llm', { connection, defaultJobOptions }) : null;
 export const alertQueue = connection ? new Queue('alerts', { connection, defaultJobOptions }) : null;
+export const governanceQueue = connection ? new Queue('governance-seeding', { connection, defaultJobOptions }) : null;
 
 if (activityQueue) activityQueue.on('error', (err) => logger.warn('[BULLMQ] activityQueue connection issue:', err));
 if (connectorQueue) connectorQueue.on('error', (err) => logger.warn('[BULLMQ] connectorQueue connection issue:', err));
@@ -49,6 +50,7 @@ if (driftQueue) driftQueue.on('error', (err) => logger.warn('[BULLMQ] driftQueue
 if (evaluationQueue) evaluationQueue.on('error', (err) => logger.warn('[BULLMQ] evaluationQueue connection issue:', err));
 if (automationsQueue) automationsQueue.on('error', (err) => logger.warn('[BULLMQ] automationsQueue connection issue:', err));
 if (intakeLLMQueue) intakeLLMQueue.on('error', (err) => logger.warn('[BULLMQ] intakeLLMQueue connection issue:', err));
+if (governanceQueue) governanceQueue.on('error', (err) => logger.warn('[BULLMQ] governanceQueue connection issue:', err));
 
 /**
  * Worker to process activity logs asynchronously.
@@ -105,6 +107,26 @@ export const enqueueLog = async (data: any) => {
   } catch (error) {
     logger.error('Critical: sync log write also failed:', error);
   }
+};
+
+export const enqueueGovernanceSeed = async (organizationId: string): Promise<boolean> => {
+  if (governanceQueue) {
+    try {
+      await governanceQueue.add('seed-governance', { organizationId }, {
+        jobId: `seed-gov-${organizationId}`,
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 2000 },
+        removeOnComplete: true,
+        removeOnFail: false,
+      });
+      logger.info(`[BULLMQ] Successfully enqueued governance seeding job for org ${organizationId}`);
+      return true;
+    } catch (error) {
+      logger.warn(`[BULLMQ] Failed to enqueue governance seed for org ${organizationId}:`, error);
+      return false;
+    }
+  }
+  return false;
 };
 
 // --- Scheduled Data Retention (Audit Compliance) ---

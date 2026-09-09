@@ -170,14 +170,17 @@ export async function seedHipaa(organizationId: string, prisma: any): Promise<vo
   let chapterCount = 0;
   let controlCount = 0;
 
-  for (const chapterData of HIPAA_CHAPTERS) {
-    let chapter = await prisma.hipaaChapter.findFirst({
-      where: {
-        organizationId,
-        chapterNumber: chapterData.chapterNumber,
-      }
-    });
+  // 1. Batch fetch all existing chapters for this org
+  const existingChapters = await prisma.hipaaChapter.findMany({
+    where: { organizationId },
+  });
+  const chapterMap = new Map<string, any>(
+    existingChapters.map((c: any) => [c.chapterNumber, c])
+  );
 
+  // 2. Ensure all chapters exist
+  for (const chapterData of HIPAA_CHAPTERS) {
+    let chapter = chapterMap.get(chapterData.chapterNumber);
     if (!chapter) {
       chapter = await prisma.hipaaChapter.create({
         data: {
@@ -187,7 +190,8 @@ export async function seedHipaa(organizationId: string, prisma: any): Promise<vo
           description: chapterData.description,
         }
       });
-    } else {
+      chapterMap.set(chapterData.chapterNumber, chapter);
+    } else if (chapter.title !== chapterData.title || chapter.description !== chapterData.description) {
       chapter = await prisma.hipaaChapter.update({
         where: { id: chapter.id },
         data: {
@@ -195,20 +199,30 @@ export async function seedHipaa(organizationId: string, prisma: any): Promise<vo
           description: chapterData.description,
         }
       });
+      chapterMap.set(chapterData.chapterNumber, chapter);
     }
     chapterCount++;
+  }
+
+  // 3. Batch fetch all existing controls for this org
+  const existingControls = await prisma.hipaaControl.findMany({
+    where: { organizationId },
+  });
+  const controlMap = new Map<string, any>(
+    existingControls.map((c: any) => [`${c.chapterId}_${c.articleNumber}`, c])
+  );
+
+  // 4. Ensure all controls exist
+  for (const chapterData of HIPAA_CHAPTERS) {
+    const chapter = chapterMap.get(chapterData.chapterNumber);
+    if (!chapter) continue;
 
     for (const ctrlData of chapterData.controls) {
-      const control = await prisma.hipaaControl.findFirst({
-        where: {
-          organizationId,
-          chapterId: chapter.id,
-          articleNumber: ctrlData.articleNumber,
-        }
-      });
+      const key = `${chapter.id}_${ctrlData.articleNumber}`;
+      const control = controlMap.get(key);
 
       if (!control) {
-        await prisma.hipaaControl.create({
+        const created = await prisma.hipaaControl.create({
           data: {
             organizationId,
             chapterId: chapter.id,
@@ -219,7 +233,12 @@ export async function seedHipaa(organizationId: string, prisma: any): Promise<vo
             status: 'NOT_STARTED',
           }
         });
-      } else {
+        controlMap.set(key, created);
+      } else if (
+        control.title !== ctrlData.title ||
+        control.description !== ctrlData.description ||
+        control.requirement !== ctrlData.requirement
+      ) {
         await prisma.hipaaControl.update({
           where: { id: control.id },
           data: {

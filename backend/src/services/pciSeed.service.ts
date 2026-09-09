@@ -164,14 +164,17 @@ export async function seedPci(organizationId: string, prisma: any): Promise<void
   let chapterCount = 0;
   let controlCount = 0;
 
-  for (const chapterData of PCI_CHAPTERS) {
-    let chapter = await prisma.pciChapter.findFirst({
-      where: {
-        organizationId,
-        chapterNumber: chapterData.chapterNumber,
-      }
-    });
+  // 1. Batch fetch all existing chapters for this org
+  const existingChapters = await prisma.pciChapter.findMany({
+    where: { organizationId },
+  });
+  const chapterMap = new Map<string, any>(
+    existingChapters.map((c: any) => [c.chapterNumber, c])
+  );
 
+  // 2. Ensure all chapters exist
+  for (const chapterData of PCI_CHAPTERS) {
+    let chapter = chapterMap.get(chapterData.chapterNumber);
     if (!chapter) {
       chapter = await prisma.pciChapter.create({
         data: {
@@ -181,7 +184,8 @@ export async function seedPci(organizationId: string, prisma: any): Promise<void
           description: chapterData.description,
         }
       });
-    } else {
+      chapterMap.set(chapterData.chapterNumber, chapter);
+    } else if (chapter.title !== chapterData.title || chapter.description !== chapterData.description) {
       chapter = await prisma.pciChapter.update({
         where: { id: chapter.id },
         data: {
@@ -189,20 +193,30 @@ export async function seedPci(organizationId: string, prisma: any): Promise<void
           description: chapterData.description,
         }
       });
+      chapterMap.set(chapterData.chapterNumber, chapter);
     }
     chapterCount++;
+  }
+
+  // 3. Batch fetch all existing controls for this org
+  const existingControls = await prisma.pciControl.findMany({
+    where: { organizationId },
+  });
+  const controlMap = new Map<string, any>(
+    existingControls.map((c: any) => [`${c.chapterId}_${c.articleNumber}`, c])
+  );
+
+  // 4. Ensure all controls exist
+  for (const chapterData of PCI_CHAPTERS) {
+    const chapter = chapterMap.get(chapterData.chapterNumber);
+    if (!chapter) continue;
 
     for (const ctrlData of chapterData.controls) {
-      const control = await prisma.pciControl.findFirst({
-        where: {
-          organizationId,
-          chapterId: chapter.id,
-          articleNumber: ctrlData.articleNumber,
-        }
-      });
+      const key = `${chapter.id}_${ctrlData.articleNumber}`;
+      const control = controlMap.get(key);
 
       if (!control) {
-        await prisma.pciControl.create({
+        const created = await prisma.pciControl.create({
           data: {
             organizationId,
             chapterId: chapter.id,
@@ -213,7 +227,12 @@ export async function seedPci(organizationId: string, prisma: any): Promise<void
             status: 'NOT_STARTED',
           }
         });
-      } else {
+        controlMap.set(key, created);
+      } else if (
+        control.title !== ctrlData.title ||
+        control.description !== ctrlData.description ||
+        control.requirement !== ctrlData.requirement
+      ) {
         await prisma.pciControl.update({
           where: { id: control.id },
           data: {

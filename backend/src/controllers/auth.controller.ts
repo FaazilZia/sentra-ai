@@ -9,7 +9,7 @@ import { auditLogger } from '../utils/auditLogger';
 import { OAuth2Client } from 'google-auth-library';
 import { getRedisClient } from '../config/redis';
 import { sendEmail } from '../config/email';
-import { seedOrganizationGovernance } from '../services/governanceSeed.service';
+import { triggerGovernanceSeeding, checkAndTriggerGovernanceFallback } from '../services/governanceSeed.service';
 
 const googleClient = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -199,10 +199,12 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
       });
 
       await seedDefaultPolicy(tx, org.id);
-      await seedOrganizationGovernance(org.id, tx);
 
       return { org, user };
-    });
+    }, { timeout: 10000, maxWait: 5000 });
+
+    // Trigger governance seeding asynchronously in the background (does not block 201 response)
+    triggerGovernanceSeeding(result.org.id);
 
     // Generate signed verification token (24h expiry)
     const tokenJti = randomUUID();
@@ -302,6 +304,13 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
         },
       },
     });
+
+    // Fallback: check if org has zero/partial governance frameworks seeded and re-seed in background
+    if (user.organizationId) {
+      checkAndTriggerGovernanceFallback(user.organizationId).catch((fallbackErr) => {
+        logger.error(`[GovernanceFallback] Login fallback check error for org ${user.organizationId}:`, fallbackErr);
+      });
+    }
   } catch (error) {
     next(error);
   }
@@ -331,9 +340,11 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
 
     const { email, name } = payload;
 
+    let isNewUser = false;
     let user = await prisma.users.findUnique({ where: { email } });
 
     if (!user) {
+      isNewUser = true;
       const { derivedOrgName, slug } = await generateUniqueOrgSlug(email, organizationName);
 
       const result = await prisma.$transaction(async (tx) => {
@@ -352,10 +363,17 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
           },
         });
         await seedDefaultPolicy(tx, org.id);
-        await seedOrganizationGovernance(org.id, tx);
         return newUser;
-      });
+      }, { timeout: 10000, maxWait: 5000 });
       user = result;
+
+      // Trigger governance seeding asynchronously in background for new org
+      triggerGovernanceSeeding(user.organizationId);
+    } else if (user.organizationId) {
+      // Fallback: check if existing org has zero/partial governance frameworks seeded and re-seed in background
+      checkAndTriggerGovernanceFallback(user.organizationId).catch((fallbackErr) => {
+        logger.error(`[GovernanceFallback] Google login fallback check error for org ${user?.organizationId}:`, fallbackErr);
+      });
     }
 
     const role = user.role || 'USER';
