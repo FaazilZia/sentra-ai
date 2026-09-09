@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { initializePrisma } from './config/db';
 import logger from './utils/logger';
-import { setupConnectorWorkers, setupDriftWorker, setupEvaluationWorker } from './workers/worker.manager';
+import { setupConnectorWorkers, setupDriftWorker, setupEvaluationWorker, setupGovernanceWorker } from './workers/worker.manager';
 import { setupScheduledJobs } from './services/queue.service';
 import { Queue } from 'bullmq';
 import { getRedisConnection } from './config/redis';
@@ -19,6 +19,7 @@ const startWorker = async () => {
     setupConnectorWorkers();
     setupDriftWorker();
     setupEvaluationWorker();
+    setupGovernanceWorker();
     startDriftWorker();
     startPostMarketWorker();
     setupScheduledJobs().catch(err => logger.error('[WORKER BOOT] Failed to setup scheduled jobs:', err));

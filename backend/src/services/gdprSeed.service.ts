@@ -228,15 +228,17 @@ export async function seedGdpr(organizationId: string, prisma: any): Promise<voi
   let chapterCount = 0;
   let controlCount = 0;
 
-  for (const chapterData of GDPR_CHAPTERS) {
-    // Check if chapter already exists for this organization
-    let chapter = await prisma.gdpr_chapters.findFirst({
-      where: {
-        organizationId,
-        chapterNumber: chapterData.chapterNumber,
-      }
-    });
+  // 1. Batch fetch all existing chapters for this org
+  const existingChapters = await prisma.gdpr_chapters.findMany({
+    where: { organizationId },
+  });
+  const chapterMap = new Map<string, any>(
+    existingChapters.map((c: any) => [c.chapterNumber, c])
+  );
 
+  // 2. Ensure all chapters exist
+  for (const chapterData of GDPR_CHAPTERS) {
+    let chapter = chapterMap.get(chapterData.chapterNumber);
     if (!chapter) {
       chapter = await prisma.gdpr_chapters.create({
         data: {
@@ -246,7 +248,8 @@ export async function seedGdpr(organizationId: string, prisma: any): Promise<voi
           description: chapterData.description,
         }
       });
-    } else {
+      chapterMap.set(chapterData.chapterNumber, chapter);
+    } else if (chapter.title !== chapterData.title || chapter.description !== chapterData.description) {
       chapter = await prisma.gdpr_chapters.update({
         where: { id: chapter.id },
         data: {
@@ -254,20 +257,30 @@ export async function seedGdpr(organizationId: string, prisma: any): Promise<voi
           description: chapterData.description,
         }
       });
+      chapterMap.set(chapterData.chapterNumber, chapter);
     }
     chapterCount++;
+  }
+
+  // 3. Batch fetch all existing controls for this org
+  const existingControls = await prisma.gdpr_controls.findMany({
+    where: { organizationId },
+  });
+  const controlMap = new Map<string, any>(
+    existingControls.map((c: any) => [`${c.chapterId}_${c.articleNumber}`, c])
+  );
+
+  // 4. Ensure all controls exist
+  for (const chapterData of GDPR_CHAPTERS) {
+    const chapter = chapterMap.get(chapterData.chapterNumber);
+    if (!chapter) continue;
 
     for (const ctrlData of chapterData.controls) {
-      const control = await prisma.gdpr_controls.findFirst({
-        where: {
-          organizationId,
-          chapterId: chapter.id,
-          articleNumber: ctrlData.articleNumber,
-        }
-      });
+      const key = `${chapter.id}_${ctrlData.articleNumber}`;
+      const control = controlMap.get(key);
 
       if (!control) {
-        await prisma.gdpr_controls.create({
+        const created = await prisma.gdpr_controls.create({
           data: {
             organizationId,
             chapterId: chapter.id,
@@ -278,7 +291,12 @@ export async function seedGdpr(organizationId: string, prisma: any): Promise<voi
             status: 'NOT_STARTED',
           }
         });
-      } else {
+        controlMap.set(key, created);
+      } else if (
+        control.title !== ctrlData.title ||
+        control.description !== ctrlData.description ||
+        control.requirement !== ctrlData.requirement
+      ) {
         await prisma.gdpr_controls.update({
           where: { id: control.id },
           data: {

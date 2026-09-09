@@ -133,14 +133,17 @@ export async function seedDpdp(organizationId: string, prisma: any): Promise<voi
   let chapterCount = 0;
   let controlCount = 0;
 
-  for (const chapterData of DPDP_CHAPTERS) {
-    let chapter = await prisma.dpdpChapter.findFirst({
-      where: {
-        organizationId,
-        chapterNumber: chapterData.chapterNumber,
-      }
-    });
+  // 1. Batch fetch all existing chapters for this org
+  const existingChapters = await prisma.dpdpChapter.findMany({
+    where: { organizationId },
+  });
+  const chapterMap = new Map<string, any>(
+    existingChapters.map((c: any) => [c.chapterNumber, c])
+  );
 
+  // 2. Ensure all chapters exist
+  for (const chapterData of DPDP_CHAPTERS) {
+    let chapter = chapterMap.get(chapterData.chapterNumber);
     if (!chapter) {
       chapter = await prisma.dpdpChapter.create({
         data: {
@@ -150,7 +153,8 @@ export async function seedDpdp(organizationId: string, prisma: any): Promise<voi
           description: chapterData.description,
         }
       });
-    } else {
+      chapterMap.set(chapterData.chapterNumber, chapter);
+    } else if (chapter.title !== chapterData.title || chapter.description !== chapterData.description) {
       chapter = await prisma.dpdpChapter.update({
         where: { id: chapter.id },
         data: {
@@ -158,20 +162,30 @@ export async function seedDpdp(organizationId: string, prisma: any): Promise<voi
           description: chapterData.description,
         }
       });
+      chapterMap.set(chapterData.chapterNumber, chapter);
     }
     chapterCount++;
+  }
+
+  // 3. Batch fetch all existing controls for this org
+  const existingControls = await prisma.dpdpControl.findMany({
+    where: { organizationId },
+  });
+  const controlMap = new Map<string, any>(
+    existingControls.map((c: any) => [`${c.chapterId}_${c.articleNumber}`, c])
+  );
+
+  // 4. Ensure all controls exist
+  for (const chapterData of DPDP_CHAPTERS) {
+    const chapter = chapterMap.get(chapterData.chapterNumber);
+    if (!chapter) continue;
 
     for (const ctrlData of chapterData.controls) {
-      const control = await prisma.dpdpControl.findFirst({
-        where: {
-          organizationId,
-          chapterId: chapter.id,
-          articleNumber: ctrlData.articleNumber,
-        }
-      });
+      const key = `${chapter.id}_${ctrlData.articleNumber}`;
+      const control = controlMap.get(key);
 
       if (!control) {
-        await prisma.dpdpControl.create({
+        const created = await prisma.dpdpControl.create({
           data: {
             organizationId,
             chapterId: chapter.id,
@@ -182,7 +196,12 @@ export async function seedDpdp(organizationId: string, prisma: any): Promise<voi
             status: 'NOT_STARTED',
           }
         });
-      } else {
+        controlMap.set(key, created);
+      } else if (
+        control.title !== ctrlData.title ||
+        control.description !== ctrlData.description ||
+        control.requirement !== ctrlData.requirement
+      ) {
         await prisma.dpdpControl.update({
           where: { id: control.id },
           data: {

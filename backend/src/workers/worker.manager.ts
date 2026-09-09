@@ -8,6 +8,7 @@ import { buildRedisOptions, getRedisUrl } from '../config/redis';
 import { DriftAlertService } from '../services/driftAlert.service';
 import { EvaluationService } from '../services/evaluation.service';
 import { DriftBaselineService } from '../services/driftBaseline.service';
+import { seedOrganizationGovernance } from '../services/governanceSeed.service';
 
 
 const REDIS_URL = getRedisUrl();
@@ -288,6 +289,40 @@ export function setupEvaluationWorker() {
   });
 
   return evaluationWorker;
+}
+
+export function setupGovernanceWorker() {
+  if (!REDIS_URL) {
+    return null;
+  }
+  const connection = new IORedis(REDIS_URL, buildRedisOptions({
+    maxRetriesPerRequest: null,
+    enableOfflineQueue: true,
+  }));
+  connection.on('error', (err) => {
+    logger.warn('Governance Worker Redis Connection Error:', err);
+  });
+
+  const worker = new Worker(
+    'governance-seeding',
+    async (job: Job) => {
+      const { organizationId } = job.data;
+      logger.info(`[GOVERNANCE WORKER] Processing governance seeding job for org ${organizationId}`);
+      await seedOrganizationGovernance(organizationId);
+      logger.info(`[GOVERNANCE WORKER] Governance seeding completed for org ${organizationId}`);
+    },
+    { connection }
+  );
+
+  worker.on('failed', (job, err) => {
+    logger.error({ jobId: job?.id, queue: 'governance-seeding', err: err.message }, `Governance seed job failed: ${err.message}`);
+  });
+
+  worker.on('error', (err) => {
+    logger.warn('[BULLMQ] governance-seeding worker error:', err);
+  });
+
+  return worker;
 }
 
 export async function updateConnectorTelemetry(

@@ -15,7 +15,7 @@ import prisma, { initializePrisma } from './config/db';
 import { IntakeFormService } from './services/intakeForm.service';
 import { ComplianceSeedingService } from './services/complianceSeeding.service';
 import { setupScheduledJobs } from './services/queue.service';
-import { setupConnectorWorkers, setupDriftWorker, setupEvaluationWorker } from './workers/worker.manager';
+import { setupConnectorWorkers, setupDriftWorker, setupEvaluationWorker, setupGovernanceWorker } from './workers/worker.manager';
 import { DriftBaselineService } from './services/driftBaseline.service';
 
 import { alertService } from './services/alert.service';
@@ -321,9 +321,11 @@ const startServer = async () => {
       const connWorker = setupConnectorWorkers();
       const driftWorker = setupDriftWorker();
       const evalWorker = setupEvaluationWorker();
+      const govWorker = setupGovernanceWorker();
       if (connWorker) workers.push(connWorker);
       if (driftWorker) workers.push(driftWorker);
       if (evalWorker) workers.push(evalWorker);
+      if (govWorker) workers.push(govWorker);
       setupScheduledJobs()
         .then(() => {
           // Backfill baselines for any existing agents with empty baselines

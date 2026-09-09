@@ -135,18 +135,99 @@ export async function seedOrganizationGovernance(organizationId: string, txClien
       await seedPci(organizationId, txClient);
       await seedDpdp(organizationId, txClient);
     } else {
-      await prisma.$transaction(async (tx) => {
-        await runSeeding(tx);
-        await seedGdpr(organizationId, tx);
-        await seedHipaa(organizationId, tx);
-        await seedPci(organizationId, tx);
-        await seedDpdp(organizationId, tx);
-      }, { timeout: 120000 });
+      await runSeeding(prisma);
+      await seedGdpr(organizationId, prisma);
+      await seedHipaa(organizationId, prisma);
+      await seedPci(organizationId, prisma);
+      await seedDpdp(organizationId, prisma);
     }
 
     logger.info(`[GovernanceSeeder] Finished seeding controls and obligations successfully for org ${organizationId}`);
   } catch (error) {
     logger.error(`[GovernanceSeeder] Failed to seed governance frameworks for org ${organizationId}:`, error);
     throw error;
+  }
+}
+
+export interface GovernanceSeedingStatus {
+  isComplete: boolean;
+  baselineControls: number;
+  gdprControls: number;
+  hipaaControls: number;
+  pciControls: number;
+  dpdpControls: number;
+}
+
+export async function checkGovernanceSeedingStatus(organizationId: string): Promise<GovernanceSeedingStatus> {
+  const [baselineControls, gdprControls, hipaaControls, pciControls, dpdpControls] = await Promise.all([
+    prisma.controls.count({ where: { organizationId } }),
+    prisma.gdpr_controls.count({ where: { organizationId } }),
+    prisma.hipaaControl.count({ where: { organizationId } }),
+    prisma.pciControl.count({ where: { organizationId } }),
+    prisma.dpdpControl.count({ where: { organizationId } }),
+  ]);
+
+  const isComplete =
+    baselineControls >= 20 &&
+    gdprControls >= 25 &&
+    hipaaControls >= 18 &&
+    pciControls >= 12 &&
+    dpdpControls >= 12;
+
+  return {
+    isComplete,
+    baselineControls,
+    gdprControls,
+    hipaaControls,
+    pciControls,
+    dpdpControls,
+  };
+}
+
+export const activeSeedings = new Set<string>();
+export const completedGovernanceOrgs = new Set<string>();
+
+export async function triggerGovernanceSeeding(organizationId: string): Promise<void> {
+  if (!organizationId) return;
+  if (activeSeedings.has(organizationId)) {
+    logger.info(`[GovernanceSeeder] Seeding already in progress for org ${organizationId}, skipping duplicate trigger`);
+    return;
+  }
+
+  // Asynchronous background execution via setImmediate (decoupled from caller/response)
+  activeSeedings.add(organizationId);
+  setImmediate(async () => {
+    try {
+      logger.info(`[GovernanceSeeder] Starting background governance seeding for org ${organizationId}`);
+      await seedOrganizationGovernance(organizationId);
+      completedGovernanceOrgs.add(organizationId);
+      logger.info(`[GovernanceSeeder] Successfully completed background governance seeding for org ${organizationId}`);
+    } catch (err: any) {
+      logger.error(`[GovernanceSeeder] Background governance seeding failed for org ${organizationId}: ${err?.message || err}`);
+    } finally {
+      activeSeedings.delete(organizationId);
+    }
+  });
+}
+
+export async function checkAndTriggerGovernanceFallback(organizationId: string): Promise<void> {
+  if (!organizationId) return;
+  if (completedGovernanceOrgs.has(organizationId) || activeSeedings.has(organizationId)) {
+    return;
+  }
+
+  try {
+    const status = await checkGovernanceSeedingStatus(organizationId);
+    if (!status.isComplete) {
+      logger.warn(
+        `[GovernanceFallback] Org ${organizationId} has incomplete governance seeding ` +
+        `(baseline: ${status.baselineControls}/20, GDPR: ${status.gdprControls}/25, HIPAA: ${status.hipaaControls}/18, PCI: ${status.pciControls}/12, DPDP: ${status.dpdpControls}/12). Triggering re-seed...`
+      );
+      await triggerGovernanceSeeding(organizationId);
+    } else {
+      completedGovernanceOrgs.add(organizationId);
+    }
+  } catch (err: any) {
+    logger.error(`[GovernanceFallback] Failed to verify governance status for org ${organizationId}: ${err?.message || err}`);
   }
 }
