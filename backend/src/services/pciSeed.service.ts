@@ -211,9 +211,30 @@ export async function seedPci(organizationId: string, prisma: any): Promise<void
     const chapter = chapterMap.get(chapterData.chapterNumber);
     if (!chapter) continue;
 
+const getPciBaselineStatus = (article: string): 'IMPLEMENTED' | 'IN_PROGRESS' | 'NOT_STARTED' => {
+  const implemented = [
+    'Requirement 3.2',
+    'Requirement 3.4',
+    'Requirement 4.2',
+    'Requirement 6.2',
+    'Requirement 7.2',
+    'Requirement 8.2',
+    'Requirement 8.3',
+    'Requirement 10.2',
+    'Requirement 10.4',
+    'Requirement 11.2',
+    'Requirement 12.10',
+  ];
+  const inProgress = ['Requirement 1.2', 'Requirement 1.3', 'Requirement 2.2', 'Requirement 5.2'];
+  if (implemented.includes(article)) return 'IMPLEMENTED';
+  if (inProgress.includes(article)) return 'IN_PROGRESS';
+  return 'NOT_STARTED';
+};
+
     for (const ctrlData of chapterData.controls) {
       const key = `${chapter.id}_${ctrlData.articleNumber}`;
       const control = controlMap.get(key);
+      const baselineStatus = getPciBaselineStatus(ctrlData.articleNumber);
 
       if (!control) {
         const created = await prisma.pciControl.create({
@@ -224,23 +245,30 @@ export async function seedPci(organizationId: string, prisma: any): Promise<void
             title: ctrlData.title,
             description: ctrlData.description,
             requirement: ctrlData.requirement,
-            status: 'NOT_STARTED',
+            status: baselineStatus,
           }
         });
         controlMap.set(key, created);
-      } else if (
-        control.title !== ctrlData.title ||
-        control.description !== ctrlData.description ||
-        control.requirement !== ctrlData.requirement
-      ) {
-        await prisma.pciControl.update({
-          where: { id: control.id },
-          data: {
-            title: ctrlData.title,
-            description: ctrlData.description,
-            requirement: ctrlData.requirement,
-          }
-        });
+      } else {
+        const updates: any = {};
+        if (control.status === 'NOT_STARTED' && baselineStatus !== 'NOT_STARTED') {
+          updates.status = baselineStatus;
+        }
+        if (
+          control.title !== ctrlData.title ||
+          control.description !== ctrlData.description ||
+          control.requirement !== ctrlData.requirement
+        ) {
+          updates.title = ctrlData.title;
+          updates.description = ctrlData.description;
+          updates.requirement = ctrlData.requirement;
+        }
+        if (Object.keys(updates).length > 0) {
+          await prisma.pciControl.update({
+            where: { id: control.id },
+            data: updates
+          });
+        }
       }
       controlCount++;
     }

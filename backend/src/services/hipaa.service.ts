@@ -20,11 +20,11 @@ export class HipaaService {
     });
   }
 
-  static async getStats(organizationId: string) {
+  static async getStats(organizationId: string, violationCount = 0, openIncidentsCount = 0) {
     const controls = await prisma.hipaaControl.findMany({
       where: { organizationId },
     });
-    return calculateComplianceStats(controls);
+    return calculateComplianceStats(controls, violationCount, openIncidentsCount);
   }
 
   static async updateControl(

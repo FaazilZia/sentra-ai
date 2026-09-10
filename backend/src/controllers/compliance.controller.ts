@@ -204,11 +204,11 @@ export const getComplianceStats = asyncHandler(async (req: any, res: Response) =
     nistAiRmfOverview,
     pciStats,
   ] = await Promise.all([
-    GdprService.getStats(organizationId).catch(() => null),
-    HipaaService.getStats(organizationId).catch(() => null),
-    DpdpService.getStats(organizationId).catch(() => null),
+    GdprService.getStats(organizationId, piiBreakdown['GDPR'] || 0, breakdown['GDPR'] || 0).catch(() => null),
+    HipaaService.getStats(organizationId, piiBreakdown['HIPAA'] || 0, breakdown['HIPAA'] || 0).catch(() => null),
+    DpdpService.getStats(organizationId, piiBreakdown['DPDP'] || 0, breakdown['DPDP'] || 0).catch(() => null),
     NistAiRmfService.getFrameworkOverview(organizationId).catch(() => null),
-    PciService.getStats(organizationId).catch(() => null),
+    PciService.getStats(organizationId, piiBreakdown['PCI_DSS'] || 0, breakdown['PCI_DSS'] || 0).catch(() => null),
   ]);
 
   const formatFrameworkStats = (name: string, stats: any) => {

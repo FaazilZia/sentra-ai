@@ -217,9 +217,33 @@ export async function seedHipaa(organizationId: string, prisma: any): Promise<vo
     const chapter = chapterMap.get(chapterData.chapterNumber);
     if (!chapter) continue;
 
+const getHipaaBaselineStatus = (article: string): 'IMPLEMENTED' | 'IN_PROGRESS' | 'NOT_STARTED' => {
+  const implemented = [
+    '§164.308(a)(1)(ii)(A)',
+    '§164.308(a)(1)(ii)(B)',
+    '§164.308(a)(4)',
+    '§164.312(a)(1)',
+    '§164.312(a)(2)(ii)',
+    '§164.312(b)',
+    '§164.312(c)(1)',
+    '§164.312(e)(1)',
+    '§164.404',
+    '§164.408',
+    '§164.502(b)',
+    '§164.524',
+    '§164.526',
+    '§160.306',
+  ];
+  const inProgress = ['§164.308(a)(3)', '§164.310(a)(1)', '§164.310(b)', '§164.310(d)(1)'];
+  if (implemented.includes(article)) return 'IMPLEMENTED';
+  if (inProgress.includes(article)) return 'IN_PROGRESS';
+  return 'NOT_STARTED';
+};
+
     for (const ctrlData of chapterData.controls) {
       const key = `${chapter.id}_${ctrlData.articleNumber}`;
       const control = controlMap.get(key);
+      const baselineStatus = getHipaaBaselineStatus(ctrlData.articleNumber);
 
       if (!control) {
         const created = await prisma.hipaaControl.create({
@@ -230,23 +254,30 @@ export async function seedHipaa(organizationId: string, prisma: any): Promise<vo
             title: ctrlData.title,
             description: ctrlData.description,
             requirement: ctrlData.requirement,
-            status: 'NOT_STARTED',
+            status: baselineStatus,
           }
         });
         controlMap.set(key, created);
-      } else if (
-        control.title !== ctrlData.title ||
-        control.description !== ctrlData.description ||
-        control.requirement !== ctrlData.requirement
-      ) {
-        await prisma.hipaaControl.update({
-          where: { id: control.id },
-          data: {
-            title: ctrlData.title,
-            description: ctrlData.description,
-            requirement: ctrlData.requirement,
-          }
-        });
+      } else {
+        const updates: any = {};
+        if (control.status === 'NOT_STARTED' && baselineStatus !== 'NOT_STARTED') {
+          updates.status = baselineStatus;
+        }
+        if (
+          control.title !== ctrlData.title ||
+          control.description !== ctrlData.description ||
+          control.requirement !== ctrlData.requirement
+        ) {
+          updates.title = ctrlData.title;
+          updates.description = ctrlData.description;
+          updates.requirement = ctrlData.requirement;
+        }
+        if (Object.keys(updates).length > 0) {
+          await prisma.hipaaControl.update({
+            where: { id: control.id },
+            data: updates
+          });
+        }
       }
       controlCount++;
     }

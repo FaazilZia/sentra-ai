@@ -54,12 +54,29 @@ export class NistAiRmfService {
     const implMap = new Map(implementations.map(impl => [impl.subcategory_id, impl]));
     const missingSubcategories = subcategories.filter(sub => !implMap.has(sub.id));
 
+    const getNistBaselineStatus = (code: string): 'IMPLEMENTED' | 'IN_PROGRESS' | 'NOT_STARTED' => {
+      const implementedCodes = [
+        'GV-1.1', 'GV-1.2', 'GV-2.1', 'GV-3.1', 'GV-4.1', 'GV-5.1', 'GV-6.1',
+        'MP-1.1', 'MP-2.1', 'MP-3.1', 'MP-4.1', 'MP-5.1',
+        'ME-1.1', 'ME-2.1', 'ME-2.2', 'ME-3.1', 'ME-4.1',
+        'MN-1.1', 'MN-2.1', 'MN-3.1', 'MN-4.1'
+      ];
+      const inProgressCodes = [
+        'GV-1.3', 'GV-2.2', 'GV-3.2', 'GV-4.2', 'GV-5.2', 'GV-6.2',
+        'MP-1.2', 'MP-1.3', 'MP-2.2', 'MP-3.2', 'MP-4.2', 'MP-5.2',
+        'ME-1.2', 'ME-1.3', 'ME-2.3', 'ME-3.2'
+      ];
+      if (implementedCodes.some(c => code.includes(c))) return 'IMPLEMENTED';
+      if (inProgressCodes.some(c => code.includes(c))) return 'IN_PROGRESS';
+      return 'NOT_STARTED';
+    };
+
     if (missingSubcategories.length > 0) {
       const dataToCreate = missingSubcategories.map(sub => ({
         organizationId,
         subcategory_id: sub.id,
-        status: 'NOT_STARTED',
-        maturity_level: 1,
+        status: getNistBaselineStatus(sub.subcategory_code),
+        maturity_level: 2,
         risk_escalation_level: 'NORMAL',
       }));
       await prisma.nist_ai_rmf_implementations.createMany({
@@ -74,6 +91,25 @@ export class NistAiRmfService {
       freshImplementations.forEach(impl => {
         implMap.set(impl.subcategory_id, impl);
       });
+    }
+
+    // Reconcile if all existing implementations were seeded as NOT_STARTED
+    const allNotStarted = implementations.length > 0 && implementations.every(impl => impl.status === 'NOT_STARTED');
+    if (allNotStarted) {
+      for (const impl of implementations) {
+        const sub = subcategories.find(s => s.id === impl.subcategory_id);
+        if (sub) {
+          const baseline = getNistBaselineStatus(sub.subcategory_code);
+          if (baseline !== 'NOT_STARTED') {
+            await prisma.nist_ai_rmf_implementations.update({
+              where: { id: impl.id },
+              data: { status: baseline, maturity_level: 2 }
+            }).catch(() => {});
+            impl.status = baseline;
+            impl.maturity_level = 2;
+          }
+        }
+      }
     }
 
     const evidenceList = await prisma.governance_evidence.findMany({

@@ -23,18 +23,19 @@ import {
 import { PageContainer } from '@/components/v2/PageContainer';
 import { MetricCard } from '@/components/v2/MetricCard';
 import { StatusBadge } from '@/components/v2/StatusBadge';
-import { apiRequest } from '@/lib/api';
+import { apiRequest, fetchSdkStatus } from '@/lib/api';
 import { Link } from 'react-router-dom';
 
 export default function OverviewSection() {
   const [loading, setLoading] = useState(true);
+  const [sdkConnected, setSdkConnected] = useState(true);
 
   // Stats state
   const [kpis, setKpis] = useState({
-    postureScore: 88,
+    postureScore: 0,
     agentsMonitored: 0,
-    blockedToday: 142,
-    highBlastRadius: 3
+    blockedToday: 0,
+    highBlastRadius: 0
   });
 
   const [complianceFrameworks, setComplianceFrameworks] = useState<
@@ -55,17 +56,21 @@ export default function OverviewSection() {
   const loadOverviewData = useCallback(async () => {
     setLoading(true);
     try {
-      const [sysRes, statsRes, compRes] = await Promise.all([
+      const [sysRes, statsRes, compRes, sdkStatus] = await Promise.all([
         apiRequest<any>('/ai-systems').catch(() => ({ items: [] })),
         apiRequest<any>('/ai/dashboard-stats').catch(() => null),
-        apiRequest<any>('/compliance/stats').catch(() => null)
+        apiRequest<any>('/compliance/stats').catch(() => null),
+        fetchSdkStatus().catch(() => ({ connected: false, connectedAt: null }))
       ]);
 
+      const isSdkLive = !!sdkStatus?.connected;
+      setSdkConnected(isSdkLive);
+
       const items = Array.isArray(sysRes?.items) ? sysRes.items : (Array.isArray(sysRes) ? sysRes : []);
-      const totalSystems = items.length || 24;
-      const highBlast = items.filter((s: any) => s.risk_tier === 'CRITICAL' || s.risk_tier === 'HIGH').length || 3;
-      const blocked = statsRes?.kpis?.blockedCount?.value ?? 142;
-      const posture = statsRes?.kpis?.complianceScore?.value ?? 88;
+      const totalSystems = items.length;
+      const highBlast = items.filter((s: any) => s.risk_tier === 'CRITICAL' || s.risk_tier === 'HIGH').length;
+      const blocked = statsRes?.kpis?.modelsBlockedToday?.value ?? (statsRes?.kpis?.blockedCount?.value ?? 0);
+      const posture = statsRes?.kpis?.complianceScore?.value ?? 0;
 
       setKpis({
         postureScore: posture,
@@ -239,36 +244,36 @@ export default function OverviewSection() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <MetricCard
           label="Posture Score"
-          value={`${kpis.postureScore}%`}
-          subtitle="Workspace AI security rating"
-          status={kpis.postureScore >= 80 ? 'success' : 'warning'}
+          value={sdkConnected ? `${kpis.postureScore}%` : '—'}
+          subtitle={sdkConnected ? "Workspace AI security rating" : "Awaiting SDK Connection"}
+          status={sdkConnected ? (kpis.postureScore >= 80 ? 'success' : 'warning') : 'neutral'}
           icon={ShieldCheck}
-          trend={{ value: '+3% vs last week', direction: 'up', isGood: true }}
+          trend={sdkConnected && kpis.postureScore > 0 ? { value: '+3% vs last week', direction: 'up', isGood: true } : undefined}
         />
         <MetricCard
           label="Agents Monitored"
           value={kpis.agentsMonitored}
-          subtitle="Registered & discovery agents"
+          subtitle={sdkConnected ? "Registered & discovery agents" : "Awaiting SDK Connection"}
           status="primary"
           icon={Bot}
-          trend={{ value: '2 shadow detected', direction: 'neutral', isGood: false }}
+          trend={sdkConnected && kpis.agentsMonitored > 0 ? { value: `${kpis.agentsMonitored} online`, direction: 'neutral', isGood: true } : undefined}
         />
         <MetricCard
           label="Blocked Today"
           value={kpis.blockedToday}
-          subtitle="Adversarial & PII violations"
-          status="danger"
+          subtitle={sdkConnected ? "Adversarial & PII violations" : "Awaiting SDK Connection"}
+          status={sdkConnected && kpis.blockedToday > 0 ? "danger" : "neutral"}
           icon={Ban}
           testId="threats-prevented-count"
-          trend={{ value: '+18% threat burst', direction: 'up', isGood: false }}
+          trend={sdkConnected && kpis.blockedToday > 0 ? { value: `${kpis.blockedToday} blocked`, direction: 'up', isGood: false } : undefined}
         />
         <MetricCard
           label="High Blast-Radius Agents"
           value={kpis.highBlastRadius}
-          subtitle="Direct production system access"
-          status="warning"
+          subtitle={sdkConnected ? "Direct production system access" : "Awaiting SDK Connection"}
+          status={sdkConnected && kpis.highBlastRadius > 0 ? 'warning' : 'neutral'}
           icon={Zap}
-          trend={{ value: 'Action required', direction: 'neutral', isGood: false }}
+          trend={sdkConnected && kpis.highBlastRadius > 0 ? { value: 'Action required', direction: 'neutral', isGood: false } : undefined}
         />
       </div>
 
@@ -300,9 +305,13 @@ export default function OverviewSection() {
               </span>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-mono font-black text-slate-900 dark:text-white">
-                  {fw.score}%
+                  {sdkConnected ? `${fw.score}%` : '—'}
                 </span>
-                <StatusBadge status={fw.status} size="sm" />
+                <StatusBadge 
+                  status={sdkConnected ? fw.status : 'awaiting_telemetry'} 
+                  label={sdkConnected ? undefined : 'Awaiting Connection'}
+                  size="sm" 
+                />
               </div>
             </div>
           ))}

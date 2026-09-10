@@ -4,7 +4,7 @@ import { TabBar } from '@/components/v2/TabBar';
 import { StatusBadge } from '@/components/v2/StatusBadge';
 import { MetricCard } from '@/components/v2/MetricCard';
 import { DataTable, Column } from '@/components/v2/DataTable';
-import { apiRequest } from '@/lib/api';
+import { apiRequest, fetchSdkStatus } from '@/lib/api';
 import { useStore } from '@/store/useStore';
 import { 
   ShieldCheck, 
@@ -35,6 +35,8 @@ export default function PoliciesSection() {
   const { addToast } = useStore();
   const [activeTab, setActiveTab] = useState<string>('rules');
   const [loading, setLoading] = useState(false);
+  const [sdkConnected, setSdkConnected] = useState(true);
+  const [interceptionsToday, setInterceptionsToday] = useState(0);
   const [rules, setRules] = useState<GovernanceRule[]>([]);
   const [workflows, setWorkflows] = useState<any[]>([]);
 
@@ -48,14 +50,22 @@ export default function PoliciesSection() {
   const loadPoliciesData = useCallback(async () => {
     setLoading(true);
     try {
-      const [polRes, guardRes, wfRes] = await Promise.all([
+      const [polRes, guardRes, wfRes, statsRes, sdkStatus] = await Promise.all([
         apiRequest<any>('/policies').catch(() => []),
         apiRequest<any>('/guardrails').catch(() => ({ data: [] })),
-        apiRequest<any>('/workflows').catch(() => ({ data: [] }))
+        apiRequest<any>('/workflows').catch(() => ({ data: [] })),
+        apiRequest<any>('/ai/dashboard-stats').catch(() => null),
+        fetchSdkStatus().catch(() => ({ connected: false, connectedAt: null }))
       ]);
+
+      const isSdkLive = !!sdkStatus?.connected;
+      setSdkConnected(isSdkLive);
 
       const loadedPolicies = Array.isArray(polRes?.data) ? polRes.data : (Array.isArray(polRes) ? polRes : []);
       const loadedGuardrails = Array.isArray(guardRes?.data) ? guardRes.data : [];
+
+      const blockedCount = statsRes?.kpis?.modelsBlockedToday?.value ?? (statsRes?.kpis?.blockedCount?.value ?? 0);
+      setInterceptionsToday(isSdkLive ? blockedCount : 0);
 
       const formattedRules: GovernanceRule[] = [
         {
@@ -66,8 +76,8 @@ export default function PoliciesSection() {
           enforcementMode: 'blocking',
           actionType: 'BLOCK',
           isEnabled: true,
-          blockedCountToday: 88,
-          updatedAt: '2 hours ago'
+          blockedCountToday: 0,
+          updatedAt: 'Recently'
         },
         {
           id: 'rule-2',
@@ -77,8 +87,8 @@ export default function PoliciesSection() {
           enforcementMode: 'blocking',
           actionType: 'BLOCK',
           isEnabled: true,
-          blockedCountToday: 34,
-          updatedAt: '1 day ago'
+          blockedCountToday: 0,
+          updatedAt: 'Recently'
         },
         {
           id: 'rule-3',
@@ -88,8 +98,8 @@ export default function PoliciesSection() {
           enforcementMode: 'human-in-loop',
           actionType: 'FLAG',
           isEnabled: true,
-          blockedCountToday: 12,
-          updatedAt: '3 days ago'
+          blockedCountToday: 0,
+          updatedAt: 'Recently'
         },
         {
           id: 'rule-4',
@@ -99,8 +109,8 @@ export default function PoliciesSection() {
           enforcementMode: 'blocking',
           actionType: 'BLOCK',
           isEnabled: true,
-          blockedCountToday: 8,
-          updatedAt: 'Today'
+          blockedCountToday: 0,
+          updatedAt: 'Recently'
         },
         {
           id: 'rule-5',
@@ -111,7 +121,7 @@ export default function PoliciesSection() {
           actionType: 'FLAG',
           isEnabled: false,
           blockedCountToday: 0,
-          updatedAt: '5 days ago'
+          updatedAt: 'Recently'
         }
       ];
 
@@ -125,7 +135,7 @@ export default function PoliciesSection() {
           enforcementMode: p.effect === 'deny' ? 'blocking' : 'flag-and-review',
           actionType: p.effect === 'deny' ? 'BLOCK' : 'FLAG',
           isEnabled: p.status === 'ACTIVE',
-          blockedCountToday: ((idx + 1) * 7) % 20,
+          blockedCountToday: 0,
           updatedAt: 'Recently'
         });
       });
@@ -266,29 +276,29 @@ export default function PoliciesSection() {
         <MetricCard
           label="Active Governance Rules"
           value={rules.filter(r => r.isEnabled).length}
-          subtitle="Enforced across workspace"
+          subtitle={sdkConnected ? "Enforced across workspace" : "Policies active — awaiting agent traffic to enforce"}
           status="primary"
           icon={ShieldCheck}
         />
         <MetricCard
           label="Strict Blocking Mode"
           value={rules.filter(r => r.enforcementMode === 'blocking' && r.isEnabled).length}
-          subtitle="Zero-trust automated blocks"
-          status="danger"
+          subtitle={sdkConnected ? "Zero-trust automated blocks" : "Awaiting SDK Connection"}
+          status={rules.some(r => r.enforcementMode === 'blocking' && r.isEnabled) ? "danger" : "neutral"}
           icon={Ban}
         />
         <MetricCard
           label="Human-in-Loop Triggers"
           value={rules.filter(r => r.enforcementMode === 'human-in-loop').length}
-          subtitle="Requires SOC approval"
-          status="warning"
+          subtitle={sdkConnected ? "Requires SOC approval" : "Awaiting SDK Connection"}
+          status={rules.some(r => r.enforcementMode === 'human-in-loop') ? "warning" : "neutral"}
           icon={AlertTriangle}
         />
         <MetricCard
           label="Interceptions Today"
-          value={rules.reduce((acc, r) => acc + r.blockedCountToday, 0)}
-          subtitle="Actions blocked / flagged"
-          status="success"
+          value={interceptionsToday}
+          subtitle={sdkConnected ? "Actions blocked / flagged" : "Awaiting SDK Connection"}
+          status={sdkConnected && interceptionsToday > 0 ? "success" : "neutral"}
           icon={Zap}
         />
       </div>
@@ -298,7 +308,7 @@ export default function PoliciesSection() {
         tabs={[
           { id: 'rules', label: 'Governance Rules & Guardrails', count: rules.length, icon: SlidersHorizontal },
           { id: 'intake', label: 'Policy Builder & Intake Queue', icon: Sliders },
-          { id: 'workflows', label: 'Approval Workflows', count: workflows.length || 3, icon: GitPullRequest }
+          { id: 'workflows', label: 'Approval Workflows', count: workflows.length, icon: GitPullRequest }
         ]}
         activeTab={activeTab}
         onChange={setActiveTab}

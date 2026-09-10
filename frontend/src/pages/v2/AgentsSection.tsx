@@ -5,7 +5,7 @@ import { DataTable, Column } from '@/components/v2/DataTable';
 import { StatusBadge } from '@/components/v2/StatusBadge';
 import { RiskPill } from '@/components/v2/RiskPill';
 import { MetricCard } from '@/components/v2/MetricCard';
-import { apiRequest } from '@/lib/api';
+import { apiRequest, fetchSdkStatus } from '@/lib/api';
 import { useStore } from '@/store/useStore';
 import { 
   Bot, 
@@ -38,6 +38,7 @@ export default function AgentsSection() {
   const { addToast } = useStore();
   const [activeTab, setActiveTab] = useState('inventory');
   const [loading, setLoading] = useState(true);
+  const [sdkConnected, setSdkConnected] = useState(true);
   const [agents, setAgents] = useState<AgentItem[]>([]);
   const [datasets, setDatasets] = useState<any[]>([]);
 
@@ -47,11 +48,15 @@ export default function AgentsSection() {
   const loadAgentsData = useCallback(async () => {
     setLoading(true);
     try {
-      const [sysRes, shadowRes, dsRes] = await Promise.all([
+      const [sysRes, shadowRes, dsRes, sdkStatus] = await Promise.all([
         apiRequest<any>('/ai-systems').catch(() => ({ items: [] })),
         apiRequest<any>('/shadow-ai/detections').catch(() => ({ incidents: [] })),
-        apiRequest<any>('/datasets').catch(() => ({ data: [] }))
+        apiRequest<any>('/datasets').catch(() => ({ data: [] })),
+        fetchSdkStatus().catch(() => ({ connected: false, connectedAt: null }))
       ]);
+
+      const isSdkLive = !!sdkStatus?.connected;
+      setSdkConnected(isSdkLive);
 
       const registered = (sysRes?.items || sysRes || []).map((sys: any, idx: number) => ({
         id: sys.id || `sys-${idx + 1}`,
@@ -77,34 +82,6 @@ export default function AgentsSection() {
         department: inc.dept,
         detectedAt: inc.time || 'Today'
       }));
-
-      // Fallback default mock shadow agents if DB empty for demonstration
-      if (shadowItems.length === 0) {
-        shadowItems.push(
-          {
-            id: 'shadow-demo-1',
-            name: 'Shadow AutoGPT Assistant',
-            source: 'Slack Webhook (DevOps)',
-            riskLevel: 'SHADOW',
-            actionsToday: 48,
-            status: 'UNDER_REVIEW',
-            isShadow: true,
-            department: 'Engineering',
-            detectedAt: '10 mins ago'
-          },
-          {
-            id: 'shadow-demo-2',
-            name: 'Unverified CodeLlama Extension',
-            source: 'VSCode Local Host',
-            riskLevel: 'SHADOW',
-            actionsToday: 112,
-            status: 'BLOCKED',
-            isShadow: true,
-            department: 'Product Development',
-            detectedAt: '1 hour ago'
-          }
-        );
-      }
 
       setAgents([...shadowItems, ...registered]);
       setDatasets(dsRes?.data || dsRes || []);
@@ -264,29 +241,29 @@ export default function AgentsSection() {
         <MetricCard
           label="Total Agents Monitored"
           value={agents.length}
-          subtitle="Unified inventory footprint"
+          subtitle={sdkConnected ? "Unified inventory footprint" : "Awaiting SDK Connection"}
           status="primary"
           icon={Bot}
         />
         <MetricCard
           label="Active & Compliant"
           value={activeCount}
-          subtitle="Passing active policy guardrails"
-          status="success"
+          subtitle={sdkConnected ? "Passing active policy guardrails" : "Awaiting SDK Connection"}
+          status={sdkConnected && activeCount > 0 ? "success" : "neutral"}
           icon={Zap}
         />
         <MetricCard
           label="Inline Shadow AI"
           value={shadowCount}
-          subtitle="Flagged in inventory below"
-          status="warning"
+          subtitle={sdkConnected ? "Flagged in inventory below" : "Awaiting SDK Connection"}
+          status={sdkConnected && shadowCount > 0 ? "warning" : "neutral"}
           icon={EyeOff}
         />
         <MetricCard
           label="Enforced / Blocked"
           value={blockedCount}
-          subtitle="Suspended due to risk violations"
-          status="danger"
+          subtitle={sdkConnected ? "Suspended due to risk violations" : "Awaiting SDK Connection"}
+          status={sdkConnected && blockedCount > 0 ? "danger" : "neutral"}
           icon={ShieldAlert}
         />
       </div>
@@ -296,7 +273,7 @@ export default function AgentsSection() {
         tabs={[
           { id: 'inventory', label: 'All Agents & Inventory', count: agents.length, icon: Bot },
           { id: 'discovery', label: 'Agent Discovery', count: shadowCount, icon: Search },
-          { id: 'datasets', label: 'Connected Datasets', count: datasets.length || 8, icon: Database },
+          { id: 'datasets', label: 'Connected Datasets', count: datasets.length, icon: Database },
           { id: 'evaluation', label: 'LLM Evaluation & Benchmarks', icon: FlaskConical }
         ]}
         activeTab={activeTab}
@@ -315,6 +292,11 @@ export default function AgentsSection() {
               : ''
           }
           isLoading={loading}
+          emptyMessage={
+            !sdkConnected && agents.length === 0
+              ? 'No agents monitored yet — Awaiting SDK Connection'
+              : 'No agents registered in inventory.'
+          }
           searchPlaceholder="Search agent by name, source, or status..."
           actions={
             <button
@@ -349,20 +331,26 @@ export default function AgentsSection() {
 
           <div className="space-y-3">
             <h4 className="text-xs font-bold uppercase text-slate-400">Recently Intercepted Unregistered Tokens</h4>
-            {agents.filter(a => a.isShadow).map(shadow => (
-              <div key={shadow.id} className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-xl flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-purple-500/20 text-purple-300">
-                    <EyeOff className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h5 className="text-xs font-bold text-white">{shadow.name}</h5>
-                    <span className="text-[10px] text-slate-400 font-mono">Detected via {shadow.source} • {shadow.detectedAt}</span>
-                  </div>
-                </div>
-                <StatusBadge status="shadow" label="Shadow Flag" />
+            {agents.filter(a => a.isShadow).length === 0 ? (
+              <div className="p-8 text-center text-slate-500 dark:text-slate-400 text-xs border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
+                {sdkConnected ? 'No shadow agents intercepted.' : 'No shadow agents detected — Awaiting SDK Connection.'}
               </div>
-            ))}
+            ) : (
+              agents.filter(a => a.isShadow).map(shadow => (
+                <div key={shadow.id} className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-xl flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-purple-500/20 text-purple-300">
+                      <EyeOff className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h5 className="text-xs font-bold text-white">{shadow.name}</h5>
+                      <span className="text-[10px] text-slate-400 font-mono">Detected via {shadow.source} • {shadow.detectedAt}</span>
+                    </div>
+                  </div>
+                  <StatusBadge status="shadow" label="Shadow Flag" />
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}

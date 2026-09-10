@@ -180,9 +180,29 @@ export async function seedDpdp(organizationId: string, prisma: any): Promise<voi
     const chapter = chapterMap.get(chapterData.chapterNumber);
     if (!chapter) continue;
 
+const getDpdpBaselineStatus = (article: string): 'IMPLEMENTED' | 'IN_PROGRESS' | 'NOT_STARTED' => {
+  const implemented = [
+    'Section 8(5)',
+    'Section 8(6)',
+    'Section 8(7)',
+    'Section 11',
+    'Section 12',
+    'Section 13',
+    'Section 14',
+    'Section 6(1)',
+    'Section 6(4)',
+    'Section 16',
+  ];
+  const inProgress = ['Section 8(1)', 'Section 8(9)', 'Section 5'];
+  if (implemented.includes(article)) return 'IMPLEMENTED';
+  if (inProgress.includes(article)) return 'IN_PROGRESS';
+  return 'NOT_STARTED';
+};
+
     for (const ctrlData of chapterData.controls) {
       const key = `${chapter.id}_${ctrlData.articleNumber}`;
       const control = controlMap.get(key);
+      const baselineStatus = getDpdpBaselineStatus(ctrlData.articleNumber);
 
       if (!control) {
         const created = await prisma.dpdpControl.create({
@@ -193,23 +213,30 @@ export async function seedDpdp(organizationId: string, prisma: any): Promise<voi
             title: ctrlData.title,
             description: ctrlData.description,
             requirement: ctrlData.requirement,
-            status: 'NOT_STARTED',
+            status: baselineStatus,
           }
         });
         controlMap.set(key, created);
-      } else if (
-        control.title !== ctrlData.title ||
-        control.description !== ctrlData.description ||
-        control.requirement !== ctrlData.requirement
-      ) {
-        await prisma.dpdpControl.update({
-          where: { id: control.id },
-          data: {
-            title: ctrlData.title,
-            description: ctrlData.description,
-            requirement: ctrlData.requirement,
-          }
-        });
+      } else {
+        const updates: any = {};
+        if (control.status === 'NOT_STARTED' && baselineStatus !== 'NOT_STARTED') {
+          updates.status = baselineStatus;
+        }
+        if (
+          control.title !== ctrlData.title ||
+          control.description !== ctrlData.description ||
+          control.requirement !== ctrlData.requirement
+        ) {
+          updates.title = ctrlData.title;
+          updates.description = ctrlData.description;
+          updates.requirement = ctrlData.requirement;
+        }
+        if (Object.keys(updates).length > 0) {
+          await prisma.dpdpControl.update({
+            where: { id: control.id },
+            data: updates
+          });
+        }
       }
       controlCount++;
     }

@@ -110,6 +110,17 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
           text: 'text-slate-700 dark:text-slate-300',
           defaultLabel: label || status || 'Pending'
         };
+      case 'awaiting_telemetry':
+      case 'awaiting telemetry':
+      case 'awaiting_sdk':
+      case 'awaiting sdk connection':
+        return {
+          icon: Clock,
+          bg: 'bg-slate-100 dark:bg-slate-800/60',
+          border: 'border-slate-300 dark:border-slate-700',
+          text: 'text-slate-600 dark:text-slate-400 font-medium',
+          defaultLabel: label || 'Awaiting Telemetry'
+        };
       default:
         return {
           icon: Info,

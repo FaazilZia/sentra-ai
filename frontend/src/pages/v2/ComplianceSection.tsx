@@ -4,7 +4,7 @@ import { TabBar } from "@/components/v2/TabBar";
 import { StatusBadge } from "@/components/v2/StatusBadge";
 import { MetricCard } from "@/components/v2/MetricCard";
 import { DataTable, Column } from "@/components/v2/DataTable";
-import { apiRequest } from "@/lib/api";
+import { apiRequest, fetchSdkStatus } from "@/lib/api";
 import { useStore } from "@/store/useStore";
 import { 
   ClipboardCheck, 
@@ -17,7 +17,8 @@ import {
   Lock,
   RefreshCw,
   SlidersHorizontal,
-  AlertCircle
+  AlertCircle,
+  Info
 } from "lucide-react";
 
 // The 5 active frameworks specified by the prompt
@@ -211,6 +212,7 @@ export default function ComplianceSection() {
   const [activeTab, setActiveTab] = useState<string>("GDPR");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sdkConnected, setSdkConnected] = useState<boolean>(true);
   const [frameworks, setFrameworks] = useState<FrameworkSummary[]>(FIVE_FRAMEWORKS);
   const [controls, setControls] = useState<ControlItem[]>([]);
 
@@ -226,7 +228,8 @@ export default function ComplianceSection() {
         pciRes,
         nistRes,
         govControlsRes,
-        sysRes
+        sysRes,
+        sdkStatusRes
       ] = await Promise.all([
         apiRequest<any>("/compliance/stats").catch(() => null),
         apiRequest<any[]>("/gdpr/controls").catch(() => []),
@@ -235,8 +238,12 @@ export default function ComplianceSection() {
         apiRequest<any[]>("/pci/controls").catch(() => []),
         apiRequest<any[]>("/compliance/nist-ai-rmf/controls").catch(() => []),
         apiRequest<{ items: any[] }>("/governance/controls").catch(() => null),
-        apiRequest<{ items: any[] }>("/ai-systems").catch(() => null)
+        apiRequest<{ items: any[] }>("/ai-systems").catch(() => null),
+        fetchSdkStatus().catch(() => ({ connected: false, firstConnectedAt: null }))
       ]);
+
+      const isConnected = Boolean(sdkStatusRes?.connected);
+      setSdkConnected(isConnected);
 
       const hasStats = Boolean(statsRes);
       const hasGovControls = Boolean(govControlsRes?.items?.length);
@@ -346,6 +353,7 @@ export default function ComplianceSection() {
   const currentControls = controls.filter(c => c.framework === activeTab);
 
   const getFwScoreDisplay = (id: ActiveFramework) => {
+    if (!sdkConnected) return "—";
     const fw = frameworks.find(f => f.id === id);
     if (!fw || fw.totalControls === 0) return "0%";
     return `${fw.readinessScore}%`;
@@ -387,7 +395,12 @@ export default function ComplianceSection() {
       header: "Audit Status",
       accessorKey: "status",
       sortable: true,
-      cell: (item) => <StatusBadge status={item.status} />
+      cell: (item) => (
+        <StatusBadge 
+          status={sdkConnected ? item.status : "awaiting_telemetry"} 
+          label={sdkConnected ? undefined : "Awaiting Telemetry"} 
+        />
+      )
     },
     {
       header: "Action",
@@ -473,12 +486,44 @@ export default function ComplianceSection() {
                 <div className="text-right">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Readiness</span>
                   <span className="text-2xl font-mono font-black text-indigo-600 dark:text-indigo-400">
-                    {currentFw.readinessScore}%
+                    {sdkConnected ? `${currentFw.readinessScore}%` : "—"}
                   </span>
                 </div>
-                <StatusBadge status={currentFw.readinessScore >= 85 ? "compliant" : "warning"} size="md" />
+                <StatusBadge 
+                  status={sdkConnected ? (currentFw.readinessScore >= 85 ? "compliant" : "warning") : "awaiting_telemetry"} 
+                  label={sdkConnected ? undefined : "Awaiting SDK Connection"}
+                  size="md" 
+                />
               </div>
             </div>
+
+            {/* Awaiting SDK Connection Explanatory Banner */}
+            {!sdkConnected && (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl animate-fade-in">
+                <div className="flex items-center gap-2.5">
+                  <Info className="h-4 w-4 text-indigo-500 shrink-0" />
+                  <p className="text-xs text-slate-600 dark:text-slate-300">
+                    <span className="font-semibold text-slate-900 dark:text-white">Not Yet Assessed — Awaiting SDK Connection:</span> Compliance controls are evaluated against real agent traffic and telemetry once the SDK is integrated.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <a
+                    href="/settings"
+                    className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-all shadow-sm"
+                  >
+                    Connect SDK
+                  </a>
+                  <a
+                    href="https://docs.sentra.ai"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-3 py-1 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition-all"
+                  >
+                    View Setup Docs
+                  </a>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <MetricCard
@@ -490,15 +535,15 @@ export default function ComplianceSection() {
               />
               <MetricCard
                 label="Passed Controls"
-                value={currentFw.passedControls}
-                status="success"
+                value={sdkConnected ? currentFw.passedControls : "0 (Awaiting Telemetry)"}
+                status={sdkConnected ? "success" : "info"}
                 icon={CheckCircle2}
                 testId="metric-passed-controls"
               />
               <MetricCard
                 label="Open Findings & Obligations"
-                value={currentFw.openFindings}
-                status={currentFw.openFindings > 3 ? "danger" : "warning"}
+                value={sdkConnected ? currentFw.openFindings : 0}
+                status={sdkConnected && currentFw.openFindings > 3 ? "danger" : "warning"}
                 icon={AlertTriangle}
                 testId="metric-open-findings"
               />
@@ -519,7 +564,7 @@ export default function ComplianceSection() {
               data={currentControls}
               keyExtractor={(item) => item.id}
               isLoading={loading}
-              emptyMessage={`No compliance controls assessed yet for ${currentFw.id}.`}
+              emptyMessage={!sdkConnected ? `Awaiting SDK telemetry to evaluate ${currentFw.id} controls.` : `No compliance controls assessed yet for ${currentFw.id}.`}
             />
           </div>
         </div>

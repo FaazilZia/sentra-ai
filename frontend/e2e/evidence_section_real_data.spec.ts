@@ -70,6 +70,17 @@ test.describe('EvidenceSection: Real API Wiring & Mock Data Elimination', () => 
       });
     });
 
+    await page.route('**/api/v1/organizations/**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          id: 'org-test-1',
+          name: 'Sentraa Test Corp',
+        }),
+      });
+    });
+
     await page.route('**/organizations/**', async (route) => {
       await route.fulfill({
         status: 200,
@@ -78,6 +89,36 @@ test.describe('EvidenceSection: Real API Wiring & Mock Data Elimination', () => 
           id: 'org-test-1',
           name: 'Sentraa Test Corp',
         }),
+      });
+    });
+
+    await page.route('**/organizations/sdk-status', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: {
+            connected: true,
+            connectedAt: '2026-09-01T12:00:00Z',
+            firstConnectedAt: '2026-09-01T12:00:00Z'
+          }
+        })
+      });
+    });
+
+    await page.route('**/api/v1/organizations/sdk-status', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: {
+            connected: true,
+            connectedAt: '2026-09-01T12:00:00Z',
+            firstConnectedAt: '2026-09-01T12:00:00Z'
+          }
+        })
       });
     });
 

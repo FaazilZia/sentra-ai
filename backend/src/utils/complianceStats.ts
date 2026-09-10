@@ -4,16 +4,24 @@ export interface ControlStatusItem {
   status: string;
 }
 
-export function calculateComplianceStats(controls: ControlStatusItem[]) {
+export function calculateComplianceStats(
+  controls: ControlStatusItem[],
+  violationCount: number = 0,
+  openIncidentsCount: number = 0
+) {
   const total = controls.length;
   const implemented = controls.filter(c => c.status === 'IMPLEMENTED').length;
   const inProgress = controls.filter(c => c.status === 'IN_PROGRESS').length;
   const notStarted = controls.filter(c => c.status === 'NOT_STARTED').length;
   const notApplicable = controls.filter(c => c.status === 'NOT_APPLICABLE').length;
 
-  const compliance_score = total > 0 
+  const baseScore = total > 0 
     ? Math.round(((implemented + notApplicable + inProgress * 0.5) / total) * 100)
     : 0;
+
+  // Dynamic deduction based on real SDK telemetry & incidents
+  const deduction = (openIncidentsCount * 10) + (violationCount * 5);
+  const compliance_score = Math.max(0, baseScore - deduction);
 
   return {
     total_controls: total,

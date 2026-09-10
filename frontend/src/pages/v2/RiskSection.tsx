@@ -5,7 +5,7 @@ import { StatusBadge } from '@/components/v2/StatusBadge';
 import { RiskPill } from '@/components/v2/RiskPill';
 import { MetricCard } from '@/components/v2/MetricCard';
 import { DataTable, Column } from '@/components/v2/DataTable';
-import { apiRequest } from '@/lib/api';
+import { apiRequest, fetchSdkStatus } from '@/lib/api';
 import { useStore } from '@/store/useStore';
 import { 
   ShieldAlert, 
@@ -142,22 +142,32 @@ export default function RiskSection() {
   const [activeTab, setActiveTab] = useState<string>('ranking');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sdkConnected, setSdkConnected] = useState(true);
   const [rankedAgents, setRankedAgents] = useState<RankedAgentRisk[]>([]);
   const [driftAlerts, setDriftAlerts] = useState<DriftItem[]>([]);
+  const [impactAssessments, setImpactAssessments] = useState<any[]>([]);
 
   const loadRiskData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [riskRes, sysRes, driftRes] = await Promise.all([
+      const [riskRes, sysRes, driftRes, impactRes, sdkStatus] = await Promise.all([
         apiRequest<any>('/risks'),
-        apiRequest<any>('/ai-systems'),
-        apiRequest<any>('/drift/alerts')
+        apiRequest<any>('/ai-systems').catch(() => []),
+        apiRequest<any>('/drift/alerts').catch(() => []),
+        apiRequest<any>('/governance/impact-assessments').catch(() => ({ items: [] })),
+        fetchSdkStatus().catch(() => ({ connected: false, connectedAt: null }))
       ]);
+
+      const isSdkLive = !!sdkStatus?.connected;
+      setSdkConnected(isSdkLive);
 
       const rawRisks = extractList(riskRes);
       const rawSystems = extractList(sysRes);
       const rawDrifts = extractList(driftRes);
+      const rawImpacts = extractList(impactRes);
+
+      setImpactAssessments(rawImpacts);
 
       const ranked = mergeRankedAgents(rawRisks, rawSystems);
       setRankedAgents(ranked);
@@ -182,6 +192,7 @@ export default function RiskSection() {
       setError(err?.message || 'Failed to load risk data');
       setRankedAgents([]);
       setDriftAlerts([]);
+      setImpactAssessments([]);
     } finally {
       setLoading(false);
     }
@@ -276,33 +287,33 @@ export default function RiskSection() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <MetricCard
           label="Critical Severity Risk"
-          value={criticalCount}
-          subtitle="Immediate mitigation required"
-          status="danger"
+          value={sdkConnected ? criticalCount : 0}
+          subtitle={sdkConnected ? "Immediate mitigation required" : "Awaiting telemetry to assess risk"}
+          status={sdkConnected && criticalCount > 0 ? "danger" : "neutral"}
           icon={ShieldAlert}
           testId="critical-severity-count"
         />
         <MetricCard
           label="High Severity Risk"
-          value={highCount}
-          subtitle="Elevated blast-radius access"
-          status="warning"
+          value={sdkConnected ? highCount : 0}
+          subtitle={sdkConnected ? "Elevated blast-radius access" : "Awaiting telemetry to assess risk"}
+          status={sdkConnected && highCount > 0 ? "warning" : "neutral"}
           icon={AlertTriangle}
           testId="high-severity-count"
         />
         <MetricCard
           label="Medium Severity Risk"
-          value={mediumCount}
-          subtitle="Policy threshold warnings"
-          status="warning"
+          value={sdkConnected ? mediumCount : 0}
+          subtitle={sdkConnected ? "Policy threshold warnings" : "Awaiting telemetry to assess risk"}
+          status={sdkConnected && mediumCount > 0 ? "warning" : "neutral"}
           icon={Activity}
           testId="medium-severity-count"
         />
         <MetricCard
           label="Active Drift Alerts"
-          value={driftAlerts.length}
-          subtitle="Concept & hallucination drift"
-          status="info"
+          value={sdkConnected ? driftAlerts.length : 0}
+          subtitle={sdkConnected ? "Concept & hallucination drift" : "Awaiting telemetry to assess risk"}
+          status={sdkConnected && driftAlerts.length > 0 ? "info" : "neutral"}
           icon={TrendingUp}
           testId="active-drift-alerts"
         />
@@ -327,9 +338,9 @@ export default function RiskSection() {
       {/* Sub-Tabs */}
       <TabBar
         tabs={[
-          { id: 'ranking', label: 'Ranked Highest-Risk Agents', count: rankedAgents.length, icon: ShieldAlert },
-          { id: 'drift', label: 'Drift Detection Alerts', count: driftAlerts.length, icon: Activity },
-          { id: 'assessments', label: 'Risk Audits & Impact Boards', icon: Award }
+          { id: 'ranking', label: 'Ranked Highest-Risk Agents', count: sdkConnected ? rankedAgents.length : 0, icon: ShieldAlert },
+          { id: 'drift', label: 'Drift Detection Alerts', count: sdkConnected ? driftAlerts.length : 0, icon: Activity },
+          { id: 'assessments', label: 'Risk Audits & Impact Boards', count: impactAssessments.length, icon: Award }
         ]}
         activeTab={activeTab}
         onChange={setActiveTab}
@@ -342,7 +353,11 @@ export default function RiskSection() {
           data={rankedAgents}
           keyExtractor={(item) => item.id}
           isLoading={loading}
-          emptyMessage="No risk assessments or monitored AI systems yet."
+          emptyMessage={
+            !sdkConnected && rankedAgents.length === 0
+              ? "No risk assessments yet — Awaiting SDK Connection"
+              : "No risk assessments or monitored AI systems yet."
+          }
           searchPlaceholder="Filter risk center by agent or severity..."
         />
       )}
@@ -405,14 +420,31 @@ export default function RiskSection() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
-              <span className="text-[10px] font-bold uppercase text-indigo-500 font-mono">Quarterly Audit Board</span>
-              <h4 className="text-xs font-bold text-slate-900 dark:text-white">Q3 Financial Agent Blast-Radius Audit</h4>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">Assessed 14 data access points and API webhook boundaries.</p>
-              <StatusBadge status="compliant" label="Audit Completed" />
+          {impactAssessments.length === 0 ? (
+            <div className="p-12 text-center text-slate-500 dark:text-slate-400 text-xs border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
+              {sdkConnected ? "No impact assessments recorded yet." : "No Audits Run Yet — Awaiting SDK Connection"}
             </div>
-          </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {impactAssessments.map((item: any, idx: number) => (
+                <div key={item.id || idx} className="p-4 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
+                  <span className="text-[10px] font-bold uppercase text-indigo-500 font-mono">
+                    {item.type || 'Risk Audit Board'}
+                  </span>
+                  <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+                    {item.name || item.form_data?.title || `Assessment #${idx + 1}`}
+                  </h4>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    {item.description || item.form_data?.scope || 'Formal risk assessment record.'}
+                  </p>
+                  <StatusBadge 
+                    status={item.status === 'APPROVED' ? 'compliant' : item.status === 'SUBMITTED' ? 'pending' : 'draft'} 
+                    label={item.status || 'Completed'} 
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </PageContainer>

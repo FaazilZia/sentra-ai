@@ -413,6 +413,36 @@ test.describe("Compliance Section — Real Data E2E", () => {
       });
     });
 
+    await page.route("**/organizations/sdk-status", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          data: {
+            connected: true,
+            connectedAt: "2026-09-01T12:00:00Z",
+            firstConnectedAt: "2026-09-01T12:00:00Z"
+          }
+        })
+      });
+    });
+
+    await page.route("**/api/v1/organizations/sdk-status", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          data: {
+            connected: true,
+            connectedAt: "2026-09-01T12:00:00Z",
+            firstConnectedAt: "2026-09-01T12:00:00Z"
+          }
+        })
+      });
+    });
+
     await page.addInitScript(() => {
       localStorage.setItem("sentra_onboarded", "true");
       localStorage.setItem("sentra_token", "fake-jwt-token");
@@ -618,5 +648,39 @@ test.describe("Compliance Section — Real Data E2E", () => {
     const screenshotPath = path.join(ARTIFACT_DIR, "compliance_section_error_state.png");
     await page.screenshot({ path: screenshotPath, fullPage: true });
     expect(fs.existsSync(screenshotPath)).toBe(true);
+  });
+
+  test("SDK Disconnected State: renders Not Yet Assessed banner and neutral status badges", async ({ page }) => {
+    await page.route("**/organizations/sdk-status", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          data: { connected: false, connectedAt: null, firstConnectedAt: null }
+        })
+      });
+    });
+
+    await page.route("**/api/v1/organizations/sdk-status", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          data: { connected: false, connectedAt: null, firstConnectedAt: null }
+        })
+      });
+    });
+
+    await page.goto("/app/compliance", { waitUntil: "networkidle" });
+    await expect(page.getByRole("heading", { name: "Compliance", exact: true })).toBeVisible({ timeout: 15000 });
+
+    // Verify Not Yet Assessed banner is visible
+    await expect(page.getByText("Not Yet Assessed — Awaiting SDK Connection")).toBeVisible();
+    await expect(page.getByText("Compliance controls are evaluated against real agent traffic and telemetry once the SDK is integrated.")).toBeVisible();
+
+    // Verify readiness shows "—" instead of "0%"
+    await expect(page.getByText("—").first()).toBeVisible();
   });
 });

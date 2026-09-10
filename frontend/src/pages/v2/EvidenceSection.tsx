@@ -4,7 +4,7 @@ import { TabBar } from '@/components/v2/TabBar';
 import { StatusBadge } from '@/components/v2/StatusBadge';
 import { MetricCard } from '@/components/v2/MetricCard';
 import { DataTable, Column } from '@/components/v2/DataTable';
-import { apiRequest } from '@/lib/api';
+import { apiRequest, fetchSdkStatus } from '@/lib/api';
 import { useStore } from '@/store/useStore';
 import { 
   FolderOpen, 
@@ -78,13 +78,23 @@ export default function EvidenceSection() {
   const [activeTab, setActiveTab] = useState<string>('registry');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sdkConnected, setSdkConnected] = useState(true);
   const [documents, setDocuments] = useState<ComplianceDocument[]>([]);
+  const [executiveReports, setExecutiveReports] = useState<any[]>([]);
 
   const loadEvidenceData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await apiRequest<any>('/evidence');
+      const [res, execRes, sdkStatus] = await Promise.all([
+        apiRequest<any>('/evidence'),
+        apiRequest<any>('/reports/executive').catch(() => null),
+        fetchSdkStatus().catch(() => ({ connected: false, connectedAt: null }))
+      ]);
+
+      const isSdkLive = !!sdkStatus?.connected;
+      setSdkConnected(isSdkLive);
+
       const rawList: any[] = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
 
       const mappedDocs: ComplianceDocument[] = rawList.map((item: any, index: number) => ({
@@ -99,10 +109,15 @@ export default function EvidenceSection() {
       }));
 
       setDocuments(mappedDocs);
+
+      const rawReports = Array.isArray(execRes?.reports) ? execRes.reports : (Array.isArray(execRes?.data) ? execRes.data : []);
+      setExecutiveReports(rawReports);
+
     } catch (err: any) {
       console.error('Error loading evidence registry:', err);
       setError(err?.message || 'Failed to load compliance evidence documents');
       setDocuments([]);
+      setExecutiveReports([]);
     } finally {
       setLoading(false);
     }
@@ -219,31 +234,31 @@ export default function EvidenceSection() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <MetricCard
           label="Total Verified Artifacts"
-          value={verifiedCount}
-          subtitle="Audit-ready compliance packages"
-          status="primary"
+          value={sdkConnected ? verifiedCount : 0}
+          subtitle={sdkConnected ? "Audit-ready compliance packages" : "Awaiting SDK Connection"}
+          status={sdkConnected && verifiedCount > 0 ? "primary" : "neutral"}
           icon={FolderOpen}
           testId="total-verified-artifacts"
         />
         <MetricCard
           label="Framework Export Packages"
-          value={uniqueFrameworksCount}
-          subtitle="Active compliance frameworks"
-          status="success"
+          value={sdkConnected ? uniqueFrameworksCount : 0}
+          subtitle={sdkConnected ? "Active compliance frameworks" : "Awaiting SDK Connection"}
+          status={sdkConnected && uniqueFrameworksCount > 0 ? "success" : "neutral"}
           icon={FileCheck}
         />
         <MetricCard
           label="Executive Reports"
-          value={3}
-          subtitle="Monthly executive summaries"
-          status="info"
+          value={sdkConnected ? executiveReports.length : 0}
+          subtitle={sdkConnected ? "Monthly executive summaries" : "Awaiting SDK Connection"}
+          status={sdkConnected && executiveReports.length > 0 ? "info" : "neutral"}
           icon={BarChart3}
         />
         <MetricCard
           label="Verified Status"
-          value={verifiedPercentage}
-          subtitle="Cryptographically hashed"
-          status="success"
+          value={sdkConnected && documents.length > 0 ? verifiedPercentage : "—"}
+          subtitle={sdkConnected ? "Cryptographically hashed" : "Awaiting SDK Connection"}
+          status={sdkConnected && documents.length > 0 ? "success" : "neutral"}
           icon={CheckCircle2}
         />
       </div>
@@ -268,7 +283,7 @@ export default function EvidenceSection() {
       <TabBar
         tabs={[
           { id: 'registry', label: 'Compliance Document Registry', count: documents.length, icon: FolderOpen },
-          { id: 'executive', label: 'Executive Summary Reports', count: 3, icon: BarChart3 }
+          { id: 'executive', label: 'Executive Summary Reports', count: executiveReports.length, icon: BarChart3 }
         ]}
         activeTab={activeTab}
         onChange={setActiveTab}
@@ -281,7 +296,11 @@ export default function EvidenceSection() {
           data={documents}
           keyExtractor={(item) => item.id}
           isLoading={loading}
-          emptyMessage="No compliance evidence artifacts uploaded yet."
+          emptyMessage={
+            !sdkConnected && documents.length === 0
+              ? "0 Reports Generated — Awaiting SDK Connection"
+              : "No compliance evidence artifacts uploaded yet."
+          }
           searchPlaceholder="Search compliance evidence documents..."
         />
       )}
@@ -299,34 +318,36 @@ export default function EvidenceSection() {
               </p>
             </div>
             <button
-              onClick={() => addToast({ message: 'Generating August 2026 Executive Summary Report PDF...', type: 'success' })}
+              onClick={() => addToast({ message: 'Generating Executive Summary Report PDF...', type: 'success' })}
               className="px-3 py-1.5 bg-indigo-600 text-white font-bold text-xs rounded-lg shadow-sm"
             >
               Generate Monthly Executive PDF
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[
-              { title: 'August 2026 Executive AI Governance Summary', date: '2026-08-13', size: '3.4 MB' },
-              { title: 'July 2026 Executive AI Governance Summary', date: '2026-07-31', size: '3.1 MB' },
-              { title: 'Q2 2026 Board-Level AI Risk & Compliance Report', date: '2026-06-30', size: '5.8 MB' }
-            ].map((report, i) => (
-              <div key={i} className="p-4 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between">
-                <div>
-                  <h4 className="text-xs font-bold text-slate-900 dark:text-white">{report.title}</h4>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Generated: {report.date} • {report.size}</span>
+          {executiveReports.length === 0 ? (
+            <div className="p-12 text-center text-slate-500 dark:text-slate-400 text-xs border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
+              {sdkConnected ? "No executive reports generated yet." : "0 Reports Generated — Awaiting SDK Connection"}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {executiveReports.map((report, i) => (
+                <div key={i} className="p-4 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between">
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900 dark:text-white">{report.title}</h4>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Generated: {report.date} • {report.size}</span>
+                  </div>
+                  <button
+                    onClick={() => handleDownload(report.title || report.url)}
+                    className="p-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-all"
+                    title="Download PDF"
+                  >
+                    <Download className="h-4 w-4" />
+                  </button>
                 </div>
-                <button
-                  onClick={() => handleDownload(report.title)}
-                  className="p-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-all"
-                  title="Download PDF"
-                >
-                  <Download className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </PageContainer>

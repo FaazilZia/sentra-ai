@@ -1,5 +1,6 @@
 import prisma from '../config/db';
 import logger from './logger';
+import { getRedisClient } from '../config/redis';
 
 // OpenAI gpt-4o-mini pricing as of now (approximate)
 // $0.150 / 1M input tokens
@@ -57,3 +58,43 @@ export const updateApiKeyLastUsed = (apiKeyId: string) => {
     }
   });
 };
+
+export const recordSdkConnection = (organizationId: string) => {
+  // Use setImmediate to keep it non-blocking for SDK request latency
+  setImmediate(async () => {
+    try {
+      const redis = getRedisClient();
+      if (redis) {
+        try {
+          const cached = await redis.get(`sdk_conn:${organizationId}`);
+          if (cached) return;
+        } catch {
+          // Redis down, timeout, or unreachable — fall through to Postgres
+        }
+      }
+
+      const org = await prisma.organizations.findUnique({
+        where: { id: organizationId },
+        select: { sdkConnectedAt: true }
+      });
+
+      if (org && !org.sdkConnectedAt) {
+        await prisma.organizations.update({
+          where: { id: organizationId },
+          data: { sdkConnectedAt: new Date() }
+        });
+      }
+
+      if (redis) {
+        try {
+          await redis.set(`sdk_conn:${organizationId}`, '1', 'EX', 86400);
+        } catch {
+          // Non-fatal: Redis down
+        }
+      }
+    } catch (error) {
+      logger.error(`Failed to record SDK connection for org ${organizationId}:`, error);
+    }
+  });
+};
+

@@ -10,7 +10,7 @@ import { decrypt } from '../utils/encryption';
 
 const API_KEY_CACHE_TTL = 300; // 5 minutes
 
-import { updateApiKeyLastUsed } from '../utils/usage';
+import { updateApiKeyLastUsed, recordSdkConnection } from '../utils/usage';
 
 async function resolveApiKey(token: string): Promise<{ organizationId: string; slug: string; id: string } | null> {
   const redis = getRedisClient();
@@ -84,6 +84,7 @@ async function handleSdkToken(token: string, req: any, res: Response): Promise<{
   Sentry.setUser({ id: req.user.id, email: req.user.email, organizationId: req.user.organizationId });
   Sentry.setTag('organizationId', req.user.organizationId);
   updateApiKeyLastUsed(resolved.id);
+  recordSdkConnection(resolved.organizationId);
   return { handled: true };
 }
 

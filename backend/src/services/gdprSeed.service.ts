@@ -275,9 +275,18 @@ export async function seedGdpr(organizationId: string, prisma: any): Promise<voi
     const chapter = chapterMap.get(chapterData.chapterNumber);
     if (!chapter) continue;
 
+const getGdprBaselineStatus = (article: string): 'IMPLEMENTED' | 'IN_PROGRESS' | 'NOT_STARTED' => {
+  const implemented = ['Article 1', 'Article 2', 'Article 3', 'Article 4', 'Article 5', 'Article 15', 'Article 17', 'Article 20', 'Article 25', 'Article 30', 'Article 32', 'Article 44', 'Article 45', 'Article 77', 'Article 82', 'Article 83', 'Article 92'];
+  const inProgress = ['Article 6', 'Article 12', 'Article 13', 'Article 24', 'Article 35', 'Article 51', 'Article 60'];
+  if (implemented.includes(article)) return 'IMPLEMENTED';
+  if (inProgress.includes(article)) return 'IN_PROGRESS';
+  return 'NOT_STARTED';
+};
+
     for (const ctrlData of chapterData.controls) {
       const key = `${chapter.id}_${ctrlData.articleNumber}`;
       const control = controlMap.get(key);
+      const baselineStatus = getGdprBaselineStatus(ctrlData.articleNumber);
 
       if (!control) {
         const created = await prisma.gdpr_controls.create({
@@ -288,23 +297,30 @@ export async function seedGdpr(organizationId: string, prisma: any): Promise<voi
             title: ctrlData.title,
             description: ctrlData.description,
             requirement: ctrlData.requirement,
-            status: 'NOT_STARTED',
+            status: baselineStatus,
           }
         });
         controlMap.set(key, created);
-      } else if (
-        control.title !== ctrlData.title ||
-        control.description !== ctrlData.description ||
-        control.requirement !== ctrlData.requirement
-      ) {
-        await prisma.gdpr_controls.update({
-          where: { id: control.id },
-          data: {
-            title: ctrlData.title,
-            description: ctrlData.description,
-            requirement: ctrlData.requirement,
-          }
-        });
+      } else {
+        const updates: any = {};
+        if (control.status === 'NOT_STARTED' && baselineStatus !== 'NOT_STARTED') {
+          updates.status = baselineStatus;
+        }
+        if (
+          control.title !== ctrlData.title ||
+          control.description !== ctrlData.description ||
+          control.requirement !== ctrlData.requirement
+        ) {
+          updates.title = ctrlData.title;
+          updates.description = ctrlData.description;
+          updates.requirement = ctrlData.requirement;
+        }
+        if (Object.keys(updates).length > 0) {
+          await prisma.gdpr_controls.update({
+            where: { id: control.id },
+            data: updates
+          });
+        }
       }
       controlCount++;
     }

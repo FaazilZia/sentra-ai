@@ -513,6 +513,20 @@ export async function updateWebhookUrl(url: string): Promise<any> {
   });
 }
 
+export interface SdkStatusResponse {
+  connected: boolean;
+  firstConnectedAt: string | null;
+}
+
+export async function fetchSdkStatus(organizationId?: string): Promise<SdkStatusResponse> {
+  const path = organizationId ? `/organizations/${organizationId}/sdk-status` : '/organizations/sdk-status';
+  return apiRequest<SdkStatusResponse>(path).catch(() => ({
+    connected: false,
+    firstConnectedAt: null
+  }));
+}
+
+
 /**
  * DRIFT DETECTION ENDPOINTS
  */

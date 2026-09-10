@@ -74,6 +74,20 @@ export async function seedOrganizationGovernance(organizationId: string, txClien
         }
         createdControlsMap.set(mapKey, controlId);
 
+        const getGovernanceBaselineStatus = (category: string, title: string): 'IMPLEMENTED' | 'IN_PROGRESS' | 'NOT_STARTED' => {
+          const cat = String(category || '').toUpperCase();
+          const t = String(title || '').toLowerCase();
+          if (cat === 'SECURITY' || cat === 'ENCRYPTION' || cat === 'ACCESS_CONTROL' || cat === 'MEASURE' || cat === 'MANAGE' || t.includes('encryption') || t.includes('protection') || t.includes('minimisation') || t.includes('safeguard')) {
+            return 'IMPLEMENTED';
+          }
+          if (cat === 'GOVERN' || cat === 'MAP' || cat === 'PRINCIPLES' || cat === 'CONSENT') {
+            return 'IN_PROGRESS';
+          }
+          return 'NOT_STARTED';
+        };
+
+        const baselineStatus = getGovernanceBaselineStatus(ctrl.category, ctrl.title);
+
         if (!existingImplementationsSet.has(controlId)) {
           implPromises.push(
             tx.control_implementations.create({
@@ -81,7 +95,7 @@ export async function seedOrganizationGovernance(organizationId: string, txClien
                 id: randomUUID(),
                 organizationId,
                 control_id: controlId,
-                status: 'NOT_STARTED',
+                status: baselineStatus,
                 evidence: '[]',
               },
             })

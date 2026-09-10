@@ -31,6 +31,7 @@ model organizations {
   saml_metadata  Json?
   custom_domain  String? @unique
   aidrEnforcementMode String @default("BLOCK") @map("aidr_enforcement_mode")
+  sdkConnectedAt      DateTime? @map("sdk_connected_at")
 
   // Relations
   ai_agents            ai_agents[]

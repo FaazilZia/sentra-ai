@@ -22,6 +22,34 @@ export const getOrganizationById = asyncHandler(async (req: any, res: Response) 
   return sendSuccess(res, company);
 });
 
+export const getSdkStatus = asyncHandler(async (req: any, res: Response) => {
+  const requestOrganizationId = await resolveOrganizationId(req);
+  const targetId = req.params?.id || requestOrganizationId;
+
+  if (!targetId) {
+    return sendError(res, 401, 'Unauthorized: Organization not identified');
+  }
+
+  if (requestOrganizationId && targetId !== requestOrganizationId && req.user?.role !== 'SUPERADMIN') {
+    return sendError(res, 403, 'Forbidden');
+  }
+
+  const org = await prisma.organizations.findUnique({
+    where: { id: targetId },
+    select: { sdkConnectedAt: true }
+  });
+
+  if (!org) {
+    return sendError(res, 404, 'Organization not found');
+  }
+
+  return sendSuccess(res, {
+    connected: Boolean(org.sdkConnectedAt),
+    connectedAt: org.sdkConnectedAt || null,
+    firstConnectedAt: org.sdkConnectedAt || null
+  });
+});
+
 export const updateAlertSettings = asyncHandler(async (req: any, res: Response) => {
   const organizationId = await resolveOrganizationId(req);
   if (!organizationId) {
