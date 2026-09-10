@@ -182,6 +182,7 @@ async function handleXApiKey(xApiKey: string, req: any, res: Response): Promise<
     Sentry.setUser({ id: req.user.id, email: req.user.email, organizationId: req.user.organizationId });
     Sentry.setTag('organizationId', req.user.organizationId);
     updateApiKeyLastUsed(resolved.id);
+    recordSdkConnection(resolved.organizationId);
     return { handled: true };
   }
   return { handled: false };
