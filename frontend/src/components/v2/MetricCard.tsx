@@ -12,7 +12,7 @@ export interface MetricCardProps {
     isGood?: boolean;
   };
   icon: LucideIcon;
-  status?: 'success' | 'warning' | 'danger' | 'info' | 'primary';
+  status?: 'success' | 'warning' | 'danger' | 'info' | 'primary' | 'neutral';
   testId?: string;
   className?: string;
 }
@@ -48,6 +48,11 @@ export const MetricCard: React.FC<MetricCardProps> = ({
         return {
           iconBg: 'bg-sky-500/10 text-sky-600 dark:bg-sky-500/20 dark:text-sky-400 border-sky-500/20',
           accent: 'border-l-sky-500'
+        };
+      case 'neutral':
+        return {
+          iconBg: 'bg-slate-500/10 text-slate-600 dark:bg-slate-500/20 dark:text-slate-400 border-slate-500/20',
+          accent: 'border-l-slate-400 dark:border-l-slate-600'
         };
       default:
         return {
