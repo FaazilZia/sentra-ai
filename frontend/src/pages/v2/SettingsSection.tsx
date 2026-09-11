@@ -61,13 +61,9 @@ export default function SettingsSection() {
   const [loading, setLoading] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  // States
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [vendors, setVendors] = useState<VendorRiskItem[]>([]);
-  const [apiKeys, setApiKeys] = useState<ApiKeyItem[]>([
-    { id: 'key-1', name: 'Production Pipeline Key', prefix: 'sentra_98a4bc12...', createdAt: '2026-07-01', lastUsed: '2 mins ago' },
-    { id: 'key-2', name: 'Dev Staging Key', prefix: 'sentra_41b9ef08...', createdAt: '2026-08-05', lastUsed: '3 days ago' }
-  ]);
+  const [apiKeys, setApiKeys] = useState<ApiKeyItem[]>([]);
   const [newlyCreatedKey, setNewlyCreatedKey] = useState<NewlyCreatedKey | null>(null);
   const [copiedFullKey, setCopiedFullKey] = useState(false);
   const [generatingKey, setGeneratingKey] = useState(false);
@@ -89,107 +85,53 @@ export default function SettingsSection() {
             ? keysRes.data
             : (Array.isArray(keysRes?.data?.data) ? keysRes.data.data : []));
 
-      const mockMembers: TeamMember[] = [
-        {
-          id: 'u-1',
-          fullName: user?.fullName || 'Sentra Governance Admin',
-          email: user?.email || 'admin@sentraa.ai',
-          role: user?.role || 'ADMIN',
+      const realMembers: TeamMember[] = loadedUsers.map((u: any, idx: number) => ({
+        id: u.id || `u-res-${idx}`,
+        fullName: u.full_name || u.fullName || 'Workspace Member',
+        email: u.email,
+        role: u.role || 'MEMBER',
+        status: 'ACTIVE',
+        joinedAt: u.created_at ? new Date(u.created_at).toISOString().split('T')[0] : 'Active'
+      }));
+
+      if (realMembers.length === 0 && user) {
+        realMembers.push({
+          id: user.id || 'u-1',
+          fullName: user.fullName || 'Sentra Governance Admin',
+          email: user.email || 'admin@sentraa.ai',
+          role: user.role || 'ADMIN',
           status: 'ACTIVE',
-          joinedAt: '2026-01-15'
-        },
-        {
-          id: 'u-2',
-          fullName: 'Security Operations Lead',
-          email: 'soc-lead@sentraa.ai',
-          role: 'SECURITY_OFFICER',
-          status: 'ACTIVE',
-          joinedAt: '2026-03-10'
-        },
-        {
-          id: 'u-3',
-          fullName: 'DevOps Engineer',
-          email: 'devops@sentraa.ai',
-          role: 'ENGINEER',
-          status: 'INVITED',
-          joinedAt: '2026-08-01'
-        }
-      ];
-
-      loadedUsers.forEach((u: any, idx: number) => {
-        if (!mockMembers.some(m => m.email === u.email)) {
-          mockMembers.push({
-            id: u.id || `u-res-${idx}`,
-            fullName: u.full_name || u.fullName || 'Workspace Member',
-            email: u.email,
-            role: u.role || 'MEMBER',
-            status: 'ACTIVE',
-            joinedAt: '2026-05-20'
-          });
-        }
-      });
-
-      const mockVendorsList: VendorRiskItem[] = [
-        {
-          id: 'v-1',
-          vendorName: 'OpenAI API Platform',
-          vendorType: 'LLM Infrastructure Provider',
-          riskScore: 24,
-          riskLevel: 'LOW',
-          status: 'ASSESSED',
-          lastAssessed: '2026-08-01'
-        },
-        {
-          id: 'v-2',
-          vendorName: 'Anthropic Claude Engine',
-          vendorType: 'Third-Party AI Service',
-          riskScore: 28,
-          riskLevel: 'LOW',
-          status: 'ASSESSED',
-          lastAssessed: '2026-08-05'
-        },
-        {
-          id: 'v-3',
-          vendorName: 'Pinecone Vector Database',
-          vendorType: 'External Vector Store',
-          riskScore: 45,
-          riskLevel: 'MEDIUM',
-          status: 'UNDER_REVIEW',
-          lastAssessed: '2026-07-20'
-        }
-      ];
-
-      loadedVendors.forEach((v: any, idx: number) => {
-        mockVendorsList.push({
-          id: v.id || `v-res-${idx}`,
-          vendorName: v.vendor_name || 'Third-Party AI Tool',
-          vendorType: v.vendor_type || 'External Vendor',
-          riskScore: v.risk_score || 35,
-          riskLevel: (v.risk_level || 'MEDIUM').toUpperCase() as any,
-          status: v.status || 'ACTIVE',
-          lastAssessed: 'Recently'
+          joinedAt: 'Active'
         });
-      });
-
-      setTeamMembers(mockMembers);
-      setVendors(mockVendorsList);
-
-      if (rawKeys.length > 0) {
-        const formattedKeys: ApiKeyItem[] = rawKeys.map((k: any) => {
-          let prefixStr = 'sentra_key...';
-          if (k.key_prefix) {
-            prefixStr = k.key_prefix.startsWith('sentra_') ? `${k.key_prefix}...` : `sentra_${k.key_prefix}...`;
-          }
-          return {
-            id: String(k.id),
-            name: k.name || 'API Secret Key',
-            prefix: prefixStr,
-            createdAt: k.created_at ? new Date(k.created_at).toISOString().split('T')[0] : 'Recently',
-            lastUsed: k.last_used_at ? new Date(k.last_used_at).toISOString().split('T')[0] : 'Never'
-          };
-        });
-        setApiKeys(formattedKeys);
       }
+
+      const realVendors: VendorRiskItem[] = loadedVendors.map((v: any, idx: number) => ({
+        id: v.id || `v-res-${idx}`,
+        vendorName: v.vendor_name || 'Third-Party AI Tool',
+        vendorType: v.vendor_type || 'External Vendor',
+        riskScore: v.risk_score ?? 0,
+        riskLevel: (v.risk_level || 'LOW').toUpperCase() as any,
+        status: v.status || 'ACTIVE',
+        lastAssessed: v.last_assessed ? new Date(v.last_assessed).toISOString().split('T')[0] : 'Recently'
+      }));
+
+      setTeamMembers(realMembers);
+      setVendors(realVendors);
+
+      const formattedKeys: ApiKeyItem[] = rawKeys.map((k: any) => {
+        let prefixStr = 'sentra_key...';
+        if (k.key_prefix) {
+          prefixStr = k.key_prefix.startsWith('sentra_') ? `${k.key_prefix}...` : `sentra_${k.key_prefix}...`;
+        }
+        return {
+          id: String(k.id),
+          name: k.name || 'API Secret Key',
+          prefix: prefixStr,
+          createdAt: k.created_at ? new Date(k.created_at).toISOString().split('T')[0] : 'Recently',
+          lastUsed: k.last_used_at ? new Date(k.last_used_at).toISOString().split('T')[0] : 'Never'
+        };
+      });
+      setApiKeys(formattedKeys);
 
     } catch (err: any) {
       console.error('Error loading settings:', err);
@@ -491,6 +433,7 @@ export default function SettingsSection() {
             data={vendors}
             keyExtractor={(item) => item.id}
             isLoading={loading}
+            emptyMessage="No third-party vendor risk assessments added yet."
             searchPlaceholder="Search third-party vendors..."
           />
         </div>
@@ -621,46 +564,70 @@ export default function SettingsSection() {
           )}
 
           <div className="space-y-3" data-testid="api-keys-list">
-            {apiKeys.map((key) => (
+            {apiKeys.length === 0 ? (
               <div
-                key={key.id}
-                data-testid={`api-key-row-${key.id}`}
-                className="p-4 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between"
+                data-testid="api-keys-empty-state"
+                className="p-8 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-center bg-slate-50/50 dark:bg-slate-900/30"
               >
-                <div>
-                  <h4 className="text-xs font-bold text-slate-900 dark:text-white">{key.name}</h4>
-                  <div className="flex items-center gap-2 mt-1">
-                    <code
-                      data-testid="api-key-prefix-badge"
-                      className="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400 bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700"
-                    >
-                      {key.prefix}
-                    </code>
+                <div className="mx-auto w-10 h-10 rounded-full bg-indigo-500/10 text-indigo-500 flex items-center justify-center mb-3">
+                  <Key className="w-5 h-5" />
+                </div>
+                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">No API Keys Generated</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+                  No active API keys for this organization. Generate an API key to connect the Python SDK, MCP integrations, or CI/CD pipelines.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleCreateApiKey}
+                  disabled={generatingKey}
+                  className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-all shadow-sm"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Generate API Key
+                </button>
+              </div>
+            ) : (
+              apiKeys.map((key) => (
+                <div
+                  key={key.id}
+                  data-testid={`api-key-row-${key.id}`}
+                  className="p-4 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between"
+                >
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900 dark:text-white">{key.name}</h4>
+                    <div className="flex items-center gap-2 mt-1">
+                      <code
+                        data-testid="api-key-prefix-badge"
+                        className="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400 bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700"
+                      >
+                        {key.prefix}
+                      </code>
+                      <button
+                        onClick={() => handleCopyKey(key.prefix)}
+                        className="p-1 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                        title="Copy Prefix"
+                        data-testid="copy-prefix-button"
+                        aria-label={`Copy prefix for ${key.name}`}
+                      >
+                        {copiedKey === key.prefix ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Last used: {key.lastUsed}</span>
                     <button
-                      onClick={() => handleCopyKey(key.prefix)}
-                      className="p-1 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-                      title="Copy Prefix"
-                      data-testid="copy-prefix-button"
-                      aria-label={`Copy prefix for ${key.name}`}
+                      onClick={() => handleRevokeKey(key.id, key.name)}
+                      className="p-1.5 text-slate-400 hover:text-rose-500 rounded transition-colors"
+                      title="Revoke Key"
+                      data-testid="revoke-key-button"
+                      aria-label={`Revoke ${key.name}`}
                     >
-                      {copiedKey === key.prefix ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Last used: {key.lastUsed}</span>
-                  <button
-                    onClick={() => handleRevokeKey(key.id, key.name)}
-                    className="p-1.5 text-slate-400 hover:text-rose-500 rounded transition-colors"
-                    title="Revoke Key"
-                    data-testid="revoke-key-button"
-                    aria-label={`Revoke ${key.name}`}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       )}

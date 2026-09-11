@@ -6,8 +6,7 @@ import ReactFlow, {
   useNodesState,
   useEdgesState,
   Node,
-  Edge,
-  MarkerType
+  Edge
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { 
@@ -98,7 +97,7 @@ export default function OverviewSection() {
       }
 
       // Build relationship graph nodes and edges
-      buildGraphData(items);
+      buildGraphData(items, isSdkLive);
 
     } catch (err: any) {
       console.error('Failed to load overview metrics:', err);
@@ -107,115 +106,43 @@ export default function OverviewSection() {
     }
   }, []);
 
-  const buildGraphData = (_systemsList: any[]) => {
-    const defaultNodes: Node[] = [
-      // Data / Core Target Nodes (Left & Right)
-      {
-        id: 'data-pii',
-        position: { x: 50, y: 80 },
-        data: { label: 'User PII Vault (PostgreSQL)', type: 'DATASET', risk: 'HIGH' },
-        style: { background: '#ef4444', color: '#fff', borderRadius: '8px', padding: '10px', fontSize: '11px', fontWeight: 'bold', border: '2px solid #b91c1c' }
-      },
-      {
-        id: 'data-payments',
-        position: { x: 50, y: 220 },
-        data: { label: 'Payment Gateway (Stripe)', type: 'SYSTEM', risk: 'CRITICAL' },
-        style: { background: '#ef4444', color: '#fff', borderRadius: '8px', padding: '10px', fontSize: '11px', fontWeight: 'bold', border: '2px solid #991b1b' }
-      },
-      {
-        id: 'data-vector',
-        position: { x: 50, y: 360 },
-        data: { label: 'Knowledge Base (Pinecone)', type: 'DATASET', risk: 'LOW' },
-        style: { background: '#3b82f6', color: '#fff', borderRadius: '8px', padding: '10px', fontSize: '11px', fontWeight: 'bold', border: '1px solid #1d4ed8' }
-      },
+  const buildGraphData = (systemsList: any[], isSdkLive: boolean) => {
+    if (!isSdkLive || !systemsList || systemsList.length === 0) {
+      setNodes([]);
+      setEdges([]);
+      return;
+    }
 
-      // Agent Nodes (Center)
-      {
-        id: 'agent-finance',
-        position: { x: 450, y: 60 },
-        data: { label: 'Financial Analyst Bot', type: 'AGENT', risk: 'CRITICAL', source: 'MCP / Python' },
-        style: { background: '#1e293b', color: '#f8fafc', borderRadius: '12px', padding: '12px', fontSize: '12px', fontWeight: 'bold', border: '2px solid #ef4444', boxShadow: '0 0 15px rgba(239, 68, 68, 0.3)' }
-      },
-      {
-        id: 'agent-support',
-        position: { x: 450, y: 200 },
-        data: { label: 'Customer Support Agent', type: 'AGENT', risk: 'MEDIUM', source: 'LangChain' },
-        style: { background: '#1e293b', color: '#f8fafc', borderRadius: '12px', padding: '12px', fontSize: '12px', fontWeight: 'bold', border: '1px solid #f59e0b' }
-      },
-      {
-        id: 'agent-shadow',
-        position: { x: 450, y: 340 },
-        data: { label: 'Shadow AutoGPT (Unregistered)', type: 'AGENT', risk: 'SHADOW', source: 'Slack Webhook' },
-        style: { background: '#2e1065', color: '#d8b4fe', borderRadius: '12px', padding: '12px', fontSize: '12px', fontWeight: 'bold', border: '2px dashed #a855f7', boxShadow: '0 0 15px rgba(168, 85, 247, 0.4)' }
-      },
+    const realNodes: Node[] = [];
+    const realEdges: Edge[] = [];
 
-      // Target Systems (Right)
-      {
-        id: 'sys-crm',
-        position: { x: 820, y: 120 },
-        data: { label: 'HubSpot CRM', type: 'SYSTEM', risk: 'MEDIUM' },
-        style: { background: '#334155', color: '#f8fafc', borderRadius: '8px', padding: '10px', fontSize: '11px', fontWeight: 'bold', border: '1px solid #64748b' }
-      },
-      {
-        id: 'sys-aws',
-        position: { x: 820, y: 280 },
-        data: { label: 'AWS S3 Production Dump', type: 'SYSTEM', risk: 'CRITICAL' },
-        style: { background: '#ef4444', color: '#fff', borderRadius: '8px', padding: '10px', fontSize: '11px', fontWeight: 'bold', border: '2px solid #991b1b' }
-      }
-    ];
+    systemsList.forEach((sys: any, idx: number) => {
+      const riskLevel = (sys.risk_tier || 'LOW').toUpperCase();
+      const isCritical = riskLevel === 'CRITICAL' || riskLevel === 'HIGH';
+      realNodes.push({
+        id: `agent-${sys.id || idx}`,
+        position: { x: 200 + (idx % 3) * 260, y: 80 + Math.floor(idx / 3) * 160 },
+        data: {
+          label: sys.name || sys.system_name || `Agent ${idx + 1}`,
+          type: 'AGENT',
+          risk: riskLevel,
+          source: sys.system_type || sys.framework || sys.vendor || 'Sentra SDK'
+        },
+        style: {
+          background: '#1e293b',
+          color: '#f8fafc',
+          borderRadius: '12px',
+          padding: '12px',
+          fontSize: '12px',
+          fontWeight: 'bold',
+          border: isCritical ? '2px solid #ef4444' : '1px solid #6366f1',
+          boxShadow: isCritical ? '0 0 15px rgba(239, 68, 68, 0.3)' : undefined
+        }
+      });
+    });
 
-    const defaultEdges: Edge[] = [
-      // High-Risk Red Paths
-      {
-        id: 'e-shadow-pii',
-        source: 'agent-shadow',
-        target: 'data-pii',
-        animated: true,
-        style: { stroke: '#ef4444', strokeWidth: 3 },
-        markerEnd: { type: MarkerType.ArrowClosed, color: '#ef4444' },
-        label: 'HIGH RISK EXFIL',
-        labelStyle: { fill: '#ef4444', fontWeight: 'bold', fontSize: '10px' }
-      },
-      {
-        id: 'e-finance-payments',
-        source: 'agent-finance',
-        target: 'data-payments',
-        animated: true,
-        style: { stroke: '#ef4444', strokeWidth: 3 },
-        markerEnd: { type: MarkerType.ArrowClosed, color: '#ef4444' },
-        label: 'UNGUARDED API',
-        labelStyle: { fill: '#ef4444', fontWeight: 'bold', fontSize: '10px' }
-      },
-      {
-        id: 'e-shadow-aws',
-        source: 'agent-shadow',
-        target: 'sys-aws',
-        animated: true,
-        style: { stroke: '#ef4444', strokeWidth: 3, strokeDasharray: '5,5' },
-        markerEnd: { type: MarkerType.ArrowClosed, color: '#ef4444' },
-        label: 'SHADOW ACCESS',
-        labelStyle: { fill: '#dc2626', fontWeight: 'bold', fontSize: '10px' }
-      },
-
-      // Safe / Standard Paths
-      {
-        id: 'e-support-vector',
-        source: 'agent-support',
-        target: 'data-vector',
-        style: { stroke: '#6366f1', strokeWidth: 1.5 },
-        markerEnd: { type: MarkerType.ArrowClosed, color: '#6366f1' }
-      },
-      {
-        id: 'e-support-crm',
-        source: 'agent-support',
-        target: 'sys-crm',
-        style: { stroke: '#6366f1', strokeWidth: 1.5 },
-        markerEnd: { type: MarkerType.ArrowClosed, color: '#6366f1' }
-      }
-    ];
-
-    setNodes(defaultNodes);
-    setEdges(defaultEdges);
+    setNodes(realNodes);
+    setEdges(realEdges);
   };
 
   useEffect(() => {
@@ -326,59 +253,81 @@ export default function OverviewSection() {
             <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
               Agent Relationship Graph
             </h2>
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
-              High-Risk Paths Red-Highlighted
-            </span>
+            {sdkConnected && nodes.length > 0 ? (
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                High-Risk Paths Red-Highlighted
+              </span>
+            ) : (
+              <StatusBadge status="awaiting_telemetry" label="Awaiting Connection" size="sm" />
+            )}
           </div>
           <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-            Interactive Node Mapping
+            {sdkConnected && nodes.length > 0 ? 'Interactive Node Mapping' : '0 Mapped Topologies'}
           </span>
         </div>
 
-        <div className="flex-1 relative bg-slate-950">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onNodeClick={onNodeClick}
-            fitView
-          >
-            <Background color="rgba(99, 102, 241, 0.1)" gap={20} size={1} />
-            <Controls className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden text-slate-900 dark:text-white" />
-            <MiniMap
-              className="bg-slate-900 border border-slate-800 rounded-lg"
-              nodeColor={(n) => (n.data?.risk === 'CRITICAL' ? '#ef4444' : '#6366f1')}
-            />
-          </ReactFlow>
-
-          {/* Node detail side card */}
-          {selectedNodeData && (
-            <div className="absolute right-4 top-4 w-72 bg-slate-900/90 backdrop-blur-md border border-slate-700 text-slate-100 rounded-xl p-4 shadow-2xl space-y-3 z-20">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                <span className="text-[10px] font-bold uppercase text-indigo-400">
-                  {selectedNodeData.type} Node Info
-                </span>
-                <button
-                  onClick={() => setSelectedNodeData(null)}
-                  className="text-xs text-slate-400 hover:text-white"
-                >
-                  ✕
-                </button>
+        <div className="flex-1 relative bg-slate-950 flex items-center justify-center">
+          {!sdkConnected || nodes.length === 0 ? (
+            <div data-testid="agent-graph-empty-state" className="text-center max-w-md p-6 space-y-3">
+              <div className="mx-auto w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center shadow-inner">
+                <Network className="w-6 h-6" />
               </div>
-              <div>
-                <h4 className="text-sm font-bold text-white">{selectedNodeData.label}</h4>
-                {selectedNodeData.source && (
-                  <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-                    Source: {selectedNodeData.source}
-                  </p>
-                )}
-              </div>
-              <div className="flex items-center justify-between bg-slate-800/60 p-2 rounded text-xs font-semibold">
-                <span className="text-slate-400">Risk Tier</span>
-                <StatusBadge status={selectedNodeData.risk || 'LOW'} />
-              </div>
+              <h3 className="text-sm font-bold text-slate-200">
+                {!sdkConnected ? 'Awaiting SDK Connection' : 'No Agent Topologies Mapped'}
+              </h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                {!sdkConnected
+                  ? 'Connect the Sentra SDK to discover active agent topologies, tool access permissions, and inter-system data flows.'
+                  : 'No inter-agent communication or sensitive resource access detected yet. Connect agent runtimes to map relationships.'}
+              </p>
             </div>
+          ) : (
+            <>
+              <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onNodeClick={onNodeClick}
+                fitView
+              >
+                <Background color="rgba(99, 102, 241, 0.1)" gap={20} size={1} />
+                <Controls className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden text-slate-900 dark:text-white" />
+                <MiniMap
+                  className="bg-slate-900 border border-slate-800 rounded-lg"
+                  nodeColor={(n) => (n.data?.risk === 'CRITICAL' ? '#ef4444' : '#6366f1')}
+                />
+              </ReactFlow>
+
+              {/* Node detail side card */}
+              {selectedNodeData && (
+                <div className="absolute right-4 top-4 w-72 bg-slate-900/90 backdrop-blur-md border border-slate-700 text-slate-100 rounded-xl p-4 shadow-2xl space-y-3 z-20">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <span className="text-[10px] font-bold uppercase text-indigo-400">
+                      {selectedNodeData.type} Node Info
+                    </span>
+                    <button
+                      onClick={() => setSelectedNodeData(null)}
+                      className="text-xs text-slate-400 hover:text-white"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">{selectedNodeData.label}</h4>
+                    {selectedNodeData.source && (
+                      <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                        Source: {selectedNodeData.source}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between bg-slate-800/60 p-2 rounded text-xs font-semibold">
+                    <span className="text-slate-400">Risk Tier</span>
+                    <StatusBadge status={selectedNodeData.risk || 'LOW'} />
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
