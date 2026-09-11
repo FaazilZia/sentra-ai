@@ -79,6 +79,17 @@ test.describe('Agents & Overview Synchronization & SDK Connection Awareness', ()
     // Compliance snapshot should show "—" and "Awaiting Connection" badges
     await expect(page.getByText('Awaiting Connection').first()).toBeVisible();
 
+    // Agent Relationship Graph should render calm empty state
+    const graphEmptyState = page.locator('[data-testid="agent-graph-empty-state"]');
+    await expect(graphEmptyState).toBeVisible();
+    await expect(graphEmptyState).toContainText('Awaiting SDK Connection');
+
+    // Assert fake nodes and fake alarmist edge labels are NOT present!
+    await expect(page.getByText('Financial Analyst Bot')).toHaveCount(0);
+    await expect(page.getByText('AWS S3 Production Dump')).toHaveCount(0);
+    await expect(page.getByText('HIGH RISK EXFIL')).toHaveCount(0);
+    await expect(page.getByText('SHADOW ACCESS')).toHaveCount(0);
+
     // 2. Visit Agents Page
     await page.goto('/app/agents', { waitUntil: 'networkidle' });
     await expect(page.getByRole('heading', { name: 'Agents' })).toBeVisible({ timeout: 15000 });
@@ -141,6 +152,11 @@ test.describe('Agents & Overview Synchronization & SDK Connection Awareness', ()
 
     const agentsKpiCard = page.locator('div').filter({ hasText: /^Agents Monitored/ }).first();
     await expect(agentsKpiCard).toContainText('2');
+
+    // Agent Relationship Graph should render real agent nodes
+    await expect(page.locator('[data-testid="agent-graph-empty-state"]')).toHaveCount(0);
+    await expect(page.getByText('Finance Agent Pro')).toBeVisible();
+    await expect(page.getByText('Customer Support Bot')).toBeVisible();
 
     // 2. Visit Agents Page
     await page.goto('/app/agents', { waitUntil: 'networkidle' });

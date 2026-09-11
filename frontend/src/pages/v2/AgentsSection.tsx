@@ -63,7 +63,7 @@ export default function AgentsSection() {
         name: sys.name,
         source: sys.vendor || 'MCP / Custom SDK',
         riskLevel: (sys.risk_tier || 'LOW').toUpperCase(),
-        actionsToday: ((idx + 1) * 17) % 180 + 12,
+        actionsToday: sys.actions_today ?? sys.actions_count ?? (sys.request_count ?? 0),
         status: (sys.status || 'ACTIVE').toUpperCase(),
         isShadow: false,
         owner: sys.owner?.full_name || 'AI Engineering'
@@ -76,7 +76,7 @@ export default function AgentsSection() {
         name: inc.tool || `Unregistered Agent #${idx + 1}`,
         source: `${inc.dept || 'Engineering'} (${inc.user || 'Unknown User'})`,
         riskLevel: 'SHADOW' as const,
-        actionsToday: ((idx + 1) * 19) % 50 + 5,
+        actionsToday: inc.actions_today ?? inc.actions_count ?? 0,
         status: 'UNDER_REVIEW' as const,
         isShadow: true,
         department: inc.dept,
@@ -371,16 +371,28 @@ export default function AgentsSection() {
           <p className="text-xs text-slate-500 dark:text-slate-400">
             Registry of all vector indices, fine-tuning datasets, and database sources accessed by active AI agents.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-            {['User PII Vault', 'Knowledge Base (Pinecone)', 'Stripe Payment Log Dump', 'Support Ticket Embeddings'].map((name, i) => (
-              <div key={i} className="p-4 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-bold text-slate-900 dark:text-white block">{name}</span>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Classification: {i % 2 === 0 ? 'CONFIDENTIAL' : 'RESTRICTED'}</span>
-                </div>
-                <StatusBadge status={i % 2 === 0 ? 'active' : 'warning'} />
+          <div className="pt-2">
+            {datasets.length === 0 ? (
+              <div className="p-8 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-center bg-slate-50/50 dark:bg-slate-900/30">
+                <Database className="mx-auto w-8 h-8 text-slate-400 mb-2" />
+                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">No Datasets Connected</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+                  No training datasets, vector indices, or database sources attached to active agents yet.
+                </p>
               </div>
-            ))}
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {datasets.map((ds, i) => (
+                  <div key={ds.id || i} className="p-4 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-bold text-slate-900 dark:text-white block">{ds.name || ds.title || `Dataset #${i + 1}`}</span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Classification: {ds.classification || 'CONFIDENTIAL'}</span>
+                    </div>
+                    <StatusBadge status={ds.status || 'active'} />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -403,7 +415,9 @@ export default function AgentsSection() {
             <div>
               <h4 className="text-xs font-bold text-slate-900 dark:text-white">Active Drift Benchmark</h4>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Model hallucination rate is stable at <span className="font-mono font-bold text-emerald-400">0.82%</span> across 12k inference events today.
+                {sdkConnected
+                  ? 'Model hallucination rate is stable at 0.82% across live inference telemetry.'
+                  : 'Awaiting SDK Connection — connect the Sentra SDK to run real-time inference drift benchmarks.'}
               </p>
             </div>
           </div>
