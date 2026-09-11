@@ -174,8 +174,11 @@ test.describe('SettingsSection Real Data & Honest Zero States', () => {
     await page.locator('[data-testid="done-button"]').click();
     await expect(page.locator('[data-testid="api-key-reveal-modal"]')).toHaveCount(0);
 
-    // Empty state should be gone, and new key should be listed
+    // Empty state should be gone, and new key should be listed with permanent masking
     await expect(page.locator('[data-testid="api-keys-empty-state"]')).toHaveCount(0);
     await expect(page.locator('[data-testid="api-keys-list"]').getByRole('heading', { name: 'New API Key #1' })).toBeVisible();
+    await expect(page.locator('[data-testid="api-key-masked-value"]')).toBeVisible();
+    expect(await page.locator('[data-testid="api-key-masked-value"]').innerText()).toContain('••••');
+    await expect(page.locator('[data-testid="api-key-zero-trust-banner"]')).toBeVisible();
   });
 });
