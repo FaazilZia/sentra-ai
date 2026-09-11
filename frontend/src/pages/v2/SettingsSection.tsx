@@ -17,7 +17,9 @@ import {
   Check, 
   Trash2,
   AlertTriangle,
-  X
+  X,
+  ShieldCheck,
+  Lock
 } from 'lucide-react';
 
 interface TeamMember {
@@ -43,6 +45,7 @@ export interface ApiKeyItem {
   id: string;
   name: string;
   prefix: string;
+  maskedKey: string;
   createdAt: string;
   lastUsed: string;
 }
@@ -119,14 +122,15 @@ export default function SettingsSection() {
       setVendors(realVendors);
 
       const formattedKeys: ApiKeyItem[] = rawKeys.map((k: any) => {
-        let prefixStr = 'sentra_key...';
-        if (k.key_prefix) {
-          prefixStr = k.key_prefix.startsWith('sentra_') ? `${k.key_prefix}...` : `sentra_${k.key_prefix}...`;
-        }
+        const rawPrefix = String(k.key_prefix || 'key');
+        const cleanPrefix = rawPrefix.startsWith('sentra_') ? rawPrefix.slice(7) : rawPrefix;
+        const displayPrefix = `sentra_${cleanPrefix}`;
+        const maskedKey = `sentra_${cleanPrefix.slice(0, 4)}••••••••••••••••••••••••••••••••`;
         return {
           id: String(k.id),
           name: k.name || 'API Secret Key',
-          prefix: prefixStr,
+          prefix: displayPrefix,
+          maskedKey,
           createdAt: k.created_at ? new Date(k.created_at).toISOString().split('T')[0] : 'Recently',
           lastUsed: k.last_used_at ? new Date(k.last_used_at).toISOString().split('T')[0] : 'Never'
         };
@@ -149,7 +153,7 @@ export default function SettingsSection() {
       navigator.clipboard.writeText(keyString).catch(() => {});
     }
     setCopiedKey(keyString);
-    addToast({ message: 'API key prefix copied to clipboard.', type: 'info' });
+    addToast({ message: `Key prefix (${keyString}) copied. Secret keys are never retrievable after creation.`, type: 'info' });
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
@@ -177,11 +181,15 @@ export default function SettingsSection() {
       const payload = res?.data || res;
       if (payload?.api_key) {
         fullSecretKey = payload.api_key;
-        const prefix = payload.key_prefix ? `sentra_${payload.key_prefix}...` : `${fullSecretKey.slice(0, 15)}...`;
+        const rawPrefix = String(payload.key_prefix || (fullSecretKey.split('_')[1] || 'live'));
+        const cleanPrefix = rawPrefix.startsWith('sentra_') ? rawPrefix.slice(7) : rawPrefix;
+        const displayPrefix = `sentra_${cleanPrefix}`;
+        const maskedKey = `sentra_${cleanPrefix.slice(0, 4)}••••••••••••••••••••••••••••••••`;
         createdItem = {
           id: payload.id || `key-${Date.now()}`,
           name: payload.name || keyName,
-          prefix,
+          prefix: displayPrefix,
+          maskedKey,
           createdAt: 'Today',
           lastUsed: 'Never'
         };
@@ -205,10 +213,13 @@ export default function SettingsSection() {
         .replace(/\//g, '_')
         .replace(/=+$/, '');
       fullSecretKey = `sentra_${hexPrefix}_${base64Secret}`;
+      const displayPrefix = `sentra_${hexPrefix}`;
+      const maskedKey = `sentra_${hexPrefix.slice(0, 4)}••••••••••••••••••••••••••••••••`;
       createdItem = {
         id: `key-${Date.now()}`,
         name: keyName,
-        prefix: `sentra_${hexPrefix}...`,
+        prefix: displayPrefix,
+        maskedKey,
         createdAt: 'Today',
         lastUsed: 'Never'
       };
@@ -462,6 +473,22 @@ export default function SettingsSection() {
             </button>
           </div>
 
+          {/* Zero-Trust Security Callout */}
+          <div
+            data-testid="api-key-zero-trust-banner"
+            className="p-3.5 bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between text-xs text-slate-600 dark:text-slate-300"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="h-7 w-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="font-bold text-slate-800 dark:text-slate-200">Zero-Trust Key Security:</span>{' '}
+                Secret keys are revealed only once upon generation and hashed with bcrypt. Plaintext keys are never stored and cannot be retrieved after creation.
+              </div>
+            </div>
+          </div>
+
           {/* One-Time Full Key Reveal Modal */}
           {newlyCreatedKey && (
             <div
@@ -595,17 +622,27 @@ export default function SettingsSection() {
                 >
                   <div>
                     <h4 className="text-xs font-bold text-slate-900 dark:text-white">{key.name}</h4>
-                    <div className="flex items-center gap-2 mt-1">
-                      <code
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                      <div className="flex items-center gap-1.5 bg-slate-200/70 dark:bg-slate-800/80 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 font-mono text-xs">
+                        <Lock className="h-3 w-3 text-slate-400 shrink-0" />
+                        <code
+                          data-testid="api-key-masked-value"
+                          className="font-semibold text-slate-800 dark:text-slate-200 tracking-wider"
+                        >
+                          {key.maskedKey}
+                        </code>
+                      </div>
+                      <span
                         data-testid="api-key-prefix-badge"
-                        className="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400 bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700"
+                        className="text-[10px] font-mono font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800/60"
                       >
-                        {key.prefix}
-                      </code>
+                        Prefix: {key.prefix}
+                      </span>
                       <button
+                        type="button"
                         onClick={() => handleCopyKey(key.prefix)}
                         className="p-1 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-                        title="Copy Prefix"
+                        title="Copy Key Prefix"
                         data-testid="copy-prefix-button"
                         aria-label={`Copy prefix for ${key.name}`}
                       >
@@ -616,6 +653,7 @@ export default function SettingsSection() {
                   <div className="flex items-center gap-4">
                     <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Last used: {key.lastUsed}</span>
                     <button
+                      type="button"
                       onClick={() => handleRevokeKey(key.id, key.name)}
                       className="p-1.5 text-slate-400 hover:text-rose-500 rounded transition-colors"
                       title="Revoke Key"

@@ -122,15 +122,21 @@ test.describe('Settings API Keys: Generation & One-Time Full Key Reveal', () => 
     await expect(apiKeysTab).toBeVisible();
     await apiKeysTab.click();
 
-    // Verify Tab 4 header
+    // Verify Tab 4 header & Zero-Trust Security Banner
     await expect(page.getByText('Workspace API Secret Keys')).toBeVisible();
+    await expect(page.locator('[data-testid="api-key-zero-trust-banner"]')).toBeVisible();
 
     // Verify existing keys are masked
     const existingPrefixes = page.locator('[data-testid="api-key-prefix-badge"]');
     await expect(existingPrefixes.first()).toBeVisible();
     const firstPrefixText = await existingPrefixes.first().innerText();
-    expect(firstPrefixText).toContain('sentra_98a4bc12...');
+    expect(firstPrefixText).toContain('sentra_98a4bc12');
     expect(firstPrefixText).not.toContain('_h8Ks9LmP');
+
+    const existingMaskedValues = page.locator('[data-testid="api-key-masked-value"]');
+    await expect(existingMaskedValues.first()).toBeVisible();
+    const firstMaskedText = await existingMaskedValues.first().innerText();
+    expect(firstMaskedText).toContain('••••');
 
     // 3. Click "Generate API Key"
     const generateBtn = page.locator('[data-testid="generate-api-key-btn"]');
@@ -195,7 +201,10 @@ test.describe('Settings API Keys: Generation & One-Time Full Key Reveal', () => 
     const newKeyRow = page.locator(`[data-testid="api-key-row-${MOCK_NEW_KEY_RESPONSE.data.id}"]`);
     await expect(newKeyRow).toBeVisible();
     const displayedPrefix = await newKeyRow.locator('[data-testid="api-key-prefix-badge"]').innerText();
-    expect(displayedPrefix).toBe('sentra_6ebf5ae1...');
+    expect(displayedPrefix).toContain('sentra_6ebf5ae1');
+
+    const displayedMasked = await newKeyRow.locator('[data-testid="api-key-masked-value"]').innerText();
+    expect(displayedMasked).toContain('••••');
 
     // The unmasked secret must NEVER be visible in the table row
     const rowText = await newKeyRow.innerText();
