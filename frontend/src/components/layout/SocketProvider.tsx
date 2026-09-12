@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth';
 
 export function SocketProvider({ children }: { children: ReactNode }) {
   const { user, accessToken } = useAuth();
-  const { setConnectionStatus, addEvent } = useSocketStore();
+  const { setConnectionStatus, addEvent, addDriftAlert } = useSocketStore();
 
   useEffect(() => {
     if (!user || !user.organizationId) {
@@ -54,11 +54,21 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       }
     };
 
+    const onDriftDetected = (payload: any) => {
+      const items = Array.isArray(payload) ? payload : [payload];
+      const payloadOrgId = payload?.organizationId || items[0]?.organizationId;
+      if (payloadOrgId && payloadOrgId !== user.organizationId) {
+        return;
+      }
+      addDriftAlert(payload);
+    };
+
     // Attach listeners
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on('connect_error', onConnectError);
     socket.on('activity_log', onActivityLog);
+    socket.on('drift:detected', onDriftDetected);
 
     // Initiate connection
     socket.connect();
@@ -69,11 +79,12 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       socket.off('disconnect', onDisconnect);
       socket.off('connect_error', onConnectError);
       socket.off('activity_log', onActivityLog);
+      socket.off('drift:detected', onDriftDetected);
       clearTimeout(timeoutId);
       // We don't disconnect entirely here to allow fast navigation,
       // but if user changes/logs out, the outer effect will handle disconnect.
     };
-  }, [user, accessToken, setConnectionStatus, addEvent]);
+  }, [user, accessToken, setConnectionStatus, addEvent, addDriftAlert]);
 
   return <>{children}</>;
 }

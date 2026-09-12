@@ -125,8 +125,13 @@ export const postCheckAction = async (req: any, res: Response, next: NextFunctio
         await updateBaseline(agent, organizationId, { metadata }, riskNumeric);
         const driftChecks = await detectDrift(agent, organizationId, { action, metadata }, riskNumeric);
         if (driftChecks.length > 0) {
+          const enrichedDriftChecks = driftChecks.map(check => ({
+            ...check,
+            agentId: agent,
+            organizationId,
+          }));
           await persistDriftAlerts(agent, organizationId, driftChecks);
-          io.to(`org:${organizationId}`).emit('drift:detected', driftChecks);
+          io.to(`company_${organizationId}`).emit('drift:detected', enrichedDriftChecks);
           logger.info(`[DRIFT] ${driftChecks.length} drift alert(s) for agent ${agent}`);
         }
       } catch (err: any) {

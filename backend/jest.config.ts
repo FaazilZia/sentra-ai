@@ -24,6 +24,7 @@ module.exports = {
     'node_modules/(?!(uuid)/)'
   ],
   moduleNameMapper: {
+    '^@sentra-ai/sdk$': '<rootDir>/../packages/sdk/src/index.ts',
     // Mock the queue module in CI where Redis/p-queue timers cause worker leaks
     '^../config/queue$': '<rootDir>/src/__mocks__/config/queue.ts',
     '^../../config/queue$': '<rootDir>/src/__mocks__/config/queue.ts',

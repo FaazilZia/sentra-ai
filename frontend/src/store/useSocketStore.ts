@@ -34,13 +34,30 @@ export interface RiskEvent {
   decision?: 'BLOCK' | 'MODIFY' | 'ALLOW';
 }
 
+export interface DriftAlert {
+  id: string;
+  name: string;
+  type: string;
+  shift: string;
+  status: 'warning' | 'danger' | 'active';
+  severity?: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  agentName?: string;
+  agentId?: string;
+  message?: string;
+  time?: string;
+  detectedAt?: string;
+}
+
 interface SocketState {
   connectionStatus: ConnectionStatus;
   activities: Activity[];
   alerts: Alert[];
   riskEvents: RiskEvent[];
+  driftAlerts: DriftAlert[];
   setConnectionStatus: (status: ConnectionStatus) => void;
   addEvent: (payload: any) => void;
+  addDriftAlert: (payload: any) => void;
+  setDriftAlerts: (alerts: DriftAlert[]) => void;
 }
 
 // Helper to format time nicely (e.g., "Just now" or HH:MM:SS)
@@ -58,8 +75,80 @@ export const useSocketStore = create<SocketState>((set) => ({
   activities: [],
   alerts: [],
   riskEvents: [],
+  driftAlerts: [],
   
   setConnectionStatus: (status) => set({ connectionStatus: status }),
+  setDriftAlerts: (alerts) => set({ driftAlerts: alerts }),
+  addDriftAlert: (payload) => set((state) => {
+    let rawItems: any[] = [];
+    if (Array.isArray(payload)) {
+      rawItems = payload;
+    } else if (payload && Array.isArray(payload.alerts)) {
+      rawItems = payload.alerts;
+    } else if (payload && Array.isArray(payload.data)) {
+      rawItems = payload.data;
+    } else if (payload) {
+      rawItems = [payload];
+    }
+
+    if (rawItems.length === 0) return state;
+
+    const newDrifts: DriftAlert[] = rawItems.map((item: any, idx: number) => {
+      let fallbackId = `live-drift-${Date.now()}-${idx}`;
+      if (typeof window !== 'undefined' && window.crypto?.randomUUID) {
+        fallbackId = window.crypto.randomUUID();
+      }
+      const id = item.id || fallbackId;
+      const agentName = item.agentName || item.agentId || item.agent || 'Monitored Agent';
+      const driftType = item.driftType || item.type || 'Concept Drift';
+
+      let divergenceStr = '+10.0%';
+      if (item.divergencePct !== undefined) {
+        const prefix = item.divergencePct > 0 ? '+' : '';
+        divergenceStr = `${prefix}${item.divergencePct}%`;
+      } else if (item.currentValue !== undefined && item.baselineValue !== undefined) {
+        const base = Math.max(item.baselineValue, 1);
+        const pct = Math.max(1, Math.round(((item.currentValue - item.baselineValue) / base) * 100));
+        divergenceStr = `+${pct}%`;
+      }
+
+      const severityUpper = String(item.severity || '').toUpperCase();
+      const isHighSeverity = severityUpper === 'CRITICAL' || severityUpper === 'HIGH';
+
+      const timestamp = item.timestamp || item.detectedAt || new Date().toISOString();
+
+      return {
+        id,
+        name: `${agentName} - ${driftType}`,
+        type: driftType,
+        shift: `${divergenceStr} ${item.metricName || item.message || 'Divergence'}`,
+        status: isHighSeverity ? 'danger' : 'warning',
+        severity: isHighSeverity ? 'HIGH' : 'MEDIUM',
+        agentName,
+        agentId: item.agentId || item.agent,
+        message: item.message || item.description,
+        time: formatTime(timestamp),
+        detectedAt: timestamp
+      };
+    });
+
+    const existingIds = new Set(state.driftAlerts.map(d => d.id));
+    const filteredNew = newDrifts.filter(d => !existingIds.has(d.id));
+    if (filteredNew.length === 0) return state;
+
+    const newAlerts = filteredNew.map(d => ({
+      id: d.id,
+      title: `Drift Detected: ${d.name}`,
+      system: d.agentName || 'AI Agent',
+      severity: (d.status === 'danger' ? 'critical' : 'high') as 'critical' | 'high' | 'medium',
+      time: d.time || 'Just now',
+    }));
+
+    return {
+      driftAlerts: [...filteredNew, ...state.driftAlerts].slice(0, 50),
+      alerts: [...newAlerts, ...state.alerts].slice(0, 20),
+    };
+  }),
   
   addEvent: (payload) => set((state) => {
     // Rely exclusively on backend-generated stable ID

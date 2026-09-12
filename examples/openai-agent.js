@@ -3,9 +3,9 @@
  * 
  * Demonstrates how to intercept an LLM's intent to read sensitive data.
  */
-const { Sentra } = require('../packages/sdk/dist'); // In real usage: @sentra/sdk
+const { SentraClient } = require('../packages/sdk/dist'); // In real usage: @sentra-ai/sdk
 
-const sentra = new Sentra({
+const sentra = new SentraClient({
   apiKey: "demo-api-key",
   baseUrl: "http://localhost:3000/api"
 });
