@@ -80,30 +80,42 @@ export const useSocketStore = create<SocketState>((set) => ({
   setConnectionStatus: (status) => set({ connectionStatus: status }),
   setDriftAlerts: (alerts) => set({ driftAlerts: alerts }),
   addDriftAlert: (payload) => set((state) => {
-    const rawItems = Array.isArray(payload)
-      ? payload
-      : Array.isArray(payload?.alerts)
-      ? payload.alerts
-      : Array.isArray(payload?.data)
-      ? payload.data
-      : payload ? [payload] : [];
+    let rawItems: any[] = [];
+    if (Array.isArray(payload)) {
+      rawItems = payload;
+    } else if (payload && Array.isArray(payload.alerts)) {
+      rawItems = payload.alerts;
+    } else if (payload && Array.isArray(payload.data)) {
+      rawItems = payload.data;
+    } else if (payload) {
+      rawItems = [payload];
+    }
 
     if (rawItems.length === 0) return state;
 
     const newDrifts: DriftAlert[] = rawItems.map((item: any, idx: number) => {
-      const id = item.id || `live-drift-${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 7)}`;
+      let fallbackId = `live-drift-${Date.now()}-${idx}`;
+      if (typeof window !== 'undefined' && window.crypto?.randomUUID) {
+        fallbackId = window.crypto.randomUUID();
+      }
+      const id = item.id || fallbackId;
       const agentName = item.agentName || item.agentId || item.agent || 'Monitored Agent';
       const driftType = item.driftType || item.type || 'Concept Drift';
 
-      const divergenceStr = item.divergencePct !== undefined
-        ? `${item.divergencePct > 0 ? '+' : ''}${item.divergencePct}%`
-        : (item.currentValue !== undefined && item.baselineValue !== undefined
-            ? `+${Math.max(1, Math.round(((item.currentValue - item.baselineValue) / Math.max(item.baselineValue, 1)) * 100))}%`
-            : '+10.0%');
+      let divergenceStr = '+10.0%';
+      if (item.divergencePct !== undefined) {
+        const prefix = item.divergencePct > 0 ? '+' : '';
+        divergenceStr = `${prefix}${item.divergencePct}%`;
+      } else if (item.currentValue !== undefined && item.baselineValue !== undefined) {
+        const base = Math.max(item.baselineValue, 1);
+        const pct = Math.max(1, Math.round(((item.currentValue - item.baselineValue) / base) * 100));
+        divergenceStr = `+${pct}%`;
+      }
 
-      const isHighSeverity =
-        String(item.severity || '').toUpperCase() === 'CRITICAL' ||
-        String(item.severity || '').toUpperCase() === 'HIGH';
+      const severityUpper = String(item.severity || '').toUpperCase();
+      const isHighSeverity = severityUpper === 'CRITICAL' || severityUpper === 'HIGH';
+
+      const timestamp = item.timestamp || item.detectedAt || new Date().toISOString();
 
       return {
         id,
@@ -115,8 +127,8 @@ export const useSocketStore = create<SocketState>((set) => ({
         agentName,
         agentId: item.agentId || item.agent,
         message: item.message || item.description,
-        time: formatTime(item.timestamp || item.detectedAt || new Date().toISOString()),
-        detectedAt: item.timestamp || item.detectedAt || new Date().toISOString()
+        time: formatTime(timestamp),
+        detectedAt: timestamp
       };
     });
 
