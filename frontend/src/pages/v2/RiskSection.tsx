@@ -7,6 +7,7 @@ import { MetricCard } from '@/components/v2/MetricCard';
 import { DataTable, Column } from '@/components/v2/DataTable';
 import { apiRequest, fetchSdkStatus } from '@/lib/api';
 import { useStore } from '@/store/useStore';
+import { useSocketStore } from '@/store/useSocketStore';
 import { 
   ShieldAlert, 
   AlertTriangle, 
@@ -146,6 +147,7 @@ export default function RiskSection() {
   const [rankedAgents, setRankedAgents] = useState<RankedAgentRisk[]>([]);
   const [driftAlerts, setDriftAlerts] = useState<DriftItem[]>([]);
   const [impactAssessments, setImpactAssessments] = useState<any[]>([]);
+  const socketDriftAlerts = useSocketStore((state) => state.driftAlerts);
 
   const loadRiskData = useCallback(async () => {
     setLoading(true);
@@ -176,16 +178,26 @@ export default function RiskSection() {
         const divergenceStr = d?.divergencePct !== undefined 
           ? `${d.divergencePct > 0 ? '+' : ''}${d.divergencePct}%` 
           : '+10.0%';
-        const isHighSeverity = d?.severity === 'CRITICAL' || d?.severity === 'HIGH';
+        const isHighSeverity =
+          d?.severity === 'CRITICAL' ||
+          d?.severity === 'HIGH' ||
+          String(d?.severity).toUpperCase() === 'CRITICAL' ||
+          String(d?.severity).toUpperCase() === 'HIGH';
+        const agentLabel = d?.agentName || d?.agentId || d?.agent;
         return {
           id: d?.id || `drift-${idx}`,
-          name: d?.agentName ? `${d.agentName} - ${d.driftType || 'Drift'}` : (d?.metricName || `Drift Event #${idx + 1}`),
-          type: d?.driftType || 'Concept Drift',
-          shift: `${divergenceStr} ${d?.metricName || 'Divergence'}`,
+          name: agentLabel ? `${agentLabel} - ${d?.driftType || d?.type || 'Drift'}` : (d?.metricName || d?.message || `Drift Event #${idx + 1}`),
+          type: d?.driftType || d?.type || 'Concept Drift',
+          shift: `${divergenceStr} ${d?.metricName || d?.message || 'Divergence'}`,
           status: isHighSeverity ? 'danger' : 'warning'
         };
       });
-      setDriftAlerts(mappedDrifts);
+      setDriftAlerts((prev) => {
+        const liveItems = prev.filter((p) => p.id.startsWith('live-drift-'));
+        const fetchedIds = new Set(mappedDrifts.map((d) => d.id));
+        const nonDuplicateLive = liveItems.filter((item) => !fetchedIds.has(item.id));
+        return [...nonDuplicateLive, ...mappedDrifts];
+      });
 
     } catch (err: any) {
       console.error('Error loading risk center:', err);
@@ -201,6 +213,26 @@ export default function RiskSection() {
   useEffect(() => {
     loadRiskData();
   }, [loadRiskData]);
+
+  // Synchronize live drift alerts received via WebSocket into the view state without page refresh
+  useEffect(() => {
+    if (socketDriftAlerts && socketDriftAlerts.length > 0) {
+      setDriftAlerts((prev) => {
+        const existingIds = new Set(prev.map((d) => d.id));
+        const newItems: DriftItem[] = socketDriftAlerts
+          .filter((d) => !existingIds.has(d.id))
+          .map((d) => ({
+            id: d.id,
+            name: d.name,
+            type: d.type,
+            shift: d.shift,
+            status: d.status
+          }));
+        if (newItems.length === 0) return prev;
+        return [...newItems, ...prev];
+      });
+    }
+  }, [socketDriftAlerts]);
 
   const criticalCount = rankedAgents.filter(r => r.severity === 'CRITICAL').length;
   const highCount = rankedAgents.filter(r => r.severity === 'HIGH').length;

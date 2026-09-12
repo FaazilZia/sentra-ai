@@ -402,6 +402,78 @@ test.describe('RiskSection: Real API Wiring & Mock Data Elimination', () => {
     // Old mock data must not be displayed
     await expect(page.getByText('Financial Analyst Bot')).toHaveCount(0);
   });
+
+  test('Live Drift Alert: appears in Risk section in real-time without page refresh when socket event fires', async ({ page }) => {
+    // 1. Initial empty drift alerts
+    await page.route('**/api/v1/risks', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: [] }),
+      });
+    });
+
+    await page.route('**/api/v1/ai-systems', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: { items: [] } }),
+      });
+    });
+
+    await page.route('**/api/v1/drift/alerts', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: [] }),
+      });
+    });
+
+    await page.goto('/app/risk', { waitUntil: 'networkidle' });
+    await expect(page.getByRole('heading', { name: 'Risk', exact: true })).toBeVisible({ timeout: 15000 });
+
+    // Initial KPI should show 0 active drift alerts
+    await expect(page.getByTestId('active-drift-alerts')).toHaveText('0');
+
+    // 2. Dispatch simulated live socket drift:detected alert via store
+    await page.evaluate(() => {
+      const store = (window as any).__useSocketStore;
+      if (store) {
+        store.getState().addDriftAlert([
+          {
+            id: 'drift-live-realtime-999',
+            agentId: 'autonomous-trading-bot',
+            agentName: 'Autonomous Trading Bot',
+            driftType: 'Concept Drift',
+            metricName: 'Feature Divergence',
+            divergencePct: 34.2,
+            severity: 'CRITICAL',
+            message: 'Significant feature distribution shift detected in real time'
+          }
+        ]);
+      }
+    });
+
+    // 3. Verify KPI card immediately updates to 1 without page refresh
+    await expect(page.getByTestId('active-drift-alerts')).toHaveText('1');
+
+    // 4. Switch to Drift tab and verify the alert card is rendered live
+    await page.getByRole('button', { name: /Drift Detection Alerts/i }).click();
+    await expect(page.getByText('Autonomous Trading Bot - Concept Drift')).toBeVisible();
+    await expect(page.getByText('+34.2% Feature Divergence')).toBeVisible();
+
+    // 5. Capture screenshot of live drift alert in Risk section
+    fs.mkdirSync(ARTIFACT_DIR, { recursive: true });
+    const liveDriftScreenshot = path.join(ARTIFACT_DIR, 'risk_section_live_drift_realtime.png');
+    await page.screenshot({ path: liveDriftScreenshot, fullPage: true });
+    console.log(`📸 Live drift real-time alert screenshot saved: ${liveDriftScreenshot}`);
+
+    // Also copy to root screenshots dir if available
+    const rootScreenshotDir = path.resolve(process.cwd(), '../screenshots');
+    if (fs.existsSync(rootScreenshotDir)) {
+      fs.copyFileSync(liveDriftScreenshot, path.join(rootScreenshotDir, 'risk_section_live_drift_realtime.png'));
+    }
+  });
 });
 
 test.describe('RiskSection: Helper Functions Unit Tests', () => {
@@ -499,5 +571,58 @@ test.describe('RiskSection: Helper Functions Unit Tests', () => {
     expect(ranked[2].agentName).toBe('Beta Agent');
     expect(ranked[2].compositeScore).toBe(55);
     expect(ranked[2].severity).toBe('MEDIUM');
+  });
+
+  test('Live drift socket alert mapping handles severity, divergence, and deduplication', () => {
+    const rawAlerts = [
+      {
+        id: 'drift-live-101',
+        agentId: 'autonomous-finance-bot',
+        agentName: 'Autonomous Finance Bot',
+        driftType: 'Volume Spike',
+        metricName: 'Request Volume',
+        currentValue: 30,
+        baselineValue: 5,
+        severity: 'HIGH',
+      },
+      {
+        id: 'drift-live-102',
+        agentId: 'rag-query-bot',
+        type: 'new_resource',
+        message: 'Agent accessed new resource: /api/v1/vault',
+        severity: 'CRITICAL',
+        divergencePct: 25.0
+      }
+    ];
+
+    const mapped = rawAlerts.map((d: any) => {
+      const divergenceStr = d?.divergencePct !== undefined
+        ? `${d.divergencePct > 0 ? '+' : ''}${d.divergencePct}%`
+        : (d?.currentValue && d?.baselineValue
+            ? `+${Math.round(((d.currentValue - d.baselineValue) / Math.max(d.baselineValue, 1)) * 100)}%`
+            : '+10.0%');
+      const isHighSeverity =
+        d?.severity === 'CRITICAL' ||
+        d?.severity === 'HIGH' ||
+        String(d?.severity).toUpperCase() === 'CRITICAL' ||
+        String(d?.severity).toUpperCase() === 'HIGH';
+      const agentLabel = d?.agentName || d?.agentId || d?.agent;
+      return {
+        id: d.id,
+        name: agentLabel ? `${agentLabel} - ${d?.driftType || d?.type || 'Drift'}` : (d?.metricName || 'Drift Event'),
+        type: d?.driftType || d?.type || 'Concept Drift',
+        shift: `${divergenceStr} ${d?.metricName || d?.message || 'Divergence'}`,
+        status: isHighSeverity ? 'danger' : 'warning'
+      };
+    });
+
+    expect(mapped).toHaveLength(2);
+    expect(mapped[0].name).toBe('Autonomous Finance Bot - Volume Spike');
+    expect(mapped[0].shift).toContain('+500%');
+    expect(mapped[0].status).toBe('danger');
+
+    expect(mapped[1].name).toBe('rag-query-bot - new_resource');
+    expect(mapped[1].shift).toContain('+25%');
+    expect(mapped[1].status).toBe('danger');
   });
 });

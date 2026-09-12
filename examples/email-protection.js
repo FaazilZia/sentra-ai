@@ -3,9 +3,9 @@
  * 
  * Demonstrates blocking an AI agent from sending unauthorized emails.
  */
-const { Sentra } = require('../packages/sdk/dist');
+const { SentraClient } = require('../packages/sdk/dist'); // In real usage: @sentra-ai/sdk
 
-const sentra = new Sentra({
+const sentra = new SentraClient({
   apiKey: "demo-api-key",
   baseUrl: "http://localhost:3000/api"
 });
