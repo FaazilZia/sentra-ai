@@ -110,7 +110,7 @@ io.use(async (socket, next) => {
       : undefined;
     const cookieHeader = socket.handshake.headers.cookie;
     const cookies = parseCookieHeader(cookieHeader);
-    const cookieToken = cookies.accessToken || cookies.token;
+    const cookieToken = cookies.sentra_access_token || cookies.accessToken || cookies.token;
 
     const token = authToken || bearerToken || cookieToken;
 

@@ -103,5 +103,22 @@ describe('Auth Endpoints (Integration)', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty('accessToken');
     });
+
+    it('should refresh access token via sentra_refresh_token cookie without body token', async () => {
+      const loginRes = await request(app)
+        .post('/api/v1/auth/login')
+        .send({ email: TEST_EMAIL, password: TEST_PASSWORD });
+      
+      const refreshToken = loginRes.body.data.refreshToken;
+
+      const response = await request(app)
+        .post('/api/v1/auth/refresh')
+        .set('Cookie', [`sentra_refresh_token=${refreshToken}`])
+        .send({});
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toHaveProperty('accessToken');
+    });
   });
 });
