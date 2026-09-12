@@ -408,7 +408,7 @@ export const googleCallback = async (req: Request, res: Response) => {
 
 export const refreshToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { token } = req.body;
+    const token = req.body?.token || req.cookies?.sentra_refresh_token;
     if (!token) return res.status(401).json({ success: false, message: 'Refresh token required' });
 
     // 1. Verify and lookup token

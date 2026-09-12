@@ -8,7 +8,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const { setConnectionStatus, addEvent, addDriftAlert } = useSocketStore();
 
   useEffect(() => {
-    if (!user || !user.organizationId) {
+    if (!user || !user.organizationId || !accessToken) {
       setSocketAuthToken(null);
       if (socket.connected) {
         socket.disconnect();

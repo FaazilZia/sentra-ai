@@ -6,7 +6,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { fetchCurrentUser, loginRequest, registerRequest, apiRequest, ApiError, setImpersonationToken } from './api';
+import { fetchCurrentUser, loginRequest, registerRequest, refreshSession, apiRequest, ApiError, setImpersonationToken } from './api';
 
 export interface AppUser {
   id: string;
@@ -70,11 +70,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Attempt to fetch current user directly using browser credentials (cookies)
-    fetchCurrentUser()
-      .then((currentUser) => {
-        setUser(currentUser);
-        setAccessToken(null);
+    // Attempt to restore session: mint a fresh access token via HTTP-only refresh cookie, then fetch user profile
+    refreshSession()
+      .then(async (refreshRes) => {
+        if (refreshRes?.accessToken) {
+          setAccessToken(refreshRes.accessToken);
+          try {
+            const currentUser = await fetchCurrentUser();
+            setUser(currentUser);
+          } catch {
+            setUser(null);
+            setAccessToken(null);
+          }
+        } else {
+          setUser(null);
+          setAccessToken(null);
+        }
       })
       .catch(() => {
         setUser(null);

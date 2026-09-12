@@ -250,6 +250,13 @@ export function registerRequest(payload: any): Promise<any> {
   });
 }
 
+export function refreshSession(): Promise<{ accessToken: string; refreshToken?: string }> {
+  return apiRequest<{ accessToken: string; refreshToken?: string }>('/auth/refresh', {
+    method: 'POST',
+    body: JSON.stringify({}),
+  }, false);
+}
+
 /**
  * USER ENDPOINTS
  */
