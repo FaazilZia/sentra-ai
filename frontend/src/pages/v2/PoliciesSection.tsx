@@ -50,11 +50,12 @@ export default function PoliciesSection() {
   const loadPoliciesData = useCallback(async () => {
     setLoading(true);
     try {
-      const [polRes, guardRes, wfRes, statsRes, sdkStatus] = await Promise.all([
-        apiRequest<any>('/policies').catch(() => []),
+      const [polRes, guardRes, wfRes, statsRes, aiLogsRes, sdkStatus] = await Promise.all([
+        apiRequest<any>('/policies').catch(() => ({ data: [] })),
         apiRequest<any>('/guardrails').catch(() => ({ data: [] })),
         apiRequest<any>('/workflows').catch(() => ({ data: [] })),
         apiRequest<any>('/ai/dashboard-stats').catch(() => null),
+        apiRequest<any>('/ai/logs').catch(() => ({ data: [] })),
         fetchSdkStatus().catch(() => ({ connected: false, connectedAt: null }))
       ]);
 
@@ -64,8 +65,27 @@ export default function PoliciesSection() {
       const loadedPolicies = Array.isArray(polRes?.data) ? polRes.data : (Array.isArray(polRes) ? polRes : []);
       const loadedGuardrails = Array.isArray(guardRes?.data) ? guardRes.data : [];
 
-      const blockedCount = statsRes?.kpis?.modelsBlockedToday?.value ?? (statsRes?.kpis?.blockedCount?.value ?? 0);
-      setInterceptionsToday(isSdkLive ? blockedCount : 0);
+      // Calculate rule-level action attribution from stats and live AI logs
+      const ruleInterceptions: Record<string, number> = {
+        ...(statsRes?.data?.ruleInterceptions || statsRes?.ruleInterceptions || {})
+      };
+
+      const today = new Date().toDateString();
+      const rawLogs = Array.isArray(aiLogsRes?.data) ? aiLogsRes.data : (Array.isArray(aiLogsRes) ? aiLogsRes : []);
+      const todayLogs = rawLogs.filter((l: any) => new Date(l.timestamp).toDateString() === today);
+      todayLogs.forEach((l: any) => {
+        if (l.status === 'blocked' || l.status === 'flagged') {
+          const meta = l.metadata || {};
+          const rId = meta.ruleId;
+          const rName = meta.matchedPolicy || meta.ruleName;
+          if (rId) {
+            ruleInterceptions[rId] = todayLogs.filter((x: any) => (x.status === 'blocked' || x.status === 'flagged') && x.metadata?.ruleId === rId).length;
+          }
+          if (rName) {
+            ruleInterceptions[rName] = todayLogs.filter((x: any) => (x.status === 'blocked' || x.status === 'flagged') && (x.metadata?.matchedPolicy === rName || x.metadata?.ruleName === rName)).length;
+          }
+        }
+      });
 
       const formattedRules: GovernanceRule[] = [
         {
@@ -76,7 +96,7 @@ export default function PoliciesSection() {
           enforcementMode: 'blocking',
           actionType: 'BLOCK',
           isEnabled: true,
-          blockedCountToday: 0,
+          blockedCountToday: ruleInterceptions['rule-1'] || ruleInterceptions['Strict PII & SSN Redaction Rule'] || 0,
           updatedAt: 'Recently'
         },
         {
@@ -87,18 +107,18 @@ export default function PoliciesSection() {
           enforcementMode: 'blocking',
           actionType: 'BLOCK',
           isEnabled: true,
-          blockedCountToday: 0,
+          blockedCountToday: ruleInterceptions['rule-2'] || ruleInterceptions['Adversarial Jailbreak & System Reset Interception'] || 0,
           updatedAt: 'Recently'
         },
         {
           id: 'rule-3',
-          name: 'Disbursement > $50k Human Approval Trigger',
+          name: 'Disbursement > $10k Human Approval Trigger',
           category: 'Financial Governance',
           targetScope: 'Financial Analyst Bot',
           enforcementMode: 'human-in-loop',
           actionType: 'FLAG',
           isEnabled: true,
-          blockedCountToday: 0,
+          blockedCountToday: ruleInterceptions['rule-3'] || ruleInterceptions['Disbursement > $10k Human Approval Trigger'] || 0,
           updatedAt: 'Recently'
         },
         {
@@ -109,7 +129,7 @@ export default function PoliciesSection() {
           enforcementMode: 'blocking',
           actionType: 'BLOCK',
           isEnabled: true,
-          blockedCountToday: 0,
+          blockedCountToday: ruleInterceptions['rule-4'] || ruleInterceptions['Shadow Agent Workspace Admin Access Block'] || 0,
           updatedAt: 'Recently'
         },
         {
@@ -120,7 +140,40 @@ export default function PoliciesSection() {
           enforcementMode: 'flag-and-review',
           actionType: 'FLAG',
           isEnabled: false,
-          blockedCountToday: 0,
+          blockedCountToday: ruleInterceptions['rule-5'] || 0,
+          updatedAt: 'Recently'
+        },
+        {
+          id: 'rule-gdpr-transfer',
+          name: 'GDPR Cross-Border Transfer Guardrail',
+          category: 'Data Privacy & GDPR',
+          targetScope: 'GDPR Compliance Agents',
+          enforcementMode: 'blocking',
+          actionType: 'BLOCK',
+          isEnabled: true,
+          blockedCountToday: ruleInterceptions['rule-gdpr-transfer'] || ruleInterceptions['GDPR Cross-Border Transfer Guardrail'] || 0,
+          updatedAt: 'Recently'
+        },
+        {
+          id: 'rule-hipaa-baa',
+          name: 'HIPAA PHI Vendor Disclosure Guardrail',
+          category: 'Healthcare Privacy & HIPAA',
+          targetScope: 'Healthcare Assistant Agents',
+          enforcementMode: 'blocking',
+          actionType: 'BLOCK',
+          isEnabled: true,
+          blockedCountToday: ruleInterceptions['rule-hipaa-baa'] || ruleInterceptions['HIPAA PHI Vendor Disclosure Guardrail'] || 0,
+          updatedAt: 'Recently'
+        },
+        {
+          id: 'rule-dpdp-biometric',
+          name: 'DPDP Minor Biometric Consent Guardrail',
+          category: 'Data Privacy & DPDP',
+          targetScope: 'DPDP Fiduciary Agents',
+          enforcementMode: 'blocking',
+          actionType: 'BLOCK',
+          isEnabled: true,
+          blockedCountToday: ruleInterceptions['rule-dpdp-biometric'] || ruleInterceptions['DPDP Minor Biometric Consent Guardrail'] || 0,
           updatedAt: 'Recently'
         }
       ];
@@ -135,10 +188,14 @@ export default function PoliciesSection() {
           enforcementMode: p.effect === 'deny' ? 'blocking' : 'flag-and-review',
           actionType: p.effect === 'deny' ? 'BLOCK' : 'FLAG',
           isEnabled: p.status === 'ACTIVE',
-          blockedCountToday: 0,
+          blockedCountToday: ruleInterceptions[p.id] || ruleInterceptions[p.name] || 0,
           updatedAt: 'Recently'
         });
       });
+
+      const totalInterceptions = formattedRules.reduce((sum, r) => sum + (r.blockedCountToday || 0), 0);
+      const blockedCount = statsRes?.kpis?.modelsBlockedToday?.value ?? (statsRes?.kpis?.blockedCount?.value ?? 0);
+      setInterceptionsToday(isSdkLive ? (totalInterceptions || blockedCount) : 0);
 
       setRules(formattedRules);
       setWorkflows(Array.isArray(wfRes?.data) ? wfRes.data : loadedGuardrails);

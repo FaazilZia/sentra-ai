@@ -324,9 +324,26 @@ export const getDashboardStats = async (req: any, res: Response, next: NextFunct
     ]);
 
     // 1. Calculate KPIs
+    const today = new Date().toDateString();
+    const todayLogs = logs.filter(l => new Date(l.timestamp).toDateString() === today);
     const criticalViolations = incidents.filter(i => i.severity > 70).length;
-    const blockedToday = logs.filter(l => l.status === 'blocked' && new Date(l.timestamp).toDateString() === new Date().toDateString()).length;
+    const blockedToday = todayLogs.filter(l => l.status === 'blocked').length;
+    const flaggedToday = todayLogs.filter(l => l.status === 'flagged').length;
+    const allowedToday = todayLogs.filter(l => l.status === 'allowed').length;
+    const totalToday = todayLogs.length;
     const complianceScore = policies.length > 0 ? Math.round((policies.filter(p => p.enabled).length / policies.length) * 100) : 100;
+
+    // Rule-level Interceptions attribution for Policies Section
+    const ruleInterceptions: Record<string, number> = {};
+    todayLogs.forEach(l => {
+      if (l.status === 'blocked' || l.status === 'flagged') {
+        const meta = (l.metadata as any) || {};
+        const ruleId = meta.ruleId;
+        const matchedPolicy = meta.matchedPolicy || meta.ruleName;
+        if (ruleId) ruleInterceptions[ruleId] = (ruleInterceptions[ruleId] || 0) + 1;
+        if (matchedPolicy) ruleInterceptions[matchedPolicy] = (ruleInterceptions[matchedPolicy] || 0) + 1;
+      }
+    });
 
     // 2. Generate Chart Data (Last 7 Days)
     const chartData: any[] = [];
@@ -364,8 +381,12 @@ export const getDashboardStats = async (req: any, res: Response, next: NextFunct
           riskScore: { value: score, trend: -2, trendLabel: 'points vs last week' },
           criticalViolations: { value: criticalViolations, trend: 1, trendLabel: 'since yesterday' },
           modelsBlockedToday: { value: blockedToday, trend: 0, trendLabel: 'vs yesterday' },
-          complianceScore: { value: complianceScore, trend: 0, trendLabel: 'vs last month' }
+          complianceScore: { value: complianceScore, trend: 0, trendLabel: 'vs last month' },
+          flaggedToday: { value: flaggedToday, trend: 0, trendLabel: 'vs yesterday' },
+          allowedToday: { value: allowedToday, trend: 0, trendLabel: 'vs yesterday' },
+          totalActionsToday: { value: totalToday, trend: 0, trendLabel: 'vs yesterday' }
         },
+        ruleInterceptions,
         chartData,
         departments,
         violations: logs.slice(-10).reverse().map(l => {

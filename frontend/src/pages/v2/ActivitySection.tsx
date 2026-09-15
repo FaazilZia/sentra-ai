@@ -112,6 +112,35 @@ export const mapAuditLogToFeedEvent = (log: any, index = 0): FeedEvent => {
   };
 };
 
+export const mapAiLogToFeedEvent = (log: any, index = 0): FeedEvent => {
+  const statusStr = String(log.status || '').toUpperCase();
+  const isFlagged = statusStr === 'FLAGGED' || log.isPendingApproval === true || log.metadata?.isPendingApproval === true;
+  const status: 'BLOCKED' | 'FLAGGED' | 'ALLOWED' =
+    statusStr === 'BLOCKED' ? 'BLOCKED' : (isFlagged ? 'FLAGGED' : 'ALLOWED');
+
+  const riskStr = String(log.risk || '').toUpperCase();
+  const severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' =
+    riskStr === 'HIGH' ? 'CRITICAL' :
+    riskStr === 'MEDIUM' ? 'MEDIUM' : 'LOW';
+
+  const timestamp = log.timestamp || log.created_at;
+  const rawTimestamp = timestamp ? new Date(timestamp).getTime() : Date.now();
+  const meta = log.metadata || {};
+  const snippet = meta.prompt || meta.file || meta.resource || meta.destination || (typeof meta.amount === 'number' ? `Amount: $${meta.amount.toLocaleString()}` : undefined) || log.explanation || undefined;
+
+  return {
+    id: log.id ? String(log.id) : `ai-log-${index}-${rawTimestamp}`,
+    timestamp: formatRelativeTime(timestamp),
+    agentName: log.agent || log.agent_id || 'Monitored Agent',
+    actionType: log.action || 'AI Action',
+    status,
+    reason: log.reason || log.explanation || (status === 'BLOCKED' ? 'Blocked by governance policy' : status === 'FLAGGED' ? 'Flagged for human review' : 'Authorized action'),
+    severity,
+    promptSnippet: snippet,
+    rawTimestamp: Number.isNaN(rawTimestamp) ? 0 : rawTimestamp
+  };
+};
+
 export const mergeAndSortFeedEvents = (incidents: any[], auditLogs: any[]): FeedEvent[] => {
   const incList = Array.isArray(incidents) ? incidents : [];
   const audList = Array.isArray(auditLogs) ? auditLogs : [];
@@ -139,7 +168,11 @@ export default function ActivitySection() {
     setLoading(true);
     setError(null);
     try {
-      const [auditRes, incidentsRes] = await Promise.all([
+      const [aiLogsRes, auditRes, incidentsRes] = await Promise.all([
+        apiRequest<any>('/ai/logs').catch((err) => {
+          console.error('Failed to fetch /ai/logs:', err);
+          return null;
+        }),
         apiRequest<any>('/audit').catch((err) => {
           console.error('Failed to fetch /audit:', err);
           return null;
@@ -150,26 +183,41 @@ export default function ActivitySection() {
         })
       ]);
 
-      if (!auditRes && !incidentsRes) {
+      if (!aiLogsRes && !auditRes && !incidentsRes) {
         throw new Error('Unable to connect to activity and audit services. Please verify your connection.');
       }
 
-      const fetchedIncidents = Array.isArray(incidentsRes?.data)
+      const fetchedIncidents = Array.isArray(incidentsRes?.data?.data)
+        ? incidentsRes.data.data
+        : Array.isArray(incidentsRes?.data)
         ? incidentsRes.data
         : Array.isArray(incidentsRes)
         ? incidentsRes
         : [];
-      const fetchedLogs = Array.isArray(auditRes?.logs)
+      const fetchedAudit = Array.isArray(auditRes?.logs)
         ? auditRes.logs
+        : Array.isArray(auditRes?.data)
+        ? auditRes.data
         : Array.isArray(auditRes)
         ? auditRes
         : [];
+      const fetchedAiLogs = Array.isArray(aiLogsRes?.data)
+        ? aiLogsRes.data
+        : Array.isArray(aiLogsRes)
+        ? aiLogsRes
+        : [];
 
       setRawIncidents(fetchedIncidents);
-      setRawAuditLogs(fetchedLogs);
+      setRawAuditLogs(fetchedAudit);
 
-      const mergedFeed = mergeAndSortFeedEvents(fetchedIncidents, fetchedLogs);
-      setEvents(mergedFeed);
+      if (fetchedAiLogs.length > 0) {
+        const mappedAiEvents = fetchedAiLogs.map((log: any, i: number) => mapAiLogToFeedEvent(log, i));
+        mappedAiEvents.sort((a: FeedEvent, b: FeedEvent) => (b.rawTimestamp || 0) - (a.rawTimestamp || 0));
+        setEvents(mappedAiEvents);
+      } else {
+        const mergedFeed = mergeAndSortFeedEvents(fetchedIncidents, fetchedAudit);
+        setEvents(mergedFeed);
+      }
     } catch (err: any) {
       console.error('Error loading activity feed:', err);
       setError(err?.message || 'Failed to load activity stream. Please try again.');
@@ -199,9 +247,11 @@ export default function ActivitySection() {
     }
   }, [alerts]);
 
-  const blockedCount = events.filter(e => e.status === 'BLOCKED').length;
-  const flaggedCount = events.filter(e => e.status === 'FLAGGED').length;
-  const allowedCount = events.filter(e => e.status === 'ALLOWED').length;
+  const today = new Date().toDateString();
+  const todayEvents = events.filter(e => !e.rawTimestamp || new Date(e.rawTimestamp).toDateString() === today);
+  const blockedCount = todayEvents.filter(e => e.status === 'BLOCKED').length;
+  const flaggedCount = todayEvents.filter(e => e.status === 'FLAGGED').length;
+  const allowedCount = todayEvents.filter(e => e.status === 'ALLOWED').length;
 
   const feedColumns: Column<FeedEvent>[] = [
     {
@@ -285,29 +335,29 @@ export default function ActivitySection() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <MetricCard
           label="Real-Time Feed Stream"
-          value={events.length}
-          subtitle="Monitored pipeline events"
+          value={todayEvents.length || events.length}
+          subtitle="Monitored pipeline events today"
           status="primary"
           icon={Activity}
         />
         <MetricCard
           label="Blocked Actions"
           value={blockedCount}
-          subtitle="Critical policy interventions"
+          subtitle="Critical policy interventions today"
           status="danger"
           icon={Ban}
         />
         <MetricCard
           label="Flagged / Human-in-Loop"
           value={flaggedCount}
-          subtitle="Pending manual approval"
+          subtitle="Pending manual approval today"
           status="warning"
           icon={AlertTriangle}
         />
         <MetricCard
           label="Allowed Executions"
           value={allowedCount}
-          subtitle="Safe policy transactions"
+          subtitle="Safe policy transactions today"
           status="success"
           icon={CheckCircle2}
         />

@@ -5,6 +5,7 @@ export interface PolicyEvaluation {
   allowed: boolean;
   reason?: string;
   matchedPolicy?: string;
+  ruleId?: string;
   explanation?: string;
   compliance?: any;
   impact?: string;
@@ -62,6 +63,8 @@ export const evaluatePolicy = async (agent: string, action: string, organization
     return {
       allowed: false,
       reason: 'Policy Violation: Unauthorized Data Exfiltration',
+      matchedPolicy: 'Strict PII & SSN Redaction Rule',
+      ruleId: 'rule-1',
       explanation: 'Bulk export of customer PII to unauthorized external domains is blocked.',
       compliance: ['GDPR', 'HIPAA', 'NIST_AI_RMF'],
       impact: 'Prevents customer PII leak'
@@ -74,6 +77,8 @@ export const evaluatePolicy = async (agent: string, action: string, organization
     return {
       allowed: false,
       reason: 'Policy Violation: Unauthorized Production Deletion',
+      matchedPolicy: 'Shadow Agent Workspace Admin Access Block',
+      ruleId: 'rule-4',
       explanation: 'Permanent deletion of data under production environments is prohibited.',
       compliance: ['NIST_AI_RMF', 'GDPR'],
       impact: 'Prevents data loss in production'
@@ -90,6 +95,8 @@ export const evaluatePolicy = async (agent: string, action: string, organization
     return {
       allowed: false,
       reason: 'Policy Violation: Unauthorized PII Data Export',
+      matchedPolicy: 'Strict PII & SSN Redaction Rule',
+      ruleId: 'rule-1',
       explanation: 'Exporting or transmitting data flagged as containing PII (contains_pii: true or sensitive PII file pattern) is prohibited by policy.',
       compliance: ['GDPR', 'HIPAA', 'DPDP', 'NIST_AI_RMF'],
       impact: 'Prevents customer PII exfiltration and privacy compliance breach'
@@ -104,10 +111,77 @@ export const evaluatePolicy = async (agent: string, action: string, organization
     return {
       allowed: false,
       reason: `Policy Violation: High-Value Financial Threshold Breach ($${amount.toLocaleString()})`,
+      matchedPolicy: 'Disbursement > $10k Human Approval Trigger',
+      ruleId: 'rule-3',
       explanation: `Payment processing or financial disbursement of $${amount.toLocaleString()} exceeds automated approval threshold ($10,000). Action flagged for mandatory human approval.`,
       compliance: ['PCI_DSS', 'SOX', 'FINANCIAL_COMPLIANCE'],
       impact: 'Requires human-in-the-loop approval before financial disbursement',
       isPendingApproval: true
+    };
+  }
+
+  // L1 Check 5: Cross-Border EU/German Data Transfer Without Safeguards (GDPR Art. 44-49)
+  const isTransferAction = /transfer|export|send|transmit|share|disclose|outbound|move/i.test(lowercaseAction);
+  const dataSubjectStr = String(metadata?.data_subjects || metadata?.dataSubjects || metadata?.resource || metadata?.file || '').toLowerCase();
+  const destStr = String(metadata?.destination || '').toLowerCase();
+  const hasEuOrGermanSubject = /(german|eu|europe|european|gdpr)/i.test(dataSubjectStr) || /(german|eu|europe|european|gdpr)/i.test(lowercaseAction);
+  const hasCustomerOrUserRecords = /(customer|user|resident|personal|record|identit)/i.test(dataSubjectStr) || /(customer|user|resident|personal|record|identit)/i.test(lowercaseAction);
+  const hasSccFlagFalse = metadata?.has_scc === false || metadata?.hasScc === false || metadata?.has_adequacy === false || metadata?.hasAdequacy === false;
+  const lacksSccPhrase = /(without|no|missing|lacks?)\s+(scc|adequacy|standard contractual clauses)/i.test(lowercaseAction);
+  const isUnapprovedDest = Boolean(destStr && !['eu', 'eea', 'internal', 'local', 'approved_eu_safe'].includes(destStr));
+
+  if ((isTransferAction || destStr) && hasEuOrGermanSubject && hasCustomerOrUserRecords && (hasSccFlagFalse || lacksSccPhrase || (isUnapprovedDest && metadata?.has_scc !== true && metadata?.hasScc !== true))) {
+    return {
+      allowed: false,
+      reason: 'Policy Violation: Cross-Border Data Transfer Without Safeguards (GDPR)',
+      matchedPolicy: 'GDPR Cross-Border Transfer Guardrail',
+      ruleId: 'rule-gdpr-transfer',
+      explanation: 'Cross-border transfer of German/EU customer personal records to external or non-adequate destinations without Standard Contractual Clauses (SCC) or adequacy safeguards is prohibited under GDPR Art. 44-49.',
+      compliance: ['GDPR'],
+      impact: 'Prevents unlawful international data transfer and regulatory privacy breach'
+    };
+  }
+
+  // L1 Check 6: Third-Party Healthcare PHI Disclosure Without Signed BAA (HIPAA Privacy Rule)
+  const hasBaaFlagFalse = metadata?.has_baa === false || metadata?.hasBaa === false;
+  const lacksBaaPhrase = /(without|no|missing|lacks?)\s+(baa|business associate agreement)/i.test(lowercaseAction);
+  const hasVendorOrThirdParty = Boolean(metadata?.vendor || metadata?.third_party || metadata?.thirdParty) || 
+                                /(third[- ]?party|vendor|partner|external|lab|processor|diagnostics|outsourc)/i.test(lowercaseAction);
+  const hasPhiOrClinical = Boolean(metadata?.patientId || metadata?.patient_id || metadata?.clinical_data || metadata?.diagnosis) ||
+                           /(phi|patient|medical|clinical|diagnosis|treatment|health|ehr|emr|prescription)/i.test(lowercaseAction);
+  const isHealthcareShare = /share|email|send|disclose|export|transmit|provide|expose/i.test(lowercaseAction) || Boolean(metadata?.vendor);
+
+  if (isHealthcareShare && hasPhiOrClinical && hasVendorOrThirdParty && (hasBaaFlagFalse || lacksBaaPhrase)) {
+    return {
+      allowed: false,
+      reason: 'Policy Violation: PHI Disclosure Without Signed BAA (HIPAA)',
+      matchedPolicy: 'HIPAA PHI Vendor Disclosure Guardrail',
+      ruleId: 'rule-hipaa-baa',
+      explanation: 'Sharing protected health information (PHI) or clinical diagnosis records with a third-party vendor without an active, signed Business Associate Agreement (BAA) violates HIPAA Privacy & Security Rules (45 CFR § 164.502(e)).',
+      compliance: ['HIPAA'],
+      impact: 'Prevents unauthorized third-party PHI disclosure and HIPAA compliance penalties'
+    };
+  }
+
+  // L1 Check 7: Minor Biometric Data Processing Without Verified Parental Consent (DPDP Section 9)
+  const principalAge = Number(metadata?.dataPrincipalAge || metadata?.subject_age || metadata?.age || metadata?.principal_age || 999);
+  const hasParentalConsentFalse = metadata?.verifiedParentalConsent === false || metadata?.parental_consent === false || metadata?.parentalConsent === false;
+  const isMinorAge = principalAge < 18;
+  const isMinorKeyword = /(minor|child|underage|under\s*18|kid|teen|age\s*1[0-7])/i.test(lowercaseAction);
+  const isBiometricData = Boolean(metadata?.biometricType || metadata?.biometric_type) || 
+                          /(biometric|facial|face|fingerprint|iris|retina|voiceprint|dna)/i.test(lowercaseAction);
+  const lacksConsentPhrase = /(without|no|missing|lacks?)\s+(?:parental\s+)?consent/i.test(lowercaseAction);
+  const isProcessingAction = /process|collect|save|analyze|use|enable|register|scan|capture/i.test(lowercaseAction) || Boolean(metadata?.biometricType || metadata?.biometric_type);
+
+  if (isProcessingAction && isBiometricData && (isMinorAge || isMinorKeyword) && (hasParentalConsentFalse || lacksConsentPhrase)) {
+    return {
+      allowed: false,
+      reason: 'Policy Violation: Minor Biometric Processing Without Parental Consent (DPDP)',
+      matchedPolicy: 'DPDP Minor Biometric Consent Guardrail',
+      ruleId: 'rule-dpdp-biometric',
+      explanation: 'Processing personal or biometric recognition data of a minor Data Principal (under age 18) without verified parental consent is prohibited under Section 9 of the Digital Personal Data Protection Act (DPDP).',
+      compliance: ['DPDP'],
+      impact: 'Prevents unlawful processing of minor biometric data and severe statutory penalties'
     };
   }
 

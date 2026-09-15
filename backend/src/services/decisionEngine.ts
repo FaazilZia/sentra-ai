@@ -24,6 +24,8 @@ export interface Decision {
   degraded?: boolean;
   detectionSource?: 'session_pattern' | 'behavioral_deviation' | 'memory_anomaly_heuristic' | 'multi_agent_correlation' | 'single_action';
   sessionRule?: string;
+  matchedPolicy?: string;
+  ruleId?: string;
 }
 
 export const getAidrEnforcementMode = async (organizationId: string): Promise<'FLAG_ONLY' | 'BLOCK'> => {
@@ -218,18 +220,30 @@ export const makeDecision = async (agent: string, action: string, organizationId
     const duration = getNow() - startTime;
     logger.info(`[GOVERNANCE] Decision: ${status.toUpperCase()} | Risk: ${riskScore} | Mode: ${enforcementMode} | Latency: ${duration.toFixed(2)}ms`);
 
+    const isJailbreak = status === 'blocked' && (
+      /prompt\s*injection|jailbreak|dan\s*mode|ignore\s*all\s*previous|system\s*prompt/i.test(action + ' ' + (metadata?.prompt || '')) ||
+      (semanticRisk.categories && semanticRisk.categories.some((c: string) => /injection|jailbreak|adversarial/i.test(c)))
+    );
+
+    const resolvedMatchedPolicy = isJailbreak 
+      ? 'Adversarial Jailbreak & System Reset Interception' 
+      : (policyResult.matchedPolicy || undefined);
+    const resolvedRuleId = isJailbreak ? 'rule-2' : (policyResult.ruleId || undefined);
+
     return {
       status,
       risk: riskScore,
       mode: enforcementMode,
       reason,
-      impact: policyResult.impact || 'Protects system integrity',
-      compliance: policyResult.compliance || ['Internal Policy'],
+      impact: policyResult.impact || (isJailbreak ? 'Prevents model alignment override' : 'Protects system integrity'),
+      compliance: policyResult.compliance || (isJailbreak ? ['Security', 'NIST_AI_RMF'] : ['Internal Policy']),
       explanation: maskPII(semanticRisk.explanation || 'Action aligns with safety boundaries.'),
       confidence: semanticRisk.confidence,
       isPendingApproval,
       degraded,
       detectionSource: 'single_action',
+      matchedPolicy: resolvedMatchedPolicy,
+      ruleId: resolvedRuleId,
       timeline: [
         { step: 'L1: Policy', status: 'complete', icon: 'shield' },
         { step: 'L2: Pattern', status: 'complete', icon: 'zap' },
@@ -265,6 +279,8 @@ const buildBlockedResponse = (type: string, policyResult: any, startTime: number
     explanation: maskPII(policyResult.explanation || 'Action blocked or flagged by policy.'),
     confidence: 1.0,
     isPendingApproval,
+    matchedPolicy: policyResult.matchedPolicy,
+    ruleId: policyResult.ruleId,
     timeline: [
       { step: 'L1: Policy', status: isPendingApproval ? 'warning' : 'blocked', icon: 'shield' },
       { step: 'Governance Engine', status: 'complete', icon: 'layers', description: `Final Decision: ${status.toUpperCase()}` }

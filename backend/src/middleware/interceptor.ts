@@ -102,8 +102,8 @@ export async function interceptAction(input: any, callback: () => Promise<any>) 
     decision.compliance = Array.from(complianceSet);
   }
 
-  // 2. If blocked, log and return early
-  if (decision.status === 'blocked') {
+  // 2. If blocked or flagged (pending approval), log and return early
+  if (decision.status === 'blocked' || decision.status === 'flagged') {
     // Async alerting (fire and forget)
     alertService.notify(organizationId, decision, agent, piiResult.redactedText);
 
@@ -126,6 +126,10 @@ export async function interceptAction(input: any, callback: () => Promise<any>) 
         ...metadata,
         detectionSource: decision.detectionSource || 'single_action',
         sessionRule: decision.sessionRule,
+        ruleId: decision.ruleId,
+        matchedPolicy: decision.matchedPolicy,
+        ruleName: decision.matchedPolicy,
+        isPendingApproval: decision.isPendingApproval || false,
         ...(piiResult.piiDetected ? {
           piiDetected: true,
           violatedFrameworks: piiResult.violatedFrameworks,
@@ -162,6 +166,9 @@ export async function interceptAction(input: any, callback: () => Promise<any>) 
     metadata: redactMetadata({
       ...metadata,
       result,
+      ruleId: decision.ruleId,
+      matchedPolicy: decision.matchedPolicy,
+      ruleName: decision.matchedPolicy,
       ...(piiResult.piiDetected ? {
         piiDetected: true,
         violatedFrameworks: piiResult.violatedFrameworks,
