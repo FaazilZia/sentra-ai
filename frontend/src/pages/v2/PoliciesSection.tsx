@@ -84,6 +84,12 @@ export default function PoliciesSection() {
           if (rName) {
             ruleInterceptions[rName] = todayLogs.filter((x: any) => (x.status === 'blocked' || x.status === 'flagged') && (x.metadata?.matchedPolicy === rName || x.metadata?.ruleName === rName)).length;
           }
+          if (rId === 'rule-pii-leakage' || rId === 'rule-1' || meta.piiDetected) {
+            const piiCount = todayLogs.filter((x: any) => (x.status === 'blocked' || x.status === 'flagged') && (x.metadata?.ruleId === 'rule-pii-leakage' || x.metadata?.ruleId === 'rule-1' || x.metadata?.piiDetected)).length;
+            ruleInterceptions['rule-pii-leakage'] = piiCount;
+            ruleInterceptions['rule-1'] = piiCount;
+            ruleInterceptions['Strict PII & SSN Redaction Rule'] = piiCount;
+          }
         }
       });
 
@@ -96,7 +102,11 @@ export default function PoliciesSection() {
           enforcementMode: 'blocking',
           actionType: 'BLOCK',
           isEnabled: true,
-          blockedCountToday: ruleInterceptions['rule-1'] || ruleInterceptions['Strict PII & SSN Redaction Rule'] || 0,
+          blockedCountToday:
+            ruleInterceptions['rule-1'] ||
+            ruleInterceptions['rule-pii-leakage'] ||
+            ruleInterceptions['Strict PII & SSN Redaction Rule'] ||
+            0,
           updatedAt: 'Recently'
         },
         {
@@ -107,7 +117,11 @@ export default function PoliciesSection() {
           enforcementMode: 'blocking',
           actionType: 'BLOCK',
           isEnabled: true,
-          blockedCountToday: ruleInterceptions['rule-2'] || ruleInterceptions['Adversarial Jailbreak & System Reset Interception'] || 0,
+          blockedCountToday:
+            ruleInterceptions['rule-2'] ||
+            ruleInterceptions['Adversarial Jailbreak & System Reset Interception'] ||
+            ruleInterceptions['Adversarial Prompt Injection & Jailbreak Guardrail'] ||
+            0,
           updatedAt: 'Recently'
         },
         {

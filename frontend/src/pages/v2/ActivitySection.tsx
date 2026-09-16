@@ -156,19 +156,20 @@ export const mergeAndSortFeedEvents = (incidents: any[], auditLogs: any[]): Feed
 
 export default function ActivitySection() {
   const { addToast } = useStore();
-  const { alerts } = useSocketStore();
+  const { activities: socketActivities } = useSocketStore();
   const [activeTab, setActiveTab] = useState<string>('live');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [events, setEvents] = useState<FeedEvent[]>([]);
   const [rawAuditLogs, setRawAuditLogs] = useState<any[]>([]);
   const [rawIncidents, setRawIncidents] = useState<any[]>([]);
+  const [dashboardStats, setDashboardStats] = useState<any>(null);
 
   const loadActivityData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [aiLogsRes, auditRes, incidentsRes] = await Promise.all([
+      const [aiLogsRes, auditRes, incidentsRes, statsRes] = await Promise.all([
         apiRequest<any>('/ai/logs').catch((err) => {
           console.error('Failed to fetch /ai/logs:', err);
           return null;
@@ -180,10 +181,14 @@ export default function ActivitySection() {
         apiRequest<any>('/incidents').catch((err) => {
           console.error('Failed to fetch /incidents:', err);
           return null;
+        }),
+        apiRequest<any>('/ai/dashboard-stats').catch((err) => {
+          console.error('Failed to fetch /ai/dashboard-stats:', err);
+          return null;
         })
       ]);
 
-      if (!aiLogsRes && !auditRes && !incidentsRes) {
+      if (!aiLogsRes && !auditRes && !incidentsRes && !statsRes) {
         throw new Error('Unable to connect to activity and audit services. Please verify your connection.');
       }
 
@@ -201,7 +206,9 @@ export default function ActivitySection() {
         : Array.isArray(auditRes)
         ? auditRes
         : [];
-      const fetchedAiLogs = Array.isArray(aiLogsRes?.data)
+      const fetchedAiLogs = Array.isArray(aiLogsRes?.data?.data)
+        ? aiLogsRes.data.data
+        : Array.isArray(aiLogsRes?.data)
         ? aiLogsRes.data
         : Array.isArray(aiLogsRes)
         ? aiLogsRes
@@ -209,14 +216,17 @@ export default function ActivitySection() {
 
       setRawIncidents(fetchedIncidents);
       setRawAuditLogs(fetchedAudit);
+      if (statsRes?.data || statsRes) {
+        setDashboardStats(statsRes?.data || statsRes);
+      }
 
       if (fetchedAiLogs.length > 0) {
         const mappedAiEvents = fetchedAiLogs.map((log: any, i: number) => mapAiLogToFeedEvent(log, i));
         mappedAiEvents.sort((a: FeedEvent, b: FeedEvent) => (b.rawTimestamp || 0) - (a.rawTimestamp || 0));
         setEvents(mappedAiEvents);
       } else {
-        const mergedFeed = mergeAndSortFeedEvents(fetchedIncidents, fetchedAudit);
-        setEvents(mergedFeed);
+        // Honest empty state: do not silently fall back to incidents or audit logs
+        setEvents([]);
       }
     } catch (err: any) {
       console.error('Error loading activity feed:', err);
@@ -230,28 +240,33 @@ export default function ActivitySection() {
     loadActivityData();
   }, [loadActivityData]);
 
-  // Handle incoming real-time socket alerts
+  // Handle incoming real-time socket action evaluations
   useEffect(() => {
-    if (alerts && alerts.length > 0) {
-      const latest = alerts[0] as any;
-      const newEv: FeedEvent = {
-        id: `socket-${Date.now()}`,
-        timestamp: 'Just now',
-        agentName: latest.agentName || latest.source || 'Monitored Agent',
-        actionType: latest.title || latest.type || 'Threat Detection',
-        status: (latest.severity || '').toString().toLowerCase() === 'critical' ? 'BLOCKED' : 'FLAGGED',
-        reason: latest.message || latest.description || 'Real-time security event',
-        severity: (latest.severity || 'HIGH').toString().toUpperCase() as any
-      };
-      setEvents(prev => [newEv, ...prev.slice(0, 49)]);
+    if (socketActivities && socketActivities.length > 0) {
+      const latest = socketActivities[0];
+      setEvents(prev => {
+        if (prev.some(e => e.id === latest.id)) return prev;
+        const newEv: FeedEvent = {
+          id: latest.id,
+          timestamp: latest.time || 'Just now',
+          agentName: latest.user || 'Monitored Agent',
+          actionType: latest.target || latest.action || 'AI Action',
+          status: latest.decision === 'BLOCK' ? 'BLOCKED' : latest.decision === 'MODIFY' ? 'FLAGGED' : 'ALLOWED',
+          reason: latest.aiSummary || (latest.decision === 'BLOCK' ? 'Blocked by governance policy' : latest.decision === 'MODIFY' ? 'Flagged for human review' : 'Authorized action'),
+          severity: latest.decision === 'BLOCK' ? 'CRITICAL' : latest.decision === 'MODIFY' ? 'MEDIUM' : 'LOW',
+          rawTimestamp: Date.now()
+        };
+        return [newEv, ...prev.slice(0, 49)];
+      });
     }
-  }, [alerts]);
+  }, [socketActivities]);
 
   const today = new Date().toDateString();
   const todayEvents = events.filter(e => !e.rawTimestamp || new Date(e.rawTimestamp).toDateString() === today);
-  const blockedCount = todayEvents.filter(e => e.status === 'BLOCKED').length;
-  const flaggedCount = todayEvents.filter(e => e.status === 'FLAGGED').length;
-  const allowedCount = todayEvents.filter(e => e.status === 'ALLOWED').length;
+  const blockedCount = dashboardStats?.kpis?.modelsBlockedToday?.value ?? todayEvents.filter(e => e.status === 'BLOCKED').length;
+  const flaggedCount = dashboardStats?.kpis?.flaggedToday?.value ?? todayEvents.filter(e => e.status === 'FLAGGED').length;
+  const allowedCount = dashboardStats?.kpis?.allowedToday?.value ?? todayEvents.filter(e => e.status === 'ALLOWED').length;
+  const totalFeedToday = dashboardStats?.kpis?.totalActionsToday?.value ?? (todayEvents.length || events.length);
 
   const feedColumns: Column<FeedEvent>[] = [
     {
@@ -335,7 +350,7 @@ export default function ActivitySection() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <MetricCard
           label="Real-Time Feed Stream"
-          value={todayEvents.length || events.length}
+          value={totalFeedToday}
           subtitle="Monitored pipeline events today"
           status="primary"
           icon={Activity}

@@ -45,7 +45,9 @@ export async function interceptAction(input: any, callback: () => Promise<any>) 
       reason: 'Compliance Violation - Sensitive PII Detected',
       impact: 'Immediate block to prevent sensitive data leak',
       compliance: piiResult.violatedFrameworks,
-      explanation: `Action blocked due to detection of high-risk sensitive data: ${piiResult.detectedCategories.join(', ')}.`
+      explanation: `Action blocked due to detection of high-risk sensitive data: ${piiResult.detectedCategories.join(', ')}.`,
+      ruleId: 'rule-pii-leakage',
+      matchedPolicy: 'rule-pii-leakage'
     };
 
     // Async alerting (fire and forget)
@@ -62,6 +64,10 @@ export async function interceptAction(input: any, callback: () => Promise<any>) 
       compliance: decision.compliance,
       metadata: redactMetadata({
         ...metadata,
+        ruleId: 'rule-pii-leakage',
+        matchedPolicy: 'rule-pii-leakage',
+        ruleName: 'Strict PII & SSN Redaction Rule',
+        policyName: 'Strict PII & SSN Redaction Rule',
         piiDetected: true,
         violatedFrameworks: piiResult.violatedFrameworks,
         detectedCategories: piiResult.detectedCategories
@@ -88,7 +94,9 @@ export async function interceptAction(input: any, callback: () => Promise<any>) 
       reason: 'Critical Governance Failure',
       impact: 'Protected by Fail-Closed Boundary',
       compliance: ['INTERNAL_SAFETY'],
-      explanation: 'The governance engine encountered a critical error. Action blocked for safety.'
+      explanation: 'The governance engine encountered a critical error. Action blocked for safety.',
+      ruleId: 'rule-fail-closed',
+      matchedPolicy: 'Critical Governance Fail-Closed Policy'
     };
   }
 

@@ -173,4 +173,44 @@ describe('Interceptor Middleware — interceptAction()', () => {
       BASE_INPUT.metadata
     );
   });
+
+  // ─── STEP 0 PII SCANNER BLOCK PATH ─────────────────────────────────────────
+
+  describe('when high-risk PII is detected at Step 0', () => {
+    it('blocks immediately with rule-pii-leakage and attributes ruleId in log metadata', async () => {
+      const callback = jest.fn();
+      const piiInput = {
+        agent: 'data-export-agent',
+        action: 'export_to_s3 with customer SSN 000-12-3456',
+        organizationId: 'org-abc',
+        metadata: {
+          contains_pii: true,
+          prompt: 'Customer SSN 000-12-3456',
+        },
+        requestId: 'req-pii-001',
+      };
+
+      const result = await interceptAction(piiInput, callback);
+
+      expect(result.status).toBe('blocked');
+      expect((result as any).ruleId).toBe('rule-pii-leakage');
+      expect((result as any).matchedPolicy).toBe('rule-pii-leakage');
+      expect(callback).not.toHaveBeenCalled();
+      expect(mockMakeDecision).not.toHaveBeenCalled();
+
+      expect(mockEnqueueLog).toHaveBeenCalledWith(
+        expect.objectContaining({
+          organizationId: 'org-abc',
+          agent: 'data-export-agent',
+          status: 'blocked',
+          metadata: expect.objectContaining({
+            ruleId: 'rule-pii-leakage',
+            matchedPolicy: 'rule-pii-leakage',
+            ruleName: 'Strict PII & SSN Redaction Rule',
+            piiDetected: true,
+          }),
+        })
+      );
+    });
+  });
 });

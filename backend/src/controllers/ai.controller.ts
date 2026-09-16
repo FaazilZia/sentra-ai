@@ -340,8 +340,42 @@ export const getDashboardStats = async (req: any, res: Response, next: NextFunct
         const meta = (l.metadata as any) || {};
         const ruleId = meta.ruleId;
         const matchedPolicy = meta.matchedPolicy || meta.ruleName;
-        if (ruleId) ruleInterceptions[ruleId] = (ruleInterceptions[ruleId] || 0) + 1;
-        if (matchedPolicy) ruleInterceptions[matchedPolicy] = (ruleInterceptions[matchedPolicy] || 0) + 1;
+
+        const keysToIncrement = new Set<string>();
+        if (ruleId) keysToIncrement.add(ruleId);
+        if (matchedPolicy) keysToIncrement.add(matchedPolicy);
+
+        // Robust alias and category mappings for guardrail rules
+        if (ruleId === 'rule-pii-leakage' || ruleId === 'rule-1' || meta.piiDetected || matchedPolicy === 'Strict PII & SSN Redaction Rule') {
+          keysToIncrement.add('rule-pii-leakage');
+          keysToIncrement.add('rule-1');
+          keysToIncrement.add('Strict PII & SSN Redaction Rule');
+        }
+        if (ruleId === 'rule-2' || matchedPolicy === 'Adversarial Prompt Injection & Jailbreak Guardrail') {
+          keysToIncrement.add('rule-2');
+          keysToIncrement.add('Adversarial Jailbreak & System Reset Interception');
+          keysToIncrement.add('Adversarial Prompt Injection & Jailbreak Guardrail');
+        }
+        if (ruleId === 'rule-3' || matchedPolicy === 'Disbursement > $10k Human Approval Trigger') {
+          keysToIncrement.add('rule-3');
+          keysToIncrement.add('Disbursement > $10k Human Approval Trigger');
+        }
+        if (ruleId === 'rule-gdpr-transfer' || matchedPolicy === 'GDPR Cross-Border Transfer Guardrail') {
+          keysToIncrement.add('rule-gdpr-transfer');
+          keysToIncrement.add('GDPR Cross-Border Transfer Guardrail');
+        }
+        if (ruleId === 'rule-hipaa-baa' || matchedPolicy === 'HIPAA PHI Vendor Disclosure Guardrail') {
+          keysToIncrement.add('rule-hipaa-baa');
+          keysToIncrement.add('HIPAA PHI Vendor Disclosure Guardrail');
+        }
+        if (ruleId === 'rule-dpdp-biometric' || matchedPolicy === 'DPDP Minor Biometric Consent Guardrail') {
+          keysToIncrement.add('rule-dpdp-biometric');
+          keysToIncrement.add('DPDP Minor Biometric Consent Guardrail');
+        }
+
+        keysToIncrement.forEach(key => {
+          ruleInterceptions[key] = (ruleInterceptions[key] || 0) + 1;
+        });
       }
     });
 
