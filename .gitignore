@@ -58,6 +58,7 @@ frontend/playwright-report/
 frontend/e2e/screenshots/
 backend/test-results/
 backend/playwright-report/
+backend/screenshots/
 test-playwright-report*/
 data/
 trace/
