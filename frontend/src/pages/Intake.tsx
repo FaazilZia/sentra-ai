@@ -59,12 +59,12 @@ export default function Intake() {
   const isAdmin = user?.role === 'ADMIN';
 
   useEffect(() => {
-    loadForm();
+    void loadForm();
   }, []);
 
   useEffect(() => {
     if (activeTab === 'queue') {
-      loadSubmissions();
+      void loadSubmissions();
     }
   }, [activeTab]);
 
@@ -80,7 +80,7 @@ export default function Intake() {
           setPollingActive(false);
           setPollingSubmissionId(null);
           addToast({ message: 'RISK SCORE COMPILED SUCCESSFULLY', type: 'success' });
-          loadSubmissions();
+          void loadSubmissions();
         }
       } catch (err) {
         console.error('Error polling risk score:', err);
@@ -221,7 +221,7 @@ export default function Intake() {
       addToast({ message: 'AI AGENT APPROVED & PROVISIONED', type: 'success' });
       setSelectedSubmission(null);
       setReviewNote('');
-      loadSubmissions();
+      void loadSubmissions();
     } catch (err: any) {
       addToast({ message: err.message || 'APPROVAL FAILED', type: 'error' });
     } finally {
@@ -241,7 +241,7 @@ export default function Intake() {
       addToast({ message: 'AI INTAKE REQUEST REJECTED', type: 'success' });
       setSelectedSubmission(null);
       setReviewNote('');
-      loadSubmissions();
+      void loadSubmissions();
     } catch (err: any) {
       addToast({ message: err.message || 'REJECTION FAILED', type: 'error' });
     } finally {

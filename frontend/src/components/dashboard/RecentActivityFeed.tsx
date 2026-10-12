@@ -50,7 +50,7 @@ export default function RecentActivityFeed({ isLoading: externalLoading = false 
   };
 
   useEffect(() => {
-    loadRecentHistory();
+    void loadRecentHistory();
   }, []);
 
   const showLoading = loading || externalLoading;

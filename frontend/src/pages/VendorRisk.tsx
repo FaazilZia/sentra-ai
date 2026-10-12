@@ -59,8 +59,8 @@ export default function VendorRisk() {
   const [nistRmf, setNistRmf] = useState(false);
 
   useEffect(() => {
-    loadVendors();
-    loadCurrentUser();
+    void loadVendors();
+    void loadCurrentUser();
   }, []);
 
   const loadVendors = async () => {

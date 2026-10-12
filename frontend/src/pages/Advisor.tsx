@@ -384,7 +384,7 @@ export default function Advisor() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              handleSendMessage(inputValue);
+              void handleSendMessage(inputValue);
             }}
             className="border-t border-[var(--border-default)] p-3 flex gap-2 items-center bg-slate-50"
           >

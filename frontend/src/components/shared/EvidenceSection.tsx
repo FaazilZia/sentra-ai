@@ -43,7 +43,7 @@ export function EvidenceSection({ entityType, entityId }: EvidenceSectionProps) 
 
   useEffect(() => {
     if (entityId) {
-      loadFiles();
+      void loadFiles();
     }
   }, [entityType, entityId]);
 
@@ -86,7 +86,7 @@ export function EvidenceSection({ entityType, entityId }: EvidenceSectionProps) 
       setIsFormOpen(false);
       
       // Reload
-      loadFiles();
+      void loadFiles();
     } catch (err) {
       console.error('File upload failed:', err);
       addToast({ message: 'UPLOAD FAILED', type: 'error' });
@@ -100,7 +100,7 @@ export function EvidenceSection({ entityType, entityId }: EvidenceSectionProps) 
     try {
       await apiRequest(`/evidence/${id}`, { method: 'DELETE' });
       addToast({ message: 'EVIDENCE REMOVED', type: 'success' });
-      loadFiles();
+      void loadFiles();
     } catch (err) {
       console.error(err);
       addToast({ message: 'DELETE FAILED', type: 'error' });

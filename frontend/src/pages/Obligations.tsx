@@ -39,7 +39,7 @@ export default function Obligations() {
   const [editControlId, setEditControlId] = useState('');
 
   useEffect(() => {
-    loadData();
+    void loadData();
   }, []);
 
   const loadData = async () => {

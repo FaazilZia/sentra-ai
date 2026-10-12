@@ -39,8 +39,8 @@ export default function TrustPortal() {
   const [isPortalEnabled, setIsPortalEnabled] = useState<boolean | null>(null);
 
   useEffect(() => {
-    loadPublicData();
-    checkAuthSession();
+    void loadPublicData();
+    void checkAuthSession();
   }, [orgSlug]);
 
   const loadPublicData = async () => {
@@ -84,7 +84,7 @@ export default function TrustPortal() {
       });
       setIsPortalEnabled(enabled);
       if (enabled) {
-        loadPublicData();
+        void loadPublicData();
       } else {
         setData(null);
         setError('Public Trust Portal is disabled by the administrator');
@@ -96,7 +96,7 @@ export default function TrustPortal() {
 
   const handleCopyLink = () => {
     const link = window.location.href;
-    navigator.clipboard.writeText(link);
+    void navigator.clipboard.writeText(link);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
   };

@@ -109,7 +109,7 @@ export default function Policies() {
   };
 
   useEffect(() => {
-    loadPolicies();
+    void loadPolicies();
   }, [addToast]);
 
   useEffect(() => {
@@ -255,8 +255,8 @@ export default function Policies() {
               <div className="flex items-center gap-3 mb-6">
                 <button 
                   type="button"
-                  onClick={(e) => { e.stopPropagation(); openVersionHistory(policy); }}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); openVersionHistory(policy); } }}
+                  onClick={(e) => { e.stopPropagation(); void openVersionHistory(policy); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); void openVersionHistory(policy); } }}
                   className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest hover:text-indigo-400 transition-colors flex items-center gap-1 cursor-pointer"
                   aria-label={`View version history for ${policy.name}`}
                 >

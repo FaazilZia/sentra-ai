@@ -42,4 +42,4 @@ async function runSupportAgent() {
   }
 }
 
-runSupportAgent();
+void runSupportAgent();

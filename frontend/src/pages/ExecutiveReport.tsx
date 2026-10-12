@@ -39,7 +39,7 @@ export default function ExecutiveReport() {
   const [isShareOpen, setIsShareOpen] = useState(false);
 
   useEffect(() => {
-    loadStats();
+    void loadStats();
   }, []);
 
   const loadStats = async () => {

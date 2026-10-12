@@ -69,7 +69,7 @@ export default function PoliciesSection() {
       // Single source of truth: /ai/dashboard-stats
       const statsPayload = statsRes?.data || statsRes || {};
       const ruleInterceptions: Record<string, number> = {
-        ...(statsPayload.ruleInterceptions || {})
+        ...statsPayload.ruleInterceptions
       };
 
       const formattedRules: GovernanceRule[] = [

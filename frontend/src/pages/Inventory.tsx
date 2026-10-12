@@ -58,7 +58,7 @@ export default function Inventory() {
   };
 
   useEffect(() => {
-    loadData();
+    void loadData();
   }, []);
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -85,7 +85,7 @@ export default function Inventory() {
       setRegisterModel('');
       setRegisterProvider('');
       setRegisterDepartment('');
-      loadData();
+      void loadData();
     } catch (err: any) {
       addToast({ message: err.message || 'Failed to register system', type: 'error' });
     } finally {

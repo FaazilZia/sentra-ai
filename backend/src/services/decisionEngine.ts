@@ -202,7 +202,7 @@ export const makeDecision = async (agent: string, action: string, organizationId
 
     let status: 'allowed' | 'blocked' = 'allowed';
     let reason = 'Allowed: Verified by multi-tier governance';
-    let isPendingApproval = false;
+    const isPendingApproval = false;
 
     if (riskScore === 'high') {
       if (enforcementMode === 'FLAG_ONLY') {
@@ -212,7 +212,6 @@ export const makeDecision = async (agent: string, action: string, organizationId
           : '[FLAG_ONLY MODE] High-risk pattern detected';
       } else {
         status = 'blocked';
-        isPendingApproval = false;
         reason = semanticRisk.score === 'high' ? `Blocked: ${semanticRisk.explanation}` : 'Blocked: High-risk pattern detected';
       }
     }
@@ -221,40 +220,46 @@ export const makeDecision = async (agent: string, action: string, organizationId
     logger.info(`[GOVERNANCE] Decision: ${status.toUpperCase()} | Risk: ${riskScore} | Mode: ${enforcementMode} | Latency: ${duration.toFixed(2)}ms`);
 
     const combinedText = `${action} ${metadata?.prompt || ''} ${(localRisk.triggers || []).join(' ')}`;
-    const isJailbreak = status === 'blocked' && (
-      /prompt\s*injection|jailbreak|dan\s*mode|ignore\s*(?:all\s*)?(?:previous|prior)|system\s*prompt|adversarial\s*override/i.test(combinedText) ||
-      (semanticRisk.categories && semanticRisk.categories.some((c: string) => /injection|jailbreak|adversarial/i.test(c)))
+    const hasJailbreakText =
+      /prompt\s*injection|jailbreak|dan\s*mode|system\s*prompt|adversarial\s*override/i.test(combinedText) ||
+      /ignore\s*(?:all\s*)?(?:previous|prior)/i.test(combinedText);
+    const hasJailbreakCategory = Boolean(
+      semanticRisk.categories && semanticRisk.categories.some((c: string) => /injection|jailbreak|adversarial/i.test(c))
     );
-    const isGdprTransfer = status === 'blocked' && !isJailbreak && /gdpr|scc|cross[-_ ]?border/i.test(combinedText);
-    const isHipaaBaa = status === 'blocked' && !isJailbreak && !isGdprTransfer && /hipaa|baa|patient.*phi/i.test(combinedText);
-    const isDpdpBiometric = status === 'blocked' && !isJailbreak && !isGdprTransfer && !isHipaaBaa && /minor.*biometric|parental\s*consent/i.test(combinedText);
 
-    const resolvedMatchedPolicy = isJailbreak
-      ? 'Adversarial Jailbreak & System Reset Interception'
-      : isGdprTransfer
-      ? 'GDPR Cross-Border Transfer Guardrail'
-      : isHipaaBaa
-      ? 'HIPAA PHI Vendor Disclosure Guardrail'
-      : isDpdpBiometric
-      ? 'DPDP Minor Biometric Consent Guardrail'
-      : (policyResult.matchedPolicy || undefined);
-    const resolvedRuleId = isJailbreak
-      ? 'rule-2'
-      : isGdprTransfer
-      ? 'rule-gdpr-transfer'
-      : isHipaaBaa
-      ? 'rule-hipaa-baa'
-      : isDpdpBiometric
-      ? 'rule-dpdp-biometric'
-      : (policyResult.ruleId || undefined);
+    let resolvedMatchedPolicy = policyResult.matchedPolicy || undefined;
+    let resolvedRuleId = policyResult.ruleId || undefined;
+    let resolvedImpact = policyResult.impact || 'Protects system integrity';
+    let resolvedCompliance = policyResult.compliance || ['Internal Policy'];
+
+    if (status === 'blocked') {
+      if (hasJailbreakText || hasJailbreakCategory) {
+        resolvedMatchedPolicy = 'Adversarial Jailbreak & System Reset Interception';
+        resolvedRuleId = 'rule-2';
+        resolvedImpact = policyResult.impact || 'Prevents model alignment override';
+        resolvedCompliance = policyResult.compliance || ['Security', 'NIST_AI_RMF'];
+      } else if (/gdpr|scc|cross[-_ ]?border/i.test(combinedText)) {
+        resolvedMatchedPolicy = 'GDPR Cross-Border Transfer Guardrail';
+        resolvedRuleId = 'rule-gdpr-transfer';
+        resolvedCompliance = policyResult.compliance || ['GDPR'];
+      } else if (/hipaa|baa|patient.*phi/i.test(combinedText)) {
+        resolvedMatchedPolicy = 'HIPAA PHI Vendor Disclosure Guardrail';
+        resolvedRuleId = 'rule-hipaa-baa';
+        resolvedCompliance = policyResult.compliance || ['HIPAA'];
+      } else if (/minor.*biometric|parental\s*consent/i.test(combinedText)) {
+        resolvedMatchedPolicy = 'DPDP Minor Biometric Consent Guardrail';
+        resolvedRuleId = 'rule-dpdp-biometric';
+        resolvedCompliance = policyResult.compliance || ['DPDP'];
+      }
+    }
 
     return {
       status,
       risk: riskScore,
       mode: enforcementMode,
       reason,
-      impact: policyResult.impact || (isJailbreak ? 'Prevents model alignment override' : 'Protects system integrity'),
-      compliance: policyResult.compliance || (isJailbreak ? ['Security', 'NIST_AI_RMF'] : isGdprTransfer ? ['GDPR'] : isHipaaBaa ? ['HIPAA'] : isDpdpBiometric ? ['DPDP'] : ['Internal Policy']),
+      impact: resolvedImpact,
+      compliance: resolvedCompliance,
       explanation: maskPII(semanticRisk.explanation || 'Action aligns with safety boundaries.'),
       confidence: semanticRisk.confidence,
       isPendingApproval,

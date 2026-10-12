@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Listen for auth expiration events from api.ts
     const handleAuthExpired = () => {
-      logout();
+      void logout();
     };
     window.addEventListener('auth:expired', handleAuthExpired as EventListener);
 

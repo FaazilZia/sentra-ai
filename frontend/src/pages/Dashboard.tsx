@@ -33,7 +33,7 @@ export default function Dashboard() {
     setLoading(true);
     fetchPolicies().then(policies => setPoliciesCount(policies.length)).catch(() => setPoliciesCount(0));
 
-    Promise.all([
+    void Promise.all([
       apiRequest<any>('/ai/dashboard-stats').then(setDashboardStats).catch((err) => console.error('Dashboard Stats Error:', err)),
       apiRequest<any>('/ai-systems').then(data => {
         const items = data?.items || [];

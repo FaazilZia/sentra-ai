@@ -70,7 +70,7 @@ if (decision.status === 'BLOCK') {
 } else {
   // Execute action safely
 }`;
-    navigator.clipboard.writeText(code);
+    void navigator.clipboard.writeText(code);
     addToast({ message: 'SDK Integration code copied!', type: 'success' });
   };
 

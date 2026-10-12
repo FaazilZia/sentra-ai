@@ -38,7 +38,7 @@ export default function ConsentManager() {
   };
 
   useEffect(() => {
-    loadHistory();
+    void loadHistory();
   }, []);
 
   // Derive current status: latest record in history determines current status

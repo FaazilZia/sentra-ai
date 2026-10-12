@@ -53,7 +53,7 @@ export default function LiveBlockFeed() {
   agent: 'my-agent',
   action: 'delete all user records'
 });`;
-    navigator.clipboard.writeText(code);
+    void navigator.clipboard.writeText(code);
     addToast({ message: 'Code snippet copied to clipboard!', type: 'success' });
   };
 

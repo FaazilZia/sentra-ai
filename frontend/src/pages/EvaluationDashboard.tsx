@@ -124,7 +124,7 @@ const EvaluationDashboard: React.FC = () => {
 
 
   useEffect(() => {
-    fetchAll();
+    void fetchAll();
   }, []);
 
   // Polling for live evaluation status
@@ -153,7 +153,7 @@ const EvaluationDashboard: React.FC = () => {
             
             setLiveRunning(false);
             setActivePollRunId(null);
-            fetchAll();
+            void fetchAll();
             clearInterval(interval);
           } else if (run.status === 'failed') {
             setLiveRunStatus('failed');
@@ -403,7 +403,7 @@ const EvaluationDashboard: React.FC = () => {
                   role="button"
                   tabIndex={0}
                   onClick={() => viewResults(run)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); viewResults(run); } }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); void viewResults(run); } }}
                   style={{
                     padding: '14px 20px', borderBottom: '1px solid var(--border-default)', cursor: 'pointer',
                     background: selectedRun?.id === run.id ? 'rgba(99,102,241,0.1)' : 'transparent',

@@ -175,7 +175,7 @@ export default function Settings() {
 
       await loadMfaStatus();
     }
-    loadGeneralData();
+    void loadGeneralData();
   }, []);
 
   // Fetch company details for dynamic ACS and Entity IDs
@@ -212,7 +212,7 @@ export default function Settings() {
   };
 
   useEffect(() => {
-    fetchUserProfile();
+    void fetchUserProfile();
   }, []);
 
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -309,7 +309,7 @@ export default function Settings() {
       });
       addToast({ message: 'LLM Key added successfully', type: 'success' });
       setLlmApiKey('');
-      fetchLlmKeys();
+      void fetchLlmKeys();
     } catch (err: any) {
       addToast({ message: err.message || 'Failed to add LLM key', type: 'error' });
     } finally {
@@ -323,7 +323,7 @@ export default function Settings() {
         method: 'DELETE',
       });
       addToast({ message: 'LLM Key deleted successfully', type: 'success' });
-      fetchLlmKeys();
+      void fetchLlmKeys();
     } catch (err: any) {
       addToast({ message: err.message || 'Failed to delete key', type: 'error' });
     }
@@ -348,7 +348,7 @@ export default function Settings() {
         body: JSON.stringify({ key, enabled: !currentStatus }),
       });
       addToast({ message: `Feature updated successfully`, type: 'success' });
-      fetchFeatureFlags();
+      void fetchFeatureFlags();
     } catch (err: any) {
       addToast({ message: err.message || 'Failed to update feature', type: 'error' });
     }
@@ -356,9 +356,9 @@ export default function Settings() {
 
   useEffect(() => {
     if (activeTab === 'llmkeys') {
-      fetchLlmKeys();
+      void fetchLlmKeys();
     } else if (activeTab === 'features') {
-      fetchFeatureFlags();
+      void fetchFeatureFlags();
     }
   }, [activeTab]);
 
@@ -395,11 +395,11 @@ export default function Settings() {
   };
 
   useEffect(() => {
-    loadMcpData();
+    void loadMcpData();
   }, [activeTab]);
 
   useEffect(() => {
-    loadMcpLogs();
+    void loadMcpLogs();
   }, [activeTab, logsPage, logsFilterDecision]);
 
   // Team management states and handlers
@@ -423,7 +423,7 @@ export default function Settings() {
   };
 
   useEffect(() => {
-    loadInvitations();
+    void loadInvitations();
   }, [activeTab]);
 
   const handleInviteUser = async (e: React.FormEvent) => {
@@ -437,7 +437,7 @@ export default function Settings() {
       });
       addToast({ message: `Invite sent to ${inviteEmail}`, type: 'success' });
       setInviteEmail('');
-      loadInvitations();
+      void loadInvitations();
     } catch (err: any) {
       console.error('Failed to invite user:', err);
       addToast({ message: err.message || 'Failed to send invitation', type: 'error' });
@@ -452,7 +452,7 @@ export default function Settings() {
         method: 'DELETE',
       });
       addToast({ message: 'Invitation revoked', type: 'success' });
-      loadInvitations();
+      void loadInvitations();
     } catch (err: any) {
       console.error('Failed to revoke invitation:', err);
       addToast({ message: err.message || 'Failed to revoke invitation', type: 'error' });
@@ -474,7 +474,7 @@ export default function Settings() {
   };
 
   const handleCopyKey = () => {
-    navigator.clipboard.writeText(apiKey);
+    void navigator.clipboard.writeText(apiKey);
     addToast({ message: 'API key copied to clipboard', type: 'info' });
   };
 
@@ -629,7 +629,7 @@ export default function Settings() {
       setGeneratedRawKey(res.rawKey);
       setRawKeyModalOpen(true);
       
-      loadMcpData();
+      void loadMcpData();
       addToast({ message: 'MCP Agent Key generated successfully', type: 'success' });
     } catch (err) {
       console.error('Failed to create agent key:', err);
@@ -648,7 +648,7 @@ export default function Settings() {
       addToast({ message: `Revoked key: ${keyToRevoke.name}`, type: 'success' });
       setRevokeModalOpen(false);
       setKeyToRevoke(null);
-      loadMcpData();
+      void loadMcpData();
     } catch (err) {
       console.error('Failed to revoke key:', err);
       addToast({ message: 'Failed to revoke key', type: 'error' });
@@ -1053,7 +1053,7 @@ export default function Settings() {
                   </div>
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(generatedRawKey);
+                      void navigator.clipboard.writeText(generatedRawKey);
                       addToast({ message: 'Secret key copied!', type: 'success' });
                     }}
                     className="p-2.5 border border-[var(--border-default)] rounded bg-[var(--bg-page)] hover:text-green-400 hover:border-green-500/30 transition-all self-start"
@@ -1904,7 +1904,7 @@ function GeneralTab({
                     <div className="flex gap-2">
                       <button
                         onClick={() => {
-                          navigator.clipboard.writeText(recoveryCodes.join('\n'));
+                          void navigator.clipboard.writeText(recoveryCodes.join('\n'));
                           setCodesCopied(true);
                           addToast({ message: 'Recovery codes copied', type: 'info' });
                           setTimeout(() => setCodesCopied(false), 2000);
@@ -1981,7 +1981,7 @@ function GeneralTab({
                           </div>
                           <button
                             onClick={() => {
-                              navigator.clipboard.writeText(mfaSetupData.manualKey);
+                              void navigator.clipboard.writeText(mfaSetupData.manualKey);
                               addToast({ message: 'Manual key copied', type: 'info' });
                             }}
                             type="button"
@@ -2453,7 +2453,7 @@ function SsoTab({
                   </div>
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(ssoLoginUrl);
+                      void navigator.clipboard.writeText(ssoLoginUrl);
                       addToast({ message: 'SSO Login URL copied!', type: 'info' });
                     }}
                     type="button"

@@ -45,7 +45,7 @@ export class EventTriggerService {
             select: { input_text: true, reason: true }
           });
 
-          this.triggerWebhook(rule, blockedCount, latestLog?.input_text || "N/A", latestLog?.reason || "N/A");
+          void this.triggerWebhook(rule, blockedCount, latestLog?.input_text || "N/A", latestLog?.reason || "N/A");
           this.markRuleTriggered(rule.id);
         }
       }

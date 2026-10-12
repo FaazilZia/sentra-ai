@@ -19,7 +19,7 @@ export default function Datasets() {
   const [newTagsString, setNewTagsString] = useState('');
 
   useEffect(() => {
-    loadData();
+    void loadData();
   }, []);
 
   const loadData = async () => {
@@ -101,7 +101,7 @@ export default function Datasets() {
       setNewLinkedSystemId('');
       setNewTagsString('');
       
-      loadData();
+      void loadData();
     } catch (err) {
       console.error('Failed to create dataset', err);
     }

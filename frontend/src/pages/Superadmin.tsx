@@ -181,23 +181,23 @@ export default function Superadmin() {
   };
 
   useEffect(() => {
-    loadGlobalStats();
-    loadUsers();
-    loadOrgs();
-    loadQueues();
+    void loadGlobalStats();
+    void loadUsers();
+    void loadOrgs();
+    void loadQueues();
   }, []);
 
   // Debounced search triggers
   useEffect(() => {
     const delay = setTimeout(() => {
-      loadUsers(userSearch);
+      void loadUsers(userSearch);
     }, 400);
     return () => clearTimeout(delay);
   }, [userSearch]);
 
   useEffect(() => {
     const delay = setTimeout(() => {
-      loadOrgs(orgSearch);
+      void loadOrgs(orgSearch);
     }, 400);
     return () => clearTimeout(delay);
   }, [orgSearch]);
@@ -210,7 +210,7 @@ export default function Superadmin() {
         body: JSON.stringify({ role })
       });
       addToast({ message: `Role updated to ${role} successfully`, type: 'success' });
-      loadUsers(userSearch);
+      void loadUsers(userSearch);
     } catch (err: any) {
       addToast({ message: err.message || 'Failed to update user role', type: 'error' });
     }
@@ -231,7 +231,7 @@ export default function Superadmin() {
         body: action === 'ban' ? JSON.stringify({ reason: 'Suspended by system administrator' }) : undefined
       });
       addToast({ message: `User account has been ${action === 'ban' ? 'suspended' : 'reactivated'}`, type: 'success' });
-      loadUsers(userSearch);
+      void loadUsers(userSearch);
     } catch (err: any) {
       addToast({ message: err.message || `Failed to ${action} user`, type: 'error' });
     }
@@ -243,7 +243,7 @@ export default function Superadmin() {
     try {
       await apiRequest(`/superadmin/users/${userId}`, { method: 'DELETE' });
       addToast({ message: 'User record deleted successfully', type: 'success' });
-      loadUsers(userSearch);
+      void loadUsers(userSearch);
     } catch (err: any) {
       addToast({ message: err.message || 'Failed to delete user record', type: 'error' });
     }
@@ -276,9 +276,9 @@ export default function Superadmin() {
         body: action === 'suspend' ? JSON.stringify({ reason: 'Administrative suspension' }) : undefined
       });
       addToast({ message: `Organization has been ${action === 'suspend' ? 'suspended' : 'reactivated'}`, type: 'success' });
-      loadOrgs(orgSearch);
+      void loadOrgs(orgSearch);
       if (selectedOrgId === org.id) {
-        loadOrgDetail(org.id);
+        void loadOrgDetail(org.id);
       }
     } catch (err: any) {
       addToast({ message: err.message || `Failed to change organization status`, type: 'error' });
@@ -293,7 +293,7 @@ export default function Superadmin() {
       addToast({ message: 'Organization soft-deleted successfully', type: 'success' });
       setSelectedOrgId(null);
       setSelectedOrg(null);
-      loadOrgs(orgSearch);
+      void loadOrgs(orgSearch);
     } catch (err: any) {
       addToast({ message: err.message || 'Failed to delete organization', type: 'error' });
     }
@@ -304,8 +304,8 @@ export default function Superadmin() {
     try {
       await apiRequest(`/admin/queues/${queueName}/failed/${jobId}/retry`, { method: 'POST' });
       addToast({ message: `Job ${jobId} resubmitted for execution`, type: 'success' });
-      loadFailedJobs(queueName);
-      loadQueues();
+      void loadFailedJobs(queueName);
+      void loadQueues();
     } catch (err: any) {
       addToast({ message: err.message || 'Failed to retry job', type: 'error' });
     }
@@ -317,8 +317,8 @@ export default function Superadmin() {
     try {
       await apiRequest(`/admin/queues/${queueName}/failed`, { method: 'DELETE' });
       addToast({ message: 'Failed jobs purged successfully', type: 'success' });
-      loadFailedJobs(queueName);
-      loadQueues();
+      void loadFailedJobs(queueName);
+      void loadQueues();
     } catch (err: any) {
       addToast({ message: err.message || 'Failed to flush queue', type: 'error' });
     }
@@ -327,7 +327,7 @@ export default function Superadmin() {
   // Organization drill-down wrapper
   const handleDrillDownOrg = (orgId: string) => {
     setSelectedOrgId(orgId);
-    loadOrgDetail(orgId);
+    void loadOrgDetail(orgId);
   };
 
   return (
@@ -346,10 +346,10 @@ export default function Superadmin() {
         </div>
         <button 
           onClick={() => {
-            loadGlobalStats();
-            loadUsers(userSearch);
-            loadOrgs(orgSearch);
-            loadQueues();
+            void loadGlobalStats();
+            void loadUsers(userSearch);
+            void loadOrgs(orgSearch);
+            void loadQueues();
             addToast({ message: 'Platform status cache refreshed', type: 'info' });
           }}
           className="flex items-center justify-center gap-2 h-9 px-4 border border-[var(--border-default)] hover:bg-[var(--bg-hover)] text-[10px] font-semibold uppercase tracking-wider rounded-lg transition-all"
@@ -761,7 +761,7 @@ export default function Superadmin() {
                                 body: JSON.stringify({ plan: newPlan })
                               });
                               addToast({ message: 'Plan modified successfully', type: 'success' });
-                              loadOrgDetail(selectedOrg.id);
+                              void loadOrgDetail(selectedOrg.id);
                             } catch (err: any) {
                               addToast({ message: 'Feature not supported', type: 'error' });
                             }
@@ -879,7 +879,7 @@ export default function Superadmin() {
                 <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
               </div>
               <button 
-                onClick={() => { loadQueues(); setActiveQueueName(null); setFailedJobs([]); }}
+                onClick={() => { void loadQueues(); setActiveQueueName(null); setFailedJobs([]); }}
                 className="flex items-center justify-center gap-2 h-7 px-3 border border-[var(--border-default)] hover:bg-[var(--bg-hover)] text-[9px] font-semibold uppercase tracking-wider rounded transition-all"
               >
                 <RefreshCw className="h-3 w-3" />
@@ -956,7 +956,7 @@ export default function Superadmin() {
                       <button
                         onClick={() => {
                           setActiveQueueName(q.name);
-                          loadFailedJobs(q.name);
+                          void loadFailedJobs(q.name);
                         }}
                         className="btn-secondary h-7 !px-2.5 !py-0 !text-[9px] font-semibold uppercase tracking-widest flex items-center gap-1"
                       >

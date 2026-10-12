@@ -37,7 +37,7 @@ export function ShareModal({ resourceType, resourceId, isOpen, onClose }: ShareM
 
   useEffect(() => {
     if (isOpen) {
-      loadLinks();
+      void loadLinks();
     }
   }, [isOpen, resourceType, resourceId]);
 
@@ -69,7 +69,7 @@ export function ShareModal({ resourceType, resourceId, isOpen, onClose }: ShareM
 
   const copyToClipboard = (token: string) => {
     const url = `${window.location.origin}/share/${token}`;
-    navigator.clipboard.writeText(url);
+    void navigator.clipboard.writeText(url);
     setCopiedToken(token);
     addToast({ message: 'Link copied to clipboard!', type: 'success' });
     setTimeout(() => setCopiedToken(null), 2000);

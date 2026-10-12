@@ -87,11 +87,14 @@ export const mergeRankedAgents = (risks: any[], systems: any[]): RankedAgentRisk
     }
 
     const score = Number(r?.score ?? 0);
+    let defaultFindings = 0;
+    if (score >= 80) defaultFindings = 3;
+    else if (score >= 60) defaultFindings = 1;
     const findingsCount = typeof r?.details?.violationsCount === 'number'
       ? r.details.violationsCount
       : Array.isArray(r?.details?.findings)
       ? r.details.findings.length
-      : (score >= 80 ? 3 : score >= 60 ? 1 : 0);
+      : defaultFindings;
     const agentName = r?.ai_system?.name || r?.name || `Agent-${i + 1}`;
     const source = r?.ai_system?.status ? `Status: ${r.ai_system.status}` : (r?.source || 'Risk Assessment');
     const severity = resolveSeverity(score, r?.risk_level || r?.ai_system?.risk_tier);

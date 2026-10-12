@@ -82,8 +82,8 @@ export default function IncidentManagement() {
   };
 
   useEffect(() => {
-    fetchIncidents();
-    checkScanStatus();
+    void fetchIncidents();
+    void checkScanStatus();
     return () => {
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     };
@@ -119,7 +119,7 @@ export default function IncidentManagement() {
             message: `Deep scan completed. Detected ${res?.result?.incidents_detected || 0} incidents.`, 
             type: 'success' 
           });
-          fetchIncidents();
+          void fetchIncidents();
         }
       } catch (err) {
         console.error('Error polling scan status', err);
@@ -202,7 +202,7 @@ export default function IncidentManagement() {
       setIsLogModalOpen(false);
       setLogAgent('');
       setLogDescription('');
-      fetchIncidents();
+      void fetchIncidents();
     } catch (err: any) {
       addToast({ message: err.message || 'Failed to log incident', type: 'error' });
     } finally {

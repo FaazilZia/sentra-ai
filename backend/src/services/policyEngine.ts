@@ -128,12 +128,17 @@ export const evaluatePolicy = async (agent: string, action: string, organization
     /(german|eu\b|eu_|europe|european|gdpr|eea|cross[-_ ]?border)/i.test(lowercaseAction);
   const hasCustomerOrUserRecords = /(customer|user|resident|personal|record|identit|data|pii|cross[-_ ]?border)/i.test(dataSubjectStr) ||
     /(customer|user|resident|personal|record|identit|data|pii|cross[-_ ]?border)/i.test(lowercaseAction);
+  const hasSccTerm = /\b(sccs?|adequacy|standard[_ ]+contractual[_ ]+clauses)\b/i.test(lowercaseAction);
+  const hasWithoutModifier = /\b(without|no|missing|lacks?|unapproved|unverified)\b/i.test(lowercaseAction);
+  const hasWithModifier = /\bwith\b/i.test(lowercaseAction) && !hasWithoutModifier;
   const hasSccFlagFalse = metadata?.has_scc === false || metadata?.hasScc === false || metadata?.has_adequacy === false || metadata?.hasAdequacy === false;
   const hasSccExplicitTrue = metadata?.has_scc === true || metadata?.hasScc === true || metadata?.has_adequacy === true || metadata?.hasAdequacy === true ||
-    /\bwith[_ ]+(?:an?[_ ]+|signed[_ ]+|valid[_ ]+)?(?:sccs?|adequacy|standard[_ ]+contractual[_ ]+clauses)/i.test(lowercaseAction);
-  const lacksSccPhrase = /(?:without|no|missing|lacks?|unapproved)[_ ]+(?:an?[_ ]+|signed[_ ]+|valid[_ ]+|active[_ ]+)?(?:sccs?|adequacy|standard[_ ]+contractual[_ ]+clauses|transfer)/i.test(lowercaseAction);
-  const isUnapprovedDest = Boolean(destStr && !['eu', 'eea', 'internal', 'local', 'approved_eu_safe'].includes(destStr)) ||
-    /\b(us[-_ ]?based|us[-_ ]?east|us[-_ ]?west|united[_ ]+states|external|non[-_ ]?eu|third[-_ ]?country|offshore)\b/i.test(lowercaseAction);
+    (hasWithModifier && hasSccTerm);
+  const lacksSccPhrase = hasWithoutModifier && (hasSccTerm || /\btransfer\b/i.test(lowercaseAction));
+  const hasExternalDestKeyword =
+    /\b(us[-_ ]?based|us[-_ ]?east|us[-_ ]?west|united[_ ]+states)\b/i.test(lowercaseAction) ||
+    /\b(external|non[-_ ]?eu|third[-_ ]?country|offshore)\b/i.test(lowercaseAction);
+  const isUnapprovedDest = Boolean(destStr && !['eu', 'eea', 'internal', 'local', 'approved_eu_safe'].includes(destStr)) || hasExternalDestKeyword;
 
   if ((isTransferAction || Boolean(destStr)) && hasEuOrGermanSubject && hasCustomerOrUserRecords && !hasSccExplicitTrue && (hasSccFlagFalse || lacksSccPhrase || isUnapprovedDest)) {
     return {
@@ -148,10 +153,10 @@ export const evaluatePolicy = async (agent: string, action: string, organization
   }
 
   // L1 Check 6: Third-Party Healthcare PHI Disclosure Without Signed BAA (HIPAA Privacy Rule)
+  const hasBaaTerm = /\b(baa|business[_ ]+associate[_ ]+agreement)\b/i.test(lowercaseAction);
   const hasBaaFlagFalse = metadata?.has_baa === false || metadata?.hasBaa === false;
-  const hasBaaExplicitTrue = metadata?.has_baa === true || metadata?.hasBaa === true ||
-    /\bwith[_ ]+(?:an?[_ ]+|signed[_ ]+|active[_ ]+|valid[_ ]+)?(?:baa|business[_ ]+associate[_ ]+agreement)\b/i.test(lowercaseAction);
-  const lacksBaaPhrase = /(?:without|no|missing|lacks?|unverified)[_ ]+(?:an?[_ ]+|signed[_ ]+|active[_ ]+|valid[_ ]+)?(?:baa|business[_ ]+associate[_ ]+agreement)/i.test(lowercaseAction);
+  const hasBaaExplicitTrue = metadata?.has_baa === true || metadata?.hasBaa === true || (hasWithModifier && hasBaaTerm);
+  const lacksBaaPhrase = hasWithoutModifier && hasBaaTerm;
   const hasVendorOrThirdParty = Boolean(metadata?.vendor || metadata?.third_party || metadata?.thirdParty) || 
                                 /(third[-_ ]?party|vendor|partner|external|lab\b|processor|diagnostics|outsourc)/i.test(lowercaseAction);
   const hasPhiOrClinical = Boolean(metadata?.patientId || metadata?.patient_id || metadata?.clinical_data || metadata?.diagnosis) ||
@@ -174,14 +179,15 @@ export const evaluatePolicy = async (agent: string, action: string, organization
   const rawAge = metadata?.dataPrincipalAge ?? metadata?.subject_age ?? metadata?.age ?? metadata?.principal_age;
   const principalAge = rawAge !== undefined && rawAge !== null ? Number(rawAge) : 999;
   const isAdultPrincipal = rawAge !== undefined && rawAge !== null && principalAge >= 18;
+  const hasConsentTerm = /\bconsent\b/i.test(lowercaseAction);
   const hasParentalConsentFalse = metadata?.verifiedParentalConsent === false || metadata?.parental_consent === false || metadata?.parentalConsent === false || metadata?.has_consent === false;
   const hasParentalConsentExplicitTrue = metadata?.verifiedParentalConsent === true || metadata?.parental_consent === true || metadata?.parentalConsent === true || metadata?.has_consent === true ||
-    /\bwith[_ ]+(?:verifiable[_ ]+|verified[_ ]+|valid[_ ]+)?(?:parental[_ ]+|guardian[_ ]+)?consent\b/i.test(lowercaseAction);
+    (hasWithModifier && hasConsentTerm);
   const isMinorAge = principalAge < 18;
   const isMinorKeyword = /\b(minor|minors|child|children|underage|under[_ ]*18|kid|juvenile|teen|age[_ ]*1[0-7])\b/i.test(lowercaseAction);
   const isBiometricData = Boolean(metadata?.biometricType || metadata?.biometric_type) || 
                           /(biometric|facial|face[_ ]?scan|fingerprint|iris|retina|voiceprint|dna)/i.test(lowercaseAction);
-  const lacksConsentPhrase = /(?:without|no|missing|lacks?|unverified)[_ ]+(?:verifiable[_ ]+|verified[_ ]+|valid[_ ]+|explicit[_ ]+)?(?:parental[_ ]+|guardian[_ ]+)?consent/i.test(lowercaseAction);
+  const lacksConsentPhrase = hasWithoutModifier && hasConsentTerm;
   const isProcessingAction = /process|collect|save|analyze|use|enable|register|scan|capture|store|share|export|extract|ingest|biometric[_ ]+data/i.test(lowercaseAction) ||
     Boolean(metadata?.biometricType || metadata?.biometric_type) ||
     hasParentalConsentFalse ||
