@@ -167,4 +167,46 @@ describe('Policy Engine', () => {
     );
     expect(result.allowed).toBe(true);
   });
+
+  it('should block terse GDPR cross-border transfer without SCC phrasing in L1', async () => {
+    (prisma.policies.findMany as jest.Mock).mockResolvedValue([]);
+    const result = await evaluatePolicy(
+      'gdpr-compliance-agent',
+      'GDPR cross-border transfer without SCC',
+      orgId,
+      {}
+    );
+    expect(result.allowed).toBe(false);
+    expect(result.ruleId).toBe('rule-gdpr-transfer');
+    expect(result.matchedPolicy).toBe('GDPR Cross-Border Transfer Guardrail');
+    expect(result.compliance).toContain('GDPR');
+  });
+
+  it('should block terse HIPAA data share without BAA phrasing in L1', async () => {
+    (prisma.policies.findMany as jest.Mock).mockResolvedValue([]);
+    const result = await evaluatePolicy(
+      'healthcare-assistant-agent',
+      'HIPAA data share without BAA',
+      orgId,
+      {}
+    );
+    expect(result.allowed).toBe(false);
+    expect(result.ruleId).toBe('rule-hipaa-baa');
+    expect(result.matchedPolicy).toBe('HIPAA PHI Vendor Disclosure Guardrail');
+    expect(result.compliance).toContain('HIPAA');
+  });
+
+  it('should block terse DPDP minor biometric data without consent phrasing in L1', async () => {
+    (prisma.policies.findMany as jest.Mock).mockResolvedValue([]);
+    const result = await evaluatePolicy(
+      'dpdp-fiduciary-agent',
+      'DPDP minor biometric data without consent',
+      orgId,
+      {}
+    );
+    expect(result.allowed).toBe(false);
+    expect(result.ruleId).toBe('rule-dpdp-biometric');
+    expect(result.matchedPolicy).toBe('DPDP Minor Biometric Consent Guardrail');
+    expect(result.compliance).toContain('DPDP');
+  });
 });

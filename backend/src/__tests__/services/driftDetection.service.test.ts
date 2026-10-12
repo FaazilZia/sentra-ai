@@ -285,4 +285,54 @@ describe('driftDetectionService unit tests', () => {
       }
     });
   });
+
+  describe('rapid-fire burst and calibration guards', () => {
+    it('does not fire volume_spike or risk_score_increase alerts during rapid-fire SDK bursts (< 5s interval)', async () => {
+      const redisMock = require('../../config/redis').getRedisClient();
+      const now = Date.now();
+      // Baseline updated 500ms ago (rapid-fire script timing)
+      redisMock.get.mockResolvedValueOnce(
+        JSON.stringify({
+          agentId: 'billing-payment-agent',
+          avgRequestsPerHour: 1,
+          avgRiskScore: 10,
+          toolDistribution: { process_payment: 1 },
+          requestCount: 50,
+          lastUpdated: new Date(now - 500).toISOString(),
+        })
+      );
+
+      const alerts = await driftDetectionService.detectDrift(
+        'billing-payment-agent',
+        { action: 'process_payment', riskScore: 85, currentHourRequests: 25 },
+        'org-123'
+      );
+
+      expect(alerts).toEqual([]);
+    });
+
+    it('does not fire drift alerts before MIN_CALIBRATION_REQUESTS (25 requests)', async () => {
+      const redisMock = require('../../config/redis').getRedisClient();
+      const now = Date.now();
+      // Updated 60s ago, but only 12 requests so far
+      redisMock.get.mockResolvedValueOnce(
+        JSON.stringify({
+          agentId: 'data-export-agent',
+          avgRequestsPerHour: 2,
+          avgRiskScore: 15,
+          toolDistribution: { export_to_s3: 1 },
+          requestCount: 12,
+          lastUpdated: new Date(now - 60_000).toISOString(),
+        })
+      );
+
+      const alerts = await driftDetectionService.detectDrift(
+        'data-export-agent',
+        { action: 'export_to_s3', riskScore: 90, currentHourRequests: 20 },
+        'org-123'
+      );
+
+      expect(alerts).toEqual([]);
+    });
+  });
 });

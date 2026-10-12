@@ -67,7 +67,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
           bg: 'bg-amber-500/10 dark:bg-amber-500/15',
           border: 'border-amber-500/30',
           text: 'text-amber-700 dark:text-amber-400',
-          defaultLabel: label || 'Needs Review'
+          defaultLabel: label || (normStatus === 'flagged' ? 'Flagged' : 'Needs Review')
         };
       case 'critical':
       case 'high':

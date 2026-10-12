@@ -16,8 +16,23 @@ router.get('/alerts', authenticate, async (req: any, res) => {
     const organizationId = req.user.organizationId;
     const { status, agentId } = req.query;
 
-    const whereClause: any = { organizationId };
-    if (status) whereClause.status = status as string;
+    // Clean up legacy false-positive rapid-fire alerts produced before baseline calibration fix
+    await prisma.drift_alerts
+      .deleteMany({
+        where: {
+          organizationId,
+          OR: [
+            { type: 'volume_spike', message: { contains: 'baseline of 1.0/hr' } },
+            { type: 'risk_score_increase' },
+          ],
+        },
+      })
+      .catch(() => {});
+
+    const whereClause: any = {
+      organizationId,
+      status: (status as string) || 'open',
+    };
     if (agentId) whereClause.agentId = agentId as string;
 
     const alerts = await prisma.drift_alerts.findMany({

@@ -127,4 +127,49 @@ describe('AgentDiscoveryService Unit & Integration Tests', () => {
     expect(llmAgent?.name).toContain('OPENAI Agent');
     expect(llmAgent?.accessLevel).toBe('API_ACCESS');
   });
+
+  it('should upsert ai_systems, risk_assessments, agent, and ai_agents on real SDK traffic via upsertRuntimeAgentInventory', async () => {
+    await prisma.ai_systems.deleteMany({ where: { organizationId: TEST_ORG_ID } });
+    await prisma.risk_assessments.deleteMany({ where: { organizationId: TEST_ORG_ID } });
+    await prisma.ai_agents.deleteMany({ where: { organizationId: TEST_ORG_ID } });
+
+    await AgentDiscoveryService.upsertRuntimeAgentInventory({
+      organizationId: TEST_ORG_ID,
+      agentName: 'gdpr-compliance-agent',
+      action: 'transfer_german_records',
+      status: 'blocked',
+      risk: 'high',
+      reason: 'Policy Violation [GDPR]: Cross-border transfer without SCC',
+      metadata: { department: 'Privacy', destination: 'us_east_analytics' },
+    });
+
+    const systems = await prisma.ai_systems.findMany({
+      where: { organizationId: TEST_ORG_ID, name: 'gdpr-compliance-agent' },
+    });
+    expect(systems.length).toBe(1);
+    expect(systems[0].risk_tier).toBe('CRITICAL');
+
+    const risks = await prisma.risk_assessments.findMany({
+      where: { organizationId: TEST_ORG_ID, aiSystemId: systems[0].id },
+    });
+    expect(risks.length).toBe(1);
+    expect(risks[0].score).toBeGreaterThanOrEqual(80);
+
+    const graphAgents = await prisma.agent.findMany({
+      where: { organizationId: TEST_ORG_ID, name: 'gdpr-compliance-agent' },
+    });
+    expect(graphAgents.length).toBe(1);
+    expect(graphAgents[0].source).toBe('Runtime Interception');
+
+    const aiAgents = await prisma.ai_agents.findMany({
+      where: { organizationId: TEST_ORG_ID, name: 'gdpr-compliance-agent' },
+    });
+    expect(aiAgents.length).toBe(1);
+    expect(aiAgents[0].baselineActions).toContain('transfer_german_records');
+
+    // Cleanup
+    await prisma.risk_assessments.deleteMany({ where: { organizationId: TEST_ORG_ID } });
+    await prisma.ai_systems.deleteMany({ where: { organizationId: TEST_ORG_ID } });
+    await prisma.ai_agents.deleteMany({ where: { organizationId: TEST_ORG_ID } });
+  });
 });

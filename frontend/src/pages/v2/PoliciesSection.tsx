@@ -37,6 +37,8 @@ export default function PoliciesSection() {
   const [loading, setLoading] = useState(false);
   const [sdkConnected, setSdkConnected] = useState(true);
   const [interceptionsToday, setInterceptionsToday] = useState(0);
+  const [blockedTodayCount, setBlockedTodayCount] = useState(0);
+  const [flaggedTodayCount, setFlaggedTodayCount] = useState(0);
   const [rules, setRules] = useState<GovernanceRule[]>([]);
   const [workflows, setWorkflows] = useState<any[]>([]);
 
@@ -50,12 +52,11 @@ export default function PoliciesSection() {
   const loadPoliciesData = useCallback(async () => {
     setLoading(true);
     try {
-      const [polRes, guardRes, wfRes, statsRes, aiLogsRes, sdkStatus] = await Promise.all([
+      const [polRes, guardRes, wfRes, statsRes, sdkStatus] = await Promise.all([
         apiRequest<any>('/policies').catch(() => ({ data: [] })),
         apiRequest<any>('/guardrails').catch(() => ({ data: [] })),
         apiRequest<any>('/workflows').catch(() => ({ data: [] })),
         apiRequest<any>('/ai/dashboard-stats').catch(() => null),
-        apiRequest<any>('/ai/logs').catch(() => ({ data: [] })),
         fetchSdkStatus().catch(() => ({ connected: false, connectedAt: null }))
       ]);
 
@@ -65,33 +66,11 @@ export default function PoliciesSection() {
       const loadedPolicies = Array.isArray(polRes?.data) ? polRes.data : (Array.isArray(polRes) ? polRes : []);
       const loadedGuardrails = Array.isArray(guardRes?.data) ? guardRes.data : [];
 
-      // Calculate rule-level action attribution from stats and live AI logs
+      // Single source of truth: /ai/dashboard-stats
+      const statsPayload = statsRes?.data || statsRes || {};
       const ruleInterceptions: Record<string, number> = {
-        ...(statsRes?.data?.ruleInterceptions || statsRes?.ruleInterceptions || {})
+        ...(statsPayload.ruleInterceptions || {})
       };
-
-      const today = new Date().toDateString();
-      const rawLogs = Array.isArray(aiLogsRes?.data) ? aiLogsRes.data : (Array.isArray(aiLogsRes) ? aiLogsRes : []);
-      const todayLogs = rawLogs.filter((l: any) => new Date(l.timestamp).toDateString() === today);
-      todayLogs.forEach((l: any) => {
-        if (l.status === 'blocked' || l.status === 'flagged') {
-          const meta = l.metadata || {};
-          const rId = meta.ruleId;
-          const rName = meta.matchedPolicy || meta.ruleName;
-          if (rId) {
-            ruleInterceptions[rId] = todayLogs.filter((x: any) => (x.status === 'blocked' || x.status === 'flagged') && x.metadata?.ruleId === rId).length;
-          }
-          if (rName) {
-            ruleInterceptions[rName] = todayLogs.filter((x: any) => (x.status === 'blocked' || x.status === 'flagged') && (x.metadata?.matchedPolicy === rName || x.metadata?.ruleName === rName)).length;
-          }
-          if (rId === 'rule-pii-leakage' || rId === 'rule-1' || meta.piiDetected) {
-            const piiCount = todayLogs.filter((x: any) => (x.status === 'blocked' || x.status === 'flagged') && (x.metadata?.ruleId === 'rule-pii-leakage' || x.metadata?.ruleId === 'rule-1' || x.metadata?.piiDetected)).length;
-            ruleInterceptions['rule-pii-leakage'] = piiCount;
-            ruleInterceptions['rule-1'] = piiCount;
-            ruleInterceptions['Strict PII & SSN Redaction Rule'] = piiCount;
-          }
-        }
-      });
 
       const formattedRules: GovernanceRule[] = [
         {
@@ -103,9 +82,9 @@ export default function PoliciesSection() {
           actionType: 'BLOCK',
           isEnabled: true,
           blockedCountToday:
-            ruleInterceptions['rule-1'] ||
-            ruleInterceptions['rule-pii-leakage'] ||
-            ruleInterceptions['Strict PII & SSN Redaction Rule'] ||
+            ruleInterceptions['rule-1'] ??
+            ruleInterceptions['rule-pii-leakage'] ??
+            ruleInterceptions['Strict PII & SSN Redaction Rule'] ??
             0,
           updatedAt: 'Recently'
         },
@@ -118,9 +97,9 @@ export default function PoliciesSection() {
           actionType: 'BLOCK',
           isEnabled: true,
           blockedCountToday:
-            ruleInterceptions['rule-2'] ||
-            ruleInterceptions['Adversarial Jailbreak & System Reset Interception'] ||
-            ruleInterceptions['Adversarial Prompt Injection & Jailbreak Guardrail'] ||
+            ruleInterceptions['rule-2'] ??
+            ruleInterceptions['Adversarial Jailbreak & System Reset Interception'] ??
+            ruleInterceptions['Adversarial Prompt Injection & Jailbreak Guardrail'] ??
             0,
           updatedAt: 'Recently'
         },
@@ -132,7 +111,7 @@ export default function PoliciesSection() {
           enforcementMode: 'human-in-loop',
           actionType: 'FLAG',
           isEnabled: true,
-          blockedCountToday: ruleInterceptions['rule-3'] || ruleInterceptions['Disbursement > $10k Human Approval Trigger'] || 0,
+          blockedCountToday: ruleInterceptions['rule-3'] ?? ruleInterceptions['Disbursement > $10k Human Approval Trigger'] ?? 0,
           updatedAt: 'Recently'
         },
         {
@@ -143,7 +122,7 @@ export default function PoliciesSection() {
           enforcementMode: 'blocking',
           actionType: 'BLOCK',
           isEnabled: true,
-          blockedCountToday: ruleInterceptions['rule-4'] || ruleInterceptions['Shadow Agent Workspace Admin Access Block'] || 0,
+          blockedCountToday: ruleInterceptions['rule-4'] ?? ruleInterceptions['Shadow Agent Workspace Admin Access Block'] ?? 0,
           updatedAt: 'Recently'
         },
         {
@@ -154,7 +133,7 @@ export default function PoliciesSection() {
           enforcementMode: 'flag-and-review',
           actionType: 'FLAG',
           isEnabled: false,
-          blockedCountToday: ruleInterceptions['rule-5'] || 0,
+          blockedCountToday: ruleInterceptions['rule-5'] ?? 0,
           updatedAt: 'Recently'
         },
         {
@@ -165,7 +144,7 @@ export default function PoliciesSection() {
           enforcementMode: 'blocking',
           actionType: 'BLOCK',
           isEnabled: true,
-          blockedCountToday: ruleInterceptions['rule-gdpr-transfer'] || ruleInterceptions['GDPR Cross-Border Transfer Guardrail'] || 0,
+          blockedCountToday: ruleInterceptions['rule-gdpr-transfer'] ?? ruleInterceptions['GDPR Cross-Border Transfer Guardrail'] ?? 0,
           updatedAt: 'Recently'
         },
         {
@@ -176,7 +155,7 @@ export default function PoliciesSection() {
           enforcementMode: 'blocking',
           actionType: 'BLOCK',
           isEnabled: true,
-          blockedCountToday: ruleInterceptions['rule-hipaa-baa'] || ruleInterceptions['HIPAA PHI Vendor Disclosure Guardrail'] || 0,
+          blockedCountToday: ruleInterceptions['rule-hipaa-baa'] ?? ruleInterceptions['HIPAA PHI Vendor Disclosure Guardrail'] ?? 0,
           updatedAt: 'Recently'
         },
         {
@@ -187,7 +166,7 @@ export default function PoliciesSection() {
           enforcementMode: 'blocking',
           actionType: 'BLOCK',
           isEnabled: true,
-          blockedCountToday: ruleInterceptions['rule-dpdp-biometric'] || ruleInterceptions['DPDP Minor Biometric Consent Guardrail'] || 0,
+          blockedCountToday: ruleInterceptions['rule-dpdp-biometric'] ?? ruleInterceptions['DPDP Minor Biometric Consent Guardrail'] ?? 0,
           updatedAt: 'Recently'
         }
       ];
@@ -202,14 +181,18 @@ export default function PoliciesSection() {
           enforcementMode: p.effect === 'deny' ? 'blocking' : 'flag-and-review',
           actionType: p.effect === 'deny' ? 'BLOCK' : 'FLAG',
           isEnabled: p.status === 'ACTIVE',
-          blockedCountToday: ruleInterceptions[p.id] || ruleInterceptions[p.name] || 0,
+          blockedCountToday: ruleInterceptions[p.id] ?? ruleInterceptions[p.name] ?? 0,
           updatedAt: 'Recently'
         });
       });
 
       const totalInterceptions = formattedRules.reduce((sum, r) => sum + (r.blockedCountToday || 0), 0);
-      const blockedCount = statsRes?.kpis?.modelsBlockedToday?.value ?? (statsRes?.kpis?.blockedCount?.value ?? 0);
-      setInterceptionsToday(isSdkLive ? (totalInterceptions || blockedCount) : 0);
+      const blockedCount = statsPayload?.kpis?.modelsBlockedToday?.value ?? (statsPayload?.kpis?.blockedCount?.value ?? 0);
+      const flaggedCount = statsPayload?.kpis?.flaggedToday?.value ?? 0;
+      const combinedCount = blockedCount + flaggedCount;
+      setBlockedTodayCount(isSdkLive ? blockedCount : 0);
+      setFlaggedTodayCount(isSdkLive ? flaggedCount : 0);
+      setInterceptionsToday(isSdkLive ? (combinedCount || totalInterceptions) : 0);
 
       setRules(formattedRules);
       setWorkflows(Array.isArray(wfRes?.data) ? wfRes.data : loadedGuardrails);
@@ -354,21 +337,21 @@ export default function PoliciesSection() {
         <MetricCard
           label="Strict Blocking Mode"
           value={rules.filter(r => r.enforcementMode === 'blocking' && r.isEnabled).length}
-          subtitle={sdkConnected ? "Zero-trust automated blocks" : "Awaiting SDK Connection"}
+          subtitle={sdkConnected ? `Zero-trust automated blocks (${blockedTodayCount} Blocked Today)` : "Awaiting SDK Connection"}
           status={rules.some(r => r.enforcementMode === 'blocking' && r.isEnabled) ? "danger" : "neutral"}
           icon={Ban}
         />
         <MetricCard
           label="Human-in-Loop Triggers"
           value={rules.filter(r => r.enforcementMode === 'human-in-loop').length}
-          subtitle={sdkConnected ? "Requires SOC approval" : "Awaiting SDK Connection"}
+          subtitle={sdkConnected ? `Requires SOC approval (${flaggedTodayCount} Flagged Today)` : "Awaiting SDK Connection"}
           status={rules.some(r => r.enforcementMode === 'human-in-loop') ? "warning" : "neutral"}
           icon={AlertTriangle}
         />
         <MetricCard
           label="Interceptions Today"
           value={interceptionsToday}
-          subtitle={sdkConnected ? "Actions blocked / flagged" : "Awaiting SDK Connection"}
+          subtitle={sdkConnected ? `Actions blocked / flagged (${blockedTodayCount} Blocked, ${flaggedTodayCount} Flagged)` : "Awaiting SDK Connection"}
           status={sdkConnected && interceptionsToday > 0 ? "success" : "neutral"}
           icon={Zap}
         />

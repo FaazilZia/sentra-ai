@@ -246,14 +246,17 @@ export default function ActivitySection() {
       const latest = socketActivities[0];
       setEvents(prev => {
         if (prev.some(e => e.id === latest.id)) return prev;
+        const decisionStr = String(latest.decision || '').toUpperCase();
+        const isBlocked = decisionStr === 'BLOCK' || decisionStr === 'BLOCKED';
+        const isFlagged = decisionStr === 'FLAGGED' || decisionStr === 'MODIFY';
         const newEv: FeedEvent = {
           id: latest.id,
           timestamp: latest.time || 'Just now',
           agentName: latest.user || 'Monitored Agent',
           actionType: latest.target || latest.action || 'AI Action',
-          status: latest.decision === 'BLOCK' ? 'BLOCKED' : latest.decision === 'MODIFY' ? 'FLAGGED' : 'ALLOWED',
-          reason: latest.aiSummary || (latest.decision === 'BLOCK' ? 'Blocked by governance policy' : latest.decision === 'MODIFY' ? 'Flagged for human review' : 'Authorized action'),
-          severity: latest.decision === 'BLOCK' ? 'CRITICAL' : latest.decision === 'MODIFY' ? 'MEDIUM' : 'LOW',
+          status: isBlocked ? 'BLOCKED' : isFlagged ? 'FLAGGED' : 'ALLOWED',
+          reason: latest.aiSummary || (isBlocked ? 'Blocked by governance policy' : isFlagged ? 'Flagged for human review' : 'Authorized action'),
+          severity: isBlocked ? 'CRITICAL' : isFlagged ? 'MEDIUM' : 'LOW',
           rawTimestamp: Date.now()
         };
         return [newEv, ...prev.slice(0, 49)];
@@ -263,10 +266,11 @@ export default function ActivitySection() {
 
   const today = new Date().toDateString();
   const todayEvents = events.filter(e => !e.rawTimestamp || new Date(e.rawTimestamp).toDateString() === today);
-  const blockedCount = dashboardStats?.kpis?.modelsBlockedToday?.value ?? todayEvents.filter(e => e.status === 'BLOCKED').length;
-  const flaggedCount = dashboardStats?.kpis?.flaggedToday?.value ?? todayEvents.filter(e => e.status === 'FLAGGED').length;
-  const allowedCount = dashboardStats?.kpis?.allowedToday?.value ?? todayEvents.filter(e => e.status === 'ALLOWED').length;
-  const totalFeedToday = dashboardStats?.kpis?.totalActionsToday?.value ?? (todayEvents.length || events.length);
+  const statsKpis = dashboardStats?.kpis || dashboardStats?.data?.kpis;
+  const blockedCount = statsKpis?.modelsBlockedToday?.value ?? statsKpis?.blockedCount?.value ?? todayEvents.filter(e => e.status === 'BLOCKED').length;
+  const flaggedCount = statsKpis?.flaggedToday?.value ?? todayEvents.filter(e => e.status === 'FLAGGED').length;
+  const allowedCount = statsKpis?.allowedToday?.value ?? todayEvents.filter(e => e.status === 'ALLOWED').length;
+  const totalFeedToday = statsKpis?.totalActionsToday?.value ?? (todayEvents.length || events.length);
 
   const feedColumns: Column<FeedEvent>[] = [
     {
@@ -296,8 +300,8 @@ export default function ActivitySection() {
       sortable: true,
       cell: (item) => (
         <StatusBadge 
-          status={item.status === 'BLOCKED' ? 'blocked' : item.status === 'FLAGGED' ? 'warning' : 'active'}
-          label={item.status}
+          status={item.status === 'BLOCKED' ? 'blocked' : item.status === 'FLAGGED' ? 'flagged' : 'allowed'}
+          label={item.status === 'BLOCKED' ? 'Blocked' : item.status === 'FLAGGED' ? 'Flagged' : 'Allowed'}
         />
       )
     },

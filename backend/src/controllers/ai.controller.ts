@@ -117,13 +117,27 @@ export const postCheckAction = async (req: any, res: Response, next: NextFunctio
     const latency = Date.now() - startTime;
     Sentry.setTag('latency', latency);
 
+    // 3b. Upsert runtime agent inventory (ai_systems, risk_assessments, Agent, ai_agents)
+    try {
+      const { AgentDiscoveryService } = require('../services/agentDiscovery.service');
+      await AgentDiscoveryService.upsertRuntimeAgentInventory(
+        organizationId,
+        agent,
+        action,
+        decision,
+        metadata
+      );
+    } catch (invErr: any) {
+      logger.warn(`[INVENTORY] Non-fatal agent inventory upsert error: ${invErr.message}`);
+    }
+
     // 4. Real Drift Detection (async — does not block response)
     const riskNumeric =
       decision.risk === 'high' ? 80 : decision.risk === 'medium' ? 50 : 20;
     setImmediate(async () => {
       try {
-        await updateBaseline(agent, organizationId, { metadata }, riskNumeric);
         const driftChecks = await detectDrift(agent, organizationId, { action, metadata }, riskNumeric);
+        await updateBaseline(agent, organizationId, { metadata }, riskNumeric);
         if (driftChecks.length > 0) {
           const enrichedDriftChecks = driftChecks.map(check => ({
             ...check,
@@ -144,13 +158,18 @@ export const postCheckAction = async (req: any, res: Response, next: NextFunctio
       id: requestId,
       organizationId,
       timestamp: new Date().toISOString(),
-      decision: decision.status === 'blocked' ? 'BLOCK' : (decision.isPendingApproval ? 'MODIFY' : 'ALLOW'),
+      status: decision.status,
+      decision: decision.status === 'blocked' ? 'BLOCK' : ((decision.status === 'flagged' || decision.isPendingApproval) ? 'FLAGGED' : 'ALLOW'),
+      isPendingApproval: decision.isPendingApproval || false,
       risk: decision.risk,
       reason: decision.reason,
       ai_summary,
       metadata: {
+        ...metadata,
         agent,
-        action
+        action,
+        ruleId: decision.ruleId,
+        matchedPolicy: decision.matchedPolicy,
       }
     });
 
@@ -284,17 +303,26 @@ export const getLogs = async (req: any, res: Response, next: NextFunction) => {
     const activityLogs = await prisma.logs.findMany({
       where: { organizationId: organizationId },
       orderBy: { timestamp: 'desc' },
-      take: 100
+      take: 500
     });
 
     res.status(200).json({
       success: true,
-      data: activityLogs.map(log => ({
-        ...log,
-        agent_id: log.agent,
-        risk_score: log.risk,
-        created_at: log.timestamp
-      }))
+      data: activityLogs.map(log => {
+        const canonicalStatus =
+          log.status === 'blocked'
+            ? 'blocked'
+            : log.status === 'flagged' || log.isPendingApproval === true || (log.metadata as any)?.isPendingApproval === true
+            ? 'flagged'
+            : 'allowed';
+        return {
+          ...log,
+          status: canonicalStatus,
+          agent_id: log.agent,
+          risk_score: log.risk,
+          created_at: log.timestamp
+        };
+      })
     });
   } catch (error) {
     next(error);
@@ -323,23 +351,63 @@ export const getDashboardStats = async (req: any, res: Response, next: NextFunct
       calculateSecurityScore(organizationId)
     ]);
 
-    // 1. Calculate KPIs
+    // 1. Calculate KPIs (Single Source of Truth across Overview, Activity, Policies)
     const today = new Date().toDateString();
     const todayLogs = logs.filter(l => new Date(l.timestamp).toDateString() === today);
     const criticalViolations = incidents.filter(i => i.severity > 70).length;
-    const blockedToday = todayLogs.filter(l => l.status === 'blocked').length;
-    const flaggedToday = todayLogs.filter(l => l.status === 'flagged').length;
-    const allowedToday = todayLogs.filter(l => l.status === 'allowed').length;
+    const isLogBlocked = (l: any) => l.status === 'blocked';
+    const isLogFlagged = (l: any) =>
+      l.status !== 'blocked' &&
+      (l.status === 'flagged' || l.isPendingApproval === true || (l.metadata as any)?.isPendingApproval === true);
+
+    const blockedToday = todayLogs.filter(isLogBlocked).length;
+    const flaggedToday = todayLogs.filter(isLogFlagged).length;
+    const allowedToday = todayLogs.filter(l => !isLogBlocked(l) && !isLogFlagged(l)).length;
     const totalToday = todayLogs.length;
     const complianceScore = policies.length > 0 ? Math.round((policies.filter(p => p.enabled).length / policies.length) * 100) : 100;
 
     // Rule-level Interceptions attribution for Policies Section
-    const ruleInterceptions: Record<string, number> = {};
+    const ruleInterceptions: Record<string, number> = {
+      'rule-1': 0,
+      'rule-2': 0,
+      'rule-3': 0,
+      'rule-4': 0,
+      'rule-gdpr-transfer': 0,
+      'rule-hipaa-baa': 0,
+      'rule-dpdp-biometric': 0,
+    };
     todayLogs.forEach(l => {
-      if (l.status === 'blocked' || l.status === 'flagged') {
+      if (isLogBlocked(l) || isLogFlagged(l)) {
         const meta = (l.metadata as any) || {};
-        const ruleId = meta.ruleId;
-        const matchedPolicy = meta.matchedPolicy || meta.ruleName;
+        const combinedText = `${l.action || ''} ${l.reason || ''} ${meta.prompt || ''}`;
+        let ruleId = meta.ruleId;
+        let matchedPolicy = meta.matchedPolicy || meta.ruleName;
+
+        // Fallback inference if older/custom log lacked explicit ruleId in metadata
+        if (!ruleId && !matchedPolicy) {
+          if (isLogFlagged(l) || (typeof meta.amount === 'number' && meta.amount >= 10000) || /financial threshold|\$10,000/i.test(combinedText)) {
+            ruleId = 'rule-3';
+            matchedPolicy = 'Disbursement > $10k Human Approval Trigger';
+          } else if (/gdpr|scc|cross[-_ ]?border/i.test(combinedText)) {
+            ruleId = 'rule-gdpr-transfer';
+            matchedPolicy = 'GDPR Cross-Border Transfer Guardrail';
+          } else if (/hipaa|baa|phi\b/i.test(combinedText)) {
+            ruleId = 'rule-hipaa-baa';
+            matchedPolicy = 'HIPAA PHI Vendor Disclosure Guardrail';
+          } else if (/dpdp|minor.*biometric|parental\s*consent/i.test(combinedText)) {
+            ruleId = 'rule-dpdp-biometric';
+            matchedPolicy = 'DPDP Minor Biometric Consent Guardrail';
+          } else if (/delete|drop|truncate|destroy|purge/i.test(combinedText)) {
+            ruleId = 'rule-4';
+            matchedPolicy = 'Production File System Write/Delete Lock';
+          } else if (/jailbreak|injection|dan\s*mode|ignore\s*(?:all\s*)?(?:previous|prior)|adversarial|openai_chat_completion/i.test(combinedText)) {
+            ruleId = 'rule-2';
+            matchedPolicy = 'Adversarial Jailbreak & System Reset Interception';
+          } else {
+            ruleId = 'rule-1';
+            matchedPolicy = 'Strict PII & SSN Redaction Rule';
+          }
+        }
 
         const keysToIncrement = new Set<string>();
         if (ruleId) keysToIncrement.add(ruleId);
@@ -351,7 +419,7 @@ export const getDashboardStats = async (req: any, res: Response, next: NextFunct
           keysToIncrement.add('rule-1');
           keysToIncrement.add('Strict PII & SSN Redaction Rule');
         }
-        if (ruleId === 'rule-2' || matchedPolicy === 'Adversarial Prompt Injection & Jailbreak Guardrail') {
+        if (ruleId === 'rule-2' || matchedPolicy === 'Adversarial Prompt Injection & Jailbreak Guardrail' || matchedPolicy === 'Adversarial Jailbreak & System Reset Interception') {
           keysToIncrement.add('rule-2');
           keysToIncrement.add('Adversarial Jailbreak & System Reset Interception');
           keysToIncrement.add('Adversarial Prompt Injection & Jailbreak Guardrail');
@@ -359,6 +427,10 @@ export const getDashboardStats = async (req: any, res: Response, next: NextFunct
         if (ruleId === 'rule-3' || matchedPolicy === 'Disbursement > $10k Human Approval Trigger') {
           keysToIncrement.add('rule-3');
           keysToIncrement.add('Disbursement > $10k Human Approval Trigger');
+        }
+        if (ruleId === 'rule-4' || matchedPolicy === 'Production File System Write/Delete Lock') {
+          keysToIncrement.add('rule-4');
+          keysToIncrement.add('Production File System Write/Delete Lock');
         }
         if (ruleId === 'rule-gdpr-transfer' || matchedPolicy === 'GDPR Cross-Border Transfer Guardrail') {
           keysToIncrement.add('rule-gdpr-transfer');
@@ -426,7 +498,7 @@ export const getDashboardStats = async (req: any, res: Response, next: NextFunct
         violations: logs.slice(-10).reverse().map(l => {
           let actionLabel: string = 'ALLOW WITH WARNING';
           if (l.status === 'blocked') actionLabel = 'BLOCK';
-          if (l.isPendingApproval) actionLabel = 'REQUIRE REVIEW';
+          else if (l.status === 'flagged' || l.isPendingApproval) actionLabel = 'FLAGGED';
 
           return {
             id: l.id,

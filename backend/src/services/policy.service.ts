@@ -141,6 +141,8 @@ export const logActivity = async (data: LogActivityData) => {
 
   // Persist BlockEvent to prisma.blockEvent for unified compliance view tracking
   const isBlockedOrFlagged = data.status === 'blocked' || 
+    data.status === 'flagged' ||
+    data.isPendingApproval === true ||
     data.metadata?.mode === 'FLAG_ONLY' || 
     (data.reason && data.reason.includes('[FLAG_ONLY MODE]'));
 

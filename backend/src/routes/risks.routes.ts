@@ -11,6 +11,13 @@ router.get('/', authenticate, async (req: any, res, next) => {
     const organizationId = await resolveOrganizationId(req);
     if (!organizationId) return sendError(res, 401, 'Unauthorized');
 
+    try {
+      const { AgentDiscoveryService } = require('../services/agentDiscovery.service');
+      await AgentDiscoveryService.syncLogsToInventory(organizationId);
+    } catch {
+      // Ignore sync errors
+    }
+
     const assessments = await prisma.risk_assessments.findMany({
       where: { organizationId },
       include: {

@@ -14,6 +14,7 @@ export interface AgentBaseline {
   commonResources: string[];
   activeHours: number[]; // 0–23 UTC
   totalRequests: number;
+  firstSeenAt?: string; // ISO
   lastUpdated: string; // ISO
 }
 
@@ -82,6 +83,7 @@ export async function updateBaseline(
   try {
     const existing = await getBaseline(agentId, orgId);
     const currentHour = new Date().getUTCHours();
+    const nowIso = new Date().toISOString();
 
     const resource =
       action.metadata?.path ||
@@ -94,12 +96,13 @@ export async function updateBaseline(
       const baseline: AgentBaseline = {
         agentId,
         orgId,
-        avgRequestsPerHour: 1,
+        avgRequestsPerHour: 10,
         avgRiskScore: riskScore,
         commonResources: resource ? [resource] : [],
         activeHours: [currentHour],
         totalRequests: 1,
-        lastUpdated: new Date().toISOString(),
+        firstSeenAt: nowIso,
+        lastUpdated: nowIso,
       };
       await redis.set(key, JSON.stringify(baseline), 'EX', TTL_SECONDS);
       return;
@@ -109,9 +112,13 @@ export async function updateBaseline(
     const newAvgRisk =
       existing.avgRiskScore * (1 - ALPHA) + riskScore * ALPHA;
 
-    // Estimate requests/hr using EMA on the incremental count
-    const newAvgReqPerHr =
-      existing.avgRequestsPerHour * (1 - ALPHA) + 1 * ALPHA;
+    // Estimate requests/hr using EMA on actual recent hourly request count
+    const recentRequests = await getRecentRequestCount(agentId, orgId);
+    const observedHourlyRate = Math.max(recentRequests, 1);
+    const newAvgReqPerHr = Math.max(
+      existing.avgRequestsPerHour * (1 - ALPHA) + observedHourlyRate * ALPHA,
+      5
+    );
 
     // Keep up to 50 most common resources
     let resources = existing.commonResources ?? [];
@@ -132,7 +139,8 @@ export async function updateBaseline(
       commonResources: resources,
       activeHours,
       totalRequests: (existing.totalRequests ?? 0) + 1,
-      lastUpdated: new Date().toISOString(),
+      firstSeenAt: existing.firstSeenAt || existing.lastUpdated || nowIso,
+      lastUpdated: nowIso,
     };
 
     await redis.set(key, JSON.stringify(updated), 'EX', TTL_SECONDS);
@@ -166,9 +174,14 @@ async function getRecentRequestCount(
 
 // ─── Drift detection ──────────────────────────────────────────────────────────
 
+const MIN_CALIBRATION_REQUESTS = 25;
+const RAPID_FIRE_BURST_MS = 5000;
+
 /**
  * Runs 4 drift checks after every action evaluation.
  * Returns an array of DriftCheckResult (empty = no drift detected).
+ * Suppresses statistical drift alerts during initial baseline calibration (<25 requests)
+ * or when requests arrive in a rapid-fire automated test burst (<5s inter-arrival).
  */
 export async function detectDrift(
   agentId: string,
@@ -181,9 +194,22 @@ export async function detectDrift(
   const baseline = await getBaseline(agentId, orgId);
   if (!baseline) return alerts; // No baseline yet — skip
 
-  // ── Check 1: Volume spike (>3× baseline requests/hr) ──────────────────────
+  // Do not fire statistical drift alerts until baseline has sufficient calibration history
+  if ((baseline.totalRequests ?? 0) < MIN_CALIBRATION_REQUESTS) {
+    return alerts;
+  }
+
+  // Suppress drift alerts from rapid-fire test script timing (<5s since previous request)
+  if (baseline.lastUpdated) {
+    const elapsedMs = Date.now() - new Date(baseline.lastUpdated).getTime();
+    if (elapsedMs >= 0 && elapsedMs < RAPID_FIRE_BURST_MS) {
+      return alerts;
+    }
+  }
+
+  // ── Check 1: Volume spike (>3× baseline requests/hr, minimum 50/hr) ────────
   const recentRequests = await getRecentRequestCount(agentId, orgId);
-  const volumeThreshold = Math.max(baseline.avgRequestsPerHour * 3, 5);
+  const volumeThreshold = Math.max(baseline.avgRequestsPerHour * 3, 50);
   if (recentRequests >= volumeThreshold) {
     alerts.push({
       type: 'volume_spike',

@@ -59,4 +59,63 @@ describe('Decision Engine', () => {
     expect(decision.confidence).toBeDefined();
     expect(decision.confidence).toBeGreaterThanOrEqual(0);
   });
+
+  it('should mark $10k+ financial actions as flagged with isPendingApproval=true and rule-3', async () => {
+    (prisma.policies.findMany as any).mockResolvedValue([]);
+
+    const decision = await makeDecision('billing-payment-agent', 'process_payment', orgId, {
+      amount: 75000,
+      department: 'Finance',
+    });
+
+    expect(decision.status).toBe('flagged');
+    expect(decision.isPendingApproval).toBe(true);
+    expect(decision.ruleId).toBe('rule-3');
+    expect(decision.matchedPolicy).toBe('Disbursement > $10k Human Approval Trigger');
+  });
+
+  it('should block GDPR cross-border transfer without SCC with isPendingApproval=false even when L3 is degraded', async () => {
+    (prisma.policies.findMany as any).mockResolvedValue([]);
+
+    const decision = await makeDecision(
+      'gdpr-compliance-agent',
+      'GDPR cross-border transfer without SCC',
+      orgId,
+      { destination: 'us_east_analytics', has_scc: false }
+    );
+
+    expect(decision.status).toBe('blocked');
+    expect(decision.isPendingApproval).toBe(false);
+    expect(decision.ruleId).toBe('rule-gdpr-transfer');
+  });
+
+  it('should block HIPAA data share without BAA with isPendingApproval=false even when L3 is degraded', async () => {
+    (prisma.policies.findMany as any).mockResolvedValue([]);
+
+    const decision = await makeDecision(
+      'healthcare-assistant-agent',
+      'HIPAA data share without BAA',
+      orgId,
+      { vendor: 'ExternalGenomicsLab', has_baa: false }
+    );
+
+    expect(decision.status).toBe('blocked');
+    expect(decision.isPendingApproval).toBe(false);
+    expect(decision.ruleId).toBe('rule-hipaa-baa');
+  });
+
+  it('should block DPDP minor biometric data without consent with isPendingApproval=false even when L3 is degraded', async () => {
+    (prisma.policies.findMany as any).mockResolvedValue([]);
+
+    const decision = await makeDecision(
+      'dpdp-fiduciary-agent',
+      'DPDP minor biometric data without consent',
+      orgId,
+      { dataPrincipalAge: 14, verifiedParentalConsent: false }
+    );
+
+    expect(decision.status).toBe('blocked');
+    expect(decision.isPendingApproval).toBe(false);
+    expect(decision.ruleId).toBe('rule-dpdp-biometric');
+  });
 });

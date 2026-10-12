@@ -27,7 +27,16 @@ export interface AISystemUpdateInput {
 
 export const AISystemService = {
   async list(organizationId: string) {
-    return prisma.ai_systems.findMany({
+    if (typeof organizationId === 'string' && organizationId.trim()) {
+      try {
+        const { AgentDiscoveryService } = require('./agentDiscovery.service');
+        await AgentDiscoveryService.syncLogsToInventory(organizationId);
+      } catch {
+        // Ignore sync errors in unit tests with partial mocks
+      }
+    }
+
+    const systems = await prisma.ai_systems.findMany({
       where: { organizationId },
       include: {
         owner: { select: { id: true, full_name: true, email: true } },
@@ -35,6 +44,35 @@ export const AISystemService = {
       },
       orderBy: { created_at: 'desc' },
     });
+
+    if (!Array.isArray(systems) || systems.length === 0 || !prisma.logs?.findMany) {
+      return systems;
+    }
+
+    try {
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const todayLogs = await prisma.logs.findMany({
+        where: { organizationId, timestamp: { gte: startOfToday } },
+        select: { agent: true, status: true, isPendingApproval: true },
+      });
+
+      if (!Array.isArray(todayLogs)) return systems;
+
+      return systems.map((sys: any) => {
+        const agentLogs = todayLogs.filter((l: any) => l.agent === sys.name || l.agent === sys.id);
+        const violations = agentLogs.filter(
+          (l: any) => l.status === 'blocked' || l.status === 'flagged' || l.isPendingApproval === true
+        ).length;
+        return {
+          ...sys,
+          actions_today: agentLogs.length,
+          open_violations: violations,
+        };
+      });
+    } catch {
+      return systems;
+    }
   },
 
   async create(organizationId: string, data: AISystemCreateInput) {

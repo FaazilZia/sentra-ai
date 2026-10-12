@@ -34,6 +34,7 @@ export default function OverviewSection() {
     postureScore: 0,
     agentsMonitored: 0,
     blockedToday: 0,
+    flaggedToday: 0,
     highBlastRadius: 0
   });
 
@@ -68,13 +69,16 @@ export default function OverviewSection() {
       const items = Array.isArray(sysRes?.items) ? sysRes.items : (Array.isArray(sysRes) ? sysRes : []);
       const totalSystems = items.length;
       const highBlast = items.filter((s: any) => s.risk_tier === 'CRITICAL' || s.risk_tier === 'HIGH').length;
-      const blocked = statsRes?.kpis?.modelsBlockedToday?.value ?? (statsRes?.kpis?.blockedCount?.value ?? 0);
-      const posture = statsRes?.kpis?.complianceScore?.value ?? 0;
+      const statsPayload = statsRes?.data || statsRes || {};
+      const blocked = statsPayload?.kpis?.modelsBlockedToday?.value ?? (statsPayload?.kpis?.blockedCount?.value ?? 0);
+      const flagged = statsPayload?.kpis?.flaggedToday?.value ?? 0;
+      const posture = statsPayload?.kpis?.complianceScore?.value ?? 0;
 
       setKpis({
         postureScore: posture,
         agentsMonitored: totalSystems,
         blockedToday: blocked,
+        flaggedToday: flagged,
         highBlastRadius: highBlast
       });
 
@@ -119,8 +123,9 @@ export default function OverviewSection() {
     systemsList.forEach((sys: any, idx: number) => {
       const riskLevel = (sys.risk_tier || 'LOW').toUpperCase();
       const isCritical = riskLevel === 'CRITICAL' || riskLevel === 'HIGH';
+      const nodeId = `agent-${sys.id || idx}`;
       realNodes.push({
-        id: `agent-${sys.id || idx}`,
+        id: nodeId,
         position: { x: 200 + (idx % 3) * 260, y: 80 + Math.floor(idx / 3) * 160 },
         data: {
           label: sys.name || sys.system_name || `Agent ${idx + 1}`,
@@ -139,6 +144,17 @@ export default function OverviewSection() {
           boxShadow: isCritical ? '0 0 15px rgba(239, 68, 68, 0.3)' : undefined
         }
       });
+
+      if (idx > 0) {
+        const prevId = `agent-${systemsList[idx - 1].id || (idx - 1)}`;
+        realEdges.push({
+          id: `edge-${prevId}-${nodeId}`,
+          source: prevId,
+          target: nodeId,
+          animated: isCritical,
+          style: { stroke: isCritical ? '#ef4444' : '#6366f1', strokeWidth: 1.5 }
+        });
+      }
     });
 
     setNodes(realNodes);
@@ -188,11 +204,11 @@ export default function OverviewSection() {
         <MetricCard
           label="Blocked Today"
           value={kpis.blockedToday}
-          subtitle={sdkConnected ? "Adversarial & PII violations" : "Awaiting SDK Connection"}
+          subtitle={sdkConnected ? `Adversarial & PII violations (${kpis.flaggedToday} Flagged Today)` : "Awaiting SDK Connection"}
           status={sdkConnected && kpis.blockedToday > 0 ? "danger" : "neutral"}
           icon={Ban}
           testId="threats-prevented-count"
-          trend={sdkConnected && kpis.blockedToday > 0 ? { value: `${kpis.blockedToday} blocked`, direction: 'up', isGood: false } : undefined}
+          trend={sdkConnected && (kpis.blockedToday > 0 || kpis.flaggedToday > 0) ? { value: `${kpis.blockedToday} blocked • ${kpis.flaggedToday} flagged`, direction: 'up', isGood: false } : undefined}
         />
         <MetricCard
           label="High Blast-Radius Agents"

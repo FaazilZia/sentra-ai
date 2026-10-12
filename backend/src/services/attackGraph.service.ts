@@ -59,6 +59,15 @@ export class AttackGraphService {
   static async buildGraph(organizationId: string): Promise<AttackGraphPayload> {
     logger.info(`[ATTACK-GRAPH] Building multi-hop relationship graph for organization: ${organizationId}`);
 
+    if (typeof organizationId === 'string' && organizationId.trim()) {
+      try {
+        const { AgentDiscoveryService } = require('./agentDiscovery.service');
+        await AgentDiscoveryService.syncLogsToInventory(organizationId);
+      } catch {
+        // Ignore sync errors in unit tests
+      }
+    }
+
     // 1. Fetch persisted agents and active connectors/keys
     const [agents, connectors, mcpKeys, llmKeys] = await Promise.all([
       prisma.agent.findMany({ where: { organizationId } }),
@@ -178,6 +187,52 @@ export class AttackGraphService {
         }
       }
 
+      // Link runtime SDK agents to their observed target resources / department scopes
+      if (agent.source === 'Runtime Interception' && connectedResourceIds.length === 0) {
+        const meta = (agent.metadata as Record<string, any>) || {};
+        const dept = meta.department || 'General';
+        const resNodeId = `res-dept-${String(dept).toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+        const resRisk: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' =
+          meta.riskTier === 'CRITICAL' ? 'CRITICAL' : meta.riskTier === 'HIGH' ? 'HIGH' : 'MEDIUM';
+
+        if (!nodes.some(n => n.id === resNodeId)) {
+          const resObj = {
+            id: resNodeId,
+            name: `${dept} Data Scope`,
+            type: resRisk === 'CRITICAL' ? 's3' : 'api',
+            status: 'active',
+          };
+          connectorMap.set(resNodeId, resObj);
+          nodes.push({
+            id: resNodeId,
+            label: `${dept} Data Scope`,
+            type: 'DATA_SOURCE',
+            accessLevel: agent.accessLevel || 'MONITORED',
+            status: 'active',
+            risk: resRisk,
+            blastRadiusScore: resRisk === 'CRITICAL' ? 75 : resRisk === 'HIGH' ? 60 : 35,
+            details: {
+              department: dept,
+              resources: meta.resources || [],
+            },
+          });
+        }
+
+        connectedResourceIds.push(resNodeId);
+        edges.push({
+          id: `edge-${agent.id}-${resNodeId}`,
+          source: agentNodeId,
+          target: resNodeId,
+          type: 'ACCESSES_CONNECTOR',
+          label: agent.accessLevel || 'MONITORED',
+          riskLevel: resRisk,
+        });
+
+        const list = resourceAgentMap.get(resNodeId) || [];
+        list.push(agentNodeId);
+        resourceAgentMap.set(resNodeId, list);
+      }
+
       agentConnectorsMap.set(agentNodeId, connectedResourceIds);
     }
 
@@ -229,7 +284,7 @@ export class AttackGraphService {
 
         if (hop >= 4) continue; // Cap search at 3 hops for performance
 
-        if (nodeId.startsWith('conn-') || nodeId.startsWith('mcp-') || nodeId.startsWith('llm-')) {
+        if (nodeId.startsWith('conn-') || nodeId.startsWith('mcp-') || nodeId.startsWith('llm-') || nodeId.startsWith('res-')) {
           // Connector node -> discover peer agents connected to this resource
           const peerAgents = resourceAgentMap.get(nodeId) || [];
           for (const peerId of peerAgents) {

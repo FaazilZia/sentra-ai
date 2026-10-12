@@ -121,16 +121,21 @@ export const evaluatePolicy = async (agent: string, action: string, organization
   }
 
   // L1 Check 5: Cross-Border EU/German Data Transfer Without Safeguards (GDPR Art. 44-49)
-  const isTransferAction = /transfer|export|send|transmit|share|disclose|outbound|move/i.test(lowercaseAction);
+  const isTransferAction = /transfer|export|send|transmit|share|disclose|outbound|move|sync|replicate|forward|upload/i.test(lowercaseAction);
   const dataSubjectStr = String(metadata?.data_subjects || metadata?.dataSubjects || metadata?.resource || metadata?.file || '').toLowerCase();
   const destStr = String(metadata?.destination || '').toLowerCase();
-  const hasEuOrGermanSubject = /(german|eu|europe|european|gdpr)/i.test(dataSubjectStr) || /(german|eu|europe|european|gdpr)/i.test(lowercaseAction);
-  const hasCustomerOrUserRecords = /(customer|user|resident|personal|record|identit)/i.test(dataSubjectStr) || /(customer|user|resident|personal|record|identit)/i.test(lowercaseAction);
+  const hasEuOrGermanSubject = /(german|eu\b|eu_|europe|european|gdpr|eea|cross[-_ ]?border)/i.test(dataSubjectStr) ||
+    /(german|eu\b|eu_|europe|european|gdpr|eea|cross[-_ ]?border)/i.test(lowercaseAction);
+  const hasCustomerOrUserRecords = /(customer|user|resident|personal|record|identit|data|pii|cross[-_ ]?border)/i.test(dataSubjectStr) ||
+    /(customer|user|resident|personal|record|identit|data|pii|cross[-_ ]?border)/i.test(lowercaseAction);
   const hasSccFlagFalse = metadata?.has_scc === false || metadata?.hasScc === false || metadata?.has_adequacy === false || metadata?.hasAdequacy === false;
-  const lacksSccPhrase = /(without|no|missing|lacks?)\s+(scc|adequacy|standard contractual clauses)/i.test(lowercaseAction);
-  const isUnapprovedDest = Boolean(destStr && !['eu', 'eea', 'internal', 'local', 'approved_eu_safe'].includes(destStr));
+  const hasSccExplicitTrue = metadata?.has_scc === true || metadata?.hasScc === true || metadata?.has_adequacy === true || metadata?.hasAdequacy === true ||
+    /\bwith[_ ]+(?:an?[_ ]+|signed[_ ]+|valid[_ ]+)?(?:sccs?|adequacy|standard[_ ]+contractual[_ ]+clauses)/i.test(lowercaseAction);
+  const lacksSccPhrase = /(?:without|no|missing|lacks?|unapproved)[_ ]+(?:an?[_ ]+|signed[_ ]+|valid[_ ]+|active[_ ]+)?(?:sccs?|adequacy|standard[_ ]+contractual[_ ]+clauses|transfer)/i.test(lowercaseAction);
+  const isUnapprovedDest = Boolean(destStr && !['eu', 'eea', 'internal', 'local', 'approved_eu_safe'].includes(destStr)) ||
+    /\b(us[-_ ]?based|us[-_ ]?east|us[-_ ]?west|united[_ ]+states|external|non[-_ ]?eu|third[-_ ]?country|offshore)\b/i.test(lowercaseAction);
 
-  if ((isTransferAction || destStr) && hasEuOrGermanSubject && hasCustomerOrUserRecords && (hasSccFlagFalse || lacksSccPhrase || (isUnapprovedDest && metadata?.has_scc !== true && metadata?.hasScc !== true))) {
+  if ((isTransferAction || Boolean(destStr)) && hasEuOrGermanSubject && hasCustomerOrUserRecords && !hasSccExplicitTrue && (hasSccFlagFalse || lacksSccPhrase || isUnapprovedDest)) {
     return {
       allowed: false,
       reason: 'Policy Violation: Cross-Border Data Transfer Without Safeguards (GDPR)',
@@ -144,14 +149,16 @@ export const evaluatePolicy = async (agent: string, action: string, organization
 
   // L1 Check 6: Third-Party Healthcare PHI Disclosure Without Signed BAA (HIPAA Privacy Rule)
   const hasBaaFlagFalse = metadata?.has_baa === false || metadata?.hasBaa === false;
-  const lacksBaaPhrase = /(without|no|missing|lacks?)\s+(baa|business associate agreement)/i.test(lowercaseAction);
+  const hasBaaExplicitTrue = metadata?.has_baa === true || metadata?.hasBaa === true ||
+    /\bwith[_ ]+(?:an?[_ ]+|signed[_ ]+|active[_ ]+|valid[_ ]+)?(?:baa|business[_ ]+associate[_ ]+agreement)\b/i.test(lowercaseAction);
+  const lacksBaaPhrase = /(?:without|no|missing|lacks?|unverified)[_ ]+(?:an?[_ ]+|signed[_ ]+|active[_ ]+|valid[_ ]+)?(?:baa|business[_ ]+associate[_ ]+agreement)/i.test(lowercaseAction);
   const hasVendorOrThirdParty = Boolean(metadata?.vendor || metadata?.third_party || metadata?.thirdParty) || 
-                                /(third[- ]?party|vendor|partner|external|lab|processor|diagnostics|outsourc)/i.test(lowercaseAction);
+                                /(third[-_ ]?party|vendor|partner|external|lab\b|processor|diagnostics|outsourc)/i.test(lowercaseAction);
   const hasPhiOrClinical = Boolean(metadata?.patientId || metadata?.patient_id || metadata?.clinical_data || metadata?.diagnosis) ||
-                           /(phi|patient|medical|clinical|diagnosis|treatment|health|ehr|emr|prescription)/i.test(lowercaseAction);
-  const isHealthcareShare = /share|email|send|disclose|export|transmit|provide|expose/i.test(lowercaseAction) || Boolean(metadata?.vendor);
+                           /(phi\b|patient|medical|clinical|diagnosis|treatment|health|ehr\b|emr\b|prescription|hipaa)/i.test(lowercaseAction);
+  const isHealthcareShare = /share|email|send|disclose|export|transmit|provide|expose|transfer|sync/i.test(lowercaseAction) || Boolean(metadata?.vendor);
 
-  if (isHealthcareShare && hasPhiOrClinical && hasVendorOrThirdParty && (hasBaaFlagFalse || lacksBaaPhrase)) {
+  if (isHealthcareShare && hasPhiOrClinical && !hasBaaExplicitTrue && (hasBaaFlagFalse || lacksBaaPhrase || (hasVendorOrThirdParty && metadata?.has_baa === false))) {
     return {
       allowed: false,
       reason: 'Policy Violation: PHI Disclosure Without Signed BAA (HIPAA)',
@@ -164,16 +171,23 @@ export const evaluatePolicy = async (agent: string, action: string, organization
   }
 
   // L1 Check 7: Minor Biometric Data Processing Without Verified Parental Consent (DPDP Section 9)
-  const principalAge = Number(metadata?.dataPrincipalAge || metadata?.subject_age || metadata?.age || metadata?.principal_age || 999);
-  const hasParentalConsentFalse = metadata?.verifiedParentalConsent === false || metadata?.parental_consent === false || metadata?.parentalConsent === false;
+  const rawAge = metadata?.dataPrincipalAge ?? metadata?.subject_age ?? metadata?.age ?? metadata?.principal_age;
+  const principalAge = rawAge !== undefined && rawAge !== null ? Number(rawAge) : 999;
+  const isAdultPrincipal = rawAge !== undefined && rawAge !== null && principalAge >= 18;
+  const hasParentalConsentFalse = metadata?.verifiedParentalConsent === false || metadata?.parental_consent === false || metadata?.parentalConsent === false || metadata?.has_consent === false;
+  const hasParentalConsentExplicitTrue = metadata?.verifiedParentalConsent === true || metadata?.parental_consent === true || metadata?.parentalConsent === true || metadata?.has_consent === true ||
+    /\bwith[_ ]+(?:verifiable[_ ]+|verified[_ ]+|valid[_ ]+)?(?:parental[_ ]+|guardian[_ ]+)?consent\b/i.test(lowercaseAction);
   const isMinorAge = principalAge < 18;
-  const isMinorKeyword = /(minor|child|underage|under\s*18|kid|teen|age\s*1[0-7])/i.test(lowercaseAction);
+  const isMinorKeyword = /\b(minor|minors|child|children|underage|under[_ ]*18|kid|juvenile|teen|age[_ ]*1[0-7])\b/i.test(lowercaseAction);
   const isBiometricData = Boolean(metadata?.biometricType || metadata?.biometric_type) || 
-                          /(biometric|facial|face|fingerprint|iris|retina|voiceprint|dna)/i.test(lowercaseAction);
-  const lacksConsentPhrase = /(without|no|missing|lacks?)\s+(?:parental\s+)?consent/i.test(lowercaseAction);
-  const isProcessingAction = /process|collect|save|analyze|use|enable|register|scan|capture/i.test(lowercaseAction) || Boolean(metadata?.biometricType || metadata?.biometric_type);
+                          /(biometric|facial|face[_ ]?scan|fingerprint|iris|retina|voiceprint|dna)/i.test(lowercaseAction);
+  const lacksConsentPhrase = /(?:without|no|missing|lacks?|unverified)[_ ]+(?:verifiable[_ ]+|verified[_ ]+|valid[_ ]+|explicit[_ ]+)?(?:parental[_ ]+|guardian[_ ]+)?consent/i.test(lowercaseAction);
+  const isProcessingAction = /process|collect|save|analyze|use|enable|register|scan|capture|store|share|export|extract|ingest|biometric[_ ]+data/i.test(lowercaseAction) ||
+    Boolean(metadata?.biometricType || metadata?.biometric_type) ||
+    hasParentalConsentFalse ||
+    lacksConsentPhrase;
 
-  if (isProcessingAction && isBiometricData && (isMinorAge || isMinorKeyword) && (hasParentalConsentFalse || lacksConsentPhrase)) {
+  if (!isAdultPrincipal && isProcessingAction && isBiometricData && (isMinorAge || isMinorKeyword) && !hasParentalConsentExplicitTrue && (hasParentalConsentFalse || lacksConsentPhrase || isMinorAge)) {
     return {
       allowed: false,
       reason: 'Policy Violation: Minor Biometric Processing Without Parental Consent (DPDP)',
