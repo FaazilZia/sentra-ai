@@ -66,8 +66,13 @@ async function runTest(
       raw: res.raw
     };
     results.push(result);
-    console.log(res.pass ? `✅ ${res.actual}` : `❌ ${res.actual} (Expected: ${expected})`);
-    if (res.notes) console.log(`   ↳ Note: ${res.notes}`);
+    const safeActual = String(res.actual || '').replace(/[\r\n\t]/g, '_');
+    const safeExpected = String(expected || '').replace(/[\r\n\t]/g, '_');
+    console.log(res.pass ? `✅ ${safeActual}` : `❌ ${safeActual} (Expected: ${safeExpected})`);
+    if (res.notes) {
+      const safeNotes = String(res.notes).replace(/[\r\n\t]/g, '_');
+      console.log(`   ↳ Note: ${safeNotes}`);
+    }
   } catch (err: any) {
     const result: StressResult = {
       category,
@@ -428,13 +433,13 @@ export async function runAllStressTests() {
         },
         body: JSON.stringify({ action: 'read_public_docs' })
       });
-      const data: any = await response.json().catch(() => ({}));
-      const pass = response.status === 400;
+      const statusCode = Number(response.status);
+      const pass = statusCode === 400;
       return {
-        actual: `HTTP ${response.status}`,
+        actual: `HTTP ${statusCode}`,
         pass,
-        notes: `Payload rejected cleanly: ${JSON.stringify(data.error || data.message || data)}`,
-        raw: { status: response.status, data }
+        notes: pass ? 'Payload rejected cleanly with HTTP 400' : `Unexpected status HTTP ${statusCode}`,
+        raw: { status: statusCode }
       };
     }
   );
@@ -455,13 +460,13 @@ export async function runAllStressTests() {
         },
         body: JSON.stringify({ agent: 'test-agent', action: 'test_action' })
       });
-      const data: any = await response.json().catch(() => ({}));
-      const pass = response.status === 401;
+      const statusCode = Number(response.status);
+      const pass = statusCode === 401;
       return {
-        actual: `HTTP ${response.status}`,
+        actual: `HTTP ${statusCode}`,
         pass,
-        notes: `Invalid credentials rejected cleanly: ${data.message || 'Unauthorized'}`,
-        raw: { status: response.status, data }
+        notes: pass ? 'Invalid credentials rejected cleanly with HTTP 401' : `Unexpected status HTTP ${statusCode}`,
+        raw: { status: statusCode }
       };
     }
   );
@@ -530,13 +535,13 @@ export async function runAllStressTests() {
         },
         body: JSON.stringify({ agent: 'fuzz-agent', action: null })
       });
-      const data: any = await response.json().catch(() => ({}));
-      const pass = response.status === 400;
+      const statusCode = Number(response.status);
+      const pass = statusCode === 400;
       return {
-        actual: `HTTP ${response.status}`,
+        actual: `HTTP ${statusCode}`,
         pass,
-        notes: `Zod validation caught null action: ${JSON.stringify(data.error || data.message || data)}`,
-        raw: { status: response.status, data }
+        notes: pass ? 'Zod validation caught null action with HTTP 400' : `Unexpected status HTTP ${statusCode}`,
+        raw: { status: statusCode }
       };
     }
   );
