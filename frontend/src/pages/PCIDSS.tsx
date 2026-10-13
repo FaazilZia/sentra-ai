@@ -88,7 +88,7 @@ export default function PCIDSS() {
   };
 
   useEffect(() => {
-    loadData();
+    void loadData();
   }, []);
 
   const handleEditControl = (ctrl: PCIControl) => {

@@ -88,7 +88,7 @@ export default function GDPR() {
   };
 
   useEffect(() => {
-    loadData();
+    void loadData();
   }, []);
 
   const handleEditControl = (ctrl: GDPRControl) => {

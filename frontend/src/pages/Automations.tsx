@@ -19,7 +19,7 @@ export default function Automations() {
   const [newActionConfig, setNewActionConfig] = useState<any>({ channel: '#compliance-alerts' });
 
   useEffect(() => {
-    loadAutomations();
+    void loadAutomations();
   }, []);
 
   const loadAutomations = async () => {
@@ -94,7 +94,7 @@ export default function Automations() {
       setNewActionType('SEND_SLACK_NOTIFICATION');
       setNewActionConfig({ channel: '#compliance-alerts' });
       
-      loadAutomations();
+      void loadAutomations();
     } catch (err) {
       console.error('Failed to create automation rule', err);
     }
@@ -455,7 +455,7 @@ export default function Automations() {
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleToggle(auto.id, auto.is_active);
+                          void handleToggle(auto.id, auto.is_active);
                         }}
                         className="text-slate-400 hover:text-indigo-600 transition-colors"
                       >
@@ -469,7 +469,7 @@ export default function Automations() {
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDelete(auto.id);
+                          void handleDelete(auto.id);
                         }}
                         className="text-slate-300 hover:text-rose-500 transition-colors p-1"
                       >

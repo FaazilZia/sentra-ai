@@ -115,11 +115,11 @@ export default function RiskAssessment() {
   };
 
   useEffect(() => {
-    if (view === 'matrix') loadPortfolio();
+    if (view === 'matrix') void loadPortfolio();
   }, [view]);
 
   useEffect(() => {
-    loadData();
+    void loadData();
   }, []);
 
   const loadData = async () => {
@@ -197,7 +197,7 @@ export default function RiskAssessment() {
         risk_level: res.risk_level
       });
       // Refresh list
-      loadData();
+      void loadData();
     } catch (err) {
       console.error('Failed to submit risk assessment:', err);
     }

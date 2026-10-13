@@ -55,7 +55,7 @@ export default function ShadowAI() {
       }
     }
 
-    loadShadowData();
+    void loadShadowData();
   }, []);
 
   const getDataLeakageRisk = () => {

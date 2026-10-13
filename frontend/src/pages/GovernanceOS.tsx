@@ -20,7 +20,7 @@ export default function GovernanceOS() {
   });
 
   useEffect(() => {
-    loadData();
+    void loadData();
   }, []);
 
   const loadData = async () => {

@@ -49,4 +49,4 @@ const startWorker = async () => {
   }
 };
 
-startWorker();
+void startWorker();

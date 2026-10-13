@@ -249,14 +249,26 @@ export default function ActivitySection() {
         const decisionStr = String(latest.decision || '').toUpperCase();
         const isBlocked = decisionStr === 'BLOCK' || decisionStr === 'BLOCKED';
         const isFlagged = decisionStr === 'FLAGGED' || decisionStr === 'MODIFY';
+        let status: FeedEvent['status'] = 'ALLOWED';
+        let defaultReason = 'Authorized action';
+        let severity: FeedEvent['severity'] = 'LOW';
+        if (isBlocked) {
+          status = 'BLOCKED';
+          defaultReason = 'Blocked by governance policy';
+          severity = 'CRITICAL';
+        } else if (isFlagged) {
+          status = 'FLAGGED';
+          defaultReason = 'Flagged for human review';
+          severity = 'MEDIUM';
+        }
         const newEv: FeedEvent = {
           id: latest.id,
           timestamp: latest.time || 'Just now',
           agentName: latest.user || 'Monitored Agent',
           actionType: latest.target || latest.action || 'AI Action',
-          status: isBlocked ? 'BLOCKED' : isFlagged ? 'FLAGGED' : 'ALLOWED',
-          reason: latest.aiSummary || (isBlocked ? 'Blocked by governance policy' : isFlagged ? 'Flagged for human review' : 'Authorized action'),
-          severity: isBlocked ? 'CRITICAL' : isFlagged ? 'MEDIUM' : 'LOW',
+          status,
+          reason: latest.aiSummary || defaultReason,
+          severity,
           rawTimestamp: Date.now()
         };
         return [newEv, ...prev.slice(0, 49)];
@@ -271,6 +283,12 @@ export default function ActivitySection() {
   const flaggedCount = statsKpis?.flaggedToday?.value ?? todayEvents.filter(e => e.status === 'FLAGGED').length;
   const allowedCount = statsKpis?.allowedToday?.value ?? todayEvents.filter(e => e.status === 'ALLOWED').length;
   const totalFeedToday = statsKpis?.totalActionsToday?.value ?? (todayEvents.length || events.length);
+
+  const verdictBadgeMap: Record<FeedEvent['status'], { status: 'blocked' | 'flagged' | 'allowed'; label: string }> = {
+    BLOCKED: { status: 'blocked', label: 'Blocked' },
+    FLAGGED: { status: 'flagged', label: 'Flagged' },
+    ALLOWED: { status: 'allowed', label: 'Allowed' },
+  };
 
   const feedColumns: Column<FeedEvent>[] = [
     {
@@ -298,12 +316,10 @@ export default function ActivitySection() {
       header: 'Action Verdict',
       accessorKey: 'status',
       sortable: true,
-      cell: (item) => (
-        <StatusBadge 
-          status={item.status === 'BLOCKED' ? 'blocked' : item.status === 'FLAGGED' ? 'flagged' : 'allowed'}
-          label={item.status === 'BLOCKED' ? 'Blocked' : item.status === 'FLAGGED' ? 'Flagged' : 'Allowed'}
-        />
-      )
+      cell: (item) => {
+        const badge = verdictBadgeMap[item.status] || verdictBadgeMap.ALLOWED;
+        return <StatusBadge status={badge.status} label={badge.label} />;
+      }
     },
     {
       header: 'Enforcement Reason & Snippet',

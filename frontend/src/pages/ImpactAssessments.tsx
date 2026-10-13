@@ -49,7 +49,7 @@ export default function ImpactAssessments() {
   const [selectedAssessment, setSelectedAssessment] = useState<ImpactAssessment | null>(null);
 
   useEffect(() => {
-    fetchInitialData();
+    void fetchInitialData();
   }, []);
 
   const fetchInitialData = async () => {
@@ -84,7 +84,7 @@ export default function ImpactAssessments() {
       });
       setIsOpen(false);
       setFormData({ description: "", benefits: "", data_protection: "", oversight: "" });
-      fetchInitialData();
+      void fetchInitialData();
     } catch (err) {
       console.error("Failed to create assessment:", err);
     }
@@ -97,7 +97,7 @@ export default function ImpactAssessments() {
         body: JSON.stringify({ status })
       });
       setSelectedAssessment(null);
-      fetchInitialData();
+      void fetchInitialData();
     } catch (err) {
       console.error("Failed to update status:", err);
     }

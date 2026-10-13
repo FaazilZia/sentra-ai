@@ -125,13 +125,13 @@ export default function AgentDiscovery() {
 
   // Run initial scan to populate data
   useEffect(() => {
-    handleSync();
+    void handleSync();
   }, []);
 
   // Sync registered agents when tab shifts
   useEffect(() => {
     if (activeTab === 'REGISTERED') {
-      fetchRegistered();
+      void fetchRegistered();
     }
   }, [activeTab]);
 

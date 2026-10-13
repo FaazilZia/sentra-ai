@@ -367,7 +367,7 @@ const startServer = async () => {
     logger.info(`Server is running on port ${PORT}`);
 
     // Run database migrations and initialization in background
-    runBackgroundInit();
+    void runBackgroundInit();
   });
 };
 
@@ -421,5 +421,5 @@ const startRenderKeepAlive = () => {
 
 
 if (process.env.NODE_ENV !== 'test') {
-  startServer();
+  void startServer();
 }

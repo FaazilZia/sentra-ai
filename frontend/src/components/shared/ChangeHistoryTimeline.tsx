@@ -87,7 +87,7 @@ export function ChangeHistoryTimeline({ entityType, entityId, className }: Chang
 
   useEffect(() => {
     if (entityId) {
-      loadHistory();
+      void loadHistory();
     }
   }, [entityType, entityId]);
 

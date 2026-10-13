@@ -64,8 +64,8 @@ export default function Tasks() {
   const [transitionComment, setTransitionComment] = useState('');
 
   useEffect(() => {
-    loadTasks();
-    loadUsers();
+    void loadTasks();
+    void loadUsers();
   }, []);
 
   const loadTasks = async () => {
@@ -122,7 +122,7 @@ export default function Tasks() {
       setNewCategory('COMPLIANCE');
       setNewFramework('');
 
-      loadTasks();
+      void loadTasks();
     } catch (err: any) {
       console.error('Failed to create task:', err);
       addToast({ message: err.message || 'Failed to create task', type: 'error' });
@@ -136,7 +136,7 @@ export default function Tasks() {
     try {
       await apiRequest(`/workflows/${taskId}`, { method: 'DELETE' });
       addToast({ message: 'Task deleted successfully', type: 'success' });
-      loadTasks();
+      void loadTasks();
     } catch (err: any) {
       console.error('Failed to delete task:', err);
       addToast({ message: err.message || 'Failed to delete task', type: 'error' });
@@ -150,7 +150,7 @@ export default function Tasks() {
         body: JSON.stringify({ assignedTo: userId || null }),
       });
       addToast({ message: 'Task assignment updated', type: 'success' });
-      loadTasks();
+      void loadTasks();
     } catch (err: any) {
       console.error('Failed to assign task:', err);
       addToast({ message: err.message || 'Failed to assign task', type: 'error' });
@@ -188,7 +188,7 @@ export default function Tasks() {
       setCommentModalOpen(false);
       setSelectedTask(null);
       setTransitionAction(null);
-      loadTasks();
+      void loadTasks();
     } catch (err: any) {
       console.error('Failed to update task status:', err);
       addToast({ message: err.message || 'Failed to update task status', type: 'error' });

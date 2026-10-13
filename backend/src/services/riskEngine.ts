@@ -225,18 +225,21 @@ export const evaluateRisk = (action: string, metadata: any = {}): RiskEvaluation
     }
 
     // 4. GDPR cross-border transfer without SCC
+    const hasMissingModifier = /\b(?:without|no|missing|lacks?|unverified)\b/i.test(target);
+    const hasSccKeyword = /\b(?:sccs?|adequacy|standard[_ ]+contractual[_ ]+clauses)\b/i.test(target);
     if (/(?:gdpr|german|eu\b|european|cross[-_ ]?border)/i.test(target) &&
         /(?:transfer|export|send|transmit|share|sync)/i.test(target) &&
-        (/(?:without|no|missing|lacks?)[_ ]+(?:an?[_ ]+|signed[_ ]+)?(?:sccs?|adequacy|standard[_ ]+contractual[_ ]+clauses)/i.test(target) || metadata?.has_scc === false) &&
+        ((hasMissingModifier && hasSccKeyword) || metadata?.has_scc === false) &&
         metadata?.has_scc !== true) {
       score = 'high';
       triggers.push('Governance (GDPR): Cross-border transfer without SCC safeguards is blocked');
     }
 
     // 5. HIPAA PHI/data share without BAA
+    const hasBaaKeyword = /\b(?:baa|business[_ ]+associate[_ ]+agreement)\b/i.test(target);
     if (/(?:hipaa|phi\b|patient|clinical|medical|diagnosis|health)/i.test(target) &&
         /(?:share|disclose|send|export|transfer|transmit)/i.test(target) &&
-        (/(?:without|no|missing|lacks?)[_ ]+(?:an?[_ ]+|signed[_ ]+)?(?:baa|business[_ ]+associate[_ ]+agreement)/i.test(target) || metadata?.has_baa === false) &&
+        ((hasMissingModifier && hasBaaKeyword) || metadata?.has_baa === false) &&
         metadata?.has_baa !== true) {
       score = 'high';
       triggers.push('Governance (HIPAA): PHI/data disclosure without signed BAA is blocked');
@@ -245,10 +248,11 @@ export const evaluateRisk = (action: string, metadata: any = {}): RiskEvaluation
     // 6. DPDP minor biometric data without consent
     const rawPrincipalAge = metadata?.dataPrincipalAge ?? metadata?.subject_age ?? metadata?.age;
     const isAdult = rawPrincipalAge !== undefined && rawPrincipalAge !== null && Number(rawPrincipalAge) >= 18;
+    const hasConsentKeyword = /\bconsent\b/i.test(target);
     if (!isAdult &&
         /(?:minor|child|children|under[_ ]*18|age[_ ]*1[0-7])/i.test(target) &&
         /(?:biometric|facial|face[_ ]?scan|fingerprint|iris|retina|voiceprint)/i.test(target) &&
-        (/(?:without|no|missing|lacks?|unverified)[_ ]+(?:verifiable[_ ]+|verified[_ ]+)?(?:parental[_ ]+)?consent/i.test(target) || metadata?.verifiedParentalConsent === false) &&
+        ((hasMissingModifier && hasConsentKeyword) || metadata?.verifiedParentalConsent === false) &&
         metadata?.verifiedParentalConsent !== true) {
       score = 'high';
       triggers.push('Governance (DPDP): Minor biometric data processing without verified parental consent is blocked');

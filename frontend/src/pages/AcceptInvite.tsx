@@ -46,7 +46,7 @@ export default function AcceptInvite() {
       }
     }
 
-    verifyInvite();
+    void verifyInvite();
   }, [token]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {

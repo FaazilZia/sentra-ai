@@ -88,7 +88,7 @@ export default function DPDP() {
   };
 
   useEffect(() => {
-    loadData();
+    void loadData();
   }, []);
 
   const handleEditControl = (ctrl: DPDPControl) => {

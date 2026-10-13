@@ -69,7 +69,7 @@ export default function Drift() {
   };
 
   useEffect(() => {
-    loadData();
+    void loadData();
     const interval = setInterval(() => loadData(false), 15000);
     return () => clearInterval(interval);
   }, [filter]);
@@ -123,7 +123,7 @@ export default function Drift() {
       setIsReportOpen(true);
       addToast({ message: 'Article 72 report compiled successfully!', type: 'success' });
       // Reload stats
-      loadData();
+      void loadData();
     } catch (err: any) {
       console.error('Report compilation failed:', err);
       setReportError(err.message || 'Failed to compile Article 72 compliance report.');

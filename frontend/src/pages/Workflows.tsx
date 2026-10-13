@@ -80,7 +80,7 @@ export default function Workflows() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    loadData();
+    void loadData();
   }, [activeTab]);
 
   const loadData = async () => {
@@ -123,7 +123,7 @@ export default function Workflows() {
       addToast({ message: 'Agent action resolved successfully', type: 'success' });
       setSelectedAgent(null);
       setAgentComment('');
-      loadData();
+      void loadData();
     } catch (err) {
       console.error('Failed to resolve workflow task:', err);
       addToast({ message: 'Failed to resolve agent action', type: 'error' });
@@ -152,7 +152,7 @@ export default function Workflows() {
       addToast({ message: 'Task approval decision recorded', type: 'success' });
       setSelectedTask(null);
       setTaskComment('');
-      loadData();
+      void loadData();
     } catch (err: any) {
       console.error('Failed to resolve compliance task:', err);
       addToast({ message: err.message || 'Failed to submit decision', type: 'error' });
@@ -173,7 +173,7 @@ export default function Workflows() {
       setSubmitModalOpen(false);
       setTaskToSubmit('');
       setSubmitComment('');
-      loadData();
+      void loadData();
     } catch (err: any) {
       console.error('Failed to submit task for review:', err);
       addToast({ message: err.message || 'Failed to submit task', type: 'error' });

@@ -33,4 +33,4 @@ async function runIntegrationsBot() {
   }
 }
 
-runIntegrationsBot();
+void runIntegrationsBot();

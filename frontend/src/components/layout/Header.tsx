@@ -99,7 +99,7 @@ export function Header() {
 
   // Poll count every 30 seconds
   useEffect(() => {
-    loadNotificationsData();
+    void loadNotificationsData();
     const interval = setInterval(loadNotificationsData, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -107,7 +107,7 @@ export function Header() {
   // Reload notifications when dropdown opens
   useEffect(() => {
     if (isBellOpen) {
-      loadNotificationsData();
+      void loadNotificationsData();
     }
   }, [isBellOpen]);
 
@@ -140,7 +140,7 @@ export function Header() {
       e.preventDefault();
       const selected = highlightedIndex >= 0 ? searchResults[highlightedIndex] : searchResults[0];
       if (selected) {
-        handleSearchItemClick(selected);
+        void handleSearchItemClick(selected);
       }
     } else if (e.key === 'Escape') {
       setIsSearchOpen(false);
@@ -280,7 +280,7 @@ export function Header() {
                               role="button"
                               tabIndex={0}
                               onClick={() => handleSearchItemClick(item)}
-                              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSearchItemClick(item); } }}
+                              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); void handleSearchItemClick(item); } }}
                               className={cn(
                                 "px-4 py-2 text-left cursor-pointer transition-colors outline-none",
                                 isHighlighted ? "bg-[var(--bg-hover)]" : "hover:bg-[var(--bg-page)]/40"
@@ -362,7 +362,7 @@ export function Header() {
                           role="button"
                           tabIndex={0}
                           onClick={() => handleNotificationClick(notif)}
-                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleNotificationClick(notif); } }}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); void handleNotificationClick(notif); } }}
                           className={cn(
                             "flex items-start gap-3 p-3.5 cursor-pointer text-left transition-colors relative outline-none border-l-2",
                             notif.isRead ? "border-l-transparent bg-transparent opacity-60 hover:opacity-100" : "border-l-[var(--royal-indigo)] bg-[var(--bg-hover)]/30 hover:bg-[var(--bg-hover)]/50"

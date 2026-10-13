@@ -33,7 +33,7 @@ export default function SharedView() {
         setLoading(false);
       }
     }
-    loadData();
+    void loadData();
   }, [token]);
 
   if (loading) {

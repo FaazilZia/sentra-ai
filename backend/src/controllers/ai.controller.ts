@@ -48,7 +48,7 @@ const callOpenAiCompletions = async (
         // Track Usage
         const usage = data.usage;
         if (usage) {
-          trackUsage(organizationId, usage.prompt_tokens, usage.completion_tokens);
+          void trackUsage(organizationId, usage.prompt_tokens, usage.completion_tokens);
         }
         return text;
       } else {
@@ -61,6 +61,80 @@ const callOpenAiCompletions = async (
     }
   }
   throw new Error('Completions failed');
+};
+
+const generateAllowedSummary = async (
+  organizationId: string,
+  agent: string,
+  action: string,
+  metadata: any
+): Promise<string | undefined> => {
+  const openaiKey = process.env.OPENAI_API_KEY;
+  if (!openaiKey || openaiKey.length < 10) return undefined;
+  let summary: string | undefined;
+  try {
+    await runFairly(organizationId, async () => {
+      summary = await callOpenAiCompletions(
+        openaiKey,
+        organizationId,
+        [
+          {
+            role: 'system',
+            content: 'You are a governance assistant. In one sentence, explain why this AI action was allowed or blocked.'
+          },
+          {
+            role: 'user',
+            content: `Action: ${action}, Agent: ${agent}, Decision: ALLOWED. Context: ${JSON.stringify(metadata)}`
+          },
+        ],
+        100,
+        1,
+        8000
+      );
+    });
+  } catch (e: any) {
+    logger.warn(`AI Summary generation skipped for org ${organizationId}: ${e.message}`);
+  }
+  return summary;
+};
+
+const resolveRiskNumeric = (risk: string): number => {
+  if (risk === 'high') return 80;
+  if (risk === 'medium') return 50;
+  return 20;
+};
+
+const resolveSocketDecisionLabel = (decision: { status: string; isPendingApproval?: boolean }): string => {
+  if (decision.status === 'blocked') return 'BLOCK';
+  if (decision.status === 'flagged' || decision.isPendingApproval) return 'FLAGGED';
+  return 'ALLOW';
+};
+
+const triggerAsyncDriftEvaluation = (
+  agent: string,
+  organizationId: string,
+  action: string,
+  metadata: any,
+  riskNumeric: number
+): void => {
+  setImmediate(async () => {
+    try {
+      const driftChecks = await detectDrift(agent, organizationId, { action, metadata }, riskNumeric);
+      await updateBaseline(agent, organizationId, { metadata }, riskNumeric);
+      if (driftChecks.length > 0) {
+        const enrichedDriftChecks = driftChecks.map(check => ({
+          ...check,
+          agentId: agent,
+          organizationId,
+        }));
+        await persistDriftAlerts(agent, organizationId, driftChecks);
+        io.to(`company_${organizationId}`).emit('drift:detected', enrichedDriftChecks);
+        logger.info(`[DRIFT] ${driftChecks.length} drift alert(s) for agent ${agent}`);
+      }
+    } catch (err: any) {
+      logger.warn(`[DRIFT] Non-fatal drift detection error: ${err.message}`);
+    }
+  });
 };
 
 export const postCheckAction = async (req: any, res: Response, next: NextFunction) => {
@@ -78,41 +152,14 @@ export const postCheckAction = async (req: any, res: Response, next: NextFunctio
     // 2. Intercept and Execute
     const decision = await interceptAction(
       { agent, action, organizationId, metadata, requestId },
-      async () => {
-        return { message: "Action authorized and simulated" };
-      }
+      async () => ({ message: "Action authorized and simulated" })
     );
 
     // 3. Optional: Generate AI Summary (Fair Concurrency + Usage Tracking)
-    let ai_summary: string | undefined = undefined;
-    if (decision.status === 'allowed') {
-      const openaiKey = process.env.OPENAI_API_KEY;
-      if (openaiKey && openaiKey.length >= 10) {
-        try {
-          await runFairly(organizationId, async () => {
-            ai_summary = await callOpenAiCompletions(
-              openaiKey,
-              organizationId,
-              [
-                {
-                  role: 'system',
-                  content: 'You are a governance assistant. In one sentence, explain why this AI action was allowed or blocked.'
-                },
-                { 
-                  role: 'user', 
-                  content: `Action: ${action}, Agent: ${agent}, Decision: ALLOWED. Context: ${JSON.stringify(metadata)}` 
-                },
-              ],
-              100,
-              1,
-              8000
-            );
-          });
-        } catch (e: any) {
-          logger.warn(`AI Summary generation skipped for org ${organizationId}: ${e.message}`);
-        }
-      }
-    }
+    const ai_summary =
+      decision.status === 'allowed'
+        ? await generateAllowedSummary(organizationId, agent, action, metadata)
+        : undefined;
 
     const latency = Date.now() - startTime;
     Sentry.setTag('latency', latency);
@@ -132,26 +179,8 @@ export const postCheckAction = async (req: any, res: Response, next: NextFunctio
     }
 
     // 4. Real Drift Detection (async — does not block response)
-    const riskNumeric =
-      decision.risk === 'high' ? 80 : decision.risk === 'medium' ? 50 : 20;
-    setImmediate(async () => {
-      try {
-        const driftChecks = await detectDrift(agent, organizationId, { action, metadata }, riskNumeric);
-        await updateBaseline(agent, organizationId, { metadata }, riskNumeric);
-        if (driftChecks.length > 0) {
-          const enrichedDriftChecks = driftChecks.map(check => ({
-            ...check,
-            agentId: agent,
-            organizationId,
-          }));
-          await persistDriftAlerts(agent, organizationId, driftChecks);
-          io.to(`company_${organizationId}`).emit('drift:detected', enrichedDriftChecks);
-          logger.info(`[DRIFT] ${driftChecks.length} drift alert(s) for agent ${agent}`);
-        }
-      } catch (err: any) {
-        logger.warn(`[DRIFT] Non-fatal drift detection error: ${err.message}`);
-      }
-    });
+    const riskNumeric = resolveRiskNumeric(decision.risk);
+    triggerAsyncDriftEvaluation(agent, organizationId, action, metadata, riskNumeric);
 
     // 5. Push Real-time Update
     io.to(`company_${organizationId}`).emit('activity_log', {
@@ -159,7 +188,7 @@ export const postCheckAction = async (req: any, res: Response, next: NextFunctio
       organizationId,
       timestamp: new Date().toISOString(),
       status: decision.status,
-      decision: decision.status === 'blocked' ? 'BLOCK' : ((decision.status === 'flagged' || decision.isPendingApproval) ? 'FLAGGED' : 'ALLOW'),
+      decision: resolveSocketDecisionLabel(decision),
       isPendingApproval: decision.isPendingApproval || false,
       risk: decision.risk,
       reason: decision.reason,
@@ -293,6 +322,14 @@ export const postOverrideAction = async (req: any, res: Response, next: NextFunc
   }
 };
 
+const resolveCanonicalLogStatus = (log: any): 'blocked' | 'flagged' | 'allowed' => {
+  if (log.status === 'blocked') return 'blocked';
+  if (log.status === 'flagged' || log.isPendingApproval === true || (log.metadata as any)?.isPendingApproval === true) {
+    return 'flagged';
+  }
+  return 'allowed';
+};
+
 export const getLogs = async (req: any, res: Response, next: NextFunction) => {
   try {
     const organizationId = await resolveOrganizationId(req);
@@ -309,12 +346,7 @@ export const getLogs = async (req: any, res: Response, next: NextFunction) => {
     res.status(200).json({
       success: true,
       data: activityLogs.map(log => {
-        const canonicalStatus =
-          log.status === 'blocked'
-            ? 'blocked'
-            : log.status === 'flagged' || log.isPendingApproval === true || (log.metadata as any)?.isPendingApproval === true
-            ? 'flagged'
-            : 'allowed';
+        const canonicalStatus = resolveCanonicalLogStatus(log);
         return {
           ...log,
           status: canonicalStatus,

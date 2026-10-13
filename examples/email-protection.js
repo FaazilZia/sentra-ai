@@ -35,4 +35,4 @@ async function runEmailBot() {
   }
 }
 
-runEmailBot();
+void runEmailBot();

@@ -88,7 +88,7 @@ export default function HIPAA() {
   };
 
   useEffect(() => {
-    loadData();
+    void loadData();
   }, []);
 
   const handleEditControl = (ctrl: HIPAAControl) => {

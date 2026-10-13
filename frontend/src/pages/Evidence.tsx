@@ -57,7 +57,7 @@ export default function Evidence() {
   };
 
   useEffect(() => {
-    loadEvidence();
+    void loadEvidence();
   }, [selectedFramework, selectedControlId]);
 
   // Submit file upload
@@ -90,7 +90,7 @@ export default function Evidence() {
       addToast({ message: 'EVIDENCE FILE UPLOADED SUCCESSFULLY', type: 'success' });
       setSelectedFile(null);
       setIsUploadOpen(false);
-      loadEvidence();
+      void loadEvidence();
     } catch (err: any) {
       console.error('File upload failed:', err);
       addToast({ message: err.message || 'FILE UPLOAD FAILED', type: 'error' });
@@ -106,7 +106,7 @@ export default function Evidence() {
     try {
       await apiRequest(`/evidence-files/${id}`, { method: 'DELETE' });
       addToast({ message: 'EVIDENCE FILE DELETED', type: 'success' });
-      loadEvidence();
+      void loadEvidence();
     } catch (err) {
       console.error('Delete failed:', err);
       addToast({ message: 'FAILED TO DELETE EVIDENCE RECORD', type: 'error' });

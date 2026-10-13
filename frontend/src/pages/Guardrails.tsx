@@ -67,7 +67,7 @@ export default function Guardrails() {
   };
 
   useEffect(() => {
-    loadData();
+    void loadData();
   }, []);
 
   const handleOpenAdd = () => {
@@ -130,7 +130,7 @@ export default function Guardrails() {
       });
       addToast({ message: `Imported template "${temp.name}"`, type: 'success' });
       setIsTemplatesOpen(false);
-      loadData();
+      void loadData();
     } catch (err: any) {
       addToast({ message: err.message || 'Failed to import template', type: 'error' });
     }
@@ -163,7 +163,7 @@ export default function Guardrails() {
       });
       addToast({ message: 'Guardrail policy deployed successfully!', type: 'success' });
       setIsAddOpen(false);
-      loadData();
+      void loadData();
     } catch (err: any) {
       addToast({ message: err.message || 'Failed to create guardrail', type: 'error' });
     }
@@ -192,7 +192,7 @@ export default function Guardrails() {
       addToast({ message: 'Guardrail policy updated successfully!', type: 'success' });
       setIsEditOpen(false);
       setEditingPolicy(null);
-      loadData();
+      void loadData();
     } catch (err: any) {
       addToast({ message: err.message || 'Failed to update guardrail', type: 'error' });
     }
@@ -223,7 +223,7 @@ export default function Guardrails() {
         method: 'DELETE'
       });
       addToast({ message: 'Guardrail deleted successfully', type: 'success' });
-      loadData();
+      void loadData();
     } catch (err: any) {
       addToast({ message: err.message || 'Failed to delete guardrail', type: 'error' });
     }

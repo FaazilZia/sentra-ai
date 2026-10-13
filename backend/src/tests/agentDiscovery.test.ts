@@ -133,15 +133,17 @@ describe('AgentDiscoveryService Unit & Integration Tests', () => {
     await prisma.risk_assessments.deleteMany({ where: { organizationId: TEST_ORG_ID } });
     await prisma.ai_agents.deleteMany({ where: { organizationId: TEST_ORG_ID } });
 
-    await AgentDiscoveryService.upsertRuntimeAgentInventory({
-      organizationId: TEST_ORG_ID,
-      agentName: 'gdpr-compliance-agent',
-      action: 'transfer_german_records',
-      status: 'blocked',
-      risk: 'high',
-      reason: 'Policy Violation [GDPR]: Cross-border transfer without SCC',
-      metadata: { department: 'Privacy', destination: 'us_east_analytics' },
-    });
+    await AgentDiscoveryService.upsertRuntimeAgentInventory(
+      TEST_ORG_ID,
+      'gdpr-compliance-agent',
+      'transfer_german_records',
+      {
+        status: 'blocked',
+        risk: 'high',
+        reason: 'Policy Violation [GDPR]: Cross-border transfer without SCC',
+      },
+      { department: 'Privacy', destination: 'us_east_analytics' }
+    );
 
     const systems = await prisma.ai_systems.findMany({
       where: { organizationId: TEST_ORG_ID, name: 'gdpr-compliance-agent' },
@@ -150,7 +152,7 @@ describe('AgentDiscoveryService Unit & Integration Tests', () => {
     expect(systems[0].risk_tier).toBe('CRITICAL');
 
     const risks = await prisma.risk_assessments.findMany({
-      where: { organizationId: TEST_ORG_ID, aiSystemId: systems[0].id },
+      where: { organizationId: TEST_ORG_ID, ai_system_id: systems[0].id },
     });
     expect(risks.length).toBe(1);
     expect(risks[0].score).toBeGreaterThanOrEqual(80);

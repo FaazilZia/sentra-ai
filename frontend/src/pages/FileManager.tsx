@@ -42,7 +42,7 @@ export default function FileManager() {
   const [selectedFile, setSelectedFile] = useState<EvidenceFile | null>(null);
 
   useEffect(() => {
-    loadFiles();
+    void loadFiles();
   }, [activeFolder]);
 
   const loadFolderStats = async () => {
@@ -74,7 +74,7 @@ export default function FileManager() {
       // Endpoint is GET /file-ingestion/:controlType/:controlId
       const data = await apiRequest<EvidenceFile[]>(`/file-ingestion/${activeFolder}/general`);
       setFiles(data || []);
-      loadFolderStats();
+      void loadFolderStats();
     } catch (err) {
       console.error('Failed to load files:', err);
       addToast({ message: 'Failed to load evidence files', type: 'error' });
@@ -113,7 +113,7 @@ export default function FileManager() {
       }
 
       addToast({ message: `Successfully uploaded ${file.name}`, type: 'success' });
-      loadFiles();
+      void loadFiles();
     } catch (err: any) {
       console.error('Upload error:', err);
       addToast({ message: err.message || 'Failed to upload file', type: 'error' });
@@ -124,7 +124,7 @@ export default function FileManager() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      handleUploadFile(e.target.files[0]);
+      void handleUploadFile(e.target.files[0]);
     }
   };
 
@@ -143,7 +143,7 @@ export default function FileManager() {
     e.stopPropagation();
     setDragActive(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleUploadFile(e.dataTransfer.files[0]);
+      void handleUploadFile(e.dataTransfer.files[0]);
     }
   };
 
@@ -155,7 +155,7 @@ export default function FileManager() {
       if (selectedFile?.id === fileId) {
         setSelectedFile(null);
       }
-      loadFiles();
+      void loadFiles();
     } catch (err: any) {
       console.error('Failed to delete file:', err);
       addToast({ message: err.message || 'Failed to delete file', type: 'error' });

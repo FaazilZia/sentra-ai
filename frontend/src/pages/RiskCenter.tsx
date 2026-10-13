@@ -100,7 +100,7 @@ export default function RiskCenter() {
   };
 
   useEffect(() => {
-    fetchData();
+    void fetchData();
     const interval = setInterval(fetchData, 15000);
     return () => clearInterval(interval);
   }, []);
@@ -128,7 +128,7 @@ export default function RiskCenter() {
       );
       addToast({ message: `Successfully updated risk parameters for ${overrideAgent.agentName}`, type: 'success' });
       setOverrideAgent(null);
-      fetchData(); // reload updated portfolio
+      void fetchData(); // reload updated portfolio
     } catch (err) {
       console.error('Failed to update agent risk parameters:', err);
       addToast({ message: 'Failed to save manual override parameters', type: 'error' });

@@ -192,8 +192,12 @@ export class AttackGraphService {
         const meta = (agent.metadata as Record<string, any>) || {};
         const dept = meta.department || 'General';
         const resNodeId = `res-dept-${String(dept).toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
-        const resRisk: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' =
-          meta.riskTier === 'CRITICAL' ? 'CRITICAL' : meta.riskTier === 'HIGH' ? 'HIGH' : 'MEDIUM';
+        const tierLookup: Record<string, { risk: 'CRITICAL' | 'HIGH' | 'MEDIUM'; score: number }> = {
+          CRITICAL: { risk: 'CRITICAL', score: 75 },
+          HIGH: { risk: 'HIGH', score: 60 },
+        };
+        const tierEntry = tierLookup[String(meta.riskTier)] || { risk: 'MEDIUM', score: 35 };
+        const resRisk = tierEntry.risk;
 
         if (!nodes.some(n => n.id === resNodeId)) {
           const resObj = {
@@ -210,7 +214,7 @@ export class AttackGraphService {
             accessLevel: agent.accessLevel || 'MONITORED',
             status: 'active',
             risk: resRisk,
-            blastRadiusScore: resRisk === 'CRITICAL' ? 75 : resRisk === 'HIGH' ? 60 : 35,
+            blastRadiusScore: tierEntry.score,
             details: {
               department: dept,
               resources: meta.resources || [],

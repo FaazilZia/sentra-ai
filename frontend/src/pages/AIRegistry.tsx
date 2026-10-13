@@ -93,7 +93,7 @@ export default function AIRegistry() {
   const [loadingHistory, setLoadingHistory] = useState(false);
 
   useEffect(() => {
-    loadSystems();
+    void loadSystems();
   }, []);
 
   const getLifecycleColor = (stage?: string) => {
@@ -187,7 +187,7 @@ export default function AIRegistry() {
         method: 'DELETE'
       });
       setSelectedSystem(null);
-      loadSystems();
+      void loadSystems();
     } catch (err) {
       console.error('Failed to delete AI system:', err);
       alert('Failed to delete AI system');
@@ -221,7 +221,7 @@ export default function AIRegistry() {
   const handleSelectSystem = async (sys: AISystem) => {
     setSelectedSystem(sys);
     setIsModelCardEdit(false);
-    fetchLifecycleHistory(sys.id);
+    void fetchLifecycleHistory(sys.id);
     
     // Fetch model card
     try {
@@ -346,7 +346,7 @@ export default function AIRegistry() {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      handleSelectSystem(sys);
+                      void handleSelectSystem(sys);
                     }
                   }}
                   role="button"

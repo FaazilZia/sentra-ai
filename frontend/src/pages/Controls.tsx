@@ -42,7 +42,7 @@ export default function Controls() {
   const [evidenceList, setEvidenceList] = useState<Array<Record<string, any>>>([]);
 
   useEffect(() => {
-    loadControls();
+    void loadControls();
   }, []);
 
   const loadControls = async () => {
@@ -96,7 +96,7 @@ export default function Controls() {
         })
       });
       setSelectedControl(null);
-      loadControls();
+      void loadControls();
     } catch (err) {
       console.error('Failed to update control implementation:', err);
     }
