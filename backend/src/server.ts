@@ -367,7 +367,7 @@ const startServer = async () => {
     logger.info(`Server is running on port ${PORT}`);
 
     // Run database migrations and initialization in background
-    void runBackgroundInit();
+    runBackgroundInit().catch(err => logger.error('[BOOT] Unhandled background initialization error:', err));
   });
 };
 
@@ -421,5 +421,5 @@ const startRenderKeepAlive = () => {
 
 
 if (process.env.NODE_ENV !== 'test') {
-  void startServer();
+  startServer().catch(err => logger.error('[BOOT] Fatal server startup error:', err));
 }

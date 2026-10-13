@@ -45,7 +45,7 @@ export class EventTriggerService {
             select: { input_text: true, reason: true }
           });
 
-          void this.triggerWebhook(rule, blockedCount, latestLog?.input_text || "N/A", latestLog?.reason || "N/A");
+          this.triggerWebhook(rule, blockedCount, latestLog?.input_text || "N/A", latestLog?.reason || "N/A").catch(err => logger.error('[EventTrigger] Failed to trigger alert webhook:', err));
           this.markRuleTriggered(rule.id);
         }
       }
