@@ -204,7 +204,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
     }, { timeout: 10000, maxWait: 5000 });
 
     // Trigger governance seeding asynchronously in the background (does not block 201 response)
-    void triggerGovernanceSeeding(result.org.id);
+    triggerGovernanceSeeding(result.org.id).catch(err => logger.error('[Auth] Failed background governance seeding on register:', err));
 
     // Generate signed verification token (24h expiry)
     const tokenJti = randomUUID();
@@ -368,7 +368,7 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
       user = result;
 
       // Trigger governance seeding asynchronously in background for new org
-      void triggerGovernanceSeeding(user.organizationId);
+      triggerGovernanceSeeding(user.organizationId).catch(err => logger.error('[Auth] Failed background governance seeding on OAuth login:', err));
     } else if (user.organizationId) {
       // Fallback: check if existing org has zero/partial governance frameworks seeded and re-seed in background
       checkAndTriggerGovernanceFallback(user.organizationId).catch((fallbackErr) => {

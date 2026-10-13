@@ -48,7 +48,7 @@ const callOpenAiCompletions = async (
         // Track Usage
         const usage = data.usage;
         if (usage) {
-          void trackUsage(organizationId, usage.prompt_tokens, usage.completion_tokens);
+          trackUsage(organizationId, usage.prompt_tokens, usage.completion_tokens).catch(err => logger.error('[AI] Failed to track token usage:', err));
         }
         return text;
       } else {
