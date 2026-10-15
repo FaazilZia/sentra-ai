@@ -4,6 +4,7 @@ export interface SentraConfig {
   maxRetries?: number;
   timeout?: number;
   sandbox?: boolean;
+  coldStartTimeoutMs?: number;
 }
 
 export interface ActionRequest {
@@ -14,6 +15,7 @@ export interface ActionRequest {
 
 export interface ActionResponse {
   status: 'allowed' | 'blocked' | 'flagged' | 'rate_limited';
+  isAllowed: boolean;
   risk: 'low' | 'medium' | 'high';
   reason: string;
   impact: string;
@@ -41,6 +43,7 @@ export class SentraClient {
   private readonly maxRetries: number;
   private readonly timeout: number;
   private readonly maxRetriesExplicit: boolean;
+  private readonly coldStartTimeoutMs: number;
   readonly isSandbox: boolean;
 
   constructor(config?: SentraConfig) {
@@ -68,6 +71,7 @@ export class SentraClient {
     this.maxRetriesExplicit = typeof config.maxRetries === 'number';
     this.maxRetries = config.maxRetries ?? 5;
     this.timeout = config.timeout ?? 15000;
+    this.coldStartTimeoutMs = typeof config.coldStartTimeoutMs === 'number' ? config.coldStartTimeoutMs : 60000;
 
     // Sandbox ONLY when explicitly declared via config.sandbox or explicit test/sandbox key
     this.isSandbox = Boolean(
@@ -88,7 +92,7 @@ export class SentraClient {
         ? `${request.agent || 'agent'}: ${request.action} ${request.metadata ? JSON.stringify(request.metadata) : ''}`.trim()
         : JSON.stringify(request));
 
-    const maxColdStartDurationMs = 60000; // Keep retrying for up to ~60s total on cold start
+    const maxColdStartDurationMs = this.coldStartTimeoutMs; // Configurable cold start retry budget (default: 60s)
     const startTime = Date.now();
     let attempt = 0;
 
@@ -122,9 +126,10 @@ export class SentraClient {
           console.warn(`[Sentra Sandbox] ${plainMessage}`);
           return {
             status: 'rate_limited',
+            isAllowed: false,
             risk: 'low',
             reason: plainMessage,
-            impact: 'Demo rate limit reached; action was not evaluated',
+            impact: 'Demo rate limit reached; action was not permitted to execute',
             compliance: ['Rate Limiting Quota']
           };
         }
@@ -134,6 +139,7 @@ export class SentraClient {
           console.error('[Sentra] Authentication Failed (401): Invalid or missing API key. Fix: Use a valid API key from your Sentraa dashboard, or pass apiKey: "sentra_test_sandbox" for demo mode.');
           return {
             status: 'blocked',
+            isAllowed: false,
             risk: 'high',
             reason: 'Authentication Failed: Invalid or missing API key',
             impact: 'Execution prevented to ensure safety (fail-closed)',
@@ -145,6 +151,7 @@ export class SentraClient {
           console.error('[Sentra] Access Forbidden (403): Request rejected by Sentra policy. Fix: Ensure your API key has permission for this agent/action.');
           return {
             status: 'blocked',
+            isAllowed: false,
             risk: 'high',
             reason: 'Access Forbidden: Request rejected by security policy',
             impact: 'Execution prevented to ensure safety (fail-closed)',
@@ -157,6 +164,7 @@ export class SentraClient {
           console.error(`[Sentra] Bad Request (400): Invalid request payload. Fix: Verify agent and action fields. Details: ${errData.message || 'Validation error'}`);
           return {
             status: 'blocked',
+            isAllowed: false,
             risk: 'high',
             reason: `Bad Request: ${errData.message || 'Invalid payload'}`,
             impact: 'Execution prevented to ensure safety (fail-closed)',
@@ -192,6 +200,7 @@ export class SentraClient {
 
         return {
           status,
+          isAllowed,
           risk: isAllowed ? 'low' : 'high',
           reason: resData.reason || json.reason || (isAllowed ? 'Safe Action' : 'Action blocked: potentially sensitive data or restricted pattern detected'),
           impact: resData.impact || json.impact || (isAllowed ? 'None' : (isFlagged ? 'Requires human-in-the-loop review' : 'Execution prevented to ensure safety')),
@@ -206,7 +215,7 @@ export class SentraClient {
         const isColdStart = error.name === 'AbortError' || error.status === 502 || error.status === 503 || error.status === 504;
         const elapsedMs = Date.now() - startTime;
 
-        // Cold start retry policy: if maxRetries was explicitly set, respect it; otherwise retry for up to ~60s total
+        // Cold start retry policy: if maxRetries was explicitly set, respect it; otherwise retry up to coldStartTimeoutMs
         const canRetryColdStart = isColdStart && (this.maxRetriesExplicit ? attempt <= this.maxRetries : elapsedMs < maxColdStartDurationMs);
         const canRetryTransient = !isColdStart && attempt <= this.maxRetries;
 
@@ -225,9 +234,10 @@ export class SentraClient {
     }
 
     // Fail closed (block) if the security system is unreachable after retries
-    console.error(`[Sentra] Connection Failed: Unable to reach Sentra governance engine at ${this.baseUrl} after ~60s of attempts. Failing closed to ensure safety. Fix: Check your network connection or verify that the backend is online.`);
+    console.error(`[Sentra] Connection Failed: Unable to reach Sentra governance engine at ${this.baseUrl} after cold start wait (${Math.round(maxColdStartDurationMs / 1000)}s). Failing closed to ensure safety. Fix: Check your network connection or verify that the backend is online.`);
     return {
       status: 'blocked',
+      isAllowed: false,
       risk: 'high',
       reason: `Governance engine unreachable at ${this.baseUrl} (fail-closed)`,
       impact: 'Execution prevented to ensure safety',
@@ -266,7 +276,7 @@ export class SentraClient {
         metadata: { model: params.model, prompt_length: prompt.length, prompt: prompt.substring(0, 500) }
       });
 
-      if (check.status === 'blocked' || check.status === 'rate_limited') {
+      if (!check.isAllowed) {
         throw new SentraError(`[Sentra ${check.status === 'rate_limited' ? 'Rate Limited' : 'Blocked'}] ${check.reason}`, check.status === 'rate_limited' ? 429 : 403, check);
       }
 
@@ -290,7 +300,7 @@ export class SentraClient {
         metadata: { url, method }
       });
 
-      if (check.status === 'blocked' || check.status === 'rate_limited') {
+      if (!check.isAllowed) {
         throw new SentraError(`[Sentra ${check.status === 'rate_limited' ? 'Rate Limited' : 'Blocked'}] ${check.reason}`, check.status === 'rate_limited' ? 429 : 403, check);
       }
 
@@ -315,7 +325,7 @@ export class SentraClient {
         metadata: { prompt: prompt.substring(0, 500), prompt_length: prompt.length }
       });
 
-      if (check.status === 'blocked' || check.status === 'rate_limited') {
+      if (!check.isAllowed) {
         throw new SentraError(`[Sentra ${check.status === 'rate_limited' ? 'Rate Limited' : 'Blocked'}] ${check.reason}`, check.status === 'rate_limited' ? 429 : 403, check);
       }
 
@@ -334,7 +344,7 @@ export class SentraClient {
   ): Promise<{ success: boolean; result?: T; governance: ActionResponse }> {
     const governance = await this.checkAction(request);
 
-    if (governance.status === 'allowed') {
+    if (governance.isAllowed) {
       try {
         const result = await onAllowed();
         return { success: true, result, governance };
