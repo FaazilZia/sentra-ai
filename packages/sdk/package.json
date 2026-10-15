@@ -1,12 +1,13 @@
 {
   "name": "@sentra-ai/sdk",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "description": "Enterprise-grade SDK for real-time AI governance and runtime security.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "rm -rf dist && tsc",
@@ -20,7 +21,9 @@
     "security",
     "governance",
     "interceptor",
-    "runtime"
+    "runtime",
+    "sentra",
+    "sentraa"
   ],
   "author": "Sentra AI Team",
   "license": "MIT",

@@ -403,6 +403,16 @@ export const apiRateLimiter = createSafeRateLimiter('rl:api:', {
   passOnStoreError: true
 });
 
+export const demoRateLimiter = createSafeRateLimiter('rl:demo:ip:', {
+  windowMs: 15 * 60 * 1000,
+  max: (process.env.NODE_ENV === 'test' || process.env.IS_E2E_TEST === 'true') ? 1000 : 30,
+  message: { success: false, message: 'Too many demo requests from this IP. Please sign up or slow down.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  passOnStoreError: true,
+  keyGenerator: (req: any) => req.ip || '127.0.0.1',
+});
+
 export const aiActionRateLimiter = createSafeRateLimiter('rl:ai:min:', {
   windowMs: 60 * 1000,
   max: 30, 

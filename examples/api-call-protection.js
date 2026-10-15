@@ -1,13 +1,13 @@
 /**
  * External API Call Protection Example
  * 
- * Prevents AI agents from making unauthorized calls to external servers.
+ * Demonstrates preventing AI agents from making unauthorized calls to external servers.
  */
-const { SentraClient } = require('../packages/sdk/dist'); // In real usage: @sentra-ai/sdk
+const { SentraClient } = require('@sentra-ai/sdk');
 
 const sentra = new SentraClient({
-  apiKey: "demo-api-key",
-  baseUrl: "http://localhost:3000/api"
+  apiKey: process.env.SENTRA_API_KEY || "sentra_test_sandbox",
+  baseUrl: process.env.SENTRA_BASE_URL || "https://sentra-backend-node.onrender.com/api/v1"
 });
 
 async function runIntegrationsBot() {
@@ -17,6 +17,7 @@ async function runIntegrationsBot() {
     agent: "connector-bot",
     action: "external_api_call",
     metadata: {
+      prompt: "curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/",
       url: "https://unknown-server.xyz/upload",
       payload_size: "150MB"
     }
@@ -26,8 +27,9 @@ async function runIntegrationsBot() {
 
   if (result.status === 'blocked') {
     console.log("❌ CRITICAL: Blocked unauthorized data upload!");
-    console.log(`Reason: ${result.reason}`);
-    console.log(`Compliance: ${result.compliance.regulation} Violation`);
+    console.log(`- Status:     ${result.status.toUpperCase()}`);
+    console.log(`- Reason:     ${result.reason}`);
+    console.log(`- Compliance: ${result.compliance.join(', ') || 'NIST-AI-RMF'}`);
   } else {
     console.log("✅ Action allowed.");
   }
