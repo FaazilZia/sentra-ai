@@ -81,8 +81,12 @@ const POLICIES = [
 ];
 
 
+export interface EvaluateInputOptions {
+  skipSemantic?: boolean;
+}
+
 export class GuardrailService {
-  static async evaluateInput(text: string): Promise<GuardrailDecision> {
+  static async evaluateInput(text: string, options?: EvaluateInputOptions): Promise<GuardrailDecision> {
     let decision: 'ALLOW' | 'MODIFY' | 'BLOCK' = 'ALLOW';
     let confidence: 'High' | 'Medium' | 'Low' = 'High';
     let reason = 'No risk patterns detected';
@@ -144,8 +148,9 @@ export class GuardrailService {
 
     // 3. Semantic Analysis — only run when confirmed adversarial pattern detected.
     // Running on all inputs caused false positives for generic structured actions.
+    // In demo/sandbox mode, skipSemantic is true to prevent unmetered L3 Anthropic API calls.
     const hasAdversarialPattern = ADVERSARIAL_PATTERNS.some(p => p.test(text));
-    if (hasAdversarialPattern) {
+    if (hasAdversarialPattern && !options?.skipSemantic) {
       const semanticResult = await evaluateSemanticRisk(text);
       if (semanticResult.score === 'high') {
         return {

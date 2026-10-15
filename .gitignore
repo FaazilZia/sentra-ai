@@ -40,6 +40,7 @@ ENV/
 # Build Artifacts
 dist/
 build/
+*.tgz
 *.egg-info/
 __pycache__/
 **/coverage

@@ -58,14 +58,9 @@ router.post('/proxy', authenticate, processAIRequest);
 router.post('/action', authenticate, checkAction);
 
 
-// Unauthenticated Demo Mode
-import rateLimit from 'express-rate-limit';
-const demoLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 50, // limit each IP to 50 requests per windowMs
-  message: { success: false, message: 'Too many demo requests. Please sign up to continue testing.' }
-});
-router.post('/demo', demoLimiter, processDemoRequest);
+// Unauthenticated Demo Mode (Protected by distributed per-IP rate limiter)
+import { demoRateLimiter } from '../config/rateLimit';
+router.post('/demo', demoRateLimiter, processDemoRequest);
 
 
 /**

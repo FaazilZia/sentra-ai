@@ -459,7 +459,7 @@ export default function SettingsSection() {
                 <Key className="h-4 w-4 text-indigo-500" /> Workspace API Secret Keys
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Keys used by MCP integrations, Python SDK instances, and CI/CD pipelines to authenticate with Sentraa AI.
+                Keys used by MCP integrations, Node.js SDK instances, and CI/CD pipelines to authenticate with Sentraa AI (Python is not yet supported).
               </p>
             </div>
             <button
@@ -601,7 +601,7 @@ export default function SettingsSection() {
                 </div>
                 <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">No API Keys Generated</h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
-                  No active API keys for this organization. Generate an API key to connect the Python SDK, MCP integrations, or CI/CD pipelines.
+                  No active API keys for this organization. Generate an API key to connect the Node.js SDK, MCP integrations, or CI/CD pipelines (Python is not yet supported).
                 </p>
                 <button
                   type="button"

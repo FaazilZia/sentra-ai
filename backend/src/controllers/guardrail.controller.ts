@@ -111,66 +111,42 @@ export const processAIRequest = asyncHandler(async (req: any, res: Response) => 
 });
 
 export const processDemoRequest = asyncHandler(async (req: any, res: Response) => {
-  const { prompt } = req.body;
-  if (!prompt) {
-    return sendError(res, 400, 'Prompt is required');
+  const prompt = req.body.prompt || req.body.action || (req.body.agent ? `${req.body.agent}: ${req.body.action || ''} ${JSON.stringify(req.body.metadata || {})}` : undefined);
+  if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
+    return sendError(res, 400, 'Prompt or action is required');
   }
 
   try {
-    // Optional Authentication for Demo (Syncs to User Ledger if logged in)
-    let organizationId = 'DEMO_ORG';
-    let userId = 'DEMO_USER';
-    const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      try {
-        const token = authHeader.split(' ')[1];
-        const { verifyAccessToken } = require('../utils/jwt');
-        const decoded = verifyAccessToken(token);
-        if (decoded) {
-          organizationId = decoded.organizationId;
-          userId = decoded.id;
-        }
-      } catch (e) {
-        // Silently fail auth for demo, fall back to anonymous
-      }
-    }
-
-    // 1. Pre-AI Check (Input) using existing engine
-    const inputResult = await GuardrailService.evaluateInput(prompt);
-
-    // 2. Log if it's a real user or if it's a block
-    if (organizationId !== 'DEMO_ORG' || inputResult.decision === 'BLOCK') {
-      await GuardrailService.logInterception({
-        user_id: userId,
-        organizationId: organizationId,
-        input_text: prompt,
-        decision: inputResult.decision,
-        confidence: inputResult.confidence,
-        reason: inputResult.reason,
-        policy_triggered: inputResult.policy_triggered,
-        metadata: { source: 'demo_page' }
-      });
-
-      if (inputResult.decision === 'BLOCK' && organizationId !== 'DEMO_ORG') {
-        EventTriggerService.evaluateThresholds(organizationId).catch(err => 
-          logger.error('Failed demo alert evaluation', err)
-        );
-      }
-    }
+    // 1. Evaluate input safely via L1/L2 pattern and risk rules.
+    // Sandbox calls strictly skip paid L3 (Anthropic) engine (skipSemantic: true) to avoid unmetered cost.
+    // Sandbox calls never write to any real organization's database tables or trigger tenant alerts.
+    const inputResult = await GuardrailService.evaluateInput(prompt, { skipSemantic: true });
 
     if (inputResult.decision === 'BLOCK') {
       return sendSuccess(res, {
         status: 'blocked',
-        reason: inputResult.reason || 'Prompt Injection Detected',
-        explanation: 'This input tried to override system instructions and manipulate the AI.',
+        decision: 'BLOCK',
+        risk: 'high',
+        reason: inputResult.reason || 'Action blocked: potentially sensitive data or restricted pattern detected',
+        impact: 'Execution prevented to ensure safety',
+        compliance: ['NIST-AI-RMF', 'PCI-DSS'],
+        explanation: inputResult.processedText === '[BLOCKED BY GOVERNANCE ENGINE]' 
+          ? 'Potentially sensitive data (e.g. PII/credentials) or adversarial pattern detected.'
+          : 'This input tried to override system instructions or perform an unauthorized action.',
+        confidence: 0.95,
         risk_score: 95
       });
     }
 
     return sendSuccess(res, {
       status: 'allowed',
-      reason: 'Safe Prompt',
+      decision: 'ALLOW',
+      risk: 'low',
+      reason: 'Safe Action',
+      impact: 'None',
+      compliance: [],
       explanation: 'This input does not contain harmful or manipulative patterns.',
+      confidence: 1.0,
       risk_score: 10
     });
 
