@@ -49,4 +49,7 @@ const startWorker = async () => {
   }
 };
 
-startWorker().catch(err => logger.error('[WORKER BOOT] Unhandled worker startup error:', err));
+startWorker().catch(err => {
+  logger.error('[WORKER BOOT] Unhandled worker startup error:', err);
+  process.exit(1);
+});

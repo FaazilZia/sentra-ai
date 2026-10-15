@@ -421,5 +421,8 @@ const startRenderKeepAlive = () => {
 
 
 if (process.env.NODE_ENV !== 'test') {
-  startServer().catch(err => logger.error('[BOOT] Fatal server startup error:', err));
+  startServer().catch(err => {
+    logger.error('[BOOT] Fatal server startup error:', err);
+    process.exit(1);
+  });
 }
