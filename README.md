@@ -403,7 +403,7 @@ sentra-ai/
 |---|---|---|---|
 | `/api/v1/guardrails/proxy` | POST | ✅ | Full input→AI→output pipeline |
 | `/api/v1/guardrails/action` | POST | ✅ | Action-level guardrail check |
-| `/api/v1/guardrails/demo` | POST | No | Demo mode (no auth required) |
+| `/api/v1/guardrails/demo` | POST | No | Demo mode (no auth, rate-limited: 30 req / 15 min per IP) |
 | `/api/v1/guardrails/logs` | GET | ✅ | Interception audit trail |
 | `/api/v1/guardrails/logs/export` | GET | ✅ | CSV/JSON log export |
 | `/api/v1/guardrails/metrics` | GET | ✅ | Enforcement metrics |
@@ -544,7 +544,7 @@ Control AI access to production APIs, internal systems, and customer data with o
 - ✅ **Row-Level Security** — PostgreSQL RLS enforced across all 9 core tenant tables
 - ✅ **No hardcoded credentials** — All secrets via environment variables
 - ✅ **CORS-locked** — Strict origin allowlisting (HTTP + WebSocket)
-- ✅ **Redis-backed rate limiting** — Distributed rate limiting across all endpoints
+- ✅ **Resilient rate limiting** — Distributed across endpoints when Redis is connected; automatic graceful degradation to per-instance in-memory limiter if Redis is unconfigured or offline
 - ✅ **CSP nonce enforcement** — Per-request Content-Security-Policy
 - ✅ **Brute-force protection** — 10 attempts / 15 min on auth endpoints
 - ✅ **RBAC** — ADMIN, AUDITOR, ENGINEER, USER scoping

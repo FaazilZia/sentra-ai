@@ -32,7 +32,7 @@ services:
       - key: HUGGINGFACE_MODEL
         value: mistralai/Mistral-7B-Instruct-v0.2
       - key: REDIS_URL
-        sync: false
+        sync: false # Set to Redis connection string (e.g. rediss://default:...@...) to enable distributed rate limiting across instances
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET
