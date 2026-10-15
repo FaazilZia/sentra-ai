@@ -58,7 +58,7 @@ router.post('/proxy', authenticate, processAIRequest);
 router.post('/action', authenticate, checkAction);
 
 
-// Unauthenticated Demo Mode (Protected by distributed per-IP rate limiter)
+// Unauthenticated Demo Mode (Protected by per-IP rate limiter — distributed when Redis is configured, local in-memory fallback per-instance: 30 req / 15 min)
 import { demoRateLimiter } from '../config/rateLimit';
 router.post('/demo', demoRateLimiter, processDemoRequest);
 

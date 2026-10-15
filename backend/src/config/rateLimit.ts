@@ -403,6 +403,13 @@ export const apiRateLimiter = createSafeRateLimiter('rl:api:', {
   passOnStoreError: true
 });
 
+/**
+ * Public unauthenticated demo endpoint rate limiter.
+ * Window: 15 minutes (15 * 60 * 1000 ms)
+ * Max: 30 requests per IP per window
+ * Distribution: Distributed across instances when REDIS_URL is active;
+ *               gracefully degrades to local per-instance MemoryStore when Redis is offline.
+ */
 export const demoRateLimiter = createSafeRateLimiter('rl:demo:ip:', {
   windowMs: 15 * 60 * 1000,
   max: (process.env.NODE_ENV === 'test' || process.env.IS_E2E_TEST === 'true') ? 1000 : 30,
