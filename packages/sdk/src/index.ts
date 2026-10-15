@@ -1,9 +1,10 @@
 export interface SentraConfig {
-  apiKey: string;
+  apiKey?: string;
   baseUrl?: string;
   maxRetries?: number;
   timeout?: number;
   sandbox?: boolean;
+  coldStartTimeoutMs?: number;
 }
 
 export interface ActionRequest {
@@ -13,7 +14,8 @@ export interface ActionRequest {
 }
 
 export interface ActionResponse {
-  status: 'allowed' | 'blocked' | 'flagged';
+  status: 'allowed' | 'blocked' | 'flagged' | 'rate_limited';
+  isAllowed: boolean;
   risk: 'low' | 'medium' | 'high';
   reason: string;
   impact: string;
@@ -40,21 +42,44 @@ export class SentraClient {
   private readonly baseUrl: string;
   private readonly maxRetries: number;
   private readonly timeout: number;
+  private readonly maxRetriesExplicit: boolean;
+  private readonly coldStartTimeoutMs: number;
   readonly isSandbox: boolean;
 
-  constructor(config: SentraConfig) {
-    this.apiKey = config.apiKey || '';
-    this.baseUrl = (config.baseUrl || 'https://sentra-backend-node.onrender.com/api/v1').replace(/\/$/, '');
-    this.maxRetries = config.maxRetries ?? 3;
-    this.timeout = config.timeout ?? 8000;
+  constructor(config?: SentraConfig) {
+    if (!config || (!config.apiKey && !config.sandbox)) {
+      throw new SentraError(
+        "No API key. Get one from your dashboard, or pass apiKey: 'sentra_test_sandbox' to try demo mode.",
+        401,
+        undefined,
+        "Pass a valid API key or apiKey: 'sentra_test_sandbox'"
+      );
+    }
 
+    const rawKey = (config.apiKey || '').trim();
+    if (!rawKey && !config.sandbox) {
+      throw new SentraError(
+        "No API key. Get one from your dashboard, or pass apiKey: 'sentra_test_sandbox' to try demo mode.",
+        401,
+        undefined,
+        "Pass a valid API key or apiKey: 'sentra_test_sandbox'"
+      );
+    }
+
+    this.apiKey = rawKey;
+    this.baseUrl = (config.baseUrl || 'https://sentra-backend-node.onrender.com/api/v1').replace(/\/$/, '');
+    this.maxRetriesExplicit = typeof config.maxRetries === 'number';
+    this.maxRetries = config.maxRetries ?? 5;
+    this.timeout = config.timeout ?? 15000;
+    this.coldStartTimeoutMs = typeof config.coldStartTimeoutMs === 'number' ? config.coldStartTimeoutMs : 60000;
+
+    // Sandbox ONLY when explicitly declared via config.sandbox or explicit test/sandbox key
     this.isSandbox = Boolean(
-      config.sandbox ||
-      !this.apiKey ||
-      this.apiKey === 'sentra_test_sandbox' ||
-      this.apiKey === 'demo' ||
-      this.apiKey.startsWith('sentra_test_') ||
-      this.apiKey.startsWith('test_')
+      config.sandbox === true ||
+      rawKey === 'sentra_test_sandbox' ||
+      rawKey === 'demo' ||
+      rawKey.startsWith('sentra_test_') ||
+      rawKey.startsWith('test_')
     );
   }
 
@@ -62,86 +87,59 @@ export class SentraClient {
    * Validates if an AI action is safe to execute against active policies.
    */
   async checkAction(request: ActionRequest): Promise<ActionResponse> {
-    // ─── 1. Sandbox Mode: Route to public live guardrail evaluation ───────
-    if (this.isSandbox) {
-      const prompt = request.metadata?.prompt || 
-        (typeof request.action === 'string'
-          ? `${request.agent || 'agent'}: ${request.action} ${request.metadata ? JSON.stringify(request.metadata) : ''}`.trim()
-          : JSON.stringify(request));
+    const prompt = request.metadata?.prompt || 
+      (typeof request.action === 'string'
+        ? `${request.agent || 'agent'}: ${request.action} ${request.metadata ? JSON.stringify(request.metadata) : ''}`.trim()
+        : JSON.stringify(request));
 
+    const maxColdStartDurationMs = this.coldStartTimeoutMs; // Configurable cold start retry budget (default: 60s)
+    const startTime = Date.now();
+    let attempt = 0;
+
+    while (true) {
+      attempt++;
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
       try {
-        const response = await fetch(`${this.baseUrl}/guardrails/demo`, {
+        const url = this.isSandbox ? `${this.baseUrl}/guardrails/demo` : `${this.baseUrl}/ai/check-action`;
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (!this.isSandbox) {
+          headers['Authorization'] = `Bearer ${this.apiKey}`;
+        }
+        const body = this.isSandbox
+          ? JSON.stringify({ prompt, action: request.action, agent: request.agent, metadata: request.metadata })
+          : JSON.stringify(request);
+
+        const response = await fetch(url, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt }),
+          headers,
+          body,
           signal: controller.signal
         });
 
         clearTimeout(timeoutId);
 
-        if (!response.ok) {
+        // ─── Rate Limiting (429) Handling ───
+        if (response.status === 429) {
+          const plainMessage = 'Demo limit reached. Wait a few minutes or use your own API key';
+          console.warn(`[Sentra Sandbox] ${plainMessage}`);
           return {
-            status: 'blocked',
-            risk: 'high',
-            reason: `Demo Guardrail Error (${response.status})`,
-            impact: 'Execution prevented to ensure safety',
-            compliance: ['Demo Sandbox Guardrail']
+            status: 'rate_limited',
+            isAllowed: false,
+            risk: 'low',
+            reason: plainMessage,
+            impact: 'Demo rate limit reached; action was not permitted to execute',
+            compliance: ['Rate Limiting Quota']
           };
         }
 
-        const json: any = await response.json();
-        const resData = json.data || json;
-        const isBlocked = resData.status === 'blocked' || resData.decision === 'BLOCK' || resData.decision === 'blocked';
-
-        return {
-          status: isBlocked ? 'blocked' : 'allowed',
-          risk: isBlocked ? 'high' : 'low',
-          reason: resData.reason || (isBlocked ? 'Blocked by Sentraa Guardrail' : 'Action allowed'),
-          impact: isBlocked ? 'Execution prevented to ensure safety' : 'None',
-          compliance: resData.compliance || (isBlocked ? ['NIST-AI-RMF', 'PCI-DSS'] : []),
-          explanation: resData.explanation,
-          confidence: resData.confidence ?? (isBlocked ? 0.95 : 1.0),
-          isPendingApproval: false
-        };
-      } catch (err: any) {
-        clearTimeout(timeoutId);
-        console.warn(`[Sentra Sandbox] Live demo guardrail call failed: ${err?.message || err}. Failing closed.`);
-        return {
-          status: 'blocked',
-          risk: 'high',
-          reason: 'Governance sandbox unreachable or timed out',
-          impact: 'Execution prevented to ensure safety',
-          compliance: ['Safety Fallback']
-        };
-      }
-    }
-
-    // ─── 2. Production Authenticated Mode: Route to /ai/check-action ───────
-    for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
-
-      try {
-        const response = await fetch(`${this.baseUrl}/ai/check-action`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.apiKey}`
-          },
-          body: JSON.stringify(request),
-          signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-
-        // Client errors (400, 401, 403) are deterministic — DO NOT RETRY
+        // ─── Non-transient Client Errors (400, 401, 403) — DO NOT RETRY ───
         if (response.status === 401) {
           console.error('[Sentra] Authentication Failed (401): Invalid or missing API key. Fix: Use a valid API key from your Sentraa dashboard, or pass apiKey: "sentra_test_sandbox" for demo mode.');
           return {
             status: 'blocked',
+            isAllowed: false,
             risk: 'high',
             reason: 'Authentication Failed: Invalid or missing API key',
             impact: 'Execution prevented to ensure safety (fail-closed)',
@@ -153,6 +151,7 @@ export class SentraClient {
           console.error('[Sentra] Access Forbidden (403): Request rejected by Sentra policy. Fix: Ensure your API key has permission for this agent/action.');
           return {
             status: 'blocked',
+            isAllowed: false,
             risk: 'high',
             reason: 'Access Forbidden: Request rejected by security policy',
             impact: 'Execution prevented to ensure safety (fail-closed)',
@@ -161,10 +160,11 @@ export class SentraClient {
         }
 
         if (response.status === 400) {
-          const errData = await response.json().catch(() => ({}));
+          const errData: any = await response.json().catch(() => ({}));
           console.error(`[Sentra] Bad Request (400): Invalid request payload. Fix: Verify agent and action fields. Details: ${errData.message || 'Validation error'}`);
           return {
             status: 'blocked',
+            isAllowed: false,
             risk: 'high',
             reason: `Bad Request: ${errData.message || 'Invalid payload'}`,
             impact: 'Execution prevented to ensure safety (fail-closed)',
@@ -172,16 +172,21 @@ export class SentraClient {
           };
         }
 
+        // ─── Cold Start Gateway Errors (502, 503, 504) ───
+        if (response.status === 502 || response.status === 503 || response.status === 504) {
+          throw new SentraError(`Gateway Status ${response.status}`, response.status);
+        }
+
         if (!response.ok) {
           throw new SentraError(`API Error (${response.status})`, response.status);
         }
 
-        const json = await response.json();
+        const json: any = await response.json();
         const resData = json.data || json;
         const rawDecision = resData.status || resData.decision || json.decision || json.status || 'ALLOWED';
         const decisionStr = String(rawDecision).toLowerCase();
-        
-        let status: 'allowed' | 'blocked' | 'flagged' = 'allowed';
+
+        let status: 'allowed' | 'blocked' | 'flagged' | 'rate_limited' = 'allowed';
         if (decisionStr === 'blocked' || decisionStr === 'block') {
           status = 'blocked';
         } else if (decisionStr === 'flagged' || decisionStr === 'flag' || resData.isPendingApproval) {
@@ -195,36 +200,44 @@ export class SentraClient {
 
         return {
           status,
+          isAllowed,
           risk: isAllowed ? 'low' : 'high',
-          reason: resData.reason || json.reason || 'Processed by Sentraa AI',
-          impact: resData.impact || json.impact || (isAllowed ? 'None' : (isFlagged ? 'Requires human-in-the-loop review' : 'Action prevented')),
-          compliance: resData.compliance || json.compliance || [],
+          reason: resData.reason || json.reason || (isAllowed ? 'Safe Action' : 'Action blocked: potentially sensitive data or restricted pattern detected'),
+          impact: resData.impact || json.impact || (isAllowed ? 'None' : (isFlagged ? 'Requires human-in-the-loop review' : 'Execution prevented to ensure safety')),
+          compliance: resData.compliance || json.compliance || (isAllowed ? [] : ['NIST-AI-RMF', 'PCI-DSS']),
           explanation: resData.explanation || json.explanation,
-          confidence: resData.confidence || json.confidence,
+          confidence: resData.confidence ?? json.confidence ?? (isAllowed ? 1.0 : 0.95),
           isPendingApproval: resData.isPendingApproval || isFlagged
         };
       } catch (error: any) {
         clearTimeout(timeoutId);
 
         const isColdStart = error.name === 'AbortError' || error.status === 502 || error.status === 503 || error.status === 504;
+        const elapsedMs = Date.now() - startTime;
 
-        if (attempt < this.maxRetries) {
-          const delay = Math.pow(2, attempt) * 500;
+        // Cold start retry policy: if maxRetries was explicitly set, respect it; otherwise retry up to coldStartTimeoutMs
+        const canRetryColdStart = isColdStart && (this.maxRetriesExplicit ? attempt <= this.maxRetries : elapsedMs < maxColdStartDurationMs);
+        const canRetryTransient = !isColdStart && attempt <= this.maxRetries;
+
+        if (canRetryColdStart || canRetryTransient) {
+          const delay = Math.min(Math.pow(1.5, attempt - 1) * 1000, 5000);
           if (isColdStart) {
-            console.warn(`[Sentra] Backend is waking up (Render cold start, attempt ${attempt + 1}/${this.maxRetries}). Retrying in ${delay}ms...`);
+            console.warn(`[Sentra] Backend is waking up (Render cold start, attempt ${attempt}). Retrying in ${Math.round(delay)}ms...`);
           } else {
-            console.warn(`[Sentra] Request transient failure (attempt ${attempt + 1}/${this.maxRetries}). Retrying in ${delay}ms...`);
+            console.warn(`[Sentra] Request transient failure (attempt ${attempt}). Retrying in ${Math.round(delay)}ms...`);
           }
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }
+        break;
       }
     }
 
     // Fail closed (block) if the security system is unreachable after retries
-    console.error(`[Sentra] Connection Failed: Unable to reach Sentra governance engine at ${this.baseUrl} after ${this.maxRetries} retries. Failing closed to ensure safety. Fix: Check your network connection or verify that the backend is online.`);
+    console.error(`[Sentra] Connection Failed: Unable to reach Sentra governance engine at ${this.baseUrl} after cold start wait (${Math.round(maxColdStartDurationMs / 1000)}s). Failing closed to ensure safety. Fix: Check your network connection or verify that the backend is online.`);
     return {
       status: 'blocked',
+      isAllowed: false,
       risk: 'high',
       reason: `Governance engine unreachable at ${this.baseUrl} (fail-closed)`,
       impact: 'Execution prevented to ensure safety',
@@ -263,8 +276,8 @@ export class SentraClient {
         metadata: { model: params.model, prompt_length: prompt.length, prompt: prompt.substring(0, 500) }
       });
 
-      if (check.status === 'blocked') {
-        throw new SentraError(`[Sentra Blocked] ${check.reason}`, 403, check);
+      if (!check.isAllowed) {
+        throw new SentraError(`[Sentra ${check.status === 'rate_limited' ? 'Rate Limited' : 'Blocked'}] ${check.reason}`, check.status === 'rate_limited' ? 429 : 403, check);
       }
 
       return originalCreate(...args);
@@ -287,8 +300,8 @@ export class SentraClient {
         metadata: { url, method }
       });
 
-      if (check.status === 'blocked') {
-        throw new SentraError(`[Sentra Blocked] ${check.reason}`, 403, check);
+      if (!check.isAllowed) {
+        throw new SentraError(`[Sentra ${check.status === 'rate_limited' ? 'Rate Limited' : 'Blocked'}] ${check.reason}`, check.status === 'rate_limited' ? 429 : 403, check);
       }
 
       return originalFetch(input, init);
@@ -312,8 +325,8 @@ export class SentraClient {
         metadata: { prompt: prompt.substring(0, 500), prompt_length: prompt.length }
       });
 
-      if (check.status === 'blocked') {
-        throw new SentraError(`[Sentra Blocked] ${check.reason}`, 403, check);
+      if (!check.isAllowed) {
+        throw new SentraError(`[Sentra ${check.status === 'rate_limited' ? 'Rate Limited' : 'Blocked'}] ${check.reason}`, check.status === 'rate_limited' ? 429 : 403, check);
       }
 
       return originalCall(...args);
@@ -331,7 +344,7 @@ export class SentraClient {
   ): Promise<{ success: boolean; result?: T; governance: ActionResponse }> {
     const governance = await this.checkAction(request);
 
-    if (governance.status === 'allowed') {
+    if (governance.isAllowed) {
       try {
         const result = await onAllowed();
         return { success: true, result, governance };
@@ -339,7 +352,7 @@ export class SentraClient {
         throw new SentraError('Action execution failed despite being allowed', 500, error);
       }
     } else {
-      console.warn(`[Sentra Blocked] Action: ${request.action}, Reason: ${governance.reason}`);
+      console.warn(`[Sentra ${governance.status === 'rate_limited' ? 'Rate Limited' : 'Blocked'}] Action: ${request.action}, Reason: ${governance.reason}`);
       return { success: false, governance };
     }
   }

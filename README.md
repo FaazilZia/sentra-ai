@@ -350,7 +350,7 @@ sentra-ai/
 │       └── lib/                      # API client, store, utilities
 │
 ├── packages/
-│   └── sdk/                          # @sentra-ai/sdk (npm v1.0.3)
+│   └── sdk/                          # @sentra-ai/sdk (npm v1.0.6)
 │       └── src/
 │           └── index.ts              # SentraClient + LangChain/OpenAI wrappers
 │
@@ -566,7 +566,7 @@ Control AI access to production APIs, internal systems, and customer data with o
 | **Auth** | JWT + Refresh tokens + Google OAuth + SSO |
 | **Encryption** | AES-256-GCM |
 | **Email** | Postmark |
-| **SDK** | `@sentra-ai/sdk` v1.0.3 (npm) |
+| **SDK** | `@sentra-ai/sdk` v1.0.6 (npm) |
 | **CI/CD** | GitHub Actions + SonarCloud |
 | **Deployment** | Render (backend) + Vercel (frontend) |
 
