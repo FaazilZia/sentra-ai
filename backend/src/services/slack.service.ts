@@ -161,7 +161,7 @@ export const SlackService = {
    * Dispatches rich Slack Block Kit notifications for BLOCK and FLAG decision events.
    */
   async notifyDecisionEvent(orgId: string, event: {
-    status: 'blocked' | 'flagged' | string;
+    status: 'blocked' | 'flagged';
     agent: string;
     action: string;
     risk?: string;
@@ -172,7 +172,7 @@ export const SlackService = {
     mode?: string;
   }): Promise<boolean> {
     const config = await this.getConfig(orgId);
-    if (!config || !config.enabled || !config.webhookUrl) return false;
+    if (!config?.enabled || !config?.webhookUrl) return false;
 
     const notifyOn = config.notifyOn || [];
     const isBlocked = event.status === 'blocked';

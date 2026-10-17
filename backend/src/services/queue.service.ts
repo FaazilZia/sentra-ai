@@ -8,7 +8,6 @@ import { Client as PgClient } from 'pg';
 import logger from '../utils/logger';
 import prisma from '../config/db';
 import { logActivity } from './policy.service';
-import { decrypt } from '../utils/encryption';
 import { decryptCredentials } from '../utils/credentialHelper';
 import { SENSITIVE_PATTERNS } from './riskEngine';
 import { buildRedisOptions, getRedisUrl } from '../config/redis';
@@ -429,6 +428,42 @@ async function scanSqlSource(connector: any, creds: any): Promise<{ violations: 
   return { violations, apiCalls, bytesScanned };
 }
 
+function formatConnectorScanError(err: any): string {
+  const rawMsg = err?.message || String(err);
+  if (rawMsg.includes('AccessDenied') || rawMsg.includes('Forbidden') || err?.name === 'AccessDenied') {
+    return 'Access Denied: Please verify permissions and credential scopes.';
+  }
+  if (rawMsg.includes('NoSuchBucket')) {
+    return 'Specified S3 bucket does not exist or is in a different region.';
+  }
+  if (rawMsg.includes('ECONNREFUSED') || rawMsg.includes('ETIMEDOUT')) {
+    return 'Connection refused: Host unreachable. Check firewall, network rules, or host address.';
+  }
+  if (rawMsg.includes('password authentication failed') || err?.code === '28P01') {
+    return 'Database authentication failed: Invalid username or password.';
+  }
+  if (rawMsg.includes('database') && rawMsg.includes('does not exist')) {
+    return 'Database not found: Specified database does not exist on the target server.';
+  }
+  if (rawMsg.includes('invalid_grant')) {
+    return 'Google Drive authentication failed: Invalid service account private key or client email.';
+  }
+  return `Scan failed: ${rawMsg}`;
+}
+
+async function executeSourceScan(type: string, connector: any, creds: any) {
+  if (type === 's3') {
+    return await scanS3Source(connector, creds);
+  }
+  if (type === 'gdrive') {
+    return await scanGDriveSource(connector, creds);
+  }
+  if (type === 'sql') {
+    return await scanSqlSource(connector, creds);
+  }
+  return { violations: 0, apiCalls: 0, bytesScanned: 0 };
+}
+
 export async function processConnectorScan(type: string, connectorId: string) {
   try {
     const connector = await prisma.connectors.findUnique({ where: { id: connectorId } });
@@ -468,17 +503,7 @@ export async function processConnectorScan(type: string, connectorId: string) {
     }
 
     logger.info(`Worker: Starting real scan for ${connector.name} (${type})`);
-    let result = { violations: 0, apiCalls: 0, bytesScanned: 0 };
-
-    if (type === 's3') {
-      result = await scanS3Source(connector, creds);
-    } else if (type === 'gdrive') {
-      result = await scanGDriveSource(connector, creds);
-    } else if (type === 'sql') {
-      result = await scanSqlSource(connector, creds);
-    }
-
-    const { violations, apiCalls, bytesScanned } = result;
+    const { violations, apiCalls, bytesScanned } = await executeSourceScan(type, connector, creds);
 
     // 3. Final Updates
     const scanCost = apiCalls * 0.001; // Base cost estimate per API call
@@ -500,20 +525,7 @@ export async function processConnectorScan(type: string, connectorId: string) {
     logger.info(`Worker: Scan completed for ${connector.name}. Detected ${violations} violations.`);
   } catch (err: any) {
     const rawMsg = err.message || String(err);
-    let humanError = `Scan failed: ${rawMsg}`;
-    if (rawMsg.includes('AccessDenied') || rawMsg.includes('Forbidden') || err.name === 'AccessDenied') {
-      humanError = 'Access Denied: Please verify permissions and credential scopes.';
-    } else if (rawMsg.includes('NoSuchBucket')) {
-      humanError = 'Specified S3 bucket does not exist or is in a different region.';
-    } else if (rawMsg.includes('ECONNREFUSED') || rawMsg.includes('ETIMEDOUT')) {
-      humanError = 'Connection refused: Host unreachable. Check firewall, network rules, or host address.';
-    } else if (rawMsg.includes('password authentication failed') || err.code === '28P01') {
-      humanError = 'Database authentication failed: Invalid username or password.';
-    } else if (rawMsg.includes('database') && rawMsg.includes('does not exist')) {
-      humanError = 'Database not found: Specified database does not exist on the target server.';
-    } else if (rawMsg.includes('invalid_grant')) {
-      humanError = 'Google Drive authentication failed: Invalid service account private key or client email.';
-    }
+    const humanError = formatConnectorScanError(err);
 
     logger.error(`Worker: Scan failed for ${connectorId}`, err);
     try {

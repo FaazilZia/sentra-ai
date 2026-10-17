@@ -8,8 +8,8 @@ export interface DecisionAlertEvent {
   organizationId: string;
   agent: string;
   action: string;
-  status: 'blocked' | 'flagged' | 'allowed' | string;
-  risk: 'low' | 'medium' | 'high' | string;
+  status: 'blocked' | 'flagged' | 'allowed';
+  risk: 'low' | 'medium' | 'high';
   reason: string;
   impact?: string;
   compliance?: string[];
@@ -19,7 +19,7 @@ export interface DecisionAlertEvent {
   mode?: string;
   timestamp?: string | Date;
   metadata?: Record<string, any>;
-  source?: 'interceptor' | 'mcp' | 'sdk' | 'api' | string;
+  source?: 'interceptor' | 'mcp' | 'sdk' | 'api';
 }
 
 /**
@@ -69,7 +69,7 @@ export async function processAlertJob(event: DecisionAlertEvent): Promise<void> 
         action,
         risk,
         reason,
-        policyTriggered: matchedPolicy || (compliance && compliance[0]) || 'General Safety Policy',
+        policyTriggered: matchedPolicy || compliance?.[0] || 'General Safety Policy',
         timestamp: new Date(event.timestamp || Date.now())
       });
     }

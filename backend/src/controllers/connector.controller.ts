@@ -120,7 +120,7 @@ export const createConnector = asyncHandler(async (req: any, res: Response) => {
   }
 
   // Clean raw secrets out of config
-  const cleanConfig = { ...(config || {}) };
+  const cleanConfig: Record<string, unknown> = config ? { ...config } : {};
   delete cleanConfig.credentials;
   delete cleanConfig.secretAccessKey;
   delete cleanConfig.password;

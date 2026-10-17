@@ -296,7 +296,7 @@ export class McpController {
           
           // 1. Dispatch through unified alert pipeline (Slack Block Kit, Email, etc.)
           try {
-            alertPipeline.dispatchDecisionAlert({
+            await alertPipeline.dispatchDecisionAlert({
               organizationId: agent.organizationId,
               agent: agent.name || agent.agentKeyId,
               action: args.action || 'Unknown tool action',
@@ -389,7 +389,7 @@ export class McpController {
           await McpController.logMcpAudit(agent, toolName, args, decisionStatus, riskLevel, decisionReason, durationMs);
           
           try {
-            alertPipeline.dispatchDecisionAlert({
+            await alertPipeline.dispatchDecisionAlert({
               organizationId: agent.organizationId,
               agent: agent.name || agent.agentKeyId,
               action: args.action || 'Unknown tool action',

@@ -1,5 +1,4 @@
 import { encrypt, decrypt } from './encryption';
-import logger from './logger';
 
 const ENCRYPTED_REGEX = /^[0-9a-fA-F]{24}:[0-9a-fA-F]{32}:[0-9a-fA-F]+$/;
 

@@ -1,5 +1,4 @@
 import nodemailer from 'nodemailer';
-import axios from 'axios';
 import prisma from '../config/db';
 import logger from '../utils/logger';
 
