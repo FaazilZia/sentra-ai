@@ -4,7 +4,7 @@ import prisma from '../config/db';
 import { resolveOrganizationId } from '../utils/company';
 import { enqueueConnectorScan } from '../services/queue.service';
 import { asyncHandler, sendSuccess, sendError } from '../utils/controllerHelpers';
-
+import { encryptCredentials, sanitizeConnector } from '../utils/credentialHelper';
 import { parseCursorPagination } from '../utils/pagination';
 
 export const listConnectors = asyncHandler(async (req: any, res: Response) => {
@@ -37,7 +37,8 @@ export const listConnectors = asyncHandler(async (req: any, res: Response) => {
   });
 
   const hasMore = rows.length > limit;
-  const data = hasMore ? rows.slice(0, -1) : rows;
+  const rawData = hasMore ? rows.slice(0, -1) : rows;
+  const data = rawData.map(r => sanitizeConnector(r));
   const nextCursor = hasMore ? data[data.length - 1].id : null;
 
   return sendSuccess(res, { data, items: data, nextCursor, total });
@@ -103,12 +104,27 @@ export const createConnector = asyncHandler(async (req: any, res: Response) => {
     return sendError(res, 400, 'Company context required');
   }
 
-  const { name, type, config, scope } = req.body as {
+  const { name, type, config, credentials, scope } = req.body as {
     name: string;
     type: 'sql' | 'gdrive' | 's3' | 'local';
     config?: Record<string, unknown>;
+    credentials?: Record<string, unknown> | string;
     scope?: Record<string, unknown>;
   };
+
+  // Encrypt credentials before storing
+  const rawCreds = credentials || (config && (config as any).credentials);
+  let encryptedCredentials: string | null = null;
+  if (rawCreds) {
+    encryptedCredentials = encryptCredentials(rawCreds);
+  }
+
+  // Clean raw secrets out of config
+  const cleanConfig: Record<string, unknown> = config ? { ...config } : {};
+  delete cleanConfig.credentials;
+  delete cleanConfig.secretAccessKey;
+  delete cleanConfig.password;
+  delete cleanConfig.private_key;
 
   const row = await prisma.connectors.create({
     data: {
@@ -116,14 +132,33 @@ export const createConnector = asyncHandler(async (req: any, res: Response) => {
       organizationId,
       name,
       type,
-      config: (config || {}) as object,
+      config: cleanConfig as object,
+      credentials: encryptedCredentials,
       scope: (scope || {}) as object,
       status: 'pending',
       last_scan_at: null,
+      last_error: null,
     },
   });
 
   await enqueueConnectorScan(type, row.id);
 
-  return sendSuccess(res, row, 201);
+  return sendSuccess(res, sanitizeConnector(row), 201);
+});
+
+export const deleteConnector = asyncHandler(async (req: any, res: Response) => {
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) return sendError(res, 401, 'Unauthorized');
+
+  const { id } = req.params;
+  const existing = await prisma.connectors.findFirst({
+    where: { id, organizationId },
+  });
+
+  if (!existing) {
+    return sendError(res, 404, 'Connector not found');
+  }
+
+  await prisma.connectors.delete({ where: { id } });
+  return sendSuccess(res, null, 200, 'Connector deleted successfully');
 });

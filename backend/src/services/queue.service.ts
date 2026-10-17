@@ -8,7 +8,7 @@ import { Client as PgClient } from 'pg';
 import logger from '../utils/logger';
 import prisma from '../config/db';
 import { logActivity } from './policy.service';
-import { decrypt } from '../utils/encryption';
+import { decryptCredentials } from '../utils/credentialHelper';
 import { SENSITIVE_PATTERNS } from './riskEngine';
 import { buildRedisOptions, getRedisUrl } from '../config/redis';
 import { PostMarketMonitoringService } from './postMarketMonitoring.service';
@@ -254,6 +254,20 @@ if (connection) {
     { connection }
   );
 
+  const alertWorker = new Worker(
+    'alerts',
+    async (job) => {
+      try {
+        const { processAlertJob } = require('./alertPipeline.service');
+        await processAlertJob(job.data);
+      } catch (err) {
+        logger.error(`[BULLMQ] alertWorker job ${job.id} failed:`, err);
+        throw err;
+      }
+    },
+    { connection }
+  );
+
   const registerFailedListener = (worker: Worker, queueName: string) => {
     worker.on('failed', (job, err) => {
       logger.error({
@@ -271,6 +285,7 @@ if (connection) {
   registerFailedListener(postMarketWorker, 'post-market-monitoring');
   registerFailedListener(automationsWorker, 'automations');
   registerFailedListener(intakeLLMWorker, 'intake-llm');
+  registerFailedListener(alertWorker, 'alerts');
 }
 
 async function scanS3Source(connector: any, creds: any): Promise<{ violations: number; apiCalls: number; bytesScanned: number }> {
@@ -413,6 +428,42 @@ async function scanSqlSource(connector: any, creds: any): Promise<{ violations: 
   return { violations, apiCalls, bytesScanned };
 }
 
+function formatConnectorScanError(err: any): string {
+  const rawMsg = err?.message || String(err);
+  if (rawMsg.includes('AccessDenied') || rawMsg.includes('Forbidden') || err?.name === 'AccessDenied') {
+    return 'Access Denied: Please verify permissions and credential scopes.';
+  }
+  if (rawMsg.includes('NoSuchBucket')) {
+    return 'Specified S3 bucket does not exist or is in a different region.';
+  }
+  if (rawMsg.includes('ECONNREFUSED') || rawMsg.includes('ETIMEDOUT')) {
+    return 'Connection refused: Host unreachable. Check firewall, network rules, or host address.';
+  }
+  if (rawMsg.includes('password authentication failed') || err?.code === '28P01') {
+    return 'Database authentication failed: Invalid username or password.';
+  }
+  if (rawMsg.includes('database') && rawMsg.includes('does not exist')) {
+    return 'Database not found: Specified database does not exist on the target server.';
+  }
+  if (rawMsg.includes('invalid_grant')) {
+    return 'Google Drive authentication failed: Invalid service account private key or client email.';
+  }
+  return `Scan failed: ${rawMsg}`;
+}
+
+async function executeSourceScan(type: string, connector: any, creds: any) {
+  if (type === 's3') {
+    return await scanS3Source(connector, creds);
+  }
+  if (type === 'gdrive') {
+    return await scanGDriveSource(connector, creds);
+  }
+  if (type === 'sql') {
+    return await scanSqlSource(connector, creds);
+  }
+  return { violations: 0, apiCalls: 0, bytesScanned: 0 };
+}
+
 export async function processConnectorScan(type: string, connectorId: string) {
   try {
     const connector = await prisma.connectors.findUnique({ where: { id: connectorId } });
@@ -432,30 +483,27 @@ export async function processConnectorScan(type: string, connectorId: string) {
     // 1. Decrypt Credentials
     let creds: any;
     try {
-      const encryptedCreds = (connector as any).credentials || (connector.config as any).credentials;
-      if (!encryptedCreds) throw new Error('Missing credentials');
-      creds = JSON.parse(decrypt(encryptedCreds));
-    } catch (err) {
+      const encryptedCreds = (connector as any).credentials || (connector.config as any)?.credentials;
+      if (!encryptedCreds) throw new Error('Missing credentials. Please configure authentication keys.');
+      creds = decryptCredentials(encryptedCreds);
+    } catch (err: any) {
+      const humanError = err.message || 'Decryption failed for connector credentials.';
       logger.error(`Decryption failed for connector ${connector.id}:`, err);
       await prisma.connectors.update({
         where: { id: connectorId },
-        data: { status: 'error', health_score: 0, last_scan_at: new Date().toISOString() }
+        data: {
+          status: 'error',
+          health_score: 0,
+          last_error: humanError,
+          last_scan_reason: { error: humanError, at: new Date().toISOString() },
+          last_scan_at: new Date().toISOString()
+        }
       });
       return;
     }
 
     logger.info(`Worker: Starting real scan for ${connector.name} (${type})`);
-    let result = { violations: 0, apiCalls: 0, bytesScanned: 0 };
-
-    if (type === 's3') {
-      result = await scanS3Source(connector, creds);
-    } else if (type === 'gdrive') {
-      result = await scanGDriveSource(connector, creds);
-    } else if (type === 'sql') {
-      result = await scanSqlSource(connector, creds);
-    }
-
-    const { violations, apiCalls, bytesScanned } = result;
+    const { violations, apiCalls, bytesScanned } = await executeSourceScan(type, connector, creds);
 
     // 3. Final Updates
     const scanCost = apiCalls * 0.001; // Base cost estimate per API call
@@ -469,21 +517,31 @@ export async function processConnectorScan(type: string, connectorId: string) {
         total_data_scanned: { increment: BigInt(bytesScanned) },
         health_score: violations > 0 ? Math.max(0, connector.health_score - 10) : 100,
         status: 'active',
+        last_error: null,
         updated_at: new Date()
       }
     });
 
     logger.info(`Worker: Scan completed for ${connector.name}. Detected ${violations} violations.`);
-  } catch (err) {
+  } catch (err: any) {
+    const rawMsg = err.message || String(err);
+    const humanError = formatConnectorScanError(err);
+
     logger.error(`Worker: Scan failed for ${connectorId}`, err);
-    await prisma.connectors.update({
-      where: { id: connectorId },
-      data: { 
-        status: 'error', 
-        health_score: { decrement: 10 },
-        last_scan_at: new Date().toISOString()
-      }
-    }).catch(() => {});
+    try {
+      await prisma.connectors.update({
+        where: { id: connectorId },
+        data: { 
+          status: 'error', 
+          health_score: { decrement: 10 },
+          last_error: humanError,
+          last_scan_reason: { error: humanError, raw: rawMsg, at: new Date().toISOString() },
+          last_scan_at: new Date().toISOString()
+        }
+      });
+    } catch {
+      // Ignore secondary update error
+    }
   }
 }
 
