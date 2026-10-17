@@ -9,6 +9,7 @@ import logger from '../utils/logger';
 import prisma from '../config/db';
 import { logActivity } from './policy.service';
 import { decrypt } from '../utils/encryption';
+import { decryptCredentials } from '../utils/credentialHelper';
 import { SENSITIVE_PATTERNS } from './riskEngine';
 import { buildRedisOptions, getRedisUrl } from '../config/redis';
 import { PostMarketMonitoringService } from './postMarketMonitoring.service';
@@ -254,6 +255,20 @@ if (connection) {
     { connection }
   );
 
+  const alertWorker = new Worker(
+    'alerts',
+    async (job) => {
+      try {
+        const { processAlertJob } = require('./alertPipeline.service');
+        await processAlertJob(job.data);
+      } catch (err) {
+        logger.error(`[BULLMQ] alertWorker job ${job.id} failed:`, err);
+        throw err;
+      }
+    },
+    { connection }
+  );
+
   const registerFailedListener = (worker: Worker, queueName: string) => {
     worker.on('failed', (job, err) => {
       logger.error({
@@ -271,6 +286,7 @@ if (connection) {
   registerFailedListener(postMarketWorker, 'post-market-monitoring');
   registerFailedListener(automationsWorker, 'automations');
   registerFailedListener(intakeLLMWorker, 'intake-llm');
+  registerFailedListener(alertWorker, 'alerts');
 }
 
 async function scanS3Source(connector: any, creds: any): Promise<{ violations: number; apiCalls: number; bytesScanned: number }> {
@@ -432,14 +448,21 @@ export async function processConnectorScan(type: string, connectorId: string) {
     // 1. Decrypt Credentials
     let creds: any;
     try {
-      const encryptedCreds = (connector as any).credentials || (connector.config as any).credentials;
-      if (!encryptedCreds) throw new Error('Missing credentials');
-      creds = JSON.parse(decrypt(encryptedCreds));
-    } catch (err) {
+      const encryptedCreds = (connector as any).credentials || (connector.config as any)?.credentials;
+      if (!encryptedCreds) throw new Error('Missing credentials. Please configure authentication keys.');
+      creds = decryptCredentials(encryptedCreds);
+    } catch (err: any) {
+      const humanError = err.message || 'Decryption failed for connector credentials.';
       logger.error(`Decryption failed for connector ${connector.id}:`, err);
       await prisma.connectors.update({
         where: { id: connectorId },
-        data: { status: 'error', health_score: 0, last_scan_at: new Date().toISOString() }
+        data: {
+          status: 'error',
+          health_score: 0,
+          last_error: humanError,
+          last_scan_reason: { error: humanError, at: new Date().toISOString() },
+          last_scan_at: new Date().toISOString()
+        }
       });
       return;
     }
@@ -469,21 +492,44 @@ export async function processConnectorScan(type: string, connectorId: string) {
         total_data_scanned: { increment: BigInt(bytesScanned) },
         health_score: violations > 0 ? Math.max(0, connector.health_score - 10) : 100,
         status: 'active',
+        last_error: null,
         updated_at: new Date()
       }
     });
 
     logger.info(`Worker: Scan completed for ${connector.name}. Detected ${violations} violations.`);
-  } catch (err) {
+  } catch (err: any) {
+    const rawMsg = err.message || String(err);
+    let humanError = `Scan failed: ${rawMsg}`;
+    if (rawMsg.includes('AccessDenied') || rawMsg.includes('Forbidden') || err.name === 'AccessDenied') {
+      humanError = 'Access Denied: Please verify permissions and credential scopes.';
+    } else if (rawMsg.includes('NoSuchBucket')) {
+      humanError = 'Specified S3 bucket does not exist or is in a different region.';
+    } else if (rawMsg.includes('ECONNREFUSED') || rawMsg.includes('ETIMEDOUT')) {
+      humanError = 'Connection refused: Host unreachable. Check firewall, network rules, or host address.';
+    } else if (rawMsg.includes('password authentication failed') || err.code === '28P01') {
+      humanError = 'Database authentication failed: Invalid username or password.';
+    } else if (rawMsg.includes('database') && rawMsg.includes('does not exist')) {
+      humanError = 'Database not found: Specified database does not exist on the target server.';
+    } else if (rawMsg.includes('invalid_grant')) {
+      humanError = 'Google Drive authentication failed: Invalid service account private key or client email.';
+    }
+
     logger.error(`Worker: Scan failed for ${connectorId}`, err);
-    await prisma.connectors.update({
-      where: { id: connectorId },
-      data: { 
-        status: 'error', 
-        health_score: { decrement: 10 },
-        last_scan_at: new Date().toISOString()
-      }
-    }).catch(() => {});
+    try {
+      await prisma.connectors.update({
+        where: { id: connectorId },
+        data: { 
+          status: 'error', 
+          health_score: { decrement: 10 },
+          last_error: humanError,
+          last_scan_reason: { error: humanError, raw: rawMsg, at: new Date().toISOString() },
+          last_scan_at: new Date().toISOString()
+        }
+      });
+    } catch {
+      // Ignore secondary update error
+    }
   }
 }
 

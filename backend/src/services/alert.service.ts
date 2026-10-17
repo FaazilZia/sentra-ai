@@ -121,93 +121,43 @@ class AlertService {
 
   async sendSlackAlert(orgId: string, violation: AlertViolation) {
     try {
-      const org = await prisma.organizations.findUnique({
-        where: { id: orgId },
-        select: { slackWebhookUrl: true, name: true }
+      const { SlackService } = require('./slack.service');
+      await SlackService.notifyDecisionEvent(orgId, {
+        status: 'blocked',
+        agent: violation.agent,
+        action: violation.action,
+        risk: violation.risk,
+        reason: violation.reason,
+        policyName: violation.policyTriggered,
       });
-
-      if (!org?.slackWebhookUrl) return;
-
-      const dashboardUrl = (process.env.FRONTEND_URL || 'https://sentraatech.info').split(',')[0];
-
-      const slackMessage = {
-        blocks: [
-          {
-            type: "header",
-            text: {
-              type: "plain_text",
-              text: "🚨 Sentraa AI: Action Blocked",
-              emoji: true
-            }
-          },
-          {
-            type: "section",
-            text: {
-              type: "mrkdwn",
-              text: `*Organization:* ${org.name}\n*Agent:* \`${violation.agent}\`\n*Action:* \`${violation.action}\`\n*Risk:* \`${violation.risk.toUpperCase()}\``
-            }
-          },
-          {
-            type: "section",
-            fields: [
-              {
-                type: "mrkdwn",
-                text: `*Policy:*\n${violation.policyTriggered || 'General Safety'}`
-              },
-              {
-                type: "mrkdwn",
-                text: `*Time:*\n${violation.timestamp.toLocaleTimeString()}`
-              }
-            ]
-          },
-          {
-            type: "section",
-            text: {
-              type: "mrkdwn",
-              text: `*Reason:* ${violation.reason}`
-            }
-          },
-          {
-            type: "actions",
-            elements: [
-              {
-                type: "button",
-                text: {
-                  type: "plain_text",
-                  text: "View Incident",
-                  emoji: true
-                },
-                url: `${dashboardUrl}/app/incidents`,
-                style: "danger"
-              }
-            ]
-          }
-        ]
-      };
-
-      await axios.post(org.slackWebhookUrl, slackMessage);
     } catch (error) {
       logger.error('[AlertService] Failed to send Slack alert:', error);
     }
   }
 
   /**
-   * Orchestrates notifications for a block decision.
-   * Fire-and-forget.
+   * Orchestrates notifications for a block/flag decision.
+   * Dispatches non-blocking via unified alert pipeline.
    */
   notify(orgId: string, decision: any, agent: string, action: string) {
-    const violation: AlertViolation = {
-      agent,
-      action,
-      risk: decision.risk || 'high',
-      reason: decision.reason || 'Security policy violation',
-      policyTriggered: Array.isArray(decision.compliance) ? decision.compliance[0] : decision.compliance,
-      timestamp: new Date()
-    };
-
-    // Fire and forget
-    this.sendEmailAlert(orgId, violation).catch(err => logger.error(err));
-    this.sendSlackAlert(orgId, violation).catch(err => logger.error(err));
+    try {
+      const { alertPipeline } = require('./alertPipeline.service');
+      alertPipeline.dispatchDecisionAlert({
+        organizationId: orgId,
+        agent,
+        action,
+        status: decision.status || 'blocked',
+        risk: decision.risk || 'high',
+        reason: decision.reason || 'Security policy violation',
+        compliance: Array.isArray(decision.compliance) ? decision.compliance : [decision.compliance].filter(Boolean),
+        matchedPolicy: decision.matchedPolicy,
+        ruleId: decision.ruleId,
+        mode: decision.mode,
+        source: 'interceptor'
+      });
+    } catch (err) {
+      logger.error('[AlertService] Dispatch to alertPipeline failed:', err);
+    }
   }
 
   async sendTestEmail(email: string, orgName: string) {

@@ -4,6 +4,7 @@ import prisma from '../config/db';
 import logger from '../utils/logger';
 import { makeDecision } from '../services/decisionEngine';
 import { McpAgentKeyService } from '../services/mcpAgentKey.service';
+import { alertPipeline } from '../services/alertPipeline.service';
 
 const getNow = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
@@ -289,9 +290,76 @@ export class McpController {
           reason: decision.reason,
         };
 
-        if (decision.status === 'blocked') {
+        if (decision.status === 'blocked' || decision.status === 'flagged') {
           const durationMs = Math.round(getNow() - startTime);
           await McpController.logMcpAudit(agent, toolName, args, decisionStatus, riskLevel, decisionReason, durationMs);
+          
+          // 1. Dispatch through unified alert pipeline (Slack Block Kit, Email, etc.)
+          try {
+            alertPipeline.dispatchDecisionAlert({
+              organizationId: agent.organizationId,
+              agent: agent.name || agent.agentKeyId,
+              action: args.action || 'Unknown tool action',
+              status: decision.status,
+              risk: decision.risk,
+              reason: decision.reason,
+              compliance: decision.compliance,
+              matchedPolicy: decision.matchedPolicy,
+              ruleId: decision.ruleId,
+              mode: decision.mode,
+              source: 'mcp'
+            });
+          } catch (alertErr) {
+            logger.error('[MCP-RPC] Failed to dispatch decision to alert pipeline:', alertErr);
+          }
+
+          // 2. Auto-create incident on high-risk BLOCKED action
+          if (decision.status === 'blocked' && decision.risk === 'high') {
+            const incidentId = crypto.randomUUID();
+            await prisma.incidents.create({
+              data: {
+                id: incidentId,
+                organizationId: agent.organizationId,
+                agent_id: agent.agentKeyId,
+                severity: 85,
+                action: args.action || 'MCP Action',
+                details: decision.reason || 'Action blocked by MCP Governance Gateway',
+                prompt_excerpt: (args.action || '').slice(0, 500),
+                response_excerpt: 'ACTION_BLOCKED',
+                event_metadata: {
+                  toolName,
+                  agentKeyId: agent.agentKeyId,
+                  agentName: agent.name,
+                  matchedPolicy: decision.matchedPolicy,
+                  compliance: decision.compliance,
+                  args
+                },
+                status: 'unresolved'
+              }
+            }).catch(err => logger.error('[MCP-RPC] Failed to create incident for blocked action:', err));
+          }
+
+          // 3. Record in interception_logs for dashboard & live block feed
+          await prisma.interception_logs.create({
+            data: {
+              user_id: agent.agentKeyId,
+              organizationId: agent.organizationId,
+              input_text: `[MCP:${toolName}] ${args.action || ''}`,
+              decision: decision.status === 'blocked' ? 'BLOCK' : 'FLAG',
+              confidence: 'High',
+              reason: decision.reason || 'Action blocked by Sentraa governance',
+              policy_triggered: decision.matchedPolicy || 'MCP Guardrail Policy',
+              metadata: {
+                source: 'mcp',
+                agentKeyId: agent.agentKeyId,
+                agentName: agent.name,
+                toolName,
+                args
+              },
+              timestamp: new Date()
+            }
+          }).catch(err => logger.error('[MCP-RPC] Failed to record interception log:', err));
+
           logger.warn(`[MCP-RPC] Decision Blocked: tool="${toolName}" reason="${decision.reason}" latency=${durationMs}ms`);
           return McpController.sendJsonRpcError(
             res,
@@ -319,6 +387,22 @@ export class McpController {
         if (!policyResult.allowed) {
           const durationMs = Math.round(getNow() - startTime);
           await McpController.logMcpAudit(agent, toolName, args, decisionStatus, riskLevel, decisionReason, durationMs);
+          
+          try {
+            alertPipeline.dispatchDecisionAlert({
+              organizationId: agent.organizationId,
+              agent: agent.name || agent.agentKeyId,
+              action: args.action || 'Unknown tool action',
+              status: 'blocked',
+              risk: 'high',
+              reason: policyResult.reason || 'Policy evaluation violation',
+              policyName: policyResult.matchedPolicy,
+              source: 'mcp'
+            });
+          } catch (alertErr) {
+            logger.error('[MCP-RPC] Failed to dispatch policy block to alert pipeline:', alertErr);
+          }
+
           logger.warn(`[MCP-RPC] Policy Blocked: tool="${toolName}" reason="${policyResult.reason}" latency=${durationMs}ms`);
           return McpController.sendJsonRpcError(
             res,

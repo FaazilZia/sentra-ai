@@ -1,16 +1,32 @@
 import prisma from '../config/db';
 import logger from '../utils/logger';
 import { IncomingWebhook } from '@slack/webhook';
+import { encryptCredentials, decryptCredentials } from '../utils/credentialHelper';
 
 export const SlackService = {
   /**
-   * Fetch Slack Configuration for an organization
+   * Fetch Slack Configuration for an organization.
+   * Decrypts the stored webhook URL before returning.
    */
   async getConfig(orgId: string) {
     try {
-      return await prisma.slack_config.findUnique({
+      const config = await prisma.slack_config.findUnique({
         where: { orgId }
       });
+      if (!config) return null;
+
+      let decryptedUrl = config.webhookUrl;
+      try {
+        decryptedUrl = decryptCredentials(config.webhookUrl);
+      } catch {
+        // Fallback if already plaintext
+        decryptedUrl = config.webhookUrl;
+      }
+
+      return {
+        ...config,
+        webhookUrl: decryptedUrl
+      };
     } catch (error) {
       logger.error(`[SlackService] Failed to get config for org ${orgId}:`, error);
       return null;
@@ -18,26 +34,33 @@ export const SlackService = {
   },
 
   /**
-   * Save (Upsert) Slack Configuration for an organization
+   * Save (Upsert) Slack Configuration for an organization.
+   * Encrypts the webhook URL with AES-256-GCM before database persistence.
    */
   async saveConfig(orgId: string, data: { webhookUrl: string; channel: string; enabled?: boolean; notifyOn: string[] }) {
     try {
-      return await prisma.slack_config.upsert({
+      const encryptedUrl = encryptCredentials(data.webhookUrl.trim());
+      const saved = await prisma.slack_config.upsert({
         where: { orgId },
         update: {
-          webhookUrl: data.webhookUrl,
+          webhookUrl: encryptedUrl,
           channel: data.channel,
           enabled: data.enabled ?? true,
           notifyOn: data.notifyOn
         },
         create: {
           orgId,
-          webhookUrl: data.webhookUrl,
+          webhookUrl: encryptedUrl,
           channel: data.channel,
           enabled: data.enabled ?? true,
           notifyOn: data.notifyOn
         }
       });
+
+      return {
+        ...saved,
+        webhookUrl: data.webhookUrl
+      };
     } catch (error) {
       logger.error(`[SlackService] Failed to save config for org ${orgId}:`, error);
       throw error;
@@ -60,7 +83,7 @@ export const SlackService = {
   },
 
   /**
-   * Core Slack message delivery
+   * Core Slack message delivery with decrypted webhook
    */
   async sendSlackMessage(orgId: string, text: string, blocks?: any[]) {
     try {
@@ -89,7 +112,14 @@ export const SlackService = {
    */
   async testConnection(webhookUrl: string, channel: string) {
     try {
-      const webhook = new IncomingWebhook(webhookUrl);
+      let resolvedUrl = webhookUrl;
+      try {
+        resolvedUrl = decryptCredentials(webhookUrl);
+      } catch {
+        resolvedUrl = webhookUrl;
+      }
+
+      const webhook = new IncomingWebhook(resolvedUrl);
       await webhook.send({
         text: '🔔 *Sentraa AI Slack Integration Test* \nConnection successful! This channel is now active for compliance alerts.',
         channel,
@@ -128,19 +158,46 @@ export const SlackService = {
   },
 
   /**
-   * Scoped Trigger: Guardrail Action Blocked
+   * Dispatches rich Slack Block Kit notifications for BLOCK and FLAG decision events.
    */
-  async notifyGuardrailBlock(orgId: string, agentName: string, action: string, policyName: string) {
+  async notifyDecisionEvent(orgId: string, event: {
+    status: 'blocked' | 'flagged' | string;
+    agent: string;
+    action: string;
+    risk?: string;
+    reason?: string;
+    policyName?: string;
+    ruleId?: string;
+    compliance?: string[];
+    mode?: string;
+  }): Promise<boolean> {
     const config = await this.getConfig(orgId);
-    if (!config || !config.enabled || !config.notifyOn.includes('guardrail_block')) return;
+    if (!config || !config.enabled || !config.webhookUrl) return false;
 
-    const title = '🛡️ Sentraa AI Guardrail Interception Alert';
+    const notifyOn = config.notifyOn || [];
+    const isBlocked = event.status === 'blocked';
+    const isFlagged = event.status === 'flagged';
+
+    // Verify triggers if explicitly defined
+    if (notifyOn.length > 0) {
+      const allowsBlock = isBlocked && (notifyOn.includes('guardrail_block') || notifyOn.includes('policy_violation') || notifyOn.includes('block'));
+      const allowsFlag = isFlagged && (notifyOn.includes('guardrail_block') || notifyOn.includes('drift_detected') || notifyOn.includes('flag'));
+      if (!allowsBlock && !allowsFlag) {
+        return false;
+      }
+    }
+
+    const dashboardUrl = (process.env.FRONTEND_URL || 'https://sentraatech.info').split(',')[0].replace(/\/$/, '');
+    const headerTitle = isBlocked ? '🚨 Sentraa AI: Action BLOCKED' : '⚠️ Sentraa AI: Action FLAGGED';
+    const severityBadge = (event.risk || 'high').toUpperCase();
+    const policyText = event.policyName || (event.compliance && event.compliance.length > 0 ? event.compliance.join(', ') : 'Security Guardrail Policy');
+
     const blocks = [
       {
         type: 'header',
         text: {
           type: 'plain_text',
-          text: '🛡️ Guardrail Block Alert',
+          text: headerTitle,
           emoji: true
         }
       },
@@ -148,21 +205,61 @@ export const SlackService = {
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `An action has been intercepted and *blocked* by system policies.\n\n*Agent:* \`${agentName}\`\n*Action:* \`${action}\`\n*Policy Triggered:* \`${policyName || 'System Hardening Rule'}\``
+          text: `*Status:* \`${event.status.toUpperCase()}\` | *Risk Level:* \`${severityBadge}\`\n*Agent:* \`${event.agent}\`\n*Action:* \`${event.action}\``
         }
       },
       {
-        type: 'context',
-        elements: [
+        type: 'section',
+        fields: [
           {
             type: 'mrkdwn',
-            text: 'Severity: High • Status: Enforced'
+            text: `*Rule / Policy:*\n${policyText}`
+          },
+          {
+            type: 'mrkdwn',
+            text: `*Time:*\n${new Date().toLocaleTimeString()}`
+          }
+        ]
+      },
+      {
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `*Reason:* ${event.reason || 'Security policy violation detected'}`
+        }
+      },
+      {
+        type: 'actions',
+        elements: [
+          {
+            type: 'button',
+            text: {
+              type: 'plain_text',
+              text: isBlocked ? 'View Incident' : 'Review in Dashboard',
+              emoji: true
+            },
+            url: `${dashboardUrl}/app/incidents`,
+            style: isBlocked ? 'danger' : 'primary'
           }
         ]
       }
     ];
 
-    await this.sendSlackMessage(orgId, title, blocks);
+    return await this.sendSlackMessage(orgId, headerTitle, blocks);
+  },
+
+  /**
+   * Scoped Trigger: Guardrail Action Blocked
+   */
+  async notifyGuardrailBlock(orgId: string, agentName: string, action: string, policyName: string) {
+    return await this.notifyDecisionEvent(orgId, {
+      status: 'blocked',
+      agent: agentName,
+      action,
+      risk: 'high',
+      reason: 'Guardrail interception',
+      policyName
+    });
   },
 
   /**
@@ -245,38 +342,14 @@ export const SlackService = {
    * Scoped Trigger: Policy Violation
    */
   async notifyPolicyViolation(orgId: string, policyName: string, agentName: string) {
-    const config = await this.getConfig(orgId);
-    if (!config || !config.enabled || !config.notifyOn.includes('policy_violation')) return;
-
-    const title = '❌ Sentraa AI Policy Violation Alert';
-    const blocks = [
-      {
-        type: 'header',
-        text: {
-          type: 'plain_text',
-          text: '❌ Policy Violation Alert',
-          emoji: true
-        }
-      },
-      {
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: `A policy compliance violation was logged during evaluation.\n\n*Policy Name:* \`${policyName}\`\n*AI Agent Node:* \`${agentName}\``
-        }
-      },
-      {
-        type: 'context',
-        elements: [
-          {
-            type: 'mrkdwn',
-            text: 'Compliance Center • Automatic Alert'
-          }
-        ]
-      }
-    ];
-
-    await this.sendSlackMessage(orgId, title, blocks);
+    return await this.notifyDecisionEvent(orgId, {
+      status: 'blocked',
+      agent: agentName,
+      action: 'Policy Violation Event',
+      risk: 'high',
+      reason: `Policy compliance violation during evaluation: ${policyName}`,
+      policyName
+    });
   },
 
   /**

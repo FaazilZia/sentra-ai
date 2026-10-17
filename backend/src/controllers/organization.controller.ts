@@ -3,6 +3,7 @@ import prisma from '../config/db';
 import { resolveOrganizationId } from '../utils/company';
 import { asyncHandler, sendSuccess, sendError } from '../utils/controllerHelpers';
 import { alertService } from '../services/alert.service';
+import logger from '../utils/logger';
 
 export const getOrganizationById = asyncHandler(async (req: any, res: Response) => {
   const { id } = req.params;
@@ -84,6 +85,20 @@ export const updateAlertSettings = asyncHandler(async (req: any, res: Response) 
       updated_at: new Date()
     }
   });
+
+  if (slackWebhookUrl) {
+    try {
+      const { SlackService } = require('../services/slack.service');
+      await SlackService.saveConfig(organizationId, {
+        webhookUrl: slackWebhookUrl,
+        channel: '#alerts-compliance',
+        enabled: true,
+        notifyOn: ['guardrail_block', 'policy_violation', 'incident_created']
+      });
+    } catch (syncErr) {
+      logger.error('[OrgController] Failed to sync slack_config:', syncErr);
+    }
+  }
 
   return sendSuccess(res, updated, 200, 'Alert settings updated successfully');
 });
