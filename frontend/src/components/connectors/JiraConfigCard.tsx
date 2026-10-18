@@ -36,7 +36,7 @@ export function JiraConfigCard() {
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
   useEffect(() => {
-    loadConfig();
+    void loadConfig();
   }, []);
 
   const loadConfig = async () => {
@@ -150,6 +150,28 @@ export function JiraConfigCard() {
     }
   };
 
+  const renderStatusBadge = () => {
+    if (!hasExistingConfig) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20">
+          Not Configured
+        </span>
+      );
+    }
+    if (enabled) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+          <CheckCircle2 className="h-3 w-3" /> Active
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+        Disabled
+      </span>
+    );
+  };
+
   if (loading) {
     return (
       <div className="bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-slate-800 rounded-xl p-6 flex items-center justify-center">
@@ -171,21 +193,7 @@ export function JiraConfigCard() {
               <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
                 Jira Cloud Integration
               </h3>
-              {hasExistingConfig ? (
-                enabled ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                    <CheckCircle2 className="h-3 w-3" /> Active
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                    Disabled
-                  </span>
-                )
-              ) : (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20">
-                  Not Configured
-                </span>
-              )}
+              {renderStatusBadge()}
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Automatically creates incident tickets in Jira Cloud when an AI agent action is BLOCKED with high risk.
@@ -209,15 +217,19 @@ export function JiraConfigCard() {
         <div className="flex items-start gap-2 text-slate-700 dark:text-slate-300">
           <Lock className="h-4 w-4 text-indigo-500 shrink-0 mt-0.5" />
           <div>
-            <span className="font-semibold text-slate-900 dark:text-white">Zero-Exposure Security: </span>
-            Jira API credentials are AES-256-GCM encrypted at rest. PII (SSNs, Card numbers, emails) is automatically redacted before ticket creation.
+            <span className="font-semibold text-slate-900 dark:text-white">Zero-Exposure Security:</span>
+            <span> Jira API credentials are AES-256-GCM encrypted at rest. PII (SSNs, Card numbers, emails) is automatically redacted before ticket creation.</span>
           </div>
         </div>
         <div className="flex items-start gap-2 text-slate-700 dark:text-slate-300">
           <ShieldAlert className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
           <div>
-            <span className="font-semibold text-slate-900 dark:text-white">Required Permissions: </span>
-            Your Atlassian API token only requires <code className="px-1 py-0.5 bg-slate-200 dark:bg-slate-800 rounded text-[11px] font-mono">Browse Projects</code> and <code className="px-1 py-0.5 bg-slate-200 dark:bg-slate-800 rounded text-[11px] font-mono">Create Issues</code> scopes.
+            <span className="font-semibold text-slate-900 dark:text-white">Required Permissions:</span>
+            <span> Your Atlassian API token only requires </span>
+            <code className="px-1 py-0.5 bg-slate-200 dark:bg-slate-800 rounded text-[11px] font-mono">Browse Projects</code>
+            <span> and </span>
+            <code className="px-1 py-0.5 bg-slate-200 dark:bg-slate-800 rounded text-[11px] font-mono">Create Issues</code>
+            <span> scopes.</span>
           </div>
         </div>
       </div>
@@ -255,10 +267,11 @@ export function JiraConfigCard() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
           {/* Site URL */}
           <div className="space-y-1">
-            <label className="font-bold text-slate-700 dark:text-slate-300 block">
+            <label htmlFor="jira-site-url" className="font-bold text-slate-700 dark:text-slate-300 block">
               Jira Site URL <span className="text-red-500">*</span>
             </label>
             <input
+              id="jira-site-url"
               type="url"
               required
               value={siteUrl}
@@ -273,10 +286,11 @@ export function JiraConfigCard() {
 
           {/* Project Key */}
           <div className="space-y-1">
-            <label className="font-bold text-slate-700 dark:text-slate-300 block">
+            <label htmlFor="jira-project-key" className="font-bold text-slate-700 dark:text-slate-300 block">
               Project Key <span className="text-red-500">*</span>
             </label>
             <input
+              id="jira-project-key"
               type="text"
               required
               value={projectKey}
@@ -291,10 +305,11 @@ export function JiraConfigCard() {
 
           {/* User Email */}
           <div className="space-y-1">
-            <label className="font-bold text-slate-700 dark:text-slate-300 block">
+            <label htmlFor="jira-user-email" className="font-bold text-slate-700 dark:text-slate-300 block">
               Atlassian Account Email <span className="text-red-500">*</span>
             </label>
             <input
+              id="jira-user-email"
               type="email"
               required
               value={userEmail}
@@ -310,7 +325,7 @@ export function JiraConfigCard() {
           {/* API Token */}
           <div className="space-y-1">
             <div className="flex items-center justify-between">
-              <label className="font-bold text-slate-700 dark:text-slate-300 block">
+              <label htmlFor="jira-api-token" className="font-bold text-slate-700 dark:text-slate-300 block">
                 Jira API Token <span className="text-red-500">*</span>
               </label>
               <a 
@@ -323,6 +338,7 @@ export function JiraConfigCard() {
               </a>
             </div>
             <input
+              id="jira-api-token"
               type="password"
               required
               value={apiToken}
@@ -337,10 +353,11 @@ export function JiraConfigCard() {
 
           {/* Issue Type */}
           <div className="space-y-1">
-            <label className="font-bold text-slate-700 dark:text-slate-300 block">
+            <label htmlFor="jira-issue-type" className="font-bold text-slate-700 dark:text-slate-300 block">
               Issue Type
             </label>
             <input
+              id="jira-issue-type"
               type="text"
               value={issueType}
               onChange={(e) => setIssueType(e.target.value)}
@@ -354,15 +371,16 @@ export function JiraConfigCard() {
 
           {/* Hourly Cap */}
           <div className="space-y-1">
-            <label className="font-bold text-slate-700 dark:text-slate-300 block">
+            <label htmlFor="jira-hourly-cap" className="font-bold text-slate-700 dark:text-slate-300 block">
               Hourly Ticket Cap
             </label>
             <input
+              id="jira-hourly-cap"
               type="number"
               min={1}
               max={100}
               value={hourlyCap}
-              onChange={(e) => setHourlyCap(Math.max(1, parseInt(e.target.value) || 10))}
+              onChange={(e) => setHourlyCap(Math.max(1, Number.parseInt(e.target.value, 10) || 10))}
               className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded p-2.5 text-slate-900 dark:text-white font-mono"
             />
             <p className="text-[10px] text-slate-500 dark:text-slate-400">

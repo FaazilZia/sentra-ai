@@ -41,8 +41,6 @@ export async function processAlertJob(event: DecisionAlertEvent): Promise<void> 
   // Guarantee no raw PII leaks to outbound notification channels (Slack, Email, SIEM)
   const sanitizedAction = PIIScannerService.redact(action || '');
 
-  const errors: Error[] = [];
-
   // 1. Channel Adapter: Slack
   try {
     await SlackService.notifyDecisionEvent(organizationId, {
@@ -58,7 +56,6 @@ export async function processAlertJob(event: DecisionAlertEvent): Promise<void> 
     });
   } catch (slackErr: any) {
     logger.error(`[AlertPipeline] Slack dispatch error for org ${organizationId}:`, slackErr);
-    errors.push(slackErr);
   }
 
   // 2. Channel Adapter: Email Alert
@@ -81,7 +78,6 @@ export async function processAlertJob(event: DecisionAlertEvent): Promise<void> 
     }
   } catch (emailErr: any) {
     logger.error(`[AlertPipeline] Email dispatch error for org ${organizationId}:`, emailErr);
-    errors.push(emailErr);
   }
 
   // 3. Channel Adapter: Jira Ticket (BLOCKED + high risk only)
@@ -102,7 +98,6 @@ export async function processAlertJob(event: DecisionAlertEvent): Promise<void> 
     }
   } catch (jiraErr: any) {
     logger.error(`[AlertPipeline] Jira dispatch error for org ${organizationId}:`, jiraErr);
-    errors.push(jiraErr);
   }
 }
 

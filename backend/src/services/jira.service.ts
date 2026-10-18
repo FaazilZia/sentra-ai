@@ -27,6 +27,14 @@ export interface IncidentTicketPayload {
 }
 
 /**
+ * Builds basic auth header without nested template literals.
+ */
+function getBasicAuthHeader(email: string, token: string): string {
+  const credentials = `${email}:${token}`;
+  return 'Basic ' + Buffer.from(credentials).toString('base64');
+}
+
+/**
  * Builds valid Atlassian Document Format (ADF v1) for Jira Cloud descriptions.
  */
 function buildJiraAdf(data: {
@@ -102,7 +110,17 @@ function buildJiraAdf(data: {
             content: [{
               type: 'paragraph',
               content: [
-                { type: 'text', text: 'Policy Triggered: ', marks: [{ type: 'strong' }] },
+                { type: 'text', text: 'Violation Reason: ', marks: [{ type: 'strong' }] },
+                { type: 'text', text: data.reason }
+              ]
+            }]
+          },
+          {
+            type: 'listItem',
+            content: [{
+              type: 'paragraph',
+              content: [
+                { type: 'text', text: 'Triggered Policy: ', marks: [{ type: 'strong' }] },
                 { type: 'text', text: data.policy }
               ]
             }]
@@ -113,17 +131,7 @@ function buildJiraAdf(data: {
               type: 'paragraph',
               content: [
                 { type: 'text', text: 'Frameworks: ', marks: [{ type: 'strong' }] },
-                { type: 'text', text: data.frameworks || 'General Governance' }
-              ]
-            }]
-          },
-          {
-            type: 'listItem',
-            content: [{
-              type: 'paragraph',
-              content: [
-                { type: 'text', text: 'Reason: ', marks: [{ type: 'strong' }] },
-                { type: 'text', text: data.reason }
+                { type: 'text', text: data.frameworks }
               ]
             }]
           }
@@ -132,10 +140,10 @@ function buildJiraAdf(data: {
       {
         type: 'paragraph',
         content: [
-          { type: 'text', text: '🔗 View incident details in Sentraa Dashboard: ' },
+          { type: 'text', text: 'Review incident details & remediation: ', marks: [{ type: 'strong' }] },
           {
             type: 'text',
-            text: data.incidentUrl,
+            text: 'View in Sentraa Governance Dashboard',
             marks: [{ type: 'link', attrs: { href: data.incidentUrl } }]
           }
         ]
@@ -144,28 +152,298 @@ function buildJiraAdf(data: {
   };
 }
 
+/**
+ * Checks if an incident already has a Jira ticket associated with it.
+ */
+async function checkExistingIncident(organizationId: string, incidentId?: string, agent?: string): Promise<{
+  targetId: string;
+  existingKey?: string;
+  existingUrl?: string;
+}> {
+  let targetId = incidentId || '';
+
+  if (!targetId) {
+    const recent = await prisma.incidents.findFirst({
+      where: {
+        organizationId,
+        agent_id: agent,
+        created_at: { gte: new Date(Date.now() - 15000) }
+      },
+      orderBy: { created_at: 'desc' },
+      select: { id: true, jira_issue_key: true, jira_issue_url: true }
+    });
+    if (recent) {
+      targetId = recent.id;
+      if (recent.jira_issue_key) {
+        return {
+          targetId: recent.id,
+          existingKey: recent.jira_issue_key,
+          existingUrl: recent.jira_issue_url || undefined
+        };
+      }
+    }
+  } else {
+    const existing = await prisma.incidents.findUnique({
+      where: { id: targetId },
+      select: { id: true, jira_issue_key: true, jira_issue_url: true }
+    });
+    if (existing?.jira_issue_key) {
+      return {
+        targetId: existing.id,
+        existingKey: existing.jira_issue_key,
+        existingUrl: existing.jira_issue_url || undefined
+      };
+    }
+  }
+
+  return { targetId };
+}
+
+/**
+ * Creates an individual Jira issue for a blocked action under the hourly cap.
+ */
+async function createSingleIssue(
+  config: JiraConfigData,
+  payload: IncidentTicketPayload,
+  sanitizedAction: string,
+  incidentUrl: string,
+  authHeader: string,
+  targetIncidentId: string
+) {
+  const siteUrl = config.siteUrl.replace(/\/$/, '');
+  const { agent, status, risk, reason, matchedPolicy, compliance } = payload;
+  const issueSummary = `[Sentraa Alert] High-Risk Action Blocked: ${agent.slice(0, 50)}`;
+  const complianceStr = Array.isArray(compliance) ? compliance.join(', ') : (compliance ?? 'AI Safety');
+
+  const adfDoc = buildJiraAdf({
+    agent,
+    action: sanitizedAction,
+    status,
+    risk,
+    reason: reason || 'Action blocked by Sentraa safety guardrails',
+    policy: matchedPolicy || 'Security Guardrail Policy',
+    frameworks: complianceStr,
+    incidentUrl
+  });
+
+  const createRes = await fetch(`${siteUrl}/rest/api/3/issue`, {
+    method: 'POST',
+    headers: {
+      Authorization: authHeader,
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify({
+      fields: {
+        project: { key: config.projectKey },
+        summary: issueSummary,
+        issuetype: { name: config.issueType || 'Task' },
+        description: adfDoc,
+        labels: ['sentraa-alert', 'high-risk', 'ai-governance']
+      }
+    })
+  });
+
+  if (!createRes.ok) {
+    const errText = await createRes.text();
+    logger.error(`[JiraService] Jira issue creation failed (${createRes.status}):`, errText);
+    throw new Error(`Jira API returned error ${createRes.status}: ${errText.slice(0, 200)}`);
+  }
+
+  const issueData: any = await createRes.json();
+  const issueKey = issueData.key;
+  const issueUrl = `${siteUrl}/browse/${issueKey}`;
+
+  if (targetIncidentId) {
+    await prisma.incidents.update({
+      where: { id: targetIncidentId },
+      data: { jira_issue_key: issueKey, jira_issue_url: issueUrl }
+    }).catch(err => logger.error('[JiraService] Failed to record issue key on incident:', err));
+  }
+
+  logger.info(`[JiraService] Created Jira issue ${issueKey} for incident ${targetIncidentId}`);
+  return { success: true, issueKey, issueUrl, isSummary: false };
+}
+
+/**
+ * Handles hourly ticket cap overflow by creating or appending to an hourly summary ticket.
+ */
+async function handleSummaryTicketOverflow(
+  config: JiraConfigData,
+  payload: IncidentTicketPayload,
+  sanitizedAction: string,
+  incidentUrl: string,
+  authHeader: string,
+  hourKey: string,
+  hourlyCap: number,
+  targetIncidentId: string
+) {
+  const siteUrl = config.siteUrl.replace(/\/$/, '');
+  const { organizationId, agent, matchedPolicy } = payload;
+
+  const existingSummary = await prisma.jira_summary_tickets.findUnique({
+    where: {
+      orgId_hourKey: {
+        orgId: organizationId,
+        hourKey
+      }
+    }
+  });
+
+  if (!existingSummary) {
+    const summaryTitle = `[Sentraa Overflow Summary] ${hourlyCap}+ Blocked Actions Exceeded (${hourKey}:00)`;
+    const summaryAdf = {
+      type: 'doc',
+      version: 1,
+      content: [
+        {
+          type: 'heading',
+          attrs: { level: 2 },
+          content: [{ type: 'text', text: '📊 Sentraa AI: Hourly Blocked Actions Summary' }]
+        },
+        {
+          type: 'paragraph',
+          content: [
+            {
+              type: 'text',
+              text: `The rate limit threshold of ${hourlyCap} individual tickets has been reached for this hour (${hourKey}:00). Subsequent high-risk blocked actions are aggregated here to prevent ticket flood:`,
+              marks: [{ type: 'strong' }]
+            }
+          ]
+        },
+        {
+          type: 'bulletList',
+          content: [
+            {
+              type: 'listItem',
+              content: [{
+                type: 'paragraph',
+                content: [
+                  { type: 'text', text: `Incident ${targetIncidentId || 'N/A'}: Agent "${agent}" | Action: "${sanitizedAction}" | Rule: ${matchedPolicy || 'Security Policy'} | ` },
+                  { type: 'text', text: 'View Incident', marks: [{ type: 'link', attrs: { href: incidentUrl } }] }
+                ]
+              }]
+            }
+          ]
+        }
+      ]
+    };
+
+    const summaryRes = await fetch(`${siteUrl}/rest/api/3/issue`, {
+      method: 'POST',
+      headers: {
+        Authorization: authHeader,
+        'Content-Type': 'application/json',
+        Accept: 'application/json'
+      },
+      body: JSON.stringify({
+        fields: {
+          project: { key: config.projectKey },
+          summary: summaryTitle,
+          issuetype: { name: config.issueType || 'Task' },
+          description: summaryAdf,
+          labels: ['sentraa-alert', 'overflow-summary', 'rate-limited']
+        }
+      })
+    });
+
+    if (!summaryRes.ok) {
+      const errText = await summaryRes.text();
+      throw new Error(`Failed to create Jira summary issue: ${errText.slice(0, 200)}`);
+    }
+
+    const summaryData: any = await summaryRes.json();
+    const issueKey = summaryData.key;
+    const issueUrl = `${siteUrl}/browse/${issueKey}`;
+
+    await prisma.jira_summary_tickets.create({
+      data: {
+        orgId: organizationId,
+        hourKey,
+        issueKey,
+        incidentCount: 1
+      }
+    });
+
+    if (targetIncidentId) {
+      await prisma.incidents.update({
+        where: { id: targetIncidentId },
+        data: { jira_issue_key: issueKey, jira_issue_url: issueUrl }
+      }).catch(() => {});
+    }
+
+    return { success: true, issueKey, issueUrl, isSummary: true };
+  }
+
+  // Existing summary ticket: append a comment
+  const commentAdf = {
+    type: 'doc',
+    version: 1,
+    content: [
+      {
+        type: 'paragraph',
+        content: [
+          { type: 'text', text: `• [Blocked Action #${existingSummary.incidentCount + 1}] `, marks: [{ type: 'strong' }] },
+          { type: 'text', text: `Agent: ${agent} | Action: "${sanitizedAction}" | Policy: ${matchedPolicy || 'Security Policy'} | ` },
+          { type: 'text', text: 'View Incident', marks: [{ type: 'link', attrs: { href: incidentUrl } }] }
+        ]
+      }
+    ]
+  };
+
+  await fetch(`${siteUrl}/rest/api/3/issue/${existingSummary.issueKey}/comment`, {
+    method: 'POST',
+    headers: {
+      Authorization: authHeader,
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify({ body: commentAdf })
+  }).catch(err => logger.error('[JiraService] Failed to append comment to summary ticket:', err));
+
+  await prisma.jira_summary_tickets.update({
+    where: { id: existingSummary.id },
+    data: { incidentCount: { increment: 1 } }
+  }).catch(() => {});
+
+  const summaryIssueUrl = `${siteUrl}/browse/${existingSummary.issueKey}`;
+  if (targetIncidentId) {
+    await prisma.incidents.update({
+      where: { id: targetIncidentId },
+      data: {
+        jira_issue_key: existingSummary.issueKey,
+        jira_issue_url: summaryIssueUrl
+      }
+    }).catch(() => {});
+  }
+
+  return {
+    success: true,
+    issueKey: existingSummary.issueKey,
+    issueUrl: summaryIssueUrl,
+    isSummary: true
+  };
+}
+
 export const JiraService = {
   /**
-   * Retrieves Jira configuration for an organization.
-   * Decrypts the stored API token internally.
+   * Retrieves decrypted Jira configuration for an organization.
    */
-  async getConfig(orgId: string) {
+  async getConfig(orgId: string): Promise<JiraConfigData | null> {
     try {
       const config = await prisma.jira_config.findUnique({
         where: { orgId }
       });
       if (!config) return null;
 
-      let decryptedToken = config.apiToken;
-      try {
-        decryptedToken = decryptCredentials(config.apiToken);
-      } catch {
-        decryptedToken = config.apiToken;
-      }
-
       return {
-        ...config,
-        apiToken: decryptedToken
+        siteUrl: config.siteUrl,
+        projectKey: config.projectKey,
+        userEmail: config.userEmail,
+        apiToken: decryptCredentials(config.apiToken),
+        issueType: config.issueType,
+        enabled: config.enabled,
+        hourlyCap: config.hourlyCap
       };
     } catch (error) {
       logger.error(`[JiraService] Failed to get config for org ${orgId}:`, error);
@@ -174,76 +452,73 @@ export const JiraService = {
   },
 
   /**
-   * Retrieves sanitized configuration for API transmission (token masked).
+   * Returns Jira config with the API token masked for display in UI / API responses.
    */
   async getMaskedConfig(orgId: string) {
     const config = await this.getConfig(orgId);
     if (!config) return null;
 
-    const token = config.apiToken || '';
-    const masked = token.length > 8
-      ? `${token.slice(0, 4)}••••••••${token.slice(-4)}`
-      : '••••••••••••';
-
     return {
       siteUrl: config.siteUrl,
       projectKey: config.projectKey,
       userEmail: config.userEmail,
-      apiToken: masked,
-      issueType: config.issueType,
-      enabled: config.enabled,
-      hourlyCap: config.hourlyCap,
-      updatedAt: config.updatedAt
+      apiToken: '••••••••••••',
+      issueType: config.issueType || 'Task',
+      enabled: config.enabled ?? true,
+      hourlyCap: config.hourlyCap || 10
     };
   },
 
   /**
-   * Saves Jira configuration with AES-256-GCM encrypted API token.
+   * Saves or updates Jira configuration with AES-256-GCM encrypted API token.
    */
   async saveConfig(orgId: string, data: JiraConfigData) {
     try {
-      let tokenToStore = data.apiToken.trim();
-      
-      // If token is masked string from UI, keep the existing encrypted token
-      if (tokenToStore.includes('••••')) {
+      let encryptedToken = data.apiToken.trim();
+      if (!encryptedToken.includes('••••')) {
+        encryptedToken = encryptCredentials(encryptedToken);
+      } else {
         const existing = await prisma.jira_config.findUnique({ where: { orgId } });
         if (existing) {
-          tokenToStore = existing.apiToken;
+          encryptedToken = existing.apiToken;
         } else {
-          throw new Error('Invalid API token');
+          throw new Error('Cannot save masked token for new Jira configuration.');
         }
-      } else {
-        tokenToStore = encryptCredentials(tokenToStore);
       }
-
-      const cleanSiteUrl = data.siteUrl.trim().replace(/\/$/, '');
 
       const saved = await prisma.jira_config.upsert({
         where: { orgId },
-        update: {
-          siteUrl: cleanSiteUrl,
-          projectKey: data.projectKey.trim().toUpperCase(),
-          userEmail: data.userEmail.trim(),
-          apiToken: tokenToStore,
-          issueType: data.issueType || 'Task',
-          enabled: data.enabled ?? true,
-          hourlyCap: Number(data.hourlyCap) || 10
-        },
         create: {
           orgId,
-          siteUrl: cleanSiteUrl,
+          siteUrl: data.siteUrl.trim().replace(/\/$/, ''),
           projectKey: data.projectKey.trim().toUpperCase(),
           userEmail: data.userEmail.trim(),
-          apiToken: tokenToStore,
-          issueType: data.issueType || 'Task',
+          apiToken: encryptedToken,
+          issueType: data.issueType?.trim() || 'Task',
           enabled: data.enabled ?? true,
-          hourlyCap: Number(data.hourlyCap) || 10
+          hourlyCap: data.hourlyCap ? Number(data.hourlyCap) : 10
+        },
+        update: {
+          siteUrl: data.siteUrl.trim().replace(/\/$/, ''),
+          projectKey: data.projectKey.trim().toUpperCase(),
+          userEmail: data.userEmail.trim(),
+          apiToken: encryptedToken,
+          issueType: data.issueType?.trim() || 'Task',
+          enabled: data.enabled ?? true,
+          hourlyCap: data.hourlyCap ? Number(data.hourlyCap) : 10
         }
       });
 
       return {
-        ...saved,
-        apiToken: '••••••••••••'
+        id: saved.id,
+        siteUrl: saved.siteUrl,
+        projectKey: saved.projectKey,
+        userEmail: saved.userEmail,
+        apiToken: '••••••••••••',
+        issueType: saved.issueType,
+        enabled: saved.enabled,
+        hourlyCap: saved.hourlyCap,
+        updatedAt: saved.updatedAt
       };
     } catch (error) {
       logger.error(`[JiraService] Failed to save config for org ${orgId}:`, error);
@@ -279,7 +554,7 @@ export const JiraService = {
       // already decrypted
     }
 
-    const authHeader = `Basic ${Buffer.from(`${userEmail}:${apiToken}`).toString('base64')}`;
+    const authHeader = getBasicAuthHeader(userEmail, apiToken);
 
     // 1. Verify Authentication & User Profile
     let myselfRes: Response;
@@ -351,7 +626,7 @@ export const JiraService = {
     deduplicated?: boolean;
     isSummary?: boolean;
   }> {
-    const { organizationId, incidentId, agent, action, risk, status, reason, matchedPolicy, compliance } = payload;
+    const { organizationId, incidentId, agent, action, risk, status } = payload;
 
     // Requirement: Ticket created on BLOCKED + high risk only
     if (status !== 'blocked' || risk !== 'high') {
@@ -359,59 +634,29 @@ export const JiraService = {
     }
 
     const config = await this.getConfig(organizationId);
-    if (!config || !config.enabled) {
+    if (!config?.enabled) {
       return { success: false, skipped: true, reason: 'Jira integration is not configured or disabled.' };
     }
 
-    // ─── 1. DEDUPLICATION CHECK ───
-    let targetIncidentId = incidentId;
-    if (!targetIncidentId) {
-      const recentIncident = await prisma.incidents.findFirst({
-        where: {
-          organizationId,
-          agent_id: agent,
-          created_at: { gte: new Date(Date.now() - 15000) }
-        },
-        orderBy: { created_at: 'desc' },
-        select: { id: true, jira_issue_key: true, jira_issue_url: true }
-      });
-      if (recentIncident) {
-        targetIncidentId = recentIncident.id;
-        if (recentIncident.jira_issue_key) {
-          logger.info(`[JiraService] Deduplication: Incident ${recentIncident.id} already has Jira ticket ${recentIncident.jira_issue_key}`);
-          return {
-            success: true,
-            issueKey: recentIncident.jira_issue_key,
-            issueUrl: recentIncident.jira_issue_url || undefined,
-            deduplicated: true
-          };
-        }
-      }
-    } else {
-      const existing = await prisma.incidents.findUnique({
-        where: { id: targetIncidentId },
-        select: { id: true, jira_issue_key: true, jira_issue_url: true }
-      });
-
-      if (existing?.jira_issue_key) {
-        logger.info(`[JiraService] Deduplication: Incident ${targetIncidentId} already has Jira ticket ${existing.jira_issue_key}`);
-        return {
-          success: true,
-          issueKey: existing.jira_issue_key,
-          issueUrl: existing.jira_issue_url || undefined,
-          deduplicated: true
-        };
-      }
+    // 1. DEDUPLICATION CHECK
+    const { targetId, existingKey, existingUrl } = await checkExistingIncident(organizationId, incidentId, agent);
+    if (existingKey) {
+      logger.info(`[JiraService] Deduplication: Incident ${targetId} already has Jira ticket ${existingKey}`);
+      return {
+        success: true,
+        issueKey: existingKey,
+        issueUrl: existingUrl,
+        deduplicated: true
+      };
     }
 
     // Scrub action text for privacy (defense-in-depth)
     const sanitizedAction = PIIScannerService.redact(action || '');
-    const siteUrl = config.siteUrl.replace(/\/$/, '');
-    const authHeader = `Basic ${Buffer.from(`${config.userEmail}:${config.apiToken}`).toString('base64')}`;
+    const authHeader = getBasicAuthHeader(config.userEmail, config.apiToken);
     const dashboardUrl = (process.env.FRONTEND_URL || 'https://sentraatech.info').split(',')[0].replace(/\/$/, '');
-    const incidentUrl = `${dashboardUrl}/app/incidents/${incidentId || ''}`;
+    const incidentUrl = `${dashboardUrl}/app/incidents/${targetId || incidentId || ''}`;
 
-    // ─── 2. HOURLY TICKET CAP CHECK ───
+    // 2. HOURLY TICKET CAP CHECK
     const hourlyCap = config.hourlyCap || 10;
     const oneHourAgo = new Date(Date.now() - 3600 * 1000);
     const hourKey = new Date().toISOString().slice(0, 13); // e.g. "2026-10-18T20"
@@ -424,204 +669,11 @@ export const JiraService = {
       }
     });
 
-    // ─── CASE A: UNDER HOURLY CAP -> CREATE INDIVIDUAL TICKET ───
     if (recentTicketCount < hourlyCap) {
-      const issueSummary = `[Sentraa Alert] High-Risk Action Blocked: ${agent.slice(0, 50)}`;
-      const adfDoc = buildJiraAdf({
-        agent,
-        action: sanitizedAction,
-        status,
-        risk,
-        reason: reason || 'Action blocked by Sentraa safety guardrails',
-        policy: matchedPolicy || 'Security Guardrail Policy',
-        frameworks: Array.isArray(compliance) ? compliance.join(', ') : (compliance || 'AI Safety'),
-        incidentUrl
-      });
-
-      const createRes = await fetch(`${siteUrl}/rest/api/3/issue`, {
-        method: 'POST',
-        headers: {
-          Authorization: authHeader,
-          'Content-Type': 'application/json',
-          Accept: 'application/json'
-        },
-        body: JSON.stringify({
-          fields: {
-            project: { key: config.projectKey },
-            summary: issueSummary,
-            issuetype: { name: config.issueType || 'Task' },
-            description: adfDoc,
-            labels: ['sentraa-alert', 'high-risk', 'ai-governance']
-          }
-        })
-      });
-
-      if (!createRes.ok) {
-        const errText = await createRes.text();
-        logger.error(`[JiraService] Jira issue creation failed (${createRes.status}):`, errText);
-        throw new Error(`Jira API returned error ${createRes.status}: ${errText.slice(0, 200)}`);
-      }
-
-      const issueData: any = await createRes.json();
-      const issueKey = issueData.key;
-      const issueUrl = `${siteUrl}/browse/${issueKey}`;
-
-      if (incidentId) {
-        await prisma.incidents.update({
-          where: { id: incidentId },
-          data: { jira_issue_key: issueKey, jira_issue_url: issueUrl }
-        }).catch(err => logger.error('[JiraService] Failed to record issue key on incident:', err));
-      }
-
-      logger.info(`[JiraService] Created Jira issue ${issueKey} for incident ${incidentId}`);
-      return { success: true, issueKey, issueUrl, isSummary: false };
+      return createSingleIssue(config, payload, sanitizedAction, incidentUrl, authHeader, targetId);
     }
 
-    // ─── CASE B: OVER HOURLY CAP -> SUMMARY TICKET AGGREGATION ───
     logger.warn(`[JiraService] Hourly ticket cap reached (${recentTicketCount}/${hourlyCap}) for org ${organizationId}. Aggregating to summary ticket.`);
-
-    // Find or create the summary ticket for the current hour window
-    let summaryRecord = await prisma.jira_summary_tickets.findUnique({
-      where: {
-        orgId_hourKey: {
-          orgId: organizationId,
-          hourKey
-        }
-      }
-    });
-
-    if (!summaryRecord) {
-      // Create new Summary Ticket in Jira
-      const summaryTitle = `[Sentraa Overflow Summary] ${hourlyCap}+ Blocked Actions Exceeded (${hourKey}:00)`;
-      const summaryAdf = {
-        type: 'doc',
-        version: 1,
-        content: [
-          {
-            type: 'heading',
-            attrs: { level: 2 },
-            content: [{ type: 'text', text: '📊 Sentraa AI: Hourly Blocked Actions Summary' }]
-          },
-          {
-            type: 'paragraph',
-            content: [
-              {
-                type: 'text',
-                text: `The rate limit threshold of ${hourlyCap} individual tickets has been reached for this hour (${hourKey}:00). Subsequent high-risk blocked actions are aggregated here to prevent ticket flood:`,
-                marks: [{ type: 'strong' }]
-              }
-            ]
-          },
-          {
-            type: 'bulletList',
-            content: [
-              {
-                type: 'listItem',
-                content: [{
-                  type: 'paragraph',
-                  content: [
-                    { type: 'text', text: `Incident ${incidentId || 'N/A'}: Agent "${agent}" | Action: "${sanitizedAction}" | Rule: ${matchedPolicy || 'Security Policy'} | ` },
-                    { type: 'text', text: 'View Incident', marks: [{ type: 'link', attrs: { href: incidentUrl } }] }
-                  ]
-                }]
-              }
-            ]
-          }
-        ]
-      };
-
-      const summaryRes = await fetch(`${siteUrl}/rest/api/3/issue`, {
-        method: 'POST',
-        headers: {
-          Authorization: authHeader,
-          'Content-Type': 'application/json',
-          Accept: 'application/json'
-        },
-        body: JSON.stringify({
-          fields: {
-            project: { key: config.projectKey },
-            summary: summaryTitle,
-            issuetype: { name: config.issueType || 'Task' },
-            description: summaryAdf,
-            labels: ['sentraa-alert', 'overflow-summary', 'rate-limited']
-          }
-        })
-      });
-
-      if (!summaryRes.ok) {
-        const errText = await summaryRes.text();
-        throw new Error(`Failed to create Jira summary issue: ${errText.slice(0, 200)}`);
-      }
-
-      const summaryData: any = await summaryRes.json();
-      const issueKey = summaryData.key;
-      const issueUrl = `${siteUrl}/browse/${issueKey}`;
-
-      summaryRecord = await prisma.jira_summary_tickets.create({
-        data: {
-          orgId: organizationId,
-          hourKey,
-          issueKey,
-          incidentCount: 1
-        }
-      });
-
-      if (incidentId) {
-        await prisma.incidents.update({
-          where: { id: incidentId },
-          data: { jira_issue_key: issueKey, jira_issue_url: issueUrl }
-        }).catch(() => {});
-      }
-
-      return { success: true, issueKey, issueUrl, isSummary: true };
-    }
-
-    // Append comment to existing summary ticket
-    const commentAdf = {
-      type: 'doc',
-      version: 1,
-      content: [
-        {
-          type: 'paragraph',
-          content: [
-            { type: 'text', text: `• [Blocked Action #${summaryRecord.incidentCount + 1}] `, marks: [{ type: 'strong' }] },
-            { type: 'text', text: `Agent: ${agent} | Action: "${sanitizedAction}" | Policy: ${matchedPolicy || 'Security Policy'} | ` },
-            { type: 'text', text: 'View Incident', marks: [{ type: 'link', attrs: { href: incidentUrl } }] }
-          ]
-        }
-      ]
-    };
-
-    await fetch(`${siteUrl}/rest/api/3/issue/${summaryRecord.issueKey}/comment`, {
-      method: 'POST',
-      headers: {
-        Authorization: authHeader,
-        'Content-Type': 'application/json',
-        Accept: 'application/json'
-      },
-      body: JSON.stringify({ body: commentAdf })
-    }).catch(err => logger.error('[JiraService] Failed to append comment to summary ticket:', err));
-
-    await prisma.jira_summary_tickets.update({
-      where: { id: summaryRecord.id },
-      data: { incidentCount: { increment: 1 } }
-    }).catch(() => {});
-
-    if (incidentId) {
-      await prisma.incidents.update({
-        where: { id: incidentId },
-        data: {
-          jira_issue_key: summaryRecord.issueKey,
-          jira_issue_url: `${siteUrl}/browse/${summaryRecord.issueKey}`
-        }
-      }).catch(() => {});
-    }
-
-    return {
-      success: true,
-      issueKey: summaryRecord.issueKey,
-      issueUrl: `${siteUrl}/browse/${summaryRecord.issueKey}`,
-      isSummary: true
-    };
+    return handleSummaryTicketOverflow(config, payload, sanitizedAction, incidentUrl, authHeader, hourKey, hourlyCap, targetId);
   }
 };

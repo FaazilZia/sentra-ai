@@ -23,7 +23,6 @@ import {
   Bell
 } from 'lucide-react';
 import { JiraConfigCard } from '@/components/connectors/JiraConfigCard';
-import { SlackConfigCard } from '@/components/connectors/SlackConfigCard';
 
 interface TeamMember {
   id: string;
@@ -678,7 +677,6 @@ export default function SettingsSection() {
       {activeTab === 'connectors' && (
         <div className="space-y-6">
           <JiraConfigCard />
-          <SlackConfigCard />
         </div>
       )}
     </PageContainer>
