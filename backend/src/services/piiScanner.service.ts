@@ -255,4 +255,33 @@ export class PIIScannerService {
     recurse(obj);
     return fields;
   }
+
+  /**
+   * Redacts all PII patterns from a plain string.
+   */
+  static redact(text: string): string {
+    if (!text || typeof text !== 'string') return text || '';
+    return this.scan(text).redactedText;
+  }
+
+  /**
+   * Recursively traverses an object/array and redacts PII from all string values.
+   */
+  static redactDeep<T = any>(data: T): T {
+    if (typeof data === 'string') {
+      return this.redact(data) as unknown as T;
+    }
+    if (Array.isArray(data)) {
+      return data.map((item) => this.redactDeep(item)) as unknown as T;
+    }
+    if (data && typeof data === 'object') {
+      const copy: Record<string, any> = {};
+      for (const [key, value] of Object.entries(data)) {
+        copy[key] = this.redactDeep(value);
+      }
+      return copy as T;
+    }
+    return data;
+  }
 }
+

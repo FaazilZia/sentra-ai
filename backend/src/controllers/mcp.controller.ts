@@ -5,6 +5,7 @@ import logger from '../utils/logger';
 import { makeDecision } from '../services/decisionEngine';
 import { McpAgentKeyService } from '../services/mcpAgentKey.service';
 import { alertPipeline } from '../services/alertPipeline.service';
+import { PIIScannerService } from '../services/piiScanner.service';
 
 const getNow = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
@@ -116,7 +117,8 @@ export class McpController {
    */
   private static async logMcpAudit(agent: any, toolName: string, args: any, decisionStatus: string, riskLevel: string, reason: string, durationMs: number) {
     try {
-      const inputSummary = JSON.stringify(args);
+      const redactedArgs = PIIScannerService.redactDeep(args);
+      const inputSummary = JSON.stringify(redactedArgs);
       await prisma.mcp_audit_logs.create({
         data: {
           organizationId: agent.organizationId,
@@ -292,14 +294,18 @@ export class McpController {
 
         if (decision.status === 'blocked' || decision.status === 'flagged') {
           const durationMs = Math.round(getNow() - startTime);
-          await McpController.logMcpAudit(agent, toolName, args, decisionStatus, riskLevel, decisionReason, durationMs);
+          const rawAction = args.action || '';
+          const redactedAction = PIIScannerService.redact(rawAction);
+          const redactedArgs = PIIScannerService.redactDeep(args);
+
+          await McpController.logMcpAudit(agent, toolName, redactedArgs, decisionStatus, riskLevel, decisionReason, durationMs);
           
           // 1. Dispatch through unified alert pipeline (Slack Block Kit, Email, etc.)
           try {
             await alertPipeline.dispatchDecisionAlert({
               organizationId: agent.organizationId,
               agent: agent.name || agent.agentKeyId,
-              action: args.action || 'Unknown tool action',
+              action: redactedAction || 'Unknown tool action',
               status: decision.status,
               risk: decision.risk,
               reason: decision.reason,
@@ -322,9 +328,9 @@ export class McpController {
                 organizationId: agent.organizationId,
                 agent_id: agent.agentKeyId,
                 severity: 85,
-                action: args.action || 'MCP Action',
+                action: redactedAction || 'MCP Action',
                 details: decision.reason || 'Action blocked by MCP Governance Gateway',
-                prompt_excerpt: (args.action || '').slice(0, 500),
+                prompt_excerpt: (redactedAction || '').slice(0, 500),
                 response_excerpt: 'ACTION_BLOCKED',
                 event_metadata: {
                   toolName,
@@ -332,7 +338,7 @@ export class McpController {
                   agentName: agent.name,
                   matchedPolicy: decision.matchedPolicy,
                   compliance: decision.compliance,
-                  args
+                  args: redactedArgs
                 },
                 status: 'unresolved'
               }
@@ -344,7 +350,7 @@ export class McpController {
             data: {
               user_id: agent.agentKeyId,
               organizationId: agent.organizationId,
-              input_text: `[MCP:${toolName}] ${args.action || ''}`,
+              input_text: `[MCP:${toolName}] ${redactedAction || ''}`,
               decision: decision.status === 'blocked' ? 'BLOCK' : 'FLAG',
               confidence: 'High',
               reason: decision.reason || 'Action blocked by Sentraa governance',
@@ -354,7 +360,7 @@ export class McpController {
                 agentKeyId: agent.agentKeyId,
                 agentName: agent.name,
                 toolName,
-                args
+                args: redactedArgs
               },
               timestamp: new Date()
             }
@@ -386,13 +392,17 @@ export class McpController {
 
         if (!policyResult.allowed) {
           const durationMs = Math.round(getNow() - startTime);
-          await McpController.logMcpAudit(agent, toolName, args, decisionStatus, riskLevel, decisionReason, durationMs);
+          const rawAction = args.action || '';
+          const redactedAction = PIIScannerService.redact(rawAction);
+          const redactedArgs = PIIScannerService.redactDeep(args);
+
+          await McpController.logMcpAudit(agent, toolName, redactedArgs, decisionStatus, riskLevel, decisionReason, durationMs);
           
           try {
             await alertPipeline.dispatchDecisionAlert({
               organizationId: agent.organizationId,
               agent: agent.name || agent.agentKeyId,
-              action: args.action || 'Unknown tool action',
+              action: redactedAction || 'Unknown tool action',
               status: 'blocked',
               risk: 'high',
               reason: policyResult.reason || 'Policy evaluation violation',
@@ -466,7 +476,7 @@ export class McpController {
               organizationId: agent.organizationId,
               agentKeyId: agent.agentKeyId,
               tool_name: toolName || 'unknown',
-              input_summary: JSON.stringify(args),
+              input_summary: JSON.stringify(PIIScannerService.redactDeep(args)),
               decision: 'blocked',
               risk_level: 'high',
               reason: 'Internal Governance Failure (Fail-Closed)',

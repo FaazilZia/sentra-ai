@@ -1,6 +1,7 @@
 import logger from '../utils/logger';
 import { alertQueue } from './queue.service';
 import { SlackService } from './slack.service';
+import { PIIScannerService } from './piiScanner.service';
 import prisma from '../config/db';
 
 export interface DecisionAlertEvent {
@@ -35,6 +36,9 @@ export async function processAlertJob(event: DecisionAlertEvent): Promise<void> 
     return;
   }
 
+  // Guarantee no raw PII leaks to outbound notification channels (Slack, Email, SIEM)
+  const sanitizedAction = PIIScannerService.redact(action || '');
+
   const errors: Error[] = [];
 
   // 1. Channel Adapter: Slack
@@ -42,7 +46,7 @@ export async function processAlertJob(event: DecisionAlertEvent): Promise<void> 
     await SlackService.notifyDecisionEvent(organizationId, {
       status,
       agent,
-      action,
+      action: sanitizedAction,
       risk,
       reason,
       policyName: matchedPolicy,
@@ -66,7 +70,7 @@ export async function processAlertJob(event: DecisionAlertEvent): Promise<void> 
       const { alertService } = require('./alert.service');
       await alertService.sendEmailAlert(organizationId, {
         agent,
-        action,
+        action: sanitizedAction,
         risk,
         reason,
         policyTriggered: matchedPolicy || compliance?.[0] || 'General Safety Policy',
