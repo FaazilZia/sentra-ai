@@ -3,7 +3,6 @@ import {
   Ticket, 
   CheckCircle2, 
   AlertCircle, 
-  HelpCircle, 
   Loader2, 
   ShieldAlert, 
   Trash2,
