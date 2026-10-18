@@ -43,6 +43,7 @@ import {
   saveSsoConfig,
   apiRequest
 } from '@/lib/api';
+import { JiraConfigCard } from '@/components/connectors/JiraConfigCard';
 
 
 export default function Settings() {
@@ -1853,6 +1854,11 @@ function GeneralTab({
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Section 3b: Jira Cloud Integration */}
+      <div className="lg:col-span-12 space-y-4">
+        <JiraConfigCard />
       </div>
 
       {/* Section 4: Multi-Factor Authentication (MFA) */}

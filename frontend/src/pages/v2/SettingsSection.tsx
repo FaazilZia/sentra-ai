@@ -19,8 +19,11 @@ import {
   AlertTriangle,
   X,
   ShieldCheck,
-  Lock
+  Lock,
+  Bell
 } from 'lucide-react';
+import { JiraConfigCard } from '@/components/connectors/JiraConfigCard';
+import { SlackConfigCard } from '@/components/connectors/SlackConfigCard';
 
 interface TeamMember {
   id: string;
@@ -345,13 +348,14 @@ export default function SettingsSection() {
         </button>
       }
     >
-      {/* 4 Tabs: Profile, Team, Vendor Risk, API Keys */}
+      {/* 5 Tabs: Profile, Team, Vendor Risk, API Keys, Alerts & Connectors */}
       <TabBar
         tabs={[
           { id: 'profile', label: 'Profile & Preferences', icon: User },
           { id: 'team', label: 'Team & Organization', count: teamMembers.length, icon: Users },
           { id: 'vendors', label: 'Vendor Risk Assessment', count: vendors.length, icon: Building2 },
-          { id: 'apikeys', label: 'API Keys & Security', count: apiKeys.length, icon: Key }
+          { id: 'apikeys', label: 'API Keys & Security', count: apiKeys.length, icon: Key },
+          { id: 'connectors', label: 'Alerts & Connectors', icon: Bell }
         ]}
         activeTab={activeTab}
         onChange={setActiveTab}
@@ -667,6 +671,14 @@ export default function SettingsSection() {
               ))
             )}
           </div>
+        </div>
+      )}
+
+      {/* Tab 5: Alerts & Connectors */}
+      {activeTab === 'connectors' && (
+        <div className="space-y-6">
+          <JiraConfigCard />
+          <SlackConfigCard />
         </div>
       )}
     </PageContainer>

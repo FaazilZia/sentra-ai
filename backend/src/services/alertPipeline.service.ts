@@ -1,11 +1,13 @@
 import logger from '../utils/logger';
 import { alertQueue } from './queue.service';
 import { SlackService } from './slack.service';
+import { JiraService } from './jira.service';
 import { PIIScannerService } from './piiScanner.service';
 import prisma from '../config/db';
 
 export interface DecisionAlertEvent {
   eventId?: string;
+  incidentId?: string;
   organizationId: string;
   agent: string;
   action: string;
@@ -82,9 +84,25 @@ export async function processAlertJob(event: DecisionAlertEvent): Promise<void> 
     errors.push(emailErr);
   }
 
-  // If all channels failed and we are in BullMQ, throw to allow retry with backoff
-  if (errors.length > 0 && errors.length === 2) {
-    throw new Error(`All alert channels failed: ${errors.map(e => e.message).join('; ')}`);
+  // 3. Channel Adapter: Jira Ticket (BLOCKED + high risk only)
+  try {
+    if (status === 'blocked' && risk === 'high') {
+      await JiraService.createIncidentTicket({
+        incidentId: event.incidentId || '',
+        organizationId,
+        agent,
+        action: sanitizedAction,
+        risk,
+        status,
+        reason,
+        matchedPolicy,
+        compliance,
+        ruleId: event.ruleId
+      });
+    }
+  } catch (jiraErr: any) {
+    logger.error(`[AlertPipeline] Jira dispatch error for org ${organizationId}:`, jiraErr);
+    errors.push(jiraErr);
   }
 }
 

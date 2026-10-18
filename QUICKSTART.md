@@ -135,3 +135,37 @@ Sentra returns actionable, plain-language guidance without raw stack traces:
 1. Create your production API key in the [Sentraa Dashboard](https://sentraatech.info/settings).
 2. Replace `'sentra_test_sandbox'` with `process.env.SENTRA_API_KEY`.
 3. Sentraa automatically switches to authenticated enforcement with full audit logging and custom policy evaluation.
+
+---
+
+## Outbound Alert Connectors
+
+Sentraa AI forwards security events and blocked action incidents to your enterprise incident management tools through an asynchronous, retry-enabled queue pipeline.
+
+### Jira Cloud Connector Quickstart
+
+Connect Sentraa AI to Jira Cloud in under 5 minutes to automatically dispatch tickets whenever an AI agent action is **BLOCKED** with **high risk**.
+
+#### 1. Requirements & Permissions
+- A Jira Cloud instance (e.g., `https://your-domain.atlassian.net`).
+- An Atlassian API token generated from [Atlassian Account Security](https://id.atlassian.com/manage-profile/security/api-tokens).
+- **Minimum Permissions Required:** The API token only needs:
+  - **`Browse Projects`** in your target project.
+  - **`Create Issues`** in your target project.
+  - *No admin or system management permissions are required.*
+
+#### 2. Configuration (Settings -> Alerts & Connectors)
+In the Sentraa Dashboard, navigate to **Settings -> Alerts & Connectors**:
+- **Jira Site URL:** `https://your-domain.atlassian.net`
+- **Project Key:** Target project key (e.g. `SEC`, `AI`, or `ENG`).
+- **Atlassian Account Email:** The email associated with your Atlassian account.
+- **Jira API Token:** Paste your Atlassian API token. *(Credentials are AES-256-GCM encrypted at rest and permanently masked in the UI).*
+- **Issue Type:** Name of the issue type in your project (default: `Task`).
+- **Hourly Ticket Cap:** Maximum individual tickets created per hour (default: `10`).
+
+#### 3. Protection & Rate Limiting Behavior
+- **Trigger Rules:** Tickets are created **only** for `BLOCKED` actions with `high` risk. `FLAGGED` or low-risk actions do not create tickets.
+- **Zero Duplicate Tickets:** Sentraa guarantees strict idempotency per incident. Retries never create duplicate tickets.
+- **Automatic PII Redaction:** All sensitive data (SSNs, Card numbers, credentials) is redacted to `[SSN_REDACTED]` and `[CARD_REDACTED]` before Jira ticket creation.
+- **Hourly Rate Limiter:** When an organization exceeds the hourly cap, Sentraa creates a single **Summary Ticket** (`[Sentra AI] Hourly Incident Summary`) and appends any subsequent blocked incidents as comments to avoid ticket floods.
+- **Zero Latency Impact:** Decisions execute in real-time. Jira delivery is handled asynchronously through background queue workers with exponential backoff.

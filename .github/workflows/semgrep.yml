@@ -2,7 +2,7 @@ name: Semgrep SAST
 
 on:
   push:
-    branches: [ "main", "feat/day3-connectors" ]
+    branches: [ "main", "feat/day3-connectors", "feat/day3-connectors-p2" ]
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:

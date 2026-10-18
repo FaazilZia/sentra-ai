@@ -604,6 +604,62 @@ export async function testSlackConnection(payload: { webhookUrl: string; channel
 }
 
 /**
+ * JIRA INTEGRATION ENDPOINTS
+ */
+export interface JiraConfig {
+  id?: string;
+  orgId?: string;
+  siteUrl: string;
+  projectKey: string;
+  userEmail: string;
+  apiToken: string;
+  issueType: string;
+  hourlyCap: number;
+  enabled: boolean;
+  lastError?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface JiraTestResult {
+  status: string;
+  message: string;
+  project?: {
+    id: string;
+    key: string;
+    name: string;
+  };
+}
+
+export async function fetchJiraConfig(): Promise<JiraConfig | null> {
+  return apiRequest<JiraConfig | null>('/jira/config');
+}
+
+export async function saveJiraConfig(payload: Partial<JiraConfig>): Promise<JiraConfig> {
+  return apiRequest<JiraConfig>('/jira/config', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function deleteJiraConfig(): Promise<void> {
+  return apiRequest<void>('/jira/config', { method: 'DELETE' });
+}
+
+export async function testJiraConnection(payload: {
+  siteUrl: string;
+  projectKey: string;
+  userEmail: string;
+  apiToken: string;
+}): Promise<JiraTestResult> {
+  return apiRequest<JiraTestResult>('/jira/test', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+
+/**
  * CHANGE HISTORY ENDPOINTS
  */
 export interface ChangeHistory {
