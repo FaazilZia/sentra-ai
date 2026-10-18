@@ -199,17 +199,31 @@ async function checkExistingIncident(organizationId: string, incidentId?: string
   return { targetId };
 }
 
+interface SingleIssueOptions {
+  config: JiraConfigData;
+  payload: IncidentTicketPayload;
+  sanitizedAction: string;
+  incidentUrl: string;
+  authHeader: string;
+  targetIncidentId: string;
+}
+
+interface SummaryOverflowOptions {
+  config: JiraConfigData;
+  payload: IncidentTicketPayload;
+  sanitizedAction: string;
+  incidentUrl: string;
+  authHeader: string;
+  hourKey: string;
+  hourlyCap: number;
+  targetIncidentId: string;
+}
+
 /**
  * Creates an individual Jira issue for a blocked action under the hourly cap.
  */
-async function createSingleIssue(
-  config: JiraConfigData,
-  payload: IncidentTicketPayload,
-  sanitizedAction: string,
-  incidentUrl: string,
-  authHeader: string,
-  targetIncidentId: string
-) {
+async function createSingleIssue(options: SingleIssueOptions) {
+  const { config, payload, sanitizedAction, incidentUrl, authHeader, targetIncidentId } = options;
   const siteUrl = config.siteUrl.replace(/\/$/, '');
   const { agent, status, risk, reason, matchedPolicy, compliance } = payload;
   const issueSummary = `[Sentraa Alert] High-Risk Action Blocked: ${agent.slice(0, 50)}`;
@@ -268,16 +282,8 @@ async function createSingleIssue(
 /**
  * Handles hourly ticket cap overflow by creating or appending to an hourly summary ticket.
  */
-async function handleSummaryTicketOverflow(
-  config: JiraConfigData,
-  payload: IncidentTicketPayload,
-  sanitizedAction: string,
-  incidentUrl: string,
-  authHeader: string,
-  hourKey: string,
-  hourlyCap: number,
-  targetIncidentId: string
-) {
+async function handleSummaryTicketOverflow(options: SummaryOverflowOptions) {
+  const { config, payload, sanitizedAction, incidentUrl, authHeader, hourKey, hourlyCap, targetIncidentId } = options;
   const siteUrl = config.siteUrl.replace(/\/$/, '');
   const { organizationId, agent, matchedPolicy } = payload;
 
@@ -670,10 +676,26 @@ export const JiraService = {
     });
 
     if (recentTicketCount < hourlyCap) {
-      return createSingleIssue(config, payload, sanitizedAction, incidentUrl, authHeader, targetId);
+      return createSingleIssue({
+        config,
+        payload,
+        sanitizedAction,
+        incidentUrl,
+        authHeader,
+        targetIncidentId: targetId
+      });
     }
 
     logger.warn(`[JiraService] Hourly ticket cap reached (${recentTicketCount}/${hourlyCap}) for org ${organizationId}. Aggregating to summary ticket.`);
-    return handleSummaryTicketOverflow(config, payload, sanitizedAction, incidentUrl, authHeader, hourKey, hourlyCap, targetId);
+    return handleSummaryTicketOverflow({
+      config,
+      payload,
+      sanitizedAction,
+      incidentUrl,
+      authHeader,
+      hourKey,
+      hourlyCap,
+      targetIncidentId: targetId
+    });
   }
 };
