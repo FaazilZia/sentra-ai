@@ -25,8 +25,13 @@ BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM pg_constraint WHERE conname = 'jira_config_organization_id_fkey'
     ) THEN
-        ALTER TABLE "jira_config" ADD CONSTRAINT "jira_config_organization_id_fkey" 
-        FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'companies') THEN
+            ALTER TABLE "jira_config" ADD CONSTRAINT "jira_config_organization_id_fkey" 
+            FOREIGN KEY ("organization_id") REFERENCES "companies"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+        ELSIF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'organizations') THEN
+            ALTER TABLE "jira_config" ADD CONSTRAINT "jira_config_organization_id_fkey" 
+            FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+        END IF;
     END IF;
 END $$;
 
@@ -57,7 +62,13 @@ BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM pg_constraint WHERE conname = 'jira_summary_tickets_organization_id_fkey'
     ) THEN
-        ALTER TABLE "jira_summary_tickets" ADD CONSTRAINT "jira_summary_tickets_organization_id_fkey" 
-        FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'companies') THEN
+            ALTER TABLE "jira_summary_tickets" ADD CONSTRAINT "jira_summary_tickets_organization_id_fkey" 
+            FOREIGN KEY ("organization_id") REFERENCES "companies"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+        ELSIF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'organizations') THEN
+            ALTER TABLE "jira_summary_tickets" ADD CONSTRAINT "jira_summary_tickets_organization_id_fkey" 
+            FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+        END IF;
     END IF;
 END $$;
+
