@@ -72,6 +72,8 @@ model organizations {
   notifications          notifications[]
   evidence               evidence[]
   slack_config           slack_config?
+  jira_config            jira_config?
+  jira_summary_tickets   jira_summary_tickets[]
   change_history         change_history[]
   intake_forms                 intake_forms[]
   intake_submissions           intake_submissions[]
@@ -422,6 +424,8 @@ model incidents {
   user_id          String?
   resolved_by_id   String?
   resolved_at      DateTime?
+  jira_issue_key   String?       @map("jira_issue_key")
+  jira_issue_url   String?       @map("jira_issue_url")
   organizations    organizations @relation(fields: [organizationId], references: [id])
   policies         policies?     @relation(fields: [policy_id], references: [id])
   resolved_by      users?        @relation("IncidentResolver", fields: [resolved_by_id], references: [id])
@@ -1245,6 +1249,41 @@ model slack_config {
 
   @@index([orgId])
   @@map("slack_config")
+}
+
+model jira_config {
+  id         String   @id @default(uuid())
+  orgId      String   @unique @map("organization_id")
+  siteUrl    String   @map("site_url")
+  projectKey String   @map("project_key")
+  userEmail  String   @map("user_email")
+  apiToken   String   @map("api_token")
+  issueType  String   @default("Task") @map("issue_type")
+  enabled    Boolean  @default(true)
+  hourlyCap  Int      @default(10) @map("hourly_cap")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  organization organizations @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@map("jira_config")
+}
+
+model jira_summary_tickets {
+  id            String   @id @default(uuid())
+  orgId         String   @map("organization_id")
+  hourKey       String   @map("hour_key")
+  issueKey      String   @map("issue_key")
+  incidentCount Int      @default(1) @map("incident_count")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  organization organizations @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, hourKey])
+  @@index([orgId])
+  @@map("jira_summary_tickets")
 }
 
 model change_history {

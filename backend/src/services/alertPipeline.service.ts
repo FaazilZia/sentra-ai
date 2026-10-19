@@ -1,11 +1,13 @@
 import logger from '../utils/logger';
 import { alertQueue } from './queue.service';
 import { SlackService } from './slack.service';
+import { JiraService } from './jira.service';
 import { PIIScannerService } from './piiScanner.service';
 import prisma from '../config/db';
 
 export interface DecisionAlertEvent {
   eventId?: string;
+  incidentId?: string;
   organizationId: string;
   agent: string;
   action: string;
@@ -39,8 +41,6 @@ export async function processAlertJob(event: DecisionAlertEvent): Promise<void> 
   // Guarantee no raw PII leaks to outbound notification channels (Slack, Email, SIEM)
   const sanitizedAction = PIIScannerService.redact(action || '');
 
-  const errors: Error[] = [];
-
   // 1. Channel Adapter: Slack
   try {
     await SlackService.notifyDecisionEvent(organizationId, {
@@ -56,7 +56,6 @@ export async function processAlertJob(event: DecisionAlertEvent): Promise<void> 
     });
   } catch (slackErr: any) {
     logger.error(`[AlertPipeline] Slack dispatch error for org ${organizationId}:`, slackErr);
-    errors.push(slackErr);
   }
 
   // 2. Channel Adapter: Email Alert
@@ -79,12 +78,26 @@ export async function processAlertJob(event: DecisionAlertEvent): Promise<void> 
     }
   } catch (emailErr: any) {
     logger.error(`[AlertPipeline] Email dispatch error for org ${organizationId}:`, emailErr);
-    errors.push(emailErr);
   }
 
-  // If all channels failed and we are in BullMQ, throw to allow retry with backoff
-  if (errors.length > 0 && errors.length === 2) {
-    throw new Error(`All alert channels failed: ${errors.map(e => e.message).join('; ')}`);
+  // 3. Channel Adapter: Jira Ticket (BLOCKED + high risk only)
+  try {
+    if (status === 'blocked' && risk === 'high') {
+      await JiraService.createIncidentTicket({
+        incidentId: event.incidentId || '',
+        organizationId,
+        agent,
+        action: sanitizedAction,
+        risk,
+        status,
+        reason,
+        matchedPolicy,
+        compliance,
+        ruleId: event.ruleId
+      });
+    }
+  } catch (jiraErr: any) {
+    logger.error(`[AlertPipeline] Jira dispatch error for org ${organizationId}:`, jiraErr);
   }
 }
 
