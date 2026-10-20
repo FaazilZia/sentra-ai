@@ -457,8 +457,7 @@ async function isCustomPortApprovedByAdmin(connector: any): Promise<boolean> {
     select: { role: true, organizationId: true, is_active: true },
   });
   const isValidAdmin = Boolean(
-    approver &&
-    approver.is_active &&
+    approver?.is_active &&
     approver.organizationId === connector.organizationId &&
     (approver.role === 'ADMIN' || approver.role === 'SUPER_ADMIN')
   );

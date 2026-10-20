@@ -129,6 +129,47 @@ export const testConnector = asyncHandler(async (req: any, res: Response) => {
   return sendSuccess(res, result);
 });
 
+function normalizeConnectorCredentials(
+  type: string,
+  rawCreds: any,
+  config?: Record<string, unknown>
+): any {
+  if (type === 'gdrive' && rawCreds) {
+    const parsed = parseServiceAccountInput(rawCreds);
+    return {
+      client_email: parsed.client_email,
+      private_key: parsed.private_key,
+      driveScope: parsed.driveScope || (config as any)?.driveScope,
+    };
+  }
+  return rawCreds;
+}
+
+function buildCleanConnectorConfig(
+  config: Record<string, unknown> | undefined,
+  isAdmin: boolean,
+  hasCustomPortFlag: boolean,
+  userId?: string
+): Record<string, unknown> {
+  const cleanConfig: Record<string, unknown> = config ? { ...config } : {};
+  delete cleanConfig.credentials;
+  delete cleanConfig.secretAccessKey;
+  delete cleanConfig.password;
+  delete cleanConfig.private_key;
+  delete cleanConfig.privateKey;
+
+  if (isAdmin && hasCustomPortFlag) {
+    cleanConfig.allowCustomPort = true;
+    cleanConfig.allowCustomPortApprovedBy = userId;
+    cleanConfig.allowCustomPortApprovedAt = new Date().toISOString();
+  } else {
+    delete cleanConfig.allowCustomPort;
+    delete cleanConfig.allowCustomPortApprovedBy;
+    delete cleanConfig.allowCustomPortApprovedAt;
+  }
+  return cleanConfig;
+}
+
 export const createConnector = asyncHandler(async (req: any, res: Response) => {
   const organizationId = await resolveOrganizationId(req);
   if (!organizationId) {
@@ -155,15 +196,7 @@ export const createConnector = asyncHandler(async (req: any, res: Response) => {
     return sendError(res, 403, 'Forbidden: Only administrators can configure custom database ports.');
   }
 
-  // Normalization for Google Drive service account
-  if (type === 'gdrive' && rawCreds) {
-    const parsed = parseServiceAccountInput(rawCreds);
-    rawCreds = {
-      client_email: parsed.client_email,
-      private_key: parsed.private_key,
-      driveScope: parsed.driveScope || (config as any)?.driveScope,
-    };
-  }
+  rawCreds = normalizeConnectorCredentials(type, rawCreds, config);
 
   // SSRF check for PostgreSQL targets
   if ((type === 'postgres' || type === 'sql') && rawCreds) {
@@ -173,32 +206,12 @@ export const createConnector = asyncHandler(async (req: any, res: Response) => {
     }
   }
 
-  // Encrypt credentials before storing
-  let encryptedCredentials: string | null = null;
-  if (rawCreds) {
-    encryptedCredentials = encryptCredentials(rawCreds);
+  if (!isAdmin && rawCreds && typeof rawCreds === 'object') {
+    delete rawCreds.allowCustomPort;
   }
 
-  // Clean raw secrets out of config
-  const cleanConfig: Record<string, unknown> = config ? { ...config } : {};
-  delete cleanConfig.credentials;
-  delete cleanConfig.secretAccessKey;
-  delete cleanConfig.password;
-  delete cleanConfig.private_key;
-  delete cleanConfig.privateKey;
-
-  if (isAdmin && hasCustomPortFlag) {
-    cleanConfig.allowCustomPort = true;
-    cleanConfig.allowCustomPortApprovedBy = req.user?.id;
-    cleanConfig.allowCustomPortApprovedAt = new Date().toISOString();
-  } else {
-    delete cleanConfig.allowCustomPort;
-    delete cleanConfig.allowCustomPortApprovedBy;
-    delete cleanConfig.allowCustomPortApprovedAt;
-    if (rawCreds && typeof rawCreds === 'object') {
-      delete rawCreds.allowCustomPort;
-    }
-  }
+  const encryptedCredentials = rawCreds ? encryptCredentials(rawCreds) : null;
+  const cleanConfig = buildCleanConnectorConfig(config, isAdmin, hasCustomPortFlag, req.user?.id);
 
   const row = await prisma.connectors.create({
     data: {
