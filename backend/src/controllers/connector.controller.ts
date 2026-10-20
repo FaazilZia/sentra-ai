@@ -8,7 +8,6 @@ import {
   encryptCredentials,
   sanitizeConnector,
   parseServiceAccountInput,
-  normalizePrivateKey,
 } from '../utils/credentialHelper';
 import { parseCursorPagination } from '../utils/pagination';
 import { testConnectorSource } from '../services/connectorTest.service';

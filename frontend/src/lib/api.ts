@@ -474,11 +474,14 @@ export async function fetchExecutiveOverview(): Promise<ExecutiveOverview> {
   return apiRequest<ExecutiveOverview>('/connectors/overview');
 }
 
+export type ConnectorType = 'postgres' | 'sql' | 's3' | 'gdrive';
+export type ConnectorStatus = 'active' | 'pending' | 'error' | 'paused_budget' | 'inactive';
+
 export interface ConnectorItem {
   id: string;
   name: string;
-  type: 'postgres' | 'sql' | 's3' | 'gdrive';
-  status: 'active' | 'pending' | 'error' | 'paused_budget' | string;
+  type: ConnectorType;
+  status: ConnectorStatus;
   config: Record<string, any>;
   last_scan_at: string | null;
   last_error: string | null;
@@ -491,14 +494,14 @@ export interface ConnectorItem {
 
 export interface CreateConnectorPayload {
   name: string;
-  type: 'postgres' | 'sql' | 's3' | 'gdrive';
+  type: ConnectorType;
   config?: Record<string, any>;
   credentials?: Record<string, any> | string;
   scope?: Record<string, any>;
 }
 
 export interface TestConnectorPayload {
-  type: 'postgres' | 'sql' | 's3' | 'gdrive';
+  type: ConnectorType;
   config?: Record<string, any>;
   credentials?: Record<string, any> | string;
 }

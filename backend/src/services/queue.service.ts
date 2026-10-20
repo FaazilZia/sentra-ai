@@ -400,7 +400,7 @@ async function scanSqlSource(connector: any, creds: any): Promise<{ violations: 
 
   const { host, port, user, password, database } = creds;
   const rawSchema = (connector.config as any)?.schema || creds.schema || 'public';
-  const schema = /^[a-zA-Z0-9_]+$/.test(rawSchema) ? rawSchema : 'public';
+  const schema = /^\w+$/.test(rawSchema) ? rawSchema : 'public';
   const useSsl = (connector.config as any)?.ssl !== false && creds.ssl !== false;
 
   // SSRF Protection: verify host is not private/internal before connecting
@@ -438,26 +438,44 @@ async function scanSqlSource(connector: any, creds: any): Promise<{ violations: 
       PASSWORD: /\bpassword\b|\bpasswd\b|\bpwd\b/i,
     };
 
-    for (const col of columnsRes.rows) {
+    const scanItems = columnsRes.rows.map((col) => {
       const { table_name, column_name, data_type } = col;
       const metadataDesc = `table:${table_name}.column:${column_name} (${data_type})`;
       bytesScanned += Buffer.byteLength(metadataDesc);
 
-      let found = await performPIIScan(metadataDesc, {
-        connectorId: connector.id,
-        type: 'postgres',
-        fileKey: `${schema}.${table_name}.${column_name}`,
-        organizationId: connector.organizationId
-      });
-
+      const matchedPatterns: string[] = [];
       for (const [name, pattern] of Object.entries(SENSITIVE_COLUMN_PATTERNS)) {
         if (pattern.test(column_name)) {
-          found++;
-          await prisma.interception_logs.create({
+          matchedPatterns.push(name);
+        }
+      }
+
+      return { table_name, column_name, metadataDesc, matchedPatterns };
+    });
+
+    const scanPromises = scanItems.map(item =>
+      performPIIScan(item.metadataDesc, {
+        connectorId: connector.id,
+        type: 'postgres',
+        fileKey: `${schema}.${item.table_name}.${item.column_name}`,
+        organizationId: connector.organizationId,
+      })
+    );
+    const piiResults = await Promise.all(scanPromises);
+    const piiViolations = piiResults.reduce((acc, curr) => acc + curr, 0);
+
+    const logCreations: Array<Promise<any>> = [];
+    let patternViolations = 0;
+
+    for (const item of scanItems) {
+      for (const name of item.matchedPatterns) {
+        patternViolations++;
+        logCreations.push(
+          prisma.interception_logs.create({
             data: {
               user_id: 'system_scanner',
               organizationId: connector.organizationId,
-              input_text: `Scan of postgres metadata: ${schema}.${table_name}.${column_name}`,
+              input_text: `Scan of postgres metadata: ${schema}.${item.table_name}.${item.column_name}`,
               decision: 'BLOCK',
               confidence: 'High',
               reason: `Data scan detected sensitive pattern: ${name}`,
@@ -465,17 +483,21 @@ async function scanSqlSource(connector: any, creds: any): Promise<{ violations: 
               metadata: {
                 connector_id: connector.id,
                 violationType: name,
-                fileKey: `${schema}.${table_name}.${column_name}`,
-                source_type: 'postgres'
+                fileKey: `${schema}.${item.table_name}.${item.column_name}`,
+                source_type: 'postgres',
               },
-              timestamp: new Date()
-            }
-          });
-        }
+              timestamp: new Date(),
+            },
+          })
+        );
       }
-
-      violations += found;
     }
+
+    if (logCreations.length > 0) {
+      await Promise.all(logCreations);
+    }
+
+    violations = piiViolations + patternViolations;
   } finally {
     await client.end().catch(() => {});
   }

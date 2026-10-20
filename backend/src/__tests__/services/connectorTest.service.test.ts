@@ -3,8 +3,27 @@ import { S3Client } from '@aws-sdk/client-s3';
 import { google } from 'googleapis';
 import { Client as PgClient } from 'pg';
 
+const mockDriveFn = jest.fn();
+const mockJwtFn = jest.fn();
+
 jest.mock('@aws-sdk/client-s3');
-jest.mock('googleapis');
+jest.mock('googleapis', () => ({
+  __esModule: true,
+  google: {
+    drive: mockDriveFn,
+    auth: {
+      JWT: mockJwtFn,
+    },
+  },
+  default: {
+    google: {
+      drive: mockDriveFn,
+      auth: {
+        JWT: mockJwtFn,
+      },
+    },
+  },
+}));
 jest.mock('pg');
 
 describe('Connector Test Connection Service', () => {
@@ -70,7 +89,7 @@ describe('Connector Test Connection Service', () => {
       const mockList = jest.fn().mockResolvedValueOnce({
         data: { files: [{ id: '1', name: 'report.pdf' }] },
       });
-      (google.drive as jest.Mock).mockReturnValue({
+      mockDriveFn.mockReturnValue({
         files: { list: mockList },
       });
 
@@ -89,7 +108,7 @@ describe('Connector Test Connection Service', () => {
 
     it('returns friendly error on invalid_grant', async () => {
       const mockList = jest.fn().mockRejectedValueOnce(new Error('invalid_grant: Invalid JWT Signature'));
-      (google.drive as jest.Mock).mockReturnValue({
+      mockDriveFn.mockReturnValue({
         files: { list: mockList },
       });
 

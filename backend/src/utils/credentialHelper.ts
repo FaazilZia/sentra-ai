@@ -16,9 +16,9 @@ export function normalizePrivateKey(key: string): string {
     cleaned = cleaned.slice(1, -1);
   }
   // Replace escaped newlines with actual newline characters
-  cleaned = cleaned.replace(/\\r\\n/g, '\n').replace(/\\n/g, '\n');
+  cleaned = cleaned.replaceAll('\\r\\n', '\n').replaceAll('\\n', '\n');
   // Normalize literal carriage returns
-  cleaned = cleaned.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  cleaned = cleaned.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
   return cleaned.trim();
 }
 

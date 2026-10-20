@@ -1,6 +1,29 @@
-import dns from 'dns/promises';
-import net from 'net';
+import dns from 'node:dns/promises';
+import net from 'node:net';
 import logger from './logger';
+
+const PRIVATE_IPV4_RANGES: Array<{ start: number; end: number }> = [
+  // 0.0.0.0/8 (Current network: 0.0.0.0 - 0.255.255.255)
+  { start: 0x00000000, end: 0x00ffffff },
+  // 10.0.0.0/8 (RFC 1918 private: 10.0.0.0 - 10.255.255.255)
+  { start: 0x0a000000, end: 0x0affffff },
+  // 100.64.0.0/10 (Carrier Grade NAT: 100.64.0.0 - 100.127.255.255)
+  { start: 0x64400000, end: 0x647fffff },
+  // 127.0.0.0/8 (Loopback: 127.0.0.0 - 127.255.255.255)
+  { start: 0x7f000000, end: 0x7fffffff },
+  // 169.254.0.0/16 (Link-local: 169.254.0.0 - 169.254.255.255)
+  { start: 0xa9fe0000, end: 0xa9feffff },
+  // 172.16.0.0/12 (RFC 1918 private: 172.16.0.0 - 172.31.255.255)
+  { start: 0xac100000, end: 0xac1fffff },
+  // 192.168.0.0/16 (RFC 1918 private: 192.168.0.0 - 192.168.255.255)
+  { start: 0xc0a80000, end: 0xc0a8ffff },
+  // 198.18.0.0/15 (Benchmark testing: 198.18.0.0 - 198.19.255.255)
+  { start: 0xc6120000, end: 0xc613ffff },
+  // 224.0.0.0/4 (Multicast: 224.0.0.0 - 239.255.255.255)
+  { start: 0xe0000000, end: 0xefffffff },
+  // 240.0.0.0/4 (Reserved: 240.0.0.0 - 255.255.255.255)
+  { start: 0xf0000000, end: 0xffffffff },
+];
 
 /**
  * Checks whether an IPv4 address is in a private, loopback, link-local, or restricted range.
@@ -11,39 +34,8 @@ export function isPrivateIPv4(ip: string): boolean {
     return true; // Malformed IPv4 is treated as unsafe
   }
 
-  const [b0, b1] = parts;
-
-  // 0.0.0.0/8 (Current network)
-  if (b0 === 0) return true;
-
-  // 127.0.0.0/8 (Loopback)
-  if (b0 === 127) return true;
-
-  // 10.0.0.0/8 (RFC 1918 private)
-  if (b0 === 10) return true;
-
-  // 172.16.0.0/12 (RFC 1918 private: 172.16.0.0 - 172.31.255.255)
-  if (b0 === 172 && b1 >= 16 && b1 <= 31) return true;
-
-  // 192.168.0.0/16 (RFC 1918 private)
-  if (b0 === 192 && b1 === 168) return true;
-
-  // 169.254.0.0/16 (RFC 3927 link-local, includes AWS/GCP metadata service 169.254.169.254)
-  if (b0 === 169 && b1 === 254) return true;
-
-  // 100.64.0.0/10 (Carrier Grade NAT)
-  if (b0 === 100 && b1 >= 64 && b1 <= 127) return true;
-
-  // 198.18.0.0/15 (Benchmark testing)
-  if (b0 === 198 && (b1 === 18 || b1 === 19)) return true;
-
-  // 224.0.0.0/4 (Multicast: 224.0.0.0 - 239.255.255.255)
-  if (b0 >= 224 && b0 <= 239) return true;
-
-  // 240.0.0.0/4 (Reserved / Future use: 240.0.0.0 - 255.255.255.255)
-  if (b0 >= 240) return true;
-
-  return false;
+  const intVal = ((parts[0] << 24) >>> 0) + (parts[1] << 16) + (parts[2] << 8) + parts[3];
+  return PRIVATE_IPV4_RANGES.some(r => intVal >= r.start && intVal <= r.end);
 }
 
 /**

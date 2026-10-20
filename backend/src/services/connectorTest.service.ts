@@ -1,5 +1,4 @@
 import { S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3';
-import { google } from 'googleapis';
 import { Client as PgClient } from 'pg';
 import { assertSafeTarget } from '../utils/ssrfProtection';
 import { normalizePrivateKey, parseServiceAccountInput } from '../utils/credentialHelper';
@@ -45,6 +44,159 @@ export function formatFriendlyConnectorError(err: any): string {
   return `Connection failed: ${rawMsg}`;
 }
 
+async function testS3Source(
+  config: Record<string, any>,
+  credentials: any
+): Promise<TestConnectionResult> {
+  const bucketName = config.bucketName || config.bucket || credentials.bucketName || credentials.bucket;
+  const region = config.region || credentials.region || 'us-east-1';
+  const accessKeyId = credentials.accessKeyId || config.accessKeyId;
+  const secretAccessKey = credentials.secretAccessKey || config.secretAccessKey;
+
+  if (!bucketName) {
+    return { success: false, message: 'Bucket name is required for S3 connection test.' };
+  }
+  if (!accessKeyId || !secretAccessKey) {
+    return { success: false, message: 'AWS Access Key ID and Secret Access Key are required.' };
+  }
+
+  const s3 = new S3Client({
+    region,
+    credentials: { accessKeyId, secretAccessKey },
+  });
+
+  const listCmd = new ListObjectsV2Command({ Bucket: bucketName, MaxKeys: 1 });
+  await s3.send(listCmd);
+
+  return {
+    success: true,
+    message: `Successfully connected to S3 bucket "${bucketName}" in region "${region}".`,
+    details: { bucketName, region },
+  };
+}
+
+async function testGDriveSource(
+  config: Record<string, any>,
+  credentials: any
+): Promise<TestConnectionResult> {
+  let client_email = credentials.client_email || credentials.clientEmail || config.client_email;
+  let private_key = credentials.private_key || credentials.privateKey || config.private_key;
+  const driveScope = credentials.driveScope || config.driveScope || 'https://www.googleapis.com/auth/drive.readonly';
+
+  if (!client_email || !private_key) {
+    const parsed = parseServiceAccountInput(credentials) || parseServiceAccountInput(config);
+    if (parsed.client_email) client_email = parsed.client_email;
+    if (parsed.private_key) private_key = parsed.private_key;
+  }
+
+  if (!client_email) {
+    return { success: false, message: 'Service account client email is required.' };
+  }
+  if (!private_key) {
+    return { success: false, message: 'Service account private key is required.' };
+  }
+
+  // Lazy-require googleapis to isolate third-party library loading without breaking CommonJS tests
+  const googleapis = require('googleapis');
+  const google = googleapis.google || googleapis;
+  const normalizedKey = normalizePrivateKey(private_key);
+
+  const auth = new (google.auth.JWT as any)(
+    client_email,
+    null,
+    normalizedKey,
+    [driveScope]
+  );
+  const drive = google.drive({ version: 'v3', auth });
+
+  const res = await drive.files.list({
+    pageSize: 1,
+    fields: 'files(id, name)',
+  });
+
+  const count = res.data.files ? res.data.files.length : 0;
+  return {
+    success: true,
+    message: `Successfully connected to Google Drive API. Found ${count} readable file(s) in scope.`,
+    details: { client_email, driveScope },
+  };
+}
+
+async function testPostgresSource(
+  config: Record<string, any>,
+  credentials: any
+): Promise<TestConnectionResult> {
+  const rawHost = String(credentials.host || config.host || '').trim();
+  const rawPort = credentials.port || config.port || 5432;
+  const rawUser = String(credentials.user || config.user || '').trim();
+  const rawPassword = String(credentials.password || config.password || '');
+  const rawDatabase = String(credentials.database || config.database || 'postgres').trim();
+  const rawSchema = String(config.schema || credentials.schema || 'public').trim();
+  const useSsl = config.ssl !== false && credentials.ssl !== false;
+
+  if (!rawHost) {
+    return { success: false, message: 'Database host is required.' };
+  }
+  if (!rawUser) {
+    return { success: false, message: 'Database user is required.' };
+  }
+
+  // SSRF check on host before establishing connection
+  await assertSafeTarget(rawHost);
+
+  // Strict identifier validation to prevent connection option injection
+  if (!/^[a-zA-Z0-9_.-]+$/.test(rawHost)) {
+    return { success: false, message: 'Invalid database host format.' };
+  }
+  if (!/^\w+$/.test(rawSchema)) {
+    return { success: false, message: 'Invalid schema name. Only alphanumeric characters and underscores are allowed.' };
+  }
+  if (!/^[a-zA-Z0-9_.-]+$/.test(rawUser)) {
+    return { success: false, message: 'Invalid username format.' };
+  }
+  if (!/^[a-zA-Z0-9_-]+$/.test(rawDatabase)) {
+    return { success: false, message: 'Invalid database name format.' };
+  }
+
+  const port = Math.min(65535, Math.max(1, Number.parseInt(String(rawPort), 10) || 5432));
+
+  const client = new PgClient({
+    host: rawHost,
+    port,
+    user: rawUser,
+    password: rawPassword,
+    database: rawDatabase,
+    ssl: useSsl ? { rejectUnauthorized: false } : undefined,
+    connectionTimeoutMillis: 10000,
+  });
+
+  await client.connect();
+  try {
+    const verRes = await client.query('SELECT version()');
+    const pgVersion = verRes.rows[0]?.version || 'PostgreSQL';
+
+    const tablesRes = await client.query(
+      `SELECT count(*)::int as table_count FROM information_schema.tables WHERE table_schema = $1`,
+      [rawSchema]
+    );
+    const tableCount = tablesRes.rows[0]?.table_count || 0;
+
+    return {
+      success: true,
+      message: `Successfully connected to PostgreSQL (${rawSchema} schema has ${tableCount} table(s)).`,
+      details: {
+        host: rawHost,
+        database: rawDatabase,
+        schema: rawSchema,
+        tableCount,
+        pgVersion: String(pgVersion).split(' ').slice(0, 2).join(' '),
+      },
+    };
+  } finally {
+    await client.end().catch(() => {});
+  }
+}
+
 /**
  * Tests connection to an external data source without persisting credentials or modifying state.
  */
@@ -57,135 +209,13 @@ export async function testConnectorSource(
 
   try {
     if (normalizedType === 's3') {
-      const bucketName = config.bucketName || config.bucket || credentials.bucketName || credentials.bucket;
-      const region = config.region || credentials.region || 'us-east-1';
-      const accessKeyId = credentials.accessKeyId || config.accessKeyId;
-      const secretAccessKey = credentials.secretAccessKey || config.secretAccessKey;
-
-      if (!bucketName) {
-        return { success: false, message: 'Bucket name is required for S3 connection test.' };
-      }
-      if (!accessKeyId || !secretAccessKey) {
-        return { success: false, message: 'AWS Access Key ID and Secret Access Key are required.' };
-      }
-
-      const s3 = new S3Client({
-        region,
-        credentials: { accessKeyId, secretAccessKey },
-      });
-
-      const listCmd = new ListObjectsV2Command({ Bucket: bucketName, MaxKeys: 1 });
-      await s3.send(listCmd);
-
-      return {
-        success: true,
-        message: `Successfully connected to S3 bucket "${bucketName}" in region "${region}".`,
-        details: { bucketName, region },
-      };
+      return await testS3Source(config, credentials);
     }
-
     if (normalizedType === 'gdrive') {
-      let client_email = credentials.client_email || credentials.clientEmail || config.client_email;
-      let private_key = credentials.private_key || credentials.privateKey || config.private_key;
-      const driveScope = credentials.driveScope || config.driveScope || 'https://www.googleapis.com/auth/drive.readonly';
-
-      // If user passed a service account JSON string or object
-      if (!client_email || !private_key) {
-        const parsed = parseServiceAccountInput(credentials) || parseServiceAccountInput(config);
-        if (parsed.client_email) client_email = parsed.client_email;
-        if (parsed.private_key) private_key = parsed.private_key;
-      }
-
-      if (!client_email) {
-        return { success: false, message: 'Service account client email is required.' };
-      }
-      if (!private_key) {
-        return { success: false, message: 'Service account private key is required.' };
-      }
-
-      const normalizedKey = normalizePrivateKey(private_key);
-
-      const auth = new (google.auth.JWT as any)(
-        client_email,
-        null,
-        normalizedKey,
-        [driveScope]
-      );
-      const drive = google.drive({ version: 'v3', auth });
-
-      const res = await drive.files.list({
-        pageSize: 1,
-        fields: 'files(id, name)',
-      });
-
-      const count = res.data.files ? res.data.files.length : 0;
-      return {
-        success: true,
-        message: `Successfully connected to Google Drive API. Found ${count} readable file(s) in scope.`,
-        details: { client_email, driveScope },
-      };
+      return await testGDriveSource(config, credentials);
     }
-
     if (normalizedType === 'postgres') {
-      const host = credentials.host || config.host;
-      const port = Number(credentials.port || config.port || 5432);
-      const user = credentials.user || config.user;
-      const password = credentials.password || config.password;
-      const database = credentials.database || config.database || 'postgres';
-      const schema = config.schema || credentials.schema || 'public';
-      const useSsl = config.ssl !== false && credentials.ssl !== false;
-
-      if (!host) {
-        return { success: false, message: 'Database host is required.' };
-      }
-      if (!user) {
-        return { success: false, message: 'Database user is required.' };
-      }
-
-      // SSRF check on host before establishing connection
-      await assertSafeTarget(host);
-
-      // Validate schema is a safe identifier
-      if (!/^[a-zA-Z0-9_]+$/.test(schema)) {
-        return { success: false, message: 'Invalid schema name. Only alphanumeric characters and underscores are allowed.' };
-      }
-
-      const client = new PgClient({
-        host,
-        port,
-        user,
-        password,
-        database,
-        ssl: useSsl ? { rejectUnauthorized: false } : undefined,
-        connectionTimeoutMillis: 10000,
-      });
-
-      await client.connect();
-      try {
-        const verRes = await client.query('SELECT version()');
-        const pgVersion = verRes.rows[0]?.version || 'PostgreSQL';
-
-        // Check metadata access on specified schema
-        const tablesRes = await client.query(
-          `SELECT count(*)::int as table_count FROM information_schema.tables WHERE table_schema = $1`,
-          [schema]
-        );
-        const tableCount = tablesRes.rows[0]?.table_count || 0;
-
-        return {
-          success: true,
-          message: `Successfully connected to PostgreSQL (${schema} schema has ${tableCount} table(s)).`,
-          details: {
-            host,
-            database,
-            schema,
-            tableCount,
-            pgVersion: pgVersion.split(' ')[0] + ' ' + pgVersion.split(' ')[1],
-          },
-        };
-      } finally {
-        await client.end().catch(() => {});
-      }
+      return await testPostgresSource(config, credentials);
     }
 
     return {

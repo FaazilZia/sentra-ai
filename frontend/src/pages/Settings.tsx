@@ -14,6 +14,7 @@ import {
   Plus,
   X,
   ExternalLink,
+  Check,
   CheckCircle2,
   AlertTriangle,
   Shield,
@@ -2119,11 +2120,12 @@ function McpTab({
 
         <div className="space-y-4">
           <div>
-            <label className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1">
+            <label htmlFor="mcp-gateway-url" className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1">
               MCP Gateway Proxy URL
             </label>
             <div className="flex items-center gap-2">
               <input
+                id="mcp-gateway-url"
                 type="text"
                 readOnly
                 value={proxyUrl}
@@ -2146,9 +2148,9 @@ function McpTab({
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block">
+              <span className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block">
                 Claude Desktop Configuration (<code className="font-mono text-zinc-300">claude_desktop_config.json</code>)
-              </label>
+              </span>
               <button
                 type="button"
                 onClick={() => {
