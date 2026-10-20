@@ -104,14 +104,7 @@ export const getExecutiveOverview = asyncHandler(async (req: any, res: Response)
   });
 });
 
-export const testConnector = asyncHandler(async (req: any, res: Response) => {
-  const { type, config, credentials } = req.body as {
-    type: string;
-    config?: Record<string, any>;
-    credentials?: any;
-  };
-
-  // Strip server-managed approval stamps from client input
+function extractAndAuthorizeCustomPort(req: any, config?: any, credentials?: any): { isAdmin: boolean; hasCustomPortFlag: boolean; forbidden: boolean } {
   if (config && typeof config === 'object') {
     delete config.allowCustomPortApprovedBy;
     delete config.allowCustomPortApprovedAt;
@@ -125,13 +118,24 @@ export const testConnector = asyncHandler(async (req: any, res: Response) => {
   const hasCustomPortFlag = Boolean(
     config?.allowCustomPort ||
     (credentials && typeof credentials === 'object' && credentials.allowCustomPort) ||
-    (config as any)?.allowCustomPortApprovedBy ||
-    (credentials as any)?.allowCustomPortApprovedBy ||
-    req.body.allowCustomPort ||
-    req.body.allowCustomPortApprovedBy
+    config?.allowCustomPortApprovedBy ||
+    credentials?.allowCustomPortApprovedBy ||
+    req.body?.allowCustomPort ||
+    req.body?.allowCustomPortApprovedBy
   );
 
-  if (hasCustomPortFlag && !isAdmin) {
+  return { isAdmin, hasCustomPortFlag, forbidden: hasCustomPortFlag && !isAdmin };
+}
+
+export const testConnector = asyncHandler(async (req: any, res: Response) => {
+  const { type, config, credentials } = req.body as {
+    type: string;
+    config?: Record<string, any>;
+    credentials?: any;
+  };
+
+  const { isAdmin, forbidden } = extractAndAuthorizeCustomPort(req, config, credentials);
+  if (forbidden) {
     return sendError(res, 403, 'Forbidden: Only administrators can configure or test custom database ports.');
   }
 
@@ -200,27 +204,8 @@ export const createConnector = asyncHandler(async (req: any, res: Response) => {
 
   let rawCreds: any = credentials || (config && (config as any).credentials);
 
-  // Strip server-managed approval stamps from client input
-  if (config && typeof config === 'object') {
-    delete (config as any).allowCustomPortApprovedBy;
-    delete (config as any).allowCustomPortApprovedAt;
-  }
-  if (rawCreds && typeof rawCreds === 'object') {
-    delete rawCreds.allowCustomPortApprovedBy;
-    delete rawCreds.allowCustomPortApprovedAt;
-  }
-
-  const isAdmin = Boolean(req.user?.role === 'ADMIN' || req.user?.role === 'SUPER_ADMIN');
-  const hasCustomPortFlag = Boolean(
-    config?.allowCustomPort ||
-    (rawCreds && typeof rawCreds === 'object' && rawCreds.allowCustomPort) ||
-    (config as any)?.allowCustomPortApprovedBy ||
-    (rawCreds as any)?.allowCustomPortApprovedBy ||
-    req.body.allowCustomPort ||
-    req.body.allowCustomPortApprovedBy
-  );
-
-  if (hasCustomPortFlag && !isAdmin) {
+  const { isAdmin, hasCustomPortFlag, forbidden } = extractAndAuthorizeCustomPort(req, config, rawCreds);
+  if (forbidden) {
     return sendError(res, 403, 'Forbidden: Only administrators can configure custom database ports.');
   }
 

@@ -278,19 +278,25 @@ async function testGDriveSource(
   };
 }
 
-async function testPostgresSource(
+function validatePostgresInputs(
   config: Record<string, any>,
   credentials: any,
-  isAdmin = false
-): Promise<TestConnectionResult> {
+  isAdmin: boolean
+): {
+  error?: string;
+  port?: number;
+  rawHost?: string;
+  rawUser?: string;
+  rawPassword?: string;
+  rawDatabase?: string;
+  rawSchema?: string;
+} {
   const rawHost = String(credentials.host || config.host || '').trim();
   const rawPort = credentials.port || config.port || 5432;
   const rawUser = String(credentials.user || config.user || '').trim();
   const rawPassword = String(credentials.password || config.password || '');
   const rawDatabase = String(credentials.database || config.database || 'postgres').trim();
   const rawSchema = String(config.schema || credentials.schema || 'public').trim();
-  const useSsl = config.ssl !== false && credentials.ssl !== false;
-  const allowSelfSigned = Boolean(config.allowSelfSigned || credentials.allowSelfSigned);
 
   const HOST_REGEX = /^[a-zA-Z0-9_.-]+$/;
   const USER_REGEX = /^[a-zA-Z0-9_.-]+$/;
@@ -298,16 +304,16 @@ async function testPostgresSource(
   const SCHEMA_REGEX = /^\w+$/;
 
   if (!rawHost || !HOST_REGEX.test(rawHost)) {
-    return { success: false, message: 'Database host is required and must have a valid hostname/IP format.' };
+    return { error: 'Database host is required and must have a valid hostname/IP format.' };
   }
   if (!rawUser || !USER_REGEX.test(rawUser)) {
-    return { success: false, message: 'Database user is required and must have a valid username format.' };
+    return { error: 'Database user is required and must have a valid username format.' };
   }
   if (!rawDatabase || !DB_REGEX.test(rawDatabase)) {
-    return { success: false, message: 'Invalid database name format.' };
+    return { error: 'Invalid database name format.' };
   }
   if (!rawSchema || !SCHEMA_REGEX.test(rawSchema)) {
-    return { success: false, message: 'Invalid schema name. Only alphanumeric characters and underscores are allowed.' };
+    return { error: 'Invalid schema name. Only alphanumeric characters and underscores are allowed.' };
   }
 
   if (config && typeof config === 'object') {
@@ -326,12 +332,32 @@ async function testPostgresSource(
 
   const portValidation = validatePostgresPort(rawPort, allowCustomPort);
   if (!portValidation.valid) {
-    return {
-      success: false,
-      message: portValidation.error || 'Invalid port.',
-    };
+    return { error: portValidation.error || 'Invalid port.' };
   }
-  const port = portValidation.port;
+
+  return {
+    port: portValidation.port,
+    rawHost,
+    rawUser,
+    rawPassword,
+    rawDatabase,
+    rawSchema,
+  };
+}
+
+async function testPostgresSource(
+  config: Record<string, any>,
+  credentials: any,
+  isAdmin = false
+): Promise<TestConnectionResult> {
+  const validated = validatePostgresInputs(config, credentials, isAdmin);
+  if (validated.error) {
+    return { success: false, message: validated.error };
+  }
+
+  const { rawHost, port, rawUser, rawPassword, rawDatabase, rawSchema } = validated as Required<typeof validated>;
+  const useSsl = config.ssl !== false && credentials.ssl !== false;
+  const allowSelfSigned = Boolean(config.allowSelfSigned || credentials.allowSelfSigned);
 
   // SSRF check on host before establishing connection - pins to resolved IP
   const safeIp = await assertSafeTarget(rawHost);
