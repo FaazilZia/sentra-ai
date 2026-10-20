@@ -437,6 +437,39 @@ async function runWithConcurrencyLimit<T, R>(
   );
 }
 
+async function isCustomPortApprovedByAdmin(connector: any): Promise<boolean> {
+  if (process.env.ALLOW_CUSTOM_DB_PORTS === 'true') {
+    return true;
+  }
+  const config = connector?.config as any;
+  if (!config?.allowCustomPort) {
+    return false;
+  }
+  const approverId = config.allowCustomPortApprovedBy;
+  if (!approverId || typeof approverId !== 'string') {
+    logger.warn(
+      `[Queue] Connector ${connector.id} has allowCustomPort=true without an admin approver signature. Custom port rejected.`
+    );
+    return false;
+  }
+  const approver = await prisma.users.findUnique({
+    where: { id: approverId },
+    select: { role: true, organizationId: true, is_active: true },
+  });
+  const isValidAdmin = Boolean(
+    approver &&
+    approver.is_active &&
+    approver.organizationId === connector.organizationId &&
+    (approver.role === 'ADMIN' || approver.role === 'SUPER_ADMIN')
+  );
+  if (!isValidAdmin) {
+    logger.warn(
+      `[Queue] Connector ${connector.id} has allowCustomPort=true but approver ${approverId} is not an active admin for org ${connector.organizationId}. Custom port rejected.`
+    );
+  }
+  return isValidAdmin;
+}
+
 async function scanSqlSource(connector: any, creds: any): Promise<{ violations: number; apiCalls: number; bytesScanned: number }> {
   let violations = 0;
   let apiCalls = 0;
@@ -453,11 +486,7 @@ async function scanSqlSource(connector: any, creds: any): Promise<{ violations: 
     throw new Error('Invalid database host format.');
   }
 
-  const allowCustomPort = Boolean(
-    process.env.ALLOW_CUSTOM_DB_PORTS === 'true' ||
-    (connector.config as any)?.allowCustomPort ||
-    creds.allowCustomPort
-  );
+  const allowCustomPort = await isCustomPortApprovedByAdmin(connector);
 
   const portValidation = validatePostgresPort(port || 5432, allowCustomPort);
   if (!portValidation.valid) {

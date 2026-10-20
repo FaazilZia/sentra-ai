@@ -455,7 +455,22 @@ describe('Connector Test Connection Service', () => {
         expect(resStd.success).toBe(true);
       }
 
-      // 3. Custom port 8432 WITH explicit admin setting allowCustomPort -> allowed
+      // 3. Custom port 8432 with non-admin (isAdmin: false) -> rejected
+      const resNonAdmin = await testConnectorSource(
+        'postgres',
+        { allowCustomPort: true },
+        {
+          host: 'db.example.com',
+          port: 8432,
+          user: 'postgres',
+          password: 'password',
+        },
+        false // non-admin
+      );
+      expect(resNonAdmin.success).toBe(false);
+      expect(resNonAdmin.message).toContain('not permitted by default');
+
+      // 4. Custom port 8432 WITH explicit admin setting allowCustomPort (isAdmin: true) -> allowed
       const resCustomAllowed = await testConnectorSource(
         'postgres',
         { allowCustomPort: true },
@@ -464,11 +479,12 @@ describe('Connector Test Connection Service', () => {
           port: 8432,
           user: 'postgres',
           password: 'password',
-        }
+        },
+        true // admin
       );
       expect(resCustomAllowed.success).toBe(true);
 
-      // 4. Privileged port (22) and restricted port (6379) rejected even with allowCustomPort
+      // 5. Privileged port (22) and restricted port (6379) rejected even with allowCustomPort
       const resSsh = await testConnectorSource(
         'postgres',
         { allowCustomPort: true },
@@ -477,7 +493,8 @@ describe('Connector Test Connection Service', () => {
           port: 22,
           user: 'postgres',
           password: 'password',
-        }
+        },
+        true
       );
       expect(resSsh.success).toBe(false);
       expect(resSsh.message).toContain('privileged system port (1-1023) or restricted service port');
@@ -490,7 +507,8 @@ describe('Connector Test Connection Service', () => {
           port: 6379,
           user: 'postgres',
           password: 'password',
-        }
+        },
+        true
       );
       expect(resRedis.success).toBe(false);
       expect(resRedis.message).toContain('privileged system port (1-1023) or restricted service port');

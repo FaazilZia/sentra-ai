@@ -280,7 +280,8 @@ async function testGDriveSource(
 
 async function testPostgresSource(
   config: Record<string, any>,
-  credentials: any
+  credentials: any,
+  isAdmin = false
 ): Promise<TestConnectionResult> {
   const rawHost = String(credentials.host || config.host || '').trim();
   const rawPort = credentials.port || config.port || 5432;
@@ -311,8 +312,7 @@ async function testPostgresSource(
 
   const allowCustomPort = Boolean(
     process.env.ALLOW_CUSTOM_DB_PORTS === 'true' ||
-    config.allowCustomPort ||
-    credentials.allowCustomPort
+    (isAdmin && (config.allowCustomPort || credentials.allowCustomPort))
   );
 
   const portValidation = validatePostgresPort(rawPort, allowCustomPort);
@@ -402,7 +402,8 @@ async function testPostgresSource(
 export async function testConnectorSource(
   type: string,
   config: Record<string, any> = {},
-  credentials: any = {}
+  credentials: any = {},
+  isAdmin = false
 ): Promise<TestConnectionResult> {
   const normalizedType = type === 'sql' ? 'postgres' : type;
 
@@ -414,7 +415,7 @@ export async function testConnectorSource(
       return await testGDriveSource(config, credentials);
     }
     if (normalizedType === 'postgres') {
-      return await testPostgresSource(config, credentials);
+      return await testPostgresSource(config, credentials, isAdmin);
     }
 
     return {

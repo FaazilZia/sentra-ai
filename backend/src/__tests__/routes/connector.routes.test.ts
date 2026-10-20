@@ -52,20 +52,45 @@ describe('Connector API Routes', () => {
     organizationId: orgId,
   });
 
+  const memberUserId = 'user-member-456';
+  const memberToken = generateAccessToken({
+    id: memberUserId,
+    email: 'member@sentra.ai',
+    role: 'MEMBER',
+    orgId,
+    organizationId: orgId,
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     process.env.ALLOW_PRIVATE_NETWORK_TARGETS = 'true';
-    (prisma.users.findUnique as jest.Mock).mockResolvedValue({
-      id: userId,
-      email: 'admin@sentra.ai',
-      role: 'ADMIN',
-      is_active: true,
-      organizationId: orgId,
-      organizations: {
-        id: orgId,
-        name: 'Test Org',
+    (prisma.users.findUnique as jest.Mock).mockImplementation(({ where }) => {
+      if (where?.id === memberUserId) {
+        return Promise.resolve({
+          id: memberUserId,
+          email: 'member@sentra.ai',
+          role: 'MEMBER',
+          is_active: true,
+          organizationId: orgId,
+          organizations: {
+            id: orgId,
+            name: 'Test Org',
+            is_active: true,
+          },
+        });
+      }
+      return Promise.resolve({
+        id: userId,
+        email: 'admin@sentra.ai',
+        role: 'ADMIN',
         is_active: true,
-      },
+        organizationId: orgId,
+        organizations: {
+          id: orgId,
+          name: 'Test Org',
+          is_active: true,
+        },
+      });
     });
   });
 
@@ -144,7 +169,61 @@ describe('Connector API Routes', () => {
       expect(testConnectorSource).toHaveBeenCalledWith(
         'postgres',
         undefined,
-        expect.objectContaining({ host: 'db.example.com' })
+        expect.objectContaining({ host: 'db.example.com' }),
+        true
+      );
+    });
+
+    it('blocks non-admin user sending allowCustomPort: true with 403 Forbidden', async () => {
+      const res = await request(app)
+        .post('/api/v1/connectors/test')
+        .set('Authorization', `Bearer ${memberToken}`)
+        .send({
+          type: 'postgres',
+          config: { allowCustomPort: true },
+          credentials: {
+            host: 'db.example.com',
+            port: 5000,
+            user: 'sentra_readonly',
+            password: 'secret_password',
+            database: 'prod_db',
+          },
+        });
+
+      expect(res.status).toBe(403);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Only administrators can configure or test custom database ports');
+      expect(testConnectorSource).not.toHaveBeenCalled();
+    });
+
+    it('allows admin user sending allowCustomPort: true to test custom database port', async () => {
+      (testConnectorSource as jest.Mock).mockResolvedValueOnce({
+        success: true,
+        message: 'Successfully connected to PostgreSQL database on custom port.',
+      });
+
+      const res = await request(app)
+        .post('/api/v1/connectors/test')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          type: 'postgres',
+          config: { allowCustomPort: true },
+          credentials: {
+            host: 'db.example.com',
+            port: 5000,
+            user: 'sentra_readonly',
+            password: 'secret_password',
+            database: 'prod_db',
+          },
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(testConnectorSource).toHaveBeenCalledWith(
+        'postgres',
+        expect.objectContaining({ allowCustomPort: true }),
+        expect.objectContaining({ host: 'db.example.com', port: 5000 }),
+        true
       );
     });
 
@@ -169,6 +248,59 @@ describe('Connector API Routes', () => {
   });
 
   describe('POST /api/connectors', () => {
+    it('blocks non-admin user creating connector with allowCustomPort: true with 403 Forbidden', async () => {
+      const res = await request(app)
+        .post('/api/v1/connectors')
+        .set('Authorization', `Bearer ${memberToken}`)
+        .send({
+          name: 'Custom Port Postgres',
+          type: 'postgres',
+          config: { allowCustomPort: true },
+          credentials: {
+            host: 'db.example.com',
+            port: 5000,
+            user: 'user',
+            password: 'pw',
+          },
+        });
+
+      expect(res.status).toBe(403);
+      expect(res.body.message).toContain('Only administrators can configure custom database ports');
+      expect(prisma.connectors.create).not.toHaveBeenCalled();
+    });
+
+    it('allows admin user creating connector with allowCustomPort: true and records approval metadata', async () => {
+      (prisma.connectors.create as jest.Mock).mockImplementation(({ data }) => ({
+        ...data,
+        created_at: new Date(),
+        updated_at: new Date(),
+      }));
+
+      const res = await request(app)
+        .post('/api/v1/connectors')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          name: 'Custom Port Postgres Admin',
+          type: 'postgres',
+          config: { allowCustomPort: true },
+          credentials: {
+            host: 'db.example.com',
+            port: 5000,
+            user: 'user',
+            password: 'pw',
+          },
+        });
+
+      expect(res.status).toBe(201);
+      expect(prisma.connectors.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
+          config: expect.objectContaining({
+            allowCustomPort: true,
+            allowCustomPortApprovedBy: userId,
+          }),
+        }),
+      }));
+    });
     it('rejects "local" type in creation validation', async () => {
       const res = await request(app)
         .post('/api/v1/connectors')

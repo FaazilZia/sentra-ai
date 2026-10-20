@@ -111,7 +111,17 @@ export const testConnector = asyncHandler(async (req: any, res: Response) => {
     credentials?: any;
   };
 
-  const result = await testConnectorSource(type, config, credentials);
+  const isAdmin = Boolean(req.user?.role === 'ADMIN' || req.user?.role === 'SUPER_ADMIN');
+  const hasCustomPortFlag = Boolean(
+    config?.allowCustomPort ||
+    (credentials && typeof credentials === 'object' && credentials.allowCustomPort)
+  );
+
+  if (hasCustomPortFlag && !isAdmin) {
+    return sendError(res, 403, 'Forbidden: Only administrators can configure or test custom database ports.');
+  }
+
+  const result = await testConnectorSource(type, config, credentials, isAdmin);
   if (!result.success) {
     return sendError(res, 400, result.message);
   }
@@ -134,6 +144,16 @@ export const createConnector = asyncHandler(async (req: any, res: Response) => {
   };
 
   let rawCreds: any = credentials || (config && (config as any).credentials);
+
+  const isAdmin = Boolean(req.user?.role === 'ADMIN' || req.user?.role === 'SUPER_ADMIN');
+  const hasCustomPortFlag = Boolean(
+    config?.allowCustomPort ||
+    (rawCreds && typeof rawCreds === 'object' && rawCreds.allowCustomPort)
+  );
+
+  if (hasCustomPortFlag && !isAdmin) {
+    return sendError(res, 403, 'Forbidden: Only administrators can configure custom database ports.');
+  }
 
   // Normalization for Google Drive service account
   if (type === 'gdrive' && rawCreds) {
@@ -166,6 +186,19 @@ export const createConnector = asyncHandler(async (req: any, res: Response) => {
   delete cleanConfig.password;
   delete cleanConfig.private_key;
   delete cleanConfig.privateKey;
+
+  if (isAdmin && hasCustomPortFlag) {
+    cleanConfig.allowCustomPort = true;
+    cleanConfig.allowCustomPortApprovedBy = req.user?.id;
+    cleanConfig.allowCustomPortApprovedAt = new Date().toISOString();
+  } else {
+    delete cleanConfig.allowCustomPort;
+    delete cleanConfig.allowCustomPortApprovedBy;
+    delete cleanConfig.allowCustomPortApprovedAt;
+    if (rawCreds && typeof rawCreds === 'object') {
+      delete rawCreds.allowCustomPort;
+    }
+  }
 
   const row = await prisma.connectors.create({
     data: {
