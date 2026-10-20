@@ -38,75 +38,114 @@ export const RESTRICTED_POSTGRES_PORTS = new Set([
   27017,// MongoDB
 ]);
 
+interface FriendlyErrorRule {
+  matches: (msg: string, err?: any) => boolean;
+  friendlyMessage: string;
+}
+
+const FRIENDLY_ERROR_RULES: FriendlyErrorRule[] = [
+  {
+    matches: (msg, err) => msg.includes('AccessDenied') || msg.includes('Forbidden') || err?.name === 'AccessDenied',
+    friendlyMessage: 'Access Denied: Please verify permissions and credential scopes (e.g. check s3:ListBucket).',
+  },
+  {
+    matches: (msg) => msg.includes('NoSuchBucket'),
+    friendlyMessage: 'Specified S3 bucket does not exist or is in a different region.',
+  },
+  {
+    matches: (msg) =>
+      msg.includes('IllegalLocationConstraintException') ||
+      msg.includes('PermanentRedirect') ||
+      msg.includes('BucketRegionError') ||
+      msg.includes('different region'),
+    friendlyMessage: 'S3 bucket region error: The specified bucket is in a different AWS region.',
+  },
+  {
+    matches: (msg) =>
+      msg.includes('SignatureDoesNotMatch') ||
+      msg.includes('InvalidAccessKeyId') ||
+      msg.includes('The security token included in the request is invalid'),
+    friendlyMessage: 'AWS authentication failed: Invalid Access Key ID or Secret Access Key.',
+  },
+  {
+    matches: (msg) => msg.includes('ECONNREFUSED'),
+    friendlyMessage: 'Connection refused: Host unreachable. Verify host address and port.',
+  },
+  {
+    matches: (msg) => msg.includes('ETIMEDOUT') || msg.includes('ENOTFOUND'),
+    friendlyMessage: 'Connection timed out or DNS lookup failed. Verify hostname and network connectivity.',
+  },
+  {
+    matches: (msg) =>
+      msg.includes('ERR_TLS_CERT_ALTNAME_INVALID') ||
+      msg.includes("is not in the cert's altnames") ||
+      msg.includes('does not match certificate'),
+    friendlyMessage: 'SSL/TLS certificate hostname mismatch: The server certificate does not match the requested hostname.',
+  },
+  {
+    matches: (msg, err) =>
+      msg.includes('DEPTH_ZERO_SELF_SIGNED_CERT') ||
+      msg.includes('SELF_SIGNED_CERT_IN_CHAIN') ||
+      msg.includes('UNABLE_TO_VERIFY_LEAF_SIGNATURE') ||
+      msg.includes('unable to verify the first certificate') ||
+      err?.code === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE' ||
+      err?.code === 'DEPTH_ZERO_SELF_SIGNED_CERT' ||
+      msg.includes('self-signed') ||
+      msg.includes('self signed'),
+    friendlyMessage:
+      'SSL/TLS certificate verification failed: Self-signed certificate in chain. Enable "Allow self-signed certificate (not recommended)" if connecting to a server with a private certificate.',
+  },
+  {
+    matches: (msg) => msg.includes('CERT_HAS_EXPIRED') || msg.includes('certificate has expired'),
+    friendlyMessage: 'SSL/TLS certificate error: The server certificate has expired.',
+  },
+  {
+    matches: (msg) => msg.includes('server does not support SSL'),
+    friendlyMessage: 'The target database does not support SSL connections. Disable the Require SSL option to connect without SSL.',
+  },
+  {
+    matches: (msg, err) => msg.includes('password authentication failed') || err?.code === '28P01',
+    friendlyMessage: 'Database authentication failed: Invalid username or password.',
+  },
+  {
+    matches: (msg) => msg.includes('database') && msg.includes('does not exist'),
+    friendlyMessage: 'Database not found: Specified database does not exist on the target server.',
+  },
+  {
+    matches: (msg, err) => msg.includes('permission denied') || msg.includes('must be member of role') || err?.code === '42501',
+    friendlyMessage: 'Database access denied: Insufficient privileges on the target schema or tables.',
+  },
+  {
+    matches: (msg) => msg.includes('invalid_grant'),
+    friendlyMessage: 'Google Drive authentication failed: Invalid service account private key or client email.',
+  },
+  {
+    matches: (msg) => msg.includes('DECODER routine:unsupported') || msg.includes('PEM routines'),
+    friendlyMessage: 'Invalid private key format. Please check the RSA private key or upload the service account JSON.',
+  },
+  {
+    matches: (msg) =>
+      msg.includes('Google Drive API has not been used') ||
+      msg.includes('Drive API is not enabled') ||
+      msg.includes('accessNotConfigured') ||
+      msg.includes('has not been used in project'),
+    friendlyMessage: 'Google Drive API is disabled. Enable the Google Drive API in your Google Cloud Console project.',
+  },
+  {
+    matches: (msg) => msg.includes('File not found') || msg.includes('notFound') || msg.includes('folder not shared'),
+    friendlyMessage: 'Target Google Drive folder or file not found or not shared with the service account email.',
+  },
+];
+
 export function formatFriendlyConnectorError(err: any): string {
   const rawMsg = err?.message || String(err);
 
   if (rawMsg.includes('SSRF validation failed') || rawMsg.includes('private or internal network')) {
     return rawMsg;
   }
-  if (rawMsg.includes('AccessDenied') || rawMsg.includes('Forbidden') || err?.name === 'AccessDenied') {
-    return 'Access Denied: Please verify permissions and credential scopes (e.g. check s3:ListBucket).';
-  }
-  if (rawMsg.includes('NoSuchBucket')) {
-    return 'Specified S3 bucket does not exist or is in a different region.';
-  }
-  if (rawMsg.includes('IllegalLocationConstraintException') || rawMsg.includes('PermanentRedirect') || rawMsg.includes('BucketRegionError') || rawMsg.includes('different region')) {
-    return 'S3 bucket region error: The specified bucket is in a different AWS region.';
-  }
-  if (rawMsg.includes('SignatureDoesNotMatch') || rawMsg.includes('InvalidAccessKeyId') || rawMsg.includes('The security token included in the request is invalid')) {
-    return 'AWS authentication failed: Invalid Access Key ID or Secret Access Key.';
-  }
-  if (rawMsg.includes('ECONNREFUSED')) {
-    return 'Connection refused: Host unreachable. Verify host address and port.';
-  }
-  if (rawMsg.includes('ETIMEDOUT') || rawMsg.includes('ENOTFOUND')) {
-    return 'Connection timed out or DNS lookup failed. Verify hostname and network connectivity.';
-  }
-  if (rawMsg.includes('ERR_TLS_CERT_ALTNAME_INVALID') || rawMsg.includes("is not in the cert's altnames") || rawMsg.includes('does not match certificate')) {
-    return 'SSL/TLS certificate hostname mismatch: The server certificate does not match the requested hostname.';
-  }
-  if (
-    rawMsg.includes('DEPTH_ZERO_SELF_SIGNED_CERT') ||
-    rawMsg.includes('SELF_SIGNED_CERT_IN_CHAIN') ||
-    rawMsg.includes('UNABLE_TO_VERIFY_LEAF_SIGNATURE') ||
-    rawMsg.includes('unable to verify the first certificate') ||
-    err?.code === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE' ||
-    err?.code === 'DEPTH_ZERO_SELF_SIGNED_CERT' ||
-    rawMsg.includes('self-signed') ||
-    rawMsg.includes('self signed')
-  ) {
-    return 'SSL/TLS certificate verification failed: Self-signed certificate in chain. Enable "Allow self-signed certificate (not recommended)" if connecting to a server with a private certificate.';
-  }
-  if (rawMsg.includes('CERT_HAS_EXPIRED') || rawMsg.includes('certificate has expired')) {
-    return 'SSL/TLS certificate error: The server certificate has expired.';
-  }
-  if (rawMsg.includes('server does not support SSL')) {
-    return 'The target database does not support SSL connections. Disable the Require SSL option to connect without SSL.';
-  }
-  if (rawMsg.includes('password authentication failed') || err?.code === '28P01') {
-    return 'Database authentication failed: Invalid username or password.';
-  }
-  if (rawMsg.includes('database') && rawMsg.includes('does not exist')) {
-    return 'Database not found: Specified database does not exist on the target server.';
-  }
-  if (rawMsg.includes('permission denied') || rawMsg.includes('must be member of role') || err?.code === '42501') {
-    return 'Database access denied: Insufficient privileges on the target schema or tables.';
-  }
-  if (rawMsg.includes('invalid_grant')) {
-    return 'Google Drive authentication failed: Invalid service account private key or client email.';
-  }
-  if (rawMsg.includes('DECODER routine:unsupported') || rawMsg.includes('PEM routines')) {
-    return 'Invalid private key format. Please check the RSA private key or upload the service account JSON.';
-  }
-  if (rawMsg.includes('Google Drive API has not been used') || rawMsg.includes('Drive API is not enabled') || rawMsg.includes('accessNotConfigured') || rawMsg.includes('has not been used in project')) {
-    return 'Google Drive API is disabled. Enable the Google Drive API in your Google Cloud Console project.';
-  }
-  if (rawMsg.includes('File not found') || rawMsg.includes('notFound') || rawMsg.includes('folder not shared')) {
-    return 'Target Google Drive folder or file not found or not shared with the service account email.';
-  }
 
-  // Friendly fallback preventing raw internal database/driver error leakage
-  return 'Connection failed. Please verify credentials, host address, and permissions.';
+  const matched = FRIENDLY_ERROR_RULES.find((rule) => rule.matches(rawMsg, err));
+  return matched ? matched.friendlyMessage : 'Connection failed. Please verify credentials, host address, and permissions.';
 }
 
 async function testS3Source(
