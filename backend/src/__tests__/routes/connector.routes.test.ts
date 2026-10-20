@@ -196,14 +196,13 @@ describe('Connector API Routes', () => {
       expect(testConnectorSource).not.toHaveBeenCalled();
     });
 
-    it('blocks non-admin user sending fake approver ID with 403 Forbidden', async () => {
+    it('blocks non-admin user sending fake approver ID without allowCustomPort with 403 Forbidden', async () => {
       const res = await request(app)
         .post('/api/v1/connectors/test')
         .set('Authorization', `Bearer ${memberToken}`)
         .send({
           type: 'postgres',
           config: {
-            allowCustomPort: true,
             allowCustomPortApprovedBy: 'fake-admin-uuid-999',
           },
           credentials: {
@@ -327,7 +326,7 @@ describe('Connector API Routes', () => {
       }));
     });
 
-    it('blocks non-admin user sending fake approver ID when creating connector with 403 Forbidden', async () => {
+    it('blocks non-admin user sending fake approver ID without allowCustomPort when creating connector with 403 Forbidden', async () => {
       const res = await request(app)
         .post('/api/v1/connectors')
         .set('Authorization', `Bearer ${memberToken}`)
@@ -335,7 +334,6 @@ describe('Connector API Routes', () => {
           name: 'Spoofed Approver Postgres',
           type: 'postgres',
           config: {
-            allowCustomPort: true,
             allowCustomPortApprovedBy: 'fake-admin-uuid-999',
           },
           credentials: {

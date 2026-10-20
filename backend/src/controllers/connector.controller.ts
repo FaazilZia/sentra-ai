@@ -105,6 +105,20 @@ export const getExecutiveOverview = asyncHandler(async (req: any, res: Response)
 });
 
 function extractAndAuthorizeCustomPort(req: any, config?: any, credentials?: any): { isAdmin: boolean; hasCustomPortFlag: boolean; forbidden: boolean } {
+  const isAdmin = Boolean(req.user?.role === 'ADMIN' || req.user?.role === 'SUPER_ADMIN');
+  const hasCustomPortFlag = Boolean(
+    config?.allowCustomPort ||
+    (credentials && typeof credentials === 'object' && credentials.allowCustomPort) ||
+    config?.allowCustomPortApprovedBy ||
+    credentials?.allowCustomPortApprovedBy ||
+    config?.allowCustomPortApprovedAt ||
+    credentials?.allowCustomPortApprovedAt ||
+    req.body?.allowCustomPort ||
+    req.body?.allowCustomPortApprovedBy ||
+    req.body?.allowCustomPortApprovedAt
+  );
+
+  // Strip server-managed approval stamps from client input
   if (config && typeof config === 'object') {
     delete config.allowCustomPortApprovedBy;
     delete config.allowCustomPortApprovedAt;
@@ -113,16 +127,10 @@ function extractAndAuthorizeCustomPort(req: any, config?: any, credentials?: any
     delete credentials.allowCustomPortApprovedBy;
     delete credentials.allowCustomPortApprovedAt;
   }
-
-  const isAdmin = Boolean(req.user?.role === 'ADMIN' || req.user?.role === 'SUPER_ADMIN');
-  const hasCustomPortFlag = Boolean(
-    config?.allowCustomPort ||
-    (credentials && typeof credentials === 'object' && credentials.allowCustomPort) ||
-    config?.allowCustomPortApprovedBy ||
-    credentials?.allowCustomPortApprovedBy ||
-    req.body?.allowCustomPort ||
-    req.body?.allowCustomPortApprovedBy
-  );
+  if (req.body && typeof req.body === 'object') {
+    delete req.body.allowCustomPortApprovedBy;
+    delete req.body.allowCustomPortApprovedAt;
+  }
 
   return { isAdmin, hasCustomPortFlag, forbidden: hasCustomPortFlag && !isAdmin };
 }

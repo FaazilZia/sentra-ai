@@ -437,7 +437,7 @@ async function runWithConcurrencyLimit<T, R>(
   );
 }
 
-async function isCustomPortApprovedByAdmin(connector: any): Promise<boolean> {
+export async function isCustomPortApprovedByAdmin(connector: any): Promise<boolean> {
   if (process.env.ALLOW_CUSTOM_DB_PORTS === 'true') {
     return true;
   }
