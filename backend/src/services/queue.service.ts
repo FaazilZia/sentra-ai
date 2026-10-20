@@ -463,6 +463,7 @@ async function scanSqlSource(connector: any, creds: any): Promise<{ violations: 
   if (!portValidation.valid) {
     throw new Error(portValidation.error || 'Invalid port.');
   }
+  const parsedPort = portValidation.port;
 
   // SSRF Protection: verify host is not private/internal before connecting and pin to resolved IP
   const safeIp = await assertSafeTarget(host);
