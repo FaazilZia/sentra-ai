@@ -10,7 +10,7 @@ import prisma from '../config/db';
 import { logActivity } from './policy.service';
 import { decryptCredentials, normalizePrivateKey } from '../utils/credentialHelper';
 import { assertSafeTarget } from '../utils/ssrfProtection';
-import { RESTRICTED_POSTGRES_PORTS, DEFAULT_ALLOWED_POSTGRES_PORTS, validatePostgresPort } from './connectorTest.service';
+import { validatePostgresPort } from './connectorTest.service';
 import { SENSITIVE_PATTERNS } from './riskEngine';
 import { buildRedisOptions, getRedisUrl } from '../config/redis';
 import { PostMarketMonitoringService } from './postMarketMonitoring.service';
