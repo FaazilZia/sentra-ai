@@ -4,8 +4,15 @@ import prisma from '../config/db';
 import { resolveOrganizationId } from '../utils/company';
 import { enqueueConnectorScan } from '../services/queue.service';
 import { asyncHandler, sendSuccess, sendError } from '../utils/controllerHelpers';
-import { encryptCredentials, sanitizeConnector } from '../utils/credentialHelper';
+import {
+  encryptCredentials,
+  sanitizeConnector,
+  parseServiceAccountInput,
+  normalizePrivateKey,
+} from '../utils/credentialHelper';
 import { parseCursorPagination } from '../utils/pagination';
+import { testConnectorSource } from '../services/connectorTest.service';
+import { assertSafeTarget } from '../utils/ssrfProtection';
 
 export const listConnectors = asyncHandler(async (req: any, res: Response) => {
   let limit: number;
@@ -98,6 +105,21 @@ export const getExecutiveOverview = asyncHandler(async (req: any, res: Response)
   });
 });
 
+export const testConnector = asyncHandler(async (req: any, res: Response) => {
+  const { type, config, credentials } = req.body as {
+    type: string;
+    config?: Record<string, any>;
+    credentials?: any;
+  };
+
+  const result = await testConnectorSource(type, config, credentials);
+  if (!result.success) {
+    return sendError(res, 400, result.message);
+  }
+
+  return sendSuccess(res, result);
+});
+
 export const createConnector = asyncHandler(async (req: any, res: Response) => {
   const organizationId = await resolveOrganizationId(req);
   if (!organizationId) {
@@ -106,14 +128,33 @@ export const createConnector = asyncHandler(async (req: any, res: Response) => {
 
   const { name, type, config, credentials, scope } = req.body as {
     name: string;
-    type: 'sql' | 'gdrive' | 's3' | 'local';
+    type: 'postgres' | 'sql' | 'gdrive' | 's3';
     config?: Record<string, unknown>;
     credentials?: Record<string, unknown> | string;
     scope?: Record<string, unknown>;
   };
 
+  let rawCreds: any = credentials || (config && (config as any).credentials);
+
+  // Normalization for Google Drive service account
+  if (type === 'gdrive' && rawCreds) {
+    const parsed = parseServiceAccountInput(rawCreds);
+    rawCreds = {
+      client_email: parsed.client_email,
+      private_key: parsed.private_key,
+      driveScope: parsed.driveScope || (config as any)?.driveScope,
+    };
+  }
+
+  // SSRF check for PostgreSQL targets
+  if ((type === 'postgres' || type === 'sql') && rawCreds) {
+    const host = rawCreds.host || (config as any)?.host;
+    if (host) {
+      await assertSafeTarget(host);
+    }
+  }
+
   // Encrypt credentials before storing
-  const rawCreds = credentials || (config && (config as any).credentials);
   let encryptedCredentials: string | null = null;
   if (rawCreds) {
     encryptedCredentials = encryptCredentials(rawCreds);
@@ -125,6 +166,7 @@ export const createConnector = asyncHandler(async (req: any, res: Response) => {
   delete cleanConfig.secretAccessKey;
   delete cleanConfig.password;
   delete cleanConfig.private_key;
+  delete cleanConfig.privateKey;
 
   const row = await prisma.connectors.create({
     data: {
@@ -144,6 +186,23 @@ export const createConnector = asyncHandler(async (req: any, res: Response) => {
   await enqueueConnectorScan(type, row.id);
 
   return sendSuccess(res, sanitizeConnector(row), 201);
+});
+
+export const triggerConnectorScan = asyncHandler(async (req: any, res: Response) => {
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) return sendError(res, 401, 'Unauthorized');
+
+  const { id } = req.params;
+  const existing = await prisma.connectors.findFirst({
+    where: { id, organizationId },
+  });
+
+  if (!existing) {
+    return sendError(res, 404, 'Connector not found');
+  }
+
+  await enqueueConnectorScan(existing.type, existing.id, { reason: 'manual' });
+  return sendSuccess(res, { message: 'Connector scan queued successfully' });
 });
 
 export const deleteConnector = asyncHandler(async (req: any, res: Response) => {

@@ -1,4 +1,10 @@
-import { encryptCredentials, decryptCredentials, sanitizeConnector } from '../../utils/credentialHelper';
+import {
+  encryptCredentials,
+  decryptCredentials,
+  sanitizeConnector,
+  normalizePrivateKey,
+  parseServiceAccountInput,
+} from '../../utils/credentialHelper';
 
 describe('Credential Helper', () => {
   it('encrypts and decrypts credentials object correctly', () => {
@@ -51,7 +57,8 @@ describe('Credential Helper', () => {
       config: {
         bucket: 'my-bucket',
         secretAccessKey: 'super-secret',
-        password: 'raw-password'
+        password: 'raw-password',
+        private_key: 'raw-key',
       }
     };
 
@@ -59,6 +66,50 @@ describe('Credential Helper', () => {
     expect((sanitized as any).credentials).toBeUndefined();
     expect((sanitized.config as any).secretAccessKey).toBeUndefined();
     expect((sanitized.config as any).password).toBeUndefined();
+    expect((sanitized.config as any).private_key).toBeUndefined();
     expect((sanitized.config as any).bucket).toBe('my-bucket');
+  });
+
+  describe('normalizePrivateKey', () => {
+    it('normalizes escaped \\n into real newlines', () => {
+      const raw = '-----BEGIN PRIVATE KEY-----\\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASC\\n-----END PRIVATE KEY-----\\n';
+      const normalized = normalizePrivateKey(raw);
+      expect(normalized).toBe('-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASC\n-----END PRIVATE KEY-----');
+    });
+
+    it('normalizes CRLF \\r\\n and escaped \\r\\n', () => {
+      const raw = '-----BEGIN PRIVATE KEY-----\r\nMIIE...\r\n-----END PRIVATE KEY-----';
+      const normalized = normalizePrivateKey(raw);
+      expect(normalized).toBe('-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----');
+    });
+
+    it('strips surrounding quotes if pasted as string literal', () => {
+      const raw = '"-----BEGIN PRIVATE KEY-----\\nMIIE...\\n-----END PRIVATE KEY-----\\n"';
+      const normalized = normalizePrivateKey(raw);
+      expect(normalized).toBe('-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----');
+    });
+  });
+
+  describe('parseServiceAccountInput', () => {
+    it('parses uploaded service account JSON file string', () => {
+      const jsonStr = JSON.stringify({
+        type: 'service_account',
+        project_id: 'my-proj',
+        client_email: 'sa@my-proj.iam.gserviceaccount.com',
+        private_key: '-----BEGIN PRIVATE KEY-----\\nMIIE...\\n-----END PRIVATE KEY-----\\n',
+      });
+
+      const parsed = parseServiceAccountInput(jsonStr);
+      expect(parsed.client_email).toBe('sa@my-proj.iam.gserviceaccount.com');
+      expect(parsed.private_key).toBe('-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----');
+      expect(parsed.project_id).toBe('my-proj');
+    });
+
+    it('parses raw private key string directly', () => {
+      const rawKey = '-----BEGIN PRIVATE KEY-----\\nMIIE...\\n-----END PRIVATE KEY-----';
+      const parsed = parseServiceAccountInput(rawKey);
+      expect(parsed.private_key).toBe('-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----');
+      expect(parsed.client_email).toBeUndefined();
+    });
   });
 });

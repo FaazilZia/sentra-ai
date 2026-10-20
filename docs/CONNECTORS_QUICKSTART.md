@@ -1,8 +1,8 @@
 # Sentraa AI — Connectors & Alert Integrations Guide
 
-Sentraa AI provides out-of-the-box integrations to stream alerts, incident reports, and blocked agent actions to your organization's workflow and SIEM tools.
+Sentraa AI provides out-of-the-box integrations to stream alerts, incident reports, and blocked agent actions to your organization's workflow and SIEM tools, as well as inbound connectors to scan enterprise data sources for sensitive data and PII.
 
-All outbound alerts are processed via an asynchronous queue with exponential backoff retry. Even if an outbound service (e.g., Slack or Jira) experiences an outage, AI agent decision checks never block, slow down, or fail.
+All alert delivery is processed via an asynchronous queue with exponential backoff retry. Even if an outbound service (e.g., Slack or Jira) experiences an outage, AI agent decision checks never block, slow down, or fail.
 
 ---
 
@@ -49,3 +49,133 @@ Automatically creates structured incident tickets in Atlassian Jira Cloud when a
   - The 11th incident triggers creation of an **Hourly Summary Ticket**.
   - Subsequent incidents in that hour are attached as comments to the summary ticket.
 - **PII Scrubbing:** Raw SSNs, credit card numbers, and credentials are scrubbed prior to ADF document generation.
+
+---
+
+## 3. PostgreSQL Connector (Metadata-Only Scanning)
+
+Scans PostgreSQL database schemas to detect high-risk table definitions, sensitive columns (e.g., unencrypted SSNs, passwords, payment card identifiers), and governance drift.
+
+> [!IMPORTANT]
+> **Metadata-Only Guarantee:** Sentraa scans metadata only (tables and columns via `information_schema.columns` and `information_schema.tables`). Sentraa **NEVER** executes `SELECT * FROM table` and **NEVER stores customer row data**.
+
+### Minimum Permissions & Read-Only User Setup
+Always connect Sentraa using a dedicated read-only database user:
+
+```sql
+-- 1. Create a dedicated read-only user
+CREATE USER sentraa_readonly WITH PASSWORD 'your_strong_password_here';
+
+-- 2. Grant connection rights to target database
+GRANT CONNECT ON DATABASE your_database_name TO sentraa_readonly;
+
+-- 3. Grant schema usage (default: public, or your specific schema)
+GRANT USAGE ON SCHEMA public TO sentraa_readonly;
+
+-- 4. Grant SELECT permission on existing and future tables
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO sentraa_readonly;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO sentraa_readonly;
+```
+
+### SSRF Protection
+Sentraa automatically validates database host addresses before establishing connections:
+- Connections to loopback (`127.0.0.0/8`, `localhost`, `::1`), RFC 1918 private subnets (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`), link-local metadata addresses (`169.254.169.254`), and DNS names resolving to them are **strictly blocked**.
+- In local development or isolated test environments, private targets can be permitted by setting `ALLOW_PRIVATE_NETWORK_TARGETS=true`.
+
+### Setup in Sentraa Dashboard
+1. Go to **Settings -> Alerts & Connectors** (or **Settings -> General**).
+2. Click **Add Connector** and select **PostgreSQL**.
+3. Fill in:
+   - **Host:** Public database hostname (e.g., `db.yourcompany.com`)
+   - **Port:** `5432`
+   - **Database:** Your database name
+   - **User:** `sentraa_readonly`
+   - **Password:** Read-only user password
+   - **Schema:** Default `public` (configurable)
+4. Click **Test Connection** to verify credentials and SSRF safety.
+5. Click **Save Connector**.
+
+---
+
+## 4. Amazon S3 Connector
+
+Inspects files in AWS S3 buckets to identify sensitive data leaks, credentials, and PII in cloud storage.
+
+### Minimum IAM Permissions
+Create an IAM policy granting read-only access to only the specific bucket:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket"
+      ],
+      "Resource": "arn:aws:s3:::my-company-vault"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject"
+      ],
+      "Resource": "arn:aws:s3:::my-company-vault/*"
+    }
+  ]
+}
+```
+
+### Setup in Sentraa Dashboard
+1. Go to **Settings -> Alerts & Connectors** -> **Add Connector** -> **Amazon S3**.
+2. Fill in:
+   - **Bucket Name:** `my-company-vault`
+   - **Region:** e.g., `us-east-1`
+   - **AWS Access Key ID:** IAM user access key
+   - **AWS Secret Access Key:** IAM user secret key
+3. Click **Test Connection** to verify bucket accessibility.
+4. Click **Save Connector**.
+
+---
+
+## 5. Google Drive Connector
+
+Scans Google Drive documents, text files, and shared drives for sensitive tokens, compliance violations, and PII.
+
+### Minimum Scope & Service Account Setup
+1. In the Google Cloud Console, create a Service Account (e.g. `sentraa-reader@my-project.iam.gserviceaccount.com`).
+2. Generate and download a Service Account JSON Key (`Keys -> Add Key -> Create new key -> JSON`).
+3. Enable the **Google Drive API** in your GCP project.
+4. In Google Drive, share target folders or drives with your service account email address with **Viewer** permissions.
+
+### Setup in Sentraa Dashboard
+1. Go to **Settings -> Alerts & Connectors** -> **Add Connector** -> **Google Drive**.
+2. Either click **Upload Service Account JSON** to automatically populate credentials, or paste:
+   - **Service Account Client Email:** `sentraa-reader@my-project.iam.gserviceaccount.com`
+   - **Private Key:** Paste RSA private key in any format (literal newlines, escaped `\n`, or Windows `\r\n`).
+3. Click **Test Connection** to verify API access.
+4. Click **Save Connector**.
+
+---
+
+## 6. Model Context Protocol (MCP) Gateway Proxy
+
+Sentraa provides an enterprise governance proxy for Model Context Protocol (MCP) clients such as Claude Desktop, Cursor, or external autonomous agents.
+
+### Claude Desktop Setup (`claude_desktop_config.json`)
+Add the following configuration to your `claude_desktop_config.json` (located at `~/Library/Application Support/Claude/claude_desktop_config.json` on macOS or `%APPDATA%\Claude\claude_desktop_config.json` on Windows):
+
+```json
+{
+  "mcpServers": {
+    "sentraa-governance": {
+      "url": "https://api.sentraa.ai/api/v1/mcp/proxy",
+      "headers": {
+        "Authorization": "Bearer YOUR_MCP_AGENT_KEY"
+      }
+    }
+  }
+}
+```
+
+Replace `YOUR_MCP_AGENT_KEY` with an agent key generated in **Settings -> MCP Gateway**. All tool invocations and model actions are intercepted, evaluated against company security policies, and logged to the immutable audit trail.

@@ -8,7 +8,8 @@ import { Client as PgClient } from 'pg';
 import logger from '../utils/logger';
 import prisma from '../config/db';
 import { logActivity } from './policy.service';
-import { decryptCredentials } from '../utils/credentialHelper';
+import { decryptCredentials, normalizePrivateKey } from '../utils/credentialHelper';
+import { assertSafeTarget } from '../utils/ssrfProtection';
 import { SENSITIVE_PATTERNS } from './riskEngine';
 import { buildRedisOptions, getRedisUrl } from '../config/redis';
 import { PostMarketMonitoringService } from './postMarketMonitoring.service';
@@ -337,10 +338,11 @@ async function scanGDriveSource(connector: any, creds: any): Promise<{ violation
   let bytesScanned = 0;
 
   const { client_email, private_key, driveScope } = creds;
+  const normalizedKey = normalizePrivateKey((private_key as string) || '');
   const auth = new (google.auth.JWT as any)(
     client_email,
     null,
-    (private_key as string || '').replaceAll(/\\n/g, '\n'),
+    normalizedKey,
     [driveScope || 'https://www.googleapis.com/auth/drive.readonly']
   );
   const drive = google.drive({ version: 'v3', auth });
@@ -397,32 +399,85 @@ async function scanSqlSource(connector: any, creds: any): Promise<{ violations: 
   let bytesScanned = 0;
 
   const { host, port, user, password, database } = creds;
-  const client = new PgClient({ host, port, user, password, database, ssl: { rejectUnauthorized: false } });
+  const rawSchema = (connector.config as any)?.schema || creds.schema || 'public';
+  const schema = /^[a-zA-Z0-9_]+$/.test(rawSchema) ? rawSchema : 'public';
+  const useSsl = (connector.config as any)?.ssl !== false && creds.ssl !== false;
+
+  // SSRF Protection: verify host is not private/internal before connecting
+  await assertSafeTarget(host);
+
+  const client = new PgClient({
+    host,
+    port: port || 5432,
+    user,
+    password,
+    database,
+    ssl: useSsl ? { rejectUnauthorized: false } : undefined,
+    connectionTimeoutMillis: 10000,
+  });
   
   await client.connect();
   apiCalls++;
 
   try {
-    const tablesRes = await client.query(`SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' LIMIT 10`);
+    // Metadata only: query table and column names from information_schema (never customer row data)
+    const columnsRes = await client.query(
+      `SELECT table_name, column_name, data_type 
+       FROM information_schema.columns 
+       WHERE table_schema = $1 
+       ORDER BY table_name, ordinal_position 
+       LIMIT 500`,
+      [schema]
+    );
     apiCalls++;
 
-    for (const table of tablesRes.rows) {
-      const tableName = table.table_name;
-      const dataRes = await client.query(`SELECT * FROM "${tableName}" LIMIT 100`);
-      apiCalls++;
+    const SENSITIVE_COLUMN_PATTERNS: Record<string, RegExp> = {
+      EMAIL: /\bemail\b|\be_mail\b/i,
+      SSN: /\bssn\b|\bsocial_security\b/i,
+      CREDIT_CARD: /\bcredit_card\b|\bcard_number\b|\bcc_num\b/i,
+      PASSWORD: /\bpassword\b|\bpasswd\b|\bpwd\b/i,
+    };
 
-      const rowData = JSON.stringify(dataRes.rows);
-      bytesScanned += Buffer.byteLength(rowData);
-      const found = await performPIIScan(rowData, {
+    for (const col of columnsRes.rows) {
+      const { table_name, column_name, data_type } = col;
+      const metadataDesc = `table:${table_name}.column:${column_name} (${data_type})`;
+      bytesScanned += Buffer.byteLength(metadataDesc);
+
+      let found = await performPIIScan(metadataDesc, {
         connectorId: connector.id,
-        type: 'sql',
-        fileKey: `table:${tableName}`,
+        type: 'postgres',
+        fileKey: `${schema}.${table_name}.${column_name}`,
         organizationId: connector.organizationId
       });
+
+      for (const [name, pattern] of Object.entries(SENSITIVE_COLUMN_PATTERNS)) {
+        if (pattern.test(column_name)) {
+          found++;
+          await prisma.interception_logs.create({
+            data: {
+              user_id: 'system_scanner',
+              organizationId: connector.organizationId,
+              input_text: `Scan of postgres metadata: ${schema}.${table_name}.${column_name}`,
+              decision: 'BLOCK',
+              confidence: 'High',
+              reason: `Data scan detected sensitive pattern: ${name}`,
+              policy_triggered: 'Data Governance Baseline',
+              metadata: {
+                connector_id: connector.id,
+                violationType: name,
+                fileKey: `${schema}.${table_name}.${column_name}`,
+                source_type: 'postgres'
+              },
+              timestamp: new Date()
+            }
+          });
+        }
+      }
+
       violations += found;
     }
   } finally {
-    await client.end();
+    await client.end().catch(() => {});
   }
 
   return { violations, apiCalls, bytesScanned };
@@ -430,13 +485,16 @@ async function scanSqlSource(connector: any, creds: any): Promise<{ violations: 
 
 function formatConnectorScanError(err: any): string {
   const rawMsg = err?.message || String(err);
+  if (rawMsg.includes('SSRF validation failed') || rawMsg.includes('private or internal network')) {
+    return 'SSRF Validation Error: Target host is in a private or restricted network address.';
+  }
   if (rawMsg.includes('AccessDenied') || rawMsg.includes('Forbidden') || err?.name === 'AccessDenied') {
     return 'Access Denied: Please verify permissions and credential scopes.';
   }
   if (rawMsg.includes('NoSuchBucket')) {
     return 'Specified S3 bucket does not exist or is in a different region.';
   }
-  if (rawMsg.includes('ECONNREFUSED') || rawMsg.includes('ETIMEDOUT')) {
+  if (rawMsg.includes('ECONNREFUSED') || rawMsg.includes('ETIMEDOUT') || rawMsg.includes('ENOTFOUND')) {
     return 'Connection refused: Host unreachable. Check firewall, network rules, or host address.';
   }
   if (rawMsg.includes('password authentication failed') || err?.code === '28P01') {
@@ -458,7 +516,7 @@ async function executeSourceScan(type: string, connector: any, creds: any) {
   if (type === 'gdrive') {
     return await scanGDriveSource(connector, creds);
   }
-  if (type === 'sql') {
+  if (type === 'sql' || type === 'postgres') {
     return await scanSqlSource(connector, creds);
   }
   return { violations: 0, apiCalls: 0, bytesScanned: 0 };

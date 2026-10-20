@@ -36,7 +36,7 @@ describe('Connector Scanning Logic', () => {
     type: 's3',
     organizationId: orgId,
     config: { region: 'us-east-1' },
-    credentials: 'encrypted-creds',
+    credentials: '0123456789abcdef01234567:0123456789abcdef0123456789abcdef:1234',
     health_score: 100,
     daily_cost_total: 0,
     total_api_calls: 0,
@@ -45,6 +45,7 @@ describe('Connector Scanning Logic', () => {
   };
 
   beforeEach(() => {
+    process.env.ALLOW_PRIVATE_NETWORK_TARGETS = 'true';
     jest.clearAllMocks();
     (decrypt as jest.Mock).mockReturnValue(JSON.stringify({
       accessKeyId: 'ak',
@@ -122,12 +123,15 @@ describe('Connector Scanning Logic', () => {
     }));
   });
 
-  it('should scan SQL and log violations', async () => {
+  it('should scan SQL metadata only and log violations', async () => {
     (prisma.connectors.findUnique as jest.Mock).mockResolvedValue({ ...mockConnector, type: 'sql' });
 
     const mockQuery = jest.fn()
-      .mockResolvedValueOnce({ rows: [{ table_name: 'users' }] }) // tables
-      .mockResolvedValueOnce({ rows: [{ id: 1, email: 'admin@sentra.ai' }] }); // data
+      .mockResolvedValueOnce({
+        rows: [
+          { table_name: 'users', column_name: 'email', data_type: 'varchar(255)' }
+        ]
+      });
 
     (PgClient as any).mockImplementation(() => ({
       connect: jest.fn(),

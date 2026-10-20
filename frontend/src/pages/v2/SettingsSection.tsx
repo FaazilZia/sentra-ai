@@ -23,6 +23,7 @@ import {
   Bell
 } from 'lucide-react';
 import { JiraConfigCard } from '@/components/connectors/JiraConfigCard';
+import { InboundConnectorsCard } from '@/components/connectors/InboundConnectorsCard';
 
 interface TeamMember {
   id: string;
@@ -676,6 +677,7 @@ export default function SettingsSection() {
       {/* Tab 5: Alerts & Connectors */}
       {activeTab === 'connectors' && (
         <div className="space-y-6">
+          <InboundConnectorsCard />
           <JiraConfigCard />
         </div>
       )}
