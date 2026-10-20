@@ -40,6 +40,42 @@ export const RESTRICTED_POSTGRES_PORTS = new Set([
   27017,// MongoDB
 ]);
 
+export function validatePostgresPort(
+  rawPort: any,
+  allowCustomPort: boolean
+): { valid: boolean; port: number; error?: string } {
+  const parsedPort = Number.parseInt(String(rawPort), 10);
+  if (Number.isNaN(parsedPort) || parsedPort < 1 || parsedPort > 65535) {
+    return {
+      valid: false,
+      port: 5432,
+      error: `Invalid port: Port ${rawPort} is not a valid TCP port number (1-65535).`,
+    };
+  }
+
+  if (DEFAULT_ALLOWED_POSTGRES_PORTS.has(parsedPort)) {
+    return { valid: true, port: parsedPort };
+  }
+
+  if (!allowCustomPort) {
+    return {
+      valid: false,
+      port: parsedPort,
+      error: `Invalid port: Port ${rawPort} is not permitted by default. Only standard PostgreSQL ports (5432, 5433, 6432, 6543) are allowed. Custom database ports require an explicit administrator setting.`,
+    };
+  }
+
+  if (parsedPort < 1024 || RESTRICTED_POSTGRES_PORTS.has(parsedPort)) {
+    return {
+      valid: false,
+      port: parsedPort,
+      error: `Invalid port: Port ${rawPort} is a privileged system port (1-1023) or restricted service port and cannot be used for PostgreSQL connections.`,
+    };
+  }
+
+  return { valid: true, port: parsedPort };
+}
+
 interface FriendlyErrorRule {
   matches: (msg: string, err?: any) => boolean;
   friendlyMessage: string;
@@ -273,35 +309,20 @@ async function testPostgresSource(
     return { success: false, message: 'Invalid schema name. Only alphanumeric characters and underscores are allowed.' };
   }
 
-  const parsedPort = Number.parseInt(String(rawPort), 10);
   const allowCustomPort = Boolean(
     process.env.ALLOW_CUSTOM_DB_PORTS === 'true' ||
     config.allowCustomPort ||
     credentials.allowCustomPort
   );
 
-  if (Number.isNaN(parsedPort) || parsedPort < 1 || parsedPort > 65535) {
+  const portValidation = validatePostgresPort(rawPort, allowCustomPort);
+  if (!portValidation.valid) {
     return {
       success: false,
-      message: `Invalid port: Port ${rawPort} is not a valid TCP port number (1-65535).`,
+      message: portValidation.error || 'Invalid port.',
     };
   }
-
-  if (!DEFAULT_ALLOWED_POSTGRES_PORTS.has(parsedPort)) {
-    if (!allowCustomPort) {
-      return {
-        success: false,
-        message: `Invalid port: Port ${rawPort} is not permitted by default. Only standard PostgreSQL ports (5432, 5433, 6432, 6543) are allowed. Custom database ports require an explicit administrator setting.`,
-      };
-    }
-    if (parsedPort < 1024 || RESTRICTED_POSTGRES_PORTS.has(parsedPort)) {
-      return {
-        success: false,
-        message: `Invalid port: Port ${rawPort} is a privileged system port (1-1023) or restricted service port and cannot be used for PostgreSQL connections.`,
-      };
-    }
-  }
-  const port = parsedPort;
+  const port = portValidation.port;
 
   // SSRF check on host before establishing connection - pins to resolved IP
   const safeIp = await assertSafeTarget(rawHost);
