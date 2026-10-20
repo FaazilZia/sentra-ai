@@ -14,6 +14,7 @@ import {
   Plus,
   X,
   ExternalLink,
+  Check,
   CheckCircle2,
   AlertTriangle,
   Shield,
@@ -44,6 +45,7 @@ import {
   apiRequest
 } from '@/lib/api';
 import { JiraConfigCard } from '@/components/connectors/JiraConfigCard';
+import { InboundConnectorsCard } from '@/components/connectors/InboundConnectorsCard';
 
 
 export default function Settings() {
@@ -1856,8 +1858,9 @@ function GeneralTab({
         </div>
       </div>
 
-      {/* Section 3b: Jira Cloud Integration */}
+      {/* Section 3b: Inbound Connectors & Jira Cloud Integration */}
       <div className="lg:col-span-12 space-y-4">
+        <InboundConnectorsCard />
         <JiraConfigCard />
       </div>
 
@@ -2078,8 +2081,104 @@ function McpTab({
   logsPages,
   logsTotal,
 }: McpTabProps) {
+  const [proxyCopied, setProxyCopied] = useState(false);
+  const [configCopied, setConfigCopied] = useState(false);
+  const PROD_MCP_PROXY_URL = 'https://sentra-backend-node.onrender.com/api/v1/mcp/proxy';
+  const proxyUrl = (import.meta.env.VITE_MCP_PROXY_URL as string) || PROD_MCP_PROXY_URL;
+  const claudeConfigSnippet = JSON.stringify(
+    {
+      mcpServers: {
+        'sentraa-governance': {
+          command: 'npx',
+          args: [
+            '-y',
+            'mcp-remote',
+            proxyUrl,
+            '--header',
+            'Authorization: Bearer YOUR_MCP_AGENT_KEY',
+          ],
+        },
+      },
+    },
+    null,
+    2
+  );
+
   return (
     <div className="space-y-6">
+      {/* MCP Proxy Gateway Configuration Card */}
+      <div className="card-base p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight flex items-center gap-2">
+              <Database className="h-4 w-4 text-[var(--royal-indigo)]" />
+              MCP Gateway Proxy & Claude Desktop Setup
+            </h3>
+            <p className="text-[10px] text-[var(--text-muted)] mt-1">
+              Route your MCP-enabled clients (e.g. Claude Desktop, Cursor, external autonomous agents) through Sentraa's real-time interception proxy.
+            </p>
+          </div>
+          <span className="text-[9px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded border bg-green-500/10 text-green-400 border-green-500/20">
+            Proxy Active
+          </span>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="mcp-gateway-url" className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1">
+              MCP Gateway Proxy URL
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                id="mcp-gateway-url"
+                type="text"
+                readOnly
+                value={proxyUrl}
+                className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-xs font-mono text-[var(--text-primary)] select-all"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  void navigator.clipboard.writeText(proxyUrl);
+                  setProxyCopied(true);
+                  setTimeout(() => setProxyCopied(false), 2000);
+                }}
+                className="px-3 py-2 bg-black/5 hover:bg-black/10 border border-[var(--border-default)] rounded text-[9px] font-semibold uppercase tracking-widest text-[var(--text-primary)] shrink-0 flex items-center gap-1.5 transition-all"
+              >
+                {proxyCopied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
+                {proxyCopied ? 'Copied' : 'Copy URL'}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block">
+                Claude Desktop Configuration (<code className="font-mono text-zinc-300">claude_desktop_config.json</code>)
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  void navigator.clipboard.writeText(claudeConfigSnippet);
+                  setConfigCopied(true);
+                  setTimeout(() => setConfigCopied(false), 2000);
+                }}
+                className="text-[9px] font-semibold uppercase tracking-widest text-[var(--royal-indigo)] hover:underline flex items-center gap-1"
+              >
+                {configCopied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
+                {configCopied ? 'Copied Config' : 'Copy JSON'}
+              </button>
+            </div>
+            <pre className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded p-3 text-xs font-mono text-[var(--text-secondary)] overflow-x-auto leading-relaxed">
+              {claudeConfigSnippet}
+            </pre>
+            <p className="text-[10px] text-[var(--text-muted)] mt-1">
+              Replace <code className="font-mono text-zinc-300">YOUR_MCP_AGENT_KEY</code> with a key generated from the table below.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* API Keys Table */}
       <div className="card-base p-6">
         <div className="flex items-center justify-between mb-6">

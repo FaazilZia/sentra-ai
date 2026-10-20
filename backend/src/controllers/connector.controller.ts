@@ -4,8 +4,14 @@ import prisma from '../config/db';
 import { resolveOrganizationId } from '../utils/company';
 import { enqueueConnectorScan } from '../services/queue.service';
 import { asyncHandler, sendSuccess, sendError } from '../utils/controllerHelpers';
-import { encryptCredentials, sanitizeConnector } from '../utils/credentialHelper';
+import {
+  encryptCredentials,
+  sanitizeConnector,
+  parseServiceAccountInput,
+} from '../utils/credentialHelper';
 import { parseCursorPagination } from '../utils/pagination';
+import { testConnectorSource } from '../services/connectorTest.service';
+import { assertSafeTarget } from '../utils/ssrfProtection';
 
 export const listConnectors = asyncHandler(async (req: any, res: Response) => {
   let limit: number;
@@ -98,6 +104,98 @@ export const getExecutiveOverview = asyncHandler(async (req: any, res: Response)
   });
 });
 
+function extractAndAuthorizeCustomPort(req: any, config?: any, credentials?: any): { isAdmin: boolean; hasCustomPortFlag: boolean; forbidden: boolean } {
+  const isAdmin = Boolean(req.user?.role === 'ADMIN' || req.user?.role === 'SUPER_ADMIN');
+  const hasCustomPortFlag = Boolean(
+    config?.allowCustomPort ||
+    (credentials && typeof credentials === 'object' && credentials.allowCustomPort) ||
+    config?.allowCustomPortApprovedBy ||
+    credentials?.allowCustomPortApprovedBy ||
+    config?.allowCustomPortApprovedAt ||
+    credentials?.allowCustomPortApprovedAt ||
+    req.body?.allowCustomPort ||
+    req.body?.allowCustomPortApprovedBy ||
+    req.body?.allowCustomPortApprovedAt
+  );
+
+  // Strip server-managed approval stamps from client input
+  if (config && typeof config === 'object') {
+    delete config.allowCustomPortApprovedBy;
+    delete config.allowCustomPortApprovedAt;
+  }
+  if (credentials && typeof credentials === 'object') {
+    delete credentials.allowCustomPortApprovedBy;
+    delete credentials.allowCustomPortApprovedAt;
+  }
+  if (req.body && typeof req.body === 'object') {
+    delete req.body.allowCustomPortApprovedBy;
+    delete req.body.allowCustomPortApprovedAt;
+  }
+
+  return { isAdmin, hasCustomPortFlag, forbidden: hasCustomPortFlag && !isAdmin };
+}
+
+export const testConnector = asyncHandler(async (req: any, res: Response) => {
+  const { type, config, credentials } = req.body as {
+    type: string;
+    config?: Record<string, any>;
+    credentials?: any;
+  };
+
+  const { isAdmin, forbidden } = extractAndAuthorizeCustomPort(req, config, credentials);
+  if (forbidden) {
+    return sendError(res, 403, 'Forbidden: Only administrators can configure or test custom database ports.');
+  }
+
+  const result = await testConnectorSource(type, config, credentials, isAdmin);
+  if (!result.success) {
+    return sendError(res, 400, result.message);
+  }
+
+  return sendSuccess(res, result);
+});
+
+function normalizeConnectorCredentials(
+  type: string,
+  rawCreds: any,
+  config?: Record<string, unknown>
+): any {
+  if (type === 'gdrive' && rawCreds) {
+    const parsed = parseServiceAccountInput(rawCreds);
+    return {
+      client_email: parsed.client_email,
+      private_key: parsed.private_key,
+      driveScope: parsed.driveScope || (config as any)?.driveScope,
+    };
+  }
+  return rawCreds;
+}
+
+function buildCleanConnectorConfig(
+  config: Record<string, unknown> | undefined,
+  isAdmin: boolean,
+  hasCustomPortFlag: boolean,
+  userId?: string
+): Record<string, unknown> {
+  const cleanConfig: Record<string, unknown> = config ? { ...config } : {};
+  delete cleanConfig.credentials;
+  delete cleanConfig.secretAccessKey;
+  delete cleanConfig.password;
+  delete cleanConfig.private_key;
+  delete cleanConfig.privateKey;
+  delete cleanConfig.allowCustomPortApprovedBy;
+  delete cleanConfig.allowCustomPortApprovedAt;
+
+  if (isAdmin && hasCustomPortFlag) {
+    cleanConfig.allowCustomPort = true;
+    cleanConfig.allowCustomPortApprovedBy = userId;
+    cleanConfig.allowCustomPortApprovedAt = new Date().toISOString();
+  } else {
+    delete cleanConfig.allowCustomPort;
+  }
+  return cleanConfig;
+}
+
 export const createConnector = asyncHandler(async (req: any, res: Response) => {
   const organizationId = await resolveOrganizationId(req);
   if (!organizationId) {
@@ -106,25 +204,35 @@ export const createConnector = asyncHandler(async (req: any, res: Response) => {
 
   const { name, type, config, credentials, scope } = req.body as {
     name: string;
-    type: 'sql' | 'gdrive' | 's3' | 'local';
+    type: 'postgres' | 'sql' | 'gdrive' | 's3';
     config?: Record<string, unknown>;
     credentials?: Record<string, unknown> | string;
     scope?: Record<string, unknown>;
   };
 
-  // Encrypt credentials before storing
-  const rawCreds = credentials || (config && (config as any).credentials);
-  let encryptedCredentials: string | null = null;
-  if (rawCreds) {
-    encryptedCredentials = encryptCredentials(rawCreds);
+  let rawCreds: any = credentials || (config && (config as any).credentials);
+
+  const { isAdmin, hasCustomPortFlag, forbidden } = extractAndAuthorizeCustomPort(req, config, rawCreds);
+  if (forbidden) {
+    return sendError(res, 403, 'Forbidden: Only administrators can configure custom database ports.');
   }
 
-  // Clean raw secrets out of config
-  const cleanConfig: Record<string, unknown> = config ? { ...config } : {};
-  delete cleanConfig.credentials;
-  delete cleanConfig.secretAccessKey;
-  delete cleanConfig.password;
-  delete cleanConfig.private_key;
+  rawCreds = normalizeConnectorCredentials(type, rawCreds, config);
+
+  // SSRF check for PostgreSQL targets
+  if ((type === 'postgres' || type === 'sql') && rawCreds) {
+    const host = rawCreds.host || (config as any)?.host;
+    if (host) {
+      await assertSafeTarget(host);
+    }
+  }
+
+  if (!isAdmin && rawCreds && typeof rawCreds === 'object') {
+    delete rawCreds.allowCustomPort;
+  }
+
+  const encryptedCredentials = rawCreds ? encryptCredentials(rawCreds) : null;
+  const cleanConfig = buildCleanConnectorConfig(config, isAdmin, hasCustomPortFlag, req.user?.id);
 
   const row = await prisma.connectors.create({
     data: {
@@ -144,6 +252,23 @@ export const createConnector = asyncHandler(async (req: any, res: Response) => {
   await enqueueConnectorScan(type, row.id);
 
   return sendSuccess(res, sanitizeConnector(row), 201);
+});
+
+export const triggerConnectorScan = asyncHandler(async (req: any, res: Response) => {
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) return sendError(res, 401, 'Unauthorized');
+
+  const { id } = req.params;
+  const existing = await prisma.connectors.findFirst({
+    where: { id, organizationId },
+  });
+
+  if (!existing) {
+    return sendError(res, 404, 'Connector not found');
+  }
+
+  await enqueueConnectorScan(existing.type, existing.id, { reason: 'manual' });
+  return sendSuccess(res, { message: 'Connector scan queued successfully' });
 });
 
 export const deleteConnector = asyncHandler(async (req: any, res: Response) => {

@@ -37,7 +37,7 @@ export const csrfProtection = (req: CsrfRequest, res: Response, next: NextFuncti
     const xApiKey = req.headers['x-api-key'];
     const isTokenAuth = (authHeader && authHeader.startsWith('Bearer ')) || !!xApiKey;
 
-    // Public/webhook routes bypass: SAML callbacks, SCIM, and guardrails demo
+    // Public/webhook routes that cannot provide CSRF tokens (external third-party callbacks)
     const isBypassRoute = 
       req.path.includes('/saml/') || 
       req.path.includes('/scim/v2/') || 

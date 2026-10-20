@@ -31,6 +31,7 @@ describe('Connector Readable Error Handling', () => {
   const connectorId = 'conn-err-1';
 
   beforeEach(() => {
+    process.env.ALLOW_PRIVATE_NETWORK_TARGETS = 'true';
     jest.clearAllMocks();
   });
 
@@ -137,6 +138,39 @@ describe('Connector Readable Error Handling', () => {
       data: expect.objectContaining({
         status: 'error',
         last_error: 'Google Drive authentication failed: Invalid service account private key or client email.',
+      }),
+    }));
+  });
+
+  it('records SSRF error when PostgreSQL targets loopback/private host with protection active', async () => {
+    process.env.ALLOW_PRIVATE_NETWORK_TARGETS = 'false';
+
+    const creds = encryptCredentials({
+      host: '127.0.0.1',
+      port: 5432,
+      user: 'postgres',
+      password: 'password',
+      database: 'prod_db',
+    });
+
+    (prisma.connectors.findUnique as jest.Mock).mockResolvedValue({
+      id: connectorId,
+      name: 'Local DB',
+      type: 'postgres',
+      organizationId: orgId,
+      credentials: creds,
+      health_score: 100,
+      daily_cost_total: 0,
+      scan_policy: {},
+    });
+
+    await processConnectorScan('postgres', connectorId);
+
+    expect(prisma.connectors.update).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: connectorId },
+      data: expect.objectContaining({
+        status: 'error',
+        last_error: expect.stringContaining('SSRF Validation Error'),
       }),
     }));
   });

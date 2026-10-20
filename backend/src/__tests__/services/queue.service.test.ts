@@ -35,23 +35,32 @@ jest.mock('@prisma/client', () => {
   };
 });
 
-jest.mock('../../config/db', () => ({
-  __esModule: true,
-  default: new Proxy({}, {
-    get: () => jest.fn().mockImplementation(() => ({
-      create: jest.fn().mockResolvedValue({ id: 'mock-id' }),
-      findMany: jest.fn().mockResolvedValue([]),
-      findFirst: jest.fn().mockResolvedValue(null),
-      findUnique: jest.fn().mockResolvedValue(null),
-      update: jest.fn().mockResolvedValue({ id: 'mock-id' }),
-      updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-      delete: jest.fn().mockResolvedValue({ id: 'mock-id' }),
-      deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
-      count: jest.fn().mockResolvedValue(0),
-      upsert: jest.fn().mockResolvedValue({ id: 'mock-id' }),
-    }))
-  })
-}));
+const dbDelegates: Record<string, any> = {};
+
+jest.mock('../../config/db', () => {
+  const defaultDelegate = {
+    create: jest.fn().mockResolvedValue({ id: 'mock-id' }),
+    findMany: jest.fn().mockResolvedValue([]),
+    findFirst: jest.fn().mockResolvedValue(null),
+    findUnique: jest.fn().mockResolvedValue(null),
+    update: jest.fn().mockResolvedValue({ id: 'mock-id' }),
+    updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+    delete: jest.fn().mockResolvedValue({ id: 'mock-id' }),
+    deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+    count: jest.fn().mockResolvedValue(0),
+    upsert: jest.fn().mockResolvedValue({ id: 'mock-id' }),
+  };
+
+  return {
+    __esModule: true,
+    default: new Proxy(dbDelegates, {
+      get: (target, prop: string) => {
+        if (typeof prop === 'string' && prop in target) return target[prop];
+        return defaultDelegate;
+      },
+    }),
+  };
+});
 
 jest.mock('../../config/redis', () => ({
   getRedisClient: jest.fn().mockReturnValue({
@@ -79,7 +88,7 @@ jest.mock('../../utils/logger', () => ({
 import prisma from '../../config/db';
 const db = prisma as any;
 
-import { defaultJobOptions } from '../../services/queue.service';
+import { defaultJobOptions, isCustomPortApprovedByAdmin } from '../../services/queue.service';
 
 describe('defaultJobOptions unit tests', () => {
   beforeEach(() => {
@@ -333,6 +342,107 @@ describe('defaultJobOptions unit tests', () => {
           expect(e).toBeDefined();
         }
       }
+    });
+  });
+
+  describe('isCustomPortApprovedByAdmin', () => {
+    it('returns false when allowCustomPort is not set', async () => {
+      const res = await isCustomPortApprovedByAdmin({ organizationId: 'org-1', config: {} });
+      expect(res).toBe(false);
+    });
+
+    it('returns false when allowCustomPortApprovedBy is missing or not a string', async () => {
+      const res = await isCustomPortApprovedByAdmin({ organizationId: 'org-1', config: { allowCustomPort: true } });
+      expect(res).toBe(false);
+    });
+
+    it('returns false when approver does not exist', async () => {
+      db.users = { findUnique: jest.fn().mockResolvedValue(null) };
+      const res = await isCustomPortApprovedByAdmin({
+        organizationId: 'org-1',
+        config: { allowCustomPort: true, allowCustomPortApprovedBy: 'nonexistent-user' },
+      });
+      expect(res).toBe(false);
+    });
+
+    it('returns false when approver is inactive (is_active: false)', async () => {
+      db.users = {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'admin-1',
+          role: 'ADMIN',
+          organizationId: 'org-1',
+          is_active: false,
+        }),
+      };
+      const res = await isCustomPortApprovedByAdmin({
+        organizationId: 'org-1',
+        config: { allowCustomPort: true, allowCustomPortApprovedBy: 'admin-1' },
+      });
+      expect(res).toBe(false);
+    });
+
+    it('returns false when approver belongs to a different organization', async () => {
+      db.users = {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'admin-1',
+          role: 'ADMIN',
+          organizationId: 'org-different',
+          is_active: true,
+        }),
+      };
+      const res = await isCustomPortApprovedByAdmin({
+        organizationId: 'org-1',
+        config: { allowCustomPort: true, allowCustomPortApprovedBy: 'admin-1' },
+      });
+      expect(res).toBe(false);
+    });
+
+    it('returns false when approver is not an admin (role: MEMBER)', async () => {
+      db.users = {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'user-1',
+          role: 'MEMBER',
+          organizationId: 'org-1',
+          is_active: true,
+        }),
+      };
+      const res = await isCustomPortApprovedByAdmin({
+        organizationId: 'org-1',
+        config: { allowCustomPort: true, allowCustomPortApprovedBy: 'user-1' },
+      });
+      expect(res).toBe(false);
+    });
+
+    it('returns true when approver is active and an ADMIN of the same organization', async () => {
+      db.users = {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'admin-1',
+          role: 'ADMIN',
+          organizationId: 'org-1',
+          is_active: true,
+        }),
+      };
+      const res = await isCustomPortApprovedByAdmin({
+        organizationId: 'org-1',
+        config: { allowCustomPort: true, allowCustomPortApprovedBy: 'admin-1' },
+      });
+      expect(res).toBe(true);
+    });
+
+    it('returns true when approver is active and a SUPER_ADMIN of the same organization', async () => {
+      db.users = {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'super-admin-1',
+          role: 'SUPER_ADMIN',
+          organizationId: 'org-1',
+          is_active: true,
+        }),
+      };
+      const res = await isCustomPortApprovedByAdmin({
+        organizationId: 'org-1',
+        config: { allowCustomPort: true, allowCustomPortApprovedBy: 'super-admin-1' },
+      });
+      expect(res).toBe(true);
     });
   });
 });

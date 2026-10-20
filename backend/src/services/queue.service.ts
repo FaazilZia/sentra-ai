@@ -8,7 +8,9 @@ import { Client as PgClient } from 'pg';
 import logger from '../utils/logger';
 import prisma from '../config/db';
 import { logActivity } from './policy.service';
-import { decryptCredentials } from '../utils/credentialHelper';
+import { decryptCredentials, normalizePrivateKey } from '../utils/credentialHelper';
+import { assertSafeTarget } from '../utils/ssrfProtection';
+import { validatePostgresPort } from './connectorTest.service';
 import { SENSITIVE_PATTERNS } from './riskEngine';
 import { buildRedisOptions, getRedisUrl } from '../config/redis';
 import { PostMarketMonitoringService } from './postMarketMonitoring.service';
@@ -294,6 +296,14 @@ async function scanS3Source(connector: any, creds: any): Promise<{ violations: n
   let bytesScanned = 0;
 
   const { accessKeyId, secretAccessKey, region, bucketName } = creds;
+
+  // Defensive SSRF check if a custom endpoint parameter was injected
+  const customEndpoint = (connector.config as any)?.endpoint || creds.endpoint;
+  if (customEndpoint) {
+    const parsedUrl = new URL(String(customEndpoint));
+    await assertSafeTarget(parsedUrl.hostname);
+  }
+
   const s3 = new S3Client({
     region: region || 'us-east-1',
     credentials: { accessKeyId, secretAccessKey }
@@ -337,10 +347,19 @@ async function scanGDriveSource(connector: any, creds: any): Promise<{ violation
   let bytesScanned = 0;
 
   const { client_email, private_key, driveScope } = creds;
+
+  // Defensive SSRF check if a custom endpoint parameter was injected
+  const customEndpoint = (connector.config as any)?.endpoint || creds.endpoint;
+  if (customEndpoint) {
+    const parsedUrl = new URL(String(customEndpoint));
+    await assertSafeTarget(parsedUrl.hostname);
+  }
+
+  const normalizedKey = normalizePrivateKey((private_key as string) || '');
   const auth = new (google.auth.JWT as any)(
     client_email,
     null,
-    (private_key as string || '').replaceAll(/\\n/g, '\n'),
+    normalizedKey,
     [driveScope || 'https://www.googleapis.com/auth/drive.readonly']
   );
   const drive = google.drive({ version: 'v3', auth });
@@ -391,38 +410,187 @@ async function scanGDriveSource(connector: any, creds: any): Promise<{ violation
   return { violations, apiCalls, bytesScanned };
 }
 
+/**
+ * Executes async tasks over an array of items with bounded concurrency to prevent
+ * database connection pool exhaustion.
+ */
+async function runWithConcurrencyLimit<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>
+): Promise<R[]> {
+  if (items.length === 0) return [];
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += limit) {
+    chunks.push(items.slice(i, i + limit));
+  }
+  const results: R[] = [];
+  return chunks.reduce(
+    (chain, chunk) =>
+      chain
+        .then(() => Promise.all(chunk.map(fn)))
+        .then(chunkResults => {
+          results.push(...chunkResults);
+          return results;
+        }),
+    Promise.resolve(results)
+  );
+}
+
+export async function isCustomPortApprovedByAdmin(connector: any): Promise<boolean> {
+  if (process.env.ALLOW_CUSTOM_DB_PORTS === 'true') {
+    return true;
+  }
+  const config = connector?.config as any;
+  if (!config?.allowCustomPort) {
+    return false;
+  }
+  const approverId = config.allowCustomPortApprovedBy;
+  if (!approverId || typeof approverId !== 'string') {
+    logger.warn(
+      `[Queue] Connector ${connector.id} has allowCustomPort=true without an admin approver signature. Custom port rejected.`
+    );
+    return false;
+  }
+  const approver = await prisma.users.findUnique({
+    where: { id: approverId },
+    select: { role: true, organizationId: true, is_active: true },
+  });
+  const isValidAdmin = Boolean(
+    approver?.is_active &&
+    approver.organizationId === connector.organizationId &&
+    (approver.role === 'ADMIN' || approver.role === 'SUPER_ADMIN')
+  );
+  if (!isValidAdmin) {
+    logger.warn(
+      `[Queue] Connector ${connector.id} has allowCustomPort=true but approver ${approverId} is not an active admin for org ${connector.organizationId}. Custom port rejected.`
+    );
+  }
+  return isValidAdmin;
+}
+
 async function scanSqlSource(connector: any, creds: any): Promise<{ violations: number; apiCalls: number; bytesScanned: number }> {
   let violations = 0;
   let apiCalls = 0;
   let bytesScanned = 0;
 
   const { host, port, user, password, database } = creds;
-  const client = new PgClient({ host, port, user, password, database, ssl: { rejectUnauthorized: false } });
+  const rawSchema = (connector.config as any)?.schema || creds.schema || 'public';
+  const schema = /^\w+$/.test(rawSchema) ? rawSchema : 'public';
+  const useSsl = (connector.config as any)?.ssl !== false && creds.ssl !== false;
+  const allowSelfSigned = Boolean((connector.config as any)?.allowSelfSigned || creds.allowSelfSigned);
+
+  const HOST_PATTERN = /^[a-zA-Z0-9_.-]+$/;
+  if (!host || !HOST_PATTERN.test(host)) {
+    throw new Error('Invalid database host format.');
+  }
+
+  const allowCustomPort = await isCustomPortApprovedByAdmin(connector);
+
+  const portValidation = validatePostgresPort(port || 5432, allowCustomPort);
+  if (!portValidation.valid) {
+    throw new Error(portValidation.error || 'Invalid port.');
+  }
+  const parsedPort = portValidation.port;
+
+  // SSRF Protection: verify host is not private/internal before connecting and pin to resolved IP
+  const safeIp = await assertSafeTarget(host);
+  if (!/^[a-zA-Z0-9_.:]+$/.test(safeIp)) {
+    throw new Error('Invalid resolved target IP address.');
+  }
+
+  const client = new PgClient({
+    host: safeIp,
+    port: parsedPort,
+    user,
+    password,
+    database,
+    ssl: useSsl ? { rejectUnauthorized: !allowSelfSigned, servername: host } : undefined,
+    connectionTimeoutMillis: 10000,
+  });
   
   await client.connect();
   apiCalls++;
 
   try {
-    const tablesRes = await client.query(`SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' LIMIT 10`);
+    // Metadata only: query table and column names from information_schema (never customer row data)
+    const columnsRes = await client.query(
+      `SELECT table_name, column_name, data_type 
+       FROM information_schema.columns 
+       WHERE table_schema = $1 
+       ORDER BY table_name, ordinal_position 
+       LIMIT 500`,
+      [schema]
+    );
     apiCalls++;
 
-    for (const table of tablesRes.rows) {
-      const tableName = table.table_name;
-      const dataRes = await client.query(`SELECT * FROM "${tableName}" LIMIT 100`);
-      apiCalls++;
+    const SENSITIVE_COLUMN_PATTERNS: Record<string, RegExp> = {
+      EMAIL: /\bemail\b|\be_mail\b/i,
+      SSN: /\bssn\b|\bsocial_security\b/i,
+      CREDIT_CARD: /\bcredit_card\b|\bcard_number\b|\bcc_num\b/i,
+      PASSWORD: /\bpassword\b|\bpasswd\b|\bpwd\b/i,
+    };
 
-      const rowData = JSON.stringify(dataRes.rows);
-      bytesScanned += Buffer.byteLength(rowData);
-      const found = await performPIIScan(rowData, {
+    const scanItems = columnsRes.rows.map((col) => {
+      const { table_name, column_name, data_type } = col;
+      const metadataDesc = `table:${table_name}.column:${column_name} (${data_type})`;
+      bytesScanned += Buffer.byteLength(metadataDesc);
+
+      const matchedPatterns: string[] = [];
+      for (const [name, pattern] of Object.entries(SENSITIVE_COLUMN_PATTERNS)) {
+        if (pattern.test(column_name)) {
+          matchedPatterns.push(name);
+        }
+      }
+
+      return { table_name, column_name, metadataDesc, matchedPatterns };
+    });
+
+    // Bounded concurrency execution (max 5 concurrent) prevents DB pool exhaustion
+    const piiResults = await runWithConcurrencyLimit(scanItems, 5, item =>
+      performPIIScan(item.metadataDesc, {
         connectorId: connector.id,
-        type: 'sql',
-        fileKey: `table:${tableName}`,
-        organizationId: connector.organizationId
-      });
-      violations += found;
+        type: 'postgres',
+        fileKey: `${schema}.${item.table_name}.${item.column_name}`,
+        organizationId: connector.organizationId,
+      })
+    );
+    const piiViolations = piiResults.reduce((acc, curr) => acc + curr, 0);
+
+    const patternItems: Array<{ item: typeof scanItems[0]; name: string }> = [];
+    for (const item of scanItems) {
+      for (const name of item.matchedPatterns) {
+        patternItems.push({ item, name });
+      }
     }
+    const patternViolations = patternItems.length;
+
+    if (patternItems.length > 0) {
+      await runWithConcurrencyLimit(patternItems, 5, async ({ item, name }) => {
+        await prisma.interception_logs.create({
+          data: {
+            user_id: 'system_scanner',
+            organizationId: connector.organizationId,
+            input_text: `Scan of postgres metadata: ${schema}.${item.table_name}.${item.column_name}`,
+            decision: 'BLOCK',
+            confidence: 'High',
+            reason: `Data scan detected sensitive pattern: ${name}`,
+            policy_triggered: 'Data Governance Baseline',
+            metadata: {
+              connector_id: connector.id,
+              violationType: name,
+              fileKey: `${schema}.${item.table_name}.${item.column_name}`,
+              source_type: 'postgres',
+            },
+            timestamp: new Date(),
+          },
+        });
+      });
+    }
+
+    violations = piiViolations + patternViolations;
   } finally {
-    await client.end();
+    await client.end().catch(() => {});
   }
 
   return { violations, apiCalls, bytesScanned };
@@ -430,13 +598,16 @@ async function scanSqlSource(connector: any, creds: any): Promise<{ violations: 
 
 function formatConnectorScanError(err: any): string {
   const rawMsg = err?.message || String(err);
+  if (rawMsg.includes('SSRF validation failed') || rawMsg.includes('private or internal network')) {
+    return 'SSRF Validation Error: Target host is in a private or restricted network address.';
+  }
   if (rawMsg.includes('AccessDenied') || rawMsg.includes('Forbidden') || err?.name === 'AccessDenied') {
     return 'Access Denied: Please verify permissions and credential scopes.';
   }
   if (rawMsg.includes('NoSuchBucket')) {
     return 'Specified S3 bucket does not exist or is in a different region.';
   }
-  if (rawMsg.includes('ECONNREFUSED') || rawMsg.includes('ETIMEDOUT')) {
+  if (rawMsg.includes('ECONNREFUSED') || rawMsg.includes('ETIMEDOUT') || rawMsg.includes('ENOTFOUND')) {
     return 'Connection refused: Host unreachable. Check firewall, network rules, or host address.';
   }
   if (rawMsg.includes('password authentication failed') || err?.code === '28P01') {
@@ -458,7 +629,7 @@ async function executeSourceScan(type: string, connector: any, creds: any) {
   if (type === 'gdrive') {
     return await scanGDriveSource(connector, creds);
   }
-  if (type === 'sql') {
+  if (type === 'sql' || type === 'postgres') {
     return await scanSqlSource(connector, creds);
   }
   return { violations: 0, apiCalls: 0, bytesScanned: 0 };

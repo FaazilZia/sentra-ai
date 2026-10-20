@@ -474,6 +474,68 @@ export async function fetchExecutiveOverview(): Promise<ExecutiveOverview> {
   return apiRequest<ExecutiveOverview>('/connectors/overview');
 }
 
+export type ConnectorType = 'postgres' | 'sql' | 's3' | 'gdrive';
+export type ConnectorStatus = 'active' | 'pending' | 'error' | 'paused_budget' | 'inactive';
+
+export interface ConnectorItem {
+  id: string;
+  name: string;
+  type: ConnectorType;
+  status: ConnectorStatus;
+  config: Record<string, any>;
+  last_scan_at: string | null;
+  last_error: string | null;
+  health_score: number;
+  daily_cost_total: number;
+  total_api_calls: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateConnectorPayload {
+  name: string;
+  type: ConnectorType;
+  config?: Record<string, any>;
+  credentials?: Record<string, any> | string;
+  scope?: Record<string, any>;
+}
+
+export interface TestConnectorPayload {
+  type: ConnectorType;
+  config?: Record<string, any>;
+  credentials?: Record<string, any> | string;
+}
+
+export async function fetchConnectors(): Promise<{ data: ConnectorItem[]; total: number }> {
+  return apiRequest<{ data: ConnectorItem[]; total: number }>('/connectors');
+}
+
+export async function createConnector(payload: CreateConnectorPayload): Promise<ConnectorItem> {
+  return apiRequest<ConnectorItem>('/connectors', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function testConnector(payload: TestConnectorPayload): Promise<{ success: boolean; message: string; details?: any }> {
+  return apiRequest<{ success: boolean; message: string; details?: any }>('/connectors/test', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function scanConnector(id: string): Promise<{ success: boolean; message: string }> {
+  return apiRequest<{ success: boolean; message: string }>(`/connectors/${id}/scan`, {
+    method: 'POST',
+  });
+}
+
+export async function deleteConnector(id: string): Promise<void> {
+  return apiRequest<void>(`/connectors/${id}`, {
+    method: 'DELETE',
+  });
+}
+
 /**
  * CONSENT ENDPOINTS (stub — pending Node.js migration)
  */
