@@ -8,7 +8,7 @@ const router = Router();
  * POST /api/v1/mcp/proxy
  * Route JSON-RPC 2.0 requests to the MCP controller
  */
-router.post('/proxy', McpController.handleJsonRpc);
+router.post('/proxy', (req: Request, res: Response) => McpController.handleJsonRpc(req, res));
 
 /**
  * GET /api/v1/mcp/proxy

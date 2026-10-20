@@ -10,7 +10,7 @@ import prisma from '../config/db';
 import { logActivity } from './policy.service';
 import { decryptCredentials, normalizePrivateKey } from '../utils/credentialHelper';
 import { assertSafeTarget } from '../utils/ssrfProtection';
-import { RESTRICTED_POSTGRES_PORTS } from './connectorTest.service';
+import { RESTRICTED_POSTGRES_PORTS, DEFAULT_ALLOWED_POSTGRES_PORTS } from './connectorTest.service';
 import { SENSITIVE_PATTERNS } from './riskEngine';
 import { buildRedisOptions, getRedisUrl } from '../config/redis';
 import { PostMarketMonitoringService } from './postMarketMonitoring.service';
@@ -454,8 +454,27 @@ async function scanSqlSource(connector: any, creds: any): Promise<{ violations: 
   }
 
   const parsedPort = Number.parseInt(String(port || 5432), 10);
-  if (Number.isNaN(parsedPort) || parsedPort < 1024 || parsedPort > 65535 || RESTRICTED_POSTGRES_PORTS.has(parsedPort)) {
-    throw new Error(`Invalid port: Port ${port} is not permitted for PostgreSQL connections.`);
+  const allowCustomPort = Boolean(
+    process.env.ALLOW_CUSTOM_DB_PORTS === 'true' ||
+    (connector.config as any)?.allowCustomPort ||
+    creds.allowCustomPort
+  );
+
+  if (Number.isNaN(parsedPort) || parsedPort < 1 || parsedPort > 65535) {
+    throw new Error(`Invalid port: Port ${port} is not a valid TCP port number (1-65535).`);
+  }
+
+  if (!DEFAULT_ALLOWED_POSTGRES_PORTS.has(parsedPort)) {
+    if (!allowCustomPort) {
+      throw new Error(
+        `Invalid port: Port ${port} is not permitted by default. Only standard PostgreSQL ports (5432, 5433, 6432, 6543) are allowed. Custom database ports require an explicit administrator setting.`
+      );
+    }
+    if (parsedPort < 1024 || RESTRICTED_POSTGRES_PORTS.has(parsedPort)) {
+      throw new Error(
+        `Invalid port: Port ${port} is a privileged system port (1-1023) or restricted service port and cannot be used for PostgreSQL connections.`
+      );
+    }
   }
 
   // SSRF Protection: verify host is not private/internal before connecting and pin to resolved IP

@@ -414,13 +414,64 @@ describe('Connector Test Connection Service', () => {
       expect(res.message).toContain('SSL/TLS certificate hostname mismatch');
     });
 
-    it('rejects privileged system ports (1-1023) and restricted service ports to prevent SSRF port scanning', async () => {
+    it('restricts PostgreSQL ports to 5432, 5433, 6432, 6543 by default unless explicit admin setting is present', async () => {
       process.env.ALLOW_PRIVATE_NETWORK_TARGETS = 'true';
 
-      // Test privileged SSH port 22
-      const resSsh = await testConnectorSource(
+      // 1. Non-standard port 8432 without admin setting -> rejected
+      const resNonStandard = await testConnectorSource(
         'postgres',
         {},
+        {
+          host: 'db.example.com',
+          port: 8432,
+          user: 'postgres',
+          password: 'password',
+        }
+      );
+      expect(resNonStandard.success).toBe(false);
+      expect(resNonStandard.message).toContain('Only standard PostgreSQL ports (5432, 5433, 6432, 6543) are allowed');
+
+      // 2. Standard ports 5432, 5433, 6432, 6543 allowed by default
+      (PgClient as jest.Mock).mockImplementation(() => ({
+        connect: jest.fn().mockResolvedValue(undefined),
+        query: jest.fn()
+          .mockResolvedValueOnce({ rows: [{ version: 'PostgreSQL 16' }] })
+          .mockResolvedValueOnce({ rows: [{ has_usage: true }] })
+          .mockResolvedValueOnce({ rows: [{ table_count: 5 }] }),
+        end: jest.fn().mockResolvedValue(undefined),
+      }));
+
+      for (const stdPort of [5432, 5433, 6432, 6543]) {
+        const resStd = await testConnectorSource(
+          'postgres',
+          {},
+          {
+            host: 'db.example.com',
+            port: stdPort,
+            user: 'postgres',
+            password: 'password',
+          }
+        );
+        expect(resStd.success).toBe(true);
+      }
+
+      // 3. Custom port 8432 WITH explicit admin setting allowCustomPort -> allowed
+      const resCustomAllowed = await testConnectorSource(
+        'postgres',
+        { allowCustomPort: true },
+        {
+          host: 'db.example.com',
+          port: 8432,
+          user: 'postgres',
+          password: 'password',
+        }
+      );
+      expect(resCustomAllowed.success).toBe(true);
+
+      // 4. Privileged port (22) and restricted port (6379) rejected even with allowCustomPort
+      const resSsh = await testConnectorSource(
+        'postgres',
+        { allowCustomPort: true },
         {
           host: 'db.example.com',
           port: 22,
@@ -429,12 +480,11 @@ describe('Connector Test Connection Service', () => {
         }
       );
       expect(resSsh.success).toBe(false);
-      expect(resSsh.message).toContain('Privileged system ports (1-1023) and restricted service ports are blocked');
+      expect(resSsh.message).toContain('privileged system port (1-1023) or restricted service port');
 
-      // Test Redis port 6379
       const resRedis = await testConnectorSource(
         'postgres',
-        {},
+        { allowCustomPort: true },
         {
           host: 'db.example.com',
           port: 6379,
@@ -443,7 +493,7 @@ describe('Connector Test Connection Service', () => {
         }
       );
       expect(resRedis.success).toBe(false);
-      expect(resRedis.message).toContain('Privileged system ports (1-1023) and restricted service ports are blocked');
+      expect(resRedis.message).toContain('privileged system port (1-1023) or restricted service port');
     });
 
     it('rejects custom S3 endpoint targeting private network when private targets are disallowed', async () => {
