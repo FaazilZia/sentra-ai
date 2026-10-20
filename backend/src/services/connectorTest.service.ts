@@ -150,28 +150,28 @@ async function testPostgresSource(
   const rawSchema = String(config.schema || credentials.schema || 'public').trim();
   const useSsl = config.ssl !== false && credentials.ssl !== false;
 
-  if (!rawHost) {
-    return { success: false, message: 'Database host is required.' };
+  const HOST_REGEX = /^[a-zA-Z0-9_.-]+$/;
+  const USER_REGEX = /^[a-zA-Z0-9_.-]+$/;
+  const DB_REGEX = /^[a-zA-Z0-9_-]+$/;
+  const SCHEMA_REGEX = /^\w+$/;
+
+  if (!rawHost || !HOST_REGEX.test(rawHost)) {
+    return { success: false, message: 'Database host is required and must have a valid hostname/IP format.' };
   }
-  if (!rawUser) {
-    return { success: false, message: 'Database user is required.' };
+  if (!rawUser || !USER_REGEX.test(rawUser)) {
+    return { success: false, message: 'Database user is required and must have a valid username format.' };
+  }
+  if (!rawDatabase || !DB_REGEX.test(rawDatabase)) {
+    return { success: false, message: 'Invalid database name format.' };
+  }
+  if (!rawSchema || !SCHEMA_REGEX.test(rawSchema)) {
+    return { success: false, message: 'Invalid schema name. Only alphanumeric characters and underscores are allowed.' };
   }
 
   // SSRF check on host before establishing connection - pins to resolved IP
   const safeIp = await assertSafeTarget(rawHost);
-
-  // Strict identifier validation to prevent connection option injection
-  if (!/^[a-zA-Z0-9_.-]+$/.test(rawHost)) {
-    return { success: false, message: 'Invalid database host format.' };
-  }
-  if (!/^\w+$/.test(rawSchema)) {
-    return { success: false, message: 'Invalid schema name. Only alphanumeric characters and underscores are allowed.' };
-  }
-  if (!/^[a-zA-Z0-9_.-]+$/.test(rawUser)) {
-    return { success: false, message: 'Invalid username format.' };
-  }
-  if (!/^[a-zA-Z0-9_-]+$/.test(rawDatabase)) {
-    return { success: false, message: 'Invalid database name format.' };
+  if (!/^[a-zA-Z0-9_.:]+$/.test(safeIp)) {
+    return { success: false, message: 'Invalid resolved target IP address.' };
   }
 
   const port = Math.min(65535, Math.max(1, Number.parseInt(String(rawPort), 10) || 5432));

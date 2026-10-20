@@ -25,60 +25,61 @@ export const PRIVATE_IPV4_RANGES: Array<{ start: number; end: number }> = [
   { start: 0xf0000000, end: 0xffffffff },
 ];
 
+function parseIpPart(part: string): number | null {
+  if (!part) return null;
+  let val: number;
+  if (/^0x[\da-f]+$/i.test(part)) {
+    val = Number.parseInt(part, 16);
+  } else if (/^0[0-7]+$/.test(part)) {
+    val = Number.parseInt(part, 8);
+  } else if (/^\d+$/.test(part)) {
+    val = Number.parseInt(part, 10);
+  } else {
+    return null;
+  }
+  return Number.isNaN(val) || val < 0 ? null : val;
+}
+
+function assembleParts(values: number[]): number | null {
+  if (values.length === 1 && values[0] <= 0xffffffff) {
+    return values[0];
+  }
+  if (values.length === 2 && values[0] <= 0xff && values[1] <= 0xffffff) {
+    return ((values[0] << 24) >>> 0) + values[1];
+  }
+  if (values.length === 3 && values[0] <= 0xff && values[1] <= 0xff && values[2] <= 0xffff) {
+    return ((values[0] << 24) >>> 0) + (values[1] << 16) + values[2];
+  }
+  if (values.length === 4 && values.every(v => v <= 0xff)) {
+    return ((values[0] << 24) >>> 0) + (values[1] << 16) + (values[2] << 8) + values[3];
+  }
+  return null;
+}
+
 /**
  * Parses IPv4 representation across decimal (2130706433), hex (0x7f000001),
  * octal (017700000001), dotted forms (0177.0.0.1, 0x7f.0.0.1), and short forms (127.1, 10.1).
  * Returns canonical uint32 and dotted quad string, or null if not a valid IPv4 representation.
  */
 export function parseIPv4Representation(input: string): { intVal: number; dotted: string } | null {
-  if (!input || typeof input !== 'string') return null;
-  const trimmed = input.trim();
+  if (!input || typeof input !== 'string' || input.includes(':')) return null;
 
-  // Explicitly ignore IPv6 addresses
-  if (trimmed.includes(':')) return null;
-
-  const parts = trimmed.split('.');
+  const parts = input.trim().split('.');
   if (parts.length > 4 || parts.length === 0) return null;
 
   const values: number[] = [];
   for (const part of parts) {
-    if (!part) return null;
-    let val: number;
-    if (/^0x[0-9a-f]+$/i.test(part)) {
-      val = Number.parseInt(part, 16);
-    } else if (/^0[0-7]+$/.test(part)) {
-      val = Number.parseInt(part, 8);
-    } else if (/^[0-9]+$/.test(part)) {
-      val = Number.parseInt(part, 10);
-    } else {
-      return null;
-    }
-    if (Number.isNaN(val) || val < 0) return null;
+    const val = parseIpPart(part);
+    if (val === null) return null;
     values.push(val);
   }
 
-  let intVal = 0;
-  if (values.length === 1) {
-    // Single number (decimal, hex, octal) representing a 32-bit address
-    if (values[0] > 0xffffffff) return null;
-    intVal = values[0];
-  } else if (values.length === 2) {
-    // a.b: a is 8-bit net, b is 24-bit host number (e.g. 127.1 -> 127.0.0.1)
-    if (values[0] > 0xff || values[1] > 0xffffff) return null;
-    intVal = ((values[0] << 24) >>> 0) + values[1];
-  } else if (values.length === 3) {
-    // a.b.c: a is 8-bit, b is 8-bit, c is 16-bit host
-    if (values[0] > 0xff || values[1] > 0xff || values[2] > 0xffff) return null;
-    intVal = ((values[0] << 24) >>> 0) + (values[1] << 16) + values[2];
-  } else if (values.length === 4) {
-    // standard 4-part quad: each part must fit in an 8-bit byte
-    if (values.some(v => v > 0xff)) return null;
-    intVal = ((values[0] << 24) >>> 0) + (values[1] << 16) + (values[2] << 8) + values[3];
-  }
+  const intVal = assembleParts(values);
+  if (intVal === null) return null;
 
-  intVal = intVal >>> 0;
-  const dotted = `${(intVal >>> 24) & 255}.${(intVal >>> 16) & 255}.${(intVal >>> 8) & 255}.${intVal & 255}`;
-  return { intVal, dotted };
+  const normalizedInt = intVal >>> 0;
+  const dotted = `${(normalizedInt >>> 24) & 255}.${(normalizedInt >>> 16) & 255}.${(normalizedInt >>> 8) & 255}.${normalizedInt & 255}`;
+  return { intVal: normalizedInt, dotted };
 }
 
 /**
@@ -133,9 +134,6 @@ export function isPrivateIPv6(ip: string): boolean {
 
   // Multicast (ff00::/8)
   if (normalized.startsWith('ff')) return true;
-
-  // Discard prefix (100::/64)
-  if (normalized.startsWith('100::')) return true;
 
   // Documentation prefix (2001:db8::/32)
   if (normalized.startsWith('2001:db8:') || normalized === '2001:db8::') return true;

@@ -403,18 +403,21 @@ async function runWithConcurrencyLimit<T, R>(
   fn: (item: T) => Promise<R>
 ): Promise<R[]> {
   if (items.length === 0) return [];
-  const results: R[] = new Array(items.length);
-  let currentIndex = 0;
-
-  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
-    while (currentIndex < items.length) {
-      const index = currentIndex++;
-      results[index] = await fn(items[index]);
-    }
-  });
-
-  await Promise.all(workers);
-  return results;
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += limit) {
+    chunks.push(items.slice(i, i + limit));
+  }
+  const results: R[] = [];
+  return chunks.reduce(
+    (chain, chunk) =>
+      chain
+        .then(() => Promise.all(chunk.map(fn)))
+        .then(chunkResults => {
+          results.push(...chunkResults);
+          return results;
+        }),
+    Promise.resolve(results)
+  );
 }
 
 async function scanSqlSource(connector: any, creds: any): Promise<{ violations: number; apiCalls: number; bytesScanned: number }> {
@@ -427,8 +430,16 @@ async function scanSqlSource(connector: any, creds: any): Promise<{ violations: 
   const schema = /^\w+$/.test(rawSchema) ? rawSchema : 'public';
   const useSsl = (connector.config as any)?.ssl !== false && creds.ssl !== false;
 
+  const HOST_PATTERN = /^[a-zA-Z0-9_.-]+$/;
+  if (!host || !HOST_PATTERN.test(host)) {
+    throw new Error('Invalid database host format.');
+  }
+
   // SSRF Protection: verify host is not private/internal before connecting and pin to resolved IP
   const safeIp = await assertSafeTarget(host);
+  if (!/^[a-zA-Z0-9_.:]+$/.test(safeIp)) {
+    throw new Error('Invalid resolved target IP address.');
+  }
 
   const client = new PgClient({
     host: safeIp,
