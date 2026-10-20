@@ -393,6 +393,30 @@ async function scanGDriveSource(connector: any, creds: any): Promise<{ violation
   return { violations, apiCalls, bytesScanned };
 }
 
+/**
+ * Executes async tasks over an array of items with bounded concurrency to prevent
+ * database connection pool exhaustion.
+ */
+async function runWithConcurrencyLimit<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>
+): Promise<R[]> {
+  if (items.length === 0) return [];
+  const results: R[] = new Array(items.length);
+  let currentIndex = 0;
+
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (currentIndex < items.length) {
+      const index = currentIndex++;
+      results[index] = await fn(items[index]);
+    }
+  });
+
+  await Promise.all(workers);
+  return results;
+}
+
 async function scanSqlSource(connector: any, creds: any): Promise<{ violations: number; apiCalls: number; bytesScanned: number }> {
   let violations = 0;
   let apiCalls = 0;
@@ -403,16 +427,16 @@ async function scanSqlSource(connector: any, creds: any): Promise<{ violations: 
   const schema = /^\w+$/.test(rawSchema) ? rawSchema : 'public';
   const useSsl = (connector.config as any)?.ssl !== false && creds.ssl !== false;
 
-  // SSRF Protection: verify host is not private/internal before connecting
-  await assertSafeTarget(host);
+  // SSRF Protection: verify host is not private/internal before connecting and pin to resolved IP
+  const safeIp = await assertSafeTarget(host);
 
   const client = new PgClient({
-    host,
+    host: safeIp,
     port: port || 5432,
     user,
     password,
     database,
-    ssl: useSsl ? { rejectUnauthorized: false } : undefined,
+    ssl: useSsl ? { rejectUnauthorized: false, servername: host } : undefined,
     connectionTimeoutMillis: 10000,
   });
   
@@ -453,7 +477,8 @@ async function scanSqlSource(connector: any, creds: any): Promise<{ violations: 
       return { table_name, column_name, metadataDesc, matchedPatterns };
     });
 
-    const scanPromises = scanItems.map(item =>
+    // Bounded concurrency execution (max 5 concurrent) prevents DB pool exhaustion
+    const piiResults = await runWithConcurrencyLimit(scanItems, 5, item =>
       performPIIScan(item.metadataDesc, {
         connectorId: connector.id,
         type: 'postgres',
@@ -461,40 +486,37 @@ async function scanSqlSource(connector: any, creds: any): Promise<{ violations: 
         organizationId: connector.organizationId,
       })
     );
-    const piiResults = await Promise.all(scanPromises);
     const piiViolations = piiResults.reduce((acc, curr) => acc + curr, 0);
 
-    const logCreations: Array<Promise<any>> = [];
-    let patternViolations = 0;
-
+    const patternItems: Array<{ item: typeof scanItems[0]; name: string }> = [];
     for (const item of scanItems) {
       for (const name of item.matchedPatterns) {
-        patternViolations++;
-        logCreations.push(
-          prisma.interception_logs.create({
-            data: {
-              user_id: 'system_scanner',
-              organizationId: connector.organizationId,
-              input_text: `Scan of postgres metadata: ${schema}.${item.table_name}.${item.column_name}`,
-              decision: 'BLOCK',
-              confidence: 'High',
-              reason: `Data scan detected sensitive pattern: ${name}`,
-              policy_triggered: 'Data Governance Baseline',
-              metadata: {
-                connector_id: connector.id,
-                violationType: name,
-                fileKey: `${schema}.${item.table_name}.${item.column_name}`,
-                source_type: 'postgres',
-              },
-              timestamp: new Date(),
-            },
-          })
-        );
+        patternItems.push({ item, name });
       }
     }
+    const patternViolations = patternItems.length;
 
-    if (logCreations.length > 0) {
-      await Promise.all(logCreations);
+    if (patternItems.length > 0) {
+      await runWithConcurrencyLimit(patternItems, 5, async ({ item, name }) => {
+        await prisma.interception_logs.create({
+          data: {
+            user_id: 'system_scanner',
+            organizationId: connector.organizationId,
+            input_text: `Scan of postgres metadata: ${schema}.${item.table_name}.${item.column_name}`,
+            decision: 'BLOCK',
+            confidence: 'High',
+            reason: `Data scan detected sensitive pattern: ${name}`,
+            policy_triggered: 'Data Governance Baseline',
+            metadata: {
+              connector_id: connector.id,
+              violationType: name,
+              fileKey: `${schema}.${item.table_name}.${item.column_name}`,
+              source_type: 'postgres',
+            },
+            timestamp: new Date(),
+          },
+        });
+      });
     }
 
     violations = piiViolations + patternViolations;

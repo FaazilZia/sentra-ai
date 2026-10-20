@@ -37,11 +37,13 @@ export const csrfProtection = (req: CsrfRequest, res: Response, next: NextFuncti
     const xApiKey = req.headers['x-api-key'];
     const isTokenAuth = (authHeader && authHeader.startsWith('Bearer ')) || !!xApiKey;
 
-    // Public/webhook routes bypass: SAML callbacks, SCIM, and guardrails demo
+    // Public/webhook/MCP routes bypass: SAML callbacks, SCIM, guardrails demo, and external MCP clients
     const isBypassRoute = 
       req.path.includes('/saml/') || 
       req.path.includes('/scim/v2/') || 
-      req.path.includes('/guardrails/demo');
+      req.path.includes('/guardrails/demo') ||
+      req.path.includes('/mcp/proxy') ||
+      req.path.includes('/api/v1/mcp');
 
     if (isTokenAuth || isBypassRoute) {
       return next();

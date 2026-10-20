@@ -2,16 +2,16 @@ import dns from 'node:dns/promises';
 import net from 'node:net';
 import logger from './logger';
 
-const PRIVATE_IPV4_RANGES: Array<{ start: number; end: number }> = [
-  // 0.0.0.0/8 (Current network: 0.0.0.0 - 0.255.255.255)
+export const PRIVATE_IPV4_RANGES: Array<{ start: number; end: number }> = [
+  // 0.0.0.0/8 (Current network / default route: 0.0.0.0 - 0.255.255.255)
   { start: 0x00000000, end: 0x00ffffff },
   // 10.0.0.0/8 (RFC 1918 private: 10.0.0.0 - 10.255.255.255)
   { start: 0x0a000000, end: 0x0affffff },
-  // 100.64.0.0/10 (Carrier Grade NAT: 100.64.0.0 - 100.127.255.255)
+  // 100.64.0.0/10 (Shared address space / Carrier-Grade NAT: 100.64.0.0 - 100.127.255.255)
   { start: 0x64400000, end: 0x647fffff },
   // 127.0.0.0/8 (Loopback: 127.0.0.0 - 127.255.255.255)
   { start: 0x7f000000, end: 0x7fffffff },
-  // 169.254.0.0/16 (Link-local: 169.254.0.0 - 169.254.255.255)
+  // 169.254.0.0/16 (Link-local & cloud metadata: 169.254.0.0 - 169.254.255.255)
   { start: 0xa9fe0000, end: 0xa9feffff },
   // 172.16.0.0/12 (RFC 1918 private: 172.16.0.0 - 172.31.255.255)
   { start: 0xac100000, end: 0xac1fffff },
@@ -21,39 +21,98 @@ const PRIVATE_IPV4_RANGES: Array<{ start: number; end: number }> = [
   { start: 0xc6120000, end: 0xc613ffff },
   // 224.0.0.0/4 (Multicast: 224.0.0.0 - 239.255.255.255)
   { start: 0xe0000000, end: 0xefffffff },
-  // 240.0.0.0/4 (Reserved: 240.0.0.0 - 255.255.255.255)
+  // 240.0.0.0/4 (Reserved / Future use: 240.0.0.0 - 255.255.255.255)
   { start: 0xf0000000, end: 0xffffffff },
 ];
 
 /**
- * Checks whether an IPv4 address is in a private, loopback, link-local, or restricted range.
+ * Parses IPv4 representation across decimal (2130706433), hex (0x7f000001),
+ * octal (017700000001), dotted forms (0177.0.0.1, 0x7f.0.0.1), and short forms (127.1, 10.1).
+ * Returns canonical uint32 and dotted quad string, or null if not a valid IPv4 representation.
+ */
+export function parseIPv4Representation(input: string): { intVal: number; dotted: string } | null {
+  if (!input || typeof input !== 'string') return null;
+  const trimmed = input.trim();
+
+  // Explicitly ignore IPv6 addresses
+  if (trimmed.includes(':')) return null;
+
+  const parts = trimmed.split('.');
+  if (parts.length > 4 || parts.length === 0) return null;
+
+  const values: number[] = [];
+  for (const part of parts) {
+    if (!part) return null;
+    let val: number;
+    if (/^0x[0-9a-f]+$/i.test(part)) {
+      val = Number.parseInt(part, 16);
+    } else if (/^0[0-7]+$/.test(part)) {
+      val = Number.parseInt(part, 8);
+    } else if (/^[0-9]+$/.test(part)) {
+      val = Number.parseInt(part, 10);
+    } else {
+      return null;
+    }
+    if (Number.isNaN(val) || val < 0) return null;
+    values.push(val);
+  }
+
+  let intVal = 0;
+  if (values.length === 1) {
+    // Single number (decimal, hex, octal) representing a 32-bit address
+    if (values[0] > 0xffffffff) return null;
+    intVal = values[0];
+  } else if (values.length === 2) {
+    // a.b: a is 8-bit net, b is 24-bit host number (e.g. 127.1 -> 127.0.0.1)
+    if (values[0] > 0xff || values[1] > 0xffffff) return null;
+    intVal = ((values[0] << 24) >>> 0) + values[1];
+  } else if (values.length === 3) {
+    // a.b.c: a is 8-bit, b is 8-bit, c is 16-bit host
+    if (values[0] > 0xff || values[1] > 0xff || values[2] > 0xffff) return null;
+    intVal = ((values[0] << 24) >>> 0) + (values[1] << 16) + values[2];
+  } else if (values.length === 4) {
+    // standard 4-part quad: each part must fit in an 8-bit byte
+    if (values.some(v => v > 0xff)) return null;
+    intVal = ((values[0] << 24) >>> 0) + (values[1] << 16) + (values[2] << 8) + values[3];
+  }
+
+  intVal = intVal >>> 0;
+  const dotted = `${(intVal >>> 24) & 255}.${(intVal >>> 16) & 255}.${(intVal >>> 8) & 255}.${intVal & 255}`;
+  return { intVal, dotted };
+}
+
+/**
+ * Checks whether an IPv4 address (in standard or unusual form) is in a private,
+ * loopback, link-local, carrier-grade NAT, or restricted range.
  */
 export function isPrivateIPv4(ip: string): boolean {
-  const parts = ip.split('.').map(p => Number.parseInt(p, 10));
-  if (parts.length !== 4 || parts.some(p => Number.isNaN(p) || p < 0 || p > 255)) {
+  const parsed = parseIPv4Representation(ip);
+  if (!parsed) {
     return true; // Malformed IPv4 is treated as unsafe
   }
 
-  const intVal = ((parts[0] << 24) >>> 0) + (parts[1] << 16) + (parts[2] << 8) + parts[3];
+  const intVal = parsed.intVal;
   return PRIVATE_IPV4_RANGES.some(r => intVal >= r.start && intVal <= r.end);
 }
 
 /**
- * Checks whether an IPv6 address is in a private, loopback, link-local, or restricted range.
+ * Checks whether an IPv6 address is in a private, loopback, link-local, ULA,
+ * multicast, or IPv4-mapped restricted range.
  */
 export function isPrivateIPv6(ip: string): boolean {
-  const normalized = ip.toLowerCase().trim();
+  const normalized = ip.toLowerCase().trim().replace(/^\[|\]$/g, '');
 
   // Loopback (::1) and Unspecified (::)
   if (normalized === '::1' || normalized === '::') return true;
 
-  // IPv4-mapped IPv6 (::ffff:127.0.0.1 or ::ffff:7f00:1)
+  // IPv4-mapped IPv6 (e.g. ::ffff:127.0.0.1, ::ffff:169.254.169.254, ::ffff:7f00:1)
   if (normalized.startsWith('::ffff:')) {
-    const v4Part = normalized.replace('::ffff:', '');
-    if (net.isIPv4(v4Part)) {
-      return isPrivateIPv4(v4Part);
+    const v4Part = normalized.slice(7);
+    const parsedV4 = parseIPv4Representation(v4Part);
+    if (parsedV4) {
+      return isPrivateIPv4(parsedV4.dotted);
     }
-    // If it's hex format like ::ffff:7f00:0001
+    // Hex format like ::ffff:7f00:0001
     const hexParts = v4Part.split(':');
     if (hexParts.length === 2) {
       const p1 = Number.parseInt(hexParts[0], 16);
@@ -75,15 +134,24 @@ export function isPrivateIPv6(ip: string): boolean {
   // Multicast (ff00::/8)
   if (normalized.startsWith('ff')) return true;
 
+  // Discard prefix (100::/64)
+  if (normalized.startsWith('100::')) return true;
+
+  // Documentation prefix (2001:db8::/32)
+  if (normalized.startsWith('2001:db8:') || normalized === '2001:db8::') return true;
+
   return false;
 }
 
 /**
- * Generic IP check across v4 and v6.
+ * Generic IP check across v4, unusual v4 forms, and v6.
  */
 export function isPrivateIp(ip: string): boolean {
-  if (net.isIPv4(ip)) return isPrivateIPv4(ip);
-  if (net.isIPv6(ip)) return isPrivateIPv6(ip);
+  const cleaned = ip.trim().replace(/^\[|\]$/g, '');
+  if (net.isIPv6(cleaned)) return isPrivateIPv6(cleaned);
+  const parsedV4 = parseIPv4Representation(cleaned);
+  if (parsedV4) return isPrivateIPv4(parsedV4.dotted);
+  if (net.isIPv4(cleaned)) return isPrivateIPv4(cleaned);
   return true; // If not recognized as valid IP, treat as unsafe
 }
 
@@ -93,23 +161,37 @@ export interface SSRFValidationOptions {
 
 /**
  * Validates whether a target host (IP or hostname) is safe from SSRF.
- * Resolves DNS to check all underlying IPv4 and IPv6 addresses.
+ * Detects unusual IP representations (decimal, hex, octal, short forms),
+ * resolves DNS to check all underlying IPv4 and IPv6 addresses,
+ * and returns the validated primary resolved IP for connection pinning.
  */
 export async function validateTargetHost(
   host: string,
   options?: SSRFValidationOptions
-): Promise<{ safe: boolean; error?: string; resolvedIps?: string[] }> {
+): Promise<{ safe: boolean; error?: string; resolvedIps?: string[]; primaryIp?: string }> {
   const allowPrivate = options?.allowPrivate ?? (process.env.ALLOW_PRIVATE_NETWORK_TARGETS === 'true');
 
   if (!host || typeof host !== 'string') {
     return { safe: false, error: 'Target host is required and must be a valid string.' };
   }
 
-  const cleanedHost = host.trim().replace(/^\[|\]$/g, ''); // Strip IPv6 bracket notation if present
+  const cleanedHost = host.trim().replace(/^\[|\]$/g, '');
 
-  // 1. If bypass flag is active, permit immediately (useful for local dev/testing)
   if (allowPrivate) {
-    return { safe: true, resolvedIps: [cleanedHost] };
+    return { safe: true, resolvedIps: [cleanedHost], primaryIp: cleanedHost };
+  }
+
+  // 1. Check for unusual IP representation (decimal, hex, octal, short-form e.g. 2130706433, 0x7f000001, 017700000001, 127.1)
+  const parsedV4 = parseIPv4Representation(cleanedHost);
+  if (parsedV4) {
+    if (isPrivateIPv4(parsedV4.dotted)) {
+      return {
+        safe: false,
+        error: `SSRF validation failed: Target IP "${cleanedHost}" (${parsedV4.dotted}) is a private or internal network address. Connection rejected for security.`,
+        resolvedIps: [parsedV4.dotted],
+      };
+    }
+    return { safe: true, resolvedIps: [parsedV4.dotted], primaryIp: parsedV4.dotted };
   }
 
   // 2. Immediate check for obvious localhost/internal hostnames
@@ -129,19 +211,19 @@ export async function validateTargetHost(
     };
   }
 
-  // 3. Direct IP check (if host is already an IP address)
-  if (net.isIP(cleanedHost)) {
-    if (isPrivateIp(cleanedHost)) {
+  // 3. Direct IPv6 check
+  if (net.isIPv6(cleanedHost)) {
+    if (isPrivateIPv6(cleanedHost)) {
       return {
         safe: false,
-        error: `SSRF validation failed: Target IP "${cleanedHost}" is a private or internal network address. Connection rejected for security.`,
+        error: `SSRF validation failed: Target IPv6 "${cleanedHost}" is a private or restricted network address. Connection rejected for security.`,
         resolvedIps: [cleanedHost],
       };
     }
-    return { safe: true, resolvedIps: [cleanedHost] };
+    return { safe: true, resolvedIps: [cleanedHost], primaryIp: cleanedHost };
   }
 
-  // 4. DNS resolution to check all resolved IPv4 and IPv6 addresses
+  // 4. DNS resolution: check all resolved addresses and pin to resolved IP
   try {
     const lookupResults = await dns.lookup(cleanedHost, { all: true });
     if (!lookupResults || lookupResults.length === 0) {
@@ -163,7 +245,7 @@ export async function validateTargetHost(
       }
     }
 
-    return { safe: true, resolvedIps };
+    return { safe: true, resolvedIps, primaryIp: lookupResults[0].address };
   } catch (err: any) {
     return {
       safe: false,
@@ -174,10 +256,63 @@ export async function validateTargetHost(
 
 /**
  * Asserts that a target host is safe, throwing an Error if it fails SSRF validation.
+ * Returns the resolved primary safe IP address so the caller can connect directly
+ * to the resolved IP to prevent DNS rebinding attacks.
  */
-export async function assertSafeTarget(host: string, options?: SSRFValidationOptions): Promise<void> {
+export async function assertSafeTarget(host: string, options?: SSRFValidationOptions): Promise<string> {
   const result = await validateTargetHost(host, options);
-  if (!result.safe) {
+  if (!result.safe || !result.primaryIp) {
     throw new Error(result.error || `SSRF validation failed: Target "${host}" is forbidden.`);
+  }
+  return result.primaryIp;
+}
+
+/**
+ * Hardened HTTP client that blocks SSRF and prevents redirect loops/redirections to internal targets.
+ */
+export async function safeFetch(
+  url: string,
+  options: RequestInit & { maxRedirects?: number } = {}
+): Promise<Response> {
+  const maxRedirects = options.maxRedirects ?? 5;
+  let currentUrl = url;
+  let redirectCount = 0;
+
+  while (true) {
+    const parsed = new URL(currentUrl);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      throw new Error(`SSRF validation failed: Protocol "${parsed.protocol}" is not allowed.`);
+    }
+
+    // SSRF Check: validate destination hostname before opening socket
+    await assertSafeTarget(parsed.hostname);
+
+    const response = await fetch(currentUrl, {
+      ...options,
+      redirect: 'manual',
+    });
+
+    if ([301, 302, 303, 307, 308].includes(response.status)) {
+      const location = response.headers.get('location');
+      if (!location) {
+        return response;
+      }
+
+      redirectCount++;
+      if (redirectCount > maxRedirects) {
+        throw new Error(`SSRF validation failed: Exceeded maximum redirect limit of ${maxRedirects}.`);
+      }
+
+      const nextUrl = new URL(location, currentUrl).toString();
+      const nextParsed = new URL(nextUrl);
+
+      // Validate redirect destination hostname
+      await assertSafeTarget(nextParsed.hostname);
+
+      currentUrl = nextUrl;
+      continue;
+    }
+
+    return response;
   }
 }

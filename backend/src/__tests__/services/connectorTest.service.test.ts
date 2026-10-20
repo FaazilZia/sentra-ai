@@ -165,6 +165,7 @@ describe('Connector Test Connection Service', () => {
 
       const mockQuery = jest.fn()
         .mockResolvedValueOnce({ rows: [{ version: 'PostgreSQL 16.1' }] })
+        .mockResolvedValueOnce({ rows: [{ has_usage: true }] })
         .mockResolvedValueOnce({ rows: [{ table_count: 5 }] });
 
       (PgClient as jest.Mock).mockImplementation(() => ({
@@ -188,6 +189,96 @@ describe('Connector Test Connection Service', () => {
       expect(res.success).toBe(true);
       expect(res.message).toContain('Successfully connected to PostgreSQL');
       expect(res.details?.tableCount).toBe(5);
+    });
+
+    it('returns clear warning and NOT success when user has 0 readable tables in schema', async () => {
+      process.env.ALLOW_PRIVATE_NETWORK_TARGETS = 'true';
+
+      const mockQuery = jest.fn()
+        .mockResolvedValueOnce({ rows: [{ version: 'PostgreSQL 16.1' }] })
+        .mockResolvedValueOnce({ rows: [{ has_usage: true }] })
+        .mockResolvedValueOnce({ rows: [{ table_count: 0 }] });
+
+      (PgClient as jest.Mock).mockImplementation(() => ({
+        connect: jest.fn().mockResolvedValue(undefined),
+        query: mockQuery,
+        end: jest.fn().mockResolvedValue(undefined),
+      }));
+
+      const res = await testConnectorSource(
+        'postgres',
+        { schema: 'public' },
+        {
+          host: '127.0.0.1',
+          port: 5432,
+          user: 'sentra_restricted',
+          password: 'password',
+          database: 'sentra_test',
+        }
+      );
+
+      expect(res.success).toBe(false);
+      expect(res.message).toBe(
+        'Connected, but this user cannot read schema public (or it has no tables). Grant USAGE on the schema and SELECT on its tables.'
+      );
+      expect(res.message).not.toContain('Success');
+      expect(res.message).not.toContain('Successfully');
+    });
+
+    it('returns clear warning when user lacks USAGE permission on schema', async () => {
+      process.env.ALLOW_PRIVATE_NETWORK_TARGETS = 'true';
+
+      const mockQuery = jest.fn()
+        .mockResolvedValueOnce({ rows: [{ version: 'PostgreSQL 16.1' }] })
+        .mockResolvedValueOnce({ rows: [{ has_usage: false }] })
+        .mockResolvedValueOnce({ rows: [{ table_count: 0 }] });
+
+      (PgClient as jest.Mock).mockImplementation(() => ({
+        connect: jest.fn().mockResolvedValue(undefined),
+        query: mockQuery,
+        end: jest.fn().mockResolvedValue(undefined),
+      }));
+
+      const res = await testConnectorSource(
+        'postgres',
+        { schema: 'restricted_schema' },
+        {
+          host: '127.0.0.1',
+          port: 5432,
+          user: 'sentra_restricted',
+          password: 'password',
+          database: 'sentra_test',
+        }
+      );
+
+      expect(res.success).toBe(false);
+      expect(res.message).toBe(
+        'Connected, but this user cannot read schema restricted_schema (or it has no tables). Grant USAGE on the schema and SELECT on its tables.'
+      );
+    });
+
+    it('does not return raw database error in details.raw (Error Text Sanitization)', async () => {
+      process.env.ALLOW_PRIVATE_NETWORK_TARGETS = 'true';
+
+      (PgClient as jest.Mock).mockImplementation(() => ({
+        connect: jest.fn().mockRejectedValue(new Error('FATAL: relation "internal_secrets" does not exist at character 42')),
+        end: jest.fn(),
+      }));
+
+      const res = await testConnectorSource(
+        'postgres',
+        {},
+        {
+          host: '127.0.0.1',
+          user: 'postgres',
+          password: 'password',
+        }
+      );
+
+      expect(res.success).toBe(false);
+      expect(res.details?.raw).toBeUndefined();
+      expect(res.message).not.toContain('internal_secrets');
+      expect(res.message).not.toContain('character 42');
     });
 
     it('formats friendly error on password authentication failure', async () => {

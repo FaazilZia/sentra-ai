@@ -2083,15 +2083,20 @@ function McpTab({
 }: McpTabProps) {
   const [proxyCopied, setProxyCopied] = useState(false);
   const [configCopied, setConfigCopied] = useState(false);
-  const proxyUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://api.sentraa.ai'}/api/v1/mcp/proxy`;
+  const PROD_MCP_PROXY_URL = 'https://sentra-backend-node.onrender.com/api/v1/mcp/proxy';
+  const proxyUrl = (import.meta.env.VITE_MCP_PROXY_URL as string) || PROD_MCP_PROXY_URL;
   const claudeConfigSnippet = JSON.stringify(
     {
       mcpServers: {
         'sentraa-governance': {
-          url: proxyUrl,
-          headers: {
-            Authorization: 'Bearer YOUR_MCP_AGENT_KEY',
-          },
+          command: 'npx',
+          args: [
+            '-y',
+            'mcp-remote',
+            proxyUrl,
+            '--header',
+            'Authorization: Bearer YOUR_MCP_AGENT_KEY',
+          ],
         },
       },
     },

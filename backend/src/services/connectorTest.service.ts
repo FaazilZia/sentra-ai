@@ -17,10 +17,16 @@ export function formatFriendlyConnectorError(err: any): string {
     return rawMsg;
   }
   if (rawMsg.includes('AccessDenied') || rawMsg.includes('Forbidden') || err?.name === 'AccessDenied') {
-    return 'Access Denied: Please verify permissions and credential scopes.';
+    return 'Access Denied: Please verify permissions and credential scopes (e.g. check s3:ListBucket).';
   }
   if (rawMsg.includes('NoSuchBucket')) {
     return 'Specified S3 bucket does not exist or is in a different region.';
+  }
+  if (rawMsg.includes('IllegalLocationConstraintException') || rawMsg.includes('PermanentRedirect') || rawMsg.includes('BucketRegionError') || rawMsg.includes('different region')) {
+    return 'S3 bucket region error: The specified bucket is in a different AWS region.';
+  }
+  if (rawMsg.includes('SignatureDoesNotMatch') || rawMsg.includes('InvalidAccessKeyId') || rawMsg.includes('The security token included in the request is invalid')) {
+    return 'AWS authentication failed: Invalid Access Key ID or Secret Access Key.';
   }
   if (rawMsg.includes('ECONNREFUSED')) {
     return 'Connection refused: Host unreachable. Verify host address and port.';
@@ -34,14 +40,24 @@ export function formatFriendlyConnectorError(err: any): string {
   if (rawMsg.includes('database') && rawMsg.includes('does not exist')) {
     return 'Database not found: Specified database does not exist on the target server.';
   }
+  if (rawMsg.includes('permission denied') || rawMsg.includes('must be member of role') || err?.code === '42501') {
+    return 'Database access denied: Insufficient privileges on the target schema or tables.';
+  }
   if (rawMsg.includes('invalid_grant')) {
     return 'Google Drive authentication failed: Invalid service account private key or client email.';
   }
   if (rawMsg.includes('DECODER routine:unsupported') || rawMsg.includes('PEM routines')) {
     return 'Invalid private key format. Please check the RSA private key or upload the service account JSON.';
   }
+  if (rawMsg.includes('Google Drive API has not been used') || rawMsg.includes('Drive API is not enabled') || rawMsg.includes('accessNotConfigured') || rawMsg.includes('has not been used in project')) {
+    return 'Google Drive API is disabled. Enable the Google Drive API in your Google Cloud Console project.';
+  }
+  if (rawMsg.includes('File not found') || rawMsg.includes('notFound') || rawMsg.includes('folder not shared')) {
+    return 'Target Google Drive folder or file not found or not shared with the service account email.';
+  }
 
-  return `Connection failed: ${rawMsg}`;
+  // Friendly fallback preventing raw internal database/driver error leakage
+  return 'Connection failed. Please verify credentials, host address, and permissions.';
 }
 
 async function testS3Source(
@@ -141,8 +157,8 @@ async function testPostgresSource(
     return { success: false, message: 'Database user is required.' };
   }
 
-  // SSRF check on host before establishing connection
-  await assertSafeTarget(rawHost);
+  // SSRF check on host before establishing connection - pins to resolved IP
+  const safeIp = await assertSafeTarget(rawHost);
 
   // Strict identifier validation to prevent connection option injection
   if (!/^[a-zA-Z0-9_.-]+$/.test(rawHost)) {
@@ -161,12 +177,12 @@ async function testPostgresSource(
   const port = Math.min(65535, Math.max(1, Number.parseInt(String(rawPort), 10) || 5432));
 
   const client = new PgClient({
-    host: rawHost,
+    host: safeIp,
     port,
     user: rawUser,
     password: rawPassword,
     database: rawDatabase,
-    ssl: useSsl ? { rejectUnauthorized: false } : undefined,
+    ssl: useSsl ? { rejectUnauthorized: false, servername: rawHost } : undefined,
     connectionTimeoutMillis: 10000,
   });
 
@@ -175,11 +191,40 @@ async function testPostgresSource(
     const verRes = await client.query('SELECT version()');
     const pgVersion = verRes.rows[0]?.version || 'PostgreSQL';
 
-    const tablesRes = await client.query(
-      `SELECT count(*)::int as table_count FROM information_schema.tables WHERE table_schema = $1`,
-      [rawSchema]
-    );
-    const tableCount = tablesRes.rows[0]?.table_count || 0;
+    let hasUsage = true;
+    try {
+      const usageRes = await client.query(
+        `SELECT has_schema_privilege(current_user, $1, 'USAGE') as has_usage`,
+        [rawSchema]
+      );
+      hasUsage = usageRes.rows[0]?.has_usage === true;
+    } catch {
+      hasUsage = false;
+    }
+
+    let tableCount = 0;
+    try {
+      const tablesRes = await client.query(
+        `SELECT count(*)::int as table_count FROM information_schema.tables WHERE table_schema = $1`,
+        [rawSchema]
+      );
+      tableCount = tablesRes.rows[0]?.table_count || 0;
+    } catch {
+      tableCount = 0;
+    }
+
+    if (!hasUsage || tableCount === 0) {
+      return {
+        success: false,
+        message: `Connected, but this user cannot read schema ${rawSchema} (or it has no tables). Grant USAGE on the schema and SELECT on its tables.`,
+        details: {
+          host: rawHost,
+          database: rawDatabase,
+          schema: rawSchema,
+          tableCount,
+        },
+      };
+    }
 
     return {
       success: true,
@@ -227,7 +272,6 @@ export async function testConnectorSource(
     return {
       success: false,
       message: formatFriendlyConnectorError(err),
-      details: { raw: err?.message },
     };
   }
 }
