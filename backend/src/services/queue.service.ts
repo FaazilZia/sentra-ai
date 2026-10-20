@@ -10,6 +10,7 @@ import prisma from '../config/db';
 import { logActivity } from './policy.service';
 import { decryptCredentials, normalizePrivateKey } from '../utils/credentialHelper';
 import { assertSafeTarget } from '../utils/ssrfProtection';
+import { RESTRICTED_POSTGRES_PORTS } from './connectorTest.service';
 import { SENSITIVE_PATTERNS } from './riskEngine';
 import { buildRedisOptions, getRedisUrl } from '../config/redis';
 import { PostMarketMonitoringService } from './postMarketMonitoring.service';
@@ -295,6 +296,14 @@ async function scanS3Source(connector: any, creds: any): Promise<{ violations: n
   let bytesScanned = 0;
 
   const { accessKeyId, secretAccessKey, region, bucketName } = creds;
+
+  // Defensive SSRF check if a custom endpoint parameter was injected
+  const customEndpoint = (connector.config as any)?.endpoint || creds.endpoint;
+  if (customEndpoint) {
+    const parsedUrl = new URL(String(customEndpoint));
+    await assertSafeTarget(parsedUrl.hostname);
+  }
+
   const s3 = new S3Client({
     region: region || 'us-east-1',
     credentials: { accessKeyId, secretAccessKey }
@@ -338,6 +347,14 @@ async function scanGDriveSource(connector: any, creds: any): Promise<{ violation
   let bytesScanned = 0;
 
   const { client_email, private_key, driveScope } = creds;
+
+  // Defensive SSRF check if a custom endpoint parameter was injected
+  const customEndpoint = (connector.config as any)?.endpoint || creds.endpoint;
+  if (customEndpoint) {
+    const parsedUrl = new URL(String(customEndpoint));
+    await assertSafeTarget(parsedUrl.hostname);
+  }
+
   const normalizedKey = normalizePrivateKey((private_key as string) || '');
   const auth = new (google.auth.JWT as any)(
     client_email,
@@ -429,10 +446,16 @@ async function scanSqlSource(connector: any, creds: any): Promise<{ violations: 
   const rawSchema = (connector.config as any)?.schema || creds.schema || 'public';
   const schema = /^\w+$/.test(rawSchema) ? rawSchema : 'public';
   const useSsl = (connector.config as any)?.ssl !== false && creds.ssl !== false;
+  const allowSelfSigned = Boolean((connector.config as any)?.allowSelfSigned || creds.allowSelfSigned);
 
   const HOST_PATTERN = /^[a-zA-Z0-9_.-]+$/;
   if (!host || !HOST_PATTERN.test(host)) {
     throw new Error('Invalid database host format.');
+  }
+
+  const parsedPort = Number.parseInt(String(port || 5432), 10);
+  if (Number.isNaN(parsedPort) || parsedPort < 1024 || parsedPort > 65535 || RESTRICTED_POSTGRES_PORTS.has(parsedPort)) {
+    throw new Error(`Invalid port: Port ${port} is not permitted for PostgreSQL connections.`);
   }
 
   // SSRF Protection: verify host is not private/internal before connecting and pin to resolved IP
@@ -443,11 +466,11 @@ async function scanSqlSource(connector: any, creds: any): Promise<{ violations: 
 
   const client = new PgClient({
     host: safeIp,
-    port: port || 5432,
+    port: parsedPort,
     user,
     password,
     database,
-    ssl: useSsl ? { rejectUnauthorized: false, servername: host } : undefined,
+    ssl: useSsl ? { rejectUnauthorized: !allowSelfSigned, servername: host } : undefined,
     connectionTimeoutMillis: 10000,
   });
   

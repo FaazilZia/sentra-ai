@@ -54,6 +54,7 @@ export function InboundConnectorsCard() {
   const [pgPassword, setPgPassword] = useState('');
   const [pgSchema, setPgSchema] = useState('public');
   const [pgSsl, setPgSsl] = useState(true);
+  const [pgAllowSelfSigned, setPgAllowSelfSigned] = useState(false);
 
   // S3 fields
   const [s3Bucket, setS3Bucket] = useState('');
@@ -114,6 +115,7 @@ export function InboundConnectorsCard() {
         config: {
           schema: pgSchema || 'public',
           ssl: pgSsl,
+          allowSelfSigned: pgAllowSelfSigned,
         },
         credentials: {
           host: pgHost,
@@ -121,6 +123,7 @@ export function InboundConnectorsCard() {
           database: pgDatabase,
           user: pgUser,
           password: pgPassword,
+          allowSelfSigned: pgAllowSelfSigned,
         },
       };
     }
@@ -206,6 +209,7 @@ export function InboundConnectorsCard() {
       setShowAddForm(false);
       setName('');
       setTestResult(null);
+      setPgAllowSelfSigned(false);
       await loadConnectors();
     } catch (err: any) {
       addToast({ message: err.message || 'Failed to save connector', type: 'error' });
@@ -577,17 +581,34 @@ export function InboundConnectorsCard() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 pt-1">
-                <input
-                  id="pg-ssl"
-                  type="checkbox"
-                  checked={pgSsl}
-                  onChange={(e) => setPgSsl(e.target.checked)}
-                  className="h-3.5 w-3.5 accent-[var(--royal-indigo)] rounded cursor-pointer"
-                />
-                <label htmlFor="pg-ssl" className="text-[10px] font-semibold text-[var(--text-secondary)] cursor-pointer">
-                  Require SSL Connection (Recommended)
-                </label>
+              <div className="space-y-2 pt-1">
+                <div className="flex items-center gap-2">
+                  <input
+                    id="pg-ssl"
+                    type="checkbox"
+                    checked={pgSsl}
+                    onChange={(e) => setPgSsl(e.target.checked)}
+                    className="h-3.5 w-3.5 accent-[var(--royal-indigo)] rounded cursor-pointer"
+                  />
+                  <label htmlFor="pg-ssl" className="text-[10px] font-semibold text-[var(--text-secondary)] cursor-pointer">
+                    Require SSL Connection (Recommended)
+                  </label>
+                </div>
+
+                {pgSsl && (
+                  <div className="flex items-center gap-2 pl-5">
+                    <input
+                      id="pg-allow-self-signed"
+                      type="checkbox"
+                      checked={pgAllowSelfSigned}
+                      onChange={(e) => setPgAllowSelfSigned(e.target.checked)}
+                      className="h-3.5 w-3.5 accent-[var(--royal-indigo)] rounded cursor-pointer"
+                    />
+                    <label htmlFor="pg-allow-self-signed" className="text-[10px] font-semibold text-amber-400/90 cursor-pointer">
+                      Allow self-signed certificate (not recommended)
+                    </label>
+                  </div>
+                )}
               </div>
             </div>
           )}

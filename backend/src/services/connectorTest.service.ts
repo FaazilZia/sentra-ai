@@ -10,6 +10,34 @@ export interface TestConnectionResult {
   details?: Record<string, any>;
 }
 
+export const RESTRICTED_POSTGRES_PORTS = new Set([
+  21,   // FTP
+  22,   // SSH
+  23,   // Telnet
+  25,   // SMTP
+  53,   // DNS
+  80,   // HTTP
+  110,  // POP3
+  143,  // IMAP
+  389,  // LDAP
+  443,  // HTTPS
+  445,  // SMB
+  636,  // LDAPS
+  2375, // Docker plain
+  2376, // Docker TLS
+  2379, // etcd
+  2380, // etcd peer
+  3306, // MySQL
+  5000, // Docker Registry / Flask
+  6379, // Redis
+  8080, // HTTP Alt
+  8443, // HTTPS Alt
+  9200, // Elasticsearch
+  9300, // Elasticsearch transport
+  11211,// Memcached
+  27017,// MongoDB
+]);
+
 export function formatFriendlyConnectorError(err: any): string {
   const rawMsg = err?.message || String(err);
 
@@ -33,6 +61,27 @@ export function formatFriendlyConnectorError(err: any): string {
   }
   if (rawMsg.includes('ETIMEDOUT') || rawMsg.includes('ENOTFOUND')) {
     return 'Connection timed out or DNS lookup failed. Verify hostname and network connectivity.';
+  }
+  if (rawMsg.includes('ERR_TLS_CERT_ALTNAME_INVALID') || rawMsg.includes("is not in the cert's altnames") || rawMsg.includes('does not match certificate')) {
+    return 'SSL/TLS certificate hostname mismatch: The server certificate does not match the requested hostname.';
+  }
+  if (
+    rawMsg.includes('DEPTH_ZERO_SELF_SIGNED_CERT') ||
+    rawMsg.includes('SELF_SIGNED_CERT_IN_CHAIN') ||
+    rawMsg.includes('UNABLE_TO_VERIFY_LEAF_SIGNATURE') ||
+    rawMsg.includes('unable to verify the first certificate') ||
+    err?.code === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE' ||
+    err?.code === 'DEPTH_ZERO_SELF_SIGNED_CERT' ||
+    rawMsg.includes('self-signed') ||
+    rawMsg.includes('self signed')
+  ) {
+    return 'SSL/TLS certificate verification failed: Self-signed certificate in chain. Enable "Allow self-signed certificate (not recommended)" if connecting to a server with a private certificate.';
+  }
+  if (rawMsg.includes('CERT_HAS_EXPIRED') || rawMsg.includes('certificate has expired')) {
+    return 'SSL/TLS certificate error: The server certificate has expired.';
+  }
+  if (rawMsg.includes('server does not support SSL')) {
+    return 'The target database does not support SSL connections. Disable the Require SSL option to connect without SSL.';
   }
   if (rawMsg.includes('password authentication failed') || err?.code === '28P01') {
     return 'Database authentication failed: Invalid username or password.';
@@ -69,6 +118,13 @@ async function testS3Source(
   const accessKeyId = credentials.accessKeyId || config.accessKeyId;
   const secretAccessKey = credentials.secretAccessKey || config.secretAccessKey;
 
+  // Defensive SSRF check if a custom endpoint parameter was injected
+  const customEndpoint = config.endpoint || credentials.endpoint;
+  if (customEndpoint) {
+    const parsedUrl = new URL(String(customEndpoint));
+    await assertSafeTarget(parsedUrl.hostname);
+  }
+
   if (!bucketName) {
     return { success: false, message: 'Bucket name is required for S3 connection test.' };
   }
@@ -98,6 +154,13 @@ async function testGDriveSource(
   let client_email = credentials.client_email || credentials.clientEmail || config.client_email;
   let private_key = credentials.private_key || credentials.privateKey || config.private_key;
   const driveScope = credentials.driveScope || config.driveScope || 'https://www.googleapis.com/auth/drive.readonly';
+
+  // Defensive SSRF check if a custom endpoint parameter was injected
+  const customEndpoint = config.endpoint || credentials.endpoint;
+  if (customEndpoint) {
+    const parsedUrl = new URL(String(customEndpoint));
+    await assertSafeTarget(parsedUrl.hostname);
+  }
 
   if (!client_email || !private_key) {
     const parsed = parseServiceAccountInput(credentials) || parseServiceAccountInput(config);
@@ -149,6 +212,7 @@ async function testPostgresSource(
   const rawDatabase = String(credentials.database || config.database || 'postgres').trim();
   const rawSchema = String(config.schema || credentials.schema || 'public').trim();
   const useSsl = config.ssl !== false && credentials.ssl !== false;
+  const allowSelfSigned = Boolean(config.allowSelfSigned || credentials.allowSelfSigned);
 
   const HOST_REGEX = /^[a-zA-Z0-9_.-]+$/;
   const USER_REGEX = /^[a-zA-Z0-9_.-]+$/;
@@ -168,13 +232,20 @@ async function testPostgresSource(
     return { success: false, message: 'Invalid schema name. Only alphanumeric characters and underscores are allowed.' };
   }
 
+  const parsedPort = Number.parseInt(String(rawPort), 10);
+  if (Number.isNaN(parsedPort) || parsedPort < 1024 || parsedPort > 65535 || RESTRICTED_POSTGRES_PORTS.has(parsedPort)) {
+    return {
+      success: false,
+      message: `Invalid port: Port ${rawPort} is not permitted for PostgreSQL connections. Privileged system ports (1-1023) and restricted service ports are blocked.`,
+    };
+  }
+  const port = parsedPort;
+
   // SSRF check on host before establishing connection - pins to resolved IP
   const safeIp = await assertSafeTarget(rawHost);
   if (!/^[a-zA-Z0-9_.:]+$/.test(safeIp)) {
     return { success: false, message: 'Invalid resolved target IP address.' };
   }
-
-  const port = Math.min(65535, Math.max(1, Number.parseInt(String(rawPort), 10) || 5432));
 
   const client = new PgClient({
     host: safeIp,
@@ -182,7 +253,7 @@ async function testPostgresSource(
     user: rawUser,
     password: rawPassword,
     database: rawDatabase,
-    ssl: useSsl ? { rejectUnauthorized: false, servername: rawHost } : undefined,
+    ssl: useSsl ? { rejectUnauthorized: !allowSelfSigned, servername: rawHost } : undefined,
     connectionTimeoutMillis: 10000,
   });
 

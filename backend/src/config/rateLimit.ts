@@ -480,3 +480,16 @@ export const verifyLimiter = createSafeRateLimiter('rl:verify:', {
   keyGenerator: (req: any) => req.ip || '127.0.0.1',
 });
 
+export const connectorTestRateLimiter = createSafeRateLimiter('rl:conn:test:', {
+  windowMs: 60 * 1000,
+  max: (req: any) => (process.env.NODE_ENV === 'test' || process.env.IS_E2E_TEST === 'true') ? 1000 : 15,
+  message: { success: false, message: 'Rate limit exceeded: Too many connection test requests for this organization. Please wait before testing again.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  passOnStoreError: true,
+  keyGenerator: (req: any) => {
+    return req.user?.organizationId || req.ip || 'global';
+  },
+});
+
+

@@ -229,7 +229,14 @@ export class McpController {
       });
     } catch (err: any) {
       logger.warn('[MCP-RPC] tools/list authentication failed:', err.message);
-      return McpController.sendJsonRpcError(res, -32000, 'Unauthorized', id);
+      return res.status(401).json({
+        jsonrpc: '2.0',
+        error: {
+          code: -32000,
+          message: 'Unauthorized: Missing or invalid agent key',
+        },
+        id,
+      });
     }
   }
 
@@ -248,7 +255,14 @@ export class McpController {
         agent = await McpController.getAuthenticatedAgent(req);
       } catch (authErr: any) {
         logger.warn('[MCP-RPC] tools/call authentication failed:', authErr.message);
-        return McpController.sendJsonRpcError(res, -32000, 'Unauthorized', id);
+        return res.status(401).json({
+          jsonrpc: '2.0',
+          error: {
+            code: -32000,
+            message: 'Unauthorized: Missing or invalid agent key',
+          },
+          id,
+        });
       }
 
       const params = req.body.params;

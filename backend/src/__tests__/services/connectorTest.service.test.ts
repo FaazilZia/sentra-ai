@@ -302,5 +302,167 @@ describe('Connector Test Connection Service', () => {
       expect(res.success).toBe(false);
       expect(res.message).toContain('Database authentication failed');
     });
+
+    it('enforces TLS verification by default with rejectUnauthorized: true and servername', async () => {
+      process.env.ALLOW_PRIVATE_NETWORK_TARGETS = 'true';
+
+      (PgClient as jest.Mock).mockImplementation((opts) => {
+        expect(opts.ssl).toEqual({
+          rejectUnauthorized: true,
+          servername: 'db.example.com',
+        });
+        return {
+          connect: jest.fn().mockResolvedValue(undefined),
+          query: jest.fn()
+            .mockResolvedValueOnce({ rows: [{ version: 'PostgreSQL 16' }] })
+            .mockResolvedValueOnce({ rows: [{ has_usage: true }] })
+            .mockResolvedValueOnce({ rows: [{ table_count: 5 }] }),
+          end: jest.fn().mockResolvedValue(undefined),
+        };
+      });
+
+      const res = await testConnectorSource(
+        'postgres',
+        { schema: 'public' },
+        {
+          host: 'db.example.com',
+          port: 5432,
+          user: 'postgres',
+          password: 'secret_password',
+          database: 'prod_db',
+        }
+      );
+
+      expect(res.success).toBe(true);
+    });
+
+    it('sets rejectUnauthorized: false when allowSelfSigned is explicitly true', async () => {
+      process.env.ALLOW_PRIVATE_NETWORK_TARGETS = 'true';
+
+      (PgClient as jest.Mock).mockImplementation((opts) => {
+        expect(opts.ssl).toEqual({
+          rejectUnauthorized: false,
+          servername: 'db.example.com',
+        });
+        return {
+          connect: jest.fn().mockResolvedValue(undefined),
+          query: jest.fn()
+            .mockResolvedValueOnce({ rows: [{ version: 'PostgreSQL 16' }] })
+            .mockResolvedValueOnce({ rows: [{ has_usage: true }] })
+            .mockResolvedValueOnce({ rows: [{ table_count: 5 }] }),
+          end: jest.fn().mockResolvedValue(undefined),
+        };
+      });
+
+      const res = await testConnectorSource(
+        'postgres',
+        { schema: 'public', allowSelfSigned: true },
+        {
+          host: 'db.example.com',
+          port: 5432,
+          user: 'postgres',
+          password: 'secret_password',
+          database: 'prod_db',
+        }
+      );
+
+      expect(res.success).toBe(true);
+    });
+
+    it('returns friendly error when self-signed certificate is encountered and allowSelfSigned is false', async () => {
+      process.env.ALLOW_PRIVATE_NETWORK_TARGETS = 'true';
+
+      (PgClient as jest.Mock).mockImplementation(() => ({
+        connect: jest.fn().mockRejectedValue(new Error('DEPTH_ZERO_SELF_SIGNED_CERT: self-signed certificate in chain')),
+        end: jest.fn(),
+      }));
+
+      const res = await testConnectorSource(
+        'postgres',
+        {},
+        {
+          host: 'db.example.com',
+          user: 'postgres',
+          password: 'password',
+        }
+      );
+
+      expect(res.success).toBe(false);
+      expect(res.message).toContain('Self-signed certificate in chain');
+      expect(res.message).toContain('Allow self-signed certificate (not recommended)');
+    });
+
+    it('returns friendly error when certificate hostname does not match requested host', async () => {
+      process.env.ALLOW_PRIVATE_NETWORK_TARGETS = 'true';
+
+      (PgClient as jest.Mock).mockImplementation(() => ({
+        connect: jest.fn().mockRejectedValue(new Error("ERR_TLS_CERT_ALTNAME_INVALID: Host: db.example.com is not in the cert's altnames")),
+        end: jest.fn(),
+      }));
+
+      const res = await testConnectorSource(
+        'postgres',
+        {},
+        {
+          host: 'db.example.com',
+          user: 'postgres',
+          password: 'password',
+        }
+      );
+
+      expect(res.success).toBe(false);
+      expect(res.message).toContain('SSL/TLS certificate hostname mismatch');
+    });
+
+    it('rejects privileged system ports (1-1023) and restricted service ports to prevent SSRF port scanning', async () => {
+      process.env.ALLOW_PRIVATE_NETWORK_TARGETS = 'true';
+
+      // Test privileged SSH port 22
+      const resSsh = await testConnectorSource(
+        'postgres',
+        {},
+        {
+          host: 'db.example.com',
+          port: 22,
+          user: 'postgres',
+          password: 'password',
+        }
+      );
+      expect(resSsh.success).toBe(false);
+      expect(resSsh.message).toContain('Privileged system ports (1-1023) and restricted service ports are blocked');
+
+      // Test Redis port 6379
+      const resRedis = await testConnectorSource(
+        'postgres',
+        {},
+        {
+          host: 'db.example.com',
+          port: 6379,
+          user: 'postgres',
+          password: 'password',
+        }
+      );
+      expect(resRedis.success).toBe(false);
+      expect(resRedis.message).toContain('Privileged system ports (1-1023) and restricted service ports are blocked');
+    });
+
+    it('rejects custom S3 endpoint targeting private network when private targets are disallowed', async () => {
+      process.env.ALLOW_PRIVATE_NETWORK_TARGETS = 'false';
+
+      const res = await testConnectorSource(
+        's3',
+        {
+          bucketName: 'test-bucket',
+          endpoint: 'http://169.254.169.254/s3',
+        },
+        {
+          accessKeyId: 'AKIAEXAMPLE',
+          secretAccessKey: 'secret',
+        }
+      );
+
+      expect(res.success).toBe(false);
+      expect(res.message).toContain('SSRF validation failed');
+    });
   });
 });
