@@ -310,6 +310,15 @@ async function testPostgresSource(
     return { success: false, message: 'Invalid schema name. Only alphanumeric characters and underscores are allowed.' };
   }
 
+  if (config && typeof config === 'object') {
+    delete config.allowCustomPortApprovedBy;
+    delete config.allowCustomPortApprovedAt;
+  }
+  if (credentials && typeof credentials === 'object') {
+    delete credentials.allowCustomPortApprovedBy;
+    delete credentials.allowCustomPortApprovedAt;
+  }
+
   const allowCustomPort = Boolean(
     process.env.ALLOW_CUSTOM_DB_PORTS === 'true' ||
     (isAdmin && (config.allowCustomPort || credentials.allowCustomPort))

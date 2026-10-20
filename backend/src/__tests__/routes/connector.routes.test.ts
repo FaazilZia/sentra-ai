@@ -196,6 +196,31 @@ describe('Connector API Routes', () => {
       expect(testConnectorSource).not.toHaveBeenCalled();
     });
 
+    it('blocks non-admin user sending fake approver ID with 403 Forbidden', async () => {
+      const res = await request(app)
+        .post('/api/v1/connectors/test')
+        .set('Authorization', `Bearer ${memberToken}`)
+        .send({
+          type: 'postgres',
+          config: {
+            allowCustomPort: true,
+            allowCustomPortApprovedBy: 'fake-admin-uuid-999',
+          },
+          credentials: {
+            host: 'db.example.com',
+            port: 5000,
+            user: 'sentra_readonly',
+            password: 'secret_password',
+            database: 'prod_db',
+          },
+        });
+
+      expect(res.status).toBe(403);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Only administrators can configure or test custom database ports');
+      expect(testConnectorSource).not.toHaveBeenCalled();
+    });
+
     it('allows admin user sending allowCustomPort: true to test custom database port', async () => {
       (testConnectorSource as jest.Mock).mockResolvedValueOnce({
         success: true,
@@ -283,6 +308,66 @@ describe('Connector API Routes', () => {
           name: 'Custom Port Postgres Admin',
           type: 'postgres',
           config: { allowCustomPort: true },
+          credentials: {
+            host: 'db.example.com',
+            port: 5000,
+            user: 'user',
+            password: 'pw',
+          },
+        });
+
+      expect(res.status).toBe(201);
+      expect(prisma.connectors.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
+          config: expect.objectContaining({
+            allowCustomPort: true,
+            allowCustomPortApprovedBy: userId,
+          }),
+        }),
+      }));
+    });
+
+    it('blocks non-admin user sending fake approver ID when creating connector with 403 Forbidden', async () => {
+      const res = await request(app)
+        .post('/api/v1/connectors')
+        .set('Authorization', `Bearer ${memberToken}`)
+        .send({
+          name: 'Spoofed Approver Postgres',
+          type: 'postgres',
+          config: {
+            allowCustomPort: true,
+            allowCustomPortApprovedBy: 'fake-admin-uuid-999',
+          },
+          credentials: {
+            host: 'db.example.com',
+            port: 5000,
+            user: 'user',
+            password: 'pw',
+          },
+        });
+
+      expect(res.status).toBe(403);
+      expect(res.body.message).toContain('Only administrators can configure custom database ports');
+      expect(prisma.connectors.create).not.toHaveBeenCalled();
+    });
+
+    it('strips client-supplied fake approver ID even when admin creates connector and uses authentic admin ID', async () => {
+      (prisma.connectors.create as jest.Mock).mockImplementation(({ data }) => ({
+        ...data,
+        created_at: new Date(),
+        updated_at: new Date(),
+      }));
+
+      const res = await request(app)
+        .post('/api/v1/connectors')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          name: 'Custom Port Postgres Admin Fake Approver Attempt',
+          type: 'postgres',
+          config: {
+            allowCustomPort: true,
+            allowCustomPortApprovedBy: 'spoofed-admin-id-999',
+          },
           credentials: {
             host: 'db.example.com',
             port: 5000,

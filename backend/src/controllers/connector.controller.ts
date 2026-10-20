@@ -111,10 +111,24 @@ export const testConnector = asyncHandler(async (req: any, res: Response) => {
     credentials?: any;
   };
 
+  // Strip server-managed approval stamps from client input
+  if (config && typeof config === 'object') {
+    delete config.allowCustomPortApprovedBy;
+    delete config.allowCustomPortApprovedAt;
+  }
+  if (credentials && typeof credentials === 'object') {
+    delete credentials.allowCustomPortApprovedBy;
+    delete credentials.allowCustomPortApprovedAt;
+  }
+
   const isAdmin = Boolean(req.user?.role === 'ADMIN' || req.user?.role === 'SUPER_ADMIN');
   const hasCustomPortFlag = Boolean(
     config?.allowCustomPort ||
-    (credentials && typeof credentials === 'object' && credentials.allowCustomPort)
+    (credentials && typeof credentials === 'object' && credentials.allowCustomPort) ||
+    (config as any)?.allowCustomPortApprovedBy ||
+    (credentials as any)?.allowCustomPortApprovedBy ||
+    req.body.allowCustomPort ||
+    req.body.allowCustomPortApprovedBy
   );
 
   if (hasCustomPortFlag && !isAdmin) {
@@ -157,6 +171,8 @@ function buildCleanConnectorConfig(
   delete cleanConfig.password;
   delete cleanConfig.private_key;
   delete cleanConfig.privateKey;
+  delete cleanConfig.allowCustomPortApprovedBy;
+  delete cleanConfig.allowCustomPortApprovedAt;
 
   if (isAdmin && hasCustomPortFlag) {
     cleanConfig.allowCustomPort = true;
@@ -164,8 +180,6 @@ function buildCleanConnectorConfig(
     cleanConfig.allowCustomPortApprovedAt = new Date().toISOString();
   } else {
     delete cleanConfig.allowCustomPort;
-    delete cleanConfig.allowCustomPortApprovedBy;
-    delete cleanConfig.allowCustomPortApprovedAt;
   }
   return cleanConfig;
 }
@@ -186,10 +200,24 @@ export const createConnector = asyncHandler(async (req: any, res: Response) => {
 
   let rawCreds: any = credentials || (config && (config as any).credentials);
 
+  // Strip server-managed approval stamps from client input
+  if (config && typeof config === 'object') {
+    delete (config as any).allowCustomPortApprovedBy;
+    delete (config as any).allowCustomPortApprovedAt;
+  }
+  if (rawCreds && typeof rawCreds === 'object') {
+    delete rawCreds.allowCustomPortApprovedBy;
+    delete rawCreds.allowCustomPortApprovedAt;
+  }
+
   const isAdmin = Boolean(req.user?.role === 'ADMIN' || req.user?.role === 'SUPER_ADMIN');
   const hasCustomPortFlag = Boolean(
     config?.allowCustomPort ||
-    (rawCreds && typeof rawCreds === 'object' && rawCreds.allowCustomPort)
+    (rawCreds && typeof rawCreds === 'object' && rawCreds.allowCustomPort) ||
+    (config as any)?.allowCustomPortApprovedBy ||
+    (rawCreds as any)?.allowCustomPortApprovedBy ||
+    req.body.allowCustomPort ||
+    req.body.allowCustomPortApprovedBy
   );
 
   if (hasCustomPortFlag && !isAdmin) {
