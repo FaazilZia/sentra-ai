@@ -224,6 +224,22 @@ async function checkQueueReadiness(redisOk: boolean): Promise<DependencyCheckRes
   }
 }
 
+function buildReadinessErrors(db: DependencyCheckResult, redis: DependencyCheckResult, queue: DependencyCheckResult) {
+  const errors: Record<string, string> = {};
+  if (db.error) errors.db = db.error;
+  if (redis.error) errors.redis = redis.error;
+  if (queue.error) errors.queue = queue.error;
+  return errors;
+}
+
+function buildReadinessAlertDetails(db: DependencyCheckResult, redis: DependencyCheckResult, queue: DependencyCheckResult) {
+  return {
+    db: db.ok ? 'ok' : (db.error || 'failed'),
+    redis: redis.ok ? 'ok' : (redis.error || 'failed'),
+    queue: queue.ok ? 'ok' : (queue.error || 'failed'),
+  };
+}
+
 // ─── Readiness Probe: /ready (Checks DB, Redis, and BullMQ Queue) ────────
 const runReadinessCheck = async (req: any, res: any) => {
   const start = performance.now();
@@ -238,11 +254,10 @@ const runReadinessCheck = async (req: any, res: any) => {
 
   if (!allOk) {
     // Non-blocking alert trigger when readiness fails
-    systemAlertService.triggerReadyFailingAlert({
-      db: db.ok ? 'ok' : (db.error || 'failed'),
-      redis: redis.ok ? 'ok' : (redis.error || 'failed'),
-      queue: queue.ok ? 'ok' : (queue.error || 'failed'),
-    }, 'One or more readiness dependencies are down').catch(err => {
+    systemAlertService.triggerReadyFailingAlert(
+      buildReadinessAlertDetails(db, redis, queue),
+      'One or more readiness dependencies are down'
+    ).catch(err => {
       logger.warn('Failed to dispatch ready failing alert:', err);
     });
   }
@@ -260,13 +275,7 @@ const runReadinessCheck = async (req: any, res: any) => {
     durationMs: Number(duration),
     version: '2.0.0',
     timestamp: new Date().toISOString(),
-    ...(allOk ? {} : {
-      errors: {
-        ...(db.error ? { db: db.error } : {}),
-        ...(redis.error ? { redis: redis.error } : {}),
-        ...(queue.error ? { queue: queue.error } : {}),
-      }
-    })
+    ...(allOk ? {} : { errors: buildReadinessErrors(db, redis, queue) })
   });
 };
 

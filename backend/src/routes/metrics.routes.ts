@@ -45,55 +45,30 @@ const QUEUES_LIST = [
   { name: 'governance-seeding', queue: governanceQueue },
 ];
 
-/**
- * Collect dynamic metrics before serving scrape request
- */
-async function collectMetricsSnapshot() {
-  let totalQueueDepth = 0;
-  let totalDlqCount = 0;
-  const queueStats: Record<string, { depth: number; dlq: number }> = {};
+interface QueueMetricsResult {
+  name: string;
+  depth: number;
+  dlq: number;
+}
 
-  const redis = getRedisClient();
-  const isRedisReady = redis && redis.status === 'ready';
-
-  if (isRedisReady) {
-    for (const item of QUEUES_LIST) {
-      if (item.queue) {
-        try {
-          const counts = await withTimeout(
-            item.queue.getJobCounts('waiting', 'active', 'delayed', 'failed'),
-            1000,
-            `Queue ${item.name} timed out`
-          );
-          const depth = (counts.waiting || 0) + (counts.active || 0) + (counts.delayed || 0);
-          const dlq = counts.failed || 0;
-
-          queueDepthGauge.set({ queue: item.name }, depth);
-          dlqCountGauge.set({ queue: item.name }, dlq);
-
-          queueStats[item.name] = { depth, dlq };
-          totalQueueDepth += depth;
-          totalDlqCount += dlq;
-
-          // If DLQ is growing beyond threshold, trigger alert
-          if (dlq > 0) {
-            systemAlertService.triggerDLQGrowingAlert(item.name, dlq).catch((err) => {
-              logger.warn(`Failed to trigger DLQ alert for ${item.name}:`, err);
-            });
-          }
-        } catch (err: any) {
-          logger.debug(`Failed to collect queue stats for ${item.name}: ${err.message}`);
-        }
-      }
-    }
+async function fetchQueueMetrics(item: { name: string; queue: any }): Promise<QueueMetricsResult> {
+  if (!item.queue) return { name: item.name, depth: 0, dlq: 0 };
+  try {
+    const counts = await withTimeout<Record<string, number>>(
+      item.queue.getJobCounts('waiting', 'active', 'delayed', 'failed'),
+      1000,
+      `Queue ${item.name} timed out`
+    );
+    const depth = (counts.waiting || 0) + (counts.active || 0) + (counts.delayed || 0);
+    const dlq = counts.failed || 0;
+    return { name: item.name, depth, dlq };
+  } catch (err: any) {
+    logger.debug(`Failed to collect queue stats for ${item.name}: ${err.message}`);
+    return { name: item.name, depth: 0, dlq: 0 };
   }
+}
 
-  queueDepthTotalGauge.set(totalQueueDepth);
-  dlqCountTotalGauge.set(totalDlqCount);
-
-  // Collect Blocked and Flagged Action counts
-  let blockedCount = 0;
-  let flaggedCount = 0;
+async function collectDatabaseMetrics(): Promise<{ blocked: number; flagged: number }> {
   try {
     const [blocked, flagged] = await withTimeout(
       Promise.all([
@@ -103,13 +78,50 @@ async function collectMetricsSnapshot() {
       2000,
       'Database count query timed out'
     );
-    blockedCount = blocked;
-    flaggedCount = flagged;
-    blockedActionsGauge.set(blocked);
-    flaggedActionsGauge.set(flagged);
+    return { blocked, flagged };
   } catch (err: any) {
     logger.debug(`Failed to query activity log status counts: ${err.message}`);
+    return { blocked: 0, flagged: 0 };
   }
+}
+
+/**
+ * Collect dynamic metrics before serving scrape request
+ */
+async function collectMetricsSnapshot() {
+  let totalQueueDepth = 0;
+  let totalDlqCount = 0;
+  const queueStats: Record<string, { depth: number; dlq: number }> = {};
+
+  const redis = getRedisClient();
+  const isRedisReady = redis?.status === 'ready';
+
+  if (isRedisReady) {
+    const results = await Promise.all(QUEUES_LIST.map(fetchQueueMetrics));
+    for (const res of results) {
+      queueDepthGauge.set({ queue: res.name }, res.depth);
+      dlqCountGauge.set({ queue: res.name }, res.dlq);
+
+      queueStats[res.name] = { depth: res.depth, dlq: res.dlq };
+      totalQueueDepth += res.depth;
+      totalDlqCount += res.dlq;
+
+      // If DLQ is growing beyond threshold, trigger alert
+      if (res.dlq > 0) {
+        systemAlertService.triggerDLQGrowingAlert(res.name, res.dlq).catch((err) => {
+          logger.warn(`Failed to trigger DLQ alert for ${res.name}:`, err);
+        });
+      }
+    }
+  }
+
+  queueDepthTotalGauge.set(totalQueueDepth);
+  dlqCountTotalGauge.set(totalDlqCount);
+
+  // Collect Blocked and Flagged Action counts
+  const { blocked: blockedCount, flagged: flaggedCount } = await collectDatabaseMetrics();
+  blockedActionsGauge.set(blockedCount);
+  flaggedActionsGauge.set(flaggedCount);
 
   // Update current error rate
   const errorRate = getCurrentErrorRate();

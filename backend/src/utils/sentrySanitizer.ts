@@ -2,12 +2,12 @@ import type { Event as SentryEvent, Breadcrumb } from '@sentry/node';
 import logger from './logger';
 
 // Secret and PII patterns for regex redaction
-const EMAIL_REGEX = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g;
-const JWT_REGEX = /\beyJ[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*\b/g;
+const EMAIL_REGEX = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}\b/g;
+const JWT_REGEX = /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}(?:\.[A-Za-z0-9_.+/=-]{10,})?\b/g;
 const DB_CONN_REGEX = /postgres(?:ql)?:\/\/[^\s@]+@[^\s/]+/gi;
 const REDIS_CONN_REGEX = /rediss?:\/\/[^\s@]+@[^\s/]+/gi;
-const API_KEY_REGEX = /\b(?:sk|ghp|gho|pat|xoxb|xoxp|sentra_live|sentra_test)-[A-Za-z0-9_-]{16,}\b/gi;
-const BEARER_REGEX = /Bearer\s+[A-Za-z0-9._-]+/gi;
+const API_KEY_REGEX = /\b(?:sk|ghp|gho|pat|xoxb|xoxp|sentra_live|sentra_test)-[a-z0-9_-]{16,}\b/gi;
+const BEARER_REGEX = /Bearer\s+[a-z0-9._-]+/gi;
 
 const SENSITIVE_KEYS = new Set([
   'password',
@@ -85,68 +85,69 @@ export function sanitizeObject<T = any>(obj: T, depth: number = 0): T {
   return obj;
 }
 
+function cleanUserContext(user: any): void {
+  delete user.email;
+  delete user.ip_address;
+  delete user.username;
+  if (user.id && typeof user.id === 'string') {
+    user.id = sanitizeString(user.id);
+  }
+}
+
+function cleanRequestContext(request: any): void {
+  if (request.headers) {
+    const headers = { ...request.headers };
+    const scrubHeaders = ['authorization', 'cookie', 'set-cookie', 'x-api-key', 'x-auth-token', 'proxy-authorization'];
+    for (const h of scrubHeaders) {
+      if (headers[h]) headers[h] = '[REDACTED_HEADER]';
+    }
+    request.headers = headers;
+  }
+  if (request.cookies) {
+    request.cookies = '[REDACTED_COOKIES]' as any;
+  }
+  if (request.data) {
+    request.data = sanitizeObject(request.data);
+  }
+  if (request.query_string) {
+    request.query_string = sanitizeString(String(request.query_string));
+  }
+  if (request.url) {
+    request.url = sanitizeString(request.url);
+  }
+}
+
+function cleanBreadcrumb(bc: Breadcrumb): Breadcrumb {
+  if (bc.message) bc.message = sanitizeString(bc.message);
+  if (bc.data) bc.data = sanitizeObject(bc.data);
+  return bc;
+}
+
+function cleanExceptions(exceptionValues?: any[]): void {
+  if (!exceptionValues) return;
+  exceptionValues.forEach((exc: any) => {
+    if (exc.value) exc.value = sanitizeString(exc.value);
+    if (exc.stacktrace?.frames) {
+      exc.stacktrace.frames.forEach((frame: any) => {
+        if (frame.vars) frame.vars = sanitizeObject(frame.vars);
+      });
+    }
+  });
+}
+
 /**
  * Sentry beforeSend hook that strips secrets, tokens, database URLs, and PII.
  */
 export function sentryBeforeSend(event: any, hint?: any): any {
   try {
-    // 1. Scrub User Context (Strip email, IP, and personal identifiers)
-    if (event.user) {
-      delete event.user.email;
-      delete event.user.ip_address;
-      delete event.user.username;
-      // Guarantee only opaque ID is retained
-      if (event.user.id && typeof event.user.id === 'string') {
-        event.user.id = sanitizeString(event.user.id);
-      }
+    if (event.user) cleanUserContext(event.user);
+    if (event.request) cleanRequestContext(event.request);
+    if (Array.isArray(event.breadcrumbs)) {
+      event.breadcrumbs = event.breadcrumbs.map(cleanBreadcrumb);
     }
-
-    // 2. Scrub Request Context
-    if (event.request) {
-      if (event.request.headers) {
-        const headers = { ...event.request.headers };
-        const scrubHeaders = ['authorization', 'cookie', 'set-cookie', 'x-api-key', 'x-auth-token', 'proxy-authorization'];
-        for (const h of scrubHeaders) {
-          if (headers[h]) headers[h] = '[REDACTED_HEADER]';
-        }
-        event.request.headers = headers;
-      }
-      if (event.request.cookies) {
-        event.request.cookies = '[REDACTED_COOKIES]' as any;
-      }
-      if (event.request.data) {
-        event.request.data = sanitizeObject(event.request.data);
-      }
-      if (event.request.query_string) {
-        event.request.query_string = sanitizeString(String(event.request.query_string));
-      }
-      if (event.request.url) {
-        event.request.url = sanitizeString(event.request.url);
-      }
-    }
-
-    // 3. Scrub Breadcrumbs
-    if (event.breadcrumbs && Array.isArray(event.breadcrumbs)) {
-      event.breadcrumbs = event.breadcrumbs.map((bc: Breadcrumb) => {
-        if (bc.message) bc.message = sanitizeString(bc.message);
-        if (bc.data) bc.data = sanitizeObject(bc.data);
-        return bc;
-      });
-    }
-
-    // 4. Scrub Exception Messages & Stack Traces
     if (event.exception?.values) {
-      event.exception.values.forEach((exc: any) => {
-        if (exc.value) exc.value = sanitizeString(exc.value);
-        if (exc.stacktrace?.frames) {
-          exc.stacktrace.frames.forEach((frame: any) => {
-            if (frame.vars) frame.vars = sanitizeObject(frame.vars);
-          });
-        }
-      });
+      cleanExceptions(event.exception.values);
     }
-
-    // 5. Scrub Extra and Contexts
     if (event.extra) {
       event.extra = sanitizeObject(event.extra);
     }

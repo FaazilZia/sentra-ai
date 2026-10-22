@@ -101,7 +101,7 @@ export const flaggedActionsGauge = new Gauge({
 let totalRequestsCount = 0;
 let serverErrors5xxCount = 0;
 
-export function recordGovernanceDecision(status: 'blocked' | 'flagged' | 'allowed' | string) {
+export function recordGovernanceDecision(status: string) {
   if (status === 'blocked') {
     decisionsBlockedTotal.inc();
   } else if (status === 'flagged') {

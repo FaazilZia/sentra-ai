@@ -27,7 +27,7 @@ export interface AlertDeliveryResult {
 }
 
 class SystemAlertService {
-  private lastAlertTimestamps: Map<string, number> = new Map();
+  private readonly lastAlertTimestamps: Map<string, number> = new Map();
   private readonly THROTTLE_WINDOW_MS = 5 * 60 * 1000; // 5 minutes cooldown per alert type
 
   /**
@@ -102,7 +102,12 @@ class SystemAlertService {
       return false;
     }
 
-    const emoji = payload.severity === 'critical' ? '🔥' : payload.severity === 'warning' ? '⚠️' : 'ℹ️';
+    let emoji = 'ℹ️';
+    if (payload.severity === 'critical') {
+      emoji = '🔥';
+    } else if (payload.severity === 'warning') {
+      emoji = '⚠️';
+    }
     const detailFields = Object.entries(payload.details || {}).map(([k, v]) => ({
       type: 'mrkdwn',
       text: `*${k}:*\n\`${typeof v === 'object' ? JSON.stringify(v) : v}\``,
@@ -168,7 +173,12 @@ class SystemAlertService {
       },
     });
 
-    const severityColor = payload.severity === 'critical' ? '#e11d48' : payload.severity === 'warning' ? '#f59e0b' : '#3b82f6';
+    let severityColor = '#3b82f6';
+    if (payload.severity === 'critical') {
+      severityColor = '#e11d48';
+    } else if (payload.severity === 'warning') {
+      severityColor = '#f59e0b';
+    }
     const detailRows = Object.entries(payload.details || {}).map(([k, v]) => `
       <tr>
         <td style="padding: 6px 12px; font-weight: bold; color: #475569; border-bottom: 1px solid #e2e8f0;">${k}</td>

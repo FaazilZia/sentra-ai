@@ -165,17 +165,14 @@ export function assertStartupEnv(env: NodeJS.ProcessEnv = process.env): void {
   const isProduction = env.NODE_ENV === 'production';
   const result = validateProductionEnv(env);
 
-  if (isProduction) {
-    if (!result.valid) {
-      const banner = '='.repeat(70);
-      logger.error(`\n${banner}\n[STARTUP FATAL] Production Environment Hardening Failure:\n${result.errors.map(e => `  ❌ ${e}`).join('\n')}\n${banner}\n`);
-      throw new Error(`Production environment validation failed:\n${result.errors.join('\n')}`);
-    }
-  } else {
+  if (isProduction && !result.valid) {
+    const banner = '='.repeat(70);
+    const errorLines = result.errors.map(e => `  ❌ ${e}`).join('\n');
+    logger.error(`\n${banner}\n[STARTUP FATAL] Production Environment Hardening Failure:\n` + errorLines + `\n${banner}\n`);
+    throw new Error(`Production environment validation failed:\n${result.errors.join('\n')}`);
+  } else if (!isProduction && !result.valid) {
     // Non-production: log warnings if missing or weak
-    if (!result.valid) {
-      logger.warn(`[DEV/TEST WARNING] Environment validation issues detected (non-blocking in ${env.NODE_ENV || 'development'}):`);
-      result.errors.forEach(e => logger.warn(`  ⚠️ ${e}`));
-    }
+    logger.warn(`[DEV/TEST WARNING] Environment validation issues detected (non-blocking in ${env.NODE_ENV || 'development'}):`);
+    result.errors.forEach(e => logger.warn(`  ⚠️ ${e}`));
   }
 }
