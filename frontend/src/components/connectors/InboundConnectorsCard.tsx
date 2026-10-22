@@ -68,7 +68,7 @@ export function InboundConnectorsCard() {
 
   // Action states
   const [testing, setTesting] = useState(false);
-  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string; warning?: boolean } | null>(null);
   const [saving, setSaving] = useState(false);
   const [scanningId, setScanningId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -170,14 +170,20 @@ export function InboundConnectorsCard() {
       });
 
       if (res.success) {
+        const isWarning = Boolean(res.warning || res.message?.includes('0 readable file'));
         setTestResult({
           success: true,
-          message: res.message || 'Connection test successful!',
+          warning: isWarning,
+          message: res.message || (isWarning ? 'Connected to Google Drive API, but 0 readable files were found in scope.' : 'Connection test successful!'),
         });
-        addToast({ message: 'Connection test passed!', type: 'info' });
+        addToast({
+          message: isWarning ? (res.message || 'Connected, but 0 readable files found in scope') : 'Connection test passed!',
+          type: isWarning ? 'warning' : 'info',
+        });
       } else {
         setTestResult({
           success: false,
+          warning: false,
           message: res.message || 'Connection test failed',
         });
         addToast({ message: res.message || 'Connection test failed', type: 'error' });
@@ -186,6 +192,7 @@ export function InboundConnectorsCard() {
       const errMsg = err.response?.data?.message || err.message || 'Connection test failed';
       setTestResult({
         success: false,
+        warning: false,
         message: errMsg,
       });
       addToast({ message: errMsg, type: 'error' });
@@ -751,19 +758,23 @@ export function InboundConnectorsCard() {
           {testResult && (
             <div
               className={`p-3 rounded border text-xs flex items-start gap-2.5 ${
-                testResult.success
+                testResult.warning
+                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                  : testResult.success
                   ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
                   : 'bg-red-500/10 border-red-500/30 text-red-400'
               }`}
             >
-              {testResult.success ? (
+              {testResult.warning ? (
+                <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-amber-400" />
+              ) : testResult.success ? (
                 <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
               ) : (
                 <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5" />
               )}
               <div className="flex-1">
                 <span className="font-bold block uppercase tracking-wider text-[10px]">
-                  {testResult.success ? 'Test Passed' : 'Test Failed'}
+                  {testResult.warning ? 'Warning' : testResult.success ? 'Test Passed' : 'Test Failed'}
                 </span>
                 <span className="text-[11px] leading-relaxed mt-0.5 block">{testResult.message}</span>
               </div>

@@ -356,12 +356,21 @@ async function scanGDriveSource(connector: any, creds: any): Promise<{ violation
   }
 
   const normalizedKey = normalizePrivateKey((private_key as string) || '');
-  const auth = new (google.auth.JWT as any)(
-    client_email,
-    null,
-    normalizedKey,
-    [driveScope || 'https://www.googleapis.com/auth/drive.readonly']
-  );
+  let auth: any;
+  try {
+    auth = new (google.auth.JWT as any)({
+      email: client_email,
+      key: normalizedKey,
+      scopes: [driveScope || 'https://www.googleapis.com/auth/drive.readonly'],
+    });
+  } catch {
+    auth = new (google.auth.JWT as any)(
+      client_email,
+      null,
+      normalizedKey,
+      [driveScope || 'https://www.googleapis.com/auth/drive.readonly']
+    );
+  }
   const drive = google.drive({ version: 'v3', auth });
 
   const res = await drive.files.list({
