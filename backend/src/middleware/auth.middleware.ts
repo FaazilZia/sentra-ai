@@ -81,7 +81,7 @@ async function handleSdkToken(token: string, req: any, res: Response): Promise<{
     role: 'SERVICE_AGENT',
     email: `sdk@${resolved.slug}.com`,
   };
-  Sentry.setUser({ id: req.user.id, email: req.user.email, organizationId: req.user.organizationId });
+  Sentry.setUser({ id: resolved.id, organizationId: req.user.organizationId });
   Sentry.setTag('organizationId', req.user.organizationId);
   updateApiKeyLastUsed(resolved.id);
   recordSdkConnection(resolved.organizationId);
@@ -160,8 +160,8 @@ async function handleJwtToken(token: string, req: any, res: Response): Promise<{
       }
 
       req.user = { id: user.id, role: user.role, organizationId: user.organizationId, email: user.email };
-      Sentry.setUser({ id: req.user.id, email: req.user.email, organizationId: req.user.organizationId });
-      Sentry.setTag('organizationId', req.user.organizationId);
+      Sentry.setUser({ id: user.id, organizationId: user.organizationId });
+      Sentry.setTag('organizationId', user.organizationId);
       return { handled: true };
     }
   } catch (error) {
@@ -179,8 +179,8 @@ async function handleXApiKey(xApiKey: string, req: any, res: Response): Promise<
       role: 'SERVICE_AGENT',
       email: `sdk@${resolved.slug}.com`,
     };
-    Sentry.setUser({ id: req.user.id, email: req.user.email, organizationId: req.user.organizationId });
-    Sentry.setTag('organizationId', req.user.organizationId);
+    Sentry.setUser({ id: resolved.id, organizationId: resolved.organizationId });
+    Sentry.setTag('organizationId', resolved.organizationId);
     updateApiKeyLastUsed(resolved.id);
     recordSdkConnection(resolved.organizationId);
     return { handled: true };

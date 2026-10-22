@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import logger from './utils/logger';
 import { validateEnv } from './config/validateEnv';
+import { assertStartupEnv } from './config/envValidator';
 
 
 import express from 'express';
@@ -181,25 +182,18 @@ io.on('connection', (socket) => {
 export { io };
 
 const startServer = async () => {
-
-  // Hard-required: server cannot function without these
-  const REQUIRED_ENV_VARS = [
-    'JWT_SECRET',
-    'REFRESH_SECRET',
-  ];
+  // Production fail-fast startup security validation
+  try {
+    assertStartupEnv(process.env);
+  } catch (err: any) {
+    logger.error(`[STARTUP FATAL] ${err?.message || err}`);
+    process.exit(1);
+  }
 
   // Database URL check with DIRECT_URL fallback
   const dbUrl = process.env.DATABASE_URL || process.env.DIRECT_URL;
-  const missing = REQUIRED_ENV_VARS.filter((v) => !process.env[v]);
-
-  if (!dbUrl) missing.push('DATABASE_URL');
-
-  if (missing.length > 0) {
-    logger.error('\n' + '='.repeat(50));
-    logger.error('[STARTUP FATAL] Missing required environment variables:');
-    missing.forEach(v => logger.error(` - ${v}`));
-    logger.error('Please ensure these are set in your Render dashboard or .env file.');
-    logger.error('='.repeat(50) + '\n');
+  if (!dbUrl) {
+    logger.error('[STARTUP FATAL] DATABASE_URL or DIRECT_URL is required.');
     process.exit(1);
   }
 

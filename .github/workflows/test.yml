@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, feat/day3-connectors, feat/day3-connectors-p2]
+    branches: [main, feat/day3-connectors, feat/day3-connectors-p2, feat/day5-hardening]
   pull_request:
     branches: [main]
 
