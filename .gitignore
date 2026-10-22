@@ -33,6 +33,11 @@ frontend/vite.config.d.ts
 .env.test
 *.env.test
 *.backup
+*.dump
+*.dump.enc
+*.dump.enc.sha256
+backups/
+backend/backups/
 .venv/
 venv/
 ENV/
@@ -52,6 +57,8 @@ update-render-env.sh
 *.sh
 !backend/docker-entrypoint.sh
 !backend/tests/load/run.sh
+!backend/scripts/backup-encrypted-export.sh
+!backend/scripts/restore-encrypted-backup.sh
 
 # Playwright test artifacts
 frontend/test-results/

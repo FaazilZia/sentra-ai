@@ -77,17 +77,19 @@ import reportCRUDRoutes from './routes/reportCRUD.routes';
 import agentDiscoveryRoutes from './routes/agentDiscovery.routes';
 import intakeFormBuilderRoutes from './routes/intakeFormBuilder.routes';
 import settingsRoutes from './routes/settings.routes';
-import prisma, { dbHealth } from './config/db';
+import prisma from './config/db';
 import { redisHealthCheck, getRedisClient } from './config/redis';
 import { alertQueue } from './services/queue.service';
 import { prometheusMiddleware } from './config/telemetry';
 import { auditRequest } from './middleware/audit.middleware';
 
-import { apiRateLimiter, getRateLimitRedisStatus } from './config/rateLimit';
+import { apiRateLimiter } from './config/rateLimit';
 import { securityObservability } from './middleware/security.middleware';
 import { csrfProtection } from './middleware/csrf.middleware';
 
 import * as Sentry from '@sentry/node';
+import { sentryBeforeSend } from './utils/sentrySanitizer';
+import { systemAlertService } from './services/systemAlert.service';
 
 import crypto from 'crypto';
 import pinoHttp from 'pino-http';
@@ -113,7 +115,7 @@ app.get('/startup-check', async (_, res) => {
     migrationStatus = { error: err.message };
   }
 
-  let dbCheck = null;
+  let dbCheck: any;
   try {
     const userCount = await prisma.users.count();
     const adminUser = await prisma.users.findUnique({ where: { email: 'admin@sentra.ai' } });
@@ -155,87 +157,131 @@ app.get('/startup-check', async (_, res) => {
   });
 });
 
-const runDeepHealthCheck = async (req: any, res: any) => {
-  const start = performance.now();
-  const redis = getRedisClient();
+// ─── Liveness Probe: /health ─────────────────────────────────────────────
+const runLivenessCheck = (_req: any, res: any) => {
+  return res.status(200).json({
+    status: 'ok',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+    version: '2.0.0',
+  });
+};
 
-  if (!redis || !alertQueue) {
-    const duration = (performance.now() - start).toFixed(3);
-    return res.status(503).json({
-      status: 'degraded',
-      db: 'ok',
-      redis: redis ? 'ok' : 'failed',
-      queue: alertQueue ? 'ok' : 'failed',
-      version: '2.0.0',
-      timestamp: new Date().toISOString()
-    });
-  }
+app.get('/health', runLivenessCheck);
+app.get('/api/health', runLivenessCheck);
+app.get('/api/v1/health', runLivenessCheck);
 
+// Helper to ensure probes never block indefinitely
+function withHealthTimeout<T>(promise: Promise<T>, ms: number = 2000, fallbackMessage: string = 'Operation timed out'): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(fallbackMessage)), ms)),
+  ]);
+}
+
+interface DependencyCheckResult {
+  ok: boolean;
+  error?: string;
+}
+
+async function checkDatabaseReadiness(): Promise<DependencyCheckResult> {
   try {
-    const checks = await Promise.allSettled([
-      prisma.$queryRaw`SELECT 1`,
-      redis.ping(),
-      alertQueue.getWorkers(),
-    ]);
-
-    const dbOk = checks[0].status === 'fulfilled';
-    const redisOk = checks[1].status === 'fulfilled' && (checks[1] as any).value === 'PONG';
-    const queueOk = checks[2].status === 'fulfilled';
-
-    const allOk = dbOk && redisOk && queueOk;
-    const status = allOk ? 200 : 503;
-
-    return res.status(status).json({
-      status: allOk ? 'ok' : 'degraded',
-      db: dbOk ? 'ok' : 'failed',
-      redis: redisOk ? 'ok' : 'failed',
-      queue: queueOk ? 'ok' : 'failed',
-      version: '2.0.0',
-      timestamp: new Date().toISOString()
-    });
-  } catch (error: any) {
-    return res.status(503).json({
-      status: 'degraded',
-      error: error.message,
-      version: '2.0.0',
-      timestamp: new Date().toISOString()
-    });
+    await withHealthTimeout(prisma.$queryRaw`SELECT 1`, 2000, 'Database query timed out');
+    return { ok: true };
+  } catch (err: any) {
+    return { ok: false, error: err?.message || 'Database query failed' };
   }
-};
+}
 
-app.get('/health', runDeepHealthCheck);
-app.get('/api/health', runDeepHealthCheck);
-app.get('/api/v1/health', runDeepHealthCheck);
+async function checkRedisReadiness(): Promise<DependencyCheckResult> {
+  const redis = getRedisClient();
+  if (!redis) {
+    return { ok: false, error: 'Redis client not configured' };
+  }
+  try {
+    const pong = await withHealthTimeout(redis.ping(), 2000, 'Redis ping timed out');
+    if (pong === 'PONG') {
+      return { ok: true };
+    }
+    return { ok: false, error: `Unexpected ping response: ${pong}` };
+  } catch (err: any) {
+    return { ok: false, error: err?.message || 'Redis ping failed' };
+  }
+}
 
-const handleReadyRequest = (req: any, res: any) => {
+async function checkQueueReadiness(redisOk: boolean): Promise<DependencyCheckResult> {
+  if (!alertQueue) {
+    return { ok: false, error: 'Queue client not initialized' };
+  }
+  if (!redisOk) {
+    return { ok: false, error: 'Queue degraded: Redis is unreachable' };
+  }
+  try {
+    await withHealthTimeout(alertQueue.getJobCounts('waiting', 'active', 'failed'), 2000, 'Queue count timed out');
+    return { ok: true };
+  } catch (err: any) {
+    return { ok: false, error: err?.message || 'Queue job count check failed' };
+  }
+}
+
+function buildReadinessErrors(db: DependencyCheckResult, redis: DependencyCheckResult, queue: DependencyCheckResult) {
+  const errors: Record<string, string> = {};
+  if (db.error) errors.db = db.error;
+  if (redis.error) errors.redis = redis.error;
+  if (queue.error) errors.queue = queue.error;
+  return errors;
+}
+
+function buildReadinessAlertDetails(db: DependencyCheckResult, redis: DependencyCheckResult, queue: DependencyCheckResult) {
+  return {
+    db: db.ok ? 'ok' : (db.error || 'failed'),
+    redis: redis.ok ? 'ok' : (redis.error || 'failed'),
+    queue: queue.ok ? 'ok' : (queue.error || 'failed'),
+  };
+}
+
+// ─── Readiness Probe: /ready (Checks DB, Redis, and BullMQ Queue) ────────
+const runReadinessCheck = async (req: any, res: any) => {
   const start = performance.now();
-  const dbStatus = dbHealth.isHealthy ? 'connected' : 'disconnected';
-  const redisStatus = getRateLimitRedisStatus();
 
-  if (dbHealth.isHealthy) {
-    const isDegraded = redisStatus === 'degraded';
-    res.status(200).json({ 
-      status: isDegraded ? 'degraded' : 'ready', 
-      db: dbStatus, 
-      redis: redisStatus,
-      message: isDegraded ? 'Operational but distributed rate limiting is offline.' : 'Full system operational'
-    });
-  } else {
-    res.status(503).json({ 
-      status: 'unhealthy', 
-      db: dbStatus, 
-      redis: redisStatus, 
-      error: 'Critical database failure' 
+  const db = await checkDatabaseReadiness();
+  const redis = await checkRedisReadiness();
+  const queue = await checkQueueReadiness(redis.ok);
+
+  const allOk = db.ok && redis.ok && queue.ok;
+  const status = allOk ? 200 : 503;
+  const duration = (performance.now() - start).toFixed(3);
+
+  if (!allOk) {
+    // Non-blocking alert trigger when readiness fails
+    systemAlertService.triggerReadyFailingAlert(
+      buildReadinessAlertDetails(db, redis, queue),
+      'One or more readiness dependencies are down'
+    ).catch(err => {
+      logger.warn('Failed to dispatch ready failing alert:', err);
     });
   }
-  
-  const duration = (performance.now() - start).toFixed(3);
+
   const sanitizedUrl = String(req.originalUrl || req.url).replaceAll(/[\r\n]/g, '');
-  logger.info(`[HEALTH] Responded to ${sanitizedUrl} in ${duration} ms`);
+  logger.info(`[READINESS] Responded to ${sanitizedUrl} in ${duration} ms (status: ${allOk ? 'ready' : 'unhealthy'})`);
+
+  return res.status(status).json({
+    status: allOk ? 'ready' : 'unhealthy',
+    checks: {
+      db: db.ok ? 'ok' : 'failed',
+      redis: redis.ok ? 'ok' : 'failed',
+      queue: queue.ok ? 'ok' : 'failed',
+    },
+    durationMs: Number(duration),
+    version: '2.0.0',
+    timestamp: new Date().toISOString(),
+    ...(allOk ? {} : { errors: buildReadinessErrors(db, redis, queue) })
+  });
 };
 
-app.get('/api/ready', handleReadyRequest);
-app.get('/api/v1/ready', handleReadyRequest);
+app.get('/ready', runReadinessCheck);
+app.get('/api/ready', runReadinessCheck);
+app.get('/api/v1/ready', runReadinessCheck);
 
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
@@ -266,15 +312,14 @@ const swaggerAuthMiddleware = (req: any, res: any, next: any) => {
 // Mount Swagger UI
 app.use('/api-docs/ui', swaggerAuthMiddleware, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Initialize Sentry for observability
+// Initialize Sentry for observability with PII/secret scrubbing
 if (process.env.SENTRY_DSN) {
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
     tracesSampleRate: 0.1, // Reduced in production for cost/performance
     environment: process.env.NODE_ENV || 'production',
-    integrations: [
-      // Express integration is added automatically in newer versions or via integrations
-    ],
+    sendDefaultPii: false,
+    beforeSend: sentryBeforeSend,
   });
 }
 

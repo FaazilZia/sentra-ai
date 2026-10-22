@@ -1,12 +1,13 @@
 import { z } from 'zod';
 import nodemailer from 'nodemailer';
 import logger from '../utils/logger';
+import { assertStartupEnv } from './envValidator';
 
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
   JWT_SECRET: z.string().min(1, 'JWT_SECRET is required'),
   REFRESH_SECRET: z.string().min(1, 'REFRESH_SECRET is required'),
-  GOVERNANCE_SIGNING_KEYS: z.string().min(1, 'GOVERNANCE_SIGNING_KEYS is required'),
+  GOVERNANCE_SIGNING_KEYS: z.string().optional(),
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.string().optional(),
   SMTP_USER: z.string().optional(),
@@ -19,7 +20,10 @@ export const validateEnv = async () => {
     // 1. Zod validation
     envSchema.parse(process.env);
 
-    // 2. Production strict checks & dynamic SMTP transporter verify
+    // 2. Production fail-fast assertions (JWT, REFRESH, ENCRYPTION, DB, REDIS, METRICS, TLS, PORTS)
+    assertStartupEnv(process.env);
+
+    // 3. Dynamic SMTP transporter verify in production if SMTP_HOST provided
     if (process.env.NODE_ENV === 'production' && process.env.SMTP_HOST) {
       const smtpVars = ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASS'];
       for (const key of smtpVars) {
@@ -42,11 +46,11 @@ export const validateEnv = async () => {
         await transporter.verify();
         logger.info('SMTP connection verified successfully on startup');
       } catch (err: any) {
-        throw new Error(`CRITICAL SMTP Connection Verification Failed: ${err.message || err}`);
+        throw new Error(`CRITICAL SMTP Connection Verification Failed: ${err.message || err}`, { cause: err });
       }
     }
   } catch (error: any) {
-    throw new Error(`Config validation failed: ${error.message || error}`);
+    throw new Error(`Config validation failed: ${error.message || error}`, { cause: error });
   }
 };
 
