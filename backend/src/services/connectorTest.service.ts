@@ -7,6 +7,7 @@ import logger from '../utils/logger';
 export interface TestConnectionResult {
   success: boolean;
   message: string;
+  warning?: boolean;
   details?: Record<string, any>;
 }
 
@@ -257,12 +258,21 @@ async function testGDriveSource(
   const google = googleapis.google || googleapis;
   const normalizedKey = normalizePrivateKey(private_key);
 
-  const auth = new (google.auth.JWT as any)(
-    client_email,
-    null,
-    normalizedKey,
-    [driveScope]
-  );
+  let auth: any;
+  try {
+    auth = new (google.auth.JWT as any)({
+      email: client_email,
+      key: normalizedKey,
+      scopes: [driveScope],
+    });
+  } catch {
+    auth = new (google.auth.JWT as any)(
+      client_email,
+      null,
+      normalizedKey,
+      [driveScope]
+    );
+  }
   const drive = google.drive({ version: 'v3', auth });
 
   const res = await drive.files.list({
@@ -271,10 +281,20 @@ async function testGDriveSource(
   });
 
   const count = res.data.files ? res.data.files.length : 0;
+  if (count === 0) {
+    return {
+      success: true,
+      warning: true,
+      message: 'Connected to Google Drive API, but 0 readable files were found in scope. Ensure target files or folders are shared with the Service Account email.',
+      details: { client_email, driveScope, fileCount: 0 },
+    };
+  }
+
   return {
     success: true,
+    warning: false,
     message: `Successfully connected to Google Drive API. Found ${count} readable file(s) in scope.`,
-    details: { client_email, driveScope },
+    details: { client_email, driveScope, fileCount: count },
   };
 }
 

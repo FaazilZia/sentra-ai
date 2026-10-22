@@ -517,8 +517,8 @@ export async function createConnector(payload: CreateConnectorPayload): Promise<
   });
 }
 
-export async function testConnector(payload: TestConnectorPayload): Promise<{ success: boolean; message: string; details?: any }> {
-  return apiRequest<{ success: boolean; message: string; details?: any }>('/connectors/test', {
+export async function testConnector(payload: TestConnectorPayload): Promise<{ success: boolean; message: string; warning?: boolean; details?: any }> {
+  return apiRequest<{ success: boolean; message: string; warning?: boolean; details?: any }>('/connectors/test', {
     method: 'POST',
     body: JSON.stringify(payload),
   });

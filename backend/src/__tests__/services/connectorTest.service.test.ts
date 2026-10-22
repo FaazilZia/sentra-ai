@@ -85,7 +85,7 @@ describe('Connector Test Connection Service', () => {
       expect(res.message).toContain('client email is required');
     });
 
-    it('normalizes private key and returns success when API responds', async () => {
+    it('normalizes private key and returns success when API responds with files', async () => {
       const mockList = jest.fn().mockResolvedValueOnce({
         data: { files: [{ id: '1', name: 'report.pdf' }] },
       });
@@ -103,7 +103,34 @@ describe('Connector Test Connection Service', () => {
       );
 
       expect(res.success).toBe(true);
+      expect(res.warning).toBe(false);
       expect(res.message).toContain('Successfully connected to Google Drive API');
+      expect(res.message).toContain('Found 1 readable file(s)');
+      expect(res.details?.fileCount).toBe(1);
+    });
+
+    it('returns warning state when 0 readable files are found in scope', async () => {
+      const mockList = jest.fn().mockResolvedValueOnce({
+        data: { files: [] },
+      });
+      mockDriveFn.mockReturnValue({
+        files: { list: mockList },
+      });
+
+      const res = await testConnectorSource(
+        'gdrive',
+        {},
+        {
+          client_email: 'sa@test.iam.gserviceaccount.com',
+          private_key: '-----BEGIN PRIVATE KEY-----\\nMIIEvg...\\n-----END PRIVATE KEY-----\\n',
+        }
+      );
+
+      expect(res.success).toBe(true);
+      expect(res.warning).toBe(true);
+      expect(res.message).toContain('0 readable files were found in scope');
+      expect(res.message).toContain('Ensure target files or folders are shared');
+      expect(res.details?.fileCount).toBe(0);
     });
 
     it('returns friendly error on invalid_grant', async () => {
