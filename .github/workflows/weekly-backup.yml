@@ -1,0 +1,123 @@
+name: Weekly Encrypted Database Backup
+
+on:
+  schedule:
+    # Run every Sunday at 02:00 UTC
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Perform dry run verification without full archive upload'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  encrypted-export:
+    name: Encrypted Export & Verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install PostgreSQL Client & OpenSSL
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-client openssl
+
+      - name: Run Encrypted Export Script
+        env:
+          BACKUP_DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL || secrets.DATABASE_URL }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+          BACKUP_OUTPUT_DIR: ./backups
+        run: |
+          if [ -z "$BACKUP_DATABASE_URL" ]; then
+            echo "::error::BACKUP_DATABASE_URL secret is not configured in repository secrets."
+            exit 1
+          fi
+          if [ -z "$BACKUP_ENCRYPTION_KEY" ]; then
+            echo "::error::BACKUP_ENCRYPTION_KEY secret is not configured in repository secrets."
+            exit 1
+          fi
+          chmod +x backend/scripts/backup-encrypted-export.sh
+          ./backend/scripts/backup-encrypted-export.sh
+
+      - name: Verify Archive Integrity (SHA-256)
+        run: |
+          BACKUP_FILE=$(ls -t ./backups/sentra_backup_*.dump.enc | head -n 1)
+          SHA_FILE="${BACKUP_FILE}.sha256"
+          echo "Verifying SHA-256 for: $(basename "$BACKUP_FILE")"
+          sha256sum -c "$SHA_FILE"
+          echo "SHA-256 checksum verified successfully."
+
+      - name: Upload Encrypted Archive to Private Storage
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        with:
+          name: sentra-encrypted-database-backup
+          path: |
+            ./backups/*.dump.enc
+            ./backups/*.dump.enc.sha256
+          retention-days: 30
+          if-no-files-found: error
+
+  restore-test:
+    name: Restore Verification Drill
+    needs: encrypted-export
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: sentra_restore_verification
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install PostgreSQL Client & OpenSSL
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-client openssl
+
+      - name: Download Encrypted Backup Artifact
+        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+        with:
+          name: sentra-encrypted-database-backup
+          path: ./backups
+
+      - name: Execute Decrypted Restore Drill
+        env:
+          RESTORE_DATABASE_URL: postgresql://test_user:test_password@localhost:5432/sentra_restore_verification
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: |
+          BACKUP_FILE=$(ls -t ./backups/*.dump.enc | head -n 1)
+          chmod +x backend/scripts/restore-encrypted-backup.sh
+          ./backend/scripts/restore-encrypted-backup.sh "$BACKUP_FILE"
+
+      - name: Verify Restored Database Relational Integrity
+        run: |
+          PGPASSWORD=test_password psql -h localhost -U test_user -d sentra_restore_verification -t -A -c "
+            SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public';
+          " | while read -r count; do
+            echo "Total Public Tables Restored in Clean Target DB: $count"
+            if [ "$count" -lt 1 ]; then
+              echo "::error::Database restore verification failed: 0 tables found."
+              exit 1
+            fi
+          done
+          echo "✅ Restore drill verified successfully into throwaway PostgreSQL instance."
