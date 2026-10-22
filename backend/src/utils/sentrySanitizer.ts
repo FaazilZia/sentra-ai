@@ -1,4 +1,5 @@
 import type { Event as SentryEvent, Breadcrumb } from '@sentry/node';
+import logger from './logger';
 
 // Secret and PII patterns for regex redaction
 const EMAIL_REGEX = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g;
@@ -155,7 +156,10 @@ export function sentryBeforeSend(event: any, hint?: any): any {
 
     return event;
   } catch (err) {
-    // If scrubber fails, fail closed: return sanitized minimal event
+    // If scrubber encounters an unhandled parsing anomaly, fail closed: log and return sanitized minimal event
+    logger.warn('Sentry beforeSend sanitizer encountered an error, falling back to minimal sanitized event', {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return {
       message: 'Sanitized error: Sentry beforeSend sanitizer handled an error report',
       timestamp: event.timestamp || Date.now() / 1000,

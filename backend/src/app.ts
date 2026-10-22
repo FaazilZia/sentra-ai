@@ -77,13 +77,13 @@ import reportCRUDRoutes from './routes/reportCRUD.routes';
 import agentDiscoveryRoutes from './routes/agentDiscovery.routes';
 import intakeFormBuilderRoutes from './routes/intakeFormBuilder.routes';
 import settingsRoutes from './routes/settings.routes';
-import prisma, { dbHealth } from './config/db';
+import prisma from './config/db';
 import { redisHealthCheck, getRedisClient } from './config/redis';
 import { alertQueue } from './services/queue.service';
 import { prometheusMiddleware } from './config/telemetry';
 import { auditRequest } from './middleware/audit.middleware';
 
-import { apiRateLimiter, getRateLimitRedisStatus } from './config/rateLimit';
+import { apiRateLimiter } from './config/rateLimit';
 import { securityObservability } from './middleware/security.middleware';
 import { csrfProtection } from './middleware/csrf.middleware';
 
@@ -179,57 +179,69 @@ function withHealthTimeout<T>(promise: Promise<T>, ms: number = 2000, fallbackMe
   ]);
 }
 
+interface DependencyCheckResult {
+  ok: boolean;
+  error?: string;
+}
+
+async function checkDatabaseReadiness(): Promise<DependencyCheckResult> {
+  try {
+    await withHealthTimeout(prisma.$queryRaw`SELECT 1`, 2000, 'Database query timed out');
+    return { ok: true };
+  } catch (err: any) {
+    return { ok: false, error: err?.message || 'Database query failed' };
+  }
+}
+
+async function checkRedisReadiness(): Promise<DependencyCheckResult> {
+  const redis = getRedisClient();
+  if (!redis) {
+    return { ok: false, error: 'Redis client not configured' };
+  }
+  try {
+    const pong = await withHealthTimeout(redis.ping(), 2000, 'Redis ping timed out');
+    if (pong === 'PONG') {
+      return { ok: true };
+    }
+    return { ok: false, error: `Unexpected ping response: ${pong}` };
+  } catch (err: any) {
+    return { ok: false, error: err?.message || 'Redis ping failed' };
+  }
+}
+
+async function checkQueueReadiness(redisOk: boolean): Promise<DependencyCheckResult> {
+  if (!alertQueue) {
+    return { ok: false, error: 'Queue client not initialized' };
+  }
+  if (!redisOk) {
+    return { ok: false, error: 'Queue degraded: Redis is unreachable' };
+  }
+  try {
+    await withHealthTimeout(alertQueue.getJobCounts('waiting', 'active', 'failed'), 2000, 'Queue count timed out');
+    return { ok: true };
+  } catch (err: any) {
+    return { ok: false, error: err?.message || 'Queue job count check failed' };
+  }
+}
+
 // ─── Readiness Probe: /ready (Checks DB, Redis, and BullMQ Queue) ────────
 const runReadinessCheck = async (req: any, res: any) => {
   const start = performance.now();
-  const redis = getRedisClient();
 
-  let dbOk = false;
-  let dbError: string | undefined;
-  try {
-    await withHealthTimeout(prisma.$queryRaw`SELECT 1`, 2000, 'Database query timed out');
-    dbOk = true;
-  } catch (err: any) {
-    dbError = err?.message || 'Database query failed';
-  }
+  const db = await checkDatabaseReadiness();
+  const redis = await checkRedisReadiness();
+  const queue = await checkQueueReadiness(redis.ok);
 
-  let redisOk = false;
-  let redisError: string | undefined;
-  if (redis) {
-    try {
-      const pong = await withHealthTimeout(redis.ping(), 2000, 'Redis ping timed out');
-      redisOk = pong === 'PONG';
-      if (!redisOk) redisError = `Unexpected ping response: ${pong}`;
-    } catch (err: any) {
-      redisError = err?.message || 'Redis ping failed';
-    }
-  } else {
-    redisError = 'Redis client not configured';
-  }
-
-  let queueOk = false;
-  let queueError: string | undefined;
-  if (alertQueue && redisOk) {
-    try {
-      await withHealthTimeout(alertQueue.getJobCounts('waiting', 'active', 'failed'), 2000, 'Queue count timed out');
-      queueOk = true;
-    } catch (err: any) {
-      queueError = err?.message || 'Queue job count check failed';
-    }
-  } else {
-    queueError = !alertQueue ? 'Queue client not initialized' : 'Queue degraded: Redis is unreachable';
-  }
-
-  const allOk = dbOk && redisOk && queueOk;
+  const allOk = db.ok && redis.ok && queue.ok;
   const status = allOk ? 200 : 503;
   const duration = (performance.now() - start).toFixed(3);
 
   if (!allOk) {
     // Non-blocking alert trigger when readiness fails
     systemAlertService.triggerReadyFailingAlert({
-      db: dbOk ? 'ok' : (dbError || 'failed'),
-      redis: redisOk ? 'ok' : (redisError || 'failed'),
-      queue: queueOk ? 'ok' : (queueError || 'failed'),
+      db: db.ok ? 'ok' : (db.error || 'failed'),
+      redis: redis.ok ? 'ok' : (redis.error || 'failed'),
+      queue: queue.ok ? 'ok' : (queue.error || 'failed'),
     }, 'One or more readiness dependencies are down').catch(err => {
       logger.warn('Failed to dispatch ready failing alert:', err);
     });
@@ -241,18 +253,18 @@ const runReadinessCheck = async (req: any, res: any) => {
   return res.status(status).json({
     status: allOk ? 'ready' : 'unhealthy',
     checks: {
-      db: dbOk ? 'ok' : 'failed',
-      redis: redisOk ? 'ok' : 'failed',
-      queue: queueOk ? 'ok' : 'failed',
+      db: db.ok ? 'ok' : 'failed',
+      redis: redis.ok ? 'ok' : 'failed',
+      queue: queue.ok ? 'ok' : 'failed',
     },
     durationMs: Number(duration),
     version: '2.0.0',
     timestamp: new Date().toISOString(),
     ...(allOk ? {} : {
       errors: {
-        ...(dbError ? { db: dbError } : {}),
-        ...(redisError ? { redis: redisError } : {}),
-        ...(queueError ? { queue: queueError } : {}),
+        ...(db.error ? { db: db.error } : {}),
+        ...(redis.error ? { redis: redis.error } : {}),
+        ...(queue.error ? { queue: queue.error } : {}),
       }
     })
   });
