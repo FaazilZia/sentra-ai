@@ -269,6 +269,44 @@ describe('Connector API Routes', () => {
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain('SSRF validation failed');
     });
+
+    it('allows testing slack connector with valid bot token format', async () => {
+      (testConnectorSource as jest.Mock).mockResolvedValueOnce({
+        success: true,
+        message: 'Successfully connected to Slack workspace "Acme"',
+        details: { workspaceName: 'Acme', channelCount: 5 },
+      });
+
+      const res = await request(app)
+        .post('/api/v1/connectors/test')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          type: 'slack',
+          credentials: { botToken: 'xoxb-fake-placeholder-test-bot-token-routes-test' },
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(testConnectorSource).toHaveBeenCalledWith(
+        'slack',
+        undefined,
+        expect.objectContaining({ botToken: 'xoxb-fake-placeholder-test-bot-token-routes-test' }),
+        true
+      );
+    });
+
+    it('rejects testing slack connector with invalid bot token format', async () => {
+      const res = await request(app)
+        .post('/api/v1/connectors/test')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          type: 'slack',
+          credentials: { botToken: 'invalid-token-no-xoxb' },
+        });
+
+      expect(res.status).toBe(400);
+      expect(testConnectorSource).not.toHaveBeenCalled();
+    });
   });
 
   describe('POST /api/connectors', () => {
@@ -428,6 +466,39 @@ describe('Connector API Routes', () => {
       // Verify that stored credentials were encrypted
       expect(prisma.connectors.create).toHaveBeenCalledWith(expect.objectContaining({
         data: expect.objectContaining({
+          credentials: expect.stringMatching(/^[0-9a-fA-F]{24}:[0-9a-fA-F]{32}:/),
+        }),
+      }));
+    });
+
+    it('creates slack connector with encrypted token and does not return credentials', async () => {
+      (prisma.connectors.create as jest.Mock).mockImplementation(({ data }) => ({
+        ...data,
+        created_at: new Date(),
+        updated_at: new Date(),
+      }));
+
+      const res = await request(app)
+        .post('/api/v1/connectors')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          name: 'Slack Inbound Scanner',
+          type: 'slack',
+          credentials: {
+            botToken: 'xoxb-fake-placeholder-test-bot-token-create-test',
+          },
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.name).toBe('Slack Inbound Scanner');
+      expect(res.body.data.credentials).toBeUndefined();
+      expect(enqueueConnectorScan).toHaveBeenCalledWith('slack', expect.any(String));
+
+      // Token must be stored encrypted
+      expect(prisma.connectors.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
+          type: 'slack',
           credentials: expect.stringMatching(/^[0-9a-fA-F]{24}:[0-9a-fA-F]{32}:/),
         }),
       }));

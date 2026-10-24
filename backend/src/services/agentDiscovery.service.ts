@@ -50,7 +50,8 @@ export class AgentDiscoveryService {
         const platformName = 
           conn.type === 's3' ? 'AWS S3' :
           conn.type === 'gdrive' ? 'Google Drive' :
-          conn.type === 'sql' ? 'SQL Database' : 'Custom API';
+          conn.type === 'sql' || conn.type === 'postgres' ? 'PostgreSQL' :
+          conn.type === 'slack' ? 'Slack Workspace' : 'Custom API';
 
         candidates.push({
           name: conn.name,
