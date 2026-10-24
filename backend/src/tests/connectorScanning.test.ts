@@ -15,10 +15,21 @@ jest.mock('../server', () => ({
   },
 }));
 
+const mockSlackList = jest.fn();
+const mockSlackHistory = jest.fn();
+
 jest.mock('@aws-sdk/client-s3');
 jest.mock('googleapis');
 jest.mock('pg');
 jest.mock('../utils/encryption');
+jest.mock('@slack/web-api', () => ({
+  WebClient: jest.fn().mockImplementation(() => ({
+    conversations: {
+      list: mockSlackList,
+      history: mockSlackHistory,
+    },
+  })),
+}));
 
 import { processConnectorScan } from '../services/queue.service';
 import prisma from '../config/db';
@@ -58,7 +69,8 @@ describe('Connector Scanning Logic', () => {
       port: 5432,
       user: 'user',
       password: 'pass',
-      database: 'db'
+      database: 'db',
+      botToken: 'xoxb-fake-placeholder-test-bot-token-scanning-test',
     }));
   });
 
@@ -145,6 +157,54 @@ describe('Connector Scanning Logic', () => {
       data: expect.objectContaining({
         reason: expect.stringContaining('detected sensitive pattern: EMAIL')
       })
+    }));
+  });
+
+  it('should scan Slack messages and log violations when PII is detected', async () => {
+    (prisma.connectors.findUnique as jest.Mock).mockResolvedValue({
+      ...mockConnector,
+      type: 'slack',
+      config: {},
+    });
+
+    mockSlackList.mockResolvedValueOnce({
+      ok: true,
+      channels: [{ id: 'C_DEV', name: 'dev-team', is_archived: false }],
+    });
+
+    mockSlackHistory.mockResolvedValueOnce({
+      ok: true,
+      messages: [
+        {
+          ts: '1700000000.123456',
+          text: 'Sending customer details to email alice@example.com for onboarding',
+        },
+      ],
+    });
+
+    await processConnectorScan('slack', connectorId);
+
+    expect(prisma.interception_logs.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        organizationId: orgId,
+        decision: 'BLOCK',
+        reason: expect.stringContaining('detected sensitive PII'),
+        input_text: 'Scan of Slack message in #dev-team',
+        metadata: expect.objectContaining({
+          source_type: 'slack',
+          channelId: 'C_DEV',
+          channelName: 'dev-team',
+          messageTs: '1700000000.123456',
+        }),
+      }),
+    }));
+
+    expect(prisma.connectors.update).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: connectorId },
+      data: expect.objectContaining({
+        status: 'active',
+        health_score: 90,
+      }),
     }));
   });
 

@@ -12,6 +12,7 @@ import { decryptCredentials, normalizePrivateKey } from '../utils/credentialHelp
 import { assertSafeTarget } from '../utils/ssrfProtection';
 import { validatePostgresPort } from './connectorTest.service';
 import { SENSITIVE_PATTERNS } from './riskEngine';
+import { PIIScannerService, PIIScanResult } from './piiScanner.service';
 import { buildRedisOptions, getRedisUrl } from '../config/redis';
 import { PostMarketMonitoringService } from './postMarketMonitoring.service';
 
@@ -382,7 +383,7 @@ async function scanGDriveSource(connector: any, creds: any): Promise<{ violation
   if (res.data.files) {
     for (const file of res.data.files) {
       if (!file.id) continue;
-      let content = '';
+      let content: string;
       try {
         if (file.mimeType === 'application/vnd.google-apps.document') {
           const exportRes = await drive.files.export({
@@ -479,7 +480,7 @@ export async function isCustomPortApprovedByAdmin(connector: any): Promise<boole
 }
 
 async function scanSqlSource(connector: any, creds: any): Promise<{ violations: number; apiCalls: number; bytesScanned: number }> {
-  let violations = 0;
+  let violations: number;
   let apiCalls = 0;
   let bytesScanned = 0;
 
@@ -605,6 +606,339 @@ async function scanSqlSource(connector: any, creds: any): Promise<{ violations: 
   return { violations, apiCalls, bytesScanned };
 }
 
+export const SLACK_SCAN_CONFIG = {
+  MAX_CHANNELS: 25,
+  MAX_MESSAGES_PER_CHANNEL: 100,
+  MAX_FILE_SIZE_BYTES: 1024 * 1024, // 1MB
+  LOOKBACK_DAYS: 7,
+  PAGE_LIMIT: 50,
+  MAX_RATE_LIMIT_RETRIES: 3,
+  DEFAULT_RETRY_DELAY_MS: 1000,
+  MAX_RETRY_DELAY_MS: 10000,
+};
+
+export async function callSlackWithBackoff<T>(
+  fn: () => Promise<T>,
+  retries = SLACK_SCAN_CONFIG.MAX_RATE_LIMIT_RETRIES
+): Promise<T> {
+  let attempt = 0;
+  while (attempt <= retries) {
+    try {
+      return await fn();
+    } catch (err: any) {
+      attempt++;
+      const is429 =
+        err?.status === 429 ||
+        err?.statusCode === 429 ||
+        err?.code === 'slack_webapi_rate_limited_error' ||
+        err?.data?.error === 'ratelimited';
+      if (is429 && attempt <= retries) {
+        const retryHeader = Number(err?.headers?.['retry-after'] || err?.data?.retry_after);
+        const delayMs = !Number.isNaN(retryHeader) && retryHeader > 0
+          ? Math.min(retryHeader * 1000, SLACK_SCAN_CONFIG.MAX_RETRY_DELAY_MS)
+          : Math.min(SLACK_SCAN_CONFIG.DEFAULT_RETRY_DELAY_MS * (2 ** (attempt - 1)), SLACK_SCAN_CONFIG.MAX_RETRY_DELAY_MS);
+        logger.warn(`[SlackScan] Rate limited (429). Backing off for ${delayMs}ms (attempt ${attempt}/${retries})`);
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw new Error('Slack API rate limit exceeded after maximum retries.');
+}
+
+function isSupportedSlackTextFile(file: any): boolean {
+  if (!file) return false;
+  const mime = String(file.mimetype || '').toLowerCase();
+  const name = String(file.name || '').toLowerCase();
+  if (mime.startsWith('text/') || mime === 'application/json' || mime === 'application/csv') {
+    return true;
+  }
+  return /\.(txt|md|csv|json|log|xml|ya?ml)$/i.test(name);
+}
+
+async function downloadSlackFileText(url: string, botToken: string): Promise<string> {
+  const parsedUrl = new URL(url);
+  await assertSafeTarget(parsedUrl.hostname);
+
+  const resp = await fetch(url, {
+    headers: { Authorization: `Bearer ${botToken}` },
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!resp.ok) {
+    throw new Error(`File fetch failed with status ${resp.status}`);
+  }
+  const text = await resp.text();
+  return text.slice(0, 10240); // Cap content at 10KB
+}
+
+async function recordSlackFinding(params: {
+  connector: any;
+  channelId: string;
+  channelName: string;
+  messageTs: string;
+  fileId?: string;
+  fileName?: string;
+  scanResult: PIIScanResult;
+}): Promise<number> {
+  const { connector, channelId, channelName, messageTs, fileId, fileName, scanResult } = params;
+  let count = 0;
+  for (const category of scanResult.detectedCategories) {
+    count++;
+    const fileKey = fileId
+      ? `slack://${channelName || channelId}/${messageTs}/${fileName || fileId}`
+      : `slack://${channelName || channelId}/${messageTs}`;
+
+    await prisma.interception_logs.create({
+      data: {
+        user_id: 'system_scanner',
+        organizationId: connector.organizationId,
+        input_text: fileId
+          ? `Scan of Slack file in #${channelName}`
+          : `Scan of Slack message in #${channelName}`,
+        decision: 'BLOCK',
+        confidence: 'High',
+        reason: `Data scan detected sensitive PII: ${category}`,
+        policy_triggered: 'Data Governance Baseline',
+        metadata: {
+          connector_id: connector.id,
+          violationType: category,
+          fileKey,
+          channelId,
+          channelName,
+          messageTs,
+          fileId: fileId || undefined,
+          fileName: fileName || undefined,
+          source_type: 'slack',
+          frameworks: scanResult.violatedFrameworks,
+          riskLevel: scanResult.riskLevel,
+          severity: scanResult.riskLevel,
+        },
+        timestamp: new Date(),
+      },
+    });
+  }
+  return count;
+}
+
+async function fetchSlackChannels(
+  slackClient: any,
+  connector: any
+): Promise<{ channels: Array<{ id: string; name: string }>; apiCalls: number }> {
+  let apiCalls = 0;
+  const config = (connector.config as Record<string, any>) || {};
+  const scope = (connector.scope as Record<string, any>) || {};
+
+  const includePrivate = Boolean(config.includePrivateChannels || scope.includePrivateChannels);
+  const channelTypes = includePrivate ? 'public_channel,private_channel' : 'public_channel';
+
+  const rawAllowed = config.allowedChannels || scope.channels;
+  const allowedSet = Array.isArray(rawAllowed) && rawAllowed.length > 0 ? new Set(rawAllowed.map(String)) : null;
+
+  const targetChannels: Array<{ id: string; name: string }> = [];
+  let cursor: string | undefined = undefined;
+
+  do {
+    const listLimit = Math.min(SLACK_SCAN_CONFIG.PAGE_LIMIT, SLACK_SCAN_CONFIG.MAX_CHANNELS - targetChannels.length);
+    const res = await callSlackWithBackoff<any>(() =>
+      slackClient.conversations.list({
+        types: channelTypes,
+        exclude_archived: true,
+        limit: listLimit,
+        cursor,
+      })
+    );
+    apiCalls++;
+
+    if (Array.isArray(res.channels)) {
+      for (const ch of res.channels) {
+        if (!ch.id || ch.is_archived) continue;
+        if (allowedSet && !allowedSet.has(ch.id) && !allowedSet.has(ch.name)) {
+          continue;
+        }
+        targetChannels.push({ id: ch.id, name: ch.name || ch.id });
+        if (targetChannels.length >= SLACK_SCAN_CONFIG.MAX_CHANNELS) break;
+      }
+    }
+
+    cursor = res.response_metadata?.next_cursor;
+  } while (cursor && targetChannels.length < SLACK_SCAN_CONFIG.MAX_CHANNELS);
+
+  return { channels: targetChannels, apiCalls };
+}
+
+async function scanSlackChannelMessages(
+  slackClient: any,
+  channel: { id: string; name: string },
+  connector: any,
+  botToken: string,
+  lastScannedTs: number
+): Promise<{ violations: number; apiCalls: number; bytesScanned: number; latestTs: number }> {
+  let violations = 0;
+  let apiCalls = 0;
+  let bytesScanned = 0;
+  let latestTs = lastScannedTs;
+
+  const sevenDaysAgo = (Date.now() - SLACK_SCAN_CONFIG.LOOKBACK_DAYS * 24 * 60 * 60 * 1000) / 1000;
+  const oldestSeconds = Math.max(sevenDaysAgo, lastScannedTs);
+
+  let msgCursor: string | undefined = undefined;
+  let messageCount = 0;
+
+  do {
+    const pageLimit = Math.min(
+      SLACK_SCAN_CONFIG.PAGE_LIMIT,
+      SLACK_SCAN_CONFIG.MAX_MESSAGES_PER_CHANNEL - messageCount
+    );
+
+    const histRes = await callSlackWithBackoff<any>(() =>
+      slackClient.conversations.history({
+        channel: channel.id,
+        oldest: String(oldestSeconds),
+        limit: pageLimit,
+        cursor: msgCursor,
+      })
+    );
+    apiCalls++;
+
+    if (Array.isArray(histRes.messages)) {
+      for (const msg of histRes.messages) {
+        messageCount++;
+        if (msg.subtype === 'bot_message' || msg.bot_id || msg.app_id) {
+          continue;
+        }
+
+        const msgTsNum = Number(msg.ts) || 0;
+        if (msgTsNum > 0 && msgTsNum <= lastScannedTs) {
+          continue;
+        }
+        if (msgTsNum > latestTs) {
+          latestTs = msgTsNum;
+        }
+
+        if (typeof msg.text === 'string' && msg.text.trim()) {
+          bytesScanned += Buffer.byteLength(msg.text);
+          const scanRes = PIIScannerService.scan(msg.text);
+          if (scanRes.piiDetected) {
+            violations += await recordSlackFinding({
+              connector,
+              channelId: channel.id,
+              channelName: channel.name,
+              messageTs: msg.ts,
+              scanResult: scanRes,
+            });
+          }
+        }
+
+        if (Array.isArray(msg.files)) {
+          for (const file of msg.files) {
+            if (!file.id || (file.size && file.size > SLACK_SCAN_CONFIG.MAX_FILE_SIZE_BYTES)) {
+              continue;
+            }
+            if (!isSupportedSlackTextFile(file)) continue;
+
+            const downloadUrl = file.url_private_download || file.url_private;
+            if (!downloadUrl) continue;
+
+            try {
+              const fileContent = await downloadSlackFileText(downloadUrl, botToken);
+              apiCalls++;
+              if (fileContent) {
+                bytesScanned += Buffer.byteLength(fileContent);
+                const fileScan = PIIScannerService.scan(fileContent);
+                if (fileScan.piiDetected) {
+                  violations += await recordSlackFinding({
+                    connector,
+                    channelId: channel.id,
+                    channelName: channel.name,
+                    messageTs: msg.ts,
+                    fileId: file.id,
+                    fileName: file.name,
+                    scanResult: fileScan,
+                  });
+                }
+              }
+            } catch (err) {
+              logger.warn(`[SlackScan] Could not scan file ${file.id} in #${channel.name}:`, err);
+            }
+          }
+        }
+
+        if (messageCount >= SLACK_SCAN_CONFIG.MAX_MESSAGES_PER_CHANNEL) break;
+      }
+    }
+
+    msgCursor = histRes.response_metadata?.next_cursor;
+  } while (msgCursor && messageCount < SLACK_SCAN_CONFIG.MAX_MESSAGES_PER_CHANNEL);
+
+  return { violations, apiCalls, bytesScanned, latestTs };
+}
+
+async function scanSlackSource(
+  connector: any,
+  creds: any
+): Promise<{ violations: number; apiCalls: number; bytesScanned: number }> {
+  let violations = 0;
+  let apiCalls = 0;
+  let bytesScanned = 0;
+
+  let botToken = '';
+  if (typeof creds === 'string') {
+    botToken = creds.trim();
+  } else if (creds && typeof creds === 'object') {
+    botToken = (creds.botToken || creds.token || '').trim();
+  }
+
+  if (!botToken) {
+    throw new Error('Missing Slack Bot User OAuth Token.');
+  }
+
+  const { WebClient } = require('@slack/web-api');
+  const slackClient = new WebClient(botToken);
+
+  const channelResult = await fetchSlackChannels(slackClient, connector);
+  apiCalls += channelResult.apiCalls;
+
+  const config = (connector.config as Record<string, any>) || {};
+  const existingTimestamps: Record<string, string> = { ...(config.lastScannedTimestamps || {}) };
+  const updatedTimestamps: Record<string, string> = { ...existingTimestamps };
+
+  for (const channel of channelResult.channels) {
+    const lastScanned = Number(existingTimestamps[channel.id]) || 0;
+    const chScan = await scanSlackChannelMessages(
+      slackClient,
+      channel,
+      connector,
+      botToken,
+      lastScanned
+    );
+
+    violations += chScan.violations;
+    apiCalls += chScan.apiCalls;
+    bytesScanned += chScan.bytesScanned;
+
+    if (chScan.latestTs > lastScanned) {
+      updatedTimestamps[channel.id] = String(chScan.latestTs);
+    }
+  }
+
+  try {
+    await prisma.connectors.update({
+      where: { id: connector.id },
+      data: {
+        config: {
+          ...config,
+          lastScannedTimestamps: updatedTimestamps,
+        },
+      },
+    });
+  } catch (err) {
+    logger.warn(`[SlackScan] Could not update scan timestamps for connector ${connector.id}:`, err);
+  }
+
+  return { violations, apiCalls, bytesScanned };
+}
+
 function formatConnectorScanError(err: any): string {
   const rawMsg = err?.message || String(err);
   if (rawMsg.includes('SSRF validation failed') || rawMsg.includes('private or internal network')) {
@@ -628,6 +962,18 @@ function formatConnectorScanError(err: any): string {
   if (rawMsg.includes('invalid_grant')) {
     return 'Google Drive authentication failed: Invalid service account private key or client email.';
   }
+  if (rawMsg.includes('invalid_auth') || rawMsg.includes('not_authed')) {
+    return 'Slack authentication failed: Invalid bot token.';
+  }
+  if (rawMsg.includes('missing_scope')) {
+    return 'Slack authorization error: Missing required OAuth scopes (channels:read, channels:history, files:read).';
+  }
+  if (rawMsg.includes('token_revoked') || rawMsg.includes('account_inactive')) {
+    return 'Slack connection failed: Bot token revoked or workspace inactive.';
+  }
+  if (rawMsg.includes('ratelimited')) {
+    return 'Slack rate limit exceeded: Too many requests.';
+  }
   return `Scan failed: ${rawMsg}`;
 }
 
@@ -640,6 +986,9 @@ async function executeSourceScan(type: string, connector: any, creds: any) {
   }
   if (type === 'sql' || type === 'postgres') {
     return await scanSqlSource(connector, creds);
+  }
+  if (type === 'slack') {
+    return await scanSlackSource(connector, creds);
   }
   return { violations: 0, apiCalls: 0, bytesScanned: 0 };
 }

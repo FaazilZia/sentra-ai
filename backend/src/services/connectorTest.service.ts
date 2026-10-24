@@ -174,6 +174,22 @@ const FRIENDLY_ERROR_RULES: FriendlyErrorRule[] = [
     matches: (msg) => msg.includes('File not found') || msg.includes('notFound') || msg.includes('folder not shared'),
     friendlyMessage: 'Target Google Drive folder or file not found or not shared with the service account email.',
   },
+  {
+    matches: (msg) => msg.includes('invalid_auth') || msg.includes('not_authed'),
+    friendlyMessage: 'Slack authentication failed: Invalid or missing bot token. Ensure you are using a Bot User OAuth Token starting with "xoxb-".',
+  },
+  {
+    matches: (msg) => msg.includes('token_revoked') || msg.includes('account_inactive') || msg.includes('app_uninstalled'),
+    friendlyMessage: 'Slack connection failed: Bot token has been revoked, the app is uninstalled, or workspace is inactive.',
+  },
+  {
+    matches: (msg) => msg.includes('missing_scope') || msg.includes('not_in_channel') || msg.includes('restricted_action'),
+    friendlyMessage: 'Slack authorization error: Missing required OAuth scopes. Ensure channels:read, channels:history, and files:read scopes are granted in your Slack app.',
+  },
+  {
+    matches: (msg) => msg.includes('ratelimited'),
+    friendlyMessage: 'Slack rate limit exceeded: Too many requests sent to the Slack API. Please wait before retrying.',
+  },
 ];
 
 export function formatFriendlyConnectorError(err: any): string {
@@ -451,6 +467,85 @@ async function testPostgresSource(
   }
 }
 
+async function testSlackSource(
+  config: Record<string, any>,
+  credentials: any
+): Promise<TestConnectionResult> {
+  let botToken = '';
+  if (typeof credentials === 'string') {
+    botToken = credentials.trim();
+  } else if (credentials && typeof credentials === 'object') {
+    botToken = (credentials.botToken || credentials.token || '').trim();
+  } else if (config && typeof config === 'object') {
+    botToken = (config.botToken || config.token || '').trim();
+  }
+
+  if (!botToken) {
+    return {
+      success: false,
+      message: 'Slack Bot User OAuth Token is required.',
+    };
+  }
+
+  if (!botToken.startsWith('xoxb-')) {
+    return {
+      success: false,
+      message: 'Invalid Slack bot token format. Bot tokens must begin with "xoxb-".',
+    };
+  }
+
+  const { WebClient } = require('@slack/web-api');
+  const client = new WebClient(botToken);
+
+  // 1. Verify authentication
+  const authRes = await client.auth.test();
+  if (!authRes.ok) {
+    return {
+      success: false,
+      message: `Slack authentication failed: ${authRes.error || 'Invalid credentials'}.`,
+    };
+  }
+
+  const workspaceName = authRes.team || authRes.url || 'Slack Workspace';
+
+  // 2. Count readable channels
+  let channelCount: number;
+  try {
+    const listRes = await client.conversations.list({
+      types: 'public_channel,private_channel',
+      exclude_archived: true,
+      limit: 100,
+    });
+    channelCount = Array.isArray(listRes.channels) ? listRes.channels.length : 0;
+  } catch (err: any) {
+    const rawMsg = err?.data?.error || err?.message || String(err);
+    if (rawMsg.includes('missing_scope')) {
+      return {
+        success: false,
+        message: 'Slack authorization error: Missing required OAuth scope "channels:read". Please add channels:read under Bot Token Scopes in your Slack app.',
+        details: { workspaceName },
+      };
+    }
+    throw err;
+  }
+
+  if (channelCount === 0) {
+    return {
+      success: true,
+      warning: true,
+      message: `Connected to Slack workspace "${workspaceName}", but 0 readable channels were found. Ensure the Slack app bot is invited to public or target channels.`,
+      details: { workspaceName, channelCount: 0 },
+    };
+  }
+
+  return {
+    success: true,
+    warning: false,
+    message: `Successfully connected to Slack workspace "${workspaceName}". Found ${channelCount} readable channel(s).`,
+    details: { workspaceName, channelCount },
+  };
+}
+
 /**
  * Tests connection to an external data source without persisting credentials or modifying state.
  */
@@ -472,10 +567,13 @@ export async function testConnectorSource(
     if (normalizedType === 'postgres') {
       return await testPostgresSource(config, credentials, isAdmin);
     }
+    if (normalizedType === 'slack') {
+      return await testSlackSource(config, credentials);
+    }
 
     return {
       success: false,
-      message: `Unsupported connector type "${type}". Allowed types: postgres, s3, gdrive.`,
+      message: `Unsupported connector type "${type}". Allowed types: postgres, s3, gdrive, slack.`,
     };
   } catch (err: any) {
     logger.warn(`Connector test connection failed for ${type}:`, err);

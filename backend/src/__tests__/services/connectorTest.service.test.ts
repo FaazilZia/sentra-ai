@@ -5,8 +5,16 @@ import { Client as PgClient } from 'pg';
 
 const mockDriveFn = jest.fn();
 const mockJwtFn = jest.fn();
+const mockSlackAuthTest = jest.fn();
+const mockSlackConversationsList = jest.fn();
 
 jest.mock('@aws-sdk/client-s3');
+jest.mock('@slack/web-api', () => ({
+  WebClient: jest.fn().mockImplementation(() => ({
+    auth: { test: mockSlackAuthTest },
+    conversations: { list: mockSlackConversationsList },
+  })),
+}));
 jest.mock('googleapis', () => ({
   __esModule: true,
   google: {
@@ -558,6 +566,71 @@ describe('Connector Test Connection Service', () => {
 
       expect(res.success).toBe(false);
       expect(res.message).toContain('SSRF validation failed');
+    });
+  });
+
+  describe('Slack Connection Test', () => {
+    const FAKE_SLACK_TOKEN = 'xoxb-fake-placeholder-test-bot-token-99999';
+
+    it('returns error if botToken is missing', async () => {
+      const res = await testConnectorSource('slack', {}, {});
+      expect(res.success).toBe(false);
+      expect(res.message).toContain('Token is required');
+    });
+
+    it('returns error if botToken does not start with xoxb-', async () => {
+      const res = await testConnectorSource('slack', {}, { botToken: 'invalid-token-123' });
+      expect(res.success).toBe(false);
+      expect(res.message).toContain("must begin with \"xoxb-\"");
+    });
+
+    it('returns success with channel count when auth succeeds and channels exist', async () => {
+      mockSlackAuthTest.mockResolvedValueOnce({
+        ok: true,
+        team: 'Test Workspace',
+        user_id: 'U12345',
+      });
+      mockSlackConversationsList.mockResolvedValueOnce({
+        ok: true,
+        channels: [{ id: 'C1', name: 'general' }],
+      });
+
+      const res = await testConnectorSource('slack', {}, { botToken: FAKE_SLACK_TOKEN });
+      expect(res.success).toBe(true);
+      expect(res.warning).toBe(false);
+      expect(res.message).toContain('Successfully connected to Slack workspace "Test Workspace"');
+      expect(res.details?.channelCount).toBe(1);
+    });
+
+    it('returns warning state when 0 readable channels found', async () => {
+      mockSlackAuthTest.mockResolvedValueOnce({
+        ok: true,
+        team: 'Test Workspace',
+        user_id: 'U12345',
+      });
+      mockSlackConversationsList.mockResolvedValueOnce({
+        ok: true,
+        channels: [],
+      });
+
+      const res = await testConnectorSource('slack', {}, { botToken: FAKE_SLACK_TOKEN });
+      expect(res.success).toBe(true);
+      expect(res.warning).toBe(true);
+      expect(res.message).toContain('0 readable channels were found');
+    });
+
+    it('handles missing_scope error with actionable message', async () => {
+      mockSlackAuthTest.mockResolvedValueOnce({
+        ok: true,
+        team: 'Test Workspace',
+      });
+      mockSlackConversationsList.mockRejectedValueOnce({
+        data: { error: 'missing_scope', needed: 'channels:read' },
+      });
+
+      const res = await testConnectorSource('slack', {}, { botToken: FAKE_SLACK_TOKEN });
+      expect(res.success).toBe(false);
+      expect(res.message).toContain('channels:read');
     });
   });
 });

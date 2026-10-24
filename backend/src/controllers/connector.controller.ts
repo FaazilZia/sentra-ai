@@ -168,6 +168,13 @@ function normalizeConnectorCredentials(
       driveScope: parsed.driveScope || (config as any)?.driveScope,
     };
   }
+  if (type === 'slack' && rawCreds) {
+    if (typeof rawCreds === 'string') {
+      return { botToken: rawCreds.trim() };
+    }
+    const token = rawCreds.botToken || rawCreds.token || (config as any)?.botToken || (config as any)?.token;
+    return { botToken: typeof token === 'string' ? token.trim() : '' };
+  }
   return rawCreds;
 }
 
@@ -183,6 +190,8 @@ function buildCleanConnectorConfig(
   delete cleanConfig.password;
   delete cleanConfig.private_key;
   delete cleanConfig.privateKey;
+  delete cleanConfig.botToken;
+  delete cleanConfig.token;
   delete cleanConfig.allowCustomPortApprovedBy;
   delete cleanConfig.allowCustomPortApprovedAt;
 
@@ -204,7 +213,7 @@ export const createConnector = asyncHandler(async (req: any, res: Response) => {
 
   const { name, type, config, credentials, scope } = req.body as {
     name: string;
-    type: 'postgres' | 'sql' | 'gdrive' | 's3';
+    type: 'postgres' | 'sql' | 'gdrive' | 's3' | 'slack';
     config?: Record<string, unknown>;
     credentials?: Record<string, unknown> | string;
     scope?: Record<string, unknown>;

@@ -13,6 +13,9 @@ import {
   Info,
   Server,
   ShieldAlert,
+  MessageSquare,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import {
   fetchConnectors,
@@ -44,7 +47,7 @@ export function InboundConnectorsCard() {
 
   // Form states
   const [name, setName] = useState('');
-  const [type, setType] = useState<'postgres' | 's3' | 'gdrive'>('postgres');
+  const [type, setType] = useState<'postgres' | 's3' | 'gdrive' | 'slack'>('postgres');
 
   // Postgres fields
   const [pgHost, setPgHost] = useState('');
@@ -65,6 +68,11 @@ export function InboundConnectorsCard() {
   // GDrive fields
   const [gdriveEmail, setGdriveEmail] = useState('');
   const [gdrivePrivateKey, setGdrivePrivateKey] = useState('');
+
+  // Slack fields
+  const [slackBotToken, setSlackBotToken] = useState('');
+  const [slackIncludePrivate, setSlackIncludePrivate] = useState(false);
+  const [showSlackToken, setShowSlackToken] = useState(false);
 
   // Action states
   const [testing, setTesting] = useState(false);
@@ -145,15 +153,28 @@ export function InboundConnectorsCard() {
       };
     }
 
+    if (type === 'gdrive') {
+      return {
+        name,
+        type: 'gdrive',
+        config: {
+          client_email: gdriveEmail,
+        },
+        credentials: {
+          client_email: gdriveEmail,
+          private_key: gdrivePrivateKey,
+        },
+      };
+    }
+
     return {
       name,
-      type: 'gdrive',
+      type: 'slack',
       config: {
-        client_email: gdriveEmail,
+        includePrivateChannels: slackIncludePrivate,
       },
       credentials: {
-        client_email: gdriveEmail,
-        private_key: gdrivePrivateKey,
+        botToken: slackBotToken.trim(),
       },
     };
   };
@@ -170,14 +191,18 @@ export function InboundConnectorsCard() {
       });
 
       if (res.success) {
-        const isWarning = Boolean(res.warning || res.message?.includes('0 readable file'));
+        const isWarning = Boolean(
+          res.warning ||
+          res.message?.includes('0 readable file') ||
+          res.message?.includes('0 readable channel')
+        );
         setTestResult({
           success: true,
           warning: isWarning,
-          message: res.message || (isWarning ? 'Connected to Google Drive API, but 0 readable files were found in scope.' : 'Connection test successful!'),
+          message: res.message || (isWarning ? 'Connected, but 0 readable items were found in scope.' : 'Connection test successful!'),
         });
         addToast({
-          message: isWarning ? (res.message || 'Connected, but 0 readable files found in scope') : 'Connection test passed!',
+          message: isWarning ? (res.message || 'Connected, but 0 readable items found in scope') : 'Connection test passed!',
           type: isWarning ? 'warning' : 'info',
         });
       } else {
@@ -217,6 +242,8 @@ export function InboundConnectorsCard() {
       setName('');
       setTestResult(null);
       setPgAllowSelfSigned(false);
+      setSlackBotToken('');
+      setSlackIncludePrivate(false);
       await loadConnectors();
     } catch (err: any) {
       addToast({ message: err.message || 'Failed to save connector', type: 'error' });
@@ -264,6 +291,8 @@ export function InboundConnectorsCard() {
         return <Cloud className="h-4 w-4 text-amber-400" />;
       case 'gdrive':
         return <HardDrive className="h-4 w-4 text-emerald-400" />;
+      case 'slack':
+        return <MessageSquare className="h-4 w-4 text-purple-400" />;
       default:
         return <Server className="h-4 w-4 text-zinc-400" />;
     }
@@ -278,6 +307,8 @@ export function InboundConnectorsCard() {
         return 'Amazon S3';
       case 'gdrive':
         return 'Google Drive';
+      case 'slack':
+        return 'Slack Workspace';
       default:
         return connType.toUpperCase();
     }
@@ -301,7 +332,7 @@ export function InboundConnectorsCard() {
             No Inbound Connectors Configured
           </p>
           <p className="text-[10px] text-[var(--text-muted)] mt-1 max-w-md mx-auto">
-            Connect a PostgreSQL database, Amazon S3 bucket, or Google Drive folder to begin scanning your enterprise assets for sensitive data.
+            Connect a PostgreSQL database, Amazon S3 bucket, Google Drive folder, or Slack workspace to begin scanning your enterprise assets for sensitive data.
           </p>
         </div>
       );
@@ -485,6 +516,7 @@ export function InboundConnectorsCard() {
                 <option value="postgres">PostgreSQL (Metadata Only)</option>
                 <option value="s3">Amazon S3</option>
                 <option value="gdrive">Google Drive</option>
+                <option value="slack">Slack Workspace</option>
               </select>
             </div>
           </div>
@@ -750,6 +782,74 @@ export function InboundConnectorsCard() {
                   onChange={(e) => setGdrivePrivateKey(e.target.value)}
                   className="w-full bg-[var(--card-bg)] border border-[var(--border-default)] rounded px-3 py-2 text-xs font-mono text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
                 />
+              </div>
+            </div>
+          )}
+
+          {/* Type 4: Slack Workspace */}
+          {type === 'slack' && (
+            <div className="space-y-4 pt-2">
+              <div className="flex items-start gap-2 bg-purple-500/10 border border-purple-500/20 rounded p-3 text-[10px] text-purple-300">
+                <Info className="h-4 w-4 shrink-0 text-purple-400 mt-0.5" />
+                <div>
+                  <strong className="font-semibold block uppercase tracking-wide">Slack Inbound Scanning:</strong>{' '}
+                  Sentraa scans public and configured workspace channels for PII and compliance violations using your Slack App Bot User OAuth Token.
+                  <strong className="text-white"> Zero raw message text or file content is stored.</strong> Only findings and metadata are retained.
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="slack-bot-token" className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1">
+                  Bot User OAuth Token *
+                </label>
+                <div className="relative">
+                  <input
+                    id="slack-bot-token"
+                    type={showSlackToken ? 'text' : 'password'}
+                    required
+                    placeholder="xoxb-your-slack-bot-token"
+                    value={slackBotToken}
+                    onChange={(e) => setSlackBotToken(e.target.value)}
+                    className="w-full bg-[var(--card-bg)] border border-[var(--border-default)] rounded px-3 py-2 text-xs font-mono text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)] pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowSlackToken(!showSlackToken)}
+                    className="absolute right-2.5 top-2.5 text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                    title={showSlackToken ? 'Hide token' : 'Show token'}
+                  >
+                    {showSlackToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                <p className="text-[10px] text-[var(--text-muted)] mt-1">
+                  Must start with <code className="font-mono text-white">xoxb-</code>. Stored encrypted at rest with AES-256-GCM.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  id="slack-include-private"
+                  type="checkbox"
+                  checked={slackIncludePrivate}
+                  onChange={(e) => setSlackIncludePrivate(e.target.checked)}
+                  className="rounded border-[var(--border-default)] bg-[var(--card-bg)] text-[var(--royal-indigo)] focus:ring-[var(--royal-indigo)]/20"
+                />
+                <label htmlFor="slack-include-private" className="text-xs text-[var(--text-secondary)] cursor-pointer">
+                  Include private channels (requires bot to be invited to each private channel)
+                </label>
+              </div>
+
+              <div className="bg-black/5 border border-[var(--border-default)] rounded p-3 text-[10px] space-y-1.5 text-[var(--text-secondary)]">
+                <div className="flex items-center text-[var(--text-primary)] font-semibold uppercase tracking-wide">
+                  <Info className="h-3.5 w-3.5 text-purple-400 mr-1.5" />
+                  Required Slack Bot Token Scopes
+                </div>
+                <ul className="list-disc list-inside space-y-0.5 pl-1">
+                  <li><code className="font-mono text-purple-300">channels:read</code> — View public channels in workspace</li>
+                  <li><code className="font-mono text-purple-300">channels:history</code> — Read message history for compliance scanning</li>
+                  <li><code className="font-mono text-purple-300">files:read</code> — Scan attached documents and text files for PII</li>
+                  <li><code className="font-mono text-[var(--text-muted)]">groups:read</code>, <code className="font-mono text-[var(--text-muted)]">groups:history</code> (Optional, for private channels)</li>
+                </ul>
               </div>
             </div>
           )}

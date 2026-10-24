@@ -119,6 +119,8 @@ export function sanitizeConnector<T extends Record<string, any>>(connector: T): 
     delete configCopy.secretAccessKey;
     delete configCopy.private_key;
     delete configCopy.privateKey;
+    delete configCopy.botToken;
+    delete configCopy.token;
     (copy as any).config = configCopy;
   }
   return copy;

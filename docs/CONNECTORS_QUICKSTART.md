@@ -158,7 +158,44 @@ Scans Google Drive documents, text files, and shared drives for sensitive tokens
 
 ---
 
-## 6. Model Context Protocol (MCP) Gateway Proxy
+## 6. Slack Inbound Scanner (Workspace Compliance & PII Scanning)
+
+Scans Slack workspace channels and shared documents for sensitive PII (SSNs, credit card numbers, passwords, API tokens) and regulatory compliance violations.
+
+> [!IMPORTANT]
+> **Zero Customer Content Storage Guarantee:** Sentraa scans messages and attached files in-memory to detect compliance and PII violations. Sentraa **NEVER stores raw message text or raw file content**. Only detected violation categories, severity, channel metadata, and message timestamps are preserved in the audit log.
+
+### Step-by-Step Slack App Setup
+1. Visit the [Slack API App Console](https://api.slack.com/apps) and click **Create New App** -> **From scratch**.
+2. Name your app (e.g. `Sentraa Compliance Scanner`) and select your target workspace.
+3. In the sidebar, navigate to **OAuth & Permissions**.
+4. Scroll to **Scopes** -> **Bot Token Scopes** and add the following least-privilege scopes:
+   - `channels:read` — View public channels across the workspace.
+   - `channels:history` — Read message history in public channels for compliance scanning.
+   - `files:read` — Inspect attached documents and text files for PII.
+   - *(Optional for private channels)*: `groups:read` and `groups:history` (only scans private channels where the bot is explicitly invited).
+5. Scroll up and click **Install to Workspace** (or **Reinstall to Workspace**).
+6. Copy the generated **Bot User OAuth Token** (starts with `xoxb-`).
+
+### Setup in Sentraa Dashboard
+1. Go to **Settings -> Alerts & Connectors** (or **Settings -> General**).
+2. Under **Inbound Data Connectors**, click **Add Connector** and select **Slack Workspace**.
+3. Fill in:
+   - **Connector Name:** e.g., `Corporate Slack Workspace`
+   - **Bot User OAuth Token:** Paste your Bot User OAuth Token (`xoxb-...`).
+   - **Include Private Channels:** Check only if you need to scan private channels and have invited the bot to those channels.
+4. Click **Test Connection** to verify workspace connectivity and channel access.
+5. Click **Save Connector**.
+
+### Security & Operational Guardrails
+- **Credential Encryption:** Bot tokens are encrypted at rest with AES-256-GCM and never returned to the frontend after saving.
+- **Rate Limit Resilience:** Automatic HTTP 429 exponential backoff respecting Slack's `Retry-After` header prevents workspace API throttling.
+- **Safety Caps & Lookback Window:** Scans are bounded to a default 7-day lookback window, max 25 channels, max 100 messages per channel, and 1MB max file size to avoid resource exhaustion.
+- **Deduplication:** Already-scanned messages and bot messages are automatically skipped.
+
+---
+
+## 7. Model Context Protocol (MCP) Gateway Proxy
 
 Sentraa provides an enterprise governance proxy for Model Context Protocol (MCP) clients such as Claude Desktop, Cursor, or external autonomous agents.
 
