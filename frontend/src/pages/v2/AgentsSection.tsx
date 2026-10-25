@@ -97,13 +97,29 @@ export default function AgentsSection() {
     loadAgentsData();
   }, [loadAgentsData]);
 
-  const handleScanDiscovery = () => {
+  const handleScanDiscovery = async () => {
     setScanning(true);
-    addToast({ message: 'Scanning network endpoints & API gateways for shadow agents...', type: 'info' });
-    setTimeout(() => {
+    addToast({ message: 'Triggering discovery scan across connected sources...', type: 'info' });
+    try {
+      const res = await apiRequest<any>('/ai-systems/sync', { method: 'POST' });
+      const count = Array.isArray(res?.data)
+        ? res.data.length
+        : Array.isArray(res)
+          ? res.length
+          : 0;
+      await loadAgentsData();
+      addToast({
+        message: `Discovery scan completed. Found ${count} agent${count === 1 ? '' : 's'} across connectors.`,
+        type: 'success'
+      });
+    } catch (err: any) {
+      addToast({
+        message: err.message || 'Failed to complete discovery scan.',
+        type: 'error'
+      });
+    } finally {
       setScanning(false);
-      addToast({ message: 'Discovery scan completed. 2 shadow agent tokens flagged.', type: 'success' });
-    }, 2000);
+    }
   };
 
   const shadowCount = agents.filter(a => a.isShadow).length;
@@ -323,9 +339,14 @@ export default function AgentsSection() {
             <button
               onClick={handleScanDiscovery}
               disabled={scanning}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-lg shadow-sm flex items-center gap-2"
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold text-xs rounded-lg shadow-sm flex items-center gap-2"
             >
-              <Play className="h-3.5 w-3.5 fill-current" /> Trigger Discovery Scan
+              {scanning ? (
+                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Play className="h-3.5 w-3.5 fill-current" />
+              )}
+              {scanning ? 'Scanning...' : 'Trigger Discovery Scan'}
             </button>
           </div>
 

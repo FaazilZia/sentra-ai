@@ -194,6 +194,62 @@ describe('Slack Inbound Scanning Connector', () => {
       expect(result.message).toContain('channels:read');
     });
 
+    it('requests public_channel only by default and public_channel,private_channel when includePrivateChannels is true', async () => {
+      mockAuthTest.mockResolvedValue({
+        ok: true,
+        team: 'Acme Corp',
+        user_id: 'U12345',
+      });
+      mockConversationsList.mockResolvedValue({
+        ok: true,
+        channels: [{ id: 'C1', name: 'general' }],
+      });
+
+      // 1. Default (no includePrivateChannels)
+      await testConnectorSource('slack', {}, { botToken: FAKE_TEST_TOKEN });
+      expect(mockConversationsList).toHaveBeenLastCalledWith(
+        expect.objectContaining({ types: 'public_channel' })
+      );
+
+      // 2. Explicit includePrivateChannels: false
+      await testConnectorSource('slack', { includePrivateChannels: false }, { botToken: FAKE_TEST_TOKEN });
+      expect(mockConversationsList).toHaveBeenLastCalledWith(
+        expect.objectContaining({ types: 'public_channel' })
+      );
+
+      // 3. With includePrivateChannels: true
+      await testConnectorSource('slack', { includePrivateChannels: true }, { botToken: FAKE_TEST_TOKEN });
+      expect(mockConversationsList).toHaveBeenLastCalledWith(
+        expect.objectContaining({ types: 'public_channel,private_channel' })
+      );
+    });
+
+    it('uses Slack needed and provided error fields to name the actual missing scope without assuming channels:read', async () => {
+      mockAuthTest.mockResolvedValueOnce({
+        ok: true,
+        team: 'Acme Corp',
+        user_id: 'U12345',
+      });
+      mockConversationsList.mockRejectedValueOnce({
+        data: {
+          error: 'missing_scope',
+          needed: 'groups:read',
+          provided: 'channels:read,channels:history,files:read',
+        },
+      });
+
+      const result = await testConnectorSource(
+        'slack',
+        { includePrivateChannels: true },
+        { botToken: FAKE_TEST_TOKEN }
+      );
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('Missing required OAuth scope "groups:read"');
+      expect(result.message).toContain('provided: "channels:read,channels:history,files:read"');
+      expect(result.message).not.toContain('Missing required OAuth scope "channels:read"');
+      expect(result.details?.needed).toBe('groups:read');
+    });
+
     it('returns warning state when 0 readable channels are found', async () => {
       mockAuthTest.mockResolvedValueOnce({
         ok: true,
@@ -250,7 +306,7 @@ describe('Slack Inbound Scanning Connector', () => {
       });
       mockConversationsList.mockResolvedValueOnce({
         ok: true,
-        channels: [{ id: 'C1', name: 'general' }],
+        channels: [{ id: 'C1', name: 'general', is_member: true }],
       });
 
       const result = await testConnectorSource(
@@ -288,7 +344,7 @@ describe('Slack Inbound Scanning Connector', () => {
 
       mockConversationsList.mockResolvedValueOnce({
         ok: true,
-        channels: [{ id: 'C123', name: 'general', is_archived: false }],
+        channels: [{ id: 'C123', name: 'general', is_archived: false, is_member: true }],
         response_metadata: {},
       });
 
@@ -341,7 +397,7 @@ describe('Slack Inbound Scanning Connector', () => {
 
       mockConversationsList.mockResolvedValueOnce({
         ok: true,
-        channels: [{ id: 'C123', name: 'alerts', is_archived: false }],
+        channels: [{ id: 'C123', name: 'alerts', is_archived: false, is_member: true }],
       });
 
       mockConversationsHistory.mockResolvedValueOnce({
@@ -374,7 +430,7 @@ describe('Slack Inbound Scanning Connector', () => {
 
       mockConversationsList.mockResolvedValueOnce({
         ok: true,
-        channels: [{ id: 'C123', name: 'general', is_archived: false }],
+        channels: [{ id: 'C123', name: 'general', is_archived: false, is_member: true }],
       });
 
       mockConversationsHistory.mockResolvedValueOnce({
@@ -400,13 +456,13 @@ describe('Slack Inbound Scanning Connector', () => {
       mockConversationsList
         .mockResolvedValueOnce({
           ok: true,
-          channels: [{ id: 'C1', name: 'general' }],
+          channels: [{ id: 'C1', name: 'general', is_member: true }],
           response_metadata: { next_cursor: 'cursor-page-2' },
         })
         // Page 2 of channels
         .mockResolvedValueOnce({
           ok: true,
-          channels: [{ id: 'C2', name: 'engineering' }],
+          channels: [{ id: 'C2', name: 'engineering', is_member: true }],
           response_metadata: {},
         });
 
@@ -460,7 +516,7 @@ describe('Slack Inbound Scanning Connector', () => {
 
       mockConversationsList.mockResolvedValueOnce({
         ok: true,
-        channels: [{ id: 'C123', name: 'confidential' }],
+        channels: [{ id: 'C123', name: 'confidential', is_member: true }],
       });
 
       // Mock fetch for Slack private file download
@@ -513,7 +569,7 @@ describe('Slack Inbound Scanning Connector', () => {
 
       mockConversationsList.mockResolvedValueOnce({
         ok: true,
-        channels: [{ id: 'C1', name: 'general' }],
+        channels: [{ id: 'C1', name: 'general', is_member: true }],
       });
 
       mockConversationsHistory.mockResolvedValueOnce({
@@ -530,6 +586,133 @@ describe('Slack Inbound Scanning Connector', () => {
         expect(call[0].data.organizationId).toBe(ORG_A);
         expect(call[0].data.organizationId).not.toBe(ORG_B);
       }
+    });
+
+    it('filters out unjoined public channels and only scans channels where is_member is true', async () => {
+      const connector = createMockConnector();
+      (prisma.connectors.findUnique as jest.Mock).mockResolvedValueOnce(connector);
+
+      mockConversationsList.mockResolvedValueOnce({
+        ok: true,
+        channels: [
+          { id: 'C_UNJOINED_1', name: 'all-sentra-test', is_archived: false, is_member: false },
+          { id: 'C_JOINED_1', name: 'sentra-test', is_archived: false, is_member: true },
+          { id: 'C_UNJOINED_2', name: 'sentra-empty', is_archived: false, is_member: false },
+        ],
+      });
+
+      mockConversationsHistory.mockResolvedValueOnce({
+        ok: true,
+        messages: [{ ts: '1700000001.0001', text: 'Email contact person@example.com' }],
+      });
+
+      await processConnectorScan('slack', CONNECTOR_ID);
+
+      // conversations.history must only be called for the joined channel
+      expect(mockConversationsHistory).toHaveBeenCalledTimes(1);
+      expect(mockConversationsHistory).toHaveBeenCalledWith(
+        expect.objectContaining({ channel: 'C_JOINED_1' })
+      );
+      expect(prisma.interception_logs.create).toHaveBeenCalled();
+    });
+
+    it('continues scanning remaining channels if one channel throws not_in_channel or single-channel error mid-scan', async () => {
+      const connector = createMockConnector();
+      (prisma.connectors.findUnique as jest.Mock).mockResolvedValueOnce(connector);
+
+      mockConversationsList.mockResolvedValueOnce({
+        ok: true,
+        channels: [
+          { id: 'C1', name: 'channel-fail', is_archived: false, is_member: true },
+          { id: 'C2', name: 'channel-success', is_archived: false, is_member: true },
+        ],
+      });
+
+      // Channel 1 fails with not_in_channel
+      mockConversationsHistory
+        .mockRejectedValueOnce({
+          data: { ok: false, error: 'not_in_channel' },
+        })
+        // Channel 2 succeeds and finds PII
+        .mockResolvedValueOnce({
+          ok: true,
+          messages: [{ ts: '1700000002.0001', text: 'Phone is 9876543210' }],
+        });
+
+      await processConnectorScan('slack', CONNECTOR_ID);
+
+      expect(mockConversationsHistory).toHaveBeenCalledTimes(2);
+      expect(prisma.interception_logs.create).toHaveBeenCalled();
+      expect(prisma.connectors.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: CONNECTOR_ID },
+          data: expect.objectContaining({
+            status: 'active',
+            last_error: null,
+          }),
+        })
+      );
+    });
+
+    it('completes cleanly with amber warning when zero member channels exist', async () => {
+      const connector = createMockConnector();
+      (prisma.connectors.findUnique as jest.Mock).mockResolvedValueOnce(connector);
+
+      mockConversationsList.mockResolvedValueOnce({
+        ok: true,
+        channels: [
+          { id: 'C1', name: 'sentra-empty', is_archived: false, is_member: false },
+          { id: 'C2', name: 'social', is_archived: false, is_member: false },
+        ],
+      });
+
+      await processConnectorScan('slack', CONNECTOR_ID);
+
+      // No channel history should be called
+      expect(mockConversationsHistory).not.toHaveBeenCalled();
+      expect(prisma.interception_logs.create).not.toHaveBeenCalled();
+
+      // Updates connector with amber warning status and notice message
+      expect(prisma.connectors.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: CONNECTOR_ID },
+          data: expect.objectContaining({
+            status: 'warning',
+            last_error: '0 readable channels, invite the bot with /invite',
+          }),
+        })
+      );
+    });
+
+    it('handles scan where every channel encounters an error without failing the overall worker job', async () => {
+      const connector = createMockConnector();
+      (prisma.connectors.findUnique as jest.Mock).mockResolvedValueOnce(connector);
+
+      mockConversationsList.mockResolvedValueOnce({
+        ok: true,
+        channels: [
+          { id: 'C1', name: 'err1', is_archived: false, is_member: true },
+          { id: 'C2', name: 'err2', is_archived: false, is_member: true },
+        ],
+      });
+
+      mockConversationsHistory
+        .mockRejectedValueOnce(new Error('Channel archived mid-scan'))
+        .mockRejectedValueOnce({ data: { error: 'channel_not_found' } });
+
+      await processConnectorScan('slack', CONNECTOR_ID);
+
+      expect(mockConversationsHistory).toHaveBeenCalledTimes(2);
+      expect(prisma.interception_logs.create).not.toHaveBeenCalled();
+      expect(prisma.connectors.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: CONNECTOR_ID },
+          data: expect.objectContaining({
+            status: 'active',
+            last_error: null,
+          }),
+        })
+      );
     });
   });
 

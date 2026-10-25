@@ -753,6 +753,8 @@ async function fetchSlackChannels(
     if (Array.isArray(res.channels)) {
       for (const ch of res.channels) {
         if (!ch.id || ch.is_archived) continue;
+        // Only include channels where the bot is actually a member
+        if (!ch.is_member) continue;
         if (allowedSet && !allowedSet.has(ch.id) && !allowedSet.has(ch.name)) {
           continue;
         }
@@ -791,15 +793,23 @@ async function scanSlackChannelMessages(
       SLACK_SCAN_CONFIG.MAX_MESSAGES_PER_CHANNEL - messageCount
     );
 
-    const histRes = await callSlackWithBackoff<any>(() =>
-      slackClient.conversations.history({
-        channel: channel.id,
-        oldest: String(oldestSeconds),
-        limit: pageLimit,
-        cursor: msgCursor,
-      })
-    );
-    apiCalls++;
+    let histRes: any;
+    try {
+      histRes = await callSlackWithBackoff<any>(() =>
+        slackClient.conversations.history({
+          channel: channel.id,
+          oldest: String(oldestSeconds),
+          limit: pageLimit,
+          cursor: msgCursor,
+        })
+      );
+      apiCalls++;
+    } catch (err: any) {
+      const errCode = err?.data?.error || err?.message || String(err);
+      logger.warn(`[SlackScan] conversations.history failed for #${channel.name} (${channel.id}): ${errCode}`);
+      // Single channel history error - stop reading this channel and return what was scanned
+      break;
+    }
 
     if (Array.isArray(histRes.messages)) {
       for (const msg of histRes.messages) {
@@ -877,7 +887,7 @@ async function scanSlackChannelMessages(
 async function scanSlackSource(
   connector: any,
   creds: any
-): Promise<{ violations: number; apiCalls: number; bytesScanned: number }> {
+): Promise<{ violations: number; apiCalls: number; bytesScanned: number; warning?: string }> {
   let violations = 0;
   let apiCalls = 0;
   let bytesScanned = 0;
@@ -899,26 +909,40 @@ async function scanSlackSource(
   const channelResult = await fetchSlackChannels(slackClient, connector);
   apiCalls += channelResult.apiCalls;
 
+  if (channelResult.channels.length === 0) {
+    logger.info(`[SlackScan] Zero readable member channels found for connector ${connector.id}.`);
+    return {
+      violations: 0,
+      apiCalls,
+      bytesScanned: 0,
+      warning: '0 readable channels, invite the bot with /invite',
+    };
+  }
+
   const config = (connector.config as Record<string, any>) || {};
   const existingTimestamps: Record<string, string> = { ...(config.lastScannedTimestamps || {}) };
   const updatedTimestamps: Record<string, string> = { ...existingTimestamps };
 
   for (const channel of channelResult.channels) {
-    const lastScanned = Number(existingTimestamps[channel.id]) || 0;
-    const chScan = await scanSlackChannelMessages(
-      slackClient,
-      channel,
-      connector,
-      botToken,
-      lastScanned
-    );
+    try {
+      const lastScanned = Number(existingTimestamps[channel.id]) || 0;
+      const chScan = await scanSlackChannelMessages(
+        slackClient,
+        channel,
+        connector,
+        botToken,
+        lastScanned
+      );
 
-    violations += chScan.violations;
-    apiCalls += chScan.apiCalls;
-    bytesScanned += chScan.bytesScanned;
+      violations += chScan.violations;
+      apiCalls += chScan.apiCalls;
+      bytesScanned += chScan.bytesScanned;
 
-    if (chScan.latestTs > lastScanned) {
-      updatedTimestamps[channel.id] = String(chScan.latestTs);
+      if (chScan.latestTs > lastScanned) {
+        updatedTimestamps[channel.id] = String(chScan.latestTs);
+      }
+    } catch (err: any) {
+      logger.warn(`[SlackScan] Error scanning channel #${channel.name} (${channel.id}), skipping:`, err);
     }
   }
 
@@ -974,10 +998,18 @@ function formatConnectorScanError(err: any): string {
   if (rawMsg.includes('ratelimited')) {
     return 'Slack rate limit exceeded: Too many requests.';
   }
+  if (rawMsg.includes('not_in_channel')) {
+    return 'Slack channel error: Bot is not a member of the channel. Invite the bot using /invite.';
+  }
   return `Scan failed: ${rawMsg}`;
 }
 
-async function executeSourceScan(type: string, connector: any, creds: any) {
+async function executeSourceScan(type: string, connector: any, creds: any): Promise<{
+  violations: number;
+  apiCalls: number;
+  bytesScanned: number;
+  warning?: string;
+}> {
   if (type === 's3') {
     return await scanS3Source(connector, creds);
   }
@@ -1032,7 +1064,7 @@ export async function processConnectorScan(type: string, connectorId: string) {
     }
 
     logger.info(`Worker: Starting real scan for ${connector.name} (${type})`);
-    const { violations, apiCalls, bytesScanned } = await executeSourceScan(type, connector, creds);
+    const { violations, apiCalls, bytesScanned, warning } = await executeSourceScan(type, connector, creds);
 
     // 3. Final Updates
     const scanCost = apiCalls * 0.001; // Base cost estimate per API call
@@ -1045,8 +1077,8 @@ export async function processConnectorScan(type: string, connectorId: string) {
         total_api_calls: { increment: apiCalls },
         total_data_scanned: { increment: BigInt(bytesScanned) },
         health_score: violations > 0 ? Math.max(0, connector.health_score - 10) : 100,
-        status: 'active',
-        last_error: null,
+        status: warning ? 'warning' : 'active',
+        last_error: warning || null,
         updated_at: new Date()
       }
     });

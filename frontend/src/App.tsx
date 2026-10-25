@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { LoaderCircle } from 'lucide-react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
 import { AuthProvider, useAuth } from './lib/auth';
 import { SidebarProvider } from './context/SidebarContext';
@@ -60,8 +60,6 @@ const HIPAAPage = lazy(() => import('./pages/HIPAA'));
 const PCIDSSPage = lazy(() => import('./pages/PCIDSS'));
 const DPDPPage = lazy(() => import('./pages/DPDP'));
 
-
-
 import { ModalProvider } from './components/shared/ModalProvider';
 import { ToastProvider } from './components/shared/ToastProvider';
 
@@ -76,8 +74,58 @@ function RouteFallback() {
   );
 }
 
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return <RouteFallback />;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return <AppLayout>{children}</AppLayout>;
+}
+
+function LoginRoute() {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+  const from = (location.state as any)?.from?.pathname || '/app';
+
+  if (loading) {
+    return <RouteFallback />;
+  }
+
+  if (user) {
+    return <Navigate to={from} replace />;
+  }
+
+  return <LoginPage />;
+}
+
+function SuperadminRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return <RouteFallback />;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (user.role !== 'SUPER_ADMIN') {
+    return <Navigate to="/app" replace />;
+  }
+
+  return <AppLayout>{children}</AppLayout>;
+}
+
 function AppRoutes() {
-  const { loading, user } = useAuth();
+  const { loading } = useAuth();
 
   if (loading) {
     return (
@@ -91,249 +139,84 @@ function AppRoutes() {
   }
 
   return (
-    <BrowserRouter>
-      <SidebarProvider>
-        <Suspense fallback={<RouteFallback />}>
-          <Routes>
-            {/* Standalone completely public trust portal bypasses app shell */}
-            <Route path="/public/:orgSlug/trust" element={<TrustPortalPage />} />
-            <Route path="/share/:token" element={<SharedViewPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/accept-invite" element={<AcceptInvitePage />} />
+    <SidebarProvider>
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
+          {/* Standalone completely public trust portal bypasses app shell */}
+          <Route path="/public/:orgSlug/trust" element={<TrustPortalPage />} />
+          <Route path="/share/:token" element={<SharedViewPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/accept-invite" element={<AcceptInvitePage />} />
 
-            <Route path="/login" element={!user ? <LoginPage /> : <Navigate to="/app" replace />} />
+          <Route path="/login" element={<LoginRoute />} />
 
-            <Route 
-              path="/app" 
-              element={user ? <AppLayout><DashboardPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
+          <Route path="/app" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+          <Route path="/app/agents" element={<ProtectedRoute><AgentsPage /></ProtectedRoute>} />
+          <Route path="/app/activity" element={<ProtectedRoute><ActivityPage /></ProtectedRoute>} />
+          <Route path="/app/policies" element={<ProtectedRoute><PoliciesPage /></ProtectedRoute>} />
+          <Route path="/app/incidents" element={<ProtectedRoute><IncidentManagementPage /></ProtectedRoute>} />
+          <Route path="/app/guardrails" element={<ProtectedRoute><GuardrailsPage /></ProtectedRoute>} />
+          <Route path="/app/risk" element={<ProtectedRoute><RiskCenterPage /></ProtectedRoute>} />
+          <Route path="/app/compliance" element={<ProtectedRoute><CompliancePage /></ProtectedRoute>} />
+          <Route path="/app/evidence" element={<ProtectedRoute><EvidencePage /></ProtectedRoute>} />
+          <Route path="/app/drift" element={<ProtectedRoute><DriftPage /></ProtectedRoute>} />
+          <Route path="/app/shadow" element={<ProtectedRoute><ShadowAIPage /></ProtectedRoute>} />
+          <Route path="/app/inventory" element={<ProtectedRoute><InventoryPage /></ProtectedRoute>} />
+          <Route path="/app/consent" element={<ProtectedRoute><ConsentManagerPage /></ProtectedRoute>} />
+          <Route path="/app/ai-registry" element={<ProtectedRoute><AIRegistryPage /></ProtectedRoute>} />
+          <Route path="/app/risk-assessment" element={<ProtectedRoute><RiskAssessmentPage /></ProtectedRoute>} />
+          <Route path="/app/impact-assessments" element={<ProtectedRoute><ImpactAssessmentsPage /></ProtectedRoute>} />
+          <Route path="/app/controls" element={<ProtectedRoute><ControlsPage /></ProtectedRoute>} />
+          <Route path="/app/vendor-risk" element={<ProtectedRoute><VendorRiskPage /></ProtectedRoute>} />
+          <Route path="/app/obligations" element={<ProtectedRoute><ObligationsPage /></ProtectedRoute>} />
+          <Route path="/app/workflows" element={<ProtectedRoute><WorkflowsPage /></ProtectedRoute>} />
+          <Route path="/app/tasks" element={<ProtectedRoute><TasksPage /></ProtectedRoute>} />
+          <Route path="/app/files" element={<ProtectedRoute><FileManagerPage /></ProtectedRoute>} />
+          <Route path="/app/intake" element={<ProtectedRoute><IntakePage /></ProtectedRoute>} />
+          <Route path="/app/executive-report" element={<ProtectedRoute><ExecutiveReportPage /></ProtectedRoute>} />
+          <Route path="/app/advisor" element={<ProtectedRoute><AdvisorPage /></ProtectedRoute>} />
+          <Route path="/app/automations" element={<ProtectedRoute><AutomationsPage /></ProtectedRoute>} />
+          <Route path="/app/datasets" element={<ProtectedRoute><DatasetsPage /></ProtectedRoute>} />
+          <Route path="/app/governance-os" element={<ProtectedRoute><GovernanceOSPage /></ProtectedRoute>} />
+          <Route path="/app/evaluation" element={<ProtectedRoute><EvaluationDashboardPage /></ProtectedRoute>} />
+          <Route path="/app/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+          <Route path="/app/readiness" element={<ProtectedRoute><ReadinessDashboardPage /></ProtectedRoute>} />
+          <Route path="/app/live-feed" element={<ProtectedRoute><LiveBlockFeedPage /></ProtectedRoute>} />
+          <Route path="/app/gdpr" element={<ProtectedRoute><GDPRPage /></ProtectedRoute>} />
+          <Route path="/app/hipaa" element={<ProtectedRoute><HIPAAPage /></ProtectedRoute>} />
+          <Route path="/app/pci" element={<ProtectedRoute><PCIDSSPage /></ProtectedRoute>} />
+          <Route path="/app/dpdp" element={<ProtectedRoute><DPDPPage /></ProtectedRoute>} />
+          <Route path="/app/entity-graph" element={<ProtectedRoute><EntityGraphPage /></ProtectedRoute>} />
+          <Route path="/app/intake/builder" element={<ProtectedRoute><IntakeFormBuilderPage /></ProtectedRoute>} />
+          <Route path="/app/intake/builder/:formId" element={<ProtectedRoute><IntakeFormBuilderPage /></ProtectedRoute>} />
+          <Route path="/app/agent-discovery" element={<ProtectedRoute><AgentDiscoveryPage /></ProtectedRoute>} />
+          <Route path="/app/audit" element={<ProtectedRoute><AuditExplorerPage /></ProtectedRoute>} />
 
-            <Route 
-              path="/app/agents" 
-              element={user ? <AppLayout><AgentsPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
+          <Route 
+            path="/superadmin" 
+            element={<SuperadminRoute><SuperadminPage /></SuperadminRoute>} 
+          />
 
-            <Route 
-              path="/app/activity" 
-              element={user ? <AppLayout><ActivityPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-            
-            <Route 
-              path="/app/policies" 
-              element={user ? <AppLayout><PoliciesPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/incidents" 
-              element={user ? <AppLayout><IncidentManagementPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/guardrails" 
-              element={user ? <AppLayout><GuardrailsPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/risk" 
-              element={user ? <AppLayout><RiskCenterPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/compliance" 
-              element={user ? <AppLayout><CompliancePage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/evidence" 
-              element={user ? <AppLayout><EvidencePage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/drift" 
-              element={user ? <AppLayout><DriftPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/shadow" 
-              element={user ? <AppLayout><ShadowAIPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/inventory" 
-              element={user ? <AppLayout><InventoryPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/consent" 
-              element={user ? <AppLayout><ConsentManagerPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            {/* Governance routes */}
-            <Route 
-              path="/app/ai-registry" 
-              element={user ? <AppLayout><AIRegistryPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/risk-assessment" 
-              element={user ? <AppLayout><RiskAssessmentPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/impact-assessments" 
-              element={user ? <AppLayout><ImpactAssessmentsPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-
-
-            <Route 
-              path="/app/controls" 
-              element={user ? <AppLayout><ControlsPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/vendor-risk" 
-              element={user ? <AppLayout><VendorRiskPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/obligations" 
-              element={user ? <AppLayout><ObligationsPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/workflows" 
-              element={user ? <AppLayout><WorkflowsPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/tasks" 
-              element={user ? <AppLayout><TasksPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/files" 
-              element={user ? <AppLayout><FileManagerPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/intake" 
-              element={user ? <AppLayout><IntakePage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/executive-report" 
-              element={user ? <AppLayout><ExecutiveReportPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/advisor" 
-              element={user ? <AppLayout><AdvisorPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/automations" 
-              element={user ? <AppLayout><AutomationsPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/datasets" 
-              element={user ? <AppLayout><DatasetsPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/governance-os" 
-              element={user ? <AppLayout><GovernanceOSPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route path="/app/evaluation" element={user ? <AppLayout><EvaluationDashboardPage /></AppLayout> : <Navigate to="/login" replace />} />
-
-            <Route path="/app/settings" element={user ? <AppLayout><SettingsPage /></AppLayout> : <Navigate to="/login" replace />} />
-
-            <Route 
-              path="/app/readiness" 
-              element={user ? <AppLayout><ReadinessDashboardPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/live-feed" 
-              element={user ? <AppLayout><LiveBlockFeedPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/gdpr" 
-              element={user ? <AppLayout><GDPRPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/hipaa" 
-              element={user ? <AppLayout><HIPAAPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-
-
-            <Route 
-              path="/app/pci" 
-              element={user ? <AppLayout><PCIDSSPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/dpdp" 
-              element={user ? <AppLayout><DPDPPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/entity-graph" 
-              element={user ? <AppLayout><EntityGraphPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/intake/builder" 
-              element={user ? <AppLayout><IntakeFormBuilderPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/intake/builder/:formId" 
-              element={user ? <AppLayout><IntakeFormBuilderPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/agent-discovery" 
-              element={user ? <AppLayout><AgentDiscoveryPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/app/audit" 
-              element={user ? <AppLayout><AuditExplorerPage /></AppLayout> : <Navigate to="/login" replace />}
-            />
-
-            <Route 
-              path="/superadmin" 
-              element={user && user.role === 'SUPER_ADMIN' ? <AppLayout><SuperadminPage /></AppLayout> : <Navigate to="/app" replace />} 
-            />
-
-            <Route path="/" element={<Navigate to={user ? "/app" : "/login"} replace />} />
-            <Route path="/app/*" element={<Navigate to="/app" replace />} />
-            <Route path="*" element={<Suspense fallback={<RouteFallback />}><NotFoundPage /></Suspense>} />
-
-          </Routes>
-          
-          <ModalProvider />
-          <ToastProvider />
-        </Suspense>
-      </SidebarProvider>
-    </BrowserRouter>
+          <Route path="/" element={<Navigate to="/app" replace />} />
+          <Route path="*" element={<Suspense fallback={<RouteFallback />}><NotFoundPage /></Suspense>} />
+        </Routes>
+        
+        <ModalProvider />
+        <ToastProvider />
+      </Suspense>
+    </SidebarProvider>
   );
 }
 
 function App() {
   return (
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
 
 export default App;
-
