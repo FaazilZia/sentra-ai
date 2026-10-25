@@ -475,7 +475,7 @@ export async function fetchExecutiveOverview(): Promise<ExecutiveOverview> {
 }
 
 export type ConnectorType = 'postgres' | 'sql' | 's3' | 'gdrive' | 'slack';
-export type ConnectorStatus = 'active' | 'pending' | 'error' | 'paused_budget' | 'inactive';
+export type ConnectorStatus = 'active' | 'warning' | 'pending' | 'error' | 'paused_budget' | 'inactive';
 
 export interface ConnectorItem {
   id: string;

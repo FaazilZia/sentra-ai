@@ -509,21 +509,33 @@ async function testSlackSource(
   const workspaceName = authRes.team || authRes.url || 'Slack Workspace';
 
   // 2. Count readable channels
+  const includePrivate = Boolean(config?.includePrivateChannels);
+  const channelTypes = includePrivate ? 'public_channel,private_channel' : 'public_channel';
+
   let channelCount: number;
   try {
     const listRes = await client.conversations.list({
-      types: 'public_channel,private_channel',
+      types: channelTypes,
       exclude_archived: true,
       limit: 100,
     });
     channelCount = Array.isArray(listRes.channels) ? listRes.channels.length : 0;
   } catch (err: any) {
     const rawMsg = err?.data?.error || err?.message || String(err);
-    if (rawMsg.includes('missing_scope')) {
+    if (rawMsg.includes('missing_scope') || err?.data?.error === 'missing_scope') {
+      const needed = err?.data?.needed || err?.needed || '';
+      const provided = err?.data?.provided || err?.provided || '';
+      const scopeDetail = needed ? ` "${needed}"` : '';
+      let message = `Slack authorization error: Missing required OAuth scope${scopeDetail}. Please add the required scope under Bot Token Scopes in your Slack app.`;
+      if (needed && provided) {
+        message = `Slack authorization error: Missing required OAuth scope "${needed}" (provided: "${provided}"). Please add "${needed}" under Bot Token Scopes in your Slack app.`;
+      } else if (needed) {
+        message = `Slack authorization error: Missing required OAuth scope "${needed}". Please add "${needed}" under Bot Token Scopes in your Slack app.`;
+      }
       return {
         success: false,
-        message: 'Slack authorization error: Missing required OAuth scope "channels:read". Please add channels:read under Bot Token Scopes in your Slack app.',
-        details: { workspaceName },
+        message,
+        details: { workspaceName, needed, provided },
       };
     }
     throw err;
@@ -533,7 +545,7 @@ async function testSlackSource(
     return {
       success: true,
       warning: true,
-      message: `Connected to Slack workspace "${workspaceName}", but 0 readable channels were found. Ensure the Slack app bot is invited to public or target channels.`,
+      message: `Connected to Slack workspace "${workspaceName}", but 0 readable channels were found. Ensure the Slack app bot is invited to public or target channels using /invite.`,
       details: { workspaceName, channelCount: 0 },
     };
   }

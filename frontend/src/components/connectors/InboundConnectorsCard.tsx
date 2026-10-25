@@ -32,6 +32,9 @@ function getStatusBadgeClass(status: string): string {
   if (status === 'active') {
     return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
   }
+  if (status === 'warning') {
+    return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+  }
   if (status === 'error') {
     return 'bg-red-500/10 text-red-400 border-red-500/20';
   }
@@ -96,6 +99,14 @@ export function InboundConnectorsCard() {
   useEffect(() => {
     void loadConnectors();
   }, []);
+
+  const resetForm = () => {
+    setName('');
+    setTestResult(null);
+    setPgAllowSelfSigned(false);
+    setSlackBotToken('');
+    setSlackIncludePrivate(false);
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -413,13 +424,35 @@ export function InboundConnectorsCard() {
 
               {/* Show last_error if present */}
               {hasError && (
-                <div className="bg-red-500/10 border border-red-500/25 rounded p-2.5 text-xs text-red-400 flex items-start gap-2">
-                  <AlertTriangle className="h-4 w-4 shrink-0 text-red-400 mt-0.5" />
+                <div
+                  className={`border rounded p-2.5 text-xs flex items-start gap-2 ${
+                    c.status === 'warning' || c.last_error?.includes('0 readable channels')
+                      ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                      : 'bg-red-500/10 border-red-500/25 text-red-400'
+                  }`}
+                >
+                  <AlertTriangle
+                    className={`h-4 w-4 shrink-0 mt-0.5 ${
+                      c.status === 'warning' || c.last_error?.includes('0 readable channels')
+                        ? 'text-amber-400'
+                        : 'text-red-400'
+                    }`}
+                  />
                   <div>
                     <strong className="text-[10px] font-bold uppercase tracking-wider block">
-                      Last Scan Error:
+                      {c.status === 'warning' || c.last_error?.includes('0 readable channels')
+                        ? 'Scan Notice:'
+                        : 'Last Scan Error:'}
                     </strong>
-                    <span className="text-[11px] leading-relaxed text-red-300">{c.last_error}</span>
+                    <span
+                      className={`text-[11px] leading-relaxed ${
+                        c.status === 'warning' || c.last_error?.includes('0 readable channels')
+                          ? 'text-amber-300'
+                          : 'text-red-300'
+                      }`}
+                    >
+                      {c.last_error}
+                    </span>
                   </div>
                 </div>
               )}
@@ -460,14 +493,18 @@ export function InboundConnectorsCard() {
           </button>
           <button
             onClick={() => {
-              setShowAddForm(!showAddForm);
-              setTestResult(null);
+              if (showAddForm) {
+                setShowAddForm(false);
+                resetForm();
+              } else {
+                setShowAddForm(true);
+              }
             }}
             type="button"
             className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--mid-indigo)] hover:bg-[var(--royal-indigo)] text-white rounded text-[9px] font-semibold uppercase tracking-widest transition-all"
           >
             <Plus className="h-3.5 w-3.5" />
-            {showAddForm ? 'Close Form' : 'Add Connector'}
+            {showAddForm ? 'Cancel' : 'Add Connector'}
           </button>
         </div>
       </div>
@@ -883,6 +920,16 @@ export function InboundConnectorsCard() {
 
           {/* Action Buttons */}
           <div className="flex justify-end items-center gap-2 pt-3 border-t border-[var(--border-default)]/60">
+            <button
+              type="button"
+              onClick={() => {
+                setShowAddForm(false);
+                resetForm();
+              }}
+              className="px-4 py-2 bg-transparent hover:bg-black/5 text-[var(--text-secondary)] border border-[var(--border-default)] rounded text-[9px] font-semibold uppercase tracking-widest transition-all"
+            >
+              Cancel
+            </button>
             <button
               type="button"
               onClick={handleTestConnection}

@@ -169,7 +169,7 @@ describe('Connector Scanning Logic', () => {
 
     mockSlackList.mockResolvedValueOnce({
       ok: true,
-      channels: [{ id: 'C_DEV', name: 'dev-team', is_archived: false }],
+      channels: [{ id: 'C_DEV', name: 'dev-team', is_archived: false, is_member: true }],
     });
 
     mockSlackHistory.mockResolvedValueOnce({
