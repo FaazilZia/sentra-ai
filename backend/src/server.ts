@@ -20,6 +20,8 @@ import { setupConnectorWorkers, setupDriftWorker, setupEvaluationWorker, setupGo
 import { DriftBaselineService } from './services/driftBaseline.service';
 
 import { alertService } from './services/alert.service';
+import { systemAlertService } from './services/systemAlert.service';
+import { checkSchemaDrift } from './services/schemaDrift.service';
 import { verifyAccessToken } from './utils/jwt';
 import { redisHealthCheck, getRedisClient } from './config/redis';
 
@@ -276,6 +278,25 @@ const startServer = async () => {
       logger.error('Failed to initialize database during background init:', error);
       return;
     }
+
+    // Check for database schema drift at startup (non-blocking)
+    checkSchemaDrift({ forceFresh: true })
+      .then(async (schemaResult) => {
+        if (!schemaResult.ok) {
+          const missingSummary = schemaResult.missing.map(m => `${m.table}.${m.column}`).join(', ');
+          logger.error(`[STARTUP] Database schema drift detected! Missing columns: ${missingSummary}`);
+          if (process.env.NODE_ENV === 'production') {
+            await systemAlertService.triggerSchemaDriftAlert(schemaResult.missing).catch(alertErr => {
+              logger.warn('[STARTUP] Failed to dispatch schema drift alert:', alertErr);
+            });
+          }
+        } else {
+          logger.info('[STARTUP] Schema drift check passed: database schema matches Prisma models.');
+        }
+      })
+      .catch((err: any) => {
+        logger.error('[STARTUP] Schema drift check failed with error:', err?.message || err);
+      });
 
     // Validate environment variables asynchronously in the background
     validateEnv()

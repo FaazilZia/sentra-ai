@@ -7,7 +7,8 @@ export type SystemAlertType =
   | 'ready_failing'
   | 'error_rate_spike'
   | 'dlq_growing'
-  | 'connector_scan_failing_repeatedly';
+  | 'connector_scan_failing_repeatedly'
+  | 'schema_drift';
 
 export type SystemAlertSeverity = 'critical' | 'warning' | 'info';
 
@@ -243,17 +244,35 @@ class SystemAlertService {
   /**
    * 2. Alert: /ready Failing
    */
-  async triggerReadyFailingAlert(checks: { db: string; redis: string; queue: string }, error?: string): Promise<AlertDeliveryResult> {
+  async triggerReadyFailingAlert(checks: { db: string; redis: string; queue: string; schema?: string }, error?: string): Promise<AlertDeliveryResult> {
     return this.sendAlert({
       type: 'ready_failing',
       severity: 'critical',
       title: 'Readiness Probe /ready Failing',
-      message: 'The /ready health check failed. One or more critical dependencies are unreachable.',
+      message: 'The /ready health check failed. One or more critical dependencies are unreachable or schema has drifted.',
       details: {
         database: checks.db,
         redis: checks.redis,
         queue: checks.queue,
+        schema: checks.schema || 'ok',
         error: error || 'Dependency check failed',
+      },
+    });
+  }
+
+  /**
+   * Alert: Schema Drift Detected
+   */
+  async triggerSchemaDriftAlert(missing: Array<{ table: string; column: string }>): Promise<AlertDeliveryResult> {
+    const missingSummary = missing.map(m => `${m.table}.${m.column}`).join(', ');
+    return this.sendAlert({
+      type: 'schema_drift',
+      severity: 'critical',
+      title: 'Database Schema Drift Detected',
+      message: `Production database is missing expected columns: ${missingSummary}. Immediate migration or schema alignment required.`,
+      details: {
+        missingCount: missing.length,
+        missingColumns: missingSummary,
       },
     });
   }
