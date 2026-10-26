@@ -38,7 +38,7 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Generate Prisma Client
-        run: npx --ignore-scripts prisma generate
+        run: ./node_modules/.bin/prisma generate
 
       - name: Verify Migration Connection Port
         env:
@@ -127,9 +127,9 @@ jobs:
           DATABASE_URL: ${{ secrets.MIGRATE_DATABASE_URL }}
           DIRECT_URL: ${{ secrets.MIGRATE_DATABASE_URL }}
         run: |
-          echo "Checking pending migrations via: npx prisma migrate status"
+          echo "Checking pending migrations via: ./node_modules/.bin/prisma migrate status"
           STATUS_CODE=0
-          npx prisma migrate status || STATUS_CODE=$?
+          ./node_modules/.bin/prisma migrate status || STATUS_CODE=$?
           echo "Status check exited with code: ${STATUS_CODE}"
 
       - name: Stop If Dry Run
@@ -144,8 +144,8 @@ jobs:
           DATABASE_URL: ${{ secrets.MIGRATE_DATABASE_URL }}
           DIRECT_URL: ${{ secrets.MIGRATE_DATABASE_URL }}
         run: |
-          echo "Executing: npx prisma migrate deploy"
-          npx prisma migrate deploy
+          echo "Executing: ./node_modules/.bin/prisma migrate deploy"
+          ./node_modules/.bin/prisma migrate deploy
           echo "Prisma migrate deploy completed successfully."
 
       - name: Verify Post-Migration Status
@@ -155,7 +155,7 @@ jobs:
           DIRECT_URL: ${{ secrets.MIGRATE_DATABASE_URL }}
         run: |
           echo "Verifying zero pending migrations..."
-          npx prisma migrate status
+          ./node_modules/.bin/prisma migrate status
 
       - name: Verify Production /ready Schema Health
         if: ${{ inputs.dry_run == false }}
