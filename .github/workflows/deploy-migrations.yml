@@ -1,0 +1,205 @@
+name: Deploy Production Migrations
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run only (inspect pending migrations without applying DDL)'
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  migrate:
+    name: Deploy Database Migrations
+    runs-on: ubuntu-latest
+    environment: production-migrations
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Generate Prisma Client
+        run: npx --ignore-scripts prisma generate
+
+      - name: Verify Migration Connection Port
+        env:
+          MIGRATE_DATABASE_URL: ${{ secrets.MIGRATE_DATABASE_URL }}
+        run: |
+          node -e '
+            const raw = process.env.MIGRATE_DATABASE_URL;
+            if (!raw) {
+              console.error("MIGRATE_DATABASE_URL secret is not configured in environment secrets.");
+              process.exit(1);
+            }
+            try {
+              const u = new URL(raw);
+              if (u.port === "5432") {
+                console.log("port OK");
+                process.exit(0);
+              } else {
+                console.error("port WRONG");
+                process.exit(1);
+              }
+            } catch (err) {
+              console.error("port WRONG");
+              process.exit(1);
+            }
+          '
+
+      - name: Confirm Fresh Backup Exists (< 24 Hours)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO: ${{ github.repository }}
+        run: |
+          node -e '
+            const https = require("https");
+            const repo = process.env.GITHUB_REPO;
+            const token = process.env.GITHUB_TOKEN;
+
+            const options = {
+              hostname: "api.github.com",
+              path: `/repos/${repo}/actions/workflows/weekly-backup.yml/runs?status=completed&per_page=10`,
+              headers: {
+                "User-Agent": "node-actions",
+                "Accept": "application/vnd.github.v3+json",
+                "Authorization": `Bearer ${token}`
+              }
+            };
+
+            https.get(options, res => {
+              let data = "";
+              res.on("data", c => data += c);
+              res.on("end", () => {
+                if (res.statusCode !== 200) {
+                  console.error(`GitHub API responded with HTTP ${res.statusCode}: ${data}`);
+                  process.exit(1);
+                }
+                const parsed = JSON.parse(data);
+                const runs = parsed.workflow_runs || [];
+                const successfulRuns = runs.filter(r => r.conclusion === "success");
+
+                if (successfulRuns.length === 0) {
+                  console.error("::error::No successful weekly-backup runs found in workflow history.");
+                  process.exit(1);
+                }
+
+                const latestSuccess = successfulRuns[0];
+                const runTime = new Date(latestSuccess.created_at).getTime();
+                const now = Date.now();
+                const ageHours = (now - runTime) / (1000 * 3600);
+
+                console.log(`Latest successful backup: Run #${latestSuccess.run_number} (ID: ${latestSuccess.id}) at ${latestSuccess.created_at} (${ageHours.toFixed(1)}h ago)`);
+
+                if (ageHours > 24) {
+                  console.error(`::error::Latest backup is ${ageHours.toFixed(1)} hours old (exceeds 24h limit). Run weekly-backup.yml first!`);
+                  process.exit(1);
+                }
+
+                console.log("Backup freshness check PASSED (< 24 hours old).");
+              });
+            }).on("error", err => {
+              console.error("Failed to query GitHub Actions API:", err.message);
+              process.exit(1);
+            });
+          '
+
+      - name: Check Migration Status & List Pending
+        env:
+          DATABASE_URL: ${{ secrets.MIGRATE_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.MIGRATE_DATABASE_URL }}
+        run: |
+          echo "Checking pending migrations via: npx prisma migrate status"
+          STATUS_CODE=0
+          npx prisma migrate status || STATUS_CODE=$?
+          echo "Status check exited with code: ${STATUS_CODE}"
+
+      - name: Stop If Dry Run
+        if: ${{ inputs.dry_run == true }}
+        run: |
+          echo "Dry run enabled. Migration inspection complete. Halting before executing DDL."
+          exit 0
+
+      - name: Execute Prisma Migration
+        if: ${{ inputs.dry_run == false }}
+        env:
+          DATABASE_URL: ${{ secrets.MIGRATE_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.MIGRATE_DATABASE_URL }}
+        run: |
+          echo "Executing: npx prisma migrate deploy"
+          npx prisma migrate deploy
+          echo "Prisma migrate deploy completed successfully."
+
+      - name: Verify Post-Migration Status
+        if: ${{ inputs.dry_run == false }}
+        env:
+          DATABASE_URL: ${{ secrets.MIGRATE_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.MIGRATE_DATABASE_URL }}
+        run: |
+          echo "Verifying zero pending migrations..."
+          npx prisma migrate status
+
+      - name: Verify Production /ready Schema Health
+        if: ${{ inputs.dry_run == false }}
+        working-directory: .
+        run: |
+          PUBLIC_READY_URL="https://sentra-backend-node.onrender.com/ready"
+          echo "Verifying /ready schema health: ${PUBLIC_READY_URL}"
+          
+          MAX_ATTEMPTS=6
+          DELAY_SECONDS=10
+          SUCCESS=false
+
+          for attempt in $(seq 1 $MAX_ATTEMPTS); do
+            echo "--- Attempt ${attempt} of ${MAX_ATTEMPTS} ---"
+            HTTP_STATUS=$(curl -s -o /tmp/ready_post_migrate.json -w "%{http_code}" "${PUBLIC_READY_URL}" || true)
+            echo "HTTP Status Code: ${HTTP_STATUS}"
+
+            if [ "${HTTP_STATUS}" = "200" ]; then
+              STATUS=$(jq -r '.status // empty' /tmp/ready_post_migrate.json 2>/dev/null || echo "invalid_json")
+              SCHEMA=$(jq -r '.checks.schema // empty' /tmp/ready_post_migrate.json 2>/dev/null || echo "missing_schema_check")
+
+              if [ "${STATUS}" = "ready" ] && [ "${SCHEMA}" = "ok" ]; then
+                echo "SUCCESS: Production /ready returned HTTP 200 with status=ready and checks.schema=ok."
+                SUCCESS=true
+                break
+              else
+                echo "WARNING: /ready responded 200 but status='${STATUS}', checks.schema='${SCHEMA}'"
+              fi
+            elif [ "${HTTP_STATUS}" = "503" ]; then
+              echo "ERROR: /ready returned 503 (Unhealthy or Schema Drift detected)."
+              if [ -f /tmp/ready_post_migrate.json ]; then
+                jq '.' /tmp/ready_post_migrate.json 2>/dev/null || cat /tmp/ready_post_migrate.json
+              fi
+            else
+              echo "WARNING: Unexpected HTTP status ${HTTP_STATUS}."
+            fi
+
+            if [ "${attempt}" -lt "${MAX_ATTEMPTS}" ]; then
+              echo "Retrying in ${DELAY_SECONDS} seconds..."
+              sleep ${DELAY_SECONDS}
+            fi
+          done
+
+          if [ "${SUCCESS}" != "true" ]; then
+            echo "::error::Post-migration /ready verification failed or schema check reported drift."
+            exit 1
+          fi
