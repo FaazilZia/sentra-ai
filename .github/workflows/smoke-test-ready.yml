@@ -1,0 +1,73 @@
+name: Production Smoke Test (/ready & Schema Drift)
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  smoke-test:
+    name: Verify Production /ready & Schema Health
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Wait for Render Deployment (Push to main only)
+        if: github.event_name == 'push'
+        run: |
+          echo "Triggered by push to main. Pausing 180 seconds to allow Render build & deploy to complete..."
+          sleep 180
+
+      - name: Query Public /ready Endpoint & Assert Schema Health
+        run: |
+          PUBLIC_READY_URL="https://sentra-backend-node.onrender.com/ready"
+          echo "Smoke testing public endpoint: ${PUBLIC_READY_URL}"
+          
+          MAX_ATTEMPTS=8
+          DELAY_SECONDS=15
+          SUCCESS=false
+
+          for attempt in $(seq 1 $MAX_ATTEMPTS); do
+            echo "--- Attempt ${attempt} of ${MAX_ATTEMPTS} ---"
+            
+            HTTP_STATUS=$(curl -s -o /tmp/ready_payload.json -w "%{http_code}" "${PUBLIC_READY_URL}" || true)
+            echo "HTTP Status: ${HTTP_STATUS}"
+            
+            if [ -f /tmp/ready_payload.json ]; then
+              cat /tmp/ready_payload.json
+              echo ""
+            fi
+
+            if [ "${HTTP_STATUS}" = "200" ]; then
+              STATUS=$(jq -r '.status // empty' /tmp/ready_payload.json 2>/dev/null || echo "invalid_json")
+              SCHEMA_CHECK=$(jq -r '.checks.schema // empty' /tmp/ready_payload.json 2>/dev/null || echo "missing_schema_check")
+
+              if [ "${STATUS}" = "ready" ] && [ "${SCHEMA_CHECK}" = "ok" ]; then
+                echo "SUCCESS: /ready returned HTTP 200, status='ready', checks.schema='ok'."
+                SUCCESS=true
+                break
+              else
+                echo "WARNING: /ready returned 200 but status='${STATUS}', checks.schema='${SCHEMA_CHECK}'."
+              fi
+            elif [ "${HTTP_STATUS}" = "503" ]; then
+              echo "ERROR: /ready returned HTTP 503 (Unhealthy or Schema Drift detected)."
+              if [ -f /tmp/ready_payload.json ]; then
+                jq '.' /tmp/ready_payload.json 2>/dev/null || cat /tmp/ready_payload.json
+              fi
+            else
+              echo "WARNING: Unexpected HTTP status ${HTTP_STATUS}."
+            fi
+
+            if [ "${attempt}" -lt "${MAX_ATTEMPTS}" ]; then
+              echo "Retrying in ${DELAY_SECONDS} seconds..."
+              sleep ${DELAY_SECONDS}
+            fi
+          done
+
+          if [ "${SUCCESS}" != "true" ]; then
+            echo "FAILURE: Public /ready probe failed or reported schema drift."
+            exit 1
+          fi

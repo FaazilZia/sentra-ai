@@ -1,0 +1,9 @@
+# Agent Rules
+
+Operational and safety rules for AI coding assistants working on this repository:
+
+1. **Database Migration Safety**: NEVER run `prisma migrate resolve`, `prisma db push`, `prisma migrate reset`, or `prisma migrate dev` against production or any shared database. Never edit the `_prisma_migrations` table.
+2. **Production Schema Approval**: Production schema changes only with explicit written approval from the repository owner, and only after a fresh backup run is confirmed.
+3. **Rigorous Verification**: Never mark anything "applied", "fixed", or "verified" from local output alone. Back every claim with real GitHub Actions, SonarCloud, or Render evidence. Mark each claim `VERIFIED` or `CLAIMED`.
+4. **Secret Protection**: Never print, echo, log, or screenshot secrets. Stop and ask the user for logins or MFA.
+5. **No Unauthorized Merges**: Merge nothing unless explicitly instructed to do so.

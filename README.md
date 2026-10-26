@@ -27,6 +27,7 @@
 
 - [🚀 Live Dashboard](https://sentraatech.info) — Try Sentraa AI without signing up
 - [📦 SDK on npm](https://www.npmjs.com/package/@sentra-ai/sdk) — `npm install @sentra-ai/sdk`
+- [📋 Agent Rules](./docs/AGENT_RULES.md) — Operational and safety rules for AI pair programmers
 - [📁 Project Structure](#-project-structure) — Full file tree
 - [🔌 API Reference](#-api-reference) — All 55 route modules
 - [🏗️ Architecture](#-architecture) — How the decision pipeline works

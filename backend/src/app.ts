@@ -224,39 +224,62 @@ async function checkQueueReadiness(redisOk: boolean): Promise<DependencyCheckRes
   }
 }
 
-function buildReadinessErrors(db: DependencyCheckResult, redis: DependencyCheckResult, queue: DependencyCheckResult) {
-  const errors: Record<string, string> = {};
+import { checkSchemaDrift, SchemaCheckResult } from './services/schemaDrift.service';
+
+function buildReadinessErrors(
+  db: DependencyCheckResult,
+  redis: DependencyCheckResult,
+  queue: DependencyCheckResult,
+  schema: SchemaCheckResult
+) {
+  const errors: Record<string, any> = {};
   if (db.error) errors.db = db.error;
   if (redis.error) errors.redis = redis.error;
   if (queue.error) errors.queue = queue.error;
+  if (!schema.ok) {
+    if (schema.missing && schema.missing.length > 0) {
+      errors.schema = {
+        missing: schema.missing,
+      };
+    } else {
+      errors.schema = schema.error || 'Schema validation failed';
+    }
+  }
   return errors;
 }
 
-function buildReadinessAlertDetails(db: DependencyCheckResult, redis: DependencyCheckResult, queue: DependencyCheckResult) {
+function buildReadinessAlertDetails(
+  db: DependencyCheckResult,
+  redis: DependencyCheckResult,
+  queue: DependencyCheckResult,
+  schema: SchemaCheckResult
+) {
   return {
     db: db.ok ? 'ok' : (db.error || 'failed'),
     redis: redis.ok ? 'ok' : (redis.error || 'failed'),
     queue: queue.ok ? 'ok' : (queue.error || 'failed'),
+    schema: schema.ok ? 'ok' : (schema.missing.length > 0 ? `Missing ${schema.missing.length} columns: ${schema.missing.map(m => `${m.table}.${m.column}`).join(', ')}` : (schema.error || 'failed')),
   };
 }
 
-// ─── Readiness Probe: /ready (Checks DB, Redis, and BullMQ Queue) ────────
+// ─── Readiness Probe: /ready (Checks DB, Redis, Queue, and Schema Drift) ────────
 const runReadinessCheck = async (req: any, res: any) => {
   const start = performance.now();
 
   const db = await checkDatabaseReadiness();
   const redis = await checkRedisReadiness();
   const queue = await checkQueueReadiness(redis.ok);
+  const schema = db.ok ? await checkSchemaDrift() : { ok: false, missing: [], error: 'Database unreachable' };
 
-  const allOk = db.ok && redis.ok && queue.ok;
+  const allOk = db.ok && redis.ok && queue.ok && schema.ok;
   const status = allOk ? 200 : 503;
   const duration = (performance.now() - start).toFixed(3);
 
   if (!allOk) {
     // Non-blocking alert trigger when readiness fails
     systemAlertService.triggerReadyFailingAlert(
-      buildReadinessAlertDetails(db, redis, queue),
-      'One or more readiness dependencies are down'
+      buildReadinessAlertDetails(db, redis, queue, schema),
+      schema.ok ? 'One or more readiness dependencies are down' : `Database schema drift detected: missing ${schema.missing.length} column(s)`
     ).catch(err => {
       logger.warn('Failed to dispatch ready failing alert:', err);
     });
@@ -271,11 +294,12 @@ const runReadinessCheck = async (req: any, res: any) => {
       db: db.ok ? 'ok' : 'failed',
       redis: redis.ok ? 'ok' : 'failed',
       queue: queue.ok ? 'ok' : 'failed',
+      schema: schema.ok ? 'ok' : 'failed',
     },
     durationMs: Number(duration),
     version: '2.0.0',
     timestamp: new Date().toISOString(),
-    ...(allOk ? {} : { errors: buildReadinessErrors(db, redis, queue) })
+    ...(allOk ? {} : { errors: buildReadinessErrors(db, redis, queue, schema) })
   });
 };
 

@@ -41,6 +41,7 @@ describe('Monitoring & Observability Endpoints', () => {
       expect(['ok', 'failed']).toContain(res.body.checks.db);
       expect(['ok', 'failed']).toContain(res.body.checks.redis);
       expect(['ok', 'failed']).toContain(res.body.checks.queue);
+      expect(['ok', 'failed']).toContain(res.body.checks.schema);
       expect(res.body.timestamp).toBeDefined();
     });
 
