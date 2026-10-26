@@ -2,21 +2,32 @@ import { Worker, Job, Queue } from 'bullmq';
 import IORedis from 'ioredis';
 import logger from '../utils/logger';
 import prisma from '../config/db';
-import { processS3Scan } from './s3.worker';
-import { processSqlScan } from './sql.worker';
 import { buildRedisOptions, getRedisUrl } from '../config/redis';
 import { DriftAlertService } from '../services/driftAlert.service';
 import { EvaluationService } from '../services/evaluation.service';
 import { DriftBaselineService } from '../services/driftBaseline.service';
 import { seedOrganizationGovernance } from '../services/governanceSeed.service';
+import { processConnectorScan } from '../services/queue.service';
 
 
 const REDIS_URL = getRedisUrl();
 
-export function setupConnectorWorkers() {
+let activeConnectorWorker: Worker | null = null;
+
+export function resetConnectorWorkerForTesting(): void {
+  if (activeConnectorWorker) {
+    activeConnectorWorker.close().catch(() => {});
+    activeConnectorWorker = null;
+  }
+}
+
+export function setupConnectorWorkers(): Worker | null {
+  if (activeConnectorWorker) {
+    return activeConnectorWorker;
+  }
   if (!REDIS_URL) {
     logger.warn('Skipping Connector Workers (Redis offline)');
-    return;
+    return null;
   }
 
   const connection = new IORedis(REDIS_URL, buildRedisOptions({
@@ -34,6 +45,10 @@ export function setupConnectorWorkers() {
       
       if (action === 'RESCHEDULE_ALL') {
         return await handleAdaptiveScheduling(connection);
+      }
+
+      if (!connectorId) {
+        throw new Error('Invalid connector-scans job: missing connectorId');
       }
 
       // 1. Governance Check
@@ -55,16 +70,17 @@ export function setupConnectorWorkers() {
           }
         });
 
-        // Use lowercase types to match DB field 'type'
-        switch (type) {
-          case 's3': await processS3Scan(connectorId); break;
-          case 'sql': await processSqlScan(connectorId); break;
-          case 'gdrive': logger.warn(`GDrive scan skipped - worker deactivated for connector ${connectorId}`); break;
+        // 4. Shared scan execution for all connector types (s3, gdrive, sql, postgres, slack)
+        const scanResult = await processConnectorScan(type, connectorId, { trigger, reason });
+
+        // 5. Update health score
+        const success = scanResult ? scanResult.success !== false : true;
+        await updateConnectorHealth(connectorId, success, Date.now() - startTime);
+
+        if (scanResult && scanResult.success === false) {
+          logger.warn(`Scan for connector ${connectorId} (${type}) finished with warning/error: ${scanResult.error}`);
         }
-
-        // 4. Success Health Update
-        await updateConnectorHealth(connectorId, true, Date.now() - startTime);
-
+        return scanResult;
       } catch (error) {
         logger.error(`Worker failed for job ${job.id}:`, error);
         await updateConnectorHealth(connectorId, false, Date.now() - startTime);
@@ -77,7 +93,11 @@ export function setupConnectorWorkers() {
   worker.on('error', (err) => {
     logger.warn('[BULLMQ] connector-scans worker error:', err);
   });
+  worker.on('failed', (job, err) => {
+    logger.error(`[BULLMQ] Job ${job?.id} in connector-scans failed:`, err);
+  });
 
+  activeConnectorWorker = worker;
   return worker;
 }
 
@@ -101,8 +121,8 @@ async function validateScanPolicy(connectorId: string, trigger: string) {
     return { allowed: false, reason: 'Max daily scan count reached' };
   }
 
-  // 3. Minimum Interval Check (except for anomaly triggers)
-  if (trigger !== 'anomaly' && connector.last_scan_at) {
+  // 3. Minimum Interval Check (except for anomaly, manual, or discovery triggers)
+  if (trigger !== 'anomaly' && trigger !== 'manual' && trigger !== 'discovery' && connector.last_scan_at) {
     const minInterval = (policy.minScanIntervalMinutes || 5) * 60000;
     if (Date.now() - new Date(connector.last_scan_at).getTime() < minInterval) {
       return { allowed: false, reason: 'Scan interval too short' };

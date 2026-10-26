@@ -512,14 +512,14 @@ async function testSlackSource(
   const includePrivate = Boolean(config?.includePrivateChannels);
   const channelTypes = includePrivate ? 'public_channel,private_channel' : 'public_channel';
 
-  let channelCount: number;
+  let allChannels: any[];
   try {
     const listRes = await client.conversations.list({
       types: channelTypes,
       exclude_archived: true,
       limit: 100,
     });
-    channelCount = Array.isArray(listRes.channels) ? listRes.channels.length : 0;
+    allChannels = Array.isArray(listRes.channels) ? listRes.channels : [];
   } catch (err: any) {
     const rawMsg = err?.data?.error || err?.message || String(err);
     if (rawMsg.includes('missing_scope') || err?.data?.error === 'missing_scope') {
@@ -539,6 +539,18 @@ async function testSlackSource(
       };
     }
     throw err;
+  }
+
+  const memberChannels = allChannels.filter((ch: any) => ch?.is_member === true);
+  const channelCount = memberChannels.length;
+
+  if (allChannels.length > 0 && channelCount === 0) {
+    return {
+      success: true,
+      warning: true,
+      message: 'Connected, but the bot is not in any channel. Invite it with /invite @appname in the channels you want scanned.',
+      details: { workspaceName, channelCount: 0 },
+    };
   }
 
   if (channelCount === 0) {

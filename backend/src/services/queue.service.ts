@@ -171,14 +171,9 @@ if (connection) {
     { connection }
   );
 
-  const connectorWorker = new Worker(
-    'connector-scans',
-    async (job) => {
-      const { type, connectorId } = job.data;
-      await processConnectorScan(type, connectorId);
-    },
-    { connection }
-  );
+  // RETIRED: Duplicate worker on 'connector-scans' removed.
+  // The 'connector-scans' queue is handled exclusively by setupConnectorWorkers()
+  // in backend/src/workers/worker.manager.ts to ensure ONE worker per queue.
 
   const postMarketWorker = new Worker(
     'post-market-monitoring',
@@ -284,7 +279,6 @@ if (connection) {
   };
 
   registerFailedListener(retentionWorker, 'data-retention');
-  registerFailedListener(connectorWorker, 'connector-scans');
   registerFailedListener(postMarketWorker, 'post-market-monitoring');
   registerFailedListener(automationsWorker, 'automations');
   registerFailedListener(intakeLLMWorker, 'intake-llm');
@@ -1004,28 +998,60 @@ function formatConnectorScanError(err: any): string {
   return `Scan failed: ${rawMsg}`;
 }
 
+export const SUPPORTED_CONNECTOR_TYPES = ['postgres', 'sql', 's3', 'gdrive', 'slack'] as const;
+
+export function isSupportedConnectorType(type: string): boolean {
+  return SUPPORTED_CONNECTOR_TYPES.includes(type?.toLowerCase() as any);
+}
+
 async function executeSourceScan(type: string, connector: any, creds: any): Promise<{
   violations: number;
   apiCalls: number;
   bytesScanned: number;
   warning?: string;
 }> {
-  if (type === 's3') {
+  const normalizedType = type?.toLowerCase();
+  if (normalizedType === 's3') {
     return await scanS3Source(connector, creds);
   }
-  if (type === 'gdrive') {
+  if (normalizedType === 'gdrive') {
     return await scanGDriveSource(connector, creds);
   }
-  if (type === 'sql' || type === 'postgres') {
+  if (normalizedType === 'sql' || normalizedType === 'postgres') {
     return await scanSqlSource(connector, creds);
   }
-  if (type === 'slack') {
+  if (normalizedType === 'slack') {
     return await scanSlackSource(connector, creds);
   }
-  return { violations: 0, apiCalls: 0, bytesScanned: 0 };
+  throw new Error(`Unsupported connector type "${type}". Allowed types: postgres, sql, s3, gdrive, slack.`);
 }
 
-export async function processConnectorScan(type: string, connectorId: string) {
+export async function processConnectorScan(
+  type: string,
+  connectorId: string,
+  options: { trigger?: string; reason?: string } = {}
+) {
+  const normalizedType = type?.toLowerCase();
+  if (!normalizedType || !SUPPORTED_CONNECTOR_TYPES.includes(normalizedType as any)) {
+    const errorMsg = `Unsupported connector type "${type}". Allowed types: postgres, sql, s3, gdrive, slack.`;
+    logger.error(`Worker: Unsupported connector type "${type}" for connector ${connectorId}`);
+    try {
+      await prisma.connectors.update({
+        where: { id: connectorId },
+        data: {
+          status: 'error',
+          health_score: { decrement: 10 },
+          last_error: errorMsg,
+          last_scan_reason: { error: errorMsg, at: new Date().toISOString() },
+          last_scan_at: new Date().toISOString(),
+        },
+      });
+    } catch {
+      // Ignore update error if connector doesn't exist
+    }
+    throw new Error(errorMsg);
+  }
+
   try {
     const connector = await prisma.connectors.findUnique({ where: { id: connectorId } });
     if (!connector) return;
@@ -1038,7 +1064,7 @@ export async function processConnectorScan(type: string, connectorId: string) {
         where: { id: connectorId },
         data: { status: 'paused_budget', last_scan_at: new Date().toISOString() }
       });
-      return;
+      return { success: false, reason: 'paused_budget' };
     }
 
     // 1. Decrypt Credentials
@@ -1060,7 +1086,7 @@ export async function processConnectorScan(type: string, connectorId: string) {
           last_scan_at: new Date().toISOString()
         }
       });
-      return;
+      return { success: false, error: humanError };
     }
 
     logger.info(`Worker: Starting real scan for ${connector.name} (${type})`);
@@ -1084,6 +1110,7 @@ export async function processConnectorScan(type: string, connectorId: string) {
     });
 
     logger.info(`Worker: Scan completed for ${connector.name}. Detected ${violations} violations.`);
+    return { success: true, violations, apiCalls, bytesScanned, warning };
   } catch (err: any) {
     const rawMsg = err.message || String(err);
     const humanError = formatConnectorScanError(err);
@@ -1103,6 +1130,7 @@ export async function processConnectorScan(type: string, connectorId: string) {
     } catch {
       // Ignore secondary update error
     }
+    return { success: false, error: humanError };
   }
 }
 
