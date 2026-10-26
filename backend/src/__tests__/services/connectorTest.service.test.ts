@@ -592,7 +592,7 @@ describe('Connector Test Connection Service', () => {
       });
       mockSlackConversationsList.mockResolvedValueOnce({
         ok: true,
-        channels: [{ id: 'C1', name: 'general' }],
+        channels: [{ id: 'C1', name: 'general', is_member: true }],
       });
 
       const res = await testConnectorSource('slack', {}, { botToken: FAKE_SLACK_TOKEN });
@@ -600,6 +600,29 @@ describe('Connector Test Connection Service', () => {
       expect(res.warning).toBe(false);
       expect(res.message).toContain('Successfully connected to Slack workspace "Test Workspace"');
       expect(res.details?.channelCount).toBe(1);
+    });
+
+    it('returns amber warning when public channels exist but bot is in none', async () => {
+      mockSlackAuthTest.mockResolvedValueOnce({
+        ok: true,
+        team: 'Test Workspace',
+        user_id: 'U12345',
+      });
+      mockSlackConversationsList.mockResolvedValueOnce({
+        ok: true,
+        channels: [
+          { id: 'C1', name: 'general', is_member: false },
+          { id: 'C2', name: 'random', is_member: false },
+        ],
+      });
+
+      const res = await testConnectorSource('slack', {}, { botToken: FAKE_SLACK_TOKEN });
+      expect(res.success).toBe(true);
+      expect(res.warning).toBe(true);
+      expect(res.message).toBe(
+        'Connected, but the bot is not in any channel. Invite it with /invite @appname in the channels you want scanned.'
+      );
+      expect(res.details?.channelCount).toBe(0);
     });
 
     it('returns warning state when 0 readable channels found', async () => {

@@ -273,7 +273,7 @@ describe('Slack Inbound Scanning Connector', () => {
       expect(result.details?.workspaceName).toBe('Acme Corp');
     });
 
-    it('returns success with channel count when channels > 0', async () => {
+    it('returns success with channel count when channels > 0 and bot is member', async () => {
       mockAuthTest.mockResolvedValueOnce({
         ok: true,
         team: 'Acme Corp',
@@ -282,8 +282,8 @@ describe('Slack Inbound Scanning Connector', () => {
       mockConversationsList.mockResolvedValueOnce({
         ok: true,
         channels: [
-          { id: 'C1', name: 'general' },
-          { id: 'C2', name: 'security' },
+          { id: 'C1', name: 'general', is_member: true },
+          { id: 'C2', name: 'security', is_member: true },
         ],
       });
 
@@ -297,6 +297,60 @@ describe('Slack Inbound Scanning Connector', () => {
       expect(result.message).toContain('Found 2 readable channel(s)');
       expect(result.details?.channelCount).toBe(2);
       expect(result.details?.workspaceName).toBe('Acme Corp');
+    });
+
+    it('returns amber warning when public channels exist but bot is in none', async () => {
+      mockAuthTest.mockResolvedValueOnce({
+        ok: true,
+        team: 'Acme Corp',
+        user_id: 'U12345',
+      });
+      mockConversationsList.mockResolvedValueOnce({
+        ok: true,
+        channels: [
+          { id: 'C1', name: 'general', is_member: false },
+          { id: 'C2', name: 'security', is_member: false },
+        ],
+      });
+
+      const result = await testConnectorSource(
+        'slack',
+        {},
+        { botToken: FAKE_TEST_TOKEN }
+      );
+      expect(result.success).toBe(true);
+      expect(result.warning).toBe(true);
+      expect(result.message).toBe(
+        'Connected, but the bot is not in any channel. Invite it with /invite @appname in the channels you want scanned.'
+      );
+      expect(result.details?.channelCount).toBe(0);
+      expect(result.details?.workspaceName).toBe('Acme Corp');
+    });
+
+    it('counts only member channels when workspace has both joined and unjoined channels', async () => {
+      mockAuthTest.mockResolvedValueOnce({
+        ok: true,
+        team: 'Acme Corp',
+        user_id: 'U12345',
+      });
+      mockConversationsList.mockResolvedValueOnce({
+        ok: true,
+        channels: [
+          { id: 'C1', name: 'general', is_member: true },
+          { id: 'C2', name: 'random', is_member: false },
+          { id: 'C3', name: 'announcements', is_member: false },
+        ],
+      });
+
+      const result = await testConnectorSource(
+        'slack',
+        {},
+        { botToken: FAKE_TEST_TOKEN }
+      );
+      expect(result.success).toBe(true);
+      expect(result.warning).toBe(false);
+      expect(result.message).toContain('Found 1 readable channel(s)');
+      expect(result.details?.channelCount).toBe(1);
     });
 
     it('never returns the bot token in test response or details', async () => {
