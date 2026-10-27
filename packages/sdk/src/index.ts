@@ -282,28 +282,6 @@ export class SentraClient {
 
     const flagMode = options?.flagMode || 'block';
 
-    const handleDecision = (check: ActionResponse, originalFn: Function, args: any[]) => {
-      if (check.status === 'rate_limited') {
-        throw new SentraError(`[Sentra Rate Limited] ${check.reason}`, 429, check);
-      }
-
-      if (check.status === 'blocked') {
-        throw new SentraError(`[Sentra Blocked] ${check.reason}`, 403, check);
-      }
-
-      if (check.status === 'flagged') {
-        if (flagMode === 'block') {
-          throw new SentraError(`[Sentra Blocked] ${check.reason}`, 403, check);
-        }
-        if (typeof options?.onFlag === 'function') {
-          options.onFlag(check);
-        }
-        return originalFn(...args);
-      }
-
-      return originalFn(...args);
-    };
-
     if (openaiClient.chat?.completions?.create) {
       const originalChatCreate = openaiClient.chat.completions.create.bind(openaiClient.chat.completions);
       openaiClient.chat.completions.create = async (...args: any[]) => {
@@ -316,7 +294,7 @@ export class SentraClient {
           metadata: { model: params?.model, prompt_length: prompt.length, prompt: prompt.substring(0, 500) }
         });
 
-        return handleDecision(check, originalChatCreate, args);
+        return executeWithGovernance(check, flagMode, options?.onFlag, originalChatCreate, args);
       };
     }
 
@@ -332,7 +310,7 @@ export class SentraClient {
           metadata: { model: params?.model, prompt_length: prompt.length, prompt: prompt.substring(0, 500) }
         });
 
-        return handleDecision(check, originalResponsesCreate, args);
+        return executeWithGovernance(check, flagMode, options?.onFlag, originalResponsesCreate, args);
       };
     }
 
@@ -368,25 +346,7 @@ export class SentraClient {
           metadata: { model: params?.model, prompt_length: prompt.length, prompt: prompt.substring(0, 500) }
         });
 
-        if (check.status === 'rate_limited') {
-          throw new SentraError(`[Sentra Rate Limited] ${check.reason}`, 429, check);
-        }
-
-        if (check.status === 'blocked') {
-          throw new SentraError(`[Sentra Blocked] ${check.reason}`, 403, check);
-        }
-
-        if (check.status === 'flagged') {
-          if (flagMode === 'block') {
-            throw new SentraError(`[Sentra Blocked] ${check.reason}`, 403, check);
-          }
-          if (typeof options?.onFlag === 'function') {
-            options.onFlag(check);
-          }
-          return originalMessagesCreate(...args);
-        }
-
-        return originalMessagesCreate(...args);
+        return executeWithGovernance(check, flagMode, options?.onFlag, originalMessagesCreate, args);
       };
     }
 
@@ -466,56 +426,62 @@ export class SentraClient {
   }
 }
 
+function executeWithGovernance(
+  check: ActionResponse,
+  flagMode: 'block' | 'allow',
+  onFlag: ((check: ActionResponse) => void) | undefined,
+  originalFn: Function,
+  args: any[]
+) {
+  if (check.status === 'rate_limited') {
+    throw new SentraError(`[Sentra Rate Limited] ${check.reason}`, 429, check);
+  }
+
+  if (check.status === 'blocked') {
+    throw new SentraError(`[Sentra Blocked] ${check.reason}`, 403, check);
+  }
+
+  if (check.status === 'flagged') {
+    if (flagMode === 'block') {
+      throw new SentraError(`[Sentra Blocked] ${check.reason}`, 403, check);
+    }
+    if (typeof onFlag === 'function') {
+      onFlag(check);
+    }
+    return originalFn(...args);
+  }
+
+  return originalFn(...args);
+}
+
+function extractContentText(content: any): string {
+  if (typeof content === 'string') return content;
+  if (!Array.isArray(content)) return '';
+  return content
+    .map((item: any) => (typeof item === 'string' ? item : item?.text || ''))
+    .filter(Boolean)
+    .join('\n');
+}
+
 function extractOpenAIPrompt(params: any): string {
   if (!params) return '';
   if (typeof params.prompt === 'string') return params.prompt;
   if (Array.isArray(params.prompt)) return params.prompt.join('\n');
-  if (Array.isArray(params.messages)) {
-    return params.messages
-      .map((m: any) => {
-        if (!m) return '';
-        if (typeof m.content === 'string') return m.content;
-        if (Array.isArray(m.content)) {
-          return m.content
-            .map((part: any) => {
-              if (typeof part === 'string') return part;
-              if (part && typeof part.text === 'string') return part.text;
-              return '';
-            })
-            .filter(Boolean)
-            .join('\n');
-        }
-        return '';
-      })
-      .filter(Boolean)
-      .join('\n');
-  }
-  return '';
+  if (!Array.isArray(params.messages)) return '';
+
+  return params.messages
+    .map((m: any) => extractContentText(m?.content))
+    .filter(Boolean)
+    .join('\n');
 }
 
 function extractAnthropicPrompt(params: any): string {
   if (!params) return '';
-  const parts: string[] = [];
-  if (typeof params.system === 'string') {
-    parts.push(params.system);
-  } else if (Array.isArray(params.system)) {
-    for (const s of params.system) {
-      if (typeof s === 'string') parts.push(s);
-      else if (s && typeof s.text === 'string') parts.push(s.text);
-    }
-  }
-  if (Array.isArray(params.messages)) {
-    for (const m of params.messages) {
-      if (!m) continue;
-      if (typeof m.content === 'string') {
-        parts.push(m.content);
-      } else if (Array.isArray(m.content)) {
-        for (const b of m.content) {
-          if (typeof b === 'string') parts.push(b);
-          else if (b && typeof b.text === 'string') parts.push(b.text);
-        }
-      }
-    }
-  }
-  return parts.join('\n');
+  const systemText = extractContentText(params.system);
+  const messagesText = Array.isArray(params.messages)
+    ? params.messages.map((m: any) => extractContentText(m?.content)).filter(Boolean).join('\n')
+    : '';
+
+  if (systemText && messagesText) return `${systemText}\n${messagesText}`;
+  return systemText || messagesText;
 }
