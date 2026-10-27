@@ -286,6 +286,14 @@ export const samlCallback = async (req: Request, res: Response, next: NextFuncti
       });
     }
 
+    // Deactivated user protection: an inactive user must never be logged in.
+    if (existingUser && existingUser.is_active === false) {
+      return await rejectLogin('USER_DEACTIVATED', existingUser.id, {
+        email,
+        organizationId: org.id,
+      });
+    }
+
     // Upsert the user in that organization
     let user = existingUser;
     if (!user) {
