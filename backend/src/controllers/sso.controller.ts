@@ -12,7 +12,12 @@ samlify.setSchemaValidator({ validate: () => Promise.resolve('skipped') });
 
 // Normalise a list of allowed email domains ("Acme.com", "@acme.com") into lowercase bare domains.
 export const normalizeAllowedDomains = (input: unknown): string[] => {
-  const list = Array.isArray(input) ? input : typeof input === 'string' ? input.split(',') : [];
+  let list: unknown[] = [];
+  if (Array.isArray(input)) {
+    list = input;
+  } else if (typeof input === 'string') {
+    list = input.split(',');
+  }
   return Array.from(
     new Set(
       list
