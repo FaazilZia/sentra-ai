@@ -89,24 +89,60 @@ if (!success) {
 
 ---
 
-## OpenAI Wrapper
+## Provider Wrappers (OpenAI & Anthropic)
 
-Wrap the OpenAI SDK client to guard completions automatically:
+Intercept LLM calls pre-flight to enforce security guardrails before requests reach AI model providers.
+
+### OpenAI Wrapper
+
+Wrap the OpenAI client to guard `chat.completions.create` and `responses.create` (if supported):
 
 ```typescript
 import OpenAI from 'openai';
 import { SentraClient } from '@sentra-ai/sdk';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const sentra = new SentraClient({ apiKey: process.env.SENTRA_API_KEY });
+const sentra = new SentraClient({ apiKey: 'sentra_test_sandbox' });
 
-const guardedOpenAI = sentra.wrapOpenAI(openai);
+const guardedOpenAI = sentra.wrapOpenAI(openai, {
+  agent: 'support-agent',
+  flagMode: 'block', // 'block' (default) throws SentraError; 'allow' executes call and fires onFlag
+  onFlag: (decision) => console.warn('Flagged action:', decision.reason)
+});
 
 const response = await guardedOpenAI.chat.completions.create({
-  model: 'gpt-4o',
+  model: 'gpt-4o-mini',
   messages: [{ role: 'user', content: 'Summarize this contract.' }]
 });
 ```
+
+### Anthropic Wrapper
+
+Wrap the Anthropic client to guard `messages.create`:
+
+```typescript
+import Anthropic from '@anthropic-ai/sdk';
+import { SentraClient } from '@sentra-ai/sdk';
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const sentra = new SentraClient({ apiKey: 'sentra_test_sandbox' });
+
+const guardedAnthropic = sentra.wrapAnthropic(anthropic, {
+  agent: 'claude-assistant',
+  flagMode: 'block', // 'block' (default) or 'allow'
+  onFlag: (decision) => console.warn('Flagged action:', decision.reason)
+});
+
+const response = await guardedAnthropic.messages.create({
+  model: 'claude-3-5-sonnet',
+  max_tokens: 16,
+  messages: [{ role: 'user', content: 'Hello Claude' }]
+});
+```
+
+### Streaming Behavior
+
+For streaming requests (`stream: true`), Sentra evaluates governance **pre-flight only** on the request parameters (messages, system instructions, model) before opening the provider stream. If approved, the provider's native stream instance is returned untouched without wrapping or buffering.
 
 ---
 
