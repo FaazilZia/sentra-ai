@@ -25,6 +25,12 @@ export interface ActionResponse {
   isPendingApproval?: boolean;
 }
 
+export interface WrapperOptions {
+  agent?: string;
+  flagMode?: 'block' | 'allow';
+  onFlag?: (check: ActionResponse) => void;
+}
+
 export class SentraError extends Error {
   constructor(
     message: string,
@@ -261,29 +267,91 @@ export class SentraClient {
   }
 
   /**
-   * Intercepts OpenAI requests to ensure safety.
+   * Intercepts OpenAI requests to ensure runtime safety and policy compliance.
+   * Covers chat.completions.create and responses.create (if available).
+   * Streaming: Streaming requests (stream: true) are evaluated pre-flight only before the stream is opened.
+   * If permitted, the provider's native stream is passed through without modification.
+   *
+   * @param openaiClient The OpenAI SDK client instance to wrap.
+   * @param options Configuration options including agent tag, flagMode ('block' | 'allow', default: 'block'), and onFlag callback.
    */
-  wrapOpenAI(openaiClient: any) {
-    const originalCreate = openaiClient.chat.completions.create.bind(openaiClient.chat.completions);
+  wrapOpenAI(openaiClient: any, options?: WrapperOptions) {
+    if (!openaiClient || openaiClient.__sentra_wrapped__) {
+      return openaiClient;
+    }
 
-    openaiClient.chat.completions.create = async (...args: any[]) => {
-      const params = args[0];
-      const prompt = params.messages?.map((m: any) => m.content).join('\n') || '';
+    const flagMode = options?.flagMode || 'block';
 
-      const check = await this.checkAction({
-        agent: 'openai-client',
-        action: 'OPENAI_CHAT_COMPLETION',
-        metadata: { model: params.model, prompt_length: prompt.length, prompt: prompt.substring(0, 500) }
-      });
+    if (openaiClient.chat?.completions?.create) {
+      const originalChatCreate = openaiClient.chat.completions.create.bind(openaiClient.chat.completions);
+      openaiClient.chat.completions.create = async (...args: any[]) => {
+        const params = args[0];
+        const prompt = extractOpenAIPrompt(params);
 
-      if (!check.isAllowed) {
-        throw new SentraError(`[Sentra ${check.status === 'rate_limited' ? 'Rate Limited' : 'Blocked'}] ${check.reason}`, check.status === 'rate_limited' ? 429 : 403, check);
-      }
+        const check = await this.checkAction({
+          agent: options?.agent || 'openai-client',
+          action: 'OPENAI_CHAT_COMPLETION',
+          metadata: { model: params?.model, prompt_length: prompt.length, prompt: prompt.substring(0, 500) }
+        });
 
-      return originalCreate(...args);
-    };
+        return executeWithGovernance(check, flagMode, options?.onFlag, originalChatCreate, args);
+      };
+    }
 
+    if (openaiClient.responses?.create) {
+      const originalResponsesCreate = openaiClient.responses.create.bind(openaiClient.responses);
+      openaiClient.responses.create = async (...args: any[]) => {
+        const params = args[0];
+        const prompt = extractOpenAIPrompt(params);
+
+        const check = await this.checkAction({
+          agent: options?.agent || 'openai-client',
+          action: 'OPENAI_RESPONSES_CREATE',
+          metadata: { model: params?.model, prompt_length: prompt.length, prompt: prompt.substring(0, 500) }
+        });
+
+        return executeWithGovernance(check, flagMode, options?.onFlag, originalResponsesCreate, args);
+      };
+    }
+
+    openaiClient.__sentra_wrapped__ = true;
     return openaiClient;
+  }
+
+  /**
+   * Intercepts Anthropic requests to ensure runtime safety and policy compliance.
+   * Covers messages.create.
+   * Streaming: Streaming requests (stream: true) are evaluated pre-flight only before the stream is opened.
+   * If permitted, the provider's native stream is passed through without modification.
+   *
+   * @param anthropicClient The Anthropic SDK client instance to wrap.
+   * @param options Configuration options including agent tag, flagMode ('block' | 'allow', default: 'block'), and onFlag callback.
+   */
+  wrapAnthropic(anthropicClient: any, options?: WrapperOptions) {
+    if (!anthropicClient || anthropicClient.__sentra_wrapped__) {
+      return anthropicClient;
+    }
+
+    const flagMode = options?.flagMode || 'block';
+
+    if (anthropicClient.messages?.create) {
+      const originalMessagesCreate = anthropicClient.messages.create.bind(anthropicClient.messages);
+      anthropicClient.messages.create = async (...args: any[]) => {
+        const params = args[0];
+        const prompt = extractAnthropicPrompt(params);
+
+        const check = await this.checkAction({
+          agent: options?.agent || 'anthropic-client',
+          action: 'ANTHROPIC_MESSAGES_CREATE',
+          metadata: { model: params?.model, prompt_length: prompt.length, prompt: prompt.substring(0, 500) }
+        });
+
+        return executeWithGovernance(check, flagMode, options?.onFlag, originalMessagesCreate, args);
+      };
+    }
+
+    anthropicClient.__sentra_wrapped__ = true;
+    return anthropicClient;
   }
 
   /**
@@ -356,4 +424,64 @@ export class SentraClient {
       return { success: false, governance };
     }
   }
+}
+
+function executeWithGovernance(
+  check: ActionResponse,
+  flagMode: 'block' | 'allow',
+  onFlag: ((check: ActionResponse) => void) | undefined,
+  originalFn: Function,
+  args: any[]
+) {
+  if (check.status === 'rate_limited') {
+    throw new SentraError(`[Sentra Rate Limited] ${check.reason}`, 429, check);
+  }
+
+  if (check.status === 'blocked') {
+    throw new SentraError(`[Sentra Blocked] ${check.reason}`, 403, check);
+  }
+
+  if (check.status === 'flagged') {
+    if (flagMode === 'block') {
+      throw new SentraError(`[Sentra Blocked] ${check.reason}`, 403, check);
+    }
+    if (typeof onFlag === 'function') {
+      onFlag(check);
+    }
+    return originalFn(...args);
+  }
+
+  return originalFn(...args);
+}
+
+function extractContentText(content: any): string {
+  if (typeof content === 'string') return content;
+  if (!Array.isArray(content)) return '';
+  return content
+    .map((item: any) => (typeof item === 'string' ? item : item?.text || ''))
+    .filter(Boolean)
+    .join('\n');
+}
+
+function extractOpenAIPrompt(params: any): string {
+  if (!params) return '';
+  if (typeof params.prompt === 'string') return params.prompt;
+  if (Array.isArray(params.prompt)) return params.prompt.join('\n');
+  if (!Array.isArray(params.messages)) return '';
+
+  return params.messages
+    .map((m: any) => extractContentText(m?.content))
+    .filter(Boolean)
+    .join('\n');
+}
+
+function extractAnthropicPrompt(params: any): string {
+  if (!params) return '';
+  const systemText = extractContentText(params.system);
+  const messagesText = Array.isArray(params.messages)
+    ? params.messages.map((m: any) => extractContentText(m?.content)).filter(Boolean).join('\n')
+    : '';
+
+  if (systemText && messagesText) return `${systemText}\n${messagesText}`;
+  return systemText || messagesText;
 }

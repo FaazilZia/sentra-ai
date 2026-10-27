@@ -72,6 +72,7 @@ data/
 trace/
 
 # Local development artifacts
+scratch/
 .local-dev/
 backend/src/scratch/
 .temp-backup/

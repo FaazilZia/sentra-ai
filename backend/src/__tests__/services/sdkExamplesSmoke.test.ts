@@ -20,6 +20,7 @@ describe('SDK Example Scripts & Client Smoke Test', () => {
     expect(typeof client.checkAction).toBe('function');
     expect(typeof client.safeAction).toBe('function');
     expect(typeof client.wrapOpenAI).toBe('function');
+    expect(typeof client.wrapAnthropic).toBe('function');
     expect(typeof client.wrapFetch).toBe('function');
     expect(typeof client.wrapLangChain).toBe('function');
   });
