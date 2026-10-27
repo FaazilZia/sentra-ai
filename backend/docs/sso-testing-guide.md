@@ -82,6 +82,7 @@ curl -X PUT http://localhost:10000/api/v1/sso/config \
   -d '{
     "sso_provider": "Okta",
     "idpMetadataXml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><EntityDescriptor ... > ... </EntityDescriptor>",
+    "allowedEmailDomains": ["acme.com", "subsidiary.com"],
     "attributeMapping": {
       "email": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
       "name": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"
@@ -92,6 +93,8 @@ curl -X PUT http://localhost:10000/api/v1/sso/config \
 ### Request Payload Description
 - `sso_provider`: String identifier for the provider (e.g. `Okta`, `EntraID`, `Ping`).
 - `idpMetadataXml`: The escaped, raw XML metadata string downloaded from your Identity Provider.
+- `allowedEmailDomains`: (Optional) Array or comma-separated string of permitted email domains (e.g., `["acme.com", "subsidiary.com"]` or `"acme.com, subsidiary.com"`).
+  > **Domain Restriction Note**: When `allowedEmailDomains` contains one or more domains, SAML assertions with email addresses outside these domains are rejected with `SAML_SSO_LOGIN_REJECTED` audit logs. If the list is empty (`[]`) or omitted on initial setup, the domain rule is **OFF**, and assertions for any domain signed by the trusted IdP are accepted. When updating other SSO configuration fields later, omitting `allowedEmailDomains` keeps the existing configured domains intact.
 - `attributeMapping`: Claims mapping dictionary matching assertion attributes to Sentra's internal structure:
   - `email`: Claim URI/Name containing user emails.
   - `name`: Claim URI/Name containing user full names.
