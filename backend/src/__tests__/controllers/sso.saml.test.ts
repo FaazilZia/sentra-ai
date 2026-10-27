@@ -155,7 +155,7 @@ describe('samlCallback: valid logins', () => {
   it('logs in an existing user who already belongs to this org, without creating a new one', async () => {
     mockOrg();
     (prisma.users.findFirst as jest.Mock).mockResolvedValue({
-      id: 'user-1', email: 'jane@acme.com', role: 'MEMBER', organizationId: ORG_ID,
+      id: 'user-1', email: 'jane@acme.com', role: 'MEMBER', is_active: true, organizationId: ORG_ID,
     });
     const res = makeRes();
 
@@ -233,6 +233,61 @@ describe('samlCallback: allowed email domain', () => {
 
     expect(prisma.users.create).toHaveBeenCalledTimes(1);
     expect((prisma.users.create as jest.Mock).mock.calls[0][0].data.email).toBe('sam@acme.com');
+    expect(res.redirect).toHaveBeenCalledWith(expect.stringContaining('/dashboard'));
+  });
+});
+
+describe('samlCallback: deactivated users', () => {
+  it('rejects an inactive user in the correct org and writes a USER_DEACTIVATED audit entry', async () => {
+    mockOrg();
+    (prisma.users.findFirst as jest.Mock).mockResolvedValue({
+      id: 'deactivated-user-1',
+      email: 'former.employee@acme.com',
+      role: 'MEMBER',
+      is_active: false,
+      organizationId: ORG_ID,
+    });
+    const res = makeRes();
+
+    await samlCallback(makeReq(await signedResponse(trustedIdp, 'former.employee@acme.com')), res, jest.fn());
+
+    expect(setAuthCookiesAndTokens).not.toHaveBeenCalled();
+    expect(prisma.users.create).not.toHaveBeenCalled();
+    expect(res.redirect).toHaveBeenCalledWith(LOGIN_ERROR);
+    expect(auditLogger.log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'SAML_SSO_LOGIN_REJECTED',
+        userId: 'deactivated-user-1',
+        organizationId: ORG_ID,
+        outcome: 'failure',
+        metadata: expect.objectContaining({
+          reason: 'USER_DEACTIVATED',
+          email: 'former.employee@acme.com',
+          organizationId: ORG_ID,
+        }),
+      })
+    );
+    expect(auditLogger.log).not.toHaveBeenCalledWith(expect.objectContaining({ action: 'SAML_SSO_LOGIN_SUCCESS' }));
+  });
+
+  it('allows an active user in the correct org to log in successfully', async () => {
+    mockOrg();
+    (prisma.users.findFirst as jest.Mock).mockResolvedValue({
+      id: 'active-user-1',
+      email: 'active.employee@acme.com',
+      role: 'MEMBER',
+      is_active: true,
+      organizationId: ORG_ID,
+    });
+    const res = makeRes();
+
+    await samlCallback(makeReq(await signedResponse(trustedIdp, 'active.employee@acme.com')), res, jest.fn());
+
+    expect(prisma.users.create).not.toHaveBeenCalled();
+    expect(setAuthCookiesAndTokens).toHaveBeenCalledWith(res, expect.objectContaining({ id: 'active-user-1', organizationId: ORG_ID }));
+    expect(auditLogger.log).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'SAML_SSO_LOGIN_SUCCESS', organizationId: ORG_ID, userId: 'active-user-1' })
+    );
     expect(res.redirect).toHaveBeenCalledWith(expect.stringContaining('/dashboard'));
   });
 });

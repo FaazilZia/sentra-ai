@@ -277,13 +277,22 @@ export const samlCallback = async (req: Request, res: Response, next: NextFuncti
       }
     }
 
-    // Cross-org protection: an account that belongs to another org must never be logged in here.
-    if (existingUser && existingUser.organizationId !== org.id) {
-      return await rejectLogin('ORGANIZATION_MISMATCH', existingUser.id, {
-        email,
-        attemptedOrganizationId: org.id,
-        userOrganizationId: existingUser.organizationId,
-      });
+    // Validate existing user account constraints (cross-org isolation & deactivation)
+    if (existingUser) {
+      if (existingUser.organizationId !== org.id) {
+        return await rejectLogin('ORGANIZATION_MISMATCH', existingUser.id, {
+          email,
+          attemptedOrganizationId: org.id,
+          userOrganizationId: existingUser.organizationId,
+        });
+      }
+
+      if (existingUser.is_active === false) {
+        return await rejectLogin('USER_DEACTIVATED', existingUser.id, {
+          email,
+          organizationId: org.id,
+        });
+      }
     }
 
     // Upsert the user in that organization
