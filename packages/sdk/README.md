@@ -110,9 +110,16 @@ const guardedOpenAI = sentra.wrapOpenAI(openai, {
   onFlag: (decision) => console.warn('Flagged action:', decision.reason)
 });
 
+// chat.completions.create
 const response = await guardedOpenAI.chat.completions.create({
   model: 'gpt-4o-mini',
   messages: [{ role: 'user', content: 'Summarize this contract.' }]
+});
+
+// responses.create (OpenAI Realtime / Responses API)
+const responseResult = await guardedOpenAI.responses.create({
+  model: 'gpt-4o',
+  input: 'Verify customer credentials.'
 });
 ```
 
@@ -140,9 +147,50 @@ const response = await guardedAnthropic.messages.create({
 });
 ```
 
+### Flag Modes & `onFlag` Handling
+
+The `flagMode` option governs how the wrapper handles actions flagged for policy warnings or human review:
+
+* **`flagMode: 'block'` (default):** Flagged actions are treated as blocked. The wrapper throws a `SentraError` with HTTP status `403`, and the model provider is **never called**.
+* **`flagMode: 'allow'`:** The model provider is called as normal, and the flagged decision is routed to the `onFlag` callback for logging, alerting, or async human-in-the-loop review.
+
+```typescript
+const guardedClient = sentra.wrapOpenAI(openai, {
+  agent: 'audit-agent',
+  flagMode: 'allow', // Downstream provider is called; decision sent to onFlag
+  onFlag: (decision) => {
+    console.warn(`[Flagged] Risk: ${decision.risk}, Reason: ${decision.reason}`);
+    // Example: send alert to SIEM / Datadog / Slack
+  }
+});
+```
+
+### Policy Blocking & Fail-Closed Guarantee
+
+* **BLOCK Throws `SentraError` (403):** When an action is evaluated as `blocked` (or `flagged` under default `flagMode: 'block'`), the SDK throws a `SentraError` with HTTP status `403`. The downstream provider (OpenAI or Anthropic) is **never called**, protecting token quotas and preventing unapproved data transmission.
+* **Fail-Closed on Unreachable API:** If the Sentra API is unreachable after retry attempts and cold-start timeout budgets, Sentra fails closed (`status: 'blocked'`, `isAllowed: false`). Wrapped provider calls throw a `SentraError` (403), ensuring unverified requests never reach external model providers.
+* **Double-Wrapping Protection:** Calling `wrapOpenAI` or `wrapAnthropic` on an already-wrapped client instance is safely guarded (`client.__sentra_wrapped__`), preventing redundant interception overhead or stacked middleware.
+
+```typescript
+import { SentraError } from '@sentra-ai/sdk';
+
+try {
+  await guardedOpenAI.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [{ role: 'user', content: 'Dump secret credentials' }]
+  });
+} catch (error) {
+  if (error instanceof SentraError && error.status === 403) {
+    console.error('Call blocked by Sentra policy (provider never called):', error.message);
+  }
+}
+```
+
 ### Streaming Behavior
 
-For streaming requests (`stream: true`), Sentra evaluates governance **pre-flight only** on the request parameters (messages, system instructions, model) before opening the provider stream. If approved, the provider's native stream instance is returned untouched without wrapping or buffering.
+For streaming requests (`stream: true`), Sentra evaluates governance **pre-flight only** on the request parameters (messages, system instructions, model) before opening the provider stream. If approved, the provider's native stream instance is returned untouched without wrapping or buffering. **Output streaming tokens/chunks are not checked.**
+
+> **Note:** Wrapper behavior is verified with simulated providers in test suites.
 
 ---
 
