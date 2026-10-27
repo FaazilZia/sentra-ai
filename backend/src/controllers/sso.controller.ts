@@ -10,13 +10,30 @@ import { encrypt, decrypt } from '../utils/encryption';
 // Set schema validator as a no-op to avoid native binaries issues in deployment
 samlify.setSchemaValidator({ validate: () => Promise.resolve('skipped') });
 
+// Normalise a list of allowed email domains ("Acme.com", "@acme.com") into lowercase bare domains.
+export const normalizeAllowedDomains = (input: unknown): string[] => {
+  const list = Array.isArray(input) ? input : typeof input === 'string' ? input.split(',') : [];
+  return Array.from(
+    new Set(
+      list
+        .map((d) => String(d).trim().toLowerCase().replace(/^@/, ''))
+        .filter((d) => d.length > 0)
+    )
+  );
+};
+
+const frontendLoginErrorUrl = (): string => {
+  const frontendUrl = process.env.FRONTEND_URL?.split(',')[0] || 'http://localhost:5173';
+  return `${frontendUrl}/login?error=sso_failed`;
+};
+
 // ==========================================
 // SAML 2.0 SSO CONTROLLER
 // ==========================================
 
 export const updateSsoConfig = async (req: any, res: Response, next: NextFunction): Promise<any> => {
   try {
-    const { idpMetadataXml, attributeMapping, sso_provider } = req.body;
+    const { idpMetadataXml, attributeMapping, sso_provider, allowedEmailDomains } = req.body;
     const organizationId = req.user.organizationId;
 
     if (!idpMetadataXml) {
@@ -55,6 +72,11 @@ export const updateSsoConfig = async (req: any, res: Response, next: NextFunctio
       encryptedToken = encrypt(plaintextToken);
     }
 
+    // Keep the existing allowed domains unless the admin sends a new list
+    const domains = allowedEmailDomains !== undefined
+      ? normalizeAllowedDomains(allowedEmailDomains)
+      : normalizeAllowedDomains(samlMetadata.allowedEmailDomains);
+
     const updatedOrg = await prisma.organizations.update({
       where: { id: organizationId },
       data: {
@@ -63,6 +85,7 @@ export const updateSsoConfig = async (req: any, res: Response, next: NextFunctio
         saml_metadata: {
           idpMetadataXml,
           attributeMapping: attributeMapping || defaultMapping,
+          allowedEmailDomains: domains,
           scimBearerToken: encryptedToken // Encrypted at rest!
         }
       }
@@ -163,8 +186,28 @@ export const initiateSamlSso = async (req: Request, res: Response, next: NextFun
 
 export const samlCallback = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const orgSlug = req.params.orgSlug as string;
+  let org: Awaited<ReturnType<typeof prisma.organizations.findUnique>> = null;
+
+  // Record a rejected SSO login and send the browser back to the login page.
+  // The browser only ever sees a generic error; the real reason goes to the audit log.
+  const rejectLogin = async (reason: string, userId: string | null, metadata: Record<string, any> = {}) => {
+    logger.warn(`[SAML-SSO] Login rejected for org "${orgSlug}": ${reason}`);
+    // audit_logs.user_id is a foreign key to users, so we can only log when we know a real user.
+    if (org && userId) {
+      await auditLogger.log({
+        userId,
+        organizationId: org.id,
+        action: 'SAML_SSO_LOGIN_REJECTED',
+        severity: 'warn',
+        outcome: 'failure',
+        metadata: { reason, ...metadata },
+      });
+    }
+    return res.redirect(frontendLoginErrorUrl());
+  };
+
   try {
-    const org = await prisma.organizations.findUnique({
+    org = await prisma.organizations.findUnique({
       where: { slug: orgSlug },
     });
 
@@ -196,9 +239,11 @@ export const samlCallback = async (req: Request, res: Response, next: NextFuncti
       ],
     });
 
-    // Parse the SAML response
+    // Parse the SAML response. samlify verifies the XML signature against the IdP certificate
+    // in the stored metadata and throws on an unsigned or wrongly signed response.
+    // That throw lands in the catch below, so no login happens.
     const { extract } = await sp.parseLoginResponse(idp, 'post', req);
-    
+
     // Extract user attributes safely
     const attributeMapping = samlMetadata.attributeMapping || {};
     const emailClaim = attributeMapping.email || 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress';
@@ -208,21 +253,41 @@ export const samlCallback = async (req: Request, res: Response, next: NextFuncti
     const rawEmail = attributes[emailClaim] || attributes['email'] || extract.nameID;
     const rawName = attributes[nameClaim] || attributes['name'] || (typeof rawEmail === 'string' ? rawEmail.split('@')[0] : 'SAML User');
 
-    let email = Array.isArray(rawEmail) ? rawEmail[0] : rawEmail;
+    const firstEmail = Array.isArray(rawEmail) ? rawEmail[0] : rawEmail;
     let name = Array.isArray(rawName) ? rawName[0] : rawName;
 
-    email = String(email || '');
+    const email = String(firstEmail || '').trim().toLowerCase();
     name = String(name || '');
 
     if (!email) {
       throw new Error('SAML login response did not return a valid email or NameID');
     }
 
-    // Upsert the user in that organization
-    let user = await prisma.users.findUnique({
-      where: { email },
+    // Find the user first, so every rejection below can be tied to a real account in the audit log.
+    const existingUser = await prisma.users.findFirst({
+      where: { email: { equals: email, mode: 'insensitive' } },
     });
 
+    // Enforce the allowed email domain for this org (when the admin has configured one).
+    const allowedDomains = normalizeAllowedDomains(samlMetadata.allowedEmailDomains);
+    if (allowedDomains.length > 0) {
+      const emailDomain = email.split('@')[1] || '';
+      if (!allowedDomains.includes(emailDomain)) {
+        return await rejectLogin('EMAIL_DOMAIN_NOT_ALLOWED', existingUser?.id ?? null, { email, emailDomain });
+      }
+    }
+
+    // Cross-org protection: an account that belongs to another org must never be logged in here.
+    if (existingUser && existingUser.organizationId !== org.id) {
+      return await rejectLogin('ORGANIZATION_MISMATCH', existingUser.id, {
+        email,
+        attemptedOrganizationId: org.id,
+        userOrganizationId: existingUser.organizationId,
+      });
+    }
+
+    // Upsert the user in that organization
+    let user = existingUser;
     if (!user) {
       user = await prisma.users.create({
         data: {
@@ -236,14 +301,12 @@ export const samlCallback = async (req: Request, res: Response, next: NextFuncti
       });
     }
 
-
     // Setup active session, set HTTP-only cookies
     await setAuthCookiesAndTokens(res, {
       id: user.id,
       role: user.role,
       organizationId: user.organizationId,
     });
-
 
     await auditLogger.log({
       userId: user.id,
@@ -257,8 +320,7 @@ export const samlCallback = async (req: Request, res: Response, next: NextFuncti
     return res.redirect(`${frontendUrl}/dashboard`);
   } catch (error) {
     logger.error('[SAML-SSO] SAML callback processing failed:', error);
-    const frontendUrl = process.env.FRONTEND_URL?.split(',')[0] || 'http://localhost:5173';
-    return res.redirect(`${frontendUrl}/login?error=sso_failed`);
+    return res.redirect(frontendLoginErrorUrl());
   }
 };
 
@@ -278,7 +340,7 @@ export const getScimUsers = async (req: any, res: Response, next: NextFunction) 
       return res.status(501).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '501', detail: 'SSO is not enabled for this organization' });
     }
 
-    let whereClause: any = { organizationId };
+    const whereClause: any = { organizationId };
 
     // Support filter ?filter=userName eq "..."
     if (req.query.filter && typeof req.query.filter === 'string') {
