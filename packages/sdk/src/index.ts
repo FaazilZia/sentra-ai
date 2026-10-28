@@ -266,6 +266,54 @@ export class SentraClient {
     });
   }
 
+  private wrapOpenAICompatible(
+    client: any,
+    options: WrapperOptions | undefined,
+    actionPrefix: string,
+    defaultAgent: string
+  ) {
+    if (!client || client.__sentra_wrapped__) {
+      return client;
+    }
+
+    const flagMode = options?.flagMode || 'block';
+
+    if (client.chat?.completions?.create) {
+      const originalChatCreate = client.chat.completions.create.bind(client.chat.completions);
+      client.chat.completions.create = async (...args: any[]) => {
+        const params = args[0];
+        const prompt = extractOpenAIPrompt(params);
+
+        const check = await this.checkAction({
+          agent: options?.agent || defaultAgent,
+          action: `${actionPrefix}_CHAT_COMPLETION`,
+          metadata: { model: params?.model, prompt_length: prompt.length, prompt: prompt.substring(0, 500) }
+        });
+
+        return executeWithGovernance(check, flagMode, options?.onFlag, originalChatCreate, args);
+      };
+    }
+
+    if (client.responses?.create) {
+      const originalResponsesCreate = client.responses.create.bind(client.responses);
+      client.responses.create = async (...args: any[]) => {
+        const params = args[0];
+        const prompt = extractOpenAIPrompt(params);
+
+        const check = await this.checkAction({
+          agent: options?.agent || defaultAgent,
+          action: `${actionPrefix}_RESPONSES_CREATE`,
+          metadata: { model: params?.model, prompt_length: prompt.length, prompt: prompt.substring(0, 500) }
+        });
+
+        return executeWithGovernance(check, flagMode, options?.onFlag, originalResponsesCreate, args);
+      };
+    }
+
+    client.__sentra_wrapped__ = true;
+    return client;
+  }
+
   /**
    * Intercepts OpenAI requests to ensure runtime safety and policy compliance.
    * Covers chat.completions.create and responses.create (if available).
@@ -276,46 +324,21 @@ export class SentraClient {
    * @param options Configuration options including agent tag, flagMode ('block' | 'allow', default: 'block'), and onFlag callback.
    */
   wrapOpenAI(openaiClient: any, options?: WrapperOptions) {
-    if (!openaiClient || openaiClient.__sentra_wrapped__) {
-      return openaiClient;
-    }
+    return this.wrapOpenAICompatible(openaiClient, options, 'OPENAI', 'openai-client');
+  }
 
-    const flagMode = options?.flagMode || 'block';
-
-    if (openaiClient.chat?.completions?.create) {
-      const originalChatCreate = openaiClient.chat.completions.create.bind(openaiClient.chat.completions);
-      openaiClient.chat.completions.create = async (...args: any[]) => {
-        const params = args[0];
-        const prompt = extractOpenAIPrompt(params);
-
-        const check = await this.checkAction({
-          agent: options?.agent || 'openai-client',
-          action: 'OPENAI_CHAT_COMPLETION',
-          metadata: { model: params?.model, prompt_length: prompt.length, prompt: prompt.substring(0, 500) }
-        });
-
-        return executeWithGovernance(check, flagMode, options?.onFlag, originalChatCreate, args);
-      };
-    }
-
-    if (openaiClient.responses?.create) {
-      const originalResponsesCreate = openaiClient.responses.create.bind(openaiClient.responses);
-      openaiClient.responses.create = async (...args: any[]) => {
-        const params = args[0];
-        const prompt = extractOpenAIPrompt(params);
-
-        const check = await this.checkAction({
-          agent: options?.agent || 'openai-client',
-          action: 'OPENAI_RESPONSES_CREATE',
-          metadata: { model: params?.model, prompt_length: prompt.length, prompt: prompt.substring(0, 500) }
-        });
-
-        return executeWithGovernance(check, flagMode, options?.onFlag, originalResponsesCreate, args);
-      };
-    }
-
-    openaiClient.__sentra_wrapped__ = true;
-    return openaiClient;
+  /**
+   * Intercepts Azure OpenAI requests to ensure runtime safety and policy compliance.
+   * Works with AzureOpenAI from the `openai` package; in metadata, `model` is the Azure deployment name.
+   * Covers chat.completions.create and responses.create (if available).
+   * Streaming: Streaming requests (stream: true) are evaluated pre-flight only before the stream is opened.
+   * If permitted, the provider's native stream is passed through without modification.
+   *
+   * @param azureClient The AzureOpenAI client instance to wrap.
+   * @param options Configuration options including agent tag, flagMode ('block' | 'allow', default: 'block'), and onFlag callback.
+   */
+  wrapAzureOpenAI(azureClient: any, options?: WrapperOptions) {
+    return this.wrapOpenAICompatible(azureClient, options, 'AZURE_OPENAI', 'azure-openai-client');
   }
 
   /**
