@@ -13,6 +13,7 @@
   "scripts": {
     "build": "rm -rf dist && tsc",
     "test": "node --experimental-transform-types --no-warnings --test test/*.test.ts",
+    "test:coverage": "node -e \"require('fs').mkdirSync('coverage',{recursive:true})\" && node --experimental-transform-types --no-warnings --test --experimental-test-coverage --test-reporter=lcov --test-reporter-destination=coverage/lcov.info --test-reporter=spec --test-reporter-destination=stdout test/*.test.ts && node -e \"const fs=require('fs');const p='coverage/lcov.info';if(fs.existsSync(p)){let c=fs.readFileSync(p,'utf8');fs.writeFileSync(p,c.replace(/^SF:src\\//gm,'SF:packages/sdk/src/'));}\"",
     "prepublishOnly": "npm run build && test -d dist || (echo 'Error: dist/ directory not found' && exit 1)"
   },
   "publishConfig": {
