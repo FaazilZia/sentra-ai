@@ -58,9 +58,7 @@ async function run() {
     azureOpenAIApiKey: apiKey,
     azureOpenAIEndpoint: cleanEndpoint,
     azureOpenAIApiDeploymentName: deployment,
-    azureOpenAIApiVersion: apiVersion,
-    maxTokens: 50,
-    temperature: 0
+    azureOpenAIApiVersion: apiVersion
   });
 
   const originalInvoke = underlyingModel.invoke.bind(underlyingModel);
@@ -157,9 +155,7 @@ async function run() {
     azureOpenAIApiKey: apiKey,
     azureOpenAIEndpoint: cleanEndpoint,
     azureOpenAIApiDeploymentName: deployment,
-    azureOpenAIApiVersion: apiVersion,
-    maxTokens: 50,
-    temperature: 0
+    azureOpenAIApiVersion: apiVersion
   });
 
   let blockedProviderCalls = 0;
