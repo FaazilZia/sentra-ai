@@ -1,9 +1,21 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { Readable } from 'node:stream';
-import { BedrockRuntimeClient, ConverseCommand, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
+import {
+  BedrockRuntimeClient,
+  ConverseCommand,
+  ConverseStreamCommand,
+  InvokeModelCommand,
+  InvokeModelWithResponseStreamCommand
+} from '@aws-sdk/client-bedrock-runtime';
+import { EventStreamCodec } from '@smithy/core/event-streams';
 import { SentraClient, SentraError, extractBedrockPrompt } from '../src/index.ts';
 import type { ActionRequest, ActionResponse } from '../src/index.ts';
+
+const eventStreamCodec = new EventStreamCodec(
+  (bytes: Uint8Array) => new TextDecoder().decode(bytes),
+  (str: string) => new TextEncoder().encode(str)
+);
 
 function createStubbedClient(responseToReturn: Partial<ActionResponse>) {
   const client = new SentraClient({ apiKey: 'sentra_test_sandbox' });
@@ -515,6 +527,280 @@ describe('wrapBedrock', () => {
       const decodedBody = JSON.parse(new TextDecoder().decode(result.body));
       assert.deepStrictEqual(decodedBody, cannedPayload);
       assert.strictEqual(decodedBody.completion, 'Hello from real Bedrock InvokeModel');
+    });
+
+    it('real BedrockRuntimeClient with ConverseStreamCommand: allowed stream passes through unchanged', async () => {
+      const { client, recordedRequests } = createStubbedClient({
+        status: 'allowed',
+        isAllowed: true,
+        reason: 'Safe Action'
+      });
+
+      const event1Body = { delta: { text: 'Hello ' }, contentBlockIndex: 0 };
+      const event2Body = { delta: { text: 'world from ConverseStream!' }, contentBlockIndex: 0 };
+
+      const event1Bin = eventStreamCodec.encode({
+        headers: {
+          ':message-type': { type: 'string', value: 'event' },
+          ':event-type': { type: 'string', value: 'contentBlockDelta' },
+          ':content-type': { type: 'string', value: 'application/json' }
+        },
+        body: new TextEncoder().encode(JSON.stringify(event1Body))
+      });
+
+      const event2Bin = eventStreamCodec.encode({
+        headers: {
+          ':message-type': { type: 'string', value: 'event' },
+          ':event-type': { type: 'string', value: 'contentBlockDelta' },
+          ':content-type': { type: 'string', value: 'application/json' }
+        },
+        body: new TextEncoder().encode(JSON.stringify(event2Body))
+      });
+
+      let handleCalls = 0;
+      const bedrockClient = new BedrockRuntimeClient({
+        region: 'us-east-1',
+        credentials: { accessKeyId: 'test-id', secretAccessKey: 'test-secret' },
+        requestHandler: {
+          handle: async () => {
+            handleCalls++;
+            return {
+              response: {
+                statusCode: 200,
+                headers: { 'content-type': 'application/vnd.amazon.eventstream' },
+                body: Readable.from([event1Bin, event2Bin])
+              }
+            } as any;
+          }
+        }
+      });
+
+      const wrapped = client.wrapBedrock(bedrockClient);
+      const promptText = 'Stream a response for real Bedrock ConverseStream';
+      const cmd = new ConverseStreamCommand({
+        modelId: 'amazon.nova-lite-v1:0',
+        messages: [{ role: 'user', content: [{ text: promptText }] }]
+      });
+
+      const result = await wrapped.send(cmd);
+
+      // Assert governance ran with expected action, agent, and prompt metadata
+      assert.strictEqual(recordedRequests.length, 1, 'Governance checkAction must run exactly once');
+      assert.strictEqual(recordedRequests[0].action, 'BEDROCK_CONVERSE');
+      assert.strictEqual(recordedRequests[0].agent, 'bedrock-client');
+      assert.strictEqual(recordedRequests[0].metadata?.model, 'amazon.nova-lite-v1:0');
+      assert.strictEqual(recordedRequests[0].metadata?.prompt, promptText);
+      assert.strictEqual(recordedRequests[0].metadata?.prompt_length, promptText.length);
+
+      // Assert provider requestHandler was reached once and returned stream passed through unchanged
+      assert.strictEqual(handleCalls, 1, 'Allowed stream must reach the provider exactly once');
+      assert.ok(result.stream, 'Allowed stream property must be present and returned unchanged');
+      assert.strictEqual(typeof result.stream[Symbol.asyncIterator], 'function', 'Stream must be an async iterable');
+
+      // Iterate result.stream with for await and collect the chunks
+      const collectedChunks: any[] = [];
+      for await (const chunk of result.stream) {
+        collectedChunks.push(chunk);
+      }
+
+      const expectedChunks = [
+        { contentBlockDelta: event1Body },
+        { contentBlockDelta: event2Body }
+      ];
+      assert.strictEqual(collectedChunks.length, expectedChunks.length, 'Chunk count must match');
+      assert.deepStrictEqual(collectedChunks, expectedChunks, 'Collected chunks must deep-equal what stub sent in same order');
+    });
+
+    it('real BedrockRuntimeClient with ConverseStreamCommand: blocked stream never reaches provider', async () => {
+      const { client, recordedRequests } = createStubbedClient({
+        status: 'blocked',
+        isAllowed: false,
+        reason: 'Converse stream blocked by Bedrock governance policy'
+      });
+
+      let handleCalls = 0;
+      const bedrockClient = new BedrockRuntimeClient({
+        region: 'us-east-1',
+        credentials: { accessKeyId: 'test-id', secretAccessKey: 'test-secret' },
+        requestHandler: {
+          handle: async () => {
+            handleCalls++;
+            return {
+              response: {
+                statusCode: 200,
+                headers: { 'content-type': 'application/vnd.amazon.eventstream' },
+                body: Readable.from([])
+              }
+            } as any;
+          }
+        }
+      });
+
+      const wrapped = client.wrapBedrock(bedrockClient);
+      const promptText = 'Malicious prompt that triggers block on ConverseStream';
+      const cmd = new ConverseStreamCommand({
+        modelId: 'amazon.nova-lite-v1:0',
+        messages: [{ role: 'user', content: [{ text: promptText }] }]
+      });
+
+      await assert.rejects(
+        async () => {
+          await wrapped.send(cmd);
+        },
+        (err: any) => {
+          assert.ok(err instanceof SentraError, 'Should throw SentraError');
+          assert.strictEqual(err.status, 403, 'HTTP status must be 403');
+          assert.ok(err.message.includes('Converse stream blocked by Bedrock governance policy'));
+          return true;
+        }
+      );
+
+      // Assert governance ran
+      assert.strictEqual(recordedRequests.length, 1, 'Governance checkAction must run once');
+      assert.strictEqual(recordedRequests[0].action, 'BEDROCK_CONVERSE');
+      assert.strictEqual(recordedRequests[0].agent, 'bedrock-client');
+      assert.strictEqual(recordedRequests[0].metadata?.model, 'amazon.nova-lite-v1:0');
+      assert.strictEqual(recordedRequests[0].metadata?.prompt, promptText);
+
+      // Assert provider was NEVER reached
+      assert.strictEqual(handleCalls, 0, 'Blocked stream must NEVER reach provider requestHandler');
+    });
+
+    it('real BedrockRuntimeClient with InvokeModelWithResponseStreamCommand: allowed stream passes through unchanged', async () => {
+      const { client, recordedRequests } = createStubbedClient({
+        status: 'allowed',
+        isAllowed: true,
+        reason: 'Safe Action'
+      });
+
+      const rawChunk1 = new TextEncoder().encode(JSON.stringify({ completion: 'stream chunk 1' }));
+      const rawChunk2 = new TextEncoder().encode(JSON.stringify({ completion: 'stream chunk 2' }));
+
+      const event1Bin = eventStreamCodec.encode({
+        headers: {
+          ':message-type': { type: 'string', value: 'event' },
+          ':event-type': { type: 'string', value: 'chunk' },
+          ':content-type': { type: 'string', value: 'application/json' }
+        },
+        body: new TextEncoder().encode(JSON.stringify({ bytes: Buffer.from(rawChunk1).toString('base64') }))
+      });
+
+      const event2Bin = eventStreamCodec.encode({
+        headers: {
+          ':message-type': { type: 'string', value: 'event' },
+          ':event-type': { type: 'string', value: 'chunk' },
+          ':content-type': { type: 'string', value: 'application/json' }
+        },
+        body: new TextEncoder().encode(JSON.stringify({ bytes: Buffer.from(rawChunk2).toString('base64') }))
+      });
+
+      let handleCalls = 0;
+      const bedrockClient = new BedrockRuntimeClient({
+        region: 'us-east-1',
+        credentials: { accessKeyId: 'test-id', secretAccessKey: 'test-secret' },
+        requestHandler: {
+          handle: async () => {
+            handleCalls++;
+            return {
+              response: {
+                statusCode: 200,
+                headers: { 'content-type': 'application/vnd.amazon.eventstream' },
+                body: Readable.from([event1Bin, event2Bin])
+              }
+            } as any;
+          }
+        }
+      });
+
+      const wrapped = client.wrapBedrock(bedrockClient);
+      const promptText = 'Stream a response for real Bedrock InvokeModelWithResponseStream';
+      const cmd = new InvokeModelWithResponseStreamCommand({
+        modelId: 'amazon.nova-lite-v1:0',
+        body: JSON.stringify({ prompt: promptText })
+      });
+
+      const result = await wrapped.send(cmd);
+
+      // Assert governance ran with expected action, agent, and prompt metadata
+      assert.strictEqual(recordedRequests.length, 1, 'Governance checkAction must run exactly once');
+      assert.strictEqual(recordedRequests[0].action, 'BEDROCK_INVOKE_MODEL');
+      assert.strictEqual(recordedRequests[0].agent, 'bedrock-client');
+      assert.strictEqual(recordedRequests[0].metadata?.model, 'amazon.nova-lite-v1:0');
+      assert.strictEqual(recordedRequests[0].metadata?.prompt, promptText);
+      assert.strictEqual(recordedRequests[0].metadata?.prompt_length, promptText.length);
+
+      // Assert provider requestHandler was reached once and returned body stream passed through unchanged
+      assert.strictEqual(handleCalls, 1, 'Allowed stream must reach the provider exactly once');
+      assert.ok(result.body, 'Allowed body stream property must be present and returned unchanged');
+      assert.strictEqual(typeof result.body[Symbol.asyncIterator], 'function', 'Body stream must be an async iterable');
+
+      // Iterate result.body with for await and collect the chunks
+      const collectedChunks: any[] = [];
+      for await (const chunk of result.body) {
+        collectedChunks.push(chunk);
+      }
+
+      const expectedChunks = [
+        { chunk: { bytes: rawChunk1 } },
+        { chunk: { bytes: rawChunk2 } }
+      ];
+      assert.strictEqual(collectedChunks.length, expectedChunks.length, 'Chunk count must match');
+      assert.deepStrictEqual(collectedChunks, expectedChunks, 'Collected chunks must deep-equal what stub sent in same order');
+    });
+
+    it('real BedrockRuntimeClient with InvokeModelWithResponseStreamCommand: blocked stream never reaches provider', async () => {
+      const { client, recordedRequests } = createStubbedClient({
+        status: 'blocked',
+        isAllowed: false,
+        reason: 'InvokeModel response stream blocked by Bedrock governance policy'
+      });
+
+      let handleCalls = 0;
+      const bedrockClient = new BedrockRuntimeClient({
+        region: 'us-east-1',
+        credentials: { accessKeyId: 'test-id', secretAccessKey: 'test-secret' },
+        requestHandler: {
+          handle: async () => {
+            handleCalls++;
+            return {
+              response: {
+                statusCode: 200,
+                headers: { 'content-type': 'application/vnd.amazon.eventstream' },
+                body: Readable.from([])
+              }
+            } as any;
+          }
+        }
+      });
+
+      const wrapped = client.wrapBedrock(bedrockClient);
+      const promptText = 'Malicious prompt that triggers block on InvokeModelWithResponseStream';
+      const cmd = new InvokeModelWithResponseStreamCommand({
+        modelId: 'amazon.nova-lite-v1:0',
+        body: JSON.stringify({ prompt: promptText })
+      });
+
+      await assert.rejects(
+        async () => {
+          await wrapped.send(cmd);
+        },
+        (err: any) => {
+          assert.ok(err instanceof SentraError, 'Should throw SentraError');
+          assert.strictEqual(err.status, 403, 'HTTP status must be 403');
+          assert.ok(err.message.includes('InvokeModel response stream blocked by Bedrock governance policy'));
+          return true;
+        }
+      );
+
+      // Assert governance ran
+      assert.strictEqual(recordedRequests.length, 1, 'Governance checkAction must run once');
+      assert.strictEqual(recordedRequests[0].action, 'BEDROCK_INVOKE_MODEL');
+      assert.strictEqual(recordedRequests[0].agent, 'bedrock-client');
+      assert.strictEqual(recordedRequests[0].metadata?.model, 'amazon.nova-lite-v1:0');
+      assert.strictEqual(recordedRequests[0].metadata?.prompt, promptText);
+
+      // Assert provider was NEVER reached
+      assert.strictEqual(handleCalls, 0, 'Blocked stream must NEVER reach provider requestHandler');
     });
   });
 
