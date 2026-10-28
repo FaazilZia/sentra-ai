@@ -72,40 +72,15 @@ async function run() {
   const sentraApiKey = process.env.SENTRA_API_KEY?.trim();
   const sentra = new SentraClient({
     apiKey: sentraApiKey || 'sentra_test_sandbox',
-    sandbox: !sentraApiKey,
-    timeout: 8000,
-    maxRetries: 1
+    sandbox: !sentraApiKey
   });
 
   let sentraStatus = 'unknown';
   const originalCheckAction = sentra.checkAction.bind(sentra);
   sentra.checkAction = async (request) => {
-    try {
-      const response = await originalCheckAction(request);
-      if (!sentraApiKey && !response.isAllowed && response.reason?.includes('unreachable')) {
-        sentraStatus = 'allowed (stubbed fallback: backend unreachable)';
-        return {
-          status: 'allowed',
-          isAllowed: true,
-          risk: 'low',
-          reason: 'Stubbed sandbox fallback for real call',
-          impact: 'None',
-          compliance: []
-        };
-      }
-      sentraStatus = response.status;
-      return response;
-    } catch {
-      sentraStatus = 'allowed (stubbed fallback: connection exception)';
-      return {
-        status: 'allowed',
-        isAllowed: true,
-        risk: 'low',
-        reason: 'Stubbed sandbox fallback for real call',
-        impact: 'None',
-        compliance: []
-      };
-    }
+    const response = await originalCheckAction(request);
+    sentraStatus = response.status;
+    return response;
   };
 
   // 5. Wrap client with wrapBedrock
