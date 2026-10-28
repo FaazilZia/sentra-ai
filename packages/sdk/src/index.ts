@@ -378,6 +378,81 @@ export class SentraClient {
   }
 
   /**
+   * Intercepts Google Vertex AI requests to ensure runtime safety and policy compliance.
+   * Works with @google/genai (GoogleGenAI with vertexai: true) by patching client.models.generateContent
+   * and client.models.generateContentStream, and also supports GenerativeModel-style objects that
+   * expose generateContent and generateContentStream directly on the instance.
+   * Streaming: Streaming requests are evaluated pre-flight only before the stream is opened.
+   * If permitted, the provider's native stream is passed through without modification.
+   *
+   * @param client The Vertex AI / GoogleGenAI client or model instance to wrap.
+   * @param options Configuration options including agent tag, flagMode ('block' | 'allow', default: 'block'), and onFlag callback.
+   */
+  wrapVertex(client: any, options?: WrapperOptions) {
+    if (!client || client.__sentra_wrapped__) {
+      return client;
+    }
+
+    const hasModelsMethods = client.models && (
+      typeof client.models.generateContent === 'function' ||
+      typeof client.models.generateContentStream === 'function'
+    );
+    const hasDirectMethods = (
+      typeof client.generateContent === 'function' ||
+      typeof client.generateContentStream === 'function'
+    );
+
+    if (!hasModelsMethods && !hasDirectMethods) {
+      return client;
+    }
+
+    const flagMode = options?.flagMode || 'block';
+    const agent = options?.agent || 'vertex-client';
+
+    const wrapMethod = (target: any, methodName: string, actionName: string) => {
+      if (typeof target[methodName] === 'function') {
+        const originalMethod = target[methodName].bind(target);
+        target[methodName] = async (...args: any[]) => {
+          const params = args[0];
+          const prompt = extractVertexPrompt(params);
+          const model = (params && typeof params === 'object' && params.model)
+            ? params.model
+            : (client.model || client._model || target.model || target._model);
+
+          const check = await this.checkAction({
+            agent,
+            action: actionName,
+            metadata: {
+              model,
+              prompt_length: prompt.length,
+              prompt: prompt.substring(0, 500)
+            }
+          });
+
+          return executeWithGovernance(check, flagMode, options?.onFlag, originalMethod, args);
+        };
+      }
+    };
+
+    if (client.models) {
+      wrapMethod(client.models, 'generateContent', 'VERTEX_GENERATE_CONTENT');
+      wrapMethod(client.models, 'generateContentStream', 'VERTEX_GENERATE_CONTENT_STREAM');
+      client.models.__sentra_wrapped__ = true;
+    }
+
+    if (typeof client.generateContent === 'function') {
+      wrapMethod(client, 'generateContent', 'VERTEX_GENERATE_CONTENT');
+    }
+
+    if (typeof client.generateContentStream === 'function') {
+      wrapMethod(client, 'generateContentStream', 'VERTEX_GENERATE_CONTENT_STREAM');
+    }
+
+    client.__sentra_wrapped__ = true;
+    return client;
+  }
+
+  /**
    * Intercepts fetch calls to monitor and control external API access.
    */
   wrapFetch(originalFetch: typeof fetch) {
@@ -507,4 +582,72 @@ function extractAnthropicPrompt(params: any): string {
 
   if (systemText && messagesText) return `${systemText}\n${messagesText}`;
   return systemText || messagesText;
+}
+
+function extractPartText(part: any): string {
+  if (typeof part === 'string') return part;
+  if (part && typeof part.text === 'string') return part.text;
+  return '';
+}
+
+function extractVertexContentText(contents: any): string {
+  if (!contents) return '';
+  if (typeof contents === 'string') return contents;
+  if (Array.isArray(contents)) {
+    return contents
+      .map((item: any) => {
+        if (typeof item === 'string') return item;
+        if (item && typeof item.text === 'string') return item.text;
+        if (item && Array.isArray(item.parts)) {
+          return item.parts.map(extractPartText).filter(Boolean).join('\n');
+        }
+        return '';
+      })
+      .filter(Boolean)
+      .join('\n');
+  }
+  if (typeof contents === 'object') {
+    if (typeof contents.text === 'string') return contents.text;
+    if (Array.isArray(contents.parts)) {
+      return contents.parts.map(extractPartText).filter(Boolean).join('\n');
+    }
+  }
+  return '';
+}
+
+export function extractVertexPrompt(params: any): string {
+  try {
+    if (!params) return '';
+
+    if (typeof params === 'string') return params;
+
+    if (Array.isArray(params)) {
+      return extractVertexContentText(params);
+    }
+
+    if (typeof params !== 'object') return '';
+
+    if (Array.isArray(params.parts)) {
+      return extractVertexContentText(params);
+    }
+
+    const systemInstruction = params.config?.systemInstruction ?? params.systemInstruction;
+    const systemText = systemInstruction ? extractVertexContentText(systemInstruction) : '';
+
+    let contentsText = '';
+    if (params.contents !== undefined) {
+      contentsText = extractVertexContentText(params.contents);
+    } else if (typeof params.prompt === 'string') {
+      contentsText = params.prompt;
+    } else if (typeof params.text === 'string') {
+      contentsText = params.text;
+    }
+
+    if (systemText && contentsText) {
+      return `${systemText}\n${contentsText}`;
+    }
+    return systemText || contentsText || '';
+  } catch {
+    return '';
+  }
 }
