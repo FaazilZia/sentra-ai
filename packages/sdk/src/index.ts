@@ -453,6 +453,57 @@ export class SentraClient {
   }
 
   /**
+   * Intercepts Amazon Bedrock requests to ensure runtime safety and policy compliance.
+   * Works with @aws-sdk/client-bedrock-runtime (BedrockRuntimeClient) by intercepting client.send
+   * for ConverseCommand (BEDROCK_CONVERSE) and InvokeModelCommand (BEDROCK_INVOKE_MODEL).
+   *
+   * @param client The BedrockRuntimeClient instance to wrap.
+   * @param options Configuration options including agent tag, flagMode ('block' | 'allow', default: 'block'), and onFlag callback.
+   * In metadata, model is the Bedrock model ID or inference profile ID.
+   */
+  wrapBedrock(client: any, options?: WrapperOptions) {
+    if (!client || client.__sentra_wrapped__) {
+      return client;
+    }
+
+    if (typeof client.send !== 'function') {
+      return client;
+    }
+
+    const flagMode = options?.flagMode || 'block';
+    const agent = options?.agent || 'bedrock-client';
+    const originalSend = client.send.bind(client);
+
+    client.send = async (...args: any[]) => {
+      const command = args[0];
+      const commandType = getBedrockCommandType(command);
+
+      if (!commandType) {
+        return originalSend(...args);
+      }
+
+      const action = commandType === 'converse' ? 'BEDROCK_CONVERSE' : 'BEDROCK_INVOKE_MODEL';
+      const prompt = extractBedrockPrompt(command?.input);
+      const model = command?.input?.modelId;
+
+      const check = await this.checkAction({
+        agent,
+        action,
+        metadata: {
+          model,
+          prompt_length: prompt.length,
+          prompt: prompt.substring(0, 500)
+        }
+      });
+
+      return executeWithGovernance(check, flagMode, options?.onFlag, originalSend, args);
+    };
+
+    client.__sentra_wrapped__ = true;
+    return client;
+  }
+
+  /**
    * Intercepts fetch calls to monitor and control external API access.
    */
   wrapFetch(originalFetch: typeof fetch) {
@@ -647,6 +698,114 @@ export function extractVertexPrompt(params: any): string {
       return `${systemText}\n${contentsText}`;
     }
     return systemText || contentsText || '';
+  } catch {
+    return '';
+  }
+}
+
+function getBedrockCommandType(command: any): 'converse' | 'invoke' | null {
+  if (!command) return null;
+  const name = command.name || command.constructor?.name || command._commandName;
+  if (typeof name === 'string') {
+    if (name === 'ConverseCommand' || name === 'Converse' || name.startsWith('Converse')) return 'converse';
+    if (name === 'InvokeModelCommand' || name === 'InvokeModel' || name.startsWith('InvokeModel')) return 'invoke';
+  }
+  if (command.input && typeof command.input === 'object') {
+    if (Array.isArray(command.input.messages) || command.input.system !== undefined) {
+      return 'converse';
+    }
+    if (command.input.body !== undefined) {
+      return 'invoke';
+    }
+  }
+  return null;
+}
+
+function extractBedrockConverseText(input: any): string {
+  if (!input) return '';
+  const systemText = Array.isArray(input.system)
+    ? input.system.map((s: any) => (typeof s === 'string' ? s : s?.text || '')).filter(Boolean).join('\n')
+    : (typeof input.system === 'string' ? input.system : (input.system?.text || ''));
+
+  let messagesText = '';
+  if (Array.isArray(input.messages)) {
+    messagesText = input.messages
+      .map((m: any) => {
+        if (!m) return '';
+        if (typeof m === 'string') return m;
+        if (typeof m.content === 'string') return m.content;
+        if (Array.isArray(m.content)) {
+          return m.content.map((c: any) => (typeof c === 'string' ? c : c?.text || '')).filter(Boolean).join('\n');
+        }
+        return '';
+      })
+      .filter(Boolean)
+      .join('\n');
+  }
+
+  if (systemText && messagesText) return `${systemText}\n${messagesText}`;
+  return systemText || messagesText || '';
+}
+
+function extractBedrockInvokeText(input: any): string {
+  if (!input) return '';
+  let body = input.body !== undefined ? input.body : input;
+
+  const maybeBuffer = (globalThis as any).Buffer;
+  if (maybeBuffer && typeof maybeBuffer.isBuffer === 'function' && maybeBuffer.isBuffer(body)) {
+    try {
+      body = body.toString('utf-8');
+    } catch {
+      return '';
+    }
+  } else if (body instanceof Uint8Array) {
+    try {
+      body = new TextDecoder().decode(body);
+    } catch {
+      return '';
+    }
+  }
+
+  if (typeof body === 'string') {
+    try {
+      const parsed = JSON.parse(body);
+      if (parsed && typeof parsed === 'object') {
+        body = parsed;
+      } else {
+        return body;
+      }
+    } catch {
+      return body;
+    }
+  }
+
+  if (body && typeof body === 'object') {
+    if (typeof body.inputText === 'string') return body.inputText;
+    if (typeof body.prompt === 'string') return body.prompt;
+    if (Array.isArray(body.prompt)) return body.prompt.join('\n');
+    if (Array.isArray(body.messages)) {
+      return extractBedrockConverseText(body);
+    }
+    if (typeof body.input === 'string') return body.input;
+  }
+
+  return '';
+}
+
+export function extractBedrockPrompt(input: any): string {
+  try {
+    if (!input) return '';
+    if (typeof input === 'string') return input;
+
+    if (Array.isArray(input.messages) || input.system !== undefined) {
+      return extractBedrockConverseText(input);
+    }
+
+    if (input.body !== undefined) {
+      return extractBedrockInvokeText(input);
+    }
+
+    return extractBedrockInvokeText(input);
   } catch {
     return '';
   }
