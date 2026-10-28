@@ -527,28 +527,45 @@ export class SentraClient {
 
   /**
    * Intercepts LangChain calls to monitor and control AI chain execution.
+   * Intercepts chain.call() and chain.invoke() methods.
+   *
+   * @param chain The LangChain chain or runnable instance to wrap.
+   * @param options Configuration options including agent tag, flagMode ('block' | 'allow', default: 'block'), and onFlag callback.
    */
-  wrapLangChain(chain: any) {
-    const originalCall = chain.call?.bind(chain) || chain.invoke?.bind(chain);
-    const methodName = chain.call ? 'call' : 'invoke';
+  wrapLangChain(chain: any, options?: WrapperOptions) {
+    if (!chain || chain.__sentra_wrapped__) {
+      return chain;
+    }
 
-    chain[methodName] = async (...args: any[]) => {
-      const input = args[0];
-      const prompt = typeof input === 'string' ? input : JSON.stringify(input);
+    if (typeof chain.call !== 'function' && typeof chain.invoke !== 'function') {
+      return chain;
+    }
 
-      const check = await this.checkAction({
-        agent: 'langchain-chain',
-        action: 'LANGCHAIN_INVOKE',
-        metadata: { prompt: prompt.substring(0, 500), prompt_length: prompt.length }
-      });
+    const flagMode = options?.flagMode || 'block';
+    const agent = options?.agent || 'langchain-chain';
 
-      if (!check.isAllowed) {
-        throw new SentraError(`[Sentra ${check.status === 'rate_limited' ? 'Rate Limited' : 'Blocked'}] ${check.reason}`, check.status === 'rate_limited' ? 429 : 403, check);
+    const wrapMethod = (methodName: 'call' | 'invoke') => {
+      if (typeof chain[methodName] === 'function') {
+        const originalMethod = chain[methodName].bind(chain);
+        chain[methodName] = async (...args: any[]) => {
+          const input = args[0];
+          const prompt = typeof input === 'string' ? input : JSON.stringify(input);
+
+          const check = await this.checkAction({
+            agent,
+            action: 'LANGCHAIN_INVOKE',
+            metadata: { prompt: prompt.substring(0, 500), prompt_length: prompt.length }
+          });
+
+          return executeWithGovernance(check, flagMode, options?.onFlag, originalMethod, args);
+        };
       }
-
-      return originalCall(...args);
     };
 
+    wrapMethod('call');
+    wrapMethod('invoke');
+
+    chain.__sentra_wrapped__ = true;
     return chain;
   }
 
