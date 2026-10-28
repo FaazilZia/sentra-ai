@@ -112,4 +112,44 @@ describe('Existing Wrappers Regression', () => {
     assert.strictEqual(recordedRequests[0].action, 'LANGCHAIN_INVOKE');
     assert.strictEqual(recordedRequests[0].agent, 'langchain-chain');
   });
+
+  it('wrapAzureOpenAI: preserves AZURE_OPENAI_CHAT_COMPLETION and azure-openai-client', async () => {
+    const { client, recordedRequests } = createStubbedClient({ status: 'allowed' });
+    const fakeClient = {
+      chat: {
+        completions: {
+          create: async () => ({ id: 'azure-1' })
+        }
+      }
+    };
+
+    const wrapped = client.wrapAzureOpenAI(fakeClient);
+    await wrapped.chat.completions.create({
+      model: 'gpt-5-mini-sentraa',
+      messages: [{ role: 'user', content: 'azure test' }]
+    });
+
+    assert.strictEqual(recordedRequests.length, 1);
+    assert.strictEqual(recordedRequests[0].action, 'AZURE_OPENAI_CHAT_COMPLETION');
+    assert.strictEqual(recordedRequests[0].agent, 'azure-openai-client');
+  });
+
+  it('wrapVertex: preserves VERTEX_GENERATE_CONTENT and vertex-client', async () => {
+    const { client, recordedRequests } = createStubbedClient({ status: 'allowed' });
+    const fakeClient = {
+      models: {
+        generateContent: async () => ({ text: 'vertex response' })
+      }
+    };
+
+    const wrapped = client.wrapVertex(fakeClient);
+    await wrapped.models.generateContent({
+      model: 'gemini-2.0-flash',
+      contents: 'vertex test'
+    });
+
+    assert.strictEqual(recordedRequests.length, 1);
+    assert.strictEqual(recordedRequests[0].action, 'VERTEX_GENERATE_CONTENT');
+    assert.strictEqual(recordedRequests[0].agent, 'vertex-client');
+  });
 });
