@@ -27,10 +27,10 @@ jobs:
         with:
           fetch-depth: 0  # Required for SonarCloud new code detection
 
-      - name: Use Node.js 20
+      - name: Use Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
 
@@ -146,6 +146,19 @@ jobs:
       - name: Build @sentra-ai/sdk
         working-directory: packages/sdk
         run: npm ci --ignore-scripts && npm run build
+
+      - name: Run @sentra-ai/sdk tests with coverage
+        working-directory: packages/sdk
+        run: npm run test:coverage
+
+      - name: Upload SDK coverage report
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdk-coverage-report
+          path: packages/sdk/coverage/
+          retention-days: 7
 
       - name: Run Jest E2E API tests
         run: npm run test:e2e:jest
