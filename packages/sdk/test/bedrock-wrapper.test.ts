@@ -1,5 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
+import { Readable } from 'node:stream';
+import { BedrockRuntimeClient, ConverseCommand, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
 import { SentraClient, SentraError, extractBedrockPrompt } from '../src/index.ts';
 import type { ActionRequest, ActionResponse } from '../src/index.ts';
 
@@ -405,6 +407,115 @@ describe('wrapBedrock', () => {
     const wrappedEmpty = client.wrapBedrock(empty);
     assert.strictEqual(wrappedEmpty, empty);
     assert.strictEqual((empty as any).__sentra_wrapped__, undefined);
+  });
+
+  describe('real @aws-sdk/client-bedrock-runtime with stubbed requestHandler', () => {
+    it('real BedrockRuntimeClient with ConverseCommand and stubbed requestHandler', async () => {
+      const { client, recordedRequests } = createStubbedClient({
+        status: 'allowed',
+        isAllowed: true,
+        reason: 'Safe Action'
+      });
+
+      const cannedConverse = {
+        output: {
+          message: {
+            role: 'assistant',
+            content: [{ text: 'Hello from real Bedrock Converse' }]
+          }
+        },
+        stopReason: 'end_turn',
+        usage: { inputTokens: 5, outputTokens: 6, totalTokens: 11 }
+      };
+
+      const bedrockClient = new BedrockRuntimeClient({
+        region: 'us-east-1',
+        credentials: { accessKeyId: 'test-id', secretAccessKey: 'test-secret' },
+        requestHandler: {
+          handle: async () => {
+            return {
+              response: {
+                statusCode: 200,
+                headers: { 'content-type': 'application/json' },
+                body: Readable.from([Buffer.from(JSON.stringify(cannedConverse))])
+              }
+            } as any;
+          }
+        }
+      });
+
+      const wrapped = client.wrapBedrock(bedrockClient);
+      const cmd = new ConverseCommand({
+        modelId: 'amazon.nova-lite-v1:0',
+        messages: [{ role: 'user', content: [{ text: 'Say hello in 5 words' }] }]
+      });
+
+      const result = await wrapped.send(cmd);
+
+      // Assert action, agent, model and prompt metadata correct
+      assert.strictEqual(recordedRequests.length, 1);
+      assert.strictEqual(recordedRequests[0].action, 'BEDROCK_CONVERSE');
+      assert.strictEqual(recordedRequests[0].agent, 'bedrock-client');
+      assert.strictEqual(recordedRequests[0].metadata?.model, 'amazon.nova-lite-v1:0');
+      assert.strictEqual(recordedRequests[0].metadata?.prompt, 'Say hello in 5 words');
+      assert.strictEqual(recordedRequests[0].metadata?.prompt_length, 'Say hello in 5 words'.length);
+
+      // Assert reply returned unchanged
+      assert.deepStrictEqual(result.output, cannedConverse.output);
+      assert.strictEqual(result.output?.message?.content?.[0]?.text, 'Hello from real Bedrock Converse');
+      assert.strictEqual(result.stopReason, 'end_turn');
+    });
+
+    it('real BedrockRuntimeClient with InvokeModelCommand and stubbed requestHandler', async () => {
+      const { client, recordedRequests } = createStubbedClient({
+        status: 'allowed',
+        isAllowed: true,
+        reason: 'Safe Action'
+      });
+
+      const cannedPayload = {
+        completion: 'Hello from real Bedrock InvokeModel',
+        stop_reason: 'end_turn'
+      };
+
+      const bedrockClient = new BedrockRuntimeClient({
+        region: 'us-east-1',
+        credentials: { accessKeyId: 'test-id', secretAccessKey: 'test-secret' },
+        requestHandler: {
+          handle: async () => {
+            return {
+              response: {
+                statusCode: 200,
+                headers: { 'content-type': 'application/json' },
+                body: Readable.from([Buffer.from(JSON.stringify(cannedPayload))])
+              }
+            } as any;
+          }
+        }
+      });
+
+      const wrapped = client.wrapBedrock(bedrockClient);
+      const promptText = 'Generate a summary of quantum computing';
+      const cmd = new InvokeModelCommand({
+        modelId: 'amazon.nova-lite-v1:0',
+        body: JSON.stringify({ prompt: promptText })
+      });
+
+      const result = await wrapped.send(cmd);
+
+      // Assert action, agent, model and prompt metadata correct
+      assert.strictEqual(recordedRequests.length, 1);
+      assert.strictEqual(recordedRequests[0].action, 'BEDROCK_INVOKE_MODEL');
+      assert.strictEqual(recordedRequests[0].agent, 'bedrock-client');
+      assert.strictEqual(recordedRequests[0].metadata?.model, 'amazon.nova-lite-v1:0');
+      assert.strictEqual(recordedRequests[0].metadata?.prompt, promptText);
+      assert.strictEqual(recordedRequests[0].metadata?.prompt_length, promptText.length);
+
+      // Assert reply returned unchanged
+      const decodedBody = JSON.parse(new TextDecoder().decode(result.body));
+      assert.deepStrictEqual(decodedBody, cannedPayload);
+      assert.strictEqual(decodedBody.completion, 'Hello from real Bedrock InvokeModel');
+    });
   });
 
   describe('extractBedrockPrompt', () => {
