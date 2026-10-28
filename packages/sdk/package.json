@@ -29,8 +29,17 @@
   ],
   "author": "Sentra AI Team",
   "license": "MIT",
+  "peerDependencies": {
+    "@google/genai": ">=0.1.0"
+  },
+  "peerDependenciesMeta": {
+    "@google/genai": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.1158.0",
+    "@google/genai": "^2.31.0",
     "typescript": "^5.0.0"
   }
 }
