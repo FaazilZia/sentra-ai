@@ -8,8 +8,14 @@ import {
   InvokeModelCommand,
   InvokeModelWithResponseStreamCommand
 } from '@aws-sdk/client-bedrock-runtime';
+import { EventStreamCodec } from '@smithy/core/event-streams';
 import { SentraClient, SentraError, extractBedrockPrompt } from '../src/index.ts';
 import type { ActionRequest, ActionResponse } from '../src/index.ts';
+
+const eventStreamCodec = new EventStreamCodec(
+  (bytes: Uint8Array) => new TextDecoder().decode(bytes),
+  (str: string) => new TextEncoder().encode(str)
+);
 
 function createStubbedClient(responseToReturn: Partial<ActionResponse>) {
   const client = new SentraClient({ apiKey: 'sentra_test_sandbox' });
@@ -530,6 +536,27 @@ describe('wrapBedrock', () => {
         reason: 'Safe Action'
       });
 
+      const event1Body = { delta: { text: 'Hello ' }, contentBlockIndex: 0 };
+      const event2Body = { delta: { text: 'world from ConverseStream!' }, contentBlockIndex: 0 };
+
+      const event1Bin = eventStreamCodec.encode({
+        headers: {
+          ':message-type': { type: 'string', value: 'event' },
+          ':event-type': { type: 'string', value: 'contentBlockDelta' },
+          ':content-type': { type: 'string', value: 'application/json' }
+        },
+        body: new TextEncoder().encode(JSON.stringify(event1Body))
+      });
+
+      const event2Bin = eventStreamCodec.encode({
+        headers: {
+          ':message-type': { type: 'string', value: 'event' },
+          ':event-type': { type: 'string', value: 'contentBlockDelta' },
+          ':content-type': { type: 'string', value: 'application/json' }
+        },
+        body: new TextEncoder().encode(JSON.stringify(event2Body))
+      });
+
       let handleCalls = 0;
       const bedrockClient = new BedrockRuntimeClient({
         region: 'us-east-1',
@@ -541,7 +568,7 @@ describe('wrapBedrock', () => {
               response: {
                 statusCode: 200,
                 headers: { 'content-type': 'application/vnd.amazon.eventstream' },
-                body: Readable.from([])
+                body: Readable.from([event1Bin, event2Bin])
               }
             } as any;
           }
@@ -569,6 +596,19 @@ describe('wrapBedrock', () => {
       assert.strictEqual(handleCalls, 1, 'Allowed stream must reach the provider exactly once');
       assert.ok(result.stream, 'Allowed stream property must be present and returned unchanged');
       assert.strictEqual(typeof result.stream[Symbol.asyncIterator], 'function', 'Stream must be an async iterable');
+
+      // Iterate result.stream with for await and collect the chunks
+      const collectedChunks: any[] = [];
+      for await (const chunk of result.stream) {
+        collectedChunks.push(chunk);
+      }
+
+      const expectedChunks = [
+        { contentBlockDelta: event1Body },
+        { contentBlockDelta: event2Body }
+      ];
+      assert.strictEqual(collectedChunks.length, expectedChunks.length, 'Chunk count must match');
+      assert.deepStrictEqual(collectedChunks, expectedChunks, 'Collected chunks must deep-equal what stub sent in same order');
     });
 
     it('real BedrockRuntimeClient with ConverseStreamCommand: blocked stream never reaches provider', async () => {
@@ -633,6 +673,27 @@ describe('wrapBedrock', () => {
         reason: 'Safe Action'
       });
 
+      const rawChunk1 = new TextEncoder().encode(JSON.stringify({ completion: 'stream chunk 1' }));
+      const rawChunk2 = new TextEncoder().encode(JSON.stringify({ completion: 'stream chunk 2' }));
+
+      const event1Bin = eventStreamCodec.encode({
+        headers: {
+          ':message-type': { type: 'string', value: 'event' },
+          ':event-type': { type: 'string', value: 'chunk' },
+          ':content-type': { type: 'string', value: 'application/json' }
+        },
+        body: new TextEncoder().encode(JSON.stringify({ bytes: Buffer.from(rawChunk1).toString('base64') }))
+      });
+
+      const event2Bin = eventStreamCodec.encode({
+        headers: {
+          ':message-type': { type: 'string', value: 'event' },
+          ':event-type': { type: 'string', value: 'chunk' },
+          ':content-type': { type: 'string', value: 'application/json' }
+        },
+        body: new TextEncoder().encode(JSON.stringify({ bytes: Buffer.from(rawChunk2).toString('base64') }))
+      });
+
       let handleCalls = 0;
       const bedrockClient = new BedrockRuntimeClient({
         region: 'us-east-1',
@@ -644,7 +705,7 @@ describe('wrapBedrock', () => {
               response: {
                 statusCode: 200,
                 headers: { 'content-type': 'application/vnd.amazon.eventstream' },
-                body: Readable.from([])
+                body: Readable.from([event1Bin, event2Bin])
               }
             } as any;
           }
@@ -672,6 +733,19 @@ describe('wrapBedrock', () => {
       assert.strictEqual(handleCalls, 1, 'Allowed stream must reach the provider exactly once');
       assert.ok(result.body, 'Allowed body stream property must be present and returned unchanged');
       assert.strictEqual(typeof result.body[Symbol.asyncIterator], 'function', 'Body stream must be an async iterable');
+
+      // Iterate result.body with for await and collect the chunks
+      const collectedChunks: any[] = [];
+      for await (const chunk of result.body) {
+        collectedChunks.push(chunk);
+      }
+
+      const expectedChunks = [
+        { chunk: { bytes: rawChunk1 } },
+        { chunk: { bytes: rawChunk2 } }
+      ];
+      assert.strictEqual(collectedChunks.length, expectedChunks.length, 'Chunk count must match');
+      assert.deepStrictEqual(collectedChunks, expectedChunks, 'Collected chunks must deep-equal what stub sent in same order');
     });
 
     it('real BedrockRuntimeClient with InvokeModelWithResponseStreamCommand: blocked stream never reaches provider', async () => {
