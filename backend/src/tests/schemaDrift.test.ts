@@ -1,5 +1,6 @@
 import request from 'supertest';
 import app from '../app';
+import prisma from '../config/db';
 import {
   checkSchemaDrift,
   clearSchemaDriftCache,
@@ -64,6 +65,71 @@ describe('Schema Drift Guard & /ready Integration', () => {
         table: 'connectors',
         column: 'last_error',
       });
+    });
+
+    it('detects when an entire expected table is missing from actual database schema', async () => {
+      const expected = getExpectedSchemaFromDmmf();
+      const mockRows: Array<{ table_name: string; column_name: string }> = [];
+
+      // Include all tables EXCEPT 'connectors'
+      for (const [table, cols] of expected.entries()) {
+        if (table === 'connectors') {
+          continue;
+        }
+        for (const col of cols) {
+          mockRows.push({ table_name: table, column_name: col });
+        }
+      }
+
+      const result = await checkSchemaDrift({
+        forceFresh: true,
+        queryRunner: async () => mockRows,
+      });
+
+      expect(result.ok).toBe(false);
+      const connectorsCols = expected.get('connectors')!;
+      const missingConnectorsCols = result.missing.filter(m => m.table === 'connectors');
+      expect(missingConnectorsCols.length).toBe(connectorsCols.size);
+    });
+
+    it('handles case-insensitive table and column matching correctly', async () => {
+      const expected = getExpectedSchemaFromDmmf();
+      const mockRows: Array<{ table_name: string; column_name: string }> = [];
+
+      for (const [table, cols] of expected.entries()) {
+        // Uppercase table name and column names for connectors
+        const tableName = table === 'connectors' ? table.toUpperCase() : table;
+        for (const col of cols) {
+          const colName = table === 'connectors' ? col.toUpperCase() : col;
+          mockRows.push({ table_name: tableName, column_name: colName });
+        }
+      }
+
+      const result = await checkSchemaDrift({
+        forceFresh: true,
+        queryRunner: async () => mockRows,
+      });
+
+      expect(result.ok).toBe(true);
+      expect(result.missing).toEqual([]);
+    });
+
+    it('uses queryRunner when supplied and validates schema drift', async () => {
+      const expected = getExpectedSchemaFromDmmf();
+      const mockRows: Array<{ table_name: string; column_name: string }> = [];
+      for (const [table, cols] of expected.entries()) {
+        for (const col of cols) {
+          mockRows.push({ table_name: table, column_name: col });
+        }
+      }
+
+      const result = await checkSchemaDrift({
+        forceFresh: true,
+        queryRunner: async () => mockRows,
+      });
+
+      expect(result.ok).toBe(true);
+      expect(result.missing).toEqual([]);
     });
 
     it('caches the schema drift check result for 60 seconds unless forceFresh is specified', async () => {
