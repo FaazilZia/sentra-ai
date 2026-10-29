@@ -442,6 +442,44 @@ describe('Queue Service & Background Worker Suite', () => {
       expect(res).toBe(true);
     });
 
+    it('returns true when approver is active and a SUPER_ADMIN of the same organization', async () => {
+      const mockFindUnique = jest.fn().mockResolvedValue({
+        id: 'super-admin-1',
+        role: 'SUPER_ADMIN',
+        organizationId: 'org-1',
+        is_active: true,
+      });
+      mockDbDelegates.users = { findUnique: mockFindUnique };
+
+      const connector = {
+        organizationId: 'org-1',
+        config: { allowCustomPort: true, allowCustomPortApprovedBy: 'super-admin-1' },
+      };
+      const res = await isCustomPortApprovedByAdmin(connector);
+
+      expect(mockFindUnique).toHaveBeenCalledWith({
+        where: { id: 'super-admin-1' },
+        select: { role: true, organizationId: true, is_active: true },
+      });
+      expect(res).toBe(true);
+    });
+
+    it('returns false when approver is a SUPER_ADMIN from a DIFFERENT organization', async () => {
+      mockDbDelegates.users = {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'super-admin-diff',
+          role: 'SUPER_ADMIN',
+          organizationId: 'org-different',
+          is_active: true,
+        }),
+      };
+      const res = await isCustomPortApprovedByAdmin({
+        organizationId: 'org-1',
+        config: { allowCustomPort: true, allowCustomPortApprovedBy: 'super-admin-diff' },
+      });
+      expect(res).toBe(false);
+    });
+
     it('returns true immediately when ALLOW_CUSTOM_DB_PORTS environment variable is true', async () => {
       const orig = process.env.ALLOW_CUSTOM_DB_PORTS;
       try {
