@@ -43,6 +43,7 @@ module.exports = {
     'src/services/changeHistory.service.ts',
     'src/services/intakeForm.service.ts',
     'src/services/outcome.service.ts',
+    'src/utils/ssrfProtection.ts',
   ],
   coverageThreshold: {
     global: {
