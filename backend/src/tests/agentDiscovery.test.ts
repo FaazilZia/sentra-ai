@@ -106,6 +106,31 @@ describe('AgentDiscoveryService Unit & Integration Tests', () => {
       },
     });
 
+    // 4. Create Slack config
+    await prisma.slack_config.create({
+      data: {
+        orgId: TEST_ORG_ID,
+        webhookUrl: 'https://hooks.slack.com/services/T00/B00/XXXX',
+        channel: '#security-alerts',
+        enabled: true,
+        notifyOn: ['CRITICAL'],
+      },
+    });
+
+    // 5. Create Registered AI System
+    await prisma.ai_systems.create({
+      data: {
+        organizationId: TEST_ORG_ID,
+        name: 'Registered Compliance Engine',
+        description: 'Internal engine',
+        risk_tier: 'CRITICAL',
+        model_name: 'gpt-4o',
+        model_version: '2024-05-13',
+        vendor: 'Internal',
+        use_case: 'Compliance Monitoring',
+      },
+    });
+
     const discovered = await AgentDiscoveryService.discoverAgents(TEST_ORG_ID);
 
     // Assert S3 connector agent was discovered
@@ -173,5 +198,40 @@ describe('AgentDiscoveryService Unit & Integration Tests', () => {
     await prisma.risk_assessments.deleteMany({ where: { organizationId: TEST_ORG_ID } });
     await prisma.ai_systems.deleteMany({ where: { organizationId: TEST_ORG_ID } });
     await prisma.ai_agents.deleteMany({ where: { organizationId: TEST_ORG_ID } });
+  });
+
+  it('should sync logs to inventory via syncLogsToInventory', async () => {
+    // Insert a log with an unknown agent
+    if (prisma.logs?.create) {
+      await prisma.logs.create({
+        data: {
+          id: 'log-sync-test-1',
+          organizationId: TEST_ORG_ID,
+          agent: 'sync-unregistered-agent',
+          action: 'read_medical_records',
+          status: 'allowed',
+          risk: 'medium',
+          timestamp: new Date(),
+          metadata: { department: 'Healthcare', ruleId: 'rule-hipaa-1' },
+        },
+      });
+
+      await AgentDiscoveryService.syncLogsToInventory(TEST_ORG_ID);
+
+      const systems = await prisma.ai_systems.findMany({
+        where: { organizationId: TEST_ORG_ID, name: 'sync-unregistered-agent' },
+      });
+      expect(systems.length).toBe(1);
+
+      // Cleanup
+      await prisma.logs.deleteMany({ where: { organizationId: TEST_ORG_ID } });
+      await prisma.risk_assessments.deleteMany({ where: { organizationId: TEST_ORG_ID } });
+      await prisma.ai_systems.deleteMany({ where: { organizationId: TEST_ORG_ID } });
+      await prisma.ai_agents.deleteMany({ where: { organizationId: TEST_ORG_ID } });
+    }
+  });
+
+  it('handles empty organizationId or missing logs safely', async () => {
+    await expect(AgentDiscoveryService.syncLogsToInventory('')).resolves.not.toThrow();
   });
 });
