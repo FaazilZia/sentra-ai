@@ -44,6 +44,12 @@ module.exports = {
     'src/services/intakeForm.service.ts',
     'src/services/outcome.service.ts',
     'src/utils/ssrfProtection.ts',
+    'src/services/queue.service.ts',
+    'src/services/connectorTest.service.ts',
+    'src/services/jira.service.ts',
+    'src/controllers/connector.controller.ts',
+    'src/services/agentDiscovery.service.ts',
+    'src/config/envValidator.ts',
   ],
   coverageThreshold: {
     global: {

@@ -503,6 +503,92 @@ describe('Connector API Routes', () => {
         }),
       }));
     });
+
+    it('strips allowCustomPort from credentials when non-admin creates connector', async () => {
+      (prisma.connectors.create as jest.Mock).mockResolvedValueOnce({
+        id: 'conn-strip-creds',
+        organizationId: orgId,
+        name: 'NonAdmin PG',
+        type: 'postgres',
+        config: {},
+        credentials: 'encrypted-creds',
+        scope: {},
+        status: 'pending',
+      });
+
+      const res = await request(app)
+        .post('/api/v1/connectors')
+        .set('Authorization', `Bearer ${memberToken}`)
+        .send({
+          name: 'NonAdmin PG',
+          type: 'postgres',
+          credentials: { host: 'pg.example.com', port: 5432, allowCustomPort: false },
+        });
+
+      expect(res.status).toBe(201);
+      expect(prisma.connectors.create).toHaveBeenCalled();
+    });
+
+    it('creates gdrive connector with normalized service account credentials', async () => {
+      (prisma.connectors.create as jest.Mock).mockResolvedValueOnce({
+        id: 'conn-gdrive-1',
+        organizationId: orgId,
+        name: 'GDrive Connector',
+        type: 'gdrive',
+        config: {},
+        credentials: 'encrypted-creds',
+        scope: {},
+        status: 'pending',
+      });
+
+      const res = await request(app)
+        .post('/api/v1/connectors')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          name: 'GDrive Connector',
+          type: 'gdrive',
+          credentials: {
+            client_email: 'service-acc@example.iam.gserviceaccount.com',
+            private_key: 'fake-private-key-data',
+          },
+        });
+
+      expect(res.status).toBe(201);
+      expect(prisma.connectors.create).toHaveBeenCalled();
+    });
+
+    it('returns 400 when organization context is missing', async () => {
+      const origImpl = (prisma.users.findUnique as jest.Mock).getMockImplementation();
+      (prisma.users.findUnique as jest.Mock).mockImplementation(({ where }) => {
+        if (where?.id === 'u-no-org') {
+          return Promise.resolve({
+            id: 'u-no-org',
+            role: 'MEMBER',
+            organizationId: null,
+            is_active: true,
+            organizations: { is_active: true },
+          });
+        }
+        return origImpl ? origImpl({ where }) : Promise.resolve(null);
+      });
+
+      const tokenNoOrg = generateAccessToken({
+        id: 'u-no-org',
+        email: 'noorg@sentra.ai',
+        role: 'MEMBER',
+      });
+
+      const res = await request(app)
+        .post('/api/v1/connectors')
+        .set('Authorization', `Bearer ${tokenNoOrg}`)
+        .send({
+          name: 'No Org Connector',
+          type: 's3',
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toBe('Company context required');
+    });
   });
 
   describe('POST /api/connectors/:id/scan', () => {
@@ -548,6 +634,18 @@ describe('Connector API Routes', () => {
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(prisma.connectors.delete).toHaveBeenCalledWith({ where: { id: 'conn-del-1' } });
+    });
+
+    it('returns 404 if connector does not exist when deleting', async () => {
+      (prisma.connectors.findFirst as jest.Mock).mockResolvedValueOnce(null);
+
+      const res = await request(app)
+        .delete('/api/v1/connectors/non-existent')
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(res.status).toBe(404);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toBe('Connector not found');
     });
   });
 });
