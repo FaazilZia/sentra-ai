@@ -50,6 +50,9 @@ module.exports = {
     'src/controllers/connector.controller.ts',
     'src/services/agentDiscovery.service.ts',
     'src/config/envValidator.ts',
+    'src/utils/sentrySanitizer.ts',
+    'src/services/systemAlert.service.ts',
+    'src/services/schemaDrift.service.ts',
   ],
   coverageThreshold: {
     global: {
