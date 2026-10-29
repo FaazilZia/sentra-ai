@@ -1,0 +1,17 @@
+=== LANGCHAIN REAL-CALL RUNNER ===
+Model deployment: gpt-5-mini-sentraa
+Endpoint: configured
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. ALLOWED LANGCHAIN CHAIN RUN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Sentra check status: allowed
+Provider invoked: YES (1 call)
+LangChain response: Hello! Nice to see you.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. BLOCKED LANGCHAIN CHAIN RUN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Sentra check status: blocked (HTTP 403)
+SentraError message: [Sentra Blocked] Action blocked: potentially sensitive data or restricted pattern detected
+Provider invoked: NO (0 calls - blocked by Sentra)

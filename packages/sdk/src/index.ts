@@ -453,6 +453,14 @@ export class SentraClient {
   }
 
   /**
+   * Alias for wrapVertex. Intercepts Google Vertex AI requests to ensure runtime safety and policy compliance.
+   * Works with @google/genai (GoogleGenAI with vertexai: true).
+   */
+  wrapVertexAI(client: any, options?: WrapperOptions) {
+    return this.wrapVertex(client, options);
+  }
+
+  /**
    * Intercepts Amazon Bedrock requests to ensure runtime safety and policy compliance.
    * Works with @aws-sdk/client-bedrock-runtime (BedrockRuntimeClient) by intercepting client.send
    * for ConverseCommand (BEDROCK_CONVERSE) and InvokeModelCommand (BEDROCK_INVOKE_MODEL).
@@ -826,4 +834,19 @@ export function extractBedrockPrompt(input: any): string {
   } catch {
     return '';
   }
+}
+
+/**
+ * Top-level export to intercept Google Vertex AI requests using a SentraClient.
+ */
+export function wrapVertex(client: any, options?: WrapperOptions, sentraInstance?: SentraClient) {
+  const sentra = sentraInstance || new SentraClient({ apiKey: process.env.SENTRA_API_KEY || 'sentra_test_sandbox', sandbox: !process.env.SENTRA_API_KEY });
+  return sentra.wrapVertex(client, options);
+}
+
+/**
+ * Top-level export alias for wrapVertex.
+ */
+export function wrapVertexAI(client: any, options?: WrapperOptions, sentraInstance?: SentraClient) {
+  return wrapVertex(client, options, sentraInstance);
 }

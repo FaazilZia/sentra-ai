@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { SentraClient, SentraError, extractVertexPrompt } from '../src/index.ts';
+import { GoogleGenAI } from '@google/genai';
+import { SentraClient, SentraError, extractVertexPrompt, wrapVertex, wrapVertexAI } from '../src/index.ts';
 import type { ActionRequest, ActionResponse } from '../src/index.ts';
 
 function createStubbedClient(responseToReturn: Partial<ActionResponse>) {
@@ -529,6 +530,311 @@ describe('wrapVertex', () => {
       const circular: any = {};
       circular.self = circular;
       assert.strictEqual(extractVertexPrompt(circular), '');
+    });
+  });
+
+  describe('real @google/genai (GoogleGenAI) with stubbed HTTP handler', () => {
+    it('allow path: calls real GoogleGenAI generateContent with stubbed fetch and returns response', async () => {
+      const { client, recordedRequests } = createStubbedClient({
+        status: 'allowed',
+        isAllowed: true,
+        reason: 'Safe Action'
+      });
+
+      let fetchCalls = 0;
+      const cannedResponse = {
+        candidates: [{
+          content: {
+            role: 'model',
+            parts: [{ text: 'Hello from real GoogleGenAI' }]
+          },
+          finishReason: 'STOP'
+        }]
+      };
+
+      const realGenAI = new GoogleGenAI({
+        vertexai: true,
+        apiKey: 'test-vertex-key',
+        project: 'test-project',
+        location: 'us-central1',
+        httpOptions: {
+          fetch: async () => {
+            fetchCalls++;
+            return new Response(JSON.stringify(cannedResponse), {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' }
+            });
+          }
+        }
+      });
+
+      const guarded = client.wrapVertex(realGenAI);
+      const res = await guarded.models.generateContent({
+        model: 'gemini-2.0-flash',
+        contents: 'Say hello in 5 words'
+      });
+
+      assert.strictEqual(fetchCalls, 1, 'Stubbed fetch should be called once');
+      assert.strictEqual(res.text, 'Hello from real GoogleGenAI');
+      assert.strictEqual(recordedRequests.length, 1);
+      assert.strictEqual(recordedRequests[0].action, 'VERTEX_GENERATE_CONTENT');
+      assert.strictEqual(recordedRequests[0].agent, 'vertex-client');
+      assert.strictEqual(recordedRequests[0].metadata?.model, 'gemini-2.0-flash');
+      assert.strictEqual(recordedRequests[0].metadata?.prompt, 'Say hello in 5 words');
+    });
+
+    it('block path: throws SentraError 403, real client never executes fetch', async () => {
+      const { client, recordedRequests } = createStubbedClient({
+        status: 'blocked',
+        isAllowed: false,
+        reason: 'Action blocked by Vertex policy',
+        risk: 'high'
+      });
+
+      let fetchCalls = 0;
+      const realGenAI = new GoogleGenAI({
+        vertexai: true,
+        apiKey: 'test-vertex-key',
+        httpOptions: {
+          fetch: async () => {
+            fetchCalls++;
+            return new Response('{}', { status: 200 });
+          }
+        }
+      });
+
+      const guarded = client.wrapVertex(realGenAI);
+
+      await assert.rejects(
+        async () => {
+          await guarded.models.generateContent({
+            model: 'gemini-2.0-flash',
+            contents: 'malicious prompt'
+          });
+        },
+        (err: any) => {
+          assert.ok(err instanceof SentraError);
+          assert.strictEqual(err.status, 403);
+          assert.ok(err.message.includes('Action blocked by Vertex policy'));
+          return true;
+        }
+      );
+
+      assert.strictEqual(fetchCalls, 0, 'Fetch must never be called on blocked path');
+      assert.strictEqual(recordedRequests.length, 1);
+    });
+
+    it('flag path, flagMode "block" (default): throws SentraError 403, fetch never executed', async () => {
+      const { client } = createStubbedClient({
+        status: 'flagged',
+        isAllowed: true,
+        reason: 'Flagged for Vertex review',
+        risk: 'medium'
+      });
+
+      let fetchCalls = 0;
+      const realGenAI = new GoogleGenAI({
+        vertexai: true,
+        apiKey: 'test-vertex-key',
+        httpOptions: {
+          fetch: async () => {
+            fetchCalls++;
+            return new Response('{}', { status: 200 });
+          }
+        }
+      });
+
+      const guarded = client.wrapVertex(realGenAI);
+
+      await assert.rejects(
+        async () => {
+          await guarded.models.generateContent({
+            model: 'gemini-2.0-flash',
+            contents: 'borderline prompt'
+          });
+        },
+        (err: any) => {
+          assert.ok(err instanceof SentraError);
+          assert.strictEqual(err.status, 403);
+          assert.ok(err.message.includes('Flagged for Vertex review'));
+          return true;
+        }
+      );
+
+      assert.strictEqual(fetchCalls, 0);
+    });
+
+    it('flag path, flagMode "allow": calls onFlag callback and executes fetch', async () => {
+      const { client } = createStubbedClient({
+        status: 'flagged',
+        isAllowed: true,
+        reason: 'Flagged for Vertex review',
+        risk: 'medium'
+      });
+
+      let fetchCalls = 0;
+      let flaggedCheck: any = null;
+      const cannedResponse = {
+        candidates: [{
+          content: { role: 'model', parts: [{ text: 'Flagged output' }] },
+          finishReason: 'STOP'
+        }]
+      };
+
+      const realGenAI = new GoogleGenAI({
+        vertexai: true,
+        apiKey: 'test-vertex-key',
+        httpOptions: {
+          fetch: async () => {
+            fetchCalls++;
+            return new Response(JSON.stringify(cannedResponse), {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' }
+            });
+          }
+        }
+      });
+
+      const guarded = client.wrapVertex(realGenAI, {
+        flagMode: 'allow',
+        onFlag: (check) => {
+          flaggedCheck = check;
+        }
+      });
+
+      const res = await guarded.models.generateContent({
+        model: 'gemini-2.0-flash',
+        contents: 'borderline prompt'
+      });
+
+      assert.strictEqual(fetchCalls, 1);
+      assert.strictEqual(res.text, 'Flagged output');
+      assert.ok(flaggedCheck);
+      assert.strictEqual(flaggedCheck.status, 'flagged');
+    });
+
+    it('stream path (allowed): passes through real streaming response from GoogleGenAI', async () => {
+      const { client, recordedRequests } = createStubbedClient({
+        status: 'allowed',
+        isAllowed: true,
+        reason: 'Safe Action'
+      });
+
+      let fetchCalls = 0;
+      const chunk1 = JSON.stringify({
+        candidates: [{ content: { role: 'model', parts: [{ text: 'Hello ' }] } }]
+      });
+      const chunk2 = JSON.stringify({
+        candidates: [{ content: { role: 'model', parts: [{ text: 'real Vertex stream!' }] } }]
+      });
+      const sseBody = `data: ${chunk1}\n\ndata: ${chunk2}\n\n`;
+
+      const realGenAI = new GoogleGenAI({
+        vertexai: true,
+        apiKey: 'test-vertex-key',
+        httpOptions: {
+          fetch: async () => {
+            fetchCalls++;
+            return new Response(sseBody, {
+              status: 200,
+              headers: { 'Content-Type': 'text/event-stream' }
+            });
+          }
+        }
+      });
+
+      const guarded = client.wrapVertex(realGenAI);
+      const stream = await guarded.models.generateContentStream({
+        model: 'gemini-2.0-flash',
+        contents: 'Say hello in stream'
+      });
+
+      let collectedText = '';
+      for await (const chunk of stream) {
+        collectedText += chunk.text;
+      }
+
+      assert.strictEqual(fetchCalls, 1);
+      assert.strictEqual(collectedText, 'Hello real Vertex stream!');
+      assert.strictEqual(recordedRequests.length, 1);
+      assert.strictEqual(recordedRequests[0].action, 'VERTEX_GENERATE_CONTENT_STREAM');
+      assert.strictEqual(recordedRequests[0].agent, 'vertex-client');
+    });
+
+    it('stream path (blocked): throws SentraError 403 pre-flight and never starts stream', async () => {
+      const { client } = createStubbedClient({
+        status: 'blocked',
+        isAllowed: false,
+        reason: 'Blocked streaming prompt',
+        risk: 'high'
+      });
+
+      let fetchCalls = 0;
+      const realGenAI = new GoogleGenAI({
+        vertexai: true,
+        apiKey: 'test-vertex-key',
+        httpOptions: {
+          fetch: async () => {
+            fetchCalls++;
+            return new Response('{}', { status: 200 });
+          }
+        }
+      });
+
+      const guarded = client.wrapVertex(realGenAI);
+
+      await assert.rejects(
+        async () => {
+          await guarded.models.generateContentStream({
+            model: 'gemini-2.0-flash',
+            contents: 'malicious stream prompt'
+          });
+        },
+        (err: any) => {
+          assert.ok(err instanceof SentraError);
+          assert.strictEqual(err.status, 403);
+          assert.ok(err.message.includes('Blocked streaming prompt'));
+          return true;
+        }
+      );
+
+      assert.strictEqual(fetchCalls, 0);
+    });
+
+    it('wrapVertexAI: client method and top-level export wrap real GoogleGenAI identically', async () => {
+      const { client } = createStubbedClient({
+        status: 'allowed',
+        isAllowed: true
+      });
+
+      const cannedResponse = {
+        candidates: [{ content: { role: 'model', parts: [{ text: 'Response via wrapVertexAI' }] } }]
+      };
+
+      const realGenAI = new GoogleGenAI({
+        vertexai: true,
+        apiKey: 'test-vertex-key',
+        httpOptions: {
+          fetch: async () => new Response(JSON.stringify(cannedResponse), { status: 200, headers: { 'Content-Type': 'application/json' } })
+        }
+      });
+
+      // Test SentraClient.prototype.wrapVertexAI
+      const wrappedMethod = client.wrapVertexAI(realGenAI);
+      const res1 = await wrappedMethod.models.generateContent({ model: 'gemini-2.0-flash', contents: 'Test' });
+      assert.strictEqual(res1.text, 'Response via wrapVertexAI');
+
+      // Test top-level export wrapVertexAI
+      const freshClient = new GoogleGenAI({
+        vertexai: true,
+        apiKey: 'test-vertex-key',
+        httpOptions: {
+          fetch: async () => new Response(JSON.stringify(cannedResponse), { status: 200, headers: { 'Content-Type': 'application/json' } })
+        }
+      });
+      const wrappedExport = wrapVertexAI(freshClient, undefined, client);
+      const res2 = await wrappedExport.models.generateContent({ model: 'gemini-2.0-flash', contents: 'Test 2' });
+      assert.strictEqual(res2.text, 'Response via wrapVertexAI');
     });
   });
 });

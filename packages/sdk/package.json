@@ -41,6 +41,7 @@
   "devDependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.1158.0",
     "@google/genai": "^2.31.0",
+    "openai": "^6.49.0",
     "typescript": "^5.0.0"
   }
 }

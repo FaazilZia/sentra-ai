@@ -1,0 +1,4 @@
+Sentra check status: allowed
+Bedrock call error: Error 002: Access to Bedrock models is not allowed for this account
+Error Name: ValidationException
+HTTP Status: 400

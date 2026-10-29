@@ -1,0 +1,17 @@
+=== AZURE OPENAI REAL-CALL RUNNER ===
+Model deployment: gpt-5-mini-sentraa
+Endpoint: configured
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. ALLOWED AZURE OPENAI RUN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Sentra check status: allowed
+Provider invoked: YES (1 call)
+Azure OpenAI reply: Hello there, nice meeting you.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. BLOCKED AZURE OPENAI RUN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Sentra check status: blocked (HTTP 403)
+SentraError message: [Sentra Blocked] Action blocked: potentially sensitive data or restricted pattern detected
+Provider invoked: NO (0 calls - blocked by Sentra)

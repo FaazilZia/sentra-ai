@@ -1,0 +1,18 @@
+=== VERTEX AI REAL-CALL RUNNER ===
+Model: gemini-4-argon
+Project: configured
+Location: global
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. ALLOWED VERTEX AI RUN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Sentra check status: allowed
+Provider invoked: YES (1 call)
+Vertex AI reply: Hello, how are you today?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. BLOCKED VERTEX AI RUN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Sentra check status: blocked (HTTP 403)
+SentraError message: [Sentra Blocked] Action blocked: potentially sensitive data or restricted pattern detected
+Provider invoked: NO (0 calls - blocked by Sentra)
