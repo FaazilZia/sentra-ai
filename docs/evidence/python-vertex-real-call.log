@@ -1,0 +1,31 @@
+================================================================================
+SENTRA AI PYTHON SDK REAL-CALL EVIDENCE: GOOGLE VERTEX AI
+================================================================================
+Provider:               Google Vertex AI (google-genai)
+Exact Route:            native
+Model:                  gemini-4-argon
+Project:                configured (masked)
+Location:               global
+Governance Mode:        Public Sandbox (sentra_test_sandbox)
+Credentials:            Configured via GOOGLE_APPLICATION_CREDENTIALS
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. ALLOWED VERTEX AI CALL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Sentra check status:    allowed
+Provider invoked:       YES (1 call)
+Vertex AI response:     Hello to you.
+Verdict:                PASS (Allowed call passed through cleanly)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. BLOCKED VERTEX AI CALL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Sentra check status:    blocked (HTTP 403)
+SentraError message:    [Sentra Blocked] Action blocked: potentially sensitive data or restricted pattern detected
+Provider invoked:       NO (0 calls - blocked by Sentra)
+Verdict:                PASS (Blocked call prevented before reaching provider)
+
+================================================================================
+END OF VERTEX AI EVIDENCE LOG
+================================================================================

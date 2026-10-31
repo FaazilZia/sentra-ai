@@ -5,12 +5,26 @@ from .exceptions import SentraError
 from .models import ActionRequest, ActionResponse
 from .wrappers import (
     WrapperOptions,
+    extract_anthropic_prompt,
+    extract_bedrock_prompt,
+    extract_content_text,
+    extract_langchain_prompt,
+    extract_openai_prompt,
+    extract_vertex_prompt,
     wrap_anthropic,
     wrap_azure_openai,
+    wrap_bedrock,
+    wrap_langchain,
     wrap_openai,
+    wrap_vertex,
+    wrap_vertex_ai,
     wrapAnthropic,
     wrapAzureOpenAI,
+    wrapBedrock,
+    wrapLangChain,
     wrapOpenAI,
+    wrapVertex,
+    wrapVertexAI,
 )
 
 __all__ = [
@@ -25,6 +39,20 @@ __all__ = [
     "wrapAzureOpenAI",
     "wrap_anthropic",
     "wrapAnthropic",
+    "wrap_bedrock",
+    "wrapBedrock",
+    "wrap_vertex",
+    "wrapVertex",
+    "wrap_vertex_ai",
+    "wrapVertexAI",
+    "wrap_langchain",
+    "wrapLangChain",
+    "extract_openai_prompt",
+    "extract_anthropic_prompt",
+    "extract_content_text",
+    "extract_bedrock_prompt",
+    "extract_vertex_prompt",
+    "extract_langchain_prompt",
 ]
 
 __version__ = "0.1.0"

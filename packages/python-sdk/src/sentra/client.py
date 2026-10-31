@@ -131,6 +131,10 @@ class SentraClient:
             "wrapOpenAI": self.wrap_openai,
             "wrapAzureOpenAI": self.wrap_azure_openai,
             "wrapAnthropic": self.wrap_anthropic,
+            "wrapBedrock": self.wrap_bedrock,
+            "wrapVertex": self.wrap_vertex,
+            "wrapVertexAI": self.wrap_vertex_ai,
+            "wrapLangChain": self.wrap_langchain,
         }
         if name in aliases:
             return aliases[name]
@@ -413,6 +417,48 @@ class SentraClient:
         from .wrappers import wrap_anthropic
 
         return wrap_anthropic(client, options=options, sentra_instance=self, **kwargs)
+
+    def wrap_bedrock(
+        self,
+        client: Any,
+        options: Any = None,
+        **kwargs: Any,
+    ) -> Any:
+        """Intercepts Amazon Bedrock requests to ensure runtime safety and policy compliance."""
+        from .wrappers import wrap_bedrock
+
+        return wrap_bedrock(client, options=options, sentra_instance=self, **kwargs)
+
+    def wrap_vertex(
+        self,
+        client: Any,
+        options: Any = None,
+        **kwargs: Any,
+    ) -> Any:
+        """Intercepts Google Vertex AI requests to ensure runtime safety and policy compliance."""
+        from .wrappers import wrap_vertex
+
+        return wrap_vertex(client, options=options, sentra_instance=self, **kwargs)
+
+    def wrap_vertex_ai(
+        self,
+        client: Any,
+        options: Any = None,
+        **kwargs: Any,
+    ) -> Any:
+        """Alias for wrap_vertex."""
+        return self.wrap_vertex(client, options=options, **kwargs)
+
+    def wrap_langchain(
+        self,
+        chain: Any,
+        options: Any = None,
+        **kwargs: Any,
+    ) -> Any:
+        """Intercepts LangChain requests to ensure runtime safety and policy compliance."""
+        from .wrappers import wrap_langchain
+
+        return wrap_langchain(chain, options=options, sentra_instance=self, **kwargs)
 
     def _resolve_status(self, decision_str: str, is_pending: bool) -> str:
         if decision_str in ("blocked", "block"):

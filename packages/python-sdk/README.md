@@ -82,9 +82,9 @@ if not res["success"]:
 
 ---
 
-## Provider Wrappers (OpenAI, Azure OpenAI, Anthropic)
+## Provider Wrappers (OpenAI, Azure OpenAI, Anthropic, Bedrock, Vertex, LangChain)
 
-Sentra provides zero-friction wrappers for popular AI SDKs. The wrappers intercept pre-flight completions or messages calls, validate prompts and models against active security policies, and fail closed if blocked.
+Sentra provides zero-friction wrappers for popular AI SDKs. The wrappers intercept pre-flight completions, messages, generation, or chain calls, validate prompts and models against active security policies, and fail closed if blocked.
 
 ### OpenAI Wrapper
 
@@ -145,4 +145,64 @@ message = guarded_anthropic.messages.create(
     messages=[{"role": "user", "content": "Analyze public dataset"}],
     max_tokens=100,
 )
+```
+
+### Amazon Bedrock (boto3) Wrapper
+
+```python
+import boto3
+from sentra import SentraClient, wrap_bedrock
+
+sentra = SentraClient(api_key="sentra_test_sandbox")
+bedrock_client = boto3.client("bedrock-runtime", region_name="us-east-1")
+
+guarded_bedrock = sentra.wrap_bedrock(
+    bedrock_client,
+    options={"agent": "bedrock-agent", "flag_mode": "block"},
+)
+
+# Intercepts converse, converse_stream, invoke_model, and invoke_model_with_response_stream
+response = guarded_bedrock.converse(
+    modelId="amazon.nova-lite-v1:0",
+    messages=[{"role": "user", "content": [{"text": "Hello world"}]}],
+)
+```
+
+### Google Vertex AI Wrapper
+
+```python
+from google import genai
+from sentra import SentraClient, wrap_vertex
+
+sentra = SentraClient(api_key="sentra_test_sandbox")
+vertex_client = genai.Client(vertexai=True, project="my-project", location="us-central1")
+
+guarded_vertex = sentra.wrap_vertex(
+    vertex_client,
+    options={"agent": "vertex-agent", "flag_mode": "block"},
+)
+
+# Intercepts client.models.generate_content and generate_content_stream pre-flight
+response = guarded_vertex.models.generate_content(
+    model="gemini-2.5-flash",
+    contents="Hello from Vertex",
+)
+```
+
+### LangChain Wrapper
+
+```python
+from langchain_openai import AzureChatOpenAI
+from sentra import SentraClient, wrap_langchain
+
+sentra = SentraClient(api_key="sentra_test_sandbox")
+chain = AzureChatOpenAI(...)
+
+guarded_chain = sentra.wrap_langchain(
+    chain,
+    options={"agent": "langchain-agent", "flag_mode": "block"},
+)
+
+# Intercepts chain.invoke() (LANGCHAIN_INVOKE) and chain.call() (LANGCHAIN_CALL)
+result = guarded_chain.invoke("Analyze customer issue")
 ```
