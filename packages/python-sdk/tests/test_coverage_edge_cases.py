@@ -272,3 +272,175 @@ def test_sentra_ai_alias_exports():
     assert sentra_ai.SentraError is SentraError
     assert sentra_ai.ActionRequest is ActionRequest
     assert sentra_ai.ActionResponse is ActionResponse
+
+
+class DummyAttrObj:
+    def __init__(self, **kwargs):
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+
+def test_extract_text_field_and_bedrock_system_text_branches():
+    from sentra.wrappers import (
+        _extract_text_field,
+        _extract_bedrock_system_text,
+    )
+
+    assert _extract_text_field("simple string") == "simple string"
+    assert _extract_text_field({"other": 1}) == ""
+    assert _extract_text_field(DummyAttrObj(text="from obj")) == "from obj"
+    assert _extract_text_field(DummyAttrObj(text=None)) == ""
+    assert _extract_text_field(None) == ""
+
+    assert _extract_bedrock_system_text("str sys") == "str sys"
+    assert _extract_bedrock_system_text(DummyAttrObj(text="obj sys")) == "obj sys"
+    assert _extract_bedrock_system_text(None) == ""
+
+
+def test_extract_bedrock_message_content_and_messages_text_branches():
+    from sentra.wrappers import (
+        _extract_bedrock_message_content,
+        _extract_bedrock_messages_text,
+        _extract_bedrock_converse_text,
+    )
+
+    assert _extract_bedrock_message_content([]) == []
+    assert _extract_bedrock_message_content(123) == []
+    assert _extract_bedrock_messages_text(None) == ""
+    assert _extract_bedrock_messages_text([None, "", "direct string"]) == "direct string"
+    assert _extract_bedrock_converse_text(None) == ""
+
+
+def test_extract_bedrock_body_dict_and_invoke_text_branches():
+    from sentra.wrappers import (
+        _extract_bedrock_body_dict,
+        _extract_bedrock_invoke_text,
+        extract_bedrock_prompt,
+    )
+
+    assert _extract_bedrock_body_dict({"messages": [{"content": [{"text": "conv body"}]}]}) == "conv body"
+    assert _extract_bedrock_body_dict({"input": {"messages": [{"content": [{"text": "input dict"}]}]}}) == "input dict"
+    assert _extract_bedrock_body_dict({"input": 123}) == ""
+    assert _extract_bedrock_invoke_text(None) == ""
+    assert _extract_bedrock_invoke_text(b"not json bytes") == "not json bytes"
+    assert _extract_bedrock_invoke_text(12345) == ""
+    assert extract_bedrock_prompt({"random_key": "val"}) == ""
+
+
+def test_extract_vertex_part_and_item_branches():
+    from sentra.wrappers import (
+        _extract_vertex_part,
+        _extract_vertex_item_text,
+        extract_vertex_content_text,
+        _extract_vertex_sys_instruction,
+        _extract_vertex_contents_text,
+    )
+
+    assert _extract_vertex_part("simple part") == "simple part"
+    assert _extract_vertex_part(DummyAttrObj(text="obj part")) == "obj part"
+    assert _extract_vertex_part(DummyAttrObj(text=None)) == ""
+    assert _extract_vertex_item_text({"text": "dict text"}) == "dict text"
+    assert _extract_vertex_item_text({"other": 1}) == ""
+    assert _extract_vertex_item_text(DummyAttrObj(text="obj item")) == "obj item"
+    assert _extract_vertex_item_text(DummyAttrObj(parts=["p1", "p2"])) == "p1\np2"
+    assert _extract_vertex_item_text(DummyAttrObj()) == ""
+    assert extract_vertex_content_text(None) == ""
+    assert extract_vertex_content_text(DummyAttrObj(text="single item")) == "single item"
+    assert _extract_vertex_sys_instruction({"config": {"systemInstruction": "camel sys"}}) == "camel sys"
+    assert _extract_vertex_sys_instruction({"systemInstruction": "top camel sys"}) == "top camel sys"
+    assert _extract_vertex_contents_text(DummyAttrObj(prompt="custom prompt")) == "custom prompt"
+
+
+def test_langchain_prompt_edge_cases():
+    from sentra.wrappers import (
+        _extract_langchain_dict_prompt,
+        extract_langchain_prompt,
+    )
+
+    class BrokenKey:
+        def __hash__(self):
+            return 1
+
+        def __str__(self):
+            raise RuntimeError("broken string")
+
+    # Triggers except Exception in _extract_langchain_dict_prompt
+    res_broken_dict = _extract_langchain_dict_prompt({BrokenKey(): "val"})
+    assert "BrokenKey" in res_broken_dict or res_broken_dict != ""
+
+    # Triggers except Exception in extract_langchain_prompt
+    class BrokenObj:
+        def __str__(self):
+            raise RuntimeError("cannot convert to str")
+
+    # To trigger the json.dumps exception, mock json.dumps inside extract_langchain_prompt
+    with patch("json.dumps", side_effect=Exception("dump failed")):
+        res_fallback = extract_langchain_prompt(DummyAttrObj(not_text=1))
+        assert "DummyAttrObj" in res_fallback
+
+    assert extract_langchain_prompt(DummyAttrObj(text="lc text")) == "lc text"
+    assert extract_langchain_prompt(["prompt 1", {"prompt": "prompt 2"}]) == "prompt 1\nprompt 2"
+    res_set = extract_langchain_prompt(set([1, 2]))
+    assert "1" in res_set or "2" in res_set
+
+
+def test_extract_models_and_patching_edge_cases():
+    from sentra.wrappers import (
+        _extract_bedrock_model,
+        _extract_vertex_model,
+        _patch_child_method,
+        _patch_bedrock_send,
+    )
+
+    assert _extract_bedrock_model(DummyAttrObj(modelId="bid")) == "bid"
+    assert _extract_bedrock_model(DummyAttrObj(model_id="b_mid")) == "b_mid"
+    assert _extract_bedrock_model(DummyAttrObj(model="b_m")) == "b_m"
+    assert _extract_bedrock_model(DummyAttrObj()) is None
+
+    assert _extract_vertex_model({}, client_obj=DummyAttrObj(model="cm")) == "cm"
+    assert _extract_vertex_model({}, client_obj=DummyAttrObj(_model="c_m")) == "c_m"
+
+    client = SentraClient(api_key="sentra_test_sandbox")
+    dummy_target = DummyAttrObj(test_m="not callable")
+    _patch_child_method(
+        dummy_target,
+        "test_m",
+        client,
+        "agent",
+        "action",
+        "block",
+        None,
+        lambda x: "",
+    )
+    assert dummy_target.test_m == "not callable"
+
+    dummy_bedrock = DummyAttrObj(send="not callable")
+    _patch_bedrock_send(dummy_bedrock, client, "agent", "block", None)
+    assert dummy_bedrock.send == "not callable"
+
+    class FrozenObj:
+        def __init__(self):
+            self._fn = lambda: "ok"
+
+        def __getattr__(self, name):
+            if name == "call_me":
+                return self._fn
+            raise AttributeError(name)
+
+        def __setattr__(self, name, value):
+            if name == "call_me":
+                raise ValueError("Cannot set on frozen object")
+            super().__setattr__(name, value)
+
+    frozen = FrozenObj()
+    _patch_child_method(
+        frozen,
+        "call_me",
+        client,
+        "agent",
+        "action",
+        "block",
+        None,
+        lambda x: "",
+    )
+    assert hasattr(frozen, "call_me")

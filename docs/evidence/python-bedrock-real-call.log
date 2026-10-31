@@ -1,0 +1,24 @@
+================================================================================
+SENTRA AI PYTHON SDK REAL-CALL EVIDENCE: AMAZON BEDROCK
+================================================================================
+Provider:               Amazon Bedrock (boto3)
+Exact Route:            blocked (AWS Account block Error 002)
+Status:                 code complete, tested with mocks
+AWS Region:             us-east-1
+Target Model:           amazon.nova-lite-v1:0
+Governance Mode:        Public Sandbox (sentra_test_sandbox)
+Key Status:             Configured in environment (NEVER printed or logged)
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. SINGLE REAL CONVERSE CALL CHECK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Sentra check status:    allowed
+Bedrock call error:     An error occurred (ValidationException) when calling the Converse operation: Error 002: Access to Bedrock models is not allowed for this account
+Error Name:             ValidationException
+Result:                 real call blocked by AWS
+Resolution:             Account block recorded; relying on comprehensive mocks
+
+================================================================================
+END OF BEDROCK EVIDENCE LOG
+================================================================================
