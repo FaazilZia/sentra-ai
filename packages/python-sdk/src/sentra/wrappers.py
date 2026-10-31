@@ -237,10 +237,7 @@ def _extract_bedrock_invoke_text(body_data: Any) -> str:
         return ""
     body = body_data
     if isinstance(body, (bytes, bytearray)):
-        try:
-            body = body.decode("utf-8", errors="replace")
-        except Exception:
-            return ""
+        body = body.decode("utf-8", errors="replace")
     if isinstance(body, str):
         try:
             parsed = json.loads(body)
@@ -413,11 +410,6 @@ def extract_langchain_prompt(params: Any) -> str:
     except Exception:
         return str(params)
 
-    try:
-        return json.dumps(params, default=str)
-    except Exception:
-        return str(params)
-
 
 def _extract_params(args: tuple[Any, ...], kwargs: dict[str, Any]) -> Any:
     if args:
@@ -478,15 +470,11 @@ def _resolve_options(
     return opt_agent, opt_flag_mode, opt_on_flag
 
 
-def execute_with_governance(
+def _evaluate_decision(
     check: ActionResponse,
     flag_mode: str,
     on_flag: Callable[[ActionResponse], None] | None,
-    original_fn: Callable[..., Any],
-    args: tuple[Any, ...],
-    kwargs: dict[str, Any],
-) -> Any:
-    """Evaluate decision and conditionally invoke provider synchronous callable."""
+) -> None:
     if check.status == STATUS_RATE_LIMITED:
         raise SentraError(f"{ERR_RATE_LIMITED_PREFIX}{check.reason}", status=429, data=check)
 
@@ -498,8 +486,18 @@ def execute_with_governance(
             raise SentraError(f"{ERR_BLOCKED_PREFIX}{check.reason}", status=403, data=check)
         if callable(on_flag):
             on_flag(check)
-        return original_fn(*args, **kwargs)
 
+
+def execute_with_governance(
+    check: ActionResponse,
+    flag_mode: str,
+    on_flag: Callable[[ActionResponse], None] | None,
+    original_fn: Callable[..., Any],
+    args: tuple[Any, ...],
+    kwargs: dict[str, Any],
+) -> Any:
+    """Evaluate decision and conditionally invoke provider synchronous callable."""
+    _evaluate_decision(check, flag_mode, on_flag)
     return original_fn(*args, **kwargs)
 
 
@@ -512,19 +510,7 @@ async def async_execute_with_governance(
     kwargs: dict[str, Any],
 ) -> Any:
     """Evaluate decision and conditionally invoke provider asynchronous coroutine."""
-    if check.status == STATUS_RATE_LIMITED:
-        raise SentraError(f"{ERR_RATE_LIMITED_PREFIX}{check.reason}", status=429, data=check)
-
-    if check.status == STATUS_BLOCKED:
-        raise SentraError(f"{ERR_BLOCKED_PREFIX}{check.reason}", status=403, data=check)
-
-    if check.status == STATUS_FLAGGED:
-        if flag_mode == FLAG_MODE_BLOCK:
-            raise SentraError(f"{ERR_BLOCKED_PREFIX}{check.reason}", status=403, data=check)
-        if callable(on_flag):
-            on_flag(check)
-        return await original_fn(*args, **kwargs)
-
+    _evaluate_decision(check, flag_mode, on_flag)
     return await original_fn(*args, **kwargs)
 
 
@@ -534,6 +520,22 @@ def _resolve_sentra_client(sentra_instance: SentraClient | None) -> SentraClient
     api_key = os.environ.get("SENTRA_API_KEY")
     key_val = api_key if api_key else SANDBOX_DEMO_KEY
     return SentraClient(api_key=key_val, sandbox=api_key is None)
+
+
+def _prepare_action_check(
+    sentra: SentraClient,
+    agent: str,
+    action: str,
+    prompt: str,
+    model: Any = None,
+) -> ActionResponse:
+    metadata: dict[str, Any] = {
+        "prompt_length": len(prompt),
+        "prompt": prompt[:500],
+    }
+    if model is not None:
+        metadata["model"] = model
+    return sentra.check_action(agent=agent, action=action, metadata=metadata)
 
 
 def _build_interceptor(
@@ -546,19 +548,16 @@ def _build_interceptor(
     prompt_extractor: Callable[[Any], str],
     model_extractor: Callable[[Any], Any] | None = None,
 ) -> Callable[..., Any]:
+    def _create_check(args: tuple[Any, ...], kwargs: dict[str, Any]) -> ActionResponse:
+        params = _extract_params(args, kwargs)
+        prompt = prompt_extractor(params)
+        model = model_extractor(params) if model_extractor else _extract_model(params)
+        return _prepare_action_check(sentra, agent, action, prompt, model)
+
     if inspect.iscoroutinefunction(original_fn):
 
         async def async_interceptor(*args: Any, **kwargs: Any) -> Any:
-            params = _extract_params(args, kwargs)
-            prompt = prompt_extractor(params)
-            model = model_extractor(params) if model_extractor else _extract_model(params)
-            metadata: dict[str, Any] = {
-                "prompt_length": len(prompt),
-                "prompt": prompt[:500],
-            }
-            if model is not None:
-                metadata["model"] = model
-            check = sentra.check_action(agent=agent, action=action, metadata=metadata)
+            check = _create_check(args, kwargs)
             return await async_execute_with_governance(
                 check, flag_mode, on_flag, original_fn, args, kwargs
             )
@@ -566,16 +565,7 @@ def _build_interceptor(
         return async_interceptor
 
     def sync_interceptor(*args: Any, **kwargs: Any) -> Any:
-        params = _extract_params(args, kwargs)
-        prompt = prompt_extractor(params)
-        model = model_extractor(params) if model_extractor else _extract_model(params)
-        metadata: dict[str, Any] = {
-            "prompt_length": len(prompt),
-            "prompt": prompt[:500],
-        }
-        if model is not None:
-            metadata["model"] = model
-        check = sentra.check_action(agent=agent, action=action, metadata=metadata)
+        check = _create_check(args, kwargs)
         return execute_with_governance(check, flag_mode, on_flag, original_fn, args, kwargs)
 
     return sync_interceptor
@@ -724,6 +714,20 @@ def _get_bedrock_command_action(command: Any) -> str:
     return ACTION_BEDROCK_INVOKE_MODEL
 
 
+def _prepare_bedrock_send_check(
+    sentra: SentraClient,
+    agent: str,
+    args: tuple[Any, ...],
+    kwargs: dict[str, Any],
+) -> ActionResponse:
+    cmd = args[0] if args else kwargs.get("command")
+    action = _get_bedrock_command_action(cmd)
+    cmd_input = getattr(cmd, "input", cmd)
+    prompt = extract_bedrock_prompt(cmd_input)
+    model = _extract_bedrock_model(cmd_input)
+    return _prepare_action_check(sentra, agent, action, prompt, model)
+
+
 def _patch_bedrock_send(
     client: Any,
     sentra: SentraClient,
@@ -738,18 +742,7 @@ def _patch_bedrock_send(
     if inspect.iscoroutinefunction(orig_send):
 
         async def async_send_interceptor(*args: Any, **kwargs: Any) -> Any:
-            cmd = args[0] if args else kwargs.get("command")
-            action = _get_bedrock_command_action(cmd)
-            cmd_input = getattr(cmd, "input", cmd)
-            prompt = extract_bedrock_prompt(cmd_input)
-            model = _extract_bedrock_model(cmd_input)
-            metadata: dict[str, Any] = {
-                "prompt_length": len(prompt),
-                "prompt": prompt[:500],
-            }
-            if model is not None:
-                metadata["model"] = model
-            check = sentra.check_action(agent=agent, action=action, metadata=metadata)
+            check = _prepare_bedrock_send_check(sentra, agent, args, kwargs)
             return await async_execute_with_governance(
                 check, flag_mode, on_flag, orig_send, args, kwargs
             )
@@ -758,18 +751,7 @@ def _patch_bedrock_send(
     else:
 
         def sync_send_interceptor(*args: Any, **kwargs: Any) -> Any:
-            cmd = args[0] if args else kwargs.get("command")
-            action = _get_bedrock_command_action(cmd)
-            cmd_input = getattr(cmd, "input", cmd)
-            prompt = extract_bedrock_prompt(cmd_input)
-            model = _extract_bedrock_model(cmd_input)
-            metadata: dict[str, Any] = {
-                "prompt_length": len(prompt),
-                "prompt": prompt[:500],
-            }
-            if model is not None:
-                metadata["model"] = model
-            check = sentra.check_action(agent=agent, action=action, metadata=metadata)
+            check = _prepare_bedrock_send_check(sentra, agent, args, kwargs)
             return execute_with_governance(check, flag_mode, on_flag, orig_send, args, kwargs)
 
         client.send = sync_send_interceptor
