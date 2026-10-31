@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 from unittest.mock import MagicMock
 
@@ -357,97 +358,99 @@ class TestAnthropicWrapper:
 
 
 class TestAsyncSupport:
-    @pytest.mark.anyio
-    async def test_async_openai_wrapper_allow_and_block(self) -> None:
-        sentra, _ = _create_mock_sentra({
-            "status": "allowed",
-            "is_allowed": True,
-            "risk": "low",
-            "reason": "Safe Action",
-            "impact": "None",
-        })
+    def test_async_openai_wrapper_allow_and_block(self) -> None:
+        async def _run() -> None:
+            sentra, _ = _create_mock_sentra({
+                "status": "allowed",
+                "is_allowed": True,
+                "risk": "low",
+                "reason": "Safe Action",
+                "impact": "None",
+            })
 
-        async_calls = 0
+            async_calls = 0
 
-        class AsyncCompletions:
-            async def create(self, *args: Any, **kwargs: Any) -> Any:
-                nonlocal async_calls
-                async_calls += 1
-                return {"id": "async-1"}
+            class AsyncCompletions:
+                async def create(self, *args: Any, **kwargs: Any) -> Any:
+                    nonlocal async_calls
+                    async_calls += 1
+                    return {"id": "async-1"}
 
-        class AsyncChat:
-            def __init__(self) -> None:
-                self.completions = AsyncCompletions()
+            class AsyncChat:
+                def __init__(self) -> None:
+                    self.completions = AsyncCompletions()
 
-        class AsyncClient:
-            def __init__(self) -> None:
-                self.chat = AsyncChat()
+            class AsyncClient:
+                def __init__(self) -> None:
+                    self.chat = AsyncChat()
 
-        client = AsyncClient()
-        wrapped = sentra.wrap_openai(client)
+            client = AsyncClient()
+            wrapped = sentra.wrap_openai(client)
 
-        res = await wrapped.chat.completions.create(model="gpt-4o", messages=[{"role": "user", "content": "hi"}])
-        assert async_calls == 1
-        assert res == {"id": "async-1"}
+            res = await wrapped.chat.completions.create(model="gpt-4o", messages=[{"role": "user", "content": "hi"}])
+            assert async_calls == 1
+            assert res == {"id": "async-1"}
 
-        # Now test async block path
-        sentra_block, _ = _create_mock_sentra({
-            "status": "blocked",
-            "is_allowed": False,
-            "risk": "high",
-            "reason": "Blocked async",
-            "impact": "Blocked",
-        })
-        client_blocked = AsyncClient()
-        wrapped_blocked = sentra_block.wrap_openai(client_blocked)
+            # Now test async block path
+            sentra_block, _ = _create_mock_sentra({
+                "status": "blocked",
+                "is_allowed": False,
+                "risk": "high",
+                "reason": "Blocked async",
+                "impact": "Blocked",
+            })
+            client_blocked = AsyncClient()
+            wrapped_blocked = sentra_block.wrap_openai(client_blocked)
 
-        with pytest.raises(SentraError) as exc_info:
-            await wrapped_blocked.chat.completions.create(model="gpt-4o", messages=[{"role": "user", "content": "bad"}])
+            with pytest.raises(SentraError) as exc_info:
+                await wrapped_blocked.chat.completions.create(model="gpt-4o", messages=[{"role": "user", "content": "bad"}])
 
-        assert exc_info.value.status == 403
-        assert async_calls == 1  # No additional calls!
+            assert exc_info.value.status == 403
+            assert async_calls == 1  # No additional calls!
 
-        # Test async rate limited path
-        sentra_rl, _ = _create_mock_sentra({
-            "status": "rate_limited",
-            "is_allowed": False,
-            "risk": "low",
-            "reason": "Async Rate Limited",
-            "impact": "Rate limited",
-        })
-        client_rl = AsyncClient()
-        wrapped_rl = sentra_rl.wrap_openai(client_rl)
-        with pytest.raises(SentraError) as exc_rl:
-            await wrapped_rl.chat.completions.create(model="gpt-4o")
-        assert exc_rl.value.status == 429
-        assert async_calls == 1
+            # Test async rate limited path
+            sentra_rl, _ = _create_mock_sentra({
+                "status": "rate_limited",
+                "is_allowed": False,
+                "risk": "low",
+                "reason": "Async Rate Limited",
+                "impact": "Rate limited",
+            })
+            client_rl = AsyncClient()
+            wrapped_rl = sentra_rl.wrap_openai(client_rl)
+            with pytest.raises(SentraError) as exc_rl:
+                await wrapped_rl.chat.completions.create(model="gpt-4o")
+            assert exc_rl.value.status == 429
+            assert async_calls == 1
 
-        # Test async flagged block path
-        sentra_fl, _ = _create_mock_sentra({
-            "status": "flagged",
-            "is_allowed": False,
-            "risk": "medium",
-            "reason": "Async Flagged",
-            "impact": "Review",
-        })
-        client_fl = AsyncClient()
-        wrapped_fl = sentra_fl.wrap_openai(client_fl, flag_mode="block")
-        with pytest.raises(SentraError) as exc_fl:
-            await wrapped_fl.chat.completions.create(model="gpt-4o")
-        assert exc_fl.value.status == 403
-        assert async_calls == 1
+            # Test async flagged block path
+            sentra_fl, _ = _create_mock_sentra({
+                "status": "flagged",
+                "is_allowed": False,
+                "risk": "medium",
+                "reason": "Async Flagged",
+                "impact": "Review",
+            })
+            client_fl = AsyncClient()
+            wrapped_fl = sentra_fl.wrap_openai(client_fl, flag_mode="block")
+            with pytest.raises(SentraError) as exc_fl:
+                await wrapped_fl.chat.completions.create(model="gpt-4o")
+            assert exc_fl.value.status == 403
+            assert async_calls == 1
 
-        # Test async flagged allow path
-        async_flags: list[ActionResponse] = []
-        client_fl_allow = AsyncClient()
-        wrapped_fl_allow = sentra_fl.wrap_openai(
-            client_fl_allow,
-            options=WrapperOptions(agent="async-agent", flag_mode="allow", on_flag=async_flags.append),
-        )
-        res_fl = await wrapped_fl_allow.chat.completions.create(model="gpt-4o")
-        assert res_fl == {"id": "async-1"}
-        assert async_calls == 2
-        assert len(async_flags) == 1
+            # Test async flagged allow path
+            async_flags: list[ActionResponse] = []
+            client_fl_allow = AsyncClient()
+            wrapped_fl_allow = sentra_fl.wrap_openai(
+                client_fl_allow,
+                options=WrapperOptions(agent="async-agent", flag_mode="allow", on_flag=async_flags.append),
+            )
+            res_fl = await wrapped_fl_allow.chat.completions.create(model="gpt-4o")
+            assert res_fl == {"id": "async-1"}
+            assert async_calls == 2
+            assert len(async_flags) == 1
+
+        asyncio.run(_run())
 
 
 class TestWrapperEdgeCases:
