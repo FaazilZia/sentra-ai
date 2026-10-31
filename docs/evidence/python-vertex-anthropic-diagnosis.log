@@ -1,0 +1,100 @@
+================================================================================
+VERTEX AI ANTHROPIC PUBLISHER MODELS DIAGNOSIS & GOVERNANCE REPORT
+================================================================================
+Provider:               Anthropic on Google Cloud Vertex AI (AnthropicVertex)
+Credentials File:       Configured in environment
+GCP Project:            [REDACTED-GCP-PROJECT]
+Governance Mode:        Public Sandbox (sentra_test_sandbox)
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. VERTEX AI PUBLISHER MODELS API (publishers/anthropic/models)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+--- Checking Region: us-east5 ---
+Request: GET https://us-east5-aiplatform.googleapis.com/v1beta1/publishers/anthropic/models?pageSize=100
+HTTP Status: 200
+Models Count: 0
+  (None listed: publisher model catalog returned empty list)
+
+--- Checking Region: europe-west1 ---
+Request: GET https://europe-west1-aiplatform.googleapis.com/v1beta1/publishers/anthropic/models?pageSize=100
+HTTP Status: 200
+Models Count: 0
+  (None listed: publisher model catalog returned empty list)
+
+--- Checking Region: asia-southeast1 ---
+Request: GET https://asia-southeast1-aiplatform.googleapis.com/v1beta1/publishers/anthropic/models?pageSize=100
+HTTP Status: 200
+Models Count: 0
+  (None listed: publisher model catalog returned empty list)
+
+--- Checking Region: us-central1 ---
+Request: GET https://us-central1-aiplatform.googleapis.com/v1beta1/publishers/anthropic/models?pageSize=100
+HTTP Status: 200
+Models Count: 13
+Listed Models:
+  - publishers/anthropic/models/claude-haiku-4-5 (versionId: 20251001)
+  - publishers/anthropic/models/claude-opus-4-5 (versionId: 20251101)
+  - publishers/anthropic/models/claude-opus-4-6 (versionId: default)
+  - publishers/anthropic/models/claude-sonnet-4-6 (versionId: default)
+  - publishers/anthropic/models/claude-opus-4-7 (versionId: default)
+  - publishers/anthropic/models/claude-sonnet-5 (versionId: default)
+  - publishers/anthropic/models/claude-opus-4-8 (versionId: default)
+  - publishers/anthropic/models/claude-fable-5 (versionId: default)
+  - publishers/anthropic/models/claude-opus-5 (versionId: default)
+  - publishers/anthropic/models/claude-fable-5-1 (versionId: default)
+  - publishers/anthropic/models/claude-opus-5-5 (versionId: default)
+  - publishers/anthropic/models/claude-sonnet-5-5 (versionId: default)
+  - publishers/anthropic/models/claude-haiku-5-5 (versionId: default)
+
+--- Checking Region: global ---
+Request: GET https://aiplatform.googleapis.com/v1beta1/publishers/anthropic/models?pageSize=100
+HTTP Status: 200
+Models Count: 13
+Listed Models:
+  - publishers/anthropic/models/claude-haiku-4-5 (versionId: 20251001)
+  - publishers/anthropic/models/claude-opus-4-5 (versionId: 20251101)
+  - publishers/anthropic/models/claude-opus-4-6 (versionId: default)
+  - publishers/anthropic/models/claude-sonnet-4-6 (versionId: default)
+  - publishers/anthropic/models/claude-opus-4-7 (versionId: default)
+  - publishers/anthropic/models/claude-sonnet-5 (versionId: default)
+  - publishers/anthropic/models/claude-opus-4-8 (versionId: default)
+  - publishers/anthropic/models/claude-fable-5 (versionId: default)
+  - publishers/anthropic/models/claude-opus-5 (versionId: default)
+  - publishers/anthropic/models/claude-fable-5-1 (versionId: default)
+  - publishers/anthropic/models/claude-opus-5-5 (versionId: default)
+  - publishers/anthropic/models/claude-sonnet-5-5 (versionId: default)
+  - publishers/anthropic/models/claude-haiku-5-5 (versionId: default)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. AVAILABILITY EVALUATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Region us-east5:        Claude not enabled on this project in us-east5 (0 models returned)
+Models Found:           Yes (13 models in catalog)
+Selected Vertex Model:  claude-haiku-5-5
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. GOVERNANCE WRAPPER (wrap_anthropic) WITH ANTHROPICVERTEX
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Target Region:          global
+Target Model:           claude-haiku-5-5
+
+--- A. Blocked Call Verification (Zero Provider Calls Proof) ---
+Sentra check status:    blocked (HTTP 403)
+SentraError message:    [Sentra Blocked] Action blocked: potentially sensitive data or restricted pattern detected
+Provider calls made:    0 (ZERO calls to Vertex AI)
+Verdict:                PASS (Blocked call prevented pre-flight before provider)
+
+--- B. Allowed Call Verification (Passes Through to Provider) ---
+Sentra check status:    allowed
+Provider calls made:    1 (reached Vertex AI)
+Provider response:      RateLimitError: Error code: 429 - {'error': {'code': 429, 'message': 'Quota exceeded for aiplatform.googleapis.com/global_online_prediction_requests_per_base_model with base model: anthropic-claude-haiku. Please submit a quota increase 
+Verdict:                PASS (Allowed call passed governance and reached Vertex AI provider)
+
+--- C. Regional Probe in us-central1 ---
+us-central1 Result:     NotFoundError: Error code: 404 - {'error': {'code': 404, 'message': 'Publisher model `projects/[REDACTED-GCP-PROJECT]/locations/us-central1/publishers/anthropic/models/claude-haiku-5-5` was not found or your project does not have a
+
+================================================================================
+END OF VERTEX ANTHROPIC DIAGNOSIS REPORT
+================================================================================
