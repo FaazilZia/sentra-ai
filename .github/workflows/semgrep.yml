@@ -32,7 +32,7 @@ jobs:
             --sarif \
             --output=semgrep.sarif \
             --no-error \
-            backend/src frontend/src packages/sdk/src
+            backend/src frontend/src packages/sdk/src packages/python-sdk/src
 
       - name: Publish Step Summary
         if: always()

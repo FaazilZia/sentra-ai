@@ -2,7 +2,7 @@
 
 Real-time AI governance for autonomous agents, LLM pipelines, and runtime APIs. Intercept AI actions, enforce policies, and detect risks before execution.
 
-> **Language Support:** Node.js 18+. Python is not yet supported.
+> **Language Support:** Node.js 18+ and Python 3.8+ (see `sentra-ai` in `packages/python-sdk`).
 
 ---
 
