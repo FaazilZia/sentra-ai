@@ -160,6 +160,30 @@ jobs:
           path: packages/sdk/coverage/
           retention-days: 7
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python SDK & dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pytest pytest-cov
+          pip install -e packages/python-sdk
+
+      - name: Run Python SDK tests with coverage
+        working-directory: packages/python-sdk
+        run: pytest -m "not live" --cov=sentra --cov=sentra_ai --cov-report=xml:coverage.xml --cov-report=term-missing
+
+      - name: Upload Python SDK coverage report
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-sdk-coverage-report
+          path: packages/python-sdk/coverage.xml
+          retention-days: 7
+
       - name: Run Jest E2E API tests
         run: npm run test:e2e:jest
         env:

@@ -48,7 +48,12 @@ dist/
 build/
 *.tgz
 *.egg-info/
+*.egg-info
 __pycache__/
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
 **/coverage
 **/dist
 backend/dev.db
