@@ -1,0 +1,39 @@
+================================================================================
+SENTRA AI PYTHON SDK REAL-CALL EVIDENCE: LANGCHAIN
+================================================================================
+Provider:               LangChain
+Exact Route:            via Azure OpenAI (AzureChatOpenAI)
+Deployment:             gpt-5-mini-sentraa
+API Version:            2024-10-21
+Governance Mode:        Public Sandbox (sentra_test_sandbox)
+Key Status:             Configured in environment (NEVER printed or logged)
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. ALLOWED LANGCHAIN CHAIN INVOKE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Sentra check status:    allowed
+Provider invoked:       YES (1 call)
+LangChain response:     Hello there! How are you?
+Verdict:                PASS (Allowed chain invoke passed through cleanly)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. BLOCKED LANGCHAIN CHAIN INVOKE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Sentra check status:    blocked (HTTP 403)
+SentraError message:    [Sentra Blocked] Action blocked: potentially sensitive data or restricted pattern detected
+Provider invoked:       NO (0 calls - blocked by Sentra)
+Verdict:                PASS (Blocked call prevented before reaching provider)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. LEGACY CALL PATH EVALUATION (chain.call / __call__)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Legacy call path:       NOT supported on AzureChatOpenAI in langchain-openai 1.7.3
+Details:                Modern LangChain 0.3+ / 1.x models inherit from RunnableSerializable
+                        and do not expose chain.call() or __call__(). Modern chains use invoke().
+Wrapper Parity:         wrap_langchain implements interceptors for both 'call' (LANGCHAIN_CALL)
+                        and 'invoke' (LANGCHAIN_INVOKE); legacy call is tested & verified with mocks.
+
+================================================================================
+END OF LANGCHAIN EVIDENCE LOG
+================================================================================
