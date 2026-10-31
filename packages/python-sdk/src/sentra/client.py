@@ -89,7 +89,7 @@ def _is_sandbox_key(sandbox_val: bool, key: str) -> bool:
         return True
     if key in ("sentra_test_sandbox", "demo"):
         return True
-    return key.startswith("sentra_test_") or key.startswith("test_")
+    return key.startswith(("sentra_test_", "test_"))
 
 
 class SentraClient:
@@ -128,6 +128,9 @@ class SentraClient:
             "checkAction": self.check_action,
             "demoBlockedAction": self.demo_blocked_action,
             "safeAction": self.safe_action,
+            "wrapOpenAI": self.wrap_openai,
+            "wrapAzureOpenAI": self.wrap_azure_openai,
+            "wrapAnthropic": self.wrap_anthropic,
         }
         if name in aliases:
             return aliases[name]
@@ -377,6 +380,39 @@ class SentraClient:
             governance.reason,
         )
         return {"success": False, "governance": governance}
+
+    def wrap_openai(
+        self,
+        client: Any,
+        options: Any = None,
+        **kwargs: Any,
+    ) -> Any:
+        """Intercepts OpenAI requests to ensure runtime safety and policy compliance."""
+        from .wrappers import wrap_openai
+
+        return wrap_openai(client, options=options, sentra_instance=self, **kwargs)
+
+    def wrap_azure_openai(
+        self,
+        client: Any,
+        options: Any = None,
+        **kwargs: Any,
+    ) -> Any:
+        """Intercepts Azure OpenAI requests to ensure runtime safety and policy compliance."""
+        from .wrappers import wrap_azure_openai
+
+        return wrap_azure_openai(client, options=options, sentra_instance=self, **kwargs)
+
+    def wrap_anthropic(
+        self,
+        client: Any,
+        options: Any = None,
+        **kwargs: Any,
+    ) -> Any:
+        """Intercepts Anthropic requests to ensure runtime safety and policy compliance."""
+        from .wrappers import wrap_anthropic
+
+        return wrap_anthropic(client, options=options, sentra_instance=self, **kwargs)
 
     def _resolve_status(self, decision_str: str, is_pending: bool) -> str:
         if decision_str in ("blocked", "block"):

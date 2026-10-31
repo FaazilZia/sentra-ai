@@ -1,0 +1,40 @@
+================================================================================
+SENTRA AI PYTHON SDK REAL-CALL EVIDENCE: ANTHROPIC
+================================================================================
+Provider:               Anthropic
+Governance Mode:        Public Sandbox (sentra_test_sandbox)
+Key Status:             Configured in environment (NEVER printed or logged)
+
+--- Route 1 Probe: Native Anthropic API (ANTHROPIC_API_KEY) ---
+Models Available:       ['claude-haiku-5-5', 'claude-sonnet-5-5', 'claude-opus-5-5', 'claude-fable-5-1', 'claude-opus-5']
+Selected Model ID:      claude-haiku-5-5
+Native Call Result:     FAILED (BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing )
+
+--- Route 2 Probe: Anthropic SDK via Vertex (AnthropicVertex) ---
+GCP Project:            gen-lang-client-0153858816
+GCP Credentials:        Configured
+Vertex Call Result:     FAILED (NotFoundError: Error code: 404 - {'error': {'code': 404, 'message': 'Publisher model `projects/gen-lang-client-0153858816/locations/us-east5/publishers/anthropic/models/claude-haiku-5-5` was not )
+
+Exact Route Used:       blocked: no credit or access
+Native Error Details:   BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing 
+Vertex Error Details:   NotFoundError: Error code: 404 - {'error': {'code': 404, 'message': 'Publisher model `projects/gen-lang-client-0153858816/locations/us-east5/publishers/anthropic/models/claude-haiku-5-5` was not 
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+GOVERNANCE WRAPPER VERIFICATION WITH REAL ANTHROPIC CLIENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+--- Blocked Call Test (Zero Calls Proof) ---
+Sentra check status:    blocked (HTTP 403)
+SentraError message:    [Sentra Blocked] Action blocked: potentially sensitive data or restricted pattern detected
+Provider invoked:       NO (0 calls - blocked by Sentra)
+Verdict:                PASS (Blocked call prevented before reaching provider)
+
+--- Allowed Call Test (Passes Through to Provider) ---
+Sentra check status:    allowed
+Provider invoked:       YES (1 call reached Anthropic)
+Provider response error:BadRequestError (as expected: no credit)
+Verdict:                PASS (Allowed call verified reaching provider)
+
+================================================================================
+END OF ANTHROPIC EVIDENCE LOG
+================================================================================

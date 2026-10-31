@@ -1,0 +1,31 @@
+================================================================================
+SENTRA AI PYTHON SDK REAL-CALL EVIDENCE: AZURE OPENAI
+================================================================================
+Provider:               Azure OpenAI
+Exact Route:            native
+Deployment:             gpt-5-mini-sentraa
+API Version:            2024-10-21
+Governance Mode:        Public Sandbox (sentra_test_sandbox)
+Endpoint:               configured (masked)
+Key Status:             Configured in environment (NEVER printed or logged)
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. ALLOWED AZURE OPENAI CALL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Sentra check status:    allowed
+Provider invoked:       YES (1 call)
+Azure OpenAI response:  Hello there friend
+Verdict:                PASS (Allowed call passed through cleanly)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. BLOCKED AZURE OPENAI CALL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Sentra check status:    blocked (HTTP 403)
+SentraError message:    [Sentra Blocked] Action blocked: potentially sensitive data or restricted pattern detected
+Provider invoked:       NO (0 calls - blocked by Sentra)
+Verdict:                PASS (Blocked call prevented before reaching provider)
+
+================================================================================
+END OF AZURE OPENAI EVIDENCE LOG
+================================================================================
