@@ -83,7 +83,7 @@ def run_openai_real_call() -> None:
         exact_route = "OpenAI SDK via Azure"
         log("Exact Route Used:       OpenAI SDK via Azure")
         log("SDK Package:            openai.OpenAI (Python SDK)")
-        log("Base URL:               " + f"{azure_endpoint}/openai/deployments/{deployment}")
+        log("Base URL:               https://[REDACTED-AZURE-RESOURCE].openai.azure.com/openai/deployments/" + deployment)
         log("API Version:            " + api_version)
 
         # 1. ALLOWED CALL

@@ -11,13 +11,13 @@ Selected Model ID:      claude-haiku-5-5
 Native Call Result:     FAILED (BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing )
 
 --- Route 2 Probe: Anthropic SDK via Vertex (AnthropicVertex) ---
-GCP Project:            gen-lang-client-0153858816
+GCP Project:            [REDACTED-GCP-PROJECT]
 GCP Credentials:        Configured
-Vertex Call Result:     FAILED (NotFoundError: Error code: 404 - {'error': {'code': 404, 'message': 'Publisher model `projects/gen-lang-client-0153858816/locations/us-east5/publishers/anthropic/models/claude-haiku-5-5` was not )
+Vertex Call Result:     FAILED (NotFoundError: Error code: 404 - {'error': {'code': 404, 'message': 'Publisher model `projects/[REDACTED-GCP-PROJECT]/locations/us-east5/publishers/anthropic/models/claude-haiku-5-5` was not )
 
 Exact Route Used:       blocked: no credit or access
-Native Error Details:   BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing 
-Vertex Error Details:   NotFoundError: Error code: 404 - {'error': {'code': 404, 'message': 'Publisher model `projects/gen-lang-client-0153858816/locations/us-east5/publishers/anthropic/models/claude-haiku-5-5` was not 
+Native Error Details:   BadRequestError: Error code: 400 - {'error': {'code': 404, 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing 
+Vertex Error Details:   NotFoundError: Error code: 404 - {'error': {'code': 404, 'message': 'Publisher model `projects/[REDACTED-GCP-PROJECT]/locations/us-east5/publishers/anthropic/models/claude-haiku-5-5` was not 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 GOVERNANCE WRAPPER VERIFICATION WITH REAL ANTHROPIC CLIENT

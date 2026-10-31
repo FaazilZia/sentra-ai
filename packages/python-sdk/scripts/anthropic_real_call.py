@@ -83,7 +83,7 @@ def run_anthropic_real_call() -> None:
     vertex_error = None
     log("\n--- Route 2 Probe: Anthropic SDK via Vertex (AnthropicVertex) ---")
     if gcp_creds and gcp_project:
-        log("GCP Project:            " + gcp_project)
+        log("GCP Project:            [REDACTED-GCP-PROJECT]")
         log("GCP Credentials:        Configured")
         try:
             v_client = AnthropicVertex(project_id=gcp_project, region="us-east5")
@@ -94,7 +94,8 @@ def run_anthropic_real_call() -> None:
             )
             log("Vertex Call Result:     SUCCESS")
         except Exception as e:
-            vertex_error = f"{type(e).__name__}: {str(e)[:180]}"
+            raw_err = f"{type(e).__name__}: {str(e)[:180]}"
+            vertex_error = raw_err.replace(gcp_project, "[REDACTED-GCP-PROJECT]")
             log(f"Vertex Call Result:     FAILED ({vertex_error})")
     else:
         log("Vertex Call Result:     GCP credentials not configured")

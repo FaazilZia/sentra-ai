@@ -14,7 +14,7 @@ Gemini API Key:         GEMINI_API_KEY unset in environment
 --- Route 3 Execution: OpenAI SDK via Azure ---
 Exact Route Used:       OpenAI SDK via Azure
 SDK Package:            openai.OpenAI (Python SDK)
-Base URL:               https://faazilzia01-7665-resource.openai.azure.com/openai/deployments/gpt-5-mini-sentraa
+Base URL:               https://[REDACTED-AZURE-RESOURCE].openai.azure.com/openai/deployments/gpt-5-mini-sentraa
 API Version:            2024-10-21
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
