@@ -49,6 +49,9 @@ def test_action_response_methods_and_equality():
     with pytest.raises(KeyError):
         _ = resp["unknown_prop"]
 
+    with pytest.raises(AttributeError):
+        _ = resp.unknown_attribute
+
     # Equality with ActionResponse
     resp_clone = ActionResponse(
         status="allowed",
@@ -108,6 +111,23 @@ def test_client_aliases_and_methods():
         res_safe = client.safeAction({"agent": "bot", "action": "act"}, lambda: "done")
         assert res_safe["success"] is True
         mock_safe.assert_called_once()
+
+    with pytest.raises(AttributeError):
+        _ = client.non_existent_attribute_xyz
+
+    # safe_action with custom object and rate_limited
+    class CustomReq:
+        pass
+
+    with patch.object(
+        client,
+        "check_action",
+        return_value=ActionResponse(
+            status="rate_limited", is_allowed=False, risk="low", reason="quota", impact="wait"
+        ),
+    ):
+        res_rl = client.safe_action(CustomReq(), lambda: "ok")
+        assert res_rl["success"] is False
 
 
 def test_check_action_request_object_input_and_prompt_formatting():

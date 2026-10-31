@@ -1,5 +1,7 @@
 """Core Sentra AI client for runtime AI governance and security."""
 
+from __future__ import annotations
+
 import json
 import logging
 import socket
@@ -7,15 +9,19 @@ import ssl
 import time
 import urllib.error
 import urllib.request
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Callable
 
 from .exceptions import SentraError
 from .models import ActionRequest, ActionResponse
 
 logger = logging.getLogger("sentra")
 
+FAIL_CLOSED_IMPACT = "Execution prevented to ensure safety (fail-closed)"
+ACCESS_CONTROL_COMPLIANCE = ["Access Control"]
+DEFAULT_BASE_URL = "https://sentra-backend-node.onrender.com/api/v1"
 
-def _create_ssl_context() -> Optional[ssl.SSLContext]:
+
+def _create_ssl_context() -> ssl.SSLContext | None:
     try:
         import certifi
 
@@ -27,285 +33,294 @@ def _create_ssl_context() -> Optional[ssl.SSLContext]:
             return None
 
 
+def _resolve_clean_key(
+    api_key: str | None, sandbox_val: bool, kwargs: dict[str, Any]
+) -> str:
+    raw_key = api_key if api_key is not None else kwargs.get("apiKey")
+    if raw_key is None and not sandbox_val:
+        raise SentraError(
+            "No API key. Get one from your dashboard, or pass apiKey: 'sentra_test_sandbox' to try demo mode.",
+            status=401,
+            fix="Pass a valid API key or apiKey: 'sentra_test_sandbox'",
+        )
+    clean_key = (raw_key or "").strip()
+    if not clean_key and not sandbox_val:
+        raise SentraError(
+            "No API key. Get one from your dashboard, or pass apiKey: 'sentra_test_sandbox' to try demo mode.",
+            status=401,
+            fix="Pass a valid API key or apiKey: 'sentra_test_sandbox'",
+        )
+    return clean_key
+
+
+def _resolve_base_url(base_url: str | None, kwargs: dict[str, Any]) -> str:
+    raw = base_url or kwargs.get("baseUrl") or DEFAULT_BASE_URL
+    return raw.rstrip("/")
+
+
+def _resolve_timeout(timeout: int | float | None, kwargs: dict[str, Any]) -> float:
+    val = timeout if timeout is not None else kwargs.get("timeout", 15.0)
+    num = float(val)
+    if num > 100:
+        return num / 1000.0
+    return num
+
+
+def _resolve_cold_start_timeout(
+    cold_start: int | float | None,
+    cold_start_ms: int | None,
+    kwargs: dict[str, Any],
+) -> float:
+    val = cold_start
+    if val is None:
+        val = cold_start_ms
+    if val is None:
+        val = kwargs.get("coldStartTimeoutMs")
+    if val is None:
+        return 60.0
+    num = float(val)
+    if num > 100:
+        return num / 1000.0
+    return num
+
+
+def _is_sandbox_key(sandbox_val: bool, key: str) -> bool:
+    if sandbox_val:
+        return True
+    if key in ("sentra_test_sandbox", "demo"):
+        return True
+    return key.startswith("sentra_test_") or key.startswith("test_")
+
+
 class SentraClient:
     """Client for Sentra AI real-time runtime governance engine."""
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        base_url: Optional[str] = None,
-        max_retries: Optional[int] = None,
-        timeout: Optional[Union[int, float]] = None,
-        sandbox: Optional[bool] = None,
-        cold_start_timeout: Optional[Union[int, float]] = None,
-        cold_start_timeout_ms: Optional[int] = None,
+        api_key: str | None = None,
+        base_url: str | None = None,
+        max_retries: int | None = None,
+        timeout: int | float | None = None,
+        sandbox: bool | None = None,
+        cold_start_timeout: int | float | None = None,
+        cold_start_timeout_ms: int | None = None,
         **kwargs: Any,
     ) -> None:
-        raw_key = api_key if api_key is not None else kwargs.get("apiKey")
         sandbox_val = sandbox if sandbox is not None else kwargs.get("sandbox", False)
-
-        if raw_key is None and not sandbox_val:
-            raise SentraError(
-                "No API key. Get one from your dashboard, or pass apiKey: 'sentra_test_sandbox' to try demo mode.",
-                status=401,
-                fix="Pass a valid API key or apiKey: 'sentra_test_sandbox'",
-            )
-
-        clean_key = (raw_key or "").strip()
-        if not clean_key and not sandbox_val:
-            raise SentraError(
-                "No API key. Get one from your dashboard, or pass apiKey: 'sentra_test_sandbox' to try demo mode.",
-                status=401,
-                fix="Pass a valid API key or apiKey: 'sentra_test_sandbox'",
-            )
-
-        self._api_key: str = clean_key
-        raw_base_url = (
-            base_url
-            or kwargs.get("baseUrl")
-            or "https://sentra-backend-node.onrender.com/api/v1"
-        )
-        self.base_url: str = raw_base_url.rstrip("/")
+        self._api_key: str = _resolve_clean_key(api_key, sandbox_val, kwargs)
+        self.base_url: str = _resolve_base_url(base_url, kwargs)
 
         explicit_retries = max_retries if max_retries is not None else kwargs.get("maxRetries")
         self._max_retries_explicit: bool = explicit_retries is not None
         self.max_retries: int = explicit_retries if explicit_retries is not None else 5
 
-        # Timeout: default 15s (15000ms). If > 100, assume milliseconds and convert to seconds.
-        timeout_val = timeout if timeout is not None else kwargs.get("timeout", 15.0)
-        self.timeout: float = float(timeout_val) / 1000.0 if float(timeout_val) > 100 else float(timeout_val)
-
-        # Cold start timeout: default 60s (60000ms)
-        cs_val = (
-            cold_start_timeout
-            if cold_start_timeout is not None
-            else (cold_start_timeout_ms if cold_start_timeout_ms is not None else kwargs.get("coldStartTimeoutMs"))
+        self.timeout: float = _resolve_timeout(timeout, kwargs)
+        self.cold_start_timeout: float = _resolve_cold_start_timeout(
+            cold_start_timeout, cold_start_timeout_ms, kwargs
         )
-        if cs_val is not None:
-            self.cold_start_timeout: float = float(cs_val) / 1000.0 if float(cs_val) > 100 else float(cs_val)
+        self.is_sandbox: bool = _is_sandbox_key(sandbox_val, self._api_key)
+        self._ssl_context: ssl.SSLContext | None = _create_ssl_context()
+
+    def __getattr__(self, name: str) -> Any:
+        aliases = {
+            "isSandbox": self.is_sandbox,
+            "coldStartTimeoutMs": int(self.cold_start_timeout * 1000),
+            "checkAction": self.check_action,
+            "demoBlockedAction": self.demo_blocked_action,
+            "safeAction": self.safe_action,
+        }
+        if name in aliases:
+            return aliases[name]
+        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+
+    def _normalize_request(
+        self,
+        request: ActionRequest | dict[str, Any] | None,
+        agent: str | None,
+        action: str | None,
+        metadata: dict[str, Any] | None,
+    ) -> tuple[str, str, dict[str, Any], dict[str, Any]]:
+        if request is not None:
+            if isinstance(request, ActionRequest):
+                return request.agent, request.action, request.metadata or {}, request.to_dict()
+            if isinstance(request, dict):
+                return request.get("agent", "agent"), request.get("action", ""), request.get("metadata") or {}, request
+            r_agent = getattr(request, "agent", "agent")
+            r_action = getattr(request, "action", "")
+            r_meta = getattr(request, "metadata", None) or {}
+            return r_agent, r_action, r_meta, {"agent": r_agent, "action": r_action, "metadata": r_meta}
+
+        s_agent = agent or "agent"
+        s_action = action or ""
+        s_meta = metadata or {}
+        return s_agent, s_action, s_meta, {"agent": s_agent, "action": s_action, "metadata": s_meta}
+
+    def _build_prompt(
+        self, agent: str, action: str, metadata: dict[str, Any], raw_req: dict[str, Any]
+    ) -> str:
+        if isinstance(metadata, dict) and metadata.get("prompt"):
+            return str(metadata["prompt"])
+        if isinstance(action, str):
+            meta_str = f" {json.dumps(metadata)}" if metadata else ""
+            return f"{agent or 'agent'}: {action}{meta_str}".strip()
+        return json.dumps(raw_req)
+
+    def _build_endpoint_and_payload(
+        self, prompt: str, agent: str, action: str, metadata: dict[str, Any], raw_req: dict[str, Any]
+    ) -> tuple[str, dict[str, str], bytes]:
+        if self.is_sandbox:
+            url = f"{self.base_url}/guardrails/demo"
+            headers: dict[str, str] = {"Content-Type": "application/json"}
+            payload = {
+                "prompt": prompt,
+                "action": action,
+                "agent": agent,
+                "metadata": metadata,
+            }
         else:
-            self.cold_start_timeout = 60.0
+            url = f"{self.base_url}/ai/check-action"
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self._api_key}",
+            }
+            payload = raw_req
+        return url, headers, json.dumps(payload).encode("utf-8")
 
-        # Sandbox is active ONLY when explicitly declared via sandbox=True or test/sandbox key
-        self.is_sandbox: bool = bool(
-            sandbox_val is True
-            or clean_key == "sentra_test_sandbox"
-            or clean_key == "demo"
-            or clean_key.startswith("sentra_test_")
-            or clean_key.startswith("test_")
-        )
-        self._ssl_context: Optional[ssl.SSLContext] = _create_ssl_context()
+    def _handle_http_error(
+        self, err: urllib.error.HTTPError
+    ) -> tuple[bool, ActionResponse | None]:
+        status_code = err.code
+        try:
+            err_body = err.read().decode("utf-8")
+        except Exception:
+            err_body = ""
 
-    @property
-    def isSandbox(self) -> bool:
-        """CamelCase alias for is_sandbox."""
-        return self.is_sandbox
+        if status_code == 429:
+            plain_message = "Demo limit reached. Wait a few minutes or use your own API key"
+            logger.warning("[Sentra Sandbox] %s", plain_message)
+            return False, ActionResponse(
+                status="rate_limited",
+                is_allowed=False,
+                risk="low",
+                reason=plain_message,
+                impact="Demo rate limit reached; action was not permitted to execute",
+                compliance=["Rate Limiting Quota"],
+            )
 
-    @property
-    def coldStartTimeoutMs(self) -> int:
-        """Cold start timeout in milliseconds."""
-        return int(self.cold_start_timeout * 1000)
+        if status_code == 401:
+            logger.error("[Sentra] Authentication Failed (401): Invalid or missing API key.")
+            return False, ActionResponse(
+                status="blocked",
+                is_allowed=False,
+                risk="high",
+                reason="Authentication Failed: Invalid or missing API key",
+                impact=FAIL_CLOSED_IMPACT,
+                compliance=ACCESS_CONTROL_COMPLIANCE,
+            )
+
+        if status_code == 403:
+            logger.error("[Sentra] Access Forbidden (403): Request rejected by policy.")
+            return False, ActionResponse(
+                status="blocked",
+                is_allowed=False,
+                risk="high",
+                reason="Access Forbidden: Request rejected by security policy",
+                impact=FAIL_CLOSED_IMPACT,
+                compliance=ACCESS_CONTROL_COMPLIANCE,
+            )
+
+        if status_code == 400:
+            err_data: dict[str, Any] = {}
+            try:
+                err_data = json.loads(err_body)
+            except Exception:
+                pass
+            msg = err_data.get("message") or "Invalid payload"
+            return False, ActionResponse(
+                status="blocked",
+                is_allowed=False,
+                risk="high",
+                reason=f"Bad Request: {msg}",
+                impact=FAIL_CLOSED_IMPACT,
+                compliance=["Validation Guardrail"],
+            )
+
+        if status_code in (502, 503, 504):
+            return True, None
+
+        raise SentraError(f"API Error ({status_code})", status=status_code)
+
+    def _execute_attempt(
+        self, http_request: urllib.request.Request, url: str
+    ) -> tuple[bool, ActionResponse | None, bool]:
+        urlopen_kwargs: dict[str, Any] = {"timeout": self.timeout}
+        if self._ssl_context is not None and url.startswith("https://"):
+            urlopen_kwargs["context"] = self._ssl_context
+
+        try:
+            with urllib.request.urlopen(http_request, **urlopen_kwargs) as response:
+                body = response.read().decode("utf-8")
+                return True, self._parse_success_response(body), False
+        except urllib.error.HTTPError as err:
+            is_cold, action_resp = self._handle_http_error(err)
+            if action_resp is not None:
+                return True, action_resp, False
+            return False, None, is_cold
+        except (urllib.error.URLError, TimeoutError, socket.timeout) as exc:
+            is_timeout = isinstance(exc, (TimeoutError, socket.timeout))
+            if isinstance(exc, urllib.error.URLError) and isinstance(
+                exc.reason, (TimeoutError, socket.timeout)
+            ):
+                is_timeout = True
+            is_cold_start = is_timeout or getattr(exc, "status", None) in (502, 503, 504)
+            return False, None, is_cold_start
 
     def check_action(
         self,
-        request: Optional[Union[ActionRequest, Dict[str, Any]]] = None,
+        request: ActionRequest | dict[str, Any] | None = None,
         *,
-        agent: Optional[str] = None,
-        action: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        agent: str | None = None,
+        action: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> ActionResponse:
-        """Validates if an AI action is safe to execute against active policies.
+        """Validates if an AI action is safe to execute against active policies."""
+        req_agent, req_action, req_metadata, raw_req = self._normalize_request(
+            request, agent, action, metadata
+        )
+        prompt = self._build_prompt(req_agent, req_action, req_metadata, raw_req)
+        url, headers, data_bytes = self._build_endpoint_and_payload(
+            prompt, req_agent, req_action, req_metadata, raw_req
+        )
 
-        Accepts an ActionRequest, a dict, or keyword arguments.
-        """
-        # Normalize request input
-        if request is not None:
-            if isinstance(request, ActionRequest):
-                req_agent = request.agent
-                req_action = request.action
-                req_metadata = request.metadata or {}
-            elif isinstance(request, dict):
-                req_agent = request.get("agent", "agent")
-                req_action = request.get("action", "")
-                req_metadata = request.get("metadata") or {}
-            else:
-                req_agent = getattr(request, "agent", "agent")
-                req_action = getattr(request, "action", "")
-                req_metadata = getattr(request, "metadata", None) or {}
-        else:
-            req_agent = agent or "agent"
-            req_action = action or ""
-            req_metadata = metadata or {}
-
-        # Construct prompt matching Node SDK logic
-        if isinstance(req_metadata, dict) and req_metadata.get("prompt"):
-            prompt = str(req_metadata["prompt"])
-        elif isinstance(req_action, str):
-            meta_str = f" {json.dumps(req_metadata)}" if req_metadata else ""
-            prompt = f"{req_agent or 'agent'}: {req_action}{meta_str}".strip()
-        else:
-            prompt = json.dumps({"agent": req_agent, "action": req_action, "metadata": req_metadata})
-
-        max_cold_start_duration = self.cold_start_timeout
+        max_cold_start = self.cold_start_timeout
         start_time = time.time()
         attempt = 0
 
         while True:
             attempt += 1
-
-            if self.is_sandbox:
-                url = f"{self.base_url}/guardrails/demo"
-                headers: Dict[str, str] = {"Content-Type": "application/json"}
-                payload = {
-                    "prompt": prompt,
-                    "action": req_action,
-                    "agent": req_agent,
-                    "metadata": req_metadata,
-                }
-            else:
-                url = f"{self.base_url}/ai/check-action"
-                headers = {
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {self._api_key}",
-                }
-                payload = {
-                    "agent": req_agent,
-                    "action": req_action,
-                    "metadata": req_metadata,
-                }
-
-            data_bytes = json.dumps(payload).encode("utf-8")
             http_request = urllib.request.Request(
-                url,
-                data=data_bytes,
-                headers=headers,
-                method="POST",
+                url, data=data_bytes, headers=headers, method="POST"
             )
 
-            is_cold_start = False
-
-            try:
-                urlopen_kwargs: Dict[str, Any] = {"timeout": self.timeout}
-                if self._ssl_context is not None and url.startswith("https://"):
-                    urlopen_kwargs["context"] = self._ssl_context
-
-                with urllib.request.urlopen(http_request, **urlopen_kwargs) as response:
-                    body = response.read().decode("utf-8")
-                    return self._parse_success_response(body)
-
-            except urllib.error.HTTPError as err:
-                status_code = err.code
-                try:
-                    err_body = err.read().decode("utf-8")
-                except Exception:
-                    err_body = ""
-
-                # ─── Rate Limiting (429) Handling ───
-                if status_code == 429:
-                    plain_message = "Demo limit reached. Wait a few minutes or use your own API key"
-                    logger.warning("[Sentra Sandbox] %s", plain_message)
-                    return ActionResponse(
-                        status="rate_limited",
-                        is_allowed=False,
-                        risk="low",
-                        reason=plain_message,
-                        impact="Demo rate limit reached; action was not permitted to execute",
-                        compliance=["Rate Limiting Quota"],
-                    )
-
-                # ─── Non-transient Client Errors (401, 403, 400) — DO NOT RETRY ───
-                if status_code == 401:
-                    logger.error(
-                        "[Sentra] Authentication Failed (401): Invalid or missing API key. Fix: Use a valid API key from your Sentraa dashboard, or pass apiKey: 'sentra_test_sandbox' for demo mode."
-                    )
-                    return ActionResponse(
-                        status="blocked",
-                        is_allowed=False,
-                        risk="high",
-                        reason="Authentication Failed: Invalid or missing API key",
-                        impact="Execution prevented to ensure safety (fail-closed)",
-                        compliance=["Access Control"],
-                    )
-
-                if status_code == 403:
-                    logger.error(
-                        "[Sentra] Access Forbidden (403): Request rejected by Sentra policy. Fix: Ensure your API key has permission for this agent/action."
-                    )
-                    return ActionResponse(
-                        status="blocked",
-                        is_allowed=False,
-                        risk="high",
-                        reason="Access Forbidden: Request rejected by security policy",
-                        impact="Execution prevented to ensure safety (fail-closed)",
-                        compliance=["Access Control"],
-                    )
-
-                if status_code == 400:
-                    err_data: Dict[str, Any] = {}
-                    try:
-                        err_data = json.loads(err_body)
-                    except Exception:
-                        pass
-                    msg = err_data.get("message") or "Invalid payload"
-                    logger.error(
-                        "[Sentra] Bad Request (400): Invalid request payload. Fix: Verify agent and action fields. Details: %s",
-                        msg,
-                    )
-                    return ActionResponse(
-                        status="blocked",
-                        is_allowed=False,
-                        risk="high",
-                        reason=f"Bad Request: {msg}",
-                        impact="Execution prevented to ensure safety (fail-closed)",
-                        compliance=["Validation Guardrail"],
-                    )
-
-                # ─── Cold Start Gateway Errors (502, 503, 504) ───
-                if status_code in (502, 503, 504):
-                    is_cold_start = True
-                else:
-                    raise SentraError(f"API Error ({status_code})", status=status_code)
-
-            except (urllib.error.URLError, TimeoutError, socket.timeout) as exc:
-                # Check for network timeouts / cold start abort
-                is_timeout = isinstance(exc, (TimeoutError, socket.timeout))
-                if isinstance(exc, urllib.error.URLError) and isinstance(
-                    exc.reason, (TimeoutError, socket.timeout)
-                ):
-                    is_timeout = True
-                is_cold_start = is_timeout or getattr(exc, "status", None) in (502, 503, 504)
+            done, result, is_cold_start = self._execute_attempt(http_request, url)
+            if done and result is not None:
+                return result
 
             elapsed = time.time() - start_time
-            can_retry_cold_start = is_cold_start and (
-                attempt <= self.max_retries if self._max_retries_explicit else elapsed < max_cold_start_duration
-            )
+            if self._max_retries_explicit:
+                can_retry_cold = is_cold_start and attempt <= self.max_retries
+            else:
+                can_retry_cold = is_cold_start and elapsed < max_cold_start
+
             can_retry_transient = (not is_cold_start) and attempt <= self.max_retries
 
-            if can_retry_cold_start or can_retry_transient:
+            if can_retry_cold or can_retry_transient:
                 delay = min((1.5 ** (attempt - 1)), 5.0)
-                if is_cold_start:
-                    logger.warning(
-                        "[Sentra] Backend is waking up (Render cold start, attempt %d). Retrying in %dms...",
-                        attempt,
-                        int(delay * 1000),
-                    )
-                else:
-                    logger.warning(
-                        "[Sentra] Request transient failure (attempt %d). Retrying in %dms...",
-                        attempt,
-                        int(delay * 1000),
-                    )
                 time.sleep(delay)
                 continue
 
             break
 
-        # Fail closed (block) if security system is unreachable after retries
-        logger.error(
-            "[Sentra] Connection Failed: Unable to reach Sentra governance engine at %s after cold start wait (%ds). Failing closed to ensure safety. Fix: Check your network connection or verify that the backend is online.",
-            self.base_url,
-            int(max_cold_start_duration),
-        )
         return ActionResponse(
             status="blocked",
             is_allowed=False,
@@ -315,15 +330,8 @@ class SentraClient:
             compliance=["Safety Fallback"],
         )
 
-    def checkAction(self, *args: Any, **kwargs: Any) -> ActionResponse:
-        """CamelCase alias for check_action matching Node SDK."""
-        return self.check_action(*args, **kwargs)
-
     def demo_blocked_action(self) -> ActionResponse:
-        """Built-in demo action that triggers a verified real BLOCK from the governance engine.
-
-        Ideal for quickstarts and pilot smoke-tests.
-        """
+        """Built-in demo action that triggers a verified real BLOCK from the governance engine."""
         return self.check_action(
             {
                 "agent": "demo-pilot-agent",
@@ -335,15 +343,11 @@ class SentraClient:
             }
         )
 
-    def demoBlockedAction(self) -> ActionResponse:
-        """CamelCase alias for demo_blocked_action matching Node SDK."""
-        return self.demo_blocked_action()
-
     def safe_action(
         self,
-        request: Union[ActionRequest, Dict[str, Any]],
+        request: ActionRequest | dict[str, Any],
         on_allowed: Callable[..., Any],
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Helper wrapper to execute an action only if Sentra allows it."""
         governance = self.check_action(request)
 
@@ -357,30 +361,55 @@ class SentraClient:
                     status=500,
                     data=err,
                 ) from err
-        else:
-            action_name = (
-                request.action
-                if isinstance(request, ActionRequest)
-                else (request.get("action") if isinstance(request, dict) else "")
-            )
-            logger.warning(
-                "[Sentra %s] Action: %s, Reason: %s",
-                "Rate Limited" if governance.status == "rate_limited" else "Blocked",
-                action_name,
-                governance.reason,
-            )
-            return {"success": False, "governance": governance}
 
-    def safeAction(
+        if isinstance(request, ActionRequest):
+            action_name = request.action
+        elif isinstance(request, dict):
+            action_name = request.get("action", "")
+        else:
+            action_name = ""
+
+        status_tag = "Rate Limited" if governance.status == "rate_limited" else "Blocked"
+        logger.warning(
+            "[Sentra %s] Action: %s, Reason: %s",
+            status_tag,
+            action_name,
+            governance.reason,
+        )
+        return {"success": False, "governance": governance}
+
+    def _resolve_status(self, decision_str: str, is_pending: bool) -> str:
+        if decision_str in ("blocked", "block"):
+            return "blocked"
+        if decision_str in ("flagged", "flag") or is_pending:
+            return "flagged"
+        return "allowed"
+
+    def _resolve_reason(self, res_data: dict[str, Any], json_data: dict[str, Any], is_allowed: bool) -> str:
+        explicit = res_data.get("reason") or json_data.get("reason")
+        if explicit:
+            return explicit
+        if is_allowed:
+            return "Safe Action"
+        return "Action blocked: potentially sensitive data or restricted pattern detected"
+
+    def _resolve_impact(
         self,
-        request: Union[ActionRequest, Dict[str, Any]],
-        on_allowed: Callable[..., Any],
-    ) -> Dict[str, Any]:
-        """CamelCase alias for safe_action matching Node SDK."""
-        return self.safe_action(request, on_allowed)
+        res_data: dict[str, Any],
+        json_data: dict[str, Any],
+        is_allowed: bool,
+        is_flagged: bool,
+    ) -> str:
+        explicit = res_data.get("impact") or json_data.get("impact")
+        if explicit:
+            return explicit
+        if is_allowed:
+            return "None"
+        if is_flagged:
+            return "Requires human-in-the-loop review"
+        return "Execution prevented to ensure safety"
 
     def _parse_success_response(self, body: str) -> ActionResponse:
-        """Parses a successful response JSON into an ActionResponse."""
         json_data = json.loads(body)
         res_data = json_data.get("data") if isinstance(json_data.get("data"), dict) else json_data
 
@@ -392,41 +421,15 @@ class SentraClient:
             or "ALLOWED"
         )
         decision_str = str(raw_decision).lower()
+        is_pending_raw = res_data.get("isPendingApproval")
 
-        if decision_str in ("blocked", "block"):
-            status = "blocked"
-        elif decision_str in ("flagged", "flag") or res_data.get("isPendingApproval"):
-            status = "flagged"
-        elif decision_str in ("allowed", "allow"):
-            status = "allowed"
-        else:
-            status = "allowed"
-
+        status = self._resolve_status(decision_str, bool(is_pending_raw))
         is_allowed = status == "allowed"
         is_flagged = status == "flagged"
 
-        reason = (
-            res_data.get("reason")
-            or json_data.get("reason")
-            or (
-                "Safe Action"
-                if is_allowed
-                else "Action blocked: potentially sensitive data or restricted pattern detected"
-            )
-        )
-        impact = (
-            res_data.get("impact")
-            or json_data.get("impact")
-            or (
-                "None"
-                if is_allowed
-                else (
-                    "Requires human-in-the-loop review"
-                    if is_flagged
-                    else "Execution prevented to ensure safety"
-                )
-            )
-        )
+        reason = self._resolve_reason(res_data, json_data, is_allowed)
+        impact = self._resolve_impact(res_data, json_data, is_allowed, is_flagged)
+
         compliance = (
             res_data.get("compliance")
             or json_data.get("compliance")
@@ -441,8 +444,6 @@ class SentraClient:
         if confidence is None:
             confidence = 1.0 if is_allowed else 0.95
 
-        is_pending = bool(res_data.get("isPendingApproval") or is_flagged)
-
         return ActionResponse(
             status=status,
             is_allowed=is_allowed,
@@ -452,7 +453,7 @@ class SentraClient:
             compliance=list(compliance),
             explanation=explanation,
             confidence=float(confidence) if confidence is not None else None,
-            is_pending_approval=is_pending,
+            is_pending_approval=bool(is_pending_raw or is_flagged),
         )
 
     def __repr__(self) -> str:

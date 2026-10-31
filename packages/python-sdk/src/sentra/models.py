@@ -1,7 +1,9 @@
 """Data models for Sentra AI SDK requests and responses."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 
 @dataclass
@@ -10,11 +12,11 @@ class ActionRequest:
 
     agent: str
     action: str
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: dict[str, Any] | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert ActionRequest to a dictionary."""
-        d: Dict[str, Any] = {
+        d: dict[str, Any] = {
             "agent": self.agent,
             "action": self.action,
         }
@@ -47,20 +49,17 @@ class ActionResponse:
     risk: str  # 'low' | 'medium' | 'high'
     reason: str
     impact: str
-    compliance: List[str] = field(default_factory=list)
-    explanation: Optional[str] = None
-    confidence: Optional[float] = None
-    is_pending_approval: Optional[bool] = None
+    compliance: list[str] = field(default_factory=list)
+    explanation: str | None = None
+    confidence: float | None = None
+    is_pending_approval: bool | None = None
 
-    @property
-    def isAllowed(self) -> bool:
-        """CamelCase alias for is_allowed matching the Node SDK."""
-        return self.is_allowed
-
-    @property
-    def isPendingApproval(self) -> Optional[bool]:
-        """CamelCase alias for is_pending_approval matching the Node SDK."""
-        return self.is_pending_approval
+    def __getattr__(self, name: str) -> Any:
+        if name == "isAllowed":
+            return self.is_allowed
+        if name == "isPendingApproval":
+            return self.is_pending_approval
+        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
 
     def __getitem__(self, key: str) -> Any:
         mapping = {
@@ -87,9 +86,9 @@ class ActionResponse:
         except KeyError:
             return default
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serializes the response to a dictionary compatible with Node SDK JSON."""
-        d: Dict[str, Any] = {
+        d: dict[str, Any] = {
             "status": self.status,
             "isAllowed": self.is_allowed,
             "is_allowed": self.is_allowed,

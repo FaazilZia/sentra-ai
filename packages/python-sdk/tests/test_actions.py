@@ -169,7 +169,7 @@ def test_safe_action_execution_and_error_handling():
             nonlocal called
             called = True
 
-        res = client.safe_action({"agent": "a", "action": "b"}, fn)
+        res = client.safe_action(ActionRequest(agent="a", action="b"), fn)
         assert res["success"] is False
         assert called is False
 

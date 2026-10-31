@@ -168,9 +168,8 @@ jobs:
       - name: Install Python SDK & dependencies
         working-directory: packages/python-sdk
         run: |
-          pip install --upgrade pip
-          pip install pytest pytest-cov
-          pip install -e .
+          pip install --only-binary :all: pytest==9.2.0 pytest-cov==7.1.0 certifi==2026.10.23
+          pip install --no-deps -e .
 
       - name: Run Python SDK tests with coverage
         working-directory: packages/python-sdk
