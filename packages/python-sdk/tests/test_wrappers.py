@@ -1180,7 +1180,10 @@ class TestAsyncSupport:
             assert async_calls == 2
             assert len(async_flags) == 1
 
-            # Test async Vertex
+        asyncio.run(_run())
+
+    def test_vertex_async_generate_content_stream_block_zero_provider_calls(self) -> None:
+        async def _run() -> None:
             vertex_calls = 0
 
             class AsyncVertexModels:
@@ -1200,8 +1203,15 @@ class TestAsyncSupport:
                         models = AsyncVertexModels()
                     self.aio = Aio()
 
+            sentra_allow, _ = _create_mock_sentra({
+                "status": "allowed",
+                "is_allowed": True,
+                "risk": "low",
+                "reason": "Safe Action",
+                "impact": "None",
+            })
             v_client = AsyncVertexClient()
-            v_wrapped = sentra.wrap_vertex(v_client)
+            v_wrapped = sentra_allow.wrap_vertex(v_client)
             v_res = await v_wrapped.aio.models.generate_content(model="gemini-2.5-flash", contents="hello async")
             assert vertex_calls == 1
             assert v_res == {"text": "async vertex ok"}
@@ -1212,15 +1222,33 @@ class TestAsyncSupport:
                 "is_allowed": False,
                 "risk": "high",
                 "reason": "Blocked async vertex",
+                "impact": "Blocked",
             })
-            v_client_blocked = AsyncVertexClient()
+            vertex_blocked_calls = 0
+
+            class AsyncVertexModelsBlocked:
+                async def generate_content_stream(self, *args: Any, **kwargs: Any) -> Any:
+                    nonlocal vertex_blocked_calls
+                    vertex_blocked_calls += 1
+                    return [{"text": "stream chunk"}]
+
+            class AsyncVertexClientBlocked:
+                def __init__(self) -> None:
+                    class Aio:
+                        models = AsyncVertexModelsBlocked()
+                    self.aio = Aio()
+
+            v_client_blocked = AsyncVertexClientBlocked()
             v_wrapped_blocked = sentra_v_block.wrap_vertex(v_client_blocked)
             with pytest.raises(SentraError) as exc_v:
                 await v_wrapped_blocked.aio.models.generate_content_stream(model="gemini-2.5-flash", contents="blocked")
             assert exc_v.value.status == 403
-            assert vertex_calls == 1  # No additional call on block!
+            assert vertex_blocked_calls == 0
 
-            # Test async LangChain ainvoke
+        asyncio.run(_run())
+
+    def test_langchain_async_ainvoke_block_zero_provider_calls(self) -> None:
+        async def _run() -> None:
             lc_calls = 0
 
             class AsyncLangChainChain:
@@ -1229,19 +1257,41 @@ class TestAsyncSupport:
                     lc_calls += 1
                     return {"output": "async ainvoke ok"}
 
+            sentra_allow, _ = _create_mock_sentra({
+                "status": "allowed",
+                "is_allowed": True,
+                "risk": "low",
+                "reason": "Safe Action",
+                "impact": "None",
+            })
             lc_chain = AsyncLangChainChain()
-            lc_wrapped = sentra.wrap_langchain(lc_chain)
+            lc_wrapped = sentra_allow.wrap_langchain(lc_chain)
             lc_res = await lc_wrapped.ainvoke({"input": "async lc"})
             assert lc_calls == 1
             assert lc_res == {"output": "async ainvoke ok"}
 
             # Async LangChain block makes zero calls
-            lc_blocked = AsyncLangChainChain()
-            lc_wrapped_blocked = sentra_v_block.wrap_langchain(lc_blocked)
+            sentra_lc_block, _ = _create_mock_sentra({
+                "status": "blocked",
+                "is_allowed": False,
+                "risk": "high",
+                "reason": "Blocked async lc",
+                "impact": "Blocked",
+            })
+            lc_blocked_calls = 0
+
+            class AsyncLangChainChainBlocked:
+                async def ainvoke(self, *args: Any, **kwargs: Any) -> Any:
+                    nonlocal lc_blocked_calls
+                    lc_blocked_calls += 1
+                    return {"output": "blocked"}
+
+            lc_blocked = AsyncLangChainChainBlocked()
+            lc_wrapped_blocked = sentra_lc_block.wrap_langchain(lc_blocked)
             with pytest.raises(SentraError) as exc_lc:
                 await lc_wrapped_blocked.ainvoke({"input": "blocked async lc"})
             assert exc_lc.value.status == 403
-            assert lc_calls == 1  # No additional call on block!
+            assert lc_blocked_calls == 0
 
         asyncio.run(_run())
 
