@@ -463,7 +463,8 @@ export class SentraClient {
   /**
    * Intercepts Amazon Bedrock requests to ensure runtime safety and policy compliance.
    * Works with @aws-sdk/client-bedrock-runtime (BedrockRuntimeClient) by intercepting client.send
-   * for ConverseCommand (BEDROCK_CONVERSE) and InvokeModelCommand (BEDROCK_INVOKE_MODEL).
+   * for ConverseCommand (BEDROCK_CONVERSE), ConverseStreamCommand (BEDROCK_CONVERSE_STREAM),
+   * InvokeModelCommand (BEDROCK_INVOKE_MODEL), and InvokeModelWithResponseStreamCommand (BEDROCK_INVOKE_MODEL_STREAM).
    *
    * @param client The BedrockRuntimeClient instance to wrap.
    * @param options Configuration options including agent tag, flagMode ('block' | 'allow', default: 'block'), and onFlag callback.
@@ -490,7 +491,23 @@ export class SentraClient {
         return originalSend(...args);
       }
 
-      const action = commandType === 'converse' ? 'BEDROCK_CONVERSE' : 'BEDROCK_INVOKE_MODEL';
+      let action: string;
+      switch (commandType) {
+        case 'converse_stream':
+          action = 'BEDROCK_CONVERSE_STREAM';
+          break;
+        case 'converse':
+          action = 'BEDROCK_CONVERSE';
+          break;
+        case 'invoke_stream':
+          action = 'BEDROCK_INVOKE_MODEL_STREAM';
+          break;
+        case 'invoke':
+        default:
+          action = 'BEDROCK_INVOKE_MODEL';
+          break;
+      }
+
       const prompt = extractBedrockPrompt(command?.input);
       const model = command?.input?.modelId;
 
@@ -535,7 +552,7 @@ export class SentraClient {
 
   /**
    * Intercepts LangChain calls to monitor and control AI chain execution.
-   * Intercepts chain.call() and chain.invoke() methods.
+   * Intercepts chain.call() (LANGCHAIN_CALL) and chain.invoke() (LANGCHAIN_INVOKE) methods.
    *
    * @param chain The LangChain chain or runnable instance to wrap.
    * @param options Configuration options including agent tag, flagMode ('block' | 'allow', default: 'block'), and onFlag callback.
@@ -555,13 +572,14 @@ export class SentraClient {
     const wrapMethod = (methodName: 'call' | 'invoke') => {
       if (typeof chain[methodName] === 'function') {
         const originalMethod = chain[methodName].bind(chain);
+        const action = methodName === 'call' ? 'LANGCHAIN_CALL' : 'LANGCHAIN_INVOKE';
         chain[methodName] = async (...args: any[]) => {
           const input = args[0];
           const prompt = typeof input === 'string' ? input : JSON.stringify(input);
 
           const check = await this.checkAction({
             agent,
-            action: 'LANGCHAIN_INVOKE',
+            action,
             metadata: { prompt: prompt.substring(0, 500), prompt_length: prompt.length }
           });
 
@@ -728,12 +746,25 @@ export function extractVertexPrompt(params: any): string {
   }
 }
 
-function getBedrockCommandType(command: any): 'converse' | 'invoke' | null {
+function getBedrockCommandType(command: any): 'converse' | 'converse_stream' | 'invoke' | 'invoke_stream' | null {
   if (!command) return null;
   const name = command.name || command.constructor?.name || command._commandName;
   if (typeof name === 'string') {
-    if (name === 'ConverseCommand' || name === 'Converse' || name.startsWith('Converse')) return 'converse';
-    if (name === 'InvokeModelCommand' || name === 'InvokeModel' || name.startsWith('InvokeModel')) return 'invoke';
+    if (name === 'ConverseStreamCommand' || name === 'ConverseStream') return 'converse_stream';
+    if (name === 'ConverseCommand' || name === 'Converse') return 'converse';
+    if (name === 'InvokeModelWithResponseStreamCommand' || name === 'InvokeModelWithResponseStream') return 'invoke_stream';
+    if (name === 'InvokeModelCommand' || name === 'InvokeModel') return 'invoke';
+    if (name.includes('Converse') && name.includes('Stream')) return 'converse_stream';
+    if (name.includes('Converse')) return 'converse';
+    if (name.includes('InvokeModel') && (name.includes('Stream') || name.includes('ResponseStream'))) return 'invoke_stream';
+    if (name.includes('InvokeModel') || name.startsWith('InvokeModel')) return 'invoke';
+  }
+  if (command.schema && Array.isArray(command.schema) && typeof command.schema[2] === 'string') {
+    const op = command.schema[2];
+    if (op === 'ConverseStream') return 'converse_stream';
+    if (op === 'Converse') return 'converse';
+    if (op === 'InvokeModelWithResponseStream') return 'invoke_stream';
+    if (op === 'InvokeModel') return 'invoke';
   }
   if (command.input && typeof command.input === 'object') {
     if (Array.isArray(command.input.messages) || command.input.system !== undefined) {
@@ -849,4 +880,44 @@ export function wrapVertex(client: any, options?: WrapperOptions, sentraInstance
  */
 export function wrapVertexAI(client: any, options?: WrapperOptions, sentraInstance?: SentraClient) {
   return wrapVertex(client, options, sentraInstance);
+}
+
+/**
+ * Top-level export to intercept Amazon Bedrock requests using a SentraClient.
+ */
+export function wrapBedrock(client: any, options?: WrapperOptions, sentraInstance?: SentraClient) {
+  const sentra = sentraInstance || new SentraClient({ apiKey: process.env.SENTRA_API_KEY || 'sentra_test_sandbox', sandbox: !process.env.SENTRA_API_KEY });
+  return sentra.wrapBedrock(client, options);
+}
+
+/**
+ * Top-level export to intercept Azure OpenAI requests using a SentraClient.
+ */
+export function wrapAzureOpenAI(client: any, options?: WrapperOptions, sentraInstance?: SentraClient) {
+  const sentra = sentraInstance || new SentraClient({ apiKey: process.env.SENTRA_API_KEY || 'sentra_test_sandbox', sandbox: !process.env.SENTRA_API_KEY });
+  return sentra.wrapAzureOpenAI(client, options);
+}
+
+/**
+ * Top-level export to intercept LangChain runnable/chain requests using a SentraClient.
+ */
+export function wrapLangChain(chain: any, options?: WrapperOptions, sentraInstance?: SentraClient) {
+  const sentra = sentraInstance || new SentraClient({ apiKey: process.env.SENTRA_API_KEY || 'sentra_test_sandbox', sandbox: !process.env.SENTRA_API_KEY });
+  return sentra.wrapLangChain(chain, options);
+}
+
+/**
+ * Top-level export to intercept OpenAI requests using a SentraClient.
+ */
+export function wrapOpenAI(client: any, options?: WrapperOptions, sentraInstance?: SentraClient) {
+  const sentra = sentraInstance || new SentraClient({ apiKey: process.env.SENTRA_API_KEY || 'sentra_test_sandbox', sandbox: !process.env.SENTRA_API_KEY });
+  return sentra.wrapOpenAI(client, options);
+}
+
+/**
+ * Top-level export to intercept Anthropic requests using a SentraClient.
+ */
+export function wrapAnthropic(client: any, options?: WrapperOptions, sentraInstance?: SentraClient) {
+  const sentra = sentraInstance || new SentraClient({ apiKey: process.env.SENTRA_API_KEY || 'sentra_test_sandbox', sandbox: !process.env.SENTRA_API_KEY });
+  return sentra.wrapAnthropic(client, options);
 }

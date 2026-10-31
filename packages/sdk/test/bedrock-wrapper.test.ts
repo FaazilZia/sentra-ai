@@ -9,7 +9,7 @@ import {
   InvokeModelWithResponseStreamCommand
 } from '@aws-sdk/client-bedrock-runtime';
 import { EventStreamCodec } from '@smithy/core/event-streams';
-import { SentraClient, SentraError, extractBedrockPrompt } from '../src/index.ts';
+import { SentraClient, SentraError, extractBedrockPrompt, wrapBedrock } from '../src/index.ts';
 import type { ActionRequest, ActionResponse } from '../src/index.ts';
 
 const eventStreamCodec = new EventStreamCodec(
@@ -50,6 +50,18 @@ class MockInvokeModelCommand {
   constructor(public input: any) {}
 }
 Object.defineProperty(MockInvokeModelCommand.prototype.constructor, 'name', { value: 'InvokeModelCommand' });
+
+class MockConverseStreamCommand {
+  readonly constructorName = 'ConverseStreamCommand';
+  constructor(public input: any) {}
+}
+Object.defineProperty(MockConverseStreamCommand.prototype.constructor, 'name', { value: 'ConverseStreamCommand' });
+
+class MockInvokeModelWithResponseStreamCommand {
+  readonly constructorName = 'InvokeModelWithResponseStreamCommand';
+  constructor(public input: any) {}
+}
+Object.defineProperty(MockInvokeModelWithResponseStreamCommand.prototype.constructor, 'name', { value: 'InvokeModelWithResponseStreamCommand' });
 
 class MockListFoundationModelsCommand {
   readonly constructorName = 'ListFoundationModelsCommand';
@@ -586,7 +598,7 @@ describe('wrapBedrock', () => {
 
       // Assert governance ran with expected action, agent, and prompt metadata
       assert.strictEqual(recordedRequests.length, 1, 'Governance checkAction must run exactly once');
-      assert.strictEqual(recordedRequests[0].action, 'BEDROCK_CONVERSE');
+      assert.strictEqual(recordedRequests[0].action, 'BEDROCK_CONVERSE_STREAM');
       assert.strictEqual(recordedRequests[0].agent, 'bedrock-client');
       assert.strictEqual(recordedRequests[0].metadata?.model, 'amazon.nova-lite-v1:0');
       assert.strictEqual(recordedRequests[0].metadata?.prompt, promptText);
@@ -657,7 +669,7 @@ describe('wrapBedrock', () => {
 
       // Assert governance ran
       assert.strictEqual(recordedRequests.length, 1, 'Governance checkAction must run once');
-      assert.strictEqual(recordedRequests[0].action, 'BEDROCK_CONVERSE');
+      assert.strictEqual(recordedRequests[0].action, 'BEDROCK_CONVERSE_STREAM');
       assert.strictEqual(recordedRequests[0].agent, 'bedrock-client');
       assert.strictEqual(recordedRequests[0].metadata?.model, 'amazon.nova-lite-v1:0');
       assert.strictEqual(recordedRequests[0].metadata?.prompt, promptText);
@@ -723,7 +735,7 @@ describe('wrapBedrock', () => {
 
       // Assert governance ran with expected action, agent, and prompt metadata
       assert.strictEqual(recordedRequests.length, 1, 'Governance checkAction must run exactly once');
-      assert.strictEqual(recordedRequests[0].action, 'BEDROCK_INVOKE_MODEL');
+      assert.strictEqual(recordedRequests[0].action, 'BEDROCK_INVOKE_MODEL_STREAM');
       assert.strictEqual(recordedRequests[0].agent, 'bedrock-client');
       assert.strictEqual(recordedRequests[0].metadata?.model, 'amazon.nova-lite-v1:0');
       assert.strictEqual(recordedRequests[0].metadata?.prompt, promptText);
@@ -794,7 +806,7 @@ describe('wrapBedrock', () => {
 
       // Assert governance ran
       assert.strictEqual(recordedRequests.length, 1, 'Governance checkAction must run once');
-      assert.strictEqual(recordedRequests[0].action, 'BEDROCK_INVOKE_MODEL');
+      assert.strictEqual(recordedRequests[0].action, 'BEDROCK_INVOKE_MODEL_STREAM');
       assert.strictEqual(recordedRequests[0].agent, 'bedrock-client');
       assert.strictEqual(recordedRequests[0].metadata?.model, 'amazon.nova-lite-v1:0');
       assert.strictEqual(recordedRequests[0].metadata?.prompt, promptText);
@@ -906,6 +918,93 @@ describe('wrapBedrock', () => {
       const circular: any = {};
       circular.self = circular;
       assert.strictEqual(extractBedrockPrompt(circular), '');
+    });
+  });
+
+  describe('streaming vs non-streaming distinct action names', () => {
+    it('ConverseCommand uses BEDROCK_CONVERSE and ConverseStreamCommand uses BEDROCK_CONVERSE_STREAM', async () => {
+      const { client, recordedRequests } = createStubbedClient({ status: 'allowed' });
+      const fakeBedrockClient = {
+        send: async (cmd: any) => ({ output: cmd.constructor.name })
+      };
+
+      const wrapped = client.wrapBedrock(fakeBedrockClient);
+
+      const nonStreamCmd = new MockConverseCommand({
+        modelId: 'amazon.nova-lite-v1:0',
+        messages: [{ role: 'user', content: [{ text: 'non-stream converse' }] }]
+      });
+      await wrapped.send(nonStreamCmd);
+
+      const streamCmd = new MockConverseStreamCommand({
+        modelId: 'amazon.nova-lite-v1:0',
+        messages: [{ role: 'user', content: [{ text: 'stream converse' }] }]
+      });
+      await wrapped.send(streamCmd);
+
+      assert.strictEqual(recordedRequests.length, 2);
+      assert.strictEqual(recordedRequests[0].action, 'BEDROCK_CONVERSE');
+      assert.strictEqual(recordedRequests[1].action, 'BEDROCK_CONVERSE_STREAM');
+      assert.notStrictEqual(
+        recordedRequests[0].action,
+        recordedRequests[1].action,
+        'Bedrock streaming converse action must differ from non-streaming converse action'
+      );
+    });
+
+    it('InvokeModelCommand uses BEDROCK_INVOKE_MODEL and InvokeModelWithResponseStreamCommand uses BEDROCK_INVOKE_MODEL_STREAM', async () => {
+      const { client, recordedRequests } = createStubbedClient({ status: 'allowed' });
+      const fakeBedrockClient = {
+        send: async (cmd: any) => ({ output: cmd.constructor.name })
+      };
+
+      const wrapped = client.wrapBedrock(fakeBedrockClient);
+
+      const nonStreamCmd = new MockInvokeModelCommand({
+        modelId: 'amazon.nova-lite-v1:0',
+        body: JSON.stringify({ prompt: 'non-stream invoke' })
+      });
+      await wrapped.send(nonStreamCmd);
+
+      const streamCmd = new MockInvokeModelWithResponseStreamCommand({
+        modelId: 'amazon.nova-lite-v1:0',
+        body: JSON.stringify({ prompt: 'stream invoke' })
+      });
+      await wrapped.send(streamCmd);
+
+      assert.strictEqual(recordedRequests.length, 2);
+      assert.strictEqual(recordedRequests[0].action, 'BEDROCK_INVOKE_MODEL');
+      assert.strictEqual(recordedRequests[1].action, 'BEDROCK_INVOKE_MODEL_STREAM');
+      assert.notStrictEqual(
+        recordedRequests[0].action,
+        recordedRequests[1].action,
+        'Bedrock streaming invoke action must differ from non-streaming invoke action'
+      );
+    });
+
+    it('top-level wrapBedrock export intercepts commands and applies distinct streaming action names', async () => {
+      const { client, recordedRequests } = createStubbedClient({ status: 'allowed' });
+      const fakeBedrockClient = {
+        send: async (cmd: any) => ({ output: 'ok' })
+      };
+
+      const wrapped = wrapBedrock(fakeBedrockClient, { agent: 'custom-bedrock' }, client);
+
+      await wrapped.send(new MockConverseCommand({
+        modelId: 'amazon.nova-lite-v1:0',
+        messages: [{ role: 'user', content: [{ text: 'top level converse' }] }]
+      }));
+
+      await wrapped.send(new MockConverseStreamCommand({
+        modelId: 'amazon.nova-lite-v1:0',
+        messages: [{ role: 'user', content: [{ text: 'top level converse stream' }] }]
+      }));
+
+      assert.strictEqual(recordedRequests.length, 2);
+      assert.strictEqual(recordedRequests[0].action, 'BEDROCK_CONVERSE');
+      assert.strictEqual(recordedRequests[0].agent, 'custom-bedrock');
+      assert.strictEqual(recordedRequests[1].action, 'BEDROCK_CONVERSE_STREAM');
+      assert.strictEqual(recordedRequests[1].agent, 'custom-bedrock');
     });
   });
 });

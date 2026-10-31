@@ -1,6 +1,15 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { SentraClient, SentraError } from '../src/index.ts';
+import {
+  SentraClient,
+  SentraError,
+  wrapAzureOpenAI,
+  wrapOpenAI,
+  wrapAnthropic,
+  wrapVertex,
+  wrapBedrock,
+  wrapLangChain
+} from '../src/index.ts';
 import type { ActionRequest, ActionResponse } from '../src/index.ts';
 
 function createStubbedClient(responseToReturn: Partial<ActionResponse>) {
@@ -94,23 +103,33 @@ describe('Existing Wrappers Regression', () => {
     assert.strictEqual(recordedRequests[0].agent, 'fetch-interceptor');
   });
 
-  it('wrapLangChain: intercepts call/invoke and applies governance', async () => {
+  it('wrapLangChain: intercepts call/invoke with distinct action names and applies governance', async () => {
     const { client, recordedRequests } = createStubbedClient({ status: 'allowed' });
     let invokeCalled = false;
+    let callCalled = false;
     const fakeChain = {
       invoke: async (input: any) => {
         invokeCalled = true;
         return { text: 'chain output' };
+      },
+      call: async (input: any) => {
+        callCalled = true;
+        return { text: 'call output' };
       }
     };
 
     const wrappedChain = client.wrapLangChain(fakeChain);
     await wrappedChain.invoke('langchain test prompt');
+    await wrappedChain.call('langchain call prompt');
 
     assert.strictEqual(invokeCalled, true);
-    assert.strictEqual(recordedRequests.length, 1);
+    assert.strictEqual(callCalled, true);
+    assert.strictEqual(recordedRequests.length, 2);
     assert.strictEqual(recordedRequests[0].action, 'LANGCHAIN_INVOKE');
     assert.strictEqual(recordedRequests[0].agent, 'langchain-chain');
+    assert.strictEqual(recordedRequests[1].action, 'LANGCHAIN_CALL');
+    assert.strictEqual(recordedRequests[1].agent, 'langchain-chain');
+    assert.notStrictEqual(recordedRequests[0].action, recordedRequests[1].action);
   });
 
   it('wrapAzureOpenAI: preserves AZURE_OPENAI_CHAT_COMPLETION and azure-openai-client', async () => {
@@ -151,5 +170,43 @@ describe('Existing Wrappers Regression', () => {
     assert.strictEqual(recordedRequests.length, 1);
     assert.strictEqual(recordedRequests[0].action, 'VERTEX_GENERATE_CONTENT');
     assert.strictEqual(recordedRequests[0].agent, 'vertex-client');
+  });
+
+  it('top-level wrapOpenAI, wrapAnthropic, wrapAzureOpenAI, wrapVertex exports function correctly', async () => {
+    const { client, recordedRequests } = createStubbedClient({ status: 'allowed' });
+
+    // wrapOpenAI export
+    const fakeOpenAI = {
+      chat: { completions: { create: async () => ({ id: 'chat-1' }) } }
+    };
+    const guardedOpenAI = wrapOpenAI(fakeOpenAI, undefined, client);
+    await guardedOpenAI.chat.completions.create({ model: 'gpt-4o', messages: [{ role: 'user', content: 'test' }] });
+
+    // wrapAnthropic export
+    const fakeAnthropic = {
+      messages: { create: async () => ({ id: 'msg-1' }) }
+    };
+    const guardedAnthropic = wrapAnthropic(fakeAnthropic, undefined, client);
+    await guardedAnthropic.messages.create({ model: 'claude-3', messages: [{ role: 'user', content: 'test' }] });
+
+    // wrapAzureOpenAI export
+    const fakeAzure = {
+      chat: { completions: { create: async () => ({ id: 'azure-1' }) } }
+    };
+    const guardedAzure = wrapAzureOpenAI(fakeAzure, undefined, client);
+    await guardedAzure.chat.completions.create({ model: 'gpt-4o', messages: [{ role: 'user', content: 'test' }] });
+
+    // wrapVertex export
+    const fakeVertex = {
+      models: { generateContent: async () => ({ text: 'v-text' }) }
+    };
+    const guardedVertex = wrapVertex(fakeVertex, undefined, client);
+    await guardedVertex.models.generateContent({ model: 'gemini-2.0-flash', contents: 'test' });
+
+    assert.strictEqual(recordedRequests.length, 4);
+    assert.strictEqual(recordedRequests[0].action, 'OPENAI_CHAT_COMPLETION');
+    assert.strictEqual(recordedRequests[1].action, 'ANTHROPIC_MESSAGES_CREATE');
+    assert.strictEqual(recordedRequests[2].action, 'AZURE_OPENAI_CHAT_COMPLETION');
+    assert.strictEqual(recordedRequests[3].action, 'VERTEX_GENERATE_CONTENT');
   });
 });

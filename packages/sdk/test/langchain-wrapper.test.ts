@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { SentraClient, SentraError } from '../src/index.ts';
+import { SentraClient, SentraError, wrapLangChain } from '../src/index.ts';
 import type { ActionRequest, ActionResponse } from '../src/index.ts';
 
 function createStubbedClient(responseToReturn: Partial<ActionResponse>) {
@@ -74,7 +74,7 @@ describe('wrapLangChain', () => {
     assert.strictEqual(originalCalls, 1, 'Original call should be called exactly once');
     assert.deepStrictEqual(result, fakeResult);
     assert.strictEqual(recordedRequests.length, 1);
-    assert.strictEqual(recordedRequests[0].action, 'LANGCHAIN_INVOKE');
+    assert.strictEqual(recordedRequests[0].action, 'LANGCHAIN_CALL');
     assert.strictEqual(recordedRequests[0].agent, 'langchain-chain');
   });
 
@@ -287,5 +287,85 @@ describe('wrapLangChain', () => {
     const empty = {};
     const wrappedEmpty = client.wrapLangChain(empty);
     assert.deepStrictEqual(wrappedEmpty, {});
+  });
+
+  describe('call vs invoke distinct action names', () => {
+    it('chain with both call and invoke: call() triggers LANGCHAIN_CALL and invoke() triggers LANGCHAIN_INVOKE', async () => {
+      const { client, recordedRequests } = createStubbedClient({ status: 'allowed' });
+      const fakeDualChain = {
+        call: async (input: any) => ({ from: 'call', val: input }),
+        invoke: async (input: any) => ({ from: 'invoke', val: input })
+      };
+
+      const wrapped = client.wrapLangChain(fakeDualChain);
+
+      const resCall = await wrapped.call('call test prompt');
+      assert.deepStrictEqual(resCall, { from: 'call', val: 'call test prompt' });
+
+      const resInvoke = await wrapped.invoke('invoke test prompt');
+      assert.deepStrictEqual(resInvoke, { from: 'invoke', val: 'invoke test prompt' });
+
+      assert.strictEqual(recordedRequests.length, 2);
+      assert.strictEqual(recordedRequests[0].action, 'LANGCHAIN_CALL');
+      assert.strictEqual(recordedRequests[1].action, 'LANGCHAIN_INVOKE');
+      assert.notStrictEqual(
+        recordedRequests[0].action,
+        recordedRequests[1].action,
+        'call and invoke must have different action names'
+      );
+    });
+
+    it('top-level wrapLangChain export intercepts call and invoke with distinct action names', async () => {
+      const { client, recordedRequests } = createStubbedClient({ status: 'allowed' });
+      const fakeChain = {
+        call: async (input: any) => ({ called: input }),
+        invoke: async (input: any) => ({ invoked: input })
+      };
+
+      const wrapped = wrapLangChain(fakeChain, { agent: 'dual-agent' }, client);
+
+      await wrapped.call('legacy prompt');
+      await wrapped.invoke('runnable prompt');
+
+      assert.strictEqual(recordedRequests.length, 2);
+      assert.strictEqual(recordedRequests[0].action, 'LANGCHAIN_CALL');
+      assert.strictEqual(recordedRequests[0].agent, 'dual-agent');
+      assert.strictEqual(recordedRequests[1].action, 'LANGCHAIN_INVOKE');
+      assert.strictEqual(recordedRequests[1].agent, 'dual-agent');
+    });
+
+    it('call blocked path: status "blocked" throws SentraError 403 with action LANGCHAIN_CALL and does not execute call', async () => {
+      const { client, recordedRequests } = createStubbedClient({
+        status: 'blocked',
+        isAllowed: false,
+        reason: 'Legacy call blocked by policy'
+      });
+
+      let called = false;
+      const fakeChain = {
+        call: async () => {
+          called = true;
+          return { res: 'bad' };
+        }
+      };
+
+      const wrapped = client.wrapLangChain(fakeChain);
+
+      await assert.rejects(
+        async () => {
+          await wrapped.call('blocked call prompt');
+        },
+        (err: any) => {
+          assert.ok(err instanceof SentraError);
+          assert.strictEqual(err.status, 403);
+          assert.ok(err.message.includes('Legacy call blocked by policy'));
+          return true;
+        }
+      );
+
+      assert.strictEqual(called, false, 'Blocked call must not reach target');
+      assert.strictEqual(recordedRequests.length, 1);
+      assert.strictEqual(recordedRequests[0].action, 'LANGCHAIN_CALL');
+    });
   });
 });
