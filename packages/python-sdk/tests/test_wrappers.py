@@ -687,84 +687,92 @@ class TestBedrockWrapper:
         assert recorded[-1]["action"] == "BEDROCK_INVOKE_MODEL_STREAM"
         assert client.send_calls == 4
 
-    @pytest.mark.anyio
-    async def test_bedrock_async_send_allow_calls_provider(self) -> None:
-        sentra, recorded = _create_mock_sentra({
-            "status": "allowed",
-            "is_allowed": True,
-            "risk": "low",
-            "reason": "Safe Action",
-        })
-        client = MockAsyncBedrockClient()
-        wrapped = sentra.wrap_bedrock(client)
+    def test_bedrock_async_send_allow_calls_provider(self) -> None:
+        async def _run() -> None:
+            sentra, recorded = _create_mock_sentra({
+                "status": "allowed",
+                "is_allowed": True,
+                "risk": "low",
+                "reason": "Safe Action",
+            })
+            client = MockAsyncBedrockClient()
+            wrapped = sentra.wrap_bedrock(client)
 
-        cmd = MockConverseCommand({"modelId": "nova-1", "messages": [{"content": "hello async"}]})
-        res = await wrapped.send(cmd)
+            cmd = MockConverseCommand({"modelId": "nova-1", "messages": [{"content": "hello async"}]})
+            res = await wrapped.send(cmd)
 
-        assert client.send_calls == 1
-        assert res["output"]["message"]["content"][0]["text"] == "bedrock async send ok"
-        assert len(recorded) == 1
-        assert recorded[0]["action"] == "BEDROCK_CONVERSE"
+            assert client.send_calls == 1
+            assert res["output"]["message"]["content"][0]["text"] == "bedrock async send ok"
+            assert len(recorded) == 1
+            assert recorded[0]["action"] == "BEDROCK_CONVERSE"
 
-    @pytest.mark.anyio
-    async def test_bedrock_async_send_block_zero_provider_calls(self) -> None:
-        sentra, recorded = _create_mock_sentra({
-            "status": "blocked",
-            "is_allowed": False,
-            "risk": "high",
-            "reason": "Async bedrock blocked",
-        })
-        client = MockAsyncBedrockClient()
-        wrapped = sentra.wrap_bedrock(client)
+        asyncio.run(_run())
 
-        cmd = MockConverseCommand({"modelId": "nova-1", "messages": [{"content": "blocked async"}]})
-        with pytest.raises(SentraError) as exc_info:
-            await wrapped.send(cmd)
+    def test_bedrock_async_send_block_zero_provider_calls(self) -> None:
+        async def _run() -> None:
+            sentra, recorded = _create_mock_sentra({
+                "status": "blocked",
+                "is_allowed": False,
+                "risk": "high",
+                "reason": "Async bedrock blocked",
+            })
+            client = MockAsyncBedrockClient()
+            wrapped = sentra.wrap_bedrock(client)
 
-        assert exc_info.value.status == 403
-        assert client.send_calls == 0
-        assert len(recorded) == 1
+            cmd = MockConverseCommand({"modelId": "nova-1", "messages": [{"content": "blocked async"}]})
+            with pytest.raises(SentraError) as exc_info:
+                await wrapped.send(cmd)
 
-    @pytest.mark.anyio
-    async def test_bedrock_async_send_flag_allow_and_block(self) -> None:
-        sentra, _ = _create_mock_sentra({
-            "status": "flagged",
-            "is_allowed": False,
-            "risk": "medium",
-            "reason": "Flagged async bedrock",
-        })
-        client1 = MockAsyncBedrockClient()
-        wrapped1 = sentra.wrap_bedrock(client1, options=WrapperOptions(flag_mode="block"))
-        cmd1 = MockConverseCommand({"modelId": "nova-1", "messages": [{"content": "flagged async"}]})
-        with pytest.raises(SentraError):
-            await wrapped1.send(cmd1)
-        assert client1.send_calls == 0
+            assert exc_info.value.status == 403
+            assert client.send_calls == 0
+            assert len(recorded) == 1
 
-        client2 = MockAsyncBedrockClient()
-        flagged_events: list[ActionResponse] = []
-        wrapped2 = sentra.wrap_bedrock(
-            client2, options=WrapperOptions(flag_mode="allow", on_flag=flagged_events.append)
-        )
-        cmd2 = MockConverseCommand({"modelId": "nova-1", "messages": [{"content": "flagged async"}]})
-        await wrapped2.send(cmd2)
-        assert client2.send_calls == 1
-        assert len(flagged_events) == 1
+        asyncio.run(_run())
 
-    @pytest.mark.anyio
-    async def test_bedrock_async_send_rate_limited_makes_zero_calls(self) -> None:
-        sentra, _ = _create_mock_sentra({
-            "status": "rate_limited",
-            "is_allowed": False,
-            "risk": "low",
-            "reason": "Rate limited async",
-        })
-        client = MockAsyncBedrockClient()
-        wrapped = sentra.wrap_bedrock(client)
-        cmd = MockConverseCommand({"modelId": "nova-1", "messages": [{"content": "rl async"}]})
-        with pytest.raises(SentraError) as exc_info:
-            await wrapped.send(cmd)
-        assert exc_info.value.status == 429
-        assert client.send_calls == 0
+    def test_bedrock_async_send_flag_allow_and_block(self) -> None:
+        async def _run() -> None:
+            sentra, _ = _create_mock_sentra({
+                "status": "flagged",
+                "is_allowed": False,
+                "risk": "medium",
+                "reason": "Flagged async bedrock",
+            })
+            client1 = MockAsyncBedrockClient()
+            wrapped1 = sentra.wrap_bedrock(client1, options=WrapperOptions(flag_mode="block"))
+            cmd1 = MockConverseCommand({"modelId": "nova-1", "messages": [{"content": "flagged async"}]})
+            with pytest.raises(SentraError):
+                await wrapped1.send(cmd1)
+            assert client1.send_calls == 0
+
+            client2 = MockAsyncBedrockClient()
+            flagged_events: list[ActionResponse] = []
+            wrapped2 = sentra.wrap_bedrock(
+                client2, options=WrapperOptions(flag_mode="allow", on_flag=flagged_events.append)
+            )
+            cmd2 = MockConverseCommand({"modelId": "nova-1", "messages": [{"content": "flagged async"}]})
+            await wrapped2.send(cmd2)
+            assert client2.send_calls == 1
+            assert len(flagged_events) == 1
+
+        asyncio.run(_run())
+
+    def test_bedrock_async_send_rate_limited_makes_zero_calls(self) -> None:
+        async def _run() -> None:
+            sentra, _ = _create_mock_sentra({
+                "status": "rate_limited",
+                "is_allowed": False,
+                "risk": "low",
+                "reason": "Rate limited async",
+            })
+            client = MockAsyncBedrockClient()
+            wrapped = sentra.wrap_bedrock(client)
+            cmd = MockConverseCommand({"modelId": "nova-1", "messages": [{"content": "rl async"}]})
+            with pytest.raises(SentraError) as exc_info:
+                await wrapped.send(cmd)
+            assert exc_info.value.status == 429
+            assert client.send_calls == 0
+
+        asyncio.run(_run())
 
 
 class TestVertexWrapper:
