@@ -79,3 +79,70 @@ res = sentra.safe_action(
 if not res["success"]:
     print(f"Action blocked: {res['governance'].reason}")
 ```
+
+---
+
+## Provider Wrappers (OpenAI, Azure OpenAI, Anthropic)
+
+Sentra provides zero-friction wrappers for popular AI SDKs. The wrappers intercept pre-flight completions or messages calls, validate prompts and models against active security policies, and fail closed if blocked.
+
+### OpenAI Wrapper
+
+```python
+from openai import OpenAI
+from sentra import SentraClient, wrap_openai
+
+sentra = SentraClient(api_key="sentra_test_sandbox")
+client = OpenAI()
+
+# Wrap OpenAI instance
+guarded_client = sentra.wrap_openai(client, options={"agent": "support-agent"})
+
+# Blocked calls raise SentraError (HTTP 403) before the provider is called (0 provider calls)
+completion = guarded_client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "Summarize customer ticket"}],
+)
+```
+
+### Azure OpenAI Wrapper
+
+```python
+from openai import AzureOpenAI
+from sentra import wrap_azure_openai
+
+azure_client = AzureOpenAI(
+    azure_endpoint="https://my-resource.openai.azure.com",
+    api_key="...",
+    api_version="2024-10-21",
+)
+
+# Top-level helper automatically uses SENTRA_API_KEY from environment
+guarded_azure = wrap_azure_openai(azure_client)
+
+completion = guarded_azure.chat.completions.create(
+    model="gpt-5-mini-sentraa",
+    messages=[{"role": "user", "content": "Hello"}],
+)
+```
+
+### Anthropic Wrapper
+
+```python
+from anthropic import Anthropic
+from sentra import SentraClient, wrap_anthropic
+
+sentra = SentraClient(api_key="sentra_test_sandbox")
+anthropic_client = Anthropic()
+
+guarded_anthropic = sentra.wrap_anthropic(
+    anthropic_client,
+    options={"agent": "research-agent", "flag_mode": "block"},
+)
+
+message = guarded_anthropic.messages.create(
+    model="claude-haiku-5-5",
+    messages=[{"role": "user", "content": "Analyze public dataset"}],
+    max_tokens=100,
+)
+```

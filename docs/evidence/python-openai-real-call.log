@@ -1,0 +1,38 @@
+================================================================================
+SENTRA AI PYTHON SDK REAL-CALL EVIDENCE: OPENAI
+================================================================================
+Provider:               OpenAI
+Governance Mode:        Public Sandbox (sentra_test_sandbox)
+Key Status:             Configured in environment (NEVER printed or logged)
+
+--- Route 1 Probe: Native OpenAI API (OPENAI_API_KEY) ---
+Native OpenAI Result:   FAILED (RateLimitError: Error code: 429 - You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.)
+
+--- Route 2 Probe: OpenAI SDK via Gemini-compatible endpoint ---
+Gemini API Key:         GEMINI_API_KEY unset in environment
+
+--- Route 3 Execution: OpenAI SDK via Azure ---
+Exact Route Used:       OpenAI SDK via Azure
+SDK Package:            openai.OpenAI (Python SDK)
+Base URL:               https://[REDACTED-AZURE-RESOURCE].openai.azure.com/openai/deployments/gpt-5-mini-sentraa
+API Version:            2024-10-21
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. ALLOWED OPENAI SDK CALL (via Azure Route)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Sentra check status:    allowed
+Provider invoked:       YES (1 call)
+OpenAI SDK response:    Hello and welcome
+Verdict:                PASS (Allowed call passed through cleanly)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. BLOCKED OPENAI SDK CALL (via Azure Route)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Sentra check status:    blocked (HTTP 403)
+SentraError message:    [Sentra Blocked] Action blocked: potentially sensitive data or restricted pattern detected
+Provider invoked:       NO (0 calls - blocked by Sentra)
+Verdict:                PASS (Blocked call prevented before reaching provider)
+
+================================================================================
+END OF OPENAI EVIDENCE LOG
+================================================================================
