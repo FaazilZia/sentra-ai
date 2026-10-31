@@ -145,47 +145,37 @@ def extract_anthropic_prompt(params: Any) -> str:
     return system_text or messages_text or ""
 
 
+def _extract_text_field(item: Any) -> str:
+    if isinstance(item, str):
+        return item
+    if isinstance(item, dict):
+        text_val = item.get("text")
+        if isinstance(text_val, str) and text_val:
+            return text_val
+        return ""
+    attr_text = getattr(item, "text", None)
+    if isinstance(attr_text, str) and attr_text:
+        return attr_text
+    return ""
+
+
 def _extract_bedrock_system_text(system_raw: Any) -> str:
     if isinstance(system_raw, str):
         return system_raw
     if isinstance(system_raw, list):
-        sys_blocks: list[str] = []
-        for item in system_raw:
-            if isinstance(item, str):
-                sys_blocks.append(item)
-            elif isinstance(item, dict):
-                text_val = item.get("text")
-                if isinstance(text_val, str) and text_val:
-                    sys_blocks.append(text_val)
-            else:
-                attr_text = getattr(item, "text", None)
-                if isinstance(attr_text, str) and attr_text:
-                    sys_blocks.append(attr_text)
-        return "\n".join(sys_blocks)
+        blocks = [_extract_text_field(item) for item in system_raw]
+        return "\n".join(b for b in blocks if b)
     if system_raw is not None:
-        attr_text = getattr(system_raw, "text", None)
-        if isinstance(attr_text, str):
-            return attr_text
+        return _extract_text_field(system_raw)
     return ""
 
 
 def _extract_bedrock_message_content(content: Any) -> list[str]:
-    blocks: list[str] = []
     if isinstance(content, str):
-        blocks.append(content)
-    elif isinstance(content, list):
-        for part in content:
-            if isinstance(part, str):
-                blocks.append(part)
-            elif isinstance(part, dict):
-                part_text = part.get("text")
-                if isinstance(part_text, str) and part_text:
-                    blocks.append(part_text)
-            else:
-                attr_text = getattr(part, "text", None)
-                if isinstance(attr_text, str) and attr_text:
-                    blocks.append(attr_text)
-    return blocks
+        return [content]
+    if isinstance(content, list):
+        return [b for item in content if (b := _extract_text_field(item))]
+    return []
 
 
 def _extract_bedrock_messages_text(messages_raw: Any) -> str:
