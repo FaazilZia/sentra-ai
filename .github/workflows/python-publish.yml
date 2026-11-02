@@ -1,0 +1,69 @@
+name: Python SDK Dry-Run Publish
+
+on:
+  workflow_dispatch:
+
+# Explicit read-only permissions for supply-chain security
+permissions:
+  contents: read
+
+# NOTE: This workflow performs dry-run packaging and validation ONLY.
+# It intentionally does NOT upload to PyPI or TestPyPI (no PyPI token anywhere).
+# Real publishing will be added later behind a protected GitHub Environment
+# with a required reviewer and trusted publishing / OIDC credentials.
+
+jobs:
+  dry-run-publish:
+    name: Dry-Run Build & Package Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install build and packaging tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: Build wheel and sdist with python -m build
+        working-directory: packages/python-sdk
+        run: python -m build
+
+      - name: Verify package metadata with twine check
+        working-directory: packages/python-sdk
+        run: twine check dist/*
+
+      - name: Install built wheel into clean virtualenv
+        run: |
+          python -m venv /tmp/clean-venv
+          /tmp/clean-venv/bin/python -m pip install --upgrade pip
+          /tmp/clean-venv/bin/pip install packages/python-sdk/dist/sentraa_ai-*.whl
+
+      - name: Run import smoke test
+        run: |
+          /tmp/clean-venv/bin/python -c "
+          import sentra
+          import sentra_ai
+          print('Successfully imported sentra from:', sentra.__file__)
+          print('Successfully imported sentra_ai from:', sentra_ai.__file__)
+          client = sentra.SentraClient(api_key='sentra_test_sandbox')
+          print('Client successfully initialized:', client)
+          "
+
+      - name: Run offline tests in clean environment
+        run: |
+          /tmp/clean-venv/bin/pip install pytest pytest-cov certifi
+          /tmp/clean-venv/bin/pytest packages/python-sdk/tests -m "not live" --cov=sentra --cov=sentra_ai --cov-report=term-missing
+
+      - name: Upload dist artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-sdk-dist
+          path: packages/python-sdk/dist/
+          retention-days: 7
