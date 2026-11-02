@@ -1,20 +1,38 @@
-# sentra-ai (Python SDK)
+# sentraa-ai (Python SDK)
 
 Enterprise-grade Python SDK for real-time AI governance and runtime security. Intercept AI actions, enforce security policies, and detect risks before execution.
 
 ---
 
-## Installation
+## Install
 
 ```bash
-pip install sentra-ai
+# Core SDK (zero heavy dependencies, certifi only)
+pip install sentraa-ai
 ```
+
+### Which Extras to Install
+
+Install provider-specific extras to include optional AI client libraries:
+
+| Provider / Framework | Install Command | Included Dependencies |
+|---|---|---|
+| **OpenAI & Azure OpenAI** | `pip install "sentraa-ai[openai]"` | `openai>=1.0.0` |
+| **Anthropic Claude** | `pip install "sentraa-ai[anthropic]"` | `anthropic>=0.18.0` |
+| **Amazon Bedrock** | `pip install "sentraa-ai[bedrock]"` | `boto3>=1.28.0` |
+| **Google Vertex AI** | `pip install "sentraa-ai[vertex]"` | `google-genai>=0.1.1` (Python >=3.10) |
+| **LangChain** | `pip install "sentraa-ai[langchain]"` | `langchain`, `langchain-core`, `langchain-openai` (Python >=3.9) |
+| **All Providers** | `pip install "sentraa-ai[all]"` | All optional provider packages above |
+
+> [!NOTE]
+> **Provider Testing & Verification Transparency:**
+> - **OpenAI, Azure OpenAI, Google Vertex AI, and LangChain:** Verified live against real provider endpoints and the Sentra sandbox.
+> - **Amazon Bedrock:** Tested with mocks only because of an upstream AWS account block (Error 002: account blocked / verification required).
+> - **Anthropic:** Wrapper interception and governance logic are 100% verified via unit tests and mock suites; the native provider call is untested live because of no API credit.
 
 ---
 
-## Quickstart
-
-### Sandbox Mode (No Registration Required)
+## Quickstart (sandbox)
 
 Test runtime governance immediately using the explicit sandbox API key (`'sentra_test_sandbox'`). Omitting the API key or passing empty credentials raises an error to prevent accidental unauthenticated calls:
 
@@ -128,6 +146,8 @@ completion = guarded_azure.chat.completions.create(
 
 ### Anthropic Wrapper
 
+> **Status:** Wrapper logic and pre-flight interception tested via unit/mock suites. Native provider call is untested live because of no API credit.
+
 ```python
 from anthropic import Anthropic
 from sentra import SentraClient, wrap_anthropic
@@ -148,6 +168,8 @@ message = guarded_anthropic.messages.create(
 ```
 
 ### Amazon Bedrock (boto3) Wrapper
+
+> **Status:** Tested with mocks only because of an AWS account block (Error 002: account blocked / verification required).
 
 ```python
 import boto3

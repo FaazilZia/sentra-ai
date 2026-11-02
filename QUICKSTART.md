@@ -2,7 +2,7 @@
 
 Go from zero to your first **BLOCKED** unsafe AI agent action in under 5 minutes.
 
-> **Language Support:** Node.js 18+. Python is not yet supported.
+> **Language Support:** Node.js 18+ (`npm install @sentra-ai/sdk`) and Python 3.8+ (`pip install sentraa-ai` — see [packages/python-sdk](./packages/python-sdk)).
 
 ---
 

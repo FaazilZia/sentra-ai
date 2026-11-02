@@ -3,14 +3,23 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sentra-ai"
+name = "sentraa-ai"
 version = "0.1.0"
 description = "Enterprise-grade Python SDK for real-time AI governance and runtime security."
 readme = "README.md"
 requires-python = ">=3.8"
-license = { text = "MIT" }
+license = "MIT"
 authors = [
-    { name = "Sentra AI Team" }
+    { name = "Sentraa AI Team" }
+]
+keywords = [
+    "ai-governance",
+    "ai-security",
+    "guardrails",
+    "llm-security",
+    "runtime-protection",
+    "sentra",
+    "sentraa",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -19,7 +28,6 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Security",
@@ -27,6 +35,12 @@ classifiers = [
 dependencies = [
     "certifi>=2021.10.8",
 ]
+
+[project.urls]
+Homepage = "https://sentraatech.info"
+Repository = "https://github.com/FaazilZia/sentra-ai"
+Documentation = "https://github.com/FaazilZia/sentra-ai/tree/main/packages/python-sdk#readme"
+"Bug Tracker" = "https://github.com/FaazilZia/sentra-ai/issues"
 
 [project.optional-dependencies]
 dev = [

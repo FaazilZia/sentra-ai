@@ -26,7 +26,8 @@
 ## Quick links
 
 - [🚀 Live Dashboard](https://sentraatech.info) — Try Sentraa AI without signing up
-- [📦 SDK on npm](https://www.npmjs.com/package/@sentra-ai/sdk) — `npm install @sentra-ai/sdk`
+- [📦 Node.js SDK on npm](https://www.npmjs.com/package/@sentra-ai/sdk) — `npm install @sentra-ai/sdk`
+- [🐍 Python SDK on PyPI](https://pypi.org/project/sentraa-ai/) — `pip install sentraa-ai`
 - [📋 Agent Rules](./docs/AGENT_RULES.md) — Operational and safety rules for AI pair programmers
 - [📁 Project Structure](#-project-structure) — Full file tree
 - [🔌 API Reference](#-api-reference) — All 55 route modules
@@ -246,11 +247,17 @@ cd frontend && npm run dev    # → http://localhost:5173
 
 ### 5. Integrate via SDK
 
-> **Language Support:** Node.js 18+. Python is not yet supported.  
-> See [QUICKSTART.md](./QUICKSTART.md) for the 5-minute zero-to-blocked walkthrough.
+> **Language Support:** Node.js 18+ (`npm install @sentra-ai/sdk`) and Python 3.8+ (`pip install sentraa-ai`).  
+> See [QUICKSTART.md](./QUICKSTART.md) and [packages/python-sdk](./packages/python-sdk) for walkthroughs.
 
+**Node.js:**
 ```bash
 npm install @sentra-ai/sdk
+```
+
+**Python:**
+```bash
+pip install sentraa-ai
 ```
 
 ```typescript
@@ -351,9 +358,13 @@ sentra-ai/
 │       └── lib/                      # API client, store, utilities
 │
 ├── packages/
-│   └── sdk/                          # @sentra-ai/sdk (npm v1.0.6)
+│   ├── sdk/                          # @sentra-ai/sdk (npm v1.0.6)
+│   │   └── src/
+│   │       └── index.ts              # SentraClient + LangChain/OpenAI wrappers
+│   └── python-sdk/                   # sentraa-ai (Python SDK v0.1.0)
 │       └── src/
-│           └── index.ts              # SentraClient + LangChain/OpenAI wrappers
+│           ├── sentra/               # SentraClient + AI provider wrappers
+│           └── sentra_ai/            # Alias import package
 │
 ├── examples/
 │   └── openai-agent.js               # OpenAI agent integration example
@@ -567,7 +578,7 @@ Control AI access to production APIs, internal systems, and customer data with o
 | **Auth** | JWT + Refresh tokens + Google OAuth + SSO |
 | **Encryption** | AES-256-GCM |
 | **Email** | Postmark |
-| **SDK** | `@sentra-ai/sdk` v1.0.6 (npm) |
+| **SDK** | `@sentra-ai/sdk` v1.0.6 (npm), `sentraa-ai` v0.1.0 (PyPI) |
 | **CI/CD** | GitHub Actions + SonarCloud |
 | **Deployment** | Render (backend) + Vercel (frontend) |
 
