@@ -1,0 +1,59 @@
+================================================================================
+DAY 8b: NODE SDK AUTHENTICATED ROUTE TEST (POST /ai/check-action)
+================================================================================
+SENTRA_API_KEY:          [MASKED: length=48]
+Target Route:            POST /ai/check-action (Authorization: Bearer [MASKED])
+SDK:                     @sentra-ai/sdk (Node SDK)
+Client Initialized:      isSandbox=false
+
+--- 1. Authenticated Route: ALLOWED Action ---
+Status:                  allowed
+isAllowed:               true
+Risk:                    low
+Reason:                  Allowed: Verified by multi-tier governance
+Impact:                  Protects system integrity
+Compliance:              ["Internal Policy"]
+VERDICT:                 PASS (Authenticated ALLOWED decision verified)
+
+--- 2. Authenticated Route: BLOCKED Action ---
+Status:                  blocked
+isAllowed:               false
+Risk:                    high
+Reason:                  Blocked: Semantic analysis unavailable (Degraded Mode). Fallback to pattern matching.
+Impact:                  Protects system integrity
+Compliance:              ["Internal Policy"]
+VERDICT:                 PASS (Authenticated BLOCKED decision verified)
+
+================================================================================
+DAY 8b: NODE SDK WRAPPER FLAG PATH VERIFICATION
+================================================================================
+Testing flagMode='block' (0 provider calls) and flagMode='allow' (onFlag invoked)
+--------------------------------------------------------------------------------
+
+[1/6] Azure OpenAI Wrapper FLAG Path
+  • flagMode='block':     status=403 SentraError, provider calls=0 (PASS: 0 calls) [REAL]
+  • flagMode='allow':     onFlag called=true, provider calls=1 (PASS: 1 call) [REAL]
+
+[2/6] OpenAI Wrapper FLAG Path
+  • flagMode='block':     status=403 SentraError, provider calls=0 (PASS: 0 calls) [REAL (via Azure route)]
+  • flagMode='allow':     onFlag called=true, provider calls=1 (PASS: 1 call) [REAL (via Azure route)]
+
+[3/6] Google Vertex AI Wrapper FLAG Path
+  • flagMode='block':     status=403 SentraError, provider calls=0 (PASS: 0 calls) [REAL]
+  • flagMode='allow':     onFlag called=true, provider calls=1 (PASS: 1 call) [REAL]
+
+[4/6] LangChain Wrapper FLAG Path
+  • flagMode='block':     status=403 SentraError, provider calls=0 (PASS: 0 calls) [REAL (via AzureChatOpenAI)]
+  • flagMode='allow':     onFlag called=true, provider calls=1 (PASS: 1 call) [REAL (via AzureChatOpenAI)]
+
+[5/6] Amazon Bedrock Wrapper FLAG Path
+  • flagMode='block':     status=403 SentraError, provider calls=0 (PASS: 0 calls) [MOCK (KNOWN BLOCKED - AWS Error 002)]
+  • flagMode='allow':     onFlag called=true, provider calls=1 (PASS: 1 call) [MOCK (KNOWN BLOCKED - AWS Error 002)]
+
+[6/6] Anthropic Wrapper FLAG Path
+  • flagMode='block':     status=403 SentraError, provider calls=0 (PASS: 0 calls) [MOCK (KNOWN BLOCKED - Native credit / Vertex quota)]
+  • flagMode='allow':     onFlag called=true, provider calls=1 (PASS: 1 call) [MOCK (KNOWN BLOCKED - Native credit / Vertex quota)]
+
+================================================================================
+END OF NODE SDK DAY 8b VERIFICATION
+================================================================================
