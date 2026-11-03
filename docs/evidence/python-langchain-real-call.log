@@ -14,7 +14,7 @@ Key Status:             Configured in environment (NEVER printed or logged)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Sentra check status:    allowed
 Provider invoked:       YES (1 call)
-LangChain response:     Hello there! How are you?
+LangChain response:     Hello, nice to see you.
 Verdict:                PASS (Allowed chain invoke passed through cleanly)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

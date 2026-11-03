@@ -2,6 +2,9 @@
 
 Enterprise-grade Python SDK for real-time AI governance and runtime security. Intercept AI actions, enforce security policies, and detect risks before execution.
 
+- **Package name on PyPI:** `sentraa-ai`
+- **Import names:** `import sentra` or `import sentra_ai`
+
 ---
 
 ## Install
@@ -10,6 +13,10 @@ Enterprise-grade Python SDK for real-time AI governance and runtime security. In
 # Core SDK (zero heavy dependencies, certifi only)
 pip install sentraa-ai
 ```
+
+> [!NOTE]
+> *Pre-publish verification:* Before official PyPI distribution, install the local built wheel:
+> `pip install packages/python-sdk/dist/sentraa_ai-0.1.0-py3-none-any.whl`
 
 ### Which Extras to Install
 
@@ -41,11 +48,20 @@ from sentra import SentraClient
 
 sentra = SentraClient(api_key="sentra_test_sandbox")
 
-# Verify a real BLOCKED action
-decision = sentra.demo_blocked_action()
-print(decision.status)  # "blocked"
-print(decision.is_allowed)  # False
-print(decision.reason)  # "Action blocked: potentially sensitive data or restricted pattern detected"
+# 1. Verify an ALLOWED action
+allowed = sentra.check_action(
+    agent="report-bot",
+    action="summarize",
+    metadata={"prompt": "Please summarize this public quarterly report."},
+)
+print(allowed.status)      # "allowed"
+print(allowed.is_allowed)  # True
+
+# 2. Verify a real BLOCKED action
+blocked = sentra.demo_blocked_action()
+print(blocked.status)      # "blocked"
+print(blocked.is_allowed)  # False
+print(blocked.reason)      # "Action blocked: potentially sensitive data or restricted pattern detected"
 ```
 
 ### Production Setup
