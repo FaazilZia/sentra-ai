@@ -274,6 +274,16 @@ class SentraClient:
                 return True, action_resp, False
             return False, None, is_cold
         except (urllib.error.URLError, TimeoutError, socket.timeout) as exc:
+            if isinstance(exc, urllib.error.URLError) and isinstance(exc.reason, ssl.SSLError):
+                logger.error("[Sentra] SSL Certificate Verification Failed: %s", exc.reason)
+                return True, ActionResponse(
+                    status="blocked",
+                    is_allowed=False,
+                    risk="high",
+                    reason=f"SSL certificate verification failed: {exc.reason}. Ensure 'certifi' is installed.",
+                    impact=FAIL_CLOSED_IMPACT,
+                    compliance=["TLS Verification Guardrail"],
+                ), False
             is_timeout = isinstance(exc, (TimeoutError, socket.timeout))
             if isinstance(exc, urllib.error.URLError) and isinstance(
                 exc.reason, (TimeoutError, socket.timeout)

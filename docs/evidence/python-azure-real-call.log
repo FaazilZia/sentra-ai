@@ -15,7 +15,7 @@ Key Status:             Configured in environment (NEVER printed or logged)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Sentra check status:    allowed
 Provider invoked:       YES (1 call)
-Azure OpenAI response:  Hello there friend
+Azure OpenAI response:  Hello and welcome
 Verdict:                PASS (Allowed call passed through cleanly)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

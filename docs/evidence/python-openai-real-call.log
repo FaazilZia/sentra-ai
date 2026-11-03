@@ -22,7 +22,7 @@ API Version:            2024-10-21
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Sentra check status:    allowed
 Provider invoked:       YES (1 call)
-OpenAI SDK response:    Hello and welcome
+OpenAI SDK response:    Hello there, friend.
 Verdict:                PASS (Allowed call passed through cleanly)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

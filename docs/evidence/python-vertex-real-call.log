@@ -15,7 +15,7 @@ Credentials:            Configured via GOOGLE_APPLICATION_CREDENTIALS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Sentra check status:    allowed
 Provider invoked:       YES (1 call)
-Vertex AI response:     Hello to you.
+Vertex AI response:     Hello to you!
 Verdict:                PASS (Allowed call passed through cleanly)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

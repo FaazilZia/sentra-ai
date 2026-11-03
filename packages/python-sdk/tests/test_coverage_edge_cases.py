@@ -225,6 +225,27 @@ def test_transient_non_cold_start_retry():
     assert attempts == 2
 
 
+def test_ssl_verification_error_fails_immediately():
+    """SSL verification errors fail closed immediately without retry loop."""
+    import ssl
+    client = SentraClient(api_key="sentra_test_sandbox", max_retries=3)
+    attempts = 0
+
+    def mock_urlopen(req, **kwargs):
+        nonlocal attempts
+        attempts += 1
+        raise urllib.error.URLError(ssl.SSLCertVerificationError("certificate verify failed"))
+
+    with patch("urllib.request.urlopen", side_effect=mock_urlopen):
+        res = client.check_action(agent="bot", action="act")
+
+    assert attempts == 1
+    assert res.status == "blocked"
+    assert res.is_allowed is False
+    assert "SSL certificate verification failed" in res.reason
+    assert "TLS Verification Guardrail" in res.compliance
+
+
 def test_confidence_fallback_when_none():
     """Confidence defaults to 1.0 for allowed and 0.95 for blocked if not provided."""
     client = SentraClient(api_key="sentra_test_sandbox")
