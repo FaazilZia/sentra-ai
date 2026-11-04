@@ -60,6 +60,7 @@ function makeMockFlagSentra(): SentraClient {
 }
 
 async function runAuthenticatedRouteTests(): Promise<boolean> {
+  log('FLAG decisions in this test are MOCKED. The Sentraa backend was not asked to return flagged. This proves wrapper behaviour only.');
   log('================================================================================');
   log('DAY 8b: NODE SDK AUTHENTICATED ROUTE TEST (POST /ai/check-action)');
   log('================================================================================');
@@ -128,6 +129,7 @@ async function runFlagPathTests(): Promise<boolean> {
   log('\n================================================================================');
   log('DAY 8b: NODE SDK WRAPPER FLAG PATH VERIFICATION');
   log('================================================================================');
+  log('FLAG decisions in this test are MOCKED. The Sentraa backend was not asked to return flagged. This proves wrapper behaviour only.');
   log("Testing flagMode='block' (0 provider calls) and flagMode='allow' (onFlag invoked)");
   log('--------------------------------------------------------------------------------');
 
@@ -187,9 +189,9 @@ async function runFlagPathTests(): Promise<boolean> {
     log('  • Azure OpenAI: MOCK verification (credentials missing)');
   }
 
-  // 2. OpenAI (MOCK / REAL via Azure)
+  // 2. OpenAI (MOCK - stubbed provider call)
   log('\n[2/6] OpenAI Wrapper FLAG Path');
-  const modeLabelOAI = azureEndpoint && azureKey ? 'REAL (via Azure route)' : 'MOCK';
+  const modeLabelOAI = 'MOCK';
   const { OpenAI } = await import('openai');
   const mockSentraOB = makeMockFlagSentra();
   const rawOB = new OpenAI({ apiKey: azureKey || 'dummy', baseURL: azureEndpoint ? `${azureEndpoint}/openai/deployments/${azureDeployment}` : undefined });
@@ -265,9 +267,9 @@ async function runFlagPathTests(): Promise<boolean> {
     log('  • Google Vertex AI: MOCK verification (GCP credentials missing)');
   }
 
-  // 4. LangChain (REAL via Azure OpenAI)
+  // 4. LangChain (MOCK - stubbed chain invocation)
   log('\n[4/6] LangChain Wrapper FLAG Path');
-  const modeLabelLC = azureEndpoint && azureKey ? 'REAL (via AzureChatOpenAI)' : 'MOCK';
+  const modeLabelLC = 'MOCK';
   // Block path
   const mockSentraLCB = makeMockFlagSentra();
   let lcCallsB = 0;
