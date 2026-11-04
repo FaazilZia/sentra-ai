@@ -1,3 +1,4 @@
+FLAG decisions in this test are MOCKED. The Sentraa backend was not asked to return flagged. This proves wrapper behaviour only.
 ================================================================================
 DAY 8b: PYTHON SDK AUTHENTICATED ROUTE TEST (POST /ai/check-action)
 ================================================================================
@@ -27,6 +28,7 @@ VERDICT:                 PASS (Authenticated BLOCKED decision verified)
 ================================================================================
 DAY 8b: PYTHON SDK WRAPPER FLAG PATH VERIFICATION
 ================================================================================
+FLAG decisions in this test are MOCKED. The Sentraa backend was not asked to return flagged. This proves wrapper behaviour only.
 Testing flag_mode='block' (0 provider calls) and flag_mode='allow' (on_flag invoked)
 --------------------------------------------------------------------------------
 
@@ -35,8 +37,8 @@ Testing flag_mode='block' (0 provider calls) and flag_mode='allow' (on_flag invo
   • flag_mode='allow':    on_flag called=True, provider calls=1 (PASS: 1 call) [REAL]
 
 [2/6] OpenAI Wrapper FLAG Path
-  • flag_mode='block':    status=403 SentraError, provider calls=0 (PASS: 0 calls) [REAL (via Azure route)]
-  • flag_mode='allow':    on_flag called=True, provider calls=1 (PASS: 1 call) [REAL (via Azure route)]
+  • flag_mode='block':    status=403 SentraError, provider calls=0 (PASS: 0 calls) [MOCK]
+  • flag_mode='allow':    on_flag called=True, provider calls=1 (PASS: 1 call) [MOCK]
 
 [3/6] Google Vertex AI Wrapper FLAG Path
   • flag_mode='block':    status=403 SentraError, provider calls=0 (PASS: 0 calls) [REAL]

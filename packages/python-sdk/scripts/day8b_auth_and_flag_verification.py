@@ -47,6 +47,7 @@ def log(msg: str = "") -> None:
 
 
 def run_authenticated_route_tests() -> bool:
+    log("FLAG decisions in this test are MOCKED. The Sentraa backend was not asked to return flagged. This proves wrapper behaviour only.")
     log("================================================================================")
     log("DAY 8b: PYTHON SDK AUTHENTICATED ROUTE TEST (POST /ai/check-action)")
     log("================================================================================")
@@ -110,6 +111,7 @@ def run_flag_path_tests() -> bool:
     log("\n================================================================================")
     log("DAY 8b: PYTHON SDK WRAPPER FLAG PATH VERIFICATION")
     log("================================================================================")
+    log("FLAG decisions in this test are MOCKED. The Sentraa backend was not asked to return flagged. This proves wrapper behaviour only.")
     log("Testing flag_mode='block' (0 provider calls) and flag_mode='allow' (on_flag invoked)")
     log("--------------------------------------------------------------------------------")
 
@@ -183,9 +185,9 @@ def run_flag_path_tests() -> bool:
     else:
         log("  • Azure OpenAI: MOCK verification (credentials missing)")
 
-    # 2. OpenAI (REAL via Azure route, MOCK for direct)
+    # 2. OpenAI (MOCK - stubbed provider call)
     log("\n[2/6] OpenAI Wrapper FLAG Path")
-    mode_label = "REAL (via Azure route)" if (azure_endpoint and azure_key) else "MOCK"
+    mode_label = "MOCK"
     from openai import OpenAI
     # Block path
     mock_sentra_ob = make_mock_flag_sentra()

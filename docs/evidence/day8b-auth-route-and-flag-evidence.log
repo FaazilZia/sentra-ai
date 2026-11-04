@@ -1,6 +1,7 @@
 ================================================================================
 SENTRAA AI — DAY 8b AUTHENTICATED ROUTE & WRAPPER FLAG PATH VERIFICATION
 ================================================================================
+FLAG decisions in this test are MOCKED. The Sentraa backend was not asked to return flagged. This proves wrapper behaviour only.
 Date and Time (UTC):   2026-11-03T08:42:00Z
 Target Repo:           FaazilZia/sentra-ai
 Branch:                feat/day8b-auth-route
@@ -67,12 +68,12 @@ Provider / Wrapper     | SDK     | Flag Mode: BLOCK (0 Calls) | Flag Mode: ALLOW
 -----------------------+---------+----------------------------+------------------------------------+-----------------------------------
 Azure OpenAI           | Python  | VERIFIED (status 403, 0)   | VERIFIED (on_flag=True, calls=1)   | REAL (gpt-5-mini-sentraa)
 Azure OpenAI           | Node    | VERIFIED (status 403, 0)   | VERIFIED (onFlag=true, calls=1)    | REAL (gpt-5-mini-sentraa)
-OpenAI                 | Python  | VERIFIED (status 403, 0)   | VERIFIED (on_flag=True, calls=1)   | REAL (via Azure route)
-OpenAI                 | Node    | VERIFIED (status 403, 0)   | VERIFIED (onFlag=true, calls=1)    | REAL (via Azure route)
+OpenAI                 | Python  | VERIFIED (status 403, 0)   | VERIFIED (on_flag=True, calls=1)   | MOCK
+OpenAI                 | Node    | VERIFIED (status 403, 0)   | VERIFIED (onFlag=true, calls=1)    | MOCK
 Google Vertex AI       | Python  | VERIFIED (status 403, 0)   | VERIFIED (on_flag=True, calls=1)   | REAL (gemini-4-argon)
 Google Vertex AI       | Node    | VERIFIED (status 403, 0)   | VERIFIED (onFlag=true, calls=1)    | REAL (gemini-4-argon)
 LangChain              | Python  | VERIFIED (status 403, 0)   | VERIFIED (on_flag=True, calls=1)   | REAL (AzureChatOpenAI)
-LangChain              | Node    | VERIFIED (status 403, 0)   | VERIFIED (onFlag=true, calls=1)    | REAL (AzureChatOpenAI)
+LangChain              | Node    | VERIFIED (status 403, 0)   | VERIFIED (onFlag=true, calls=1)    | MOCK
 Amazon Bedrock         | Python  | VERIFIED (status 403, 0)   | VERIFIED (on_flag=True, calls=1)   | MOCK (KNOWN BLOCKED - AWS Error 002)
 Amazon Bedrock         | Node    | VERIFIED (status 403, 0)   | VERIFIED (onFlag=true, calls=1)    | MOCK (KNOWN BLOCKED - AWS Error 002)
 Anthropic              | Python  | VERIFIED (status 403, 0)   | VERIFIED (on_flag=True, calls=1)   | MOCK (KNOWN BLOCKED - Native credit / Vertex quota)

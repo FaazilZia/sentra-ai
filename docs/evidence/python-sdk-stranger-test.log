@@ -73,10 +73,10 @@ OpenAI                 | Node    | VERIFIED     | VERIFIED (0 calls)     | MOCK 
 Google Vertex AI       | Python  | VERIFIED     | VERIFIED (0 calls)     | REAL (native gemini-4-argon)
 Google Vertex AI       | Node    | VERIFIED     | VERIFIED (0 calls)     | REAL (native gemini-4-argon)
 LangChain              | Python  | VERIFIED     | VERIFIED (0 calls)     | REAL (AzureChatOpenAI chain)
-LangChain              | Node    | VERIFIED     | VERIFIED (0 calls)     | REAL (AzureChatOpenAI chain)
-Amazon Bedrock         | Python  | VERIFIED     | VERIFIED (0 calls)     | KNOWN BLOCKED (AWS Error 002)
-Amazon Bedrock         | Node    | VERIFIED     | VERIFIED (0 calls)     | KNOWN BLOCKED (AWS Error 002)
-Anthropic              | Python  | VERIFIED     | VERIFIED (0 calls)     | KNOWN BLOCKED (Native: no credit; Vertex: quota)
+LangChain              | Node    | VERIFIED     | VERIFIED (0 calls)     | MOCK (unit test suite)
+Amazon Bedrock         | Python  | VERIFIED     | VERIFIED (0 calls)     | MOCK (KNOWN BLOCKED - AWS Error 002)
+Amazon Bedrock         | Node    | VERIFIED     | VERIFIED (0 calls)     | MOCK (KNOWN BLOCKED - AWS Error 002)
+Anthropic              | Python  | VERIFIED     | VERIFIED (0 calls)     | MOCK (KNOWN BLOCKED - Native credit / Vertex quota)
 Anthropic              | Node    | VERIFIED     | VERIFIED (0 calls)     | MOCK (unit test suite)
 
 4. TEST SUITE RESULTS & CODE COVERAGE
