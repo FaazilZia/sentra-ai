@@ -19,8 +19,10 @@ import {
   deleteScimGroup,
   getServiceProviderConfig,
   getResourceTypes,
-  getSchemas
+  getSchemas,
+  testSsoConnection
 } from '../controllers/sso.controller';
+import { ssoTestRateLimiter } from '../config/rateLimit';
 
 /**
  * @openapi
@@ -478,6 +480,7 @@ router.get('/saml/:orgSlug/metadata', getSamlMetadata);
 
 // SAML administrative configuration endpoints (requires JWT session authentication)
 router.put('/sso/config', authenticate, authorizeRoles('ADMIN'), updateSsoConfig);
+router.post('/sso/test-connection', authenticate, authorizeRoles('ADMIN'), ssoTestRateLimiter, testSsoConnection);
 router.get('/sso/metadata/:orgSlug', getSamlMetadata);
 
 // Apply SCIM header middleware to all SCIM routes

@@ -1260,10 +1260,43 @@ export async function fetchMcpAuditLogs(page = 1, limit = 20, decision?: string)
 /**
  * SAML SSO ENDPOINTS
  */
-export async function saveSsoConfig(idpMetadataXml: string, ssoProvider?: string): Promise<any> {
+export async function saveSsoConfig(
+  idpMetadataXml: string,
+  ssoProvider?: string,
+  attributeMapping?: Record<string, string>,
+  allowedEmailDomains?: string[]
+): Promise<any> {
   return apiRequest<any>('/sso/config', {
     method: 'PUT',
-    body: JSON.stringify({ idpMetadataXml, sso_provider: ssoProvider }),
+    body: JSON.stringify({
+      idpMetadataXml,
+      sso_provider: ssoProvider,
+      attributeMapping,
+      allowedEmailDomains,
+    }),
+  });
+}
+
+export async function testSsoConnection(payload: {
+  idpMetadataXml?: string;
+  attributeMapping?: Record<string, string>;
+}): Promise<{
+  success: boolean;
+  valid: boolean;
+  details?: {
+    entityId?: string;
+    ssoUrl?: string;
+    certValid?: boolean;
+    certExpiresAt?: string;
+    certDaysRemaining?: number;
+    attributeMapping?: Record<string, string>;
+    checks: Array<{ name: string; passed: boolean; message: string }>;
+  };
+  message?: string;
+}> {
+  return apiRequest('/sso/test-connection', {
+    method: 'POST',
+    body: JSON.stringify(payload),
   });
 }
 

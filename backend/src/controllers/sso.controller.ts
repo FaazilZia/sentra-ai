@@ -1,14 +1,151 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../config/db';
-import { randomUUID } from 'crypto';
+import crypto, { randomUUID } from 'crypto';
 import logger from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
 import { setAuthCookiesAndTokens } from './auth.controller';
 import * as samlify from 'samlify';
 import { encrypt, decrypt } from '../utils/encryption';
+import { getRedisClient } from '../config/redis';
 
 // Set schema validator as a no-op to avoid native binaries issues in deployment
 samlify.setSchemaValidator({ validate: () => Promise.resolve('skipped') });
+
+export const OKTA_ATTRIBUTE_PRESET = {
+  email: 'email',
+  firstName: 'firstName',
+  lastName: 'lastName',
+  name: 'name',
+  role: 'role',
+  groups: 'groups',
+};
+
+export const STANDARD_ATTRIBUTE_PRESET = {
+  email: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress',
+  firstName: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname',
+  lastName: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname',
+  name: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name',
+  role: 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role',
+  groups: 'http://schemas.xmlsoap.org/claims/Group',
+};
+
+/**
+ * Maps raw SAML role or group attributes to known system roles.
+ * Security rules:
+ * - Allowed roles: ADMIN, MEMBER, VIEWER, AUDITOR, ENGINEER.
+ * - Missing or unrecognized roles default to VIEWER.
+ * - Privilege escalation guard: SUPER_ADMIN is NEVER granted via SAML; demoted to VIEWER.
+ */
+export const mapSamlRole = (rawRole: unknown): string => {
+  if (!rawRole) return 'VIEWER';
+
+  const candidates: string[] = Array.isArray(rawRole)
+    ? rawRole.map((r) => String(r).trim().toUpperCase())
+    : [String(rawRole).trim().toUpperCase()];
+
+  // Security Escalation Guard: NEVER allow a SAML assertion to grant SUPER_ADMIN.
+  if (candidates.some((c) => c === 'SUPER_ADMIN' || c.includes('SUPER_ADMIN') || c === 'SUPERADMIN' || c.includes('SUPERADMIN'))) {
+    logger.warn('[SAML-SSO] Attempted privilege escalation to SUPER_ADMIN via SAML assertion. Demoting to VIEWER.');
+    return 'VIEWER';
+  }
+
+  // Precedence: ADMIN > ENGINEER > AUDITOR > MEMBER > VIEWER
+  const matchRole = (c: string): string | null => {
+    // Admin match
+    if (
+      c === 'ADMIN' ||
+      c.endsWith(':ADMIN') ||
+      c.endsWith('_ADMIN') ||
+      c.includes('ADMINISTRATOR') ||
+      c.includes('SENTRA_ADMIN')
+    ) {
+      return 'ADMIN';
+    }
+    // Engineer match
+    if (
+      c === 'ENGINEER' ||
+      c.endsWith(':ENGINEER') ||
+      c.endsWith('_ENGINEER') ||
+      c.includes('ENGINEERING') ||
+      c === 'ENGINEERS'
+    ) {
+      return 'ENGINEER';
+    }
+    // Auditor match
+    if (
+      c === 'AUDITOR' ||
+      c.endsWith(':AUDITOR') ||
+      c.endsWith('_AUDITOR') ||
+      c.includes('AUDIT') ||
+      c.includes('COMPLIANCE')
+    ) {
+      return 'AUDITOR';
+    }
+    // Member match
+    if (
+      c === 'MEMBER' ||
+      c.endsWith(':MEMBER') ||
+      c.endsWith('_MEMBER') ||
+      c.includes('USER') ||
+      c === 'MEMBERS'
+    ) {
+      return 'MEMBER';
+    }
+    // Viewer match
+    if (
+      c === 'VIEWER' ||
+      c.endsWith(':VIEWER') ||
+      c.endsWith('_VIEWER') ||
+      c.includes('READONLY') ||
+      c.includes('READ_ONLY')
+    ) {
+      return 'VIEWER';
+    }
+    return null;
+  };
+
+  for (const c of candidates) {
+    const matched = matchRole(c);
+    if (matched) return matched;
+  }
+
+  return 'VIEWER';
+};
+
+/**
+ * Revokes all active refresh tokens, sessions, and sets a Redis blacklist flag for a user.
+ * Ensures a deactivated user loses active session access immediately.
+ */
+export const revokeUserSessions = async (userId: string): Promise<void> => {
+  try {
+    // 1. Revoke all refresh tokens for this user
+    await prisma.refreshToken.updateMany({
+      where: { userId },
+      data: { revoked: true },
+    }).catch((err) => {
+      logger.warn(`[REVOKE-SESSIONS] Failed to revoke refresh tokens for user ${userId}:`, err);
+    });
+
+    // 2. Remove active login sessions
+    await prisma.login_sessions.deleteMany({
+      where: { userId },
+    }).catch((err) => {
+      logger.warn(`[REVOKE-SESSIONS] Failed to delete login sessions for user ${userId}:`, err);
+    });
+
+    // 3. Mark user blacklisted in Redis for immediate rejection in auth middleware
+    const redis = getRedisClient();
+    if (redis) {
+      try {
+        await redis.set(`blacklist:user:${userId}`, '1', 'EX', 86400); // 24 hours
+      } catch (redisErr) {
+        logger.warn(`[REVOKE-SESSIONS] Failed to write user blacklist in Redis for user ${userId}:`, redisErr);
+      }
+    }
+  } catch (error) {
+    logger.error(`[REVOKE-SESSIONS] Error revoking sessions for user ${userId}:`, error);
+  }
+};
 
 // Normalise a list of allowed email domains ("Acme.com", "@acme.com") into lowercase bare domains.
 export const normalizeAllowedDomains = (input: unknown): string[] => {
@@ -77,6 +214,13 @@ export const updateSsoConfig = async (req: any, res: Response, next: NextFunctio
       ? normalizeAllowedDomains(allowedEmailDomains)
       : normalizeAllowedDomains(samlMetadata.allowedEmailDomains);
 
+    // If Okta provider is chosen without custom mapping, use Okta preset
+    const chosenMapping = attributeMapping || (
+      String(sso_provider).toLowerCase() === 'okta'
+        ? OKTA_ATTRIBUTE_PRESET
+        : (samlMetadata.attributeMapping || defaultMapping)
+    );
+
     const updatedOrg = await prisma.organizations.update({
       where: { id: organizationId },
       data: {
@@ -84,7 +228,7 @@ export const updateSsoConfig = async (req: any, res: Response, next: NextFunctio
         sso_provider: sso_provider || 'SAML',
         saml_metadata: {
           idpMetadataXml,
-          attributeMapping: attributeMapping || defaultMapping,
+          attributeMapping: chosenMapping,
           allowedEmailDomains: domains,
           scimBearerToken: encryptedToken // Encrypted at rest!
         }
@@ -96,6 +240,160 @@ export const updateSsoConfig = async (req: any, res: Response, next: NextFunctio
       success: true,
       data: updatedOrg,
       scimBearerToken: plaintextToken // Plaintext returned to admin!
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Validates SAML IdP metadata XML, X.509 signing certificate expiration,
+ * SingleSignOnService redirect URL, and required attribute mappings.
+ * Strictly avoids leaking any certificates private keys, SCIM tokens, or secrets.
+ */
+export const testSsoConnection = async (req: any, res: Response, next: NextFunction): Promise<any> => {
+  try {
+    const organizationId = req.user.organizationId;
+    const org = await prisma.organizations.findUnique({
+      where: { id: organizationId }
+    });
+
+    if (!org) {
+      return res.status(404).json({ success: false, message: 'Organization not found' });
+    }
+
+    const { idpMetadataXml, attributeMapping } = req.body;
+    const xmlToTest = idpMetadataXml?.trim() || (org.saml_metadata as any)?.idpMetadataXml?.trim();
+
+    if (!xmlToTest) {
+      return res.status(400).json({
+        success: false,
+        valid: false,
+        message: 'No IdP Metadata XML provided or configured to test'
+      });
+    }
+
+    const checks: Array<{ name: string; passed: boolean; message: string }> = [];
+    let entityId: string | null = null;
+    let ssoUrl: string | null = null;
+    let certValid = false;
+    let certExpiresAt: string | null = null;
+    let certDaysRemaining: number | null = null;
+
+    // Check 1: XML Syntax & SAML EntityDescriptor
+    if (xmlToTest.includes('EntityDescriptor') && xmlToTest.includes('IDPSSODescriptor')) {
+      const entityIdMatch = xmlToTest.match(/entityID=["']([^"']+)["']/i);
+      entityId = entityIdMatch ? entityIdMatch[1] : null;
+
+      checks.push({
+        name: 'Metadata XML Structure',
+        passed: true,
+        message: `Valid SAML 2.0 metadata${entityId ? ` (Entity ID: ${entityId})` : ''}`,
+      });
+    } else {
+      checks.push({
+        name: 'Metadata XML Structure',
+        passed: false,
+        message: 'Metadata XML must contain <EntityDescriptor> and <IDPSSODescriptor>',
+      });
+    }
+
+    // Check 2: SingleSignOnService URL
+    const ssoUrlMatch = xmlToTest.match(/SingleSignOnService[^>]*Location=["']([^"']+)["']/i);
+    if (ssoUrlMatch && ssoUrlMatch[1]) {
+      ssoUrl = ssoUrlMatch[1];
+      checks.push({
+        name: 'SingleSignOnService Endpoint',
+        passed: true,
+        message: `Found SSO endpoint: ${ssoUrl}`,
+      });
+    } else {
+      checks.push({
+        name: 'SingleSignOnService Endpoint',
+        passed: false,
+        message: 'No SingleSignOnService Location found in metadata XML',
+      });
+    }
+
+    // Check 3: Certificate validity & expiration
+    try {
+      const certMatch = xmlToTest.match(/<(?:\w+:)?X509Certificate>([\s\S]*?)<\/(?:\w+:)?X509Certificate>/i);
+      if (!certMatch || !certMatch[1]) {
+        throw new Error('No X509Certificate found in metadata XML');
+      }
+
+      const rawCert = certMatch[1].replace(/\s+/g, '');
+      const pem = `-----BEGIN CERTIFICATE-----\n${rawCert.match(/.{1,64}/g)?.join('\n')}\n-----END CERTIFICATE-----`;
+
+      const x509 = new crypto.X509Certificate(pem);
+      const validFrom = new Date(x509.validFrom);
+      const validTo = new Date(x509.validTo);
+      const now = new Date();
+
+      certExpiresAt = validTo.toISOString();
+      const diffMs = validTo.getTime() - now.getTime();
+      certDaysRemaining = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+      if (now < validFrom) {
+        checks.push({
+          name: 'Signing Certificate',
+          passed: false,
+          message: `Certificate is not valid yet (valid from: ${validFrom.toLocaleDateString()})`,
+        });
+      } else if (now > validTo) {
+        checks.push({
+          name: 'Signing Certificate',
+          passed: false,
+          message: `Certificate has EXPIRED on ${validTo.toLocaleDateString()}`,
+        });
+      } else {
+        certValid = true;
+        checks.push({
+          name: 'Signing Certificate',
+          passed: true,
+          message: `Valid certificate (expires in ${certDaysRemaining} days on ${validTo.toLocaleDateString()})`,
+        });
+      }
+    } catch (certErr: any) {
+      checks.push({
+        name: 'Signing Certificate',
+        passed: false,
+        message: `Certificate parsing failed: ${certErr.message}`,
+      });
+    }
+
+    // Check 4: Required Attribute Mapping
+    const mapping = attributeMapping || (org.saml_metadata as any)?.attributeMapping || (
+      org.sso_provider === 'Okta' ? OKTA_ATTRIBUTE_PRESET : STANDARD_ATTRIBUTE_PRESET
+    );
+    if (mapping && mapping.email && typeof mapping.email === 'string' && mapping.email.trim().length > 0) {
+      checks.push({
+        name: 'Required Attributes',
+        passed: true,
+        message: `Email mapped to "${mapping.email}". First name: "${mapping.firstName || 'not set'}", Last name: "${mapping.lastName || 'not set'}", Role/Group: "${mapping.role || mapping.groups || 'not set'}"`,
+      });
+    } else {
+      checks.push({
+        name: 'Required Attributes',
+        passed: false,
+        message: 'Email attribute mapping is required and cannot be empty',
+      });
+    }
+
+    const allPassed = checks.every((c) => c.passed);
+
+    return res.status(200).json({
+      success: true,
+      valid: allPassed,
+      details: {
+        entityId,
+        ssoUrl,
+        certValid,
+        certExpiresAt,
+        certDaysRemaining,
+        attributeMapping: mapping,
+        checks,
+      },
     });
   } catch (error) {
     next(error);
@@ -248,16 +546,56 @@ export const samlCallback = async (req: Request, res: Response, next: NextFuncti
     const attributeMapping = samlMetadata.attributeMapping || {};
     const emailClaim = attributeMapping.email || 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress';
     const nameClaim = attributeMapping.name || 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name';
+    const firstNameClaim = attributeMapping.firstName || 'firstName';
+    const lastNameClaim = attributeMapping.lastName || 'lastName';
+    const roleClaim = attributeMapping.role || 'role';
+    const groupsClaim = attributeMapping.groups || 'groups';
 
     const attributes = extract.attributes || {};
-    const rawEmail = attributes[emailClaim] || attributes['email'] || extract.nameID;
-    const rawName = attributes[nameClaim] || attributes['name'] || (typeof rawEmail === 'string' ? rawEmail.split('@')[0] : 'SAML User');
+    const rawEmail = attributes[emailClaim]
+      || attributes['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress']
+      || attributes['email']
+      || extract.nameID;
+
+    // Resolve user full name from firstName + lastName if available, then nameClaim, then email prefix
+    const rawFirstName = attributes[firstNameClaim]
+      || attributes['firstName']
+      || attributes['givenName']
+      || attributes['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname'];
+    const rawLastName = attributes[lastNameClaim]
+      || attributes['lastName']
+      || attributes['familyName']
+      || attributes['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname'];
+
+    const firstStr = Array.isArray(rawFirstName) ? rawFirstName[0] : rawFirstName;
+    const lastStr = Array.isArray(rawLastName) ? rawLastName[0] : rawLastName;
+
+    let resolvedName = '';
+    if (firstStr || lastStr) {
+      resolvedName = `${firstStr || ''} ${lastStr || ''}`.trim();
+    }
+    if (!resolvedName) {
+      const rawName = attributes[nameClaim]
+        || attributes['name']
+        || attributes['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'];
+      resolvedName = Array.isArray(rawName) ? rawName[0] : rawName;
+    }
+    if (!resolvedName && typeof rawEmail === 'string') {
+      resolvedName = rawEmail.split('@')[0];
+    }
+    const name = String(resolvedName || 'SAML User').trim();
+
+    // Map system role from role / groups claims
+    const rawRole = attributes[roleClaim]
+      ?? attributes[groupsClaim]
+      ?? attributes['role']
+      ?? attributes['groups']
+      ?? attributes['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']
+      ?? attributes['http://schemas.xmlsoap.org/claims/Group'];
+    const mappedRole = mapSamlRole(rawRole);
 
     const firstEmail = Array.isArray(rawEmail) ? rawEmail[0] : rawEmail;
-    let name = Array.isArray(rawName) ? rawName[0] : rawName;
-
     const email = String(firstEmail || '').trim().toLowerCase();
-    name = String(name || '');
 
     if (!email) {
       throw new Error('SAML login response did not return a valid email or NameID');
@@ -296,18 +634,27 @@ export const samlCallback = async (req: Request, res: Response, next: NextFuncti
     }
 
     // Upsert the user in that organization
-    let user = existingUser;
-    if (!user) {
+    let user;
+    if (!existingUser) {
       user = await prisma.users.create({
         data: {
           id: randomUUID(),
           email,
           full_name: name,
-          role: 'MEMBER',
+          role: mappedRole,
           is_active: true,
           organizationId: org.id,
         },
       });
+    } else {
+      user = existingUser;
+      if (rawRole !== undefined && existingUser.role !== 'SUPER_ADMIN' && existingUser.role !== mappedRole) {
+        // Sync role if assertion explicitly sent role/groups (never touching a SUPER_ADMIN)
+        user = await prisma.users.update({
+          where: { id: existingUser.id },
+          data: { role: mappedRole }
+        });
+      }
     }
 
     // Setup active session, set HTTP-only cookies
@@ -466,20 +813,42 @@ export const updateScimUser = async (req: any, res: Response, next: NextFunction
     }
 
     const updateData: any = {};
-    if (name?.formatted) updateData.full_name = name.formatted;
-    if (active !== undefined) updateData.is_active = active;
+    if (name?.formatted) {
+      updateData.full_name = name.formatted;
+    } else if (name?.givenName || name?.familyName) {
+      updateData.full_name = `${name.givenName || ''} ${name.familyName || ''}`.trim();
+    }
+
+    let isDeactivation = false;
+    if (active !== undefined) {
+      const boolActive = active === true || String(active).toLowerCase() === 'true';
+      updateData.is_active = boolActive;
+      if (!boolActive) {
+        isDeactivation = true;
+      }
+    }
 
     const updatedUser = await prisma.users.update({
       where: { id },
       data: updateData,
     });
 
-    await auditLogger.log({
-      userId: 'scim_agent',
-      organizationId,
-      action: 'SCIM_USER_UPDATED',
-      metadata: { userId: id, active }
-    });
+    if (isDeactivation || (updatedUser.is_active === false && user.is_active === true)) {
+      await auditLogger.log({
+        userId: 'scim_agent',
+        organizationId,
+        action: 'SCIM_USER_DEACTIVATED',
+        metadata: { userId: id }
+      });
+      await revokeUserSessions(id);
+    } else {
+      await auditLogger.log({
+        userId: 'scim_agent',
+        organizationId,
+        action: 'SCIM_USER_UPDATED',
+        metadata: { userId: id, active: updatedUser.is_active }
+      });
+    }
 
     return res.status(200).json({
       schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
@@ -527,6 +896,9 @@ export const deleteScimUser = async (req: any, res: Response, next: NextFunction
       action: 'SCIM_USER_DEACTIVATED',
       metadata: { userId: id }
     });
+
+    // Invalidate active JWT sessions immediately
+    await revokeUserSessions(id);
 
     return res.status(204).end();
   } catch (error) {
@@ -576,17 +948,55 @@ export const patchScimUser = async (req: any, res: Response, next: NextFunction)
     }
 
     const updateData: any = {};
+    let isDeactivation = false;
+
     for (const op of Operations) {
-      const path = op.path;
+      const opType = String(op.op || '').toLowerCase();
+      const rawPath = op.path ? String(op.path).trim().toLowerCase() : '';
       const value = op.value;
-      const opType = String(op.op).toLowerCase();
 
       if (opType === 'replace' || opType === 'add') {
-        if (path === 'active' || value?.active !== undefined) {
-          updateData.is_active = path === 'active' ? (value === true || value === 'true') : value.active;
+        // (a) Form A: op replace/add, path "active" (case-insensitive)
+        if (rawPath === 'active') {
+          const boolActive = value === true || String(value).toLowerCase() === 'true';
+          updateData.is_active = boolActive;
+          if (!boolActive) {
+            isDeactivation = true;
+          }
         }
-        if (path === 'name.formatted') {
-          updateData.full_name = value;
+        // (b) Form B: op replace/add, NO path (or empty), value object containing { active: ... }
+        else if (!rawPath && typeof value === 'object' && value !== null) {
+          const valObj = (Array.isArray(value) ? value[0] : value) as Record<string, any>;
+          if (valObj && typeof valObj === 'object') {
+            const activeKey = Object.keys(valObj).find((k) => k.toLowerCase() === 'active');
+            if (activeKey !== undefined) {
+              const rawVal = valObj[activeKey];
+              const boolActive = rawVal === true || String(rawVal).toLowerCase() === 'true';
+              updateData.is_active = boolActive;
+              if (!boolActive) {
+                isDeactivation = true;
+              }
+            }
+            if (valObj.name) {
+              const nameObj = valObj.name;
+              if (nameObj.formatted) {
+                updateData.full_name = nameObj.formatted;
+              } else if (nameObj.givenName || nameObj.familyName) {
+                updateData.full_name = `${nameObj.givenName || ''} ${nameObj.familyName || ''}`.trim();
+              }
+            }
+          }
+        }
+
+        // Support name path updates
+        if (rawPath === 'name.formatted') {
+          updateData.full_name = String(value);
+        } else if (rawPath === 'name' && typeof value === 'object' && value !== null) {
+          if (value.formatted) {
+            updateData.full_name = value.formatted;
+          } else if (value.givenName || value.familyName) {
+            updateData.full_name = `${value.givenName || ''} ${value.familyName || ''}`.trim();
+          }
         }
       }
     }
@@ -595,6 +1005,23 @@ export const patchScimUser = async (req: any, res: Response, next: NextFunction)
       where: { id },
       data: updateData,
     });
+
+    if (isDeactivation || (updatedUser.is_active === false && user.is_active === true)) {
+      await auditLogger.log({
+        userId: 'scim_agent',
+        organizationId,
+        action: 'SCIM_USER_DEACTIVATED',
+        metadata: { userId: id }
+      });
+      await revokeUserSessions(id);
+    } else {
+      await auditLogger.log({
+        userId: 'scim_agent',
+        organizationId,
+        action: 'SCIM_USER_UPDATED',
+        metadata: { userId: id, updateData }
+      });
+    }
 
     return res.status(200).json({
       schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
