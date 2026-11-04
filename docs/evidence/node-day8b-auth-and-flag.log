@@ -1,3 +1,4 @@
+FLAG decisions in this test are MOCKED. The Sentraa backend was not asked to return flagged. This proves wrapper behaviour only.
 ================================================================================
 DAY 8b: NODE SDK AUTHENTICATED ROUTE TEST (POST /ai/check-action)
 ================================================================================
@@ -27,6 +28,7 @@ VERDICT:                 PASS (Authenticated BLOCKED decision verified)
 ================================================================================
 DAY 8b: NODE SDK WRAPPER FLAG PATH VERIFICATION
 ================================================================================
+FLAG decisions in this test are MOCKED. The Sentraa backend was not asked to return flagged. This proves wrapper behaviour only.
 Testing flagMode='block' (0 provider calls) and flagMode='allow' (onFlag invoked)
 --------------------------------------------------------------------------------
 
@@ -35,16 +37,16 @@ Testing flagMode='block' (0 provider calls) and flagMode='allow' (onFlag invoked
   • flagMode='allow':     onFlag called=true, provider calls=1 (PASS: 1 call) [REAL]
 
 [2/6] OpenAI Wrapper FLAG Path
-  • flagMode='block':     status=403 SentraError, provider calls=0 (PASS: 0 calls) [REAL (via Azure route)]
-  • flagMode='allow':     onFlag called=true, provider calls=1 (PASS: 1 call) [REAL (via Azure route)]
+  • flagMode='block':     status=403 SentraError, provider calls=0 (PASS: 0 calls) [MOCK]
+  • flagMode='allow':     onFlag called=true, provider calls=1 (PASS: 1 call) [MOCK]
 
 [3/6] Google Vertex AI Wrapper FLAG Path
   • flagMode='block':     status=403 SentraError, provider calls=0 (PASS: 0 calls) [REAL]
   • flagMode='allow':     onFlag called=true, provider calls=1 (PASS: 1 call) [REAL]
 
 [4/6] LangChain Wrapper FLAG Path
-  • flagMode='block':     status=403 SentraError, provider calls=0 (PASS: 0 calls) [REAL (via AzureChatOpenAI)]
-  • flagMode='allow':     onFlag called=true, provider calls=1 (PASS: 1 call) [REAL (via AzureChatOpenAI)]
+  • flagMode='block':     status=403 SentraError, provider calls=0 (PASS: 0 calls) [MOCK]
+  • flagMode='allow':     onFlag called=true, provider calls=1 (PASS: 1 call) [MOCK]
 
 [5/6] Amazon Bedrock Wrapper FLAG Path
   • flagMode='block':     status=403 SentraError, provider calls=0 (PASS: 0 calls) [MOCK (KNOWN BLOCKED - AWS Error 002)]
