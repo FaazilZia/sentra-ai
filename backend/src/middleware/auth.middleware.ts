@@ -99,8 +99,11 @@ async function handleJwtToken(token: string, req: any, res: Response): Promise<{
 
     if (redis) {
       try {
-        const cached = await redis.get(`blacklist:${token}`);
-        isBlacklisted = !!cached;
+        const [cachedToken, cachedUser] = await Promise.all([
+          redis.get(`blacklist:${token}`),
+          payload?.id ? redis.get(`blacklist:user:${payload.id}`) : null,
+        ]);
+        isBlacklisted = !!cachedToken || !!cachedUser;
         redisSuccess = true;
       } catch (err) {
         logger.warn('Redis error during blacklist check, falling back to database:', err);
@@ -132,6 +135,16 @@ async function handleJwtToken(token: string, req: any, res: Response): Promise<{
       where: { id: payload.id },
       include: { organizations: true },
     });
+
+    if (user && user.is_active === false) {
+      return {
+        handled: true,
+        errorResponse: {
+          status: 401,
+          body: { success: false, message: 'User account has been deactivated' }
+        }
+      };
+    }
     if (user && user.is_active && user.organizations.is_active) {
       // Invalidate access tokens issued before passwordChangedAt
       if (user.passwordChangedAt && payload.iat) {
