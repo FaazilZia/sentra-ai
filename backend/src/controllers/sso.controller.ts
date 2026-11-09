@@ -373,15 +373,6 @@ export const getSamlMetadata = async (req: Request, res: Response, next: NextFun
       return res.status(404).json({ success: false, message: 'Organization not found' });
     }
 
-    if (!org.sso_enabled || !org.saml_metadata) {
-      return res.status(400).json({ success: false, message: 'SSO is not enabled or metadata is not configured' });
-    }
-
-    const samlMetadata = org.saml_metadata as any;
-    if (!samlMetadata || !samlMetadata.idpMetadataXml) {
-      return res.status(400).json({ success: false, message: 'IdP Metadata XML is not configured for this organization' });
-    }
-
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:10000';
     const sp = samlify.ServiceProvider({
       entityID: `${backendUrl}/api/v1/saml/${orgSlug}/metadata`,

@@ -14,6 +14,7 @@ import {
   normalizeAllowedDomains,
   mapSamlRole,
   testSsoConnection,
+  getSamlMetadata,
   OKTA_ATTRIBUTE_PRESET
 } from '../../controllers/sso.controller';
 
@@ -335,6 +336,59 @@ describe('mapSamlRole role resolution & escalation protection', () => {
     expect(mapSamlRole('')).toBe('VIEWER');
     expect(mapSamlRole('UNKNOWN_CUSTOM_GROUP')).toBe('VIEWER');
     expect(mapSamlRole([])).toBe('VIEWER');
+  });
+});
+
+describe('getSamlMetadata controller', () => {
+  const ORG_SLUG = 'acme-metadata-test';
+
+  it('returns SP metadata XML when no IdP metadata is configured', async () => {
+    (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+      id: 'org-meta-1',
+      slug: ORG_SLUG,
+      sso_enabled: false,
+      saml_metadata: null,
+    });
+
+    const req: any = { params: { orgSlug: ORG_SLUG } };
+    const res: any = {
+      header: jest.fn().mockReturnThis(),
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn().mockReturnThis(),
+    };
+    const next = jest.fn();
+
+    await getSamlMetadata(req, res, next);
+
+    expect(prisma.organizations.findUnique).toHaveBeenCalledWith({
+      where: { slug: ORG_SLUG },
+    });
+    expect(res.header).toHaveBeenCalledWith('Content-Type', 'application/xml');
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.send).toHaveBeenCalled();
+    const xml = res.send.mock.calls[0][0];
+    expect(xml).toContain('EntityDescriptor');
+    expect(xml).toContain(`/api/v1/saml/${ORG_SLUG}/metadata`);
+    expect(xml).toContain(`/api/v1/saml/${ORG_SLUG}/callback`);
+  });
+
+  it('returns 404 when organization is not found by slug', async () => {
+    (prisma.organizations.findUnique as jest.Mock).mockResolvedValue(null);
+
+    const req: any = { params: { orgSlug: 'non-existent-org' } };
+    const res: any = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn().mockReturnThis(),
+    };
+    const next = jest.fn();
+
+    await getSamlMetadata(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: 'Organization not found',
+    });
   });
 });
 
