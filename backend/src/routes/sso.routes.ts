@@ -1,4 +1,4 @@
-import { Router, NextFunction } from 'express';
+import { Router, NextFunction, json } from 'express';
 import { authenticate, authenticateScim, authorizeRoles } from '../middleware/auth.middleware';
 import {
   initiateSamlSso,
@@ -483,8 +483,8 @@ router.put('/sso/config', authenticate, authorizeRoles('ADMIN'), updateSsoConfig
 router.post('/sso/test-connection', authenticate, authorizeRoles('ADMIN'), ssoTestRateLimiter, testSsoConnection);
 router.get('/sso/metadata/:orgSlug', getSamlMetadata);
 
-// Apply SCIM header middleware to all SCIM routes
-router.use('/scim/v2', scimHeaderMiddleware);
+// Apply SCIM body parser and header middleware to all SCIM routes
+router.use('/scim/v2', json({ type: ['application/scim+json', 'application/json', 'application/*+json'] }), scimHeaderMiddleware);
 
 // Discovery endpoints (no authentication required per RFC 7644 §4)
 router.get('/scim/v2/ServiceProviderConfig', getServiceProviderConfig);

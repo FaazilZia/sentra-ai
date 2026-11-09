@@ -1,3 +1,5 @@
+import express from 'express';
+import request from 'supertest';
 import prisma from '../../config/db';
 import { auditLogger } from '../../utils/auditLogger';
 import {
@@ -8,12 +10,24 @@ import {
 } from '../../controllers/sso.controller';
 import { authenticate } from '../../middleware/auth.middleware';
 import * as jwtUtil from '../../utils/jwt';
+import ssoRouter from '../../routes/sso.routes';
+
+jest.mock('../../middleware/auth.middleware', () => {
+  const actual = jest.requireActual('../../middleware/auth.middleware');
+  return {
+    ...actual,
+    authenticateScim: jest.fn((req: any, res: any, next: any) => {
+      req.user = { organizationId: 'org-scim-deact' };
+      next();
+    }),
+  };
+});
 
 jest.mock('../../config/db', () => ({
   __esModule: true,
   default: {
     organizations: { findUnique: jest.fn() },
-    users: { findFirst: jest.fn(), update: jest.fn(), findUnique: jest.fn() },
+    users: { findFirst: jest.fn(), update: jest.fn(), findUnique: jest.fn(), create: jest.fn() },
     refreshToken: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
     login_sessions: { deleteMany: jest.fn().mockResolvedValue({ count: 1 }) },
     jwt_blacklist: { findUnique: jest.fn() },
@@ -365,6 +379,149 @@ describe('SCIM Deactivation Routes & Session Invalidation', () => {
           message: 'Invalid or expired credentials',
         })
       );
+    });
+  });
+describe('SCIM Route-specific Body Parser (application/scim+json)', () => {
+    let testApp: express.Express;
+
+    beforeAll(() => {
+      testApp = express();
+      testApp.use('/api/v1', ssoRouter);
+    });
+
+    it('parses application/scim+json payload and passes structured body to createScimUser', async () => {
+      (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+        id: ORG_ID,
+        sso_enabled: true,
+      });
+      (prisma.users.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.users.create as jest.Mock).mockImplementation(async ({ data }: any) => ({
+        id: 'new-scim-user-123',
+        ...data,
+      }));
+
+      const scimUserPayload = {
+        schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
+        userName: 'provisioned.user@okta.com',
+        name: {
+          givenName: 'Provisioned',
+          familyName: 'User',
+        },
+        emails: [{ value: 'provisioned.user@okta.com', primary: true }],
+        active: true,
+      };
+
+      const res = await request(testApp)
+        .post('/api/v1/scim/v2/Users')
+        .set('Content-Type', 'application/scim+json')
+        .send(JSON.stringify(scimUserPayload));
+
+      expect(res.status).toBe(201);
+      expect(res.headers['content-type']).toMatch(/application\/scim\+json/);
+      expect(typeof res.body.id).toBe('string');
+      expect(res.body.userName).toBe('provisioned.user@okta.com');
+      expect(res.body.active).toBe(true);
+
+      // Verify that createScimUser received and processed the parsed body fields
+      expect(prisma.users.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            email: 'provisioned.user@okta.com',
+            full_name: 'Provisioned User',
+            is_active: true,
+            organizationId: ORG_ID,
+          }),
+        })
+      );
+    });
+
+    it('parses application/scim+json payload and passes structured body to patchScimUser for deactivation', async () => {
+      (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+        id: ORG_ID,
+        sso_enabled: true,
+      });
+      (prisma.users.findFirst as jest.Mock).mockImplementation(async (args: any) => {
+        if (args?.where?.role === 'ADMIN') {
+          return {
+            id: ADMIN_ACTOR_ID,
+            email: 'admin@acme.com',
+            full_name: 'Admin Actor',
+            role: 'ADMIN',
+            is_active: true,
+            organizationId: ORG_ID,
+          };
+        }
+        return {
+          id: 'user-to-patch',
+          email: 'patch.user@okta.com',
+          full_name: 'Patch User',
+          is_active: true,
+          organizationId: ORG_ID,
+        };
+      });
+      (prisma.users.update as jest.Mock).mockImplementation(async ({ data }: any) => ({
+        id: 'user-to-patch',
+        email: 'patch.user@okta.com',
+        full_name: 'Patch User',
+        is_active: data.is_active !== undefined ? data.is_active : false,
+        organizationId: ORG_ID,
+      }));
+
+      const scimPatchPayload = {
+        schemas: ['urn:ietf:params:scim:api:messages:2.0:PatchOp'],
+        Operations: [
+          {
+            op: 'replace',
+            path: 'active',
+            value: false,
+          },
+        ],
+      };
+
+      const res = await request(testApp)
+        .patch('/api/v1/scim/v2/Users/user-to-patch')
+        .set('Content-Type', 'application/scim+json')
+        .send(JSON.stringify(scimPatchPayload));
+
+      expect(res.status).toBe(200);
+      expect(res.headers['content-type']).toMatch(/application\/scim\+json/);
+      expect(res.body.active).toBe(false);
+
+      expect(prisma.users.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'user-to-patch' },
+          data: expect.objectContaining({
+            is_active: false,
+          }),
+        })
+      );
+    });
+
+    it('negative case: returns 400 Bad Request when application/scim+json body is missing required username/email', async () => {
+      (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+        id: ORG_ID,
+        sso_enabled: true,
+      });
+
+      const invalidPayload = {
+        schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
+        name: { givenName: 'NoEmailUser' },
+        active: true,
+      };
+
+      const res = await request(testApp)
+        .post('/api/v1/scim/v2/Users')
+        .set('Content-Type', 'application/scim+json')
+        .send(JSON.stringify(invalidPayload));
+
+      expect(res.status).toBe(400);
+      expect(res.headers['content-type']).toMatch(/application\/scim\+json/);
+      expect(res.body).toMatchObject({
+        schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+        status: '400',
+        detail: 'Username/Email is required',
+      });
+      expect(prisma.users.create).not.toHaveBeenCalled();
     });
   });
 });

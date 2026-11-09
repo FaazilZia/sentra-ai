@@ -428,7 +428,7 @@ app.use(prometheusMiddleware);
 // Prometheus metrics endpoint (before auth)
 app.use('/metrics', metricsRoutes);
 
-app.use(express.json({ limit: '100kb' }));
+app.use(express.json({ limit: '100kb', type: ['application/json', 'application/scim+json', 'application/*+json'] }));
 app.use(cookieParser());
 app.use(csrfProtection);
 // Morgan kept only for non-production development convenience; pino-http handles prod JSON logs
