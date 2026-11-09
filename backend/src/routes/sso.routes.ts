@@ -1,5 +1,6 @@
-import { Router, NextFunction, json } from 'express';
+import { Router, NextFunction, json, urlencoded } from 'express';
 import { authenticate, authenticateScim, authorizeRoles } from '../middleware/auth.middleware';
+import * as ssoController from '../controllers/sso.controller';
 import {
   initiateSamlSso,
   samlCallback,
@@ -475,7 +476,11 @@ const scimHeaderMiddleware = (req: any, res: any, next: NextFunction) => {
 
 // SAML 2.0 browser endpoints (slug-based, no cookie/bearer token required)
 router.get('/saml/:orgSlug', initiateSamlSso);
-router.post('/saml/:orgSlug/callback', samlCallback);
+router.post(
+  '/saml/:orgSlug/callback',
+  urlencoded({ extended: false, limit: '1mb' }),
+  (req, res, next) => ssoController.samlCallback(req, res, next)
+);
 router.get('/saml/:orgSlug/metadata', getSamlMetadata);
 
 // SAML administrative configuration endpoints (requires JWT session authentication)
