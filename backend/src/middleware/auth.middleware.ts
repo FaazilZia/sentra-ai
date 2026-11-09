@@ -256,12 +256,20 @@ export const authenticateScim = async (req: any, res: Response, next: NextFuncti
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ success: false, message: 'Authentication required' });
+      return res.status(401).type('application/scim+json').json({
+        schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+        status: '401',
+        detail: 'Authentication required',
+      });
     }
 
     const token = authHeader.split(' ')[1];
     if (!token) {
-      return res.status(401).json({ success: false, message: 'Authentication required' });
+      return res.status(401).type('application/scim+json').json({
+        schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+        status: '401',
+        detail: 'Authentication required',
+      });
     }
 
     // Retrieve all organizations with SSO enabled
@@ -286,14 +294,22 @@ export const authenticateScim = async (req: any, res: Response, next: NextFuncti
     });
 
     if (!org) {
-      return res.status(401).json({ success: false, message: 'Invalid SCIM credentials' });
+      return res.status(401).type('application/scim+json').json({
+        schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+        status: '401',
+        detail: 'Invalid SCIM credentials',
+      });
     }
 
     req.user = { organizationId: org.id };
     return next();
   } catch (error) {
     logger.error('SCIM Authentication Error:', error);
-    res.status(401).json({ success: false, message: 'Invalid or expired SCIM credentials' });
+    return res.status(401).type('application/scim+json').json({
+      schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+      status: '401',
+      detail: 'Invalid or expired SCIM credentials',
+    });
   }
 };
 

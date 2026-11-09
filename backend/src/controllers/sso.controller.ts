@@ -21,7 +21,20 @@ export const OKTA_ATTRIBUTE_PRESET = {
 };
 
 export const STANDARD_ATTRIBUTE_PRESET = {
-  email: 'http://schemas.xmlsoap.org/ws/2005/05/identity/export const DOCUMENTED_SAML_ROLE_MAP: Record<string, 'ADMIN' | 'ENGINEER' | 'AUDITOR' | 'MEMBER' | 'VIEWER'> = {
+  email: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress',
+  firstName: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname',
+  lastName: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname',
+  name: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name',
+  role: 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role',
+  groups: 'http://schemas.xmlsoap.org/claims/Group',
+};
+
+/**
+ * Exact documented SAML group names mapped to Sentraa system roles.
+ * Loose substring matching (e.g. includes 'ADMINISTRATOR', endsWith '_ADMIN', endsWith ':ADMIN')
+ * is prohibited to eliminate privilege escalation risks and prefix collisions.
+ */
+export const DOCUMENTED_SAML_ROLE_MAP: Record<string, 'ADMIN' | 'ENGINEER' | 'AUDITOR' | 'MEMBER' | 'VIEWER'> = {
   ADMIN: 'ADMIN',
   SENTRA_ADMIN: 'ADMIN',
   ENGINEER: 'ENGINEER',
@@ -635,18 +648,31 @@ export const samlCallback = async (req: Request, res: Response, next: NextFuncti
 
 
 // ==========================================
-// SCIM 2.0 CONTROLLER
+// SCIM 2.0 CONTROLLER & HELPERS
 // ==========================================
+
+/**
+ * Standard RFC 7644 SCIM 2.0 error response helper.
+ * Always responds with Content-Type: application/scim+json and schema urn:ietf:params:scim:api:messages:2.0:Error.
+ */
+export const sendScimError = (res: Response, status: number, detail: string) => {
+  return res.status(status).type('application/scim+json').json({
+    schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+    status: String(status),
+    detail,
+  });
+};
+
 export const getScimUsers = async (req: any, res: Response, next: NextFunction) => {
   try {
     const organizationId = req.user?.organizationId;
     if (!organizationId) {
-      return res.status(401).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '401', detail: 'Invalid SCIM Bearer credentials' });
+      return sendScimError(res, 401, 'Invalid SCIM Bearer credentials');
     }
 
     const org = await prisma.organizations.findUnique({ where: { id: organizationId } });
     if (!org || !org.sso_enabled) {
-      return res.status(501).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '501', detail: 'SSO is not enabled for this organization' });
+      return sendScimError(res, 501, 'SSO is not enabled for this organization');
     }
 
     const whereClause: any = { organizationId };
@@ -689,26 +715,26 @@ export const createScimUser = async (req: any, res: Response, next: NextFunction
   try {
     const organizationId = req.user?.organizationId;
     if (!organizationId) {
-      return res.status(401).json({ success: false, message: 'Invalid SCIM Bearer credentials' });
+      return sendScimError(res, 401, 'Invalid SCIM Bearer credentials');
     }
 
     const org = await prisma.organizations.findUnique({ where: { id: organizationId } });
     if (!org || !org.sso_enabled) {
-      return res.status(501).json({ success: false, message: 'SSO is not enabled for this organization' });
+      return sendScimError(res, 501, 'SSO is not enabled for this organization');
     }
 
     const { userName, emails, name, active } = req.body;
     const email = userName || emails?.[0]?.value;
-    const fullName = name?.formatted || `${name?.givenName || ''} ${name?.familyName || ''}`.trim() || email.split('@')[0];
+    const fullName = name?.formatted || `${name?.givenName || ''} ${name?.familyName || ''}`.trim() || email?.split('@')[0];
 
     if (!email) {
-      return res.status(400).json({ success: false, message: 'Username/Email is required' });
+      return sendScimError(res, 400, 'Username/Email is required');
     }
 
     // Verify user doesn't exist
     const existing = await prisma.users.findUnique({ where: { email } });
     if (existing) {
-      return res.status(409).json({ success: false, message: 'User already exists' });
+      return sendScimError(res, 409, 'User already exists');
     }
 
     const newUser = await prisma.users.create({
@@ -722,11 +748,11 @@ export const createScimUser = async (req: any, res: Response, next: NextFunction
       },
     });
 
-    await auditLogger.log({
-      userId: 'scim_agent',
+    await logScimAudit({
       organizationId,
       action: 'SCIM_USER_PROVISIONED',
-      metadata: { userId: newUser.id, email }
+      targetUserId: newUser.id,
+      metadata: { userId: newUser.id, email },
     });
 
     return res.status(201).json({
@@ -746,12 +772,12 @@ export const updateScimUser = async (req: any, res: Response, next: NextFunction
   try {
     const organizationId = req.user?.organizationId;
     if (!organizationId) {
-      return res.status(401).json({ success: false, message: 'Invalid SCIM Bearer credentials' });
+      return sendScimError(res, 401, 'Invalid SCIM Bearer credentials');
     }
 
     const org = await prisma.organizations.findUnique({ where: { id: organizationId } });
     if (!org || !org.sso_enabled) {
-      return res.status(501).json({ success: false, message: 'SSO is not enabled for this organization' });
+      return sendScimError(res, 501, 'SSO is not enabled for this organization');
     }
 
     const id = req.params.id as string;
@@ -762,7 +788,7 @@ export const updateScimUser = async (req: any, res: Response, next: NextFunction
     });
 
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return sendScimError(res, 404, 'User not found');
     }
 
     const updateData: any = {};
@@ -787,19 +813,19 @@ export const updateScimUser = async (req: any, res: Response, next: NextFunction
     });
 
     if (isDeactivation || (updatedUser.is_active === false && user.is_active === true)) {
-      await auditLogger.log({
-        userId: 'scim_agent',
+      await logScimAudit({
         organizationId,
         action: 'SCIM_USER_DEACTIVATED',
-        metadata: { userId: id }
+        targetUserId: id,
+        metadata: { userId: id },
       });
       await revokeUserSessions(id);
     } else {
-      await auditLogger.log({
-        userId: 'scim_agent',
+      await logScimAudit({
         organizationId,
         action: 'SCIM_USER_UPDATED',
-        metadata: { userId: id, active: updatedUser.is_active }
+        targetUserId: id,
+        metadata: { userId: id, active: updatedUser.is_active },
       });
     }
 
@@ -820,12 +846,12 @@ export const deleteScimUser = async (req: any, res: Response, next: NextFunction
   try {
     const organizationId = req.user?.organizationId;
     if (!organizationId) {
-      return res.status(401).json({ success: false, message: 'Invalid SCIM Bearer credentials' });
+      return sendScimError(res, 401, 'Invalid SCIM Bearer credentials');
     }
 
     const org = await prisma.organizations.findUnique({ where: { id: organizationId } });
     if (!org || !org.sso_enabled) {
-      return res.status(501).json({ success: false, message: 'SSO is not enabled for this organization' });
+      return sendScimError(res, 501, 'SSO is not enabled for this organization');
     }
 
     const { id } = req.params;
@@ -834,7 +860,7 @@ export const deleteScimUser = async (req: any, res: Response, next: NextFunction
     });
 
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return sendScimError(res, 404, 'User not found');
     }
 
     // SCIM soft-deletes/suspends user by setting active to false for audit trail integrity
@@ -843,11 +869,11 @@ export const deleteScimUser = async (req: any, res: Response, next: NextFunction
       data: { is_active: false },
     });
 
-    await auditLogger.log({
-      userId: 'scim_agent',
+    await logScimAudit({
       organizationId,
       action: 'SCIM_USER_DEACTIVATED',
-      metadata: { userId: id }
+      targetUserId: id,
+      metadata: { userId: id },
     });
 
     // Invalidate active JWT sessions immediately
@@ -863,12 +889,12 @@ export const getScimUserById = async (req: any, res: Response, next: NextFunctio
   try {
     const organizationId = req.user?.organizationId;
     if (!organizationId) {
-      return res.status(401).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '401', detail: 'Invalid SCIM Bearer credentials' });
+      return sendScimError(res, 401, 'Invalid SCIM Bearer credentials');
     }
     const { id } = req.params;
     const user = await prisma.users.findFirst({ where: { id, organizationId } });
     if (!user) {
-      return res.status(404).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '404', detail: 'User not found' });
+      return sendScimError(res, 404, 'User not found');
     }
     return res.status(200).json({
       schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
@@ -887,17 +913,17 @@ export const patchScimUser = async (req: any, res: Response, next: NextFunction)
   try {
     const organizationId = req.user?.organizationId;
     if (!organizationId) {
-      return res.status(401).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '401', detail: 'Invalid SCIM Bearer credentials' });
+      return sendScimError(res, 401, 'Invalid SCIM Bearer credentials');
     }
     const { id } = req.params;
     const user = await prisma.users.findFirst({ where: { id, organizationId } });
     if (!user) {
-      return res.status(404).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '404', detail: 'User not found' });
+      return sendScimError(res, 404, 'User not found');
     }
 
     const { Operations } = req.body;
     if (!Operations || !Array.isArray(Operations)) {
-      return res.status(400).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '400', detail: 'Invalid operations format' });
+      return sendScimError(res, 400, 'Invalid operations format');
     }
 
     const updateData: any = {};
@@ -960,19 +986,19 @@ export const patchScimUser = async (req: any, res: Response, next: NextFunction)
     });
 
     if (isDeactivation || (updatedUser.is_active === false && user.is_active === true)) {
-      await auditLogger.log({
-        userId: 'scim_agent',
+      await logScimAudit({
         organizationId,
         action: 'SCIM_USER_DEACTIVATED',
-        metadata: { userId: id }
+        targetUserId: id,
+        metadata: { userId: id },
       });
       await revokeUserSessions(id);
     } else {
-      await auditLogger.log({
-        userId: 'scim_agent',
+      await logScimAudit({
         organizationId,
         action: 'SCIM_USER_UPDATED',
-        metadata: { userId: id, updateData }
+        targetUserId: id,
+        metadata: { userId: id, updateData },
       });
     }
 
@@ -993,7 +1019,7 @@ export const getScimGroups = async (req: any, res: Response, next: NextFunction)
   try {
     const organizationId = req.user?.organizationId;
     if (!organizationId) {
-      return res.status(401).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '401', detail: 'Invalid SCIM Bearer credentials' });
+      return sendScimError(res, 401, 'Invalid SCIM Bearer credentials');
     }
 
     const rolesList = ['ADMIN', 'MEMBER', 'VIEWER', 'AUDITOR', 'ENGINEER'];
@@ -1032,7 +1058,7 @@ export const getScimGroupById = async (req: any, res: Response, next: NextFuncti
   try {
     const organizationId = req.user?.organizationId;
     if (!organizationId) {
-      return res.status(401).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '401', detail: 'Invalid SCIM Bearer credentials' });
+      return sendScimError(res, 401, 'Invalid SCIM Bearer credentials');
     }
 
     const { id } = req.params;
@@ -1040,7 +1066,7 @@ export const getScimGroupById = async (req: any, res: Response, next: NextFuncti
     const rolesList = ['ADMIN', 'MEMBER', 'VIEWER', 'AUDITOR', 'ENGINEER'];
 
     if (!rolesList.includes(roleName)) {
-      return res.status(404).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '404', detail: 'Group not found' });
+      return sendScimError(res, 404, 'Group not found');
     }
 
     const roleUsers = await prisma.users.findMany({
@@ -1066,7 +1092,7 @@ export const createScimGroup = async (req: any, res: Response, next: NextFunctio
   try {
     const organizationId = req.user?.organizationId;
     if (!organizationId) {
-      return res.status(401).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '401', detail: 'Invalid SCIM Bearer credentials' });
+      return sendScimError(res, 401, 'Invalid SCIM Bearer credentials');
     }
 
     const { displayName, members } = req.body;
@@ -1074,11 +1100,11 @@ export const createScimGroup = async (req: any, res: Response, next: NextFunctio
     const rolesList = ['ADMIN', 'MEMBER', 'VIEWER', 'AUDITOR', 'ENGINEER'];
 
     if (!rolesList.includes(targetRole)) {
-      return res.status(400).json({
-        schemas: ["urn:ietf:params:scim:api:messages:2.0:Error"],
-        status: "400",
-        detail: `Group '${displayName}' does not map to a known system role. Valid groups are: ADMIN, MEMBER, VIEWER, AUDITOR, ENGINEER.`
-      });
+      return sendScimError(
+        res,
+        400,
+        `Group '${displayName}' does not map to a known system role. Valid groups are: ADMIN, MEMBER, VIEWER, AUDITOR, ENGINEER.`
+      );
     }
 
     if (members && Array.isArray(members)) {
@@ -1104,7 +1130,7 @@ export const updateScimGroup = async (req: any, res: Response, next: NextFunctio
   try {
     const organizationId = req.user?.organizationId;
     if (!organizationId) {
-      return res.status(401).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '401', detail: 'Invalid SCIM Bearer credentials' });
+      return sendScimError(res, 401, 'Invalid SCIM Bearer credentials');
     }
 
     const { id } = req.params;
@@ -1113,11 +1139,11 @@ export const updateScimGroup = async (req: any, res: Response, next: NextFunctio
     const rolesList = ['ADMIN', 'MEMBER', 'VIEWER', 'AUDITOR', 'ENGINEER'];
 
     if (!rolesList.includes(targetRole)) {
-      return res.status(400).json({
-        schemas: ["urn:ietf:params:scim:api:messages:2.0:Error"],
-        status: "400",
-        detail: `Group '${displayName}' does not map to a known system role. Valid groups are: ADMIN, MEMBER, VIEWER, AUDITOR, ENGINEER.`
-      });
+      return sendScimError(
+        res,
+        400,
+        `Group '${displayName}' does not map to a known system role. Valid groups are: ADMIN, MEMBER, VIEWER, AUDITOR, ENGINEER.`
+      );
     }
 
     await prisma.users.updateMany({
@@ -1148,7 +1174,7 @@ export const patchScimGroup = async (req: any, res: Response, next: NextFunction
   try {
     const organizationId = req.user?.organizationId;
     if (!organizationId) {
-      return res.status(401).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '401', detail: 'Invalid SCIM Bearer credentials' });
+      return sendScimError(res, 401, 'Invalid SCIM Bearer credentials');
     }
 
     const { id } = req.params;
@@ -1156,16 +1182,16 @@ export const patchScimGroup = async (req: any, res: Response, next: NextFunction
     const rolesList = ['ADMIN', 'MEMBER', 'VIEWER', 'AUDITOR', 'ENGINEER'];
 
     if (!rolesList.includes(targetRole)) {
-      return res.status(400).json({
-        schemas: ["urn:ietf:params:scim:api:messages:2.0:Error"],
-        status: "400",
-        detail: `Group '${id}' does not map to a known system role. Valid groups are: ADMIN, MEMBER, VIEWER, AUDITOR, ENGINEER.`
-      });
+      return sendScimError(
+        res,
+        400,
+        `Group '${id}' does not map to a known system role. Valid groups are: ADMIN, MEMBER, VIEWER, AUDITOR, ENGINEER.`
+      );
     }
 
     const { Operations } = req.body;
     if (!Operations || !Array.isArray(Operations)) {
-      return res.status(400).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '400', detail: 'Invalid operations format' });
+      return sendScimError(res, 400, 'Invalid operations format');
     }
 
     for (const op of Operations) {
@@ -1231,7 +1257,7 @@ export const deleteScimGroup = async (req: any, res: Response, next: NextFunctio
   try {
     const organizationId = req.user?.organizationId;
     if (!organizationId) {
-      return res.status(401).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '401', detail: 'Invalid SCIM Bearer credentials' });
+      return sendScimError(res, 401, 'Invalid SCIM Bearer credentials');
     }
 
     const { id } = req.params;
@@ -1239,7 +1265,7 @@ export const deleteScimGroup = async (req: any, res: Response, next: NextFunctio
     const rolesList = ['ADMIN', 'MEMBER', 'VIEWER', 'AUDITOR', 'ENGINEER'];
 
     if (!rolesList.includes(targetRole)) {
-      return res.status(404).json({ schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'], status: '404', detail: 'Group not found' });
+      return sendScimError(res, 404, 'Group not found');
     }
 
     await prisma.users.updateMany({
