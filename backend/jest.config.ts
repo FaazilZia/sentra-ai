@@ -53,6 +53,8 @@ module.exports = {
     'src/utils/sentrySanitizer.ts',
     'src/services/systemAlert.service.ts',
     'src/services/schemaDrift.service.ts',
+    'src/controllers/sso.controller.ts',
+    'src/routes/sso.routes.ts',
   ],
   coverageThreshold: {
     global: {
