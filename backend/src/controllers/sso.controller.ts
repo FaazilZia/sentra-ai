@@ -21,18 +21,25 @@ export const OKTA_ATTRIBUTE_PRESET = {
 };
 
 export const STANDARD_ATTRIBUTE_PRESET = {
-  email: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress',
-  firstName: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname',
-  lastName: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname',
-  name: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name',
-  role: 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role',
-  groups: 'http://schemas.xmlsoap.org/claims/Group',
+  email: 'http://schemas.xmlsoap.org/ws/2005/05/identity/export const DOCUMENTED_SAML_ROLE_MAP: Record<string, 'ADMIN' | 'ENGINEER' | 'AUDITOR' | 'MEMBER' | 'VIEWER'> = {
+  ADMIN: 'ADMIN',
+  SENTRA_ADMIN: 'ADMIN',
+  ENGINEER: 'ENGINEER',
+  SENTRA_ENGINEER: 'ENGINEER',
+  AUDITOR: 'AUDITOR',
+  SENTRA_AUDITOR: 'AUDITOR',
+  MEMBER: 'MEMBER',
+  SENTRA_MEMBER: 'MEMBER',
+  VIEWER: 'VIEWER',
+  SENTRA_VIEWER: 'VIEWER',
 };
 
 /**
  * Maps raw SAML role or group attributes to known system roles.
  * Security rules:
- * - Allowed roles: ADMIN, MEMBER, VIEWER, AUDITOR, ENGINEER.
+ * - Allowed roles: ADMIN, ENGINEER, AUDITOR, MEMBER, VIEWER.
+ * - Matching is strictly exact against DOCUMENTED_SAML_ROLE_MAP (case-insensitive).
+ * - Precedence: ADMIN > ENGINEER > AUDITOR > MEMBER > VIEWER.
  * - Missing or unrecognized roles default to VIEWER.
  * - Privilege escalation guard: SUPER_ADMIN is NEVER granted via SAML; demoted to VIEWER.
  */
@@ -44,69 +51,24 @@ export const mapSamlRole = (rawRole: unknown): string => {
     : [String(rawRole).trim().toUpperCase()];
 
   // Security Escalation Guard: NEVER allow a SAML assertion to grant SUPER_ADMIN.
-  if (candidates.some((c) => c === 'SUPER_ADMIN' || c.includes('SUPER_ADMIN') || c === 'SUPERADMIN' || c.includes('SUPERADMIN'))) {
+  if (candidates.some((c) => c === 'SUPER_ADMIN' || c === 'SUPERADMIN' || c.includes('SUPER_ADMIN') || c.includes('SUPERADMIN'))) {
     logger.warn('[SAML-SSO] Attempted privilege escalation to SUPER_ADMIN via SAML assertion. Demoting to VIEWER.');
     return 'VIEWER';
   }
 
   // Precedence: ADMIN > ENGINEER > AUDITOR > MEMBER > VIEWER
-  const matchRole = (c: string): string | null => {
-    // Admin match
-    if (
-      c === 'ADMIN' ||
-      c.endsWith(':ADMIN') ||
-      c.endsWith('_ADMIN') ||
-      c.includes('ADMINISTRATOR') ||
-      c.includes('SENTRA_ADMIN')
-    ) {
-      return 'ADMIN';
-    }
-    // Engineer match
-    if (
-      c === 'ENGINEER' ||
-      c.endsWith(':ENGINEER') ||
-      c.endsWith('_ENGINEER') ||
-      c.includes('ENGINEERING') ||
-      c === 'ENGINEERS'
-    ) {
-      return 'ENGINEER';
-    }
-    // Auditor match
-    if (
-      c === 'AUDITOR' ||
-      c.endsWith(':AUDITOR') ||
-      c.endsWith('_AUDITOR') ||
-      c.includes('AUDIT') ||
-      c.includes('COMPLIANCE')
-    ) {
-      return 'AUDITOR';
-    }
-    // Member match
-    if (
-      c === 'MEMBER' ||
-      c.endsWith(':MEMBER') ||
-      c.endsWith('_MEMBER') ||
-      c.includes('USER') ||
-      c === 'MEMBERS'
-    ) {
-      return 'MEMBER';
-    }
-    // Viewer match
-    if (
-      c === 'VIEWER' ||
-      c.endsWith(':VIEWER') ||
-      c.endsWith('_VIEWER') ||
-      c.includes('READONLY') ||
-      c.includes('READ_ONLY')
-    ) {
-      return 'VIEWER';
-    }
-    return null;
-  };
+  const precedence: ('ADMIN' | 'ENGINEER' | 'AUDITOR' | 'MEMBER' | 'VIEWER')[] = [
+    'ADMIN',
+    'ENGINEER',
+    'AUDITOR',
+    'MEMBER',
+    'VIEWER',
+  ];
 
-  for (const c of candidates) {
-    const matched = matchRole(c);
-    if (matched) return matched;
+  for (const role of precedence) {
+    if (candidates.some((c) => DOCUMENTED_SAML_ROLE_MAP[c] === role)) {
+      return role;
+    }
   }
 
   return 'VIEWER';

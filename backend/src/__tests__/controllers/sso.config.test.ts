@@ -277,28 +277,56 @@ describe('updateSsoConfig controller', () => {
 });
 
 describe('mapSamlRole role resolution & escalation protection', () => {
-  it('maps ADMIN, ADMINISTRATOR, and SENTRA_ADMIN to ADMIN', () => {
+  it('maps documented exact group names to ADMIN', () => {
     expect(mapSamlRole('ADMIN')).toBe('ADMIN');
-    expect(mapSamlRole('Administrator')).toBe('ADMIN');
-    expect(mapSamlRole('SENTRA_ADMIN_GROUP')).toBe('ADMIN');
+    expect(mapSamlRole('admin')).toBe('ADMIN');
+    expect(mapSamlRole('SENTRA_ADMIN')).toBe('ADMIN');
+    expect(mapSamlRole('sentra_admin')).toBe('ADMIN');
   });
 
-  it('maps allowed standard roles correctly', () => {
+  it('rejects loose substring matching for ADMIN and defaults to VIEWER', () => {
+    expect(mapSamlRole('Administrator')).toBe('VIEWER');
+    expect(mapSamlRole('ADMINISTRATOR')).toBe('VIEWER');
+    expect(mapSamlRole('Jira Administrators')).toBe('VIEWER');
+    expect(mapSamlRole('DB_ADMIN')).toBe('VIEWER');
+    expect(mapSamlRole('SENTRA_ADMIN_GROUP')).toBe('VIEWER');
+    expect(mapSamlRole('org:ADMIN')).toBe('VIEWER');
+    expect(mapSamlRole('COMPANY_ADMIN')).toBe('VIEWER');
+  });
+
+  it('maps allowed standard documented roles correctly', () => {
     expect(mapSamlRole('ENGINEER')).toBe('ENGINEER');
-    expect(mapSamlRole('Engineering-Team')).toBe('ENGINEER');
+    expect(mapSamlRole('SENTRA_ENGINEER')).toBe('ENGINEER');
     expect(mapSamlRole('AUDITOR')).toBe('AUDITOR');
-    expect(mapSamlRole('Compliance_Auditor')).toBe('AUDITOR');
+    expect(mapSamlRole('SENTRA_AUDITOR')).toBe('AUDITOR');
     expect(mapSamlRole('MEMBER')).toBe('MEMBER');
-    expect(mapSamlRole('Standard-User')).toBe('MEMBER');
+    expect(mapSamlRole('SENTRA_MEMBER')).toBe('MEMBER');
     expect(mapSamlRole('VIEWER')).toBe('VIEWER');
+    expect(mapSamlRole('SENTRA_VIEWER')).toBe('VIEWER');
+  });
+
+  it('rejects loose substring matching for other roles and defaults to VIEWER', () => {
+    expect(mapSamlRole('Engineering-Team')).toBe('VIEWER');
+    expect(mapSamlRole('Compliance_Auditor')).toBe('VIEWER');
+    expect(mapSamlRole('Standard-User')).toBe('VIEWER');
     expect(mapSamlRole('ReadOnly-Access')).toBe('VIEWER');
+    expect(mapSamlRole('org:MEMBER')).toBe('VIEWER');
+  });
+
+  it('respects precedence order ADMIN > ENGINEER > AUDITOR > MEMBER > VIEWER', () => {
+    expect(mapSamlRole(['MEMBER', 'ADMIN'])).toBe('ADMIN');
+    expect(mapSamlRole(['VIEWER', 'ENGINEER'])).toBe('ENGINEER');
+    expect(mapSamlRole(['MEMBER', 'AUDITOR'])).toBe('AUDITOR');
+    expect(mapSamlRole(['VIEWER', 'MEMBER'])).toBe('MEMBER');
   });
 
   it('BLOCKED: strictly denies SUPER_ADMIN escalation and demotes to VIEWER', () => {
     expect(mapSamlRole('SUPER_ADMIN')).toBe('VIEWER');
+    expect(mapSamlRole('SUPERADMIN')).toBe('VIEWER');
     expect(mapSamlRole('superadmin')).toBe('VIEWER');
     expect(mapSamlRole('app_super_admin_role')).toBe('VIEWER');
     expect(mapSamlRole(['SUPER_ADMIN', 'ADMIN'])).toBe('VIEWER');
+    expect(mapSamlRole(['SUPERADMIN', 'ADMIN'])).toBe('VIEWER');
   });
 
   it('defaults missing, unknown, or empty roles to VIEWER', () => {

@@ -52,15 +52,26 @@ Under **Attribute Statements (optional)**, configure the following claims:
 | `role` | `Unspecified` | `appuser.role` *(or static `MEMBER`)* | System role (`ADMIN`, `MEMBER`, `VIEWER`, `AUDITOR`, `ENGINEER`) |
 
 > **Security Note on Roles**:
-> Sentraa strictly maps SAML roles to tenant-level roles: `ADMIN`, `MEMBER`, `VIEWER`, `AUDITOR`, `ENGINEER`.
-> Any missing or unrecognized role automatically defaults to `VIEWER`.
+> Sentraa strictly maps SAML roles to tenant-level roles: `ADMIN`, `ENGINEER`, `AUDITOR`, `MEMBER`, `VIEWER`.
+> Any missing, unmapped, or unrecognized role automatically defaults to `VIEWER`.
 > **Privilege Escalation Protection**: The platform-wide `SUPER_ADMIN` role can **never** be granted via SAML assertions. Any attempt to pass `SUPER_ADMIN` is demoted to `VIEWER` with a security audit warning.
 
 ### Step 5: Group Attribute Statements (Optional)
 If assigning roles via Okta Groups:
 * **Name**: `groups`
 * **Name format**: `Unspecified`
-* **Filter**: `Matches regex` → `.*` (or specific filter for Sentraa groups, e.g. `Sentraa_.*`)
+* **Filter**: Select `Equals` → enter `ADMIN` (or use exact group name matching from the documented list below)
+
+#### Documented Supported Group Names
+Sentraa matches group names strictly against an exact allowlist (case-insensitive). Loose substring matches (e.g. `Administrator`, `*_ADMIN`, `:ADMIN`, `Engineering-Team`) are rejected and default to `VIEWER`.
+
+| Okta Group Name | Sentraa System Role |
+| :--- | :--- |
+| `ADMIN` or `SENTRA_ADMIN` | `ADMIN` |
+| `ENGINEER` or `SENTRA_ENGINEER` | `ENGINEER` |
+| `AUDITOR` or `SENTRA_AUDITOR` | `AUDITOR` |
+| `MEMBER` or `SENTRA_MEMBER` | `MEMBER` |
+| `VIEWER` or `SENTRA_VIEWER` | `VIEWER` |
 
 ### Step 6: Feedback & Finish
 1. Select **"I'm an Okta customer adding an internal app"**.
