@@ -77,18 +77,32 @@ describe('SCIM Deactivation Routes & Session Invalidation', () => {
     return res;
   };
 
+  const ADMIN_ACTOR_ID = 'admin-actor-uuid';
+
   beforeEach(() => {
     jest.clearAllMocks();
     (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
       id: ORG_ID,
       sso_enabled: true,
     });
-    (prisma.users.findFirst as jest.Mock).mockResolvedValue({
-      id: USER_ID,
-      email: 'employee@acme.com',
-      full_name: 'Active Employee',
-      is_active: true,
-      organizationId: ORG_ID,
+    (prisma.users.findFirst as jest.Mock).mockImplementation(async (args: any) => {
+      if (args?.where?.role === 'ADMIN') {
+        return {
+          id: ADMIN_ACTOR_ID,
+          email: 'admin@acme.com',
+          full_name: 'Admin Actor',
+          role: 'ADMIN',
+          is_active: true,
+          organizationId: ORG_ID,
+        };
+      }
+      return {
+        id: USER_ID,
+        email: 'employee@acme.com',
+        full_name: 'Active Employee',
+        is_active: true,
+        organizationId: ORG_ID,
+      };
     });
     (prisma.users.update as jest.Mock).mockImplementation(async ({ data }: any) => ({
       id: USER_ID,
@@ -133,10 +147,14 @@ describe('SCIM Deactivation Routes & Session Invalidation', () => {
       });
       expect(auditLogger.log).toHaveBeenCalledWith(
         expect.objectContaining({
-          userId: 'scim_agent',
+          userId: ADMIN_ACTOR_ID,
           organizationId: ORG_ID,
           action: 'SCIM_USER_DEACTIVATED',
-          metadata: { userId: USER_ID },
+          metadata: expect.objectContaining({
+            actor: 'scim',
+            tokenOwner: ADMIN_ACTOR_ID,
+            targetUserId: USER_ID,
+          }),
         })
       );
       expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith({
@@ -165,10 +183,14 @@ describe('SCIM Deactivation Routes & Session Invalidation', () => {
       });
       expect(auditLogger.log).toHaveBeenCalledWith(
         expect.objectContaining({
-          userId: 'scim_agent',
+          userId: ADMIN_ACTOR_ID,
           organizationId: ORG_ID,
           action: 'SCIM_USER_DEACTIVATED',
-          metadata: { userId: USER_ID },
+          metadata: expect.objectContaining({
+            actor: 'scim',
+            tokenOwner: ADMIN_ACTOR_ID,
+            targetUserId: USER_ID,
+          }),
         })
       );
       expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith({
@@ -215,7 +237,7 @@ describe('SCIM Deactivation Routes & Session Invalidation', () => {
       expect(auditLogger.log).toHaveBeenCalledWith(
         expect.objectContaining({
           action: 'SCIM_USER_DEACTIVATED',
-          metadata: { userId: USER_ID },
+          metadata: expect.objectContaining({ userId: USER_ID }),
         })
       );
       expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith({
@@ -262,7 +284,7 @@ describe('SCIM Deactivation Routes & Session Invalidation', () => {
       expect(auditLogger.log).toHaveBeenCalledWith(
         expect.objectContaining({
           action: 'SCIM_USER_DEACTIVATED',
-          metadata: { userId: USER_ID },
+          metadata: expect.objectContaining({ userId: USER_ID }),
         })
       );
       expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith({
@@ -381,7 +403,8 @@ describe('SCIM Deactivation Routes & Session Invalidation', () => {
       );
     });
   });
-describe('SCIM Route-specific Body Parser (application/scim+json)', () => {
+
+  describe('SCIM Route-specific Body Parser (application/scim+json)', () => {
     let testApp: express.Express;
 
     beforeAll(() => {

@@ -663,6 +663,66 @@ export const sendScimError = (res: Response, status: number, detail: string) => 
   });
 };
 
+/**
+ * Resolves a valid user ID within an organization to attribute audit log entries for SCIM actions.
+ * In Sentraa, audit_logs.user_id has a strict foreign key to users(id).
+ * Using pseudo-IDs like 'scim_agent' violates the foreign key constraint on real PostgreSQL.
+ * We resolve an active ADMIN (or any existing user) from the same organization,
+ * while recording detailed SCIM actor and target information in the audit metadata.
+ */
+export const resolveAuditActorUserId = async (organizationId: string): Promise<string | null> => {
+  const adminUser = await prisma.users.findFirst({
+    where: { organizationId, role: 'ADMIN', is_active: true },
+    select: { id: true },
+    orderBy: { created_at: 'asc' },
+  });
+  if (adminUser) return adminUser.id;
+
+  const anyUser = await prisma.users.findFirst({
+    where: { organizationId },
+    select: { id: true },
+    orderBy: { created_at: 'asc' },
+  });
+  if (anyUser) return anyUser.id;
+
+  return null;
+};
+
+interface LogScimAuditParams {
+  organizationId: string;
+  action: 'SCIM_USER_PROVISIONED' | 'SCIM_USER_UPDATED' | 'SCIM_USER_DEACTIVATED';
+  targetUserId: string;
+  metadata?: Record<string, any>;
+}
+
+export const logScimAudit = async ({
+  organizationId,
+  action,
+  targetUserId,
+  metadata = {},
+}: LogScimAuditParams): Promise<void> => {
+  const actorUserId = await resolveAuditActorUserId(organizationId);
+
+  if (!actorUserId) {
+    logger.warn(
+      `[SCIM-AUDIT] Skipping audit log for action ${action}: No valid user found for organization ${organizationId} to satisfy audit_logs user_id foreign key constraint.`
+    );
+    return;
+  }
+
+  await auditLogger.log({
+    userId: actorUserId,
+    organizationId,
+    action,
+    metadata: {
+      actor: 'scim',
+      tokenOwner: actorUserId,
+      targetUserId,
+      ...metadata,
+    },
+  });
+};
+
 export const getScimUsers = async (req: any, res: Response, next: NextFunction) => {
   try {
     const organizationId = req.user?.organizationId;
