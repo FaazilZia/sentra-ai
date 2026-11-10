@@ -15,7 +15,7 @@ jest.mock('../../config/db', () => ({
   __esModule: true,
   default: {
     organizations: { findUnique: jest.fn() },
-    users: { findFirst: jest.fn(), create: jest.fn() },
+    users: { findFirst: jest.fn(), create: jest.fn(), update: jest.fn() },
   },
 }));
 
@@ -54,6 +54,7 @@ const LOGIN_RESPONSE_TEMPLATE =
   '</saml:SubjectConfirmation></saml:Subject>' +
   '<saml:Conditions NotBefore="{ConditionsNotBefore}" NotOnOrAfter="{ConditionsNotOnOrAfter}"><saml:AudienceRestriction><saml:Audience>{Audience}</saml:Audience></saml:AudienceRestriction></saml:Conditions>' +
   '<saml:AuthnStatement AuthnInstant="{IssueInstant}" SessionIndex="{SessionIndex}"><saml:AuthnContext><saml:AuthnContextClassRef>urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport</saml:AuthnContextClassRef></saml:AuthnContext></saml:AuthnStatement>' +
+  '{AttributeStatement}' +
   '</saml:Assertion></samlp:Response>';
 
 let keyDir: string;
@@ -88,12 +89,16 @@ const sp = samlify.ServiceProvider({
 let trustedIdp: ReturnType<typeof makeIdp>;
 let attackerIdp: ReturnType<typeof makeIdp>;
 
-const signedResponse = async (idp: ReturnType<typeof makeIdp>, email: string): Promise<string> => {
+const signedResponse = async (
+  idp: ReturnType<typeof makeIdp>,
+  email: string,
+  extraAttributes: Record<string, any> = {}
+): Promise<string> => {
   const { context } = await idp.createLoginResponse(
     sp,
     { extract: { request: { id: '_request-1' } } } as any,
     'post',
-    { email }
+    { email, ...extraAttributes }
   );
   return context;
 };
@@ -131,10 +136,16 @@ afterAll(() => {
 beforeEach(() => {
   (prisma.users.findFirst as jest.Mock).mockResolvedValue(null);
   (prisma.users.create as jest.Mock).mockImplementation(async ({ data }: any) => ({ ...data }));
+  (prisma.users.update as jest.Mock).mockImplementation(async ({ where, data }: any) => ({
+    id: where.id,
+    organizationId: ORG_ID,
+    role: 'MEMBER',
+    ...data,
+  }));
 });
 
 describe('samlCallback: valid logins', () => {
-  it('creates a new user in the correct org and logs them in', async () => {
+  it('creates a new user in the correct org, sets last_login_at, and logs them in', async () => {
     mockOrg();
     const res = makeRes();
 
@@ -144,6 +155,7 @@ describe('samlCallback: valid logins', () => {
     expect((prisma.users.create as jest.Mock).mock.calls[0][0].data).toMatchObject({
       email: 'new.user@acme.com',
       organizationId: ORG_ID,
+      last_login_at: expect.any(Date),
     });
     expect(setAuthCookiesAndTokens).toHaveBeenCalledWith(res, expect.objectContaining({ organizationId: ORG_ID }));
     expect(auditLogger.log).toHaveBeenCalledWith(
@@ -152,7 +164,7 @@ describe('samlCallback: valid logins', () => {
     expect(res.redirect).toHaveBeenCalledWith(expect.stringContaining('/dashboard'));
   });
 
-  it('logs in an existing user who already belongs to this org, without creating a new one', async () => {
+  it('logs in an existing user who already belongs to this org, updates last_login_at, without creating a new one', async () => {
     mockOrg();
     (prisma.users.findFirst as jest.Mock).mockResolvedValue({
       id: 'user-1', email: 'jane@acme.com', role: 'MEMBER', is_active: true, organizationId: ORG_ID,
@@ -162,7 +174,78 @@ describe('samlCallback: valid logins', () => {
     await samlCallback(makeReq(await signedResponse(trustedIdp, 'jane@acme.com')), res, jest.fn());
 
     expect(prisma.users.create).not.toHaveBeenCalled();
+    expect(prisma.users.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'user-1' },
+        data: expect.objectContaining({
+          last_login_at: expect.any(Date),
+        }),
+      })
+    );
     expect(setAuthCookiesAndTokens).toHaveBeenCalledWith(res, expect.objectContaining({ id: 'user-1', organizationId: ORG_ID }));
+    expect(res.redirect).toHaveBeenCalledWith(expect.stringContaining('/dashboard'));
+  });
+
+  it('provisions a non-admin user with mapped VIEWER role (not ADMIN) when assertion contains VIEWER', async () => {
+    mockOrg({ attributeMapping: { email: 'email', role: 'role' } });
+    const res = makeRes();
+
+    await samlCallback(
+      makeReq(await signedResponse(trustedIdp, 'viewer@acme.com', { role: 'VIEWER' })),
+      res,
+      jest.fn()
+    );
+
+    expect(prisma.users.create).toHaveBeenCalledTimes(1);
+    const createdData = (prisma.users.create as jest.Mock).mock.calls[0][0].data;
+    expect(createdData).toMatchObject({
+      email: 'viewer@acme.com',
+      role: 'VIEWER',
+    });
+    expect(createdData.role).not.toBe('ADMIN');
+    expect(res.redirect).toHaveBeenCalledWith(expect.stringContaining('/dashboard'));
+  });
+
+  it('demotes SUPER_ADMIN escalation assertion to VIEWER and prevents unauthorized SUPER_ADMIN role grant', async () => {
+    mockOrg({ attributeMapping: { email: 'email', role: 'role' } });
+    const res = makeRes();
+
+    await samlCallback(
+      makeReq(await signedResponse(trustedIdp, 'attacker@acme.com', { role: 'SUPER_ADMIN' })),
+      res,
+      jest.fn()
+    );
+
+    expect(prisma.users.create).toHaveBeenCalledTimes(1);
+    const createdData = (prisma.users.create as jest.Mock).mock.calls[0][0].data;
+    expect(createdData.role).toBe('VIEWER');
+    expect(createdData.role).not.toBe('SUPER_ADMIN');
+    expect(res.redirect).toHaveBeenCalledWith(expect.stringContaining('/dashboard'));
+  });
+
+  it('never downgrades an existing SUPER_ADMIN user regardless of incoming SAML role claim', async () => {
+    mockOrg({ attributeMapping: { email: 'email', role: 'role' } });
+    (prisma.users.findFirst as jest.Mock).mockResolvedValue({
+      id: 'superadmin-user',
+      email: 'founder@acme.com',
+      role: 'SUPER_ADMIN',
+      is_active: true,
+      organizationId: ORG_ID,
+    });
+    const res = makeRes();
+
+    await samlCallback(
+      makeReq(await signedResponse(trustedIdp, 'founder@acme.com', { role: 'VIEWER' })),
+      res,
+      jest.fn()
+    );
+
+    expect(prisma.users.create).not.toHaveBeenCalled();
+    expect(prisma.users.update).toHaveBeenCalledTimes(1);
+    const updateCall = (prisma.users.update as jest.Mock).mock.calls[0][0];
+    expect(updateCall.where).toEqual({ id: 'superadmin-user' });
+    expect(updateCall.data.role).toBeUndefined(); // Role is NEVER downgraded
+    expect(updateCall.data.last_login_at).toBeInstanceOf(Date);
     expect(res.redirect).toHaveBeenCalledWith(expect.stringContaining('/dashboard'));
   });
 });

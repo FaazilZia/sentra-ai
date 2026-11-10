@@ -99,8 +99,11 @@ async function handleJwtToken(token: string, req: any, res: Response): Promise<{
 
     if (redis) {
       try {
-        const cached = await redis.get(`blacklist:${token}`);
-        isBlacklisted = !!cached;
+        const [cachedToken, cachedUser] = await Promise.all([
+          redis.get(`blacklist:${token}`),
+          payload?.id ? redis.get(`blacklist:user:${payload.id}`) : null,
+        ]);
+        isBlacklisted = !!cachedToken || !!cachedUser;
         redisSuccess = true;
       } catch (err) {
         logger.warn('Redis error during blacklist check, falling back to database:', err);
@@ -132,6 +135,16 @@ async function handleJwtToken(token: string, req: any, res: Response): Promise<{
       where: { id: payload.id },
       include: { organizations: true },
     });
+
+    if (user && user.is_active === false) {
+      return {
+        handled: true,
+        errorResponse: {
+          status: 401,
+          body: { success: false, message: 'User account has been deactivated' }
+        }
+      };
+    }
     if (user && user.is_active && user.organizations.is_active) {
       // Invalidate access tokens issued before passwordChangedAt
       if (user.passwordChangedAt && payload.iat) {
@@ -243,12 +256,20 @@ export const authenticateScim = async (req: any, res: Response, next: NextFuncti
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ success: false, message: 'Authentication required' });
+      return res.status(401).type('application/scim+json').json({
+        schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+        status: '401',
+        detail: 'Authentication required',
+      });
     }
 
     const token = authHeader.split(' ')[1];
     if (!token) {
-      return res.status(401).json({ success: false, message: 'Authentication required' });
+      return res.status(401).type('application/scim+json').json({
+        schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+        status: '401',
+        detail: 'Authentication required',
+      });
     }
 
     // Retrieve all organizations with SSO enabled
@@ -273,14 +294,22 @@ export const authenticateScim = async (req: any, res: Response, next: NextFuncti
     });
 
     if (!org) {
-      return res.status(401).json({ success: false, message: 'Invalid SCIM credentials' });
+      return res.status(401).type('application/scim+json').json({
+        schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+        status: '401',
+        detail: 'Invalid SCIM credentials',
+      });
     }
 
     req.user = { organizationId: org.id };
     return next();
   } catch (error) {
     logger.error('SCIM Authentication Error:', error);
-    res.status(401).json({ success: false, message: 'Invalid or expired SCIM credentials' });
+    return res.status(401).type('application/scim+json').json({
+      schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+      status: '401',
+      detail: 'Invalid or expired SCIM credentials',
+    });
   }
 };
 

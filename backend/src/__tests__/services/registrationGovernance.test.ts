@@ -56,6 +56,14 @@ class MockPrismaStore {
         findUnique: jest.fn().mockImplementation(async ({ where }: any) => {
           return self.users.find((u) => (where.id && u.id === where.id) || (where.email && u.email === where.email)) || null;
         }),
+        update: jest.fn().mockImplementation(async ({ where, data }: any) => {
+          const user = self.users.find((u) => (where.id && u.id === where.id) || (where.email && u.email === where.email));
+          if (user) {
+            Object.assign(user, data);
+            return user;
+          }
+          return { id: where.id, ...data };
+        }),
       },
       refreshToken: {
         create: jest.fn().mockImplementation(async ({ data }: any) => {

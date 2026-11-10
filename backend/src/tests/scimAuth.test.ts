@@ -79,6 +79,12 @@ describe('SCIM Bearer Token Authentication (Integration)', () => {
       .get('/api/v1/scim/v2/Users');
 
     expect(response.status).toBe(401);
+    expect(response.headers['content-type']).toMatch(/application\/scim\+json/);
+    expect(response.body).toEqual({
+      schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+      status: '401',
+      detail: 'Authentication required',
+    });
   });
 
   it('should reject access with HTTP 401 when token is invalid', async () => {
@@ -87,6 +93,12 @@ describe('SCIM Bearer Token Authentication (Integration)', () => {
       .set('Authorization', 'Bearer invalid-scim-token');
 
     expect(response.status).toBe(401);
+    expect(response.headers['content-type']).toMatch(/application\/scim\+json/);
+    expect(response.body).toEqual({
+      schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+      status: '401',
+      detail: 'Invalid SCIM credentials',
+    });
   });
 
   describe('SSO SCIM Token Encryption & Regeneration Guard', () => {

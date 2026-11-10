@@ -144,8 +144,10 @@ describe('PDF Report Quality & Integration Smoke Test', () => {
           name: 'Smoke Test Policy',
           description: 'Automated quality smoke test policy.',
           status: 'active',
-          priority: 'high',
+          priority: 1,
           category: 'general',
+          enabled: true,
+          effect: 'BLOCK',
           organizationId,
         },
       });

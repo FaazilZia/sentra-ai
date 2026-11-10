@@ -77,6 +77,19 @@ describe('Auth Endpoints (Integration)', () => {
       expect(response.body.data).toHaveProperty('refreshToken');
     });
 
+    it('should update users.last_login_at on successful login', async () => {
+      const beforeLogin = new Date(Date.now() - 1000);
+      const response = await request(app)
+        .post('/api/v1/auth/login')
+        .send({ email: TEST_EMAIL, password: TEST_PASSWORD });
+
+      expect(response.status).toBe(200);
+
+      const userInDb = await prisma.users.findUnique({ where: { email: TEST_EMAIL } });
+      expect(userInDb?.last_login_at).toBeDefined();
+      expect(new Date(userInDb!.last_login_at!).getTime()).toBeGreaterThan(beforeLogin.getTime());
+    });
+
     it('should return 401 on invalid password', async () => {
       const response = await request(app)
         .post('/api/v1/auth/login')

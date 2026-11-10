@@ -42,6 +42,7 @@ import {
   revokeMcpAgentKey,
   fetchMcpAuditLogs,
   saveSsoConfig,
+  testSsoConnection,
   apiRequest
 } from '@/lib/api';
 import { JiraConfigCard } from '@/components/connectors/JiraConfigCard';
@@ -124,9 +125,21 @@ export default function Settings() {
   const [logsFilterDecision, setLogsFilterDecision] = useState<'all' | 'allowed' | 'blocked'>('all');
 
   // SAML SSO Configuration States
-  const [ssoProviderName, setSsoProviderName] = useState('');
+  const [ssoProviderName, setSsoProviderName] = useState('Okta');
   const [idpMetadataXml, setIdpMetadataXml] = useState('');
   const [savingSso, setSavingSso] = useState(false);
+  const [ssoPreset, setSsoPreset] = useState<'okta' | 'entra' | 'custom'>('okta');
+  const [attributeMapping, setAttributeMapping] = useState<Record<string, string>>({
+    email: 'email',
+    firstName: 'firstName',
+    lastName: 'lastName',
+    role: 'role',
+    groups: 'groups',
+  });
+  const [allowedDomains, setAllowedDomains] = useState('');
+  const [testingSso, setTestingSso] = useState(false);
+  const [testResult, setTestResult] = useState<any | null>(null);
+  const [newScimToken, setNewScimToken] = useState<string | null>(null);
 
   // MFA States
   const [mfaStatus, setMfaStatus] = useState<{ enabled: boolean } | null>(null);
@@ -191,9 +204,27 @@ export default function Settings() {
           if (data.slackWebhookUrl) setWebhookUrl(data.slackWebhookUrl);
           
           // Seed SSO inputs
-          setSsoProviderName(data.sso_provider || '');
+          setSsoProviderName(data.sso_provider || 'Okta');
           if (data.saml_metadata) {
             setIdpMetadataXml(data.saml_metadata.idpMetadataXml || '');
+            if (data.saml_metadata.attributeMapping) {
+              setAttributeMapping(data.saml_metadata.attributeMapping);
+              if (data.saml_metadata.attributeMapping.email === 'email') {
+                setSsoPreset('okta');
+              } else if (data.saml_metadata.attributeMapping.email?.includes('schemas.xmlsoap.org')) {
+                setSsoPreset('entra');
+              } else {
+                setSsoPreset('custom');
+              }
+            } else if (data.sso_provider?.toLowerCase() === 'okta') {
+              setSsoPreset('okta');
+            }
+            if (data.saml_metadata.allowedEmailDomains) {
+              const doms = Array.isArray(data.saml_metadata.allowedEmailDomains)
+                ? data.saml_metadata.allowedEmailDomains.join(', ')
+                : String(data.saml_metadata.allowedEmailDomains);
+              setAllowedDomains(doms);
+            }
           }
         })
         .catch((err) => console.error('Settings load company details error:', err));
@@ -661,6 +692,63 @@ export default function Settings() {
   };
 
   // SAML SSO configuration handlers
+  const handlePresetChange = (preset: 'okta' | 'entra' | 'custom') => {
+    setSsoPreset(preset);
+    if (preset === 'okta') {
+      setAttributeMapping({
+        email: 'email',
+        firstName: 'firstName',
+        lastName: 'lastName',
+        role: 'role',
+        groups: 'groups',
+      });
+      if (!ssoProviderName || ssoProviderName === 'SAML') setSsoProviderName('Okta');
+    } else if (preset === 'entra') {
+      setAttributeMapping({
+        email: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress',
+        firstName: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname',
+        lastName: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname',
+        name: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name',
+        role: 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role',
+        groups: 'http://schemas.xmlsoap.org/claims/Group',
+      });
+      if (!ssoProviderName || ssoProviderName === 'SAML') setSsoProviderName('Microsoft Entra ID');
+    }
+  };
+
+  const handleTestSso = async () => {
+    if (!idpMetadataXml.trim()) {
+      addToast({ message: 'Paste IdP Metadata XML first before testing connection', type: 'warning' });
+      return;
+    }
+    try {
+      setTestingSso(true);
+      setTestResult(null);
+      const res = await testSsoConnection({
+        idpMetadataXml: idpMetadataXml.trim(),
+        attributeMapping,
+      });
+      setTestResult(res);
+      if (res.valid) {
+        addToast({ message: 'SSO Connection Test Passed! All 4 checks succeeded.', type: 'success' });
+      } else {
+        addToast({ message: 'SSO Connection Test Failed. Review errors below.', type: 'error' });
+      }
+    } catch (err: any) {
+      console.error('SSO test connection failed:', err);
+      setTestResult({
+        valid: false,
+        message: err.message || 'Connection test failed',
+        details: {
+          checks: [{ name: 'Connection Test', passed: false, message: err.message || 'Failed to test connection' }],
+        },
+      });
+      addToast({ message: err.message || 'Failed to test SSO connection', type: 'error' });
+    } finally {
+      setTestingSso(false);
+    }
+  };
+
   const handleSaveSso = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!idpMetadataXml.trim()) {
@@ -670,12 +758,25 @@ export default function Settings() {
 
     try {
       setSavingSso(true);
-      const res = await saveSsoConfig(idpMetadataXml.trim(), ssoProviderName.trim());
-      setCompany(res);
+      const domainsArr = allowedDomains
+        .split(',')
+        .map((d) => d.trim())
+        .filter((d) => d.length > 0);
+
+      const res = await saveSsoConfig(
+        idpMetadataXml.trim(),
+        ssoProviderName.trim() || 'Okta',
+        attributeMapping,
+        domainsArr
+      );
+      setCompany(res.data || res);
+      if (res.scimBearerToken) {
+        setNewScimToken(res.scimBearerToken);
+      }
       addToast({ message: 'SAML SSO Configuration updated successfully', type: 'success' });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to save SSO config:', err);
-      addToast({ message: 'Failed to update SAML SSO Configuration', type: 'error' });
+      addToast({ message: err.message || 'Failed to update SAML SSO Configuration', type: 'error' });
     } finally {
       setSavingSso(false);
     }
@@ -913,8 +1014,19 @@ export default function Settings() {
             setSsoProviderName={setSsoProviderName}
             idpMetadataXml={idpMetadataXml}
             setIdpMetadataXml={setIdpMetadataXml}
+            ssoPreset={ssoPreset}
+            handlePresetChange={handlePresetChange}
+            attributeMapping={attributeMapping}
+            setAttributeMapping={setAttributeMapping}
+            allowedDomains={allowedDomains}
+            setAllowedDomains={setAllowedDomains}
             savingSso={savingSso}
             handleSaveSso={handleSaveSso}
+            testingSso={testingSso}
+            handleTestSso={handleTestSso}
+            testResult={testResult}
+            newScimToken={newScimToken}
+            setNewScimToken={setNewScimToken}
             spEntityId={spEntityId}
             spAcsUrl={spAcsUrl}
             ssoLoginUrl={ssoLoginUrl}
@@ -2420,28 +2532,50 @@ function McpTab({
   );
 }
 
-interface SsoTabProps {
+export interface SsoTabProps {
   company: any;
   ssoProviderName: string;
   setSsoProviderName: (val: string) => void;
   idpMetadataXml: string;
   setIdpMetadataXml: (val: string) => void;
+  ssoPreset: 'okta' | 'entra' | 'custom';
+  handlePresetChange: (preset: 'okta' | 'entra' | 'custom') => void;
+  attributeMapping: Record<string, string>;
+  setAttributeMapping: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  allowedDomains: string;
+  setAllowedDomains: (val: string) => void;
   savingSso: boolean;
   handleSaveSso: (e: React.FormEvent) => void;
+  testingSso: boolean;
+  handleTestSso: () => void;
+  testResult: any;
+  newScimToken: string | null;
+  setNewScimToken: (val: string | null) => void;
   spEntityId: string;
   spAcsUrl: string;
   ssoLoginUrl: string;
   addToast: any;
 }
 
-function SsoTab({
+export function SsoTab({
   company,
   ssoProviderName,
   setSsoProviderName,
   idpMetadataXml,
   setIdpMetadataXml,
+  ssoPreset,
+  handlePresetChange,
+  attributeMapping,
+  setAttributeMapping,
+  allowedDomains,
+  setAllowedDomains,
   savingSso,
   handleSaveSso,
+  testingSso,
+  handleTestSso,
+  testResult,
+  newScimToken,
+  setNewScimToken,
   spEntityId,
   spAcsUrl,
   ssoLoginUrl,
@@ -2451,25 +2585,172 @@ function SsoTab({
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       {/* Form configuration */}
       <div className="lg:col-span-7 space-y-4">
+        {/* SCIM Token Provisioned Notice */}
+        {newScimToken && (
+          <div className="card-base p-5 border border-emerald-500/40 bg-emerald-500/5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider">
+                <Key className="h-4 w-4" />
+                <span>SCIM 2.0 Bearer Token Provisioned</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setNewScimToken(null)}
+                className="text-zinc-400 hover:text-zinc-200 text-xs"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="text-[11px] text-[var(--text-secondary)] mt-1.5 leading-relaxed">
+              Copy this token into your Okta SCIM 2.0 Provisioning configuration. This plaintext token will not be displayed again and is encrypted at rest.
+            </p>
+            <div className="flex items-center gap-2 mt-3">
+              <input
+                type="password"
+                readOnly
+                value={newScimToken}
+                className="flex-1 bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-1.5 font-mono text-[11px] text-[var(--text-primary)]"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  void navigator.clipboard.writeText(newScimToken);
+                  addToast({ message: 'SCIM Bearer Token copied to clipboard!', type: 'success' });
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[10px] font-semibold uppercase tracking-wider transition-all"
+              >
+                <Copy className="h-3 w-3" />
+                Copy
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="card-base p-6">
           <h3 className="text-[var(--text-md)] font-bold text-[var(--text-primary)] uppercase tracking-tight mb-6 flex items-center gap-2">
             <Globe className="h-4 w-4 text-[var(--royal-indigo)]" />
             SAML 2.0 Identity Provider Config
           </h3>
 
-          <form onSubmit={handleSaveSso} className="space-y-6">
+          <form onSubmit={handleSaveSso} className="space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="sso-provider" className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+                  SSO Provider Name
+                </label>
+                <input
+                  id="sso-provider"
+                  type="text"
+                  placeholder="e.g. Okta"
+                  value={ssoProviderName}
+                  onChange={(e) => setSsoProviderName(e.target.value)}
+                  className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="sso-preset" className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+                  Attribute Mapping Preset
+                </label>
+                <select
+                  id="sso-preset"
+                  value={ssoPreset}
+                  onChange={(e) => handlePresetChange(e.target.value as any)}
+                  className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
+                >
+                  <option value="okta">Okta Preset (Recommended)</option>
+                  <option value="entra">Microsoft Entra ID / WS-Fed</option>
+                  <option value="custom">Custom Claims Mapping</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Attribute Mapping Section */}
+            <div className="p-4 border border-[var(--border-default)] rounded bg-[var(--bg-page)]/50 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-primary)] flex items-center gap-1.5">
+                  <Sliders className="h-3 w-3 text-[var(--royal-indigo)]" />
+                  Claims & Attribute Mapping
+                </span>
+                <span className="text-[9px] text-[var(--text-secondary)] uppercase font-semibold">
+                  {ssoPreset === 'okta' ? 'Okta Native' : ssoPreset === 'entra' ? 'WS-Fed Standard' : 'Manual'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[10px]">
+                <div>
+                  <label className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider block mb-1">
+                    Email Claim <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={attributeMapping.email || ''}
+                    disabled={ssoPreset !== 'custom'}
+                    onChange={(e) => setAttributeMapping({ ...attributeMapping, email: e.target.value })}
+                    placeholder="email"
+                    className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-2.5 py-1.5 text-[10px] font-mono text-[var(--text-primary)] disabled:opacity-70"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider block mb-1">
+                    Role / Groups Claim
+                  </label>
+                  <input
+                    type="text"
+                    value={attributeMapping.role || attributeMapping.groups || ''}
+                    disabled={ssoPreset !== 'custom'}
+                    onChange={(e) => setAttributeMapping({ ...attributeMapping, role: e.target.value, groups: e.target.value })}
+                    placeholder="role"
+                    className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-2.5 py-1.5 text-[10px] font-mono text-[var(--text-primary)] disabled:opacity-70"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider block mb-1">
+                    First Name Claim
+                  </label>
+                  <input
+                    type="text"
+                    value={attributeMapping.firstName || ''}
+                    disabled={ssoPreset !== 'custom'}
+                    onChange={(e) => setAttributeMapping({ ...attributeMapping, firstName: e.target.value })}
+                    placeholder="firstName"
+                    className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-2.5 py-1.5 text-[10px] font-mono text-[var(--text-primary)] disabled:opacity-70"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider block mb-1">
+                    Last Name Claim
+                  </label>
+                  <input
+                    type="text"
+                    value={attributeMapping.lastName || ''}
+                    disabled={ssoPreset !== 'custom'}
+                    onChange={(e) => setAttributeMapping({ ...attributeMapping, lastName: e.target.value })}
+                    placeholder="lastName"
+                    className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-2.5 py-1.5 text-[10px] font-mono text-[var(--text-primary)] disabled:opacity-70"
+                  />
+                </div>
+              </div>
+            </div>
+
             <div>
-              <label htmlFor="sso-provider" className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
-                SSO Provider Name
+              <label htmlFor="allowed-domains" className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1.5">
+                Allowed Email Domains (Optional, comma-separated)
               </label>
               <input
-                id="sso-provider"
+                id="allowed-domains"
                 type="text"
-                placeholder="e.g. Okta, Azure Active Directory, Google Workspace"
-                value={ssoProviderName}
-                onChange={(e) => setSsoProviderName(e.target.value)}
-                className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
+                placeholder="acme.com, subsidiary.com"
+                value={allowedDomains}
+                onChange={(e) => setAllowedDomains(e.target.value)}
+                className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[11px] font-mono text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
               />
+              <span className="text-[9px] text-[var(--text-secondary)] mt-1 block">
+                Leave empty to allow any corporate domain signed by your trusted Identity Provider.
+              </span>
             </div>
 
             <div>
@@ -2478,15 +2759,26 @@ function SsoTab({
               </label>
               <textarea
                 id="idp-xml"
-                rows={12}
-                placeholder="Paste the full IdP XML metadata string provided by your Identity Provider..."
+                rows={10}
+                placeholder="Paste the full IdP XML metadata string provided by Okta or your Identity Provider..."
                 value={idpMetadataXml}
                 onChange={(e) => setIdpMetadataXml(e.target.value)}
                 className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[10px] font-mono text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)] resize-y"
               />
             </div>
 
-            <div className="flex justify-end pt-2">
+            {/* Action buttons */}
+            <div className="flex items-center justify-between pt-2 border-t border-[var(--border-default)]/40">
+              <button
+                type="button"
+                onClick={handleTestSso}
+                disabled={testingSso || !idpMetadataXml.trim()}
+                className="flex items-center gap-2 px-4 py-2 border border-[var(--border-default)] hover:border-[var(--royal-indigo)] hover:text-[var(--royal-indigo)] text-[var(--text-primary)] rounded text-[10px] font-semibold uppercase tracking-widest transition-all disabled:opacity-50"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${testingSso ? 'animate-spin' : ''}`} />
+                {testingSso ? 'Testing Connection...' : 'Test SSO Connection'}
+              </button>
+
               <button
                 type="submit"
                 disabled={savingSso || !idpMetadataXml.trim()}
@@ -2497,6 +2789,53 @@ function SsoTab({
               </button>
             </div>
           </form>
+
+          {/* Test SSO Connection Results Banner */}
+          {testResult && (
+            <div className={`mt-5 p-4 rounded border transition-all ${
+              testResult.valid
+                ? 'border-green-500/40 bg-green-500/5'
+                : 'border-amber-500/40 bg-amber-500/5'
+            }`}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  {testResult.valid ? (
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <AlertTriangle className="h-4 w-4 text-amber-500" />
+                  )}
+                  <span className={`text-[11px] font-bold uppercase tracking-wider ${
+                    testResult.valid ? 'text-green-500' : 'text-amber-400'
+                  }`}>
+                    {testResult.valid ? 'SSO Connection Test: Passed' : 'SSO Connection Test: Attention Needed'}
+                  </span>
+                </div>
+                {testResult.details?.certDaysRemaining !== undefined && (
+                  <span className="text-[9px] font-mono text-[var(--text-secondary)]">
+                    Cert valid: {testResult.details.certDaysRemaining} days remaining
+                  </span>
+                )}
+              </div>
+
+              {testResult.details?.checks && (
+                <ul className="space-y-1.5 mt-3 pt-2 border-t border-[var(--border-default)]/40 text-[10px]">
+                  {testResult.details.checks.map((check: any, idx: number) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      {check.passed ? (
+                        <Check className="h-3.5 w-3.5 text-green-400 mt-0.5 shrink-0" />
+                      ) : (
+                        <X className="h-3.5 w-3.5 text-red-400 mt-0.5 shrink-0" />
+                      )}
+                      <div>
+                        <span className="font-semibold text-[var(--text-primary)]">{check.name}: </span>
+                        <span className="text-[var(--text-secondary)]">{check.message}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -2532,8 +2871,21 @@ function SsoTab({
                 <span className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1">
                   Your SP Entity ID
                 </span>
-                <div className="flex items-center gap-2 bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 font-mono text-[10px] text-[var(--text-secondary)] overflow-hidden text-ellipsis whitespace-nowrap">
-                  {spEntityId}
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 font-mono text-[10px] text-[var(--text-secondary)] overflow-hidden text-ellipsis whitespace-nowrap">
+                    {spEntityId}
+                  </div>
+                  <button
+                    onClick={() => {
+                      void navigator.clipboard.writeText(spEntityId);
+                      addToast({ message: 'SP Entity ID copied!', type: 'info' });
+                    }}
+                    type="button"
+                    className="p-2 border border-[var(--border-default)] rounded hover:text-[var(--royal-indigo)] bg-[var(--bg-page)]"
+                    title="Copy Link"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               </div>
 
@@ -2541,8 +2893,21 @@ function SsoTab({
                 <span className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1">
                   Your ACS URL (Assertion Consumer Service)
                 </span>
-                <div className="flex items-center gap-2 bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 font-mono text-[10px] text-[var(--text-secondary)] overflow-hidden text-ellipsis whitespace-nowrap">
-                  {spAcsUrl}
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 font-mono text-[10px] text-[var(--text-secondary)] overflow-hidden text-ellipsis whitespace-nowrap">
+                    {spAcsUrl}
+                  </div>
+                  <button
+                    onClick={() => {
+                      void navigator.clipboard.writeText(spAcsUrl);
+                      addToast({ message: 'ACS URL copied!', type: 'info' });
+                    }}
+                    type="button"
+                    className="p-2 border border-[var(--border-default)] rounded hover:text-[var(--royal-indigo)] bg-[var(--bg-page)]"
+                    title="Copy Link"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               </div>
 

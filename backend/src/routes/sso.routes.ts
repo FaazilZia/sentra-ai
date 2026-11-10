@@ -1,5 +1,6 @@
-import { Router, NextFunction } from 'express';
+import { Router, NextFunction, json, urlencoded } from 'express';
 import { authenticate, authenticateScim, authorizeRoles } from '../middleware/auth.middleware';
+import * as ssoController from '../controllers/sso.controller';
 import {
   initiateSamlSso,
   samlCallback,
@@ -19,8 +20,10 @@ import {
   deleteScimGroup,
   getServiceProviderConfig,
   getResourceTypes,
-  getSchemas
+  getSchemas,
+  testSsoConnection
 } from '../controllers/sso.controller';
+import { ssoTestRateLimiter } from '../config/rateLimit';
 
 /**
  * @openapi
@@ -473,15 +476,20 @@ const scimHeaderMiddleware = (req: any, res: any, next: NextFunction) => {
 
 // SAML 2.0 browser endpoints (slug-based, no cookie/bearer token required)
 router.get('/saml/:orgSlug', initiateSamlSso);
-router.post('/saml/:orgSlug/callback', samlCallback);
+router.post(
+  '/saml/:orgSlug/callback',
+  urlencoded({ extended: false, limit: '1mb' }),
+  (req, res, next) => ssoController.samlCallback(req, res, next)
+);
 router.get('/saml/:orgSlug/metadata', getSamlMetadata);
 
 // SAML administrative configuration endpoints (requires JWT session authentication)
 router.put('/sso/config', authenticate, authorizeRoles('ADMIN'), updateSsoConfig);
+router.post('/sso/test-connection', authenticate, authorizeRoles('ADMIN'), ssoTestRateLimiter, testSsoConnection);
 router.get('/sso/metadata/:orgSlug', getSamlMetadata);
 
-// Apply SCIM header middleware to all SCIM routes
-router.use('/scim/v2', scimHeaderMiddleware);
+// Apply SCIM body parser and header middleware to all SCIM routes
+router.use('/scim/v2', json({ type: ['application/scim+json', 'application/json', 'application/*+json'] }), scimHeaderMiddleware);
 
 // Discovery endpoints (no authentication required per RFC 7644 §4)
 router.get('/scim/v2/ServiceProviderConfig', getServiceProviderConfig);

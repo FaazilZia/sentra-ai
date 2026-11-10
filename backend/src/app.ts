@@ -401,22 +401,51 @@ const allowedOrigins = corsOrigins
   ? corsOrigins.split(',').map(o => o.trim()) 
   : ['http://localhost:5173'];
 
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    const isAllowed = allowedOrigins.includes(origin) || 
-                      (!isProduction && origin.includes('localhost')) ||
-                      origin.endsWith('.vercel.app');
-    if (isAllowed) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-API-Key', 'X-Workspace-Id', 'X-Idempotency-Key', 'X-CSRF-Token'],
-  exposedHeaders: ['x-csrf-token']
+// SAML 2.0 ACS Callback CORS Exemption:
+// In the SAML 2.0 HTTP-POST binding, Identity Providers (such as Okta) submit a cross-origin form POST
+// directly from the user's browser, transmitting the IdP domain in the Origin header (e.g. https://trial-1398524.okta.com).
+// Security for this endpoint is enforced cryptographically through digital signatures inside the SAML assertion,
+// verified against the stored IdP certificate in sso.controller.ts (never via browser origin headers).
+// We exempt ONLY the SAML ACS callback route (POST /api/v1/saml/:orgSlug/callback) from origin checking.
+// All other routes strictly enforce allowed origins without loosening policies or using wildcards.
+app.use(cors((req, callback) => {
+  const isSamlCallback = req.method === 'POST' && /^\/api\/v1\/saml\/[^/]+\/callback\/?$/.test(req.path);
+  if (isSamlCallback) {
+    return callback(null, {
+      origin: true,
+      credentials: true,
+      methods: ['POST', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-API-Key', 'X-Workspace-Id', 'X-Idempotency-Key', 'X-CSRF-Token'],
+      exposedHeaders: ['x-csrf-token'],
+    });
+  }
+
+  const origin = req.headers.origin;
+  if (!origin) {
+    return callback(null, {
+      origin: true,
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-API-Key', 'X-Workspace-Id', 'X-Idempotency-Key', 'X-CSRF-Token'],
+      exposedHeaders: ['x-csrf-token'],
+    });
+  }
+
+  const isAllowed = allowedOrigins.includes(origin) || 
+                    (!isProduction && origin.includes('localhost')) ||
+                    origin.endsWith('.vercel.app');
+
+  if (isAllowed) {
+    callback(null, {
+      origin: true,
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-API-Key', 'X-Workspace-Id', 'X-Idempotency-Key', 'X-CSRF-Token'],
+      exposedHeaders: ['x-csrf-token'],
+    });
+  } else {
+    callback(new Error('Not allowed by CORS'));
+  }
 }));
 
 // Minimal diagnostics & health check routes (mounted after Helmet/CORS to inherit security/CORS headers)
@@ -428,7 +457,7 @@ app.use(prometheusMiddleware);
 // Prometheus metrics endpoint (before auth)
 app.use('/metrics', metricsRoutes);
 
-app.use(express.json({ limit: '100kb' }));
+app.use(express.json({ limit: '100kb', type: ['application/json', 'application/scim+json', 'application/*+json'] }));
 app.use(cookieParser());
 app.use(csrfProtection);
 // Morgan kept only for non-production development convenience; pino-http handles prod JSON logs
