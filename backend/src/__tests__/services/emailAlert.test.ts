@@ -634,5 +634,91 @@ describe('Day 11: Per-Organization Email Alert Channel', () => {
         'Rate limit exceeded: Too many test alert requests'
       );
     });
+
+    it('rejects test emails when override recipient format is invalid', async () => {
+      (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+        id: orgA,
+        name: 'Alpha Corp',
+      });
+
+      await expect(emailAlertService.sendTestEmail(orgA, 'invalid-email-address')).rejects.toThrow(
+        'Invalid recipient email address'
+      );
+    });
+
+    it('rejects test emails when SMTP transporter is not configured', async () => {
+      const originalHost = process.env.SMTP_HOST;
+      try {
+        delete process.env.SMTP_HOST;
+        (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+          id: orgA,
+          name: 'Alpha Corp',
+          alertEmail: JSON.stringify({
+            recipients: ['valid@alpha.com'],
+            enabled: true,
+          }),
+        });
+
+        await expect(emailAlertService.sendTestEmail(orgA)).rejects.toThrow(
+          'SMTP transporter is not configured'
+        );
+      } finally {
+        process.env.SMTP_HOST = originalHost;
+      }
+    });
+
+    it('skips alert dispatch and returns false when SMTP transport is not configured', async () => {
+      const originalHost = process.env.SMTP_HOST;
+      try {
+        delete process.env.SMTP_HOST;
+        (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+          id: orgA,
+          name: 'Alpha Corp',
+          alertEmail: JSON.stringify({
+            recipients: ['sec@alpha.com'],
+            enabled: true,
+            severityFilter: 'high',
+          }),
+        });
+
+        const result = await emailAlertService.sendAlert(orgA, {
+          organizationId: orgA,
+          agent: 'agent-1',
+          action: 'exfil',
+          status: 'blocked',
+          risk: 'high',
+          reason: 'Policy block',
+        });
+
+        expect(result).toBe(false);
+      } finally {
+        process.env.SMTP_HOST = originalHost;
+      }
+    });
+
+    it('returns false and logs error when transporter sendMail throws', async () => {
+      (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+        id: orgA,
+        name: 'Alpha Corp',
+        alertEmail: JSON.stringify({
+          recipients: ['sec@alpha.com'],
+          enabled: true,
+          severityFilter: 'high',
+        }),
+      });
+
+      mockSendMail.mockRejectedValueOnce(new Error('Connection reset by peer'));
+
+      const result = await emailAlertService.sendAlert(orgA, {
+        organizationId: orgA,
+        agent: 'agent-1',
+        action: 'exfil',
+        status: 'blocked',
+        risk: 'high',
+        reason: 'Policy block',
+      });
+
+      expect(result).toBe(false);
+    });
   });
 });

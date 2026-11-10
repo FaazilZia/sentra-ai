@@ -55,6 +55,7 @@ module.exports = {
     'src/services/schemaDrift.service.ts',
     'src/controllers/sso.controller.ts',
     'src/routes/sso.routes.ts',
+    'src/services/emailAlert.service.ts',
   ],
   coverageThreshold: {
     global: {
