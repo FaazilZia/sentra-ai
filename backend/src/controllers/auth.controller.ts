@@ -426,6 +426,7 @@ export const refreshToken = async (req: Request, res: Response, next: NextFuncti
     });
 
     if (!storedToken || storedToken.revoked) {
+      logger.warn(`[REFRESH FAIL] storedToken found: ${!!storedToken}, revoked: ${storedToken?.revoked}, tokenPrefix: ${token?.slice(0, 10)}`);
       return res.status(403).json({ success: false, message: 'Token revoked or invalid' });
     }
 

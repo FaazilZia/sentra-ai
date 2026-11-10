@@ -250,11 +250,19 @@ export function registerRequest(payload: any): Promise<any> {
   });
 }
 
+let activeRefreshPromise: Promise<{ accessToken: string; refreshToken?: string }> | null = null;
+
 export function refreshSession(): Promise<{ accessToken: string; refreshToken?: string }> {
-  return apiRequest<{ accessToken: string; refreshToken?: string }>('/auth/refresh', {
+  if (activeRefreshPromise) {
+    return activeRefreshPromise;
+  }
+  activeRefreshPromise = apiRequest<{ accessToken: string; refreshToken?: string }>('/auth/refresh', {
     method: 'POST',
     body: JSON.stringify({}),
-  }, false);
+  }, false).finally(() => {
+    activeRefreshPromise = null;
+  });
+  return activeRefreshPromise;
 }
 
 /**

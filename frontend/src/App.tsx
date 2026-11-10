@@ -199,6 +199,7 @@ function AppRoutes() {
           />
 
           <Route path="/" element={<Navigate to="/app" replace />} />
+          <Route path="/dashboard" element={<Navigate to="/app" replace />} />
           <Route path="*" element={<Suspense fallback={<RouteFallback />}><NotFoundPage /></Suspense>} />
         </Routes>
         

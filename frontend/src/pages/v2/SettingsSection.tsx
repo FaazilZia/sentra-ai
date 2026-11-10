@@ -24,6 +24,8 @@ import {
 } from 'lucide-react';
 import { JiraConfigCard } from '@/components/connectors/JiraConfigCard';
 import { InboundConnectorsCard } from '@/components/connectors/InboundConnectorsCard';
+import { SsoTab } from '@/pages/Settings';
+import { fetchCompany, saveSsoConfig, testSsoConnection } from '@/lib/api';
 
 interface TeamMember {
   id: string;
@@ -73,6 +75,153 @@ export default function SettingsSection() {
   const [newlyCreatedKey, setNewlyCreatedKey] = useState<NewlyCreatedKey | null>(null);
   const [copiedFullKey, setCopiedFullKey] = useState(false);
   const [generatingKey, setGeneratingKey] = useState(false);
+
+  // SSO state
+  const [company, setCompany] = useState<any>(null);
+  const [ssoProviderName, setSsoProviderName] = useState('Okta');
+  const [idpMetadataXml, setIdpMetadataXml] = useState('');
+  const [ssoPreset, setSsoPreset] = useState<'okta' | 'entra' | 'custom'>('okta');
+  const [attributeMapping, setAttributeMapping] = useState<Record<string, string>>({
+    email: 'email',
+    firstName: 'firstName',
+    lastName: 'lastName',
+    role: 'role',
+    groups: 'groups',
+  });
+  const [allowedDomains, setAllowedDomains] = useState('');
+  const [savingSso, setSavingSso] = useState(false);
+  const [testingSso, setTestingSso] = useState(false);
+  const [testResult, setTestResult] = useState<any>(null);
+  const [newScimToken, setNewScimToken] = useState<string | null>(null);
+
+  const handlePresetChange = (preset: 'okta' | 'entra' | 'custom') => {
+    setSsoPreset(preset);
+    if (preset === 'okta') {
+      setAttributeMapping({
+        email: 'email',
+        firstName: 'firstName',
+        lastName: 'lastName',
+        role: 'role',
+        groups: 'groups',
+      });
+      if (!ssoProviderName || ssoProviderName === 'SAML') setSsoProviderName('Okta');
+    } else if (preset === 'entra') {
+      setAttributeMapping({
+        email: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress',
+        firstName: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname',
+        lastName: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname',
+        name: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name',
+        role: 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role',
+        groups: 'http://schemas.xmlsoap.org/claims/Group',
+      });
+      if (!ssoProviderName || ssoProviderName === 'SAML') setSsoProviderName('Microsoft Entra ID');
+    }
+  };
+
+  const handleTestSso = async () => {
+    if (!idpMetadataXml.trim()) {
+      addToast({ message: 'Paste IdP Metadata XML first before testing connection', type: 'warning' });
+      return;
+    }
+    try {
+      setTestingSso(true);
+      setTestResult(null);
+      const res = await testSsoConnection({
+        idpMetadataXml: idpMetadataXml.trim(),
+        attributeMapping,
+      });
+      setTestResult(res);
+      if (res.valid) {
+        addToast({ message: 'SSO Connection Test Passed! All 4 checks succeeded.', type: 'success' });
+      } else {
+        addToast({ message: 'SSO Connection Test Failed. Review errors below.', type: 'error' });
+      }
+    } catch (err: any) {
+      console.error('SSO test connection failed:', err);
+      setTestResult({
+        valid: false,
+        message: err.message || 'Connection test failed',
+        details: {
+          checks: [{ name: 'Connection Test', passed: false, message: err.message || 'Failed to test connection' }],
+        },
+      });
+      addToast({ message: err.message || 'Failed to test SSO connection', type: 'error' });
+    } finally {
+      setTestingSso(false);
+    }
+  };
+
+  const handleSaveSso = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!idpMetadataXml.trim()) {
+      addToast({ message: 'IdP Metadata XML is required', type: 'warning' });
+      return;
+    }
+
+    try {
+      setSavingSso(true);
+      const res = await saveSsoConfig(
+        idpMetadataXml.trim(),
+        ssoProviderName,
+        attributeMapping,
+        allowedDomains.split(',').map((d) => d.trim()).filter(Boolean)
+      );
+
+      if (res?.company) {
+        setCompany(res.company);
+      }
+      if (res?.plaintextScimToken) {
+        setNewScimToken(res.plaintextScimToken);
+      }
+
+      addToast({
+        message: 'SAML SSO and SCIM 2.0 provisioning configured successfully',
+        type: 'success',
+      });
+    } catch (err: any) {
+      console.error('Failed to configure SSO:', err);
+      addToast({ message: err.message || 'Failed to configure SSO', type: 'error' });
+    } finally {
+      setSavingSso(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.organizationId) {
+      fetchCompany(user.organizationId)
+        .then((data) => {
+          setCompany(data);
+          setSsoProviderName(data.sso_provider || 'Okta');
+          if (data.saml_metadata) {
+            setIdpMetadataXml(data.saml_metadata.idpMetadataXml || '');
+            if (data.saml_metadata.attributeMapping) {
+              setAttributeMapping(data.saml_metadata.attributeMapping);
+              if (data.saml_metadata.attributeMapping.email === 'email') {
+                setSsoPreset('okta');
+              } else if (data.saml_metadata.attributeMapping.email?.includes('schemas.xmlsoap.org')) {
+                setSsoPreset('entra');
+              } else {
+                setSsoPreset('custom');
+              }
+            } else if (data.sso_provider?.toLowerCase() === 'okta') {
+              setSsoPreset('okta');
+            }
+            if (data.saml_metadata.allowedEmailDomains) {
+              const doms = Array.isArray(data.saml_metadata.allowedEmailDomains)
+                ? data.saml_metadata.allowedEmailDomains.join(', ')
+                : String(data.saml_metadata.allowedEmailDomains);
+              setAllowedDomains(doms);
+            }
+          }
+        })
+        .catch((err) => console.error('Settings load company details error:', err));
+    }
+  }, [user?.organizationId]);
+
+  const backendUrl = import.meta.env.VITE_API_BASE_URL?.replace(/\/v1$/, '').replace(/\/api$/, '') || 'http://localhost:10000';
+  const spEntityId = company ? `${backendUrl}/api/v1/saml/${company.slug}/metadata` : '';
+  const spAcsUrl = company ? `${backendUrl}/api/v1/saml/${company.slug}/callback` : '';
+  const ssoLoginUrl = company ? `${backendUrl}/api/v1/saml/${company.slug}` : '';
 
   const loadSettingsData = useCallback(async () => {
     setLoading(true);
@@ -355,7 +504,8 @@ export default function SettingsSection() {
           { id: 'team', label: 'Team & Organization', count: teamMembers.length, icon: Users },
           { id: 'vendors', label: 'Vendor Risk Assessment', count: vendors.length, icon: Building2 },
           { id: 'apikeys', label: 'API Keys & Security', count: apiKeys.length, icon: Key },
-          { id: 'connectors', label: 'Alerts & Connectors', icon: Bell }
+          { id: 'connectors', label: 'Alerts & Connectors', icon: Bell },
+          { id: 'sso', label: 'Single Sign-On (SSO)', icon: ShieldCheck }
         ]}
         activeTab={activeTab}
         onChange={setActiveTab}
@@ -680,6 +830,34 @@ export default function SettingsSection() {
           <InboundConnectorsCard />
           <JiraConfigCard />
         </div>
+      )}
+
+      {/* Tab 6: Single Sign-On (SSO) */}
+      {activeTab === 'sso' && (
+        <SsoTab
+          company={company}
+          ssoProviderName={ssoProviderName}
+          setSsoProviderName={setSsoProviderName}
+          idpMetadataXml={idpMetadataXml}
+          setIdpMetadataXml={setIdpMetadataXml}
+          ssoPreset={ssoPreset}
+          handlePresetChange={handlePresetChange}
+          attributeMapping={attributeMapping}
+          setAttributeMapping={setAttributeMapping}
+          allowedDomains={allowedDomains}
+          setAllowedDomains={setAllowedDomains}
+          savingSso={savingSso}
+          handleSaveSso={handleSaveSso}
+          testingSso={testingSso}
+          handleTestSso={handleTestSso}
+          testResult={testResult}
+          newScimToken={newScimToken}
+          setNewScimToken={setNewScimToken}
+          spEntityId={spEntityId}
+          spAcsUrl={spAcsUrl}
+          ssoLoginUrl={ssoLoginUrl}
+          addToast={addToast}
+        />
       )}
     </PageContainer>
   );

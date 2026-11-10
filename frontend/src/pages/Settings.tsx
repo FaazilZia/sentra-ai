@@ -2532,7 +2532,7 @@ function McpTab({
   );
 }
 
-interface SsoTabProps {
+export interface SsoTabProps {
   company: any;
   ssoProviderName: string;
   setSsoProviderName: (val: string) => void;
@@ -2557,7 +2557,7 @@ interface SsoTabProps {
   addToast: any;
 }
 
-function SsoTab({
+export function SsoTab({
   company,
   ssoProviderName,
   setSsoProviderName,

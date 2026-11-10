@@ -494,7 +494,7 @@ export const connectorTestRateLimiter = createSafeRateLimiter('rl:conn:test:', {
 
 export const ssoTestRateLimiter = createSafeRateLimiter('rl:sso:test:', {
   windowMs: 60 * 1000,
-  max: (req: any) => (process.env.NODE_ENV === 'test' || process.env.IS_E2E_TEST === 'true') ? 1000 : 10,
+  max: (req: any) => (process.env.NODE_ENV === 'test' || process.env.IS_E2E_TEST === 'true') ? 1000 : 5,
   message: { success: false, message: 'Rate limit exceeded: Too many SSO connection test requests. Please wait a minute before trying again.' },
   standardHeaders: true,
   legacyHeaders: false,
