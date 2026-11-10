@@ -610,16 +610,24 @@ export const samlCallback = async (req: Request, res: Response, next: NextFuncti
           role: mappedRole,
           is_active: true,
           organizationId: org.id,
+          last_login_at: new Date(),
         },
       });
     } else {
       user = existingUser;
+      const updateData: any = {
+        last_login_at: new Date(),
+      };
       if (rawRole !== undefined && existingUser.role !== 'SUPER_ADMIN' && existingUser.role !== mappedRole) {
         // Sync role if assertion explicitly sent role/groups (never touching a SUPER_ADMIN)
-        user = await prisma.users.update({
-          where: { id: existingUser.id },
-          data: { role: mappedRole }
-        });
+        updateData.role = mappedRole;
+      }
+      user = await prisma.users.update({
+        where: { id: existingUser.id },
+        data: updateData,
+      });
+      if (!user?.id) {
+        user = { ...existingUser, ...updateData };
       }
     }
 

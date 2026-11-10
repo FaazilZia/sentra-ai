@@ -15,7 +15,7 @@ jest.mock('../../config/db', () => ({
   __esModule: true,
   default: {
     organizations: { findUnique: jest.fn() },
-    users: { findFirst: jest.fn(), create: jest.fn() },
+    users: { findFirst: jest.fn(), create: jest.fn(), update: jest.fn() },
   },
 }));
 
@@ -131,10 +131,16 @@ afterAll(() => {
 beforeEach(() => {
   (prisma.users.findFirst as jest.Mock).mockResolvedValue(null);
   (prisma.users.create as jest.Mock).mockImplementation(async ({ data }: any) => ({ ...data }));
+  (prisma.users.update as jest.Mock).mockImplementation(async ({ where, data }: any) => ({
+    id: where.id,
+    organizationId: ORG_ID,
+    role: 'MEMBER',
+    ...data,
+  }));
 });
 
 describe('samlCallback: valid logins', () => {
-  it('creates a new user in the correct org and logs them in', async () => {
+  it('creates a new user in the correct org, sets last_login_at, and logs them in', async () => {
     mockOrg();
     const res = makeRes();
 
@@ -144,6 +150,7 @@ describe('samlCallback: valid logins', () => {
     expect((prisma.users.create as jest.Mock).mock.calls[0][0].data).toMatchObject({
       email: 'new.user@acme.com',
       organizationId: ORG_ID,
+      last_login_at: expect.any(Date),
     });
     expect(setAuthCookiesAndTokens).toHaveBeenCalledWith(res, expect.objectContaining({ organizationId: ORG_ID }));
     expect(auditLogger.log).toHaveBeenCalledWith(
@@ -152,7 +159,7 @@ describe('samlCallback: valid logins', () => {
     expect(res.redirect).toHaveBeenCalledWith(expect.stringContaining('/dashboard'));
   });
 
-  it('logs in an existing user who already belongs to this org, without creating a new one', async () => {
+  it('logs in an existing user who already belongs to this org, updates last_login_at, without creating a new one', async () => {
     mockOrg();
     (prisma.users.findFirst as jest.Mock).mockResolvedValue({
       id: 'user-1', email: 'jane@acme.com', role: 'MEMBER', is_active: true, organizationId: ORG_ID,
@@ -162,6 +169,14 @@ describe('samlCallback: valid logins', () => {
     await samlCallback(makeReq(await signedResponse(trustedIdp, 'jane@acme.com')), res, jest.fn());
 
     expect(prisma.users.create).not.toHaveBeenCalled();
+    expect(prisma.users.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'user-1' },
+        data: expect.objectContaining({
+          last_login_at: expect.any(Date),
+        }),
+      })
+    );
     expect(setAuthCookiesAndTokens).toHaveBeenCalledWith(res, expect.objectContaining({ id: 'user-1', organizationId: ORG_ID }));
     expect(res.redirect).toHaveBeenCalledWith(expect.stringContaining('/dashboard'));
   });

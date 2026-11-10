@@ -120,6 +120,7 @@ export const setAuthCookiesAndTokens = async (
   }
 
   const isProduction = process.env.NODE_ENV === 'production';
+  const isHttps = isProduction || Boolean(process.env.BACKEND_URL?.startsWith('https')) || Boolean(process.env.FRONTEND_URL?.startsWith('https'));
   const cookieOptions: {
     httpOnly: boolean;
     secure: boolean;
@@ -128,8 +129,8 @@ export const setAuthCookiesAndTokens = async (
     path: string;
   } = {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? 'none' : 'lax',
+    secure: isHttps,
+    sameSite: isHttps ? 'none' : 'lax',
     path: '/',
     maxAge: 15 * 60 * 1000,
   };
@@ -280,6 +281,11 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
+
+    await prisma.users.update({
+      where: { id: user.id },
+      data: { last_login_at: new Date() },
+    });
 
     const role = user.role || 'USER';
     const { accessToken, refreshToken } = await setAuthCookiesAndTokens(
