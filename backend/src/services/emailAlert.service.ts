@@ -61,6 +61,21 @@ export function normalizeSeverityFilter(val: unknown): AlertSeverityFilter {
   return 'high';
 }
 
+/**
+ * Resolves the application base URL for dashboard deep-links.
+ * Prefers APP_BASE_URL, APP_URL, or FRONTEND_URL from environment variables,
+ * defaulting to the canonical production origin (https://sentraatech.info).
+ * Strips trailing slashes and handles comma-separated lists.
+ */
+export function resolveDashboardBaseUrl(): string {
+  const configured = process.env.APP_BASE_URL || process.env.APP_URL || process.env.FRONTEND_URL;
+  if (!configured || configured.trim() === '') {
+    return 'https://sentraatech.info';
+  }
+  const primary = configured.split(',')[0].trim();
+  return primary.replace(/\/+$/, '');
+}
+
 export class EmailAlertService {
   private db: any = prisma;
   private inMemoryRateLimits = new Map<string, { count: number; resetAt: number }>();
@@ -340,7 +355,10 @@ export class EmailAlertService {
 
       // Redact PII in action
       const sanitizedAction = PIIScannerService.redact(event.action || '');
-      const dashboardUrl = (process.env.FRONTEND_URL || 'https://sentraatech.info').split(',')[0].trim();
+      const dashboardBaseUrl = resolveDashboardBaseUrl();
+      const incidentUrl = event.incidentId
+        ? `${dashboardBaseUrl}/app/incidents?id=${encodeURIComponent(event.incidentId)}`
+        : `${dashboardBaseUrl}/app/incidents`;
 
       const isBlocked = event.status === 'blocked';
       const severityColor = isBlocked ? '#e11d48' : '#d97706';
@@ -349,7 +367,7 @@ export class EmailAlertService {
       const html = `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
           <div style="background-color: ${severityColor}; color: white; padding: 18px 24px;">
-            <h2 style="margin: 0; font-size: 18px; font-weight: 700;">🚨 [${event.status.toUpperCase()}] ${statusTitle}</h2>
+            <h2 style="margin: 0; font-size: 18px; font-weight: 700;">🚨 [${event.status.toUpperCase()}] ${statusTitle} — Sentraa AI</h2>
           </div>
           <div style="padding: 24px; background-color: #ffffff;">
             <p style="margin-top: 0; font-size: 14px; color: #334155;">
@@ -386,23 +404,23 @@ export class EmailAlertService {
               </tr>
             </table>
 
-            <a href="${dashboardUrl}/app/incidents" style="display: inline-block; background: #0f172a; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: bold; margin-top: 10px;">
+            <a href="${incidentUrl}" style="display: inline-block; background: #0f172a; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: bold; margin-top: 10px;">
               View Incident in Dashboard
             </a>
 
             <p style="font-size: 11px; color: #94a3b8; margin-top: 32px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
-              Sentra AI Automated Governance Platform | Tenant ID: ${orgId}
+              Sentraa AI Automated Governance Platform | Tenant ID: ${orgId}
             </p>
           </div>
         </div>
       `;
 
-      const fromAddress = process.env.SMTP_FROM || '"Sentra AI Alerts" <alerts@sentraatech.com>';
+      const fromAddress = process.env.SMTP_FROM || '"Sentraa AI Alerts" <alerts@sentraatech.com>';
 
       await transporter.sendMail({
         from: fromAddress,
         to: config.recipients,
-        subject: `🚨 [${event.status.toUpperCase()}] AI Security Violation: ${sanitizedAction.slice(0, 80)}`,
+        subject: `🚨 [${event.status.toUpperCase()}] Sentraa AI Security Violation: ${sanitizedAction.slice(0, 80)}`,
         html
       });
 
@@ -453,7 +471,7 @@ export class EmailAlertService {
     const html = `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
         <div style="background-color: #0f172a; color: white; padding: 18px 24px;">
-          <h2 style="margin: 0; font-size: 18px; font-weight: 700;">🧪 Sentra AI: Test Email Alert</h2>
+          <h2 style="margin: 0; font-size: 18px; font-weight: 700;">🧪 Sentraa AI: Test Email Alert</h2>
         </div>
         <div style="padding: 24px; background-color: #ffffff;">
           <p style="margin-top: 0; font-size: 14px; color: #334155;">
@@ -468,18 +486,18 @@ export class EmailAlertService {
             When policy violations or blocked actions occur, automated notifications will be delivered to this distribution list.
           </p>
           <p style="font-size: 11px; color: #94a3b8; margin-top: 32px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
-            Sentra AI Automated Governance Platform | Test Notification
+            Sentraa AI Automated Governance Platform | Test Notification
           </p>
         </div>
       </div>
     `;
 
-    const fromAddress = process.env.SMTP_FROM || '"Sentra AI Alerts" <alerts@sentraatech.com>';
+    const fromAddress = process.env.SMTP_FROM || '"Sentraa AI Alerts" <alerts@sentraatech.com>';
 
     await transporter.sendMail({
       from: fromAddress,
       to: targetRecipients,
-      subject: `🧪 Sentra AI: Test Alert for ${orgName}`,
+      subject: `🧪 Sentraa AI: Test Alert for ${orgName}`,
       html
     });
 

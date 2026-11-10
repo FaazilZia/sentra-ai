@@ -24,7 +24,7 @@ jest.mock('@slack/webhook', () => ({
 import nodemailer from 'nodemailer';
 import prisma from '../../config/db';
 import logger from '../../utils/logger';
-import { emailAlertService, isValidEmail, validateRecipients, normalizeSeverityFilter } from '../../services/emailAlert.service';
+import { emailAlertService, isValidEmail, validateRecipients, normalizeSeverityFilter, resolveDashboardBaseUrl } from '../../services/emailAlert.service';
 import { processAlertJob, DecisionAlertEvent } from '../../services/alertPipeline.service';
 
 describe('Day 11: Per-Organization Email Alert Channel', () => {
@@ -580,8 +580,8 @@ describe('Day 11: Per-Organization Email Alert Channel', () => {
 
       const mailCall = mockSendMail.mock.calls[0][0];
       expect(mailCall.to).toEqual(['admin@alpha.com']);
-      expect(mailCall.subject).toContain('Test Alert for Alpha Corp');
-      expect(mailCall.html).toContain('🧪 Sentra AI: Test Email Alert');
+      expect(mailCall.subject).toContain('🧪 Sentraa AI: Test Alert for Alpha Corp');
+      expect(mailCall.html).toContain('🧪 Sentraa AI: Test Email Alert');
     });
 
     it('allows testing with an override recipient', async () => {
@@ -719,6 +719,89 @@ describe('Day 11: Per-Organization Email Alert Channel', () => {
       });
 
       expect(result).toBe(false);
+    });
+  });
+
+  describe('Branding and Dashboard Link Resolution', () => {
+    const origAppBaseUrl = process.env.APP_BASE_URL;
+    const origAppUrl = process.env.APP_URL;
+    const origFrontendUrl = process.env.FRONTEND_URL;
+    const origSmtpFrom = process.env.SMTP_FROM;
+
+    afterEach(() => {
+      process.env.APP_BASE_URL = origAppBaseUrl;
+      process.env.APP_URL = origAppUrl;
+      process.env.FRONTEND_URL = origFrontendUrl;
+      process.env.SMTP_FROM = origSmtpFrom;
+    });
+
+    it('resolves dashboard URL from APP_BASE_URL, stripping trailing slash and list', () => {
+      process.env.APP_BASE_URL = 'https://app.sentraatech.com/, https://admin.sentraatech.com/';
+      delete process.env.APP_URL;
+      delete process.env.FRONTEND_URL;
+
+      expect(resolveDashboardBaseUrl()).toBe('https://app.sentraatech.com');
+    });
+
+    it('falls back to APP_URL when APP_BASE_URL is not set', () => {
+      delete process.env.APP_BASE_URL;
+      process.env.APP_URL = 'https://custom-app.sentraatech.info/';
+      delete process.env.FRONTEND_URL;
+
+      expect(resolveDashboardBaseUrl()).toBe('https://custom-app.sentraatech.info');
+    });
+
+    it('falls back to FRONTEND_URL when APP_BASE_URL and APP_URL are not set', () => {
+      delete process.env.APP_BASE_URL;
+      delete process.env.APP_URL;
+      process.env.FRONTEND_URL = 'https://dashboard.sentraatech.info';
+
+      expect(resolveDashboardBaseUrl()).toBe('https://dashboard.sentraatech.info');
+    });
+
+    it('defaults to canonical production https://sentraatech.info when no env vars are defined', () => {
+      delete process.env.APP_BASE_URL;
+      delete process.env.APP_URL;
+      delete process.env.FRONTEND_URL;
+
+      expect(resolveDashboardBaseUrl()).toBe('https://sentraatech.info');
+    });
+
+    it('embeds configured dashboard URL and Sentraa AI branding in alert emails', async () => {
+      process.env.APP_BASE_URL = 'https://governance.sentraatech.info';
+      delete process.env.SMTP_FROM;
+
+      (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+        id: orgA,
+        name: 'Alpha Corp',
+        alertEmail: JSON.stringify({
+          recipients: ['security@alpha.com'],
+          enabled: true,
+          severityFilter: 'high',
+        }),
+      });
+
+      await emailAlertService.sendAlert(orgA, {
+        organizationId: orgA,
+        incidentId: 'inc-9999',
+        agent: 'prod-copilot',
+        action: 'leak_api_token',
+        status: 'blocked',
+        risk: 'high',
+        reason: 'Credential exfiltration blocked',
+      });
+
+      expect(mockSendMail).toHaveBeenCalledTimes(1);
+      const call = mockSendMail.mock.calls[0][0];
+
+      // Branding checks
+      expect(call.subject).toContain('🚨 [BLOCKED] Sentraa AI Security Violation:');
+      expect(call.html).toContain('🚨 [BLOCKED] AI Action Blocked — Sentraa AI');
+      expect(call.html).toContain('Sentraa AI Automated Governance Platform | Tenant ID:');
+      expect(call.from).toBe('"Sentraa AI Alerts" <alerts@sentraatech.com>');
+
+      // Dashboard link check (configured base URL + incident ID query)
+      expect(call.html).toContain('href="https://governance.sentraatech.info/app/incidents?id=inc-9999"');
     });
   });
 });
