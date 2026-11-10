@@ -3,6 +3,7 @@ import { alertQueue } from './queue.service';
 import { SlackService } from './slack.service';
 import { JiraService } from './jira.service';
 import { PIIScannerService } from './piiScanner.service';
+import { emailAlertService } from './emailAlert.service';
 import prisma from '../config/db';
 
 export interface DecisionAlertEvent {
@@ -60,22 +61,10 @@ export async function processAlertJob(event: DecisionAlertEvent): Promise<void> 
 
   // 2. Channel Adapter: Email Alert
   try {
-    const org = await prisma.organizations.findUnique({
-      where: { id: organizationId },
-      select: { alertEmail: true, name: true }
+    await emailAlertService.sendAlert(organizationId, {
+      ...event,
+      action: sanitizedAction,
     });
-
-    if (org?.alertEmail && risk === 'high') {
-      const { alertService } = require('./alert.service');
-      await alertService.sendEmailAlert(organizationId, {
-        agent,
-        action: sanitizedAction,
-        risk,
-        reason,
-        policyTriggered: matchedPolicy || compliance?.[0] || 'General Safety Policy',
-        timestamp: new Date(event.timestamp || Date.now())
-      });
-    }
   } catch (emailErr: any) {
     logger.error(`[AlertPipeline] Email dispatch error for org ${organizationId}:`, emailErr);
   }
