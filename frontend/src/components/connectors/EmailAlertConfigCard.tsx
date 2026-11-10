@@ -14,7 +14,6 @@ import {
   fetchEmailAlertConfig, 
   saveEmailAlertConfig, 
   testEmailAlert, 
-  EmailAlertConfig,
   AlertSeverityFilter
 } from '@/lib/api';
 import { useStore } from '@/store/useStore';
