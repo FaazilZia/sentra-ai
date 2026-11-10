@@ -1,0 +1,111 @@
+================================================================================
+SENTRA AI — DAY 11 PER-ORGANIZATION EMAIL ALERT CHANNEL VERIFICATION EVIDENCE
+================================================================================
+Date and Time (UTC):   2026-11-10T15:35:00Z
+Local Time (IST):      2026-11-10T21:05:00+05:30
+Target Repository:     FaazilZia/sentra-ai
+Pull Request:          #152 (https://github.com/FaazilZia/sentra-ai/pull/152)
+Branch:                feat/day11-email-alerts
+PR Commit Head:        9ef6b173101f4f618977a1be5f4948666286cf8f
+Author:                FaazilZia <152073659+FaazilZia@users.noreply.github.com>
+Security Status:       ZERO secrets printed, logged, or committed; all credentials masked.
+================================================================================
+
+1. GITHUB ACTIONS CI & SONARCLOUD QUALITY GATE (ON HEAD COMMIT 9ef6b17)
+--------------------------------------------------------------------------------
+• CI / test (pull_request):           SUCCESS (Run 42828794933, 15m 20s)
+• CI / Accessibility (WCAG 2.1 AA):   SUCCESS (Run 42828794933, 14m 58s)
+• Semgrep SAST / Semgrep SAST Scan:   SUCCESS (Run 42828795039, 44s)
+• SonarCloud Code Analysis:           SUCCESS (Quality Gate Passed, 1m 15s)
+• Vercel Preview Comments:            SUCCESS
+• Vercel Deployment:                  SUCCESS (Preview ready)
+• VibeDoctor Quality Gate:            SKIPPED / NEUTRAL
+
+SonarCloud Quality Gate Measures:
+• Quality Gate Status:                PASSED
+• Coverage on New Code:               90.0% (Required >= 80.0%)
+• Duplication on New Code:            0.0%
+• Security Hotspots:                  0
+• Vulnerabilities:                    0
+
+2. REAL SMTP CONFIGURATION & CONNECTION VERIFICATION
+--------------------------------------------------------------------------------
+• Provider:                           Resend SMTP
+• Host:                               smtp.resend.com
+• Port:                               587 (STARTTLS)
+• User:                               resend
+• Password:                           [MASKED: length 31]
+• From Address:                       [MASKED: sender configured]
+• Target Recipient:                   faazilzia01@gmail.com (masked in logs as f***@gmail.com)
+• Transporter Verify Check:           PASS (transporter.verify() resolved successfully)
+
+3. REAL SETTINGS TEST EMAIL (POST /api/v1/organizations/email-alerts/test)
+--------------------------------------------------------------------------------
+• Authenticated User:                 admin@sentra.ai (ADMIN role)
+• Organization ID:                    00000000-0000-0000-0000-000000000001
+• Configured Recipient:               faazilzia01@gmail.com
+• Request:
+    POST /api/v1/organizations/email-alerts/test
+    Authorization: Bearer [MASKED: JWT token]
+• Response:
+    HTTP/1.1 200 OK
+    {
+      "success": true,
+      "message": "Test alert email sent to 1 recipient(s)",
+      "recipients": ["f***@gmail.com"]
+    }
+• Server Log Verification:
+    [AlertEmail] Masked recipient logged: f***@gmail.com (zero raw email / secrets logged)
+• Verdict:                            VERIFIED (Real email delivered via Resend SMTP)
+
+4. REAL ALERT PIPELINE EVENT ROUTING (POST /api/v1/organizations/test-alert)
+--------------------------------------------------------------------------------
+• Event Source:                       alertPipeline -> emailAlertService.sendAlert
+• Event Details:
+    - Agent:                          Test Agent
+    - Action:                         TEST_ACTION
+    - Risk Level:                     high
+    - Status:                         blocked
+    - Matched Policy:                 TEST_POLICY
+• Organization Recipient:             faazilzia01@gmail.com
+• Server Dispatch Log:
+    [21:03:20.618] INFO: [AlertEmail] Successfully sent email alert for org 00000000-0000-0000-0000-000000000001 to 1 recipients (f***@gmail.com). Status: blocked
+• Email Subject:                      🚨 [BLOCKED] AI Security Violation: TEST_ACTION
+• Verdict:                            VERIFIED (Real alert dispatched through alertPipeline)
+
+5. RATE LIMIT ENFORCEMENT VERIFICATION (POST /api/v1/organizations/email-alerts/test)
+--------------------------------------------------------------------------------
+• Enforced Limit:                     5 test requests per 10 minutes per tenant
+• Rapid Burst Test (6 sequential requests):
+    - Request #1:                     HTTP 200 OK  ("Test alert email sent to 1 recipient(s)")
+    - Request #2:                     HTTP 200 OK  ("Test alert email sent to 1 recipient(s)")
+    - Request #3:                     HTTP 200 OK  ("Test alert email sent to 1 recipient(s)")
+    - Request #4:                     HTTP 200 OK  ("Test alert email sent to 1 recipient(s)")
+    - Request #5:                     HTTP 200 OK  ("Test alert email sent to 1 recipient(s)")
+    - Request #6:                     HTTP 429 Too Many Requests
+• 6th Blocked Response Payload:
+    {
+      "success": false,
+      "message": "Rate limit exceeded: Too many test email requests for this organization. Please wait before testing again."
+    }
+• Verdict:                            VERIFIED (Rate limit triggered and strictly enforced)
+
+6. EMAIL BODY PII & SECRET PROTECTION AUDIT
+--------------------------------------------------------------------------------
+• Template Design:                    Modern accessible HTML email card with tenant context
+• Sanitization Check:                 PIIScannerService.redact() applied to all dynamic action & reason strings
+• Secret Inspection:                  Zero SMTP credentials, API tokens, passwords, or raw session IDs in payload
+• Recipient Masking in Logs:          All distribution lists masked using anonymizeText (u***@domain.com)
+• Verdict:                            VERIFIED
+
+7. GIT AUDIT & PR INTEGRITY
+--------------------------------------------------------------------------------
+• Branch Commits:
+    9ef6b17 | FaazilZia <152073659+FaazilZia@users.noreply.github.com> | test(coverage): collect emailAlert coverage and configure sonar exclusions
+    97e8990 | FaazilZia <152073659+FaazilZia@users.noreply.github.com> | fix(frontend): remove unused EmailAlertConfig import to fix tsc build
+    086b9a3 | FaazilZia <152073659+FaazilZia@users.noreply.github.com> | feat(alerts): per-organization email alert channel with rate limiting and settings UI (#day11)
+• Author Verification:                100% authored by FaazilZia; zero commits by janvi345
+• .env Leak Check:                    .env, .env.backup, .env.test NOT present in git diff
+• Secret Keyword Diff Audit:          No secrets or raw credentials committed
+• Verdict:                            VERIFIED
+================================================================================
