@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { JiraConfigCard } from '@/components/connectors/JiraConfigCard';
 import { InboundConnectorsCard } from '@/components/connectors/InboundConnectorsCard';
+import { EmailAlertConfigCard } from '@/components/connectors/EmailAlertConfigCard';
 import { SsoTab } from '@/pages/Settings';
 import { fetchCompany, saveSsoConfig, testSsoConnection } from '@/lib/api';
 
@@ -827,6 +828,7 @@ export default function SettingsSection() {
       {/* Tab 5: Alerts & Connectors */}
       {activeTab === 'connectors' && (
         <div className="space-y-6">
+          <EmailAlertConfigCard />
           <InboundConnectorsCard />
           <JiraConfigCard />
         </div>

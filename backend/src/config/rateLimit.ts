@@ -504,4 +504,16 @@ export const ssoTestRateLimiter = createSafeRateLimiter('rl:sso:test:', {
   },
 });
 
+export const emailAlertTestRateLimiter = createSafeRateLimiter('rl:email:test:', {
+  windowMs: 10 * 60 * 1000,
+  max: (req: any) => (process.env.NODE_ENV === 'test' || process.env.IS_E2E_TEST === 'true') ? 1000 : 5,
+  message: { success: false, message: 'Rate limit exceeded: Too many test email requests for this organization. Please wait before testing again.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  passOnStoreError: true,
+  keyGenerator: (req: any) => {
+    return req.user?.organizationId || req.ip || 'global';
+  },
+});
+
 

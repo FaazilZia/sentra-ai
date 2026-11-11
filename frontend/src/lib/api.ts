@@ -572,6 +572,38 @@ export async function withdrawConsent(): Promise<void> {
  */
 
 
+export type AlertSeverityFilter = 'high' | 'medium_and_high' | 'all';
+
+export interface EmailAlertConfig {
+  recipients: string[];
+  enabled: boolean;
+  severityFilter: AlertSeverityFilter;
+  hourlyRateLimit?: number;
+}
+
+export async function fetchEmailAlertConfig(): Promise<EmailAlertConfig> {
+  return apiRequest<EmailAlertConfig>('/organizations/email-alerts');
+}
+
+export async function saveEmailAlertConfig(config: {
+  recipients: string[];
+  enabled: boolean;
+  severityFilter: AlertSeverityFilter;
+  hourlyRateLimit?: number;
+}): Promise<EmailAlertConfig> {
+  return apiRequest<EmailAlertConfig>('/organizations/email-alerts', {
+    method: 'PUT',
+    body: JSON.stringify(config),
+  });
+}
+
+export async function testEmailAlert(recipient?: string): Promise<{ success: boolean; message: string; recipients: string[] }> {
+  return apiRequest<{ success: boolean; message: string; recipients: string[] }>('/organizations/email-alerts/test', {
+    method: 'POST',
+    body: JSON.stringify({ recipient }),
+  });
+}
+
 export async function rotateApiKey(): Promise<{ api_key: string }> {
   return apiRequest<{ api_key: string }>('/api-keys/rotate', { method: 'POST' });
 }

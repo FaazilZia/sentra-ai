@@ -3,6 +3,7 @@ import prisma from '../config/db';
 import { resolveOrganizationId } from '../utils/company';
 import { asyncHandler, sendSuccess, sendError } from '../utils/controllerHelpers';
 import { alertService } from '../services/alert.service';
+import { emailAlertService } from '../services/emailAlert.service';
 import logger from '../utils/logger';
 
 export const getOrganizationById = asyncHandler(async (req: any, res: Response) => {
@@ -120,5 +121,54 @@ export const testAlert = asyncHandler(async (req: any, res: Response) => {
   alertService.notify(organizationId, dummyDecision, 'Test Agent', 'TEST_ACTION');
 
   return sendSuccess(res, undefined, 200, 'Test alerts dispatched');
+});
+
+export const getEmailAlertSettings = asyncHandler(async (req: any, res: Response) => {
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) {
+    return sendError(res, 401, 'Unauthorized');
+  }
+
+  const config = await emailAlertService.getConfig(organizationId);
+  return sendSuccess(res, config, 200, 'Email alert configuration retrieved successfully');
+});
+
+export const updateEmailAlertSettings = asyncHandler(async (req: any, res: Response) => {
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) {
+    return sendError(res, 401, 'Unauthorized');
+  }
+
+  const { recipients, enabled, severityFilter, hourlyRateLimit } = req.body;
+
+  try {
+    const saved = await emailAlertService.saveConfig(organizationId, {
+      recipients: Array.isArray(recipients) ? recipients : [],
+      enabled,
+      severityFilter,
+      hourlyRateLimit,
+    });
+    return sendSuccess(res, saved, 200, 'Email alert configuration updated successfully');
+  } catch (err: any) {
+    return sendError(res, 400, err.message || 'Failed to update email alert configuration');
+  }
+});
+
+export const testEmailAlert = asyncHandler(async (req: any, res: Response) => {
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) {
+    return sendError(res, 401, 'Unauthorized');
+  }
+
+  try {
+    const result = await emailAlertService.sendTestEmail(organizationId, req.body?.recipient);
+    return sendSuccess(res, result, 200, result.message);
+  } catch (err: any) {
+    const message = err.message || 'Failed to send test email alert';
+    if (message.includes('Rate limit exceeded')) {
+      return sendError(res, 429, message);
+    }
+    return sendError(res, 400, message);
+  }
 });
 
