@@ -3,7 +3,7 @@ import prisma from '../config/db';
 import { resolveOrganizationId } from '../utils/company';
 import { asyncHandler, sendSuccess, sendError } from '../utils/controllerHelpers';
 import { alertService } from '../services/alert.service';
-import { emailAlertService } from '../services/emailAlert.service';
+import { emailAlertService, validateRecipients, normalizeSeverityFilter } from '../services/emailAlert.service';
 import logger from '../utils/logger';
 
 export const getOrganizationById = asyncHandler(async (req: any, res: Response) => {
@@ -68,23 +68,93 @@ export const updateAlertSettings = asyncHandler(async (req: any, res: Response) 
     return parts[0].length > 0 && parts[1].includes('.');
   };
 
-  const isValidSlackWebhook = (url: string): boolean =>
-    url.startsWith('https://hooks.slack.com/');
+  const isValidSlackWebhook = (url: unknown): boolean =>
+    typeof url === 'string' && url.startsWith('https://hooks.slack.com/');
 
-  if (alertEmail && !isValidEmail(alertEmail)) {
-    return sendError(res, 400, 'Invalid email format');
+  const updateData: any = {
+    updated_at: new Date()
+  };
+
+  if (slackWebhookUrl !== undefined) {
+    if (slackWebhookUrl && !isValidSlackWebhook(slackWebhookUrl)) {
+      return sendError(res, 400, 'Invalid Slack webhook URL');
+    }
+    updateData.slackWebhookUrl = slackWebhookUrl || null;
   }
-  if (slackWebhookUrl && !isValidSlackWebhook(slackWebhookUrl)) {
-    return sendError(res, 400, 'Invalid Slack webhook URL');
+
+  if (alertEmail !== undefined) {
+    if (!alertEmail || (typeof alertEmail === 'string' && alertEmail.trim() === '')) {
+      updateData.alertEmail = null;
+    } else if (typeof alertEmail === 'string') {
+      const trimmed = alertEmail.trim();
+      if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          const validation = validateRecipients(parsed.recipients || []);
+          if (!validation.valid) {
+            return sendError(res, 400, validation.error || 'Invalid email recipients in JSON configuration');
+          }
+          const defaultLimit = Number.parseInt(process.env.ALERT_EMAIL_RATE_LIMIT_PER_HOUR || '10', 10);
+          const hourlyRateLimit = Math.min(Math.max(Number(parsed.hourlyRateLimit) || defaultLimit, 1), 100);
+          updateData.alertEmail = JSON.stringify({
+            recipients: validation.recipients,
+            enabled: Boolean(parsed.enabled),
+            severityFilter: normalizeSeverityFilter(parsed.severityFilter),
+            hourlyRateLimit,
+          });
+        } catch {
+          return sendError(res, 400, 'Invalid JSON alert configuration');
+        }
+      } else {
+        if (!isValidEmail(trimmed)) {
+          return sendError(res, 400, 'Invalid email format');
+        }
+
+        // Decide enabled from the RAW stored organizations.alertEmail, not from getConfig output
+        const existingOrg = await prisma.organizations.findUnique({
+          where: { id: organizationId },
+          select: { alertEmail: true },
+        });
+        const rawStored = existingOrg?.alertEmail ? existingOrg.alertEmail.trim() : null;
+
+        const defaultLimit = Number.parseInt(process.env.ALERT_EMAIL_RATE_LIMIT_PER_HOUR || '10', 10);
+        let enabled = true;
+        let severityFilter: any = 'high';
+        let hourlyRateLimit = defaultLimit;
+
+        if (rawStored && rawStored.startsWith('{') && rawStored.endsWith('}')) {
+          try {
+            const parsed = JSON.parse(rawStored);
+            enabled = Boolean(parsed.enabled);
+            if (parsed.severityFilter) {
+              severityFilter = normalizeSeverityFilter(parsed.severityFilter);
+            }
+            if (parsed.hourlyRateLimit) {
+              hourlyRateLimit = Math.min(Math.max(Number(parsed.hourlyRateLimit) || defaultLimit, 1), 100);
+            }
+          } catch {
+            enabled = true;
+          }
+        } else {
+          // Stored value is null/empty or a legacy plain string -> enabled: true (admin is explicitly setting an email)
+          enabled = true;
+        }
+
+        updateData.alertEmail = JSON.stringify({
+          recipients: [trimmed.toLowerCase()],
+          enabled,
+          severityFilter,
+          hourlyRateLimit,
+        });
+      }
+    } else {
+      return sendError(res, 400, 'Invalid email format');
+    }
   }
 
   const updated = await prisma.organizations.update({
     where: { id: organizationId },
-    data: {
-      alertEmail: alertEmail || null,
-      slackWebhookUrl: slackWebhookUrl || null,
-      updated_at: new Date()
-    }
+    data: updateData
   });
 
   if (slackWebhookUrl) {

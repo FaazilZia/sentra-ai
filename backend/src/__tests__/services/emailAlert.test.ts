@@ -114,7 +114,7 @@ describe('Day 11: Per-Organization Email Alert Channel', () => {
       expect(config.hourlyRateLimit).toBe(15);
     });
 
-    it('handles legacy single-email strings gracefully with default settings', async () => {
+    it('handles legacy single-email strings by keeping recipients but defaulting enabled to false', async () => {
       (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
         id: orgA,
         name: 'Alpha Corp',
@@ -123,16 +123,70 @@ describe('Day 11: Per-Organization Email Alert Channel', () => {
 
       const config = await emailAlertService.getConfig(orgA);
       expect(config.recipients).toEqual(['admin@legacy-company.com']);
-      expect(config.enabled).toBe(true);
+      expect(config.enabled).toBe(false);
       expect(config.severityFilter).toBe('high');
       expect(config.hourlyRateLimit).toBe(10);
     });
 
-    it('returns empty disabled defaults when no alertEmail is configured', async () => {
+    it('preserves existing JSON config unchanged when enabled is true', async () => {
+      const storedConfig = {
+        recipients: ['security@alpha.com'],
+        enabled: true,
+        severityFilter: 'high',
+        hourlyRateLimit: 10,
+      };
+
+      (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+        id: orgA,
+        name: 'Alpha Corp',
+        alertEmail: JSON.stringify(storedConfig),
+      });
+
+      const config = await emailAlertService.getConfig(orgA);
+      expect(config.recipients).toEqual(['security@alpha.com']);
+      expect(config.enabled).toBe(true);
+      expect(config.severityFilter).toBe('high');
+    });
+
+    it('preserves existing JSON config unchanged when enabled is false', async () => {
+      const storedConfig = {
+        recipients: ['security@alpha.com'],
+        enabled: false,
+        severityFilter: 'all',
+        hourlyRateLimit: 25,
+      };
+
+      (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+        id: orgA,
+        name: 'Alpha Corp',
+        alertEmail: JSON.stringify(storedConfig),
+      });
+
+      const config = await emailAlertService.getConfig(orgA);
+      expect(config.recipients).toEqual(['security@alpha.com']);
+      expect(config.enabled).toBe(false);
+      expect(config.severityFilter).toBe('all');
+      expect(config.hourlyRateLimit).toBe(25);
+    });
+
+    it('returns empty disabled defaults when alertEmail is null', async () => {
       (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
         id: orgA,
         name: 'Alpha Corp',
         alertEmail: null,
+      });
+
+      const config = await emailAlertService.getConfig(orgA);
+      expect(config.recipients).toEqual([]);
+      expect(config.enabled).toBe(false);
+      expect(config.severityFilter).toBe('high');
+    });
+
+    it('returns empty disabled defaults when alertEmail is empty string or whitespace', async () => {
+      (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+        id: orgA,
+        name: 'Alpha Corp',
+        alertEmail: '   ',
       });
 
       const config = await emailAlertService.getConfig(orgA);
