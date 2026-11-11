@@ -260,4 +260,86 @@ describe('Organization Email Alert Channel Routes', () => {
       );
     });
   });
+
+  describe('PATCH /api/v1/organizations/alert-settings (JSON Format Enforcement)', () => {
+    it('converts plain email strings into structured JSON config when updated', async () => {
+      (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+        id: orgId,
+        name: 'Alpha Corp',
+        alertEmail: null,
+      });
+
+      (prisma.organizations.update as jest.Mock).mockImplementation(({ data }) =>
+        Promise.resolve({
+          id: orgId,
+          alertEmail: data.alertEmail,
+          slackWebhookUrl: data.slackWebhookUrl,
+        })
+      );
+
+      const res = await request(app)
+        .patch('/api/v1/organizations/alert-settings')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ alertEmail: 'admin@alpha.com' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(prisma.organizations.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: orgId },
+          data: expect.objectContaining({
+            alertEmail: JSON.stringify({
+              recipients: ['admin@alpha.com'],
+              enabled: true,
+              severityFilter: 'high',
+              hourlyRateLimit: 10,
+            }),
+          }),
+        })
+      );
+    });
+
+    it('sets alertEmail to null when empty string is provided', async () => {
+      (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+        id: orgId,
+        name: 'Alpha Corp',
+        alertEmail: 'admin@alpha.com',
+      });
+
+      (prisma.organizations.update as jest.Mock).mockImplementation(({ data }) =>
+        Promise.resolve({
+          id: orgId,
+          alertEmail: data.alertEmail,
+          slackWebhookUrl: data.slackWebhookUrl,
+        })
+      );
+
+      const res = await request(app)
+        .patch('/api/v1/organizations/alert-settings')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ alertEmail: '' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(prisma.organizations.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: orgId },
+          data: expect.objectContaining({
+            alertEmail: null,
+          }),
+        })
+      );
+    });
+
+    it('returns 400 when invalid email format is passed', async () => {
+      const res = await request(app)
+        .patch('/api/v1/organizations/alert-settings')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ alertEmail: 'invalid-email-address' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Invalid email format');
+    });
+  });
 });

@@ -71,20 +71,55 @@ export const updateAlertSettings = asyncHandler(async (req: any, res: Response) 
   const isValidSlackWebhook = (url: string): boolean =>
     url.startsWith('https://hooks.slack.com/');
 
-  if (alertEmail && !isValidEmail(alertEmail)) {
-    return sendError(res, 400, 'Invalid email format');
-  }
   if (slackWebhookUrl && !isValidSlackWebhook(slackWebhookUrl)) {
     return sendError(res, 400, 'Invalid Slack webhook URL');
   }
 
+  const updateData: any = {
+    updated_at: new Date()
+  };
+
+  if (slackWebhookUrl !== undefined) {
+    updateData.slackWebhookUrl = slackWebhookUrl || null;
+  }
+
+  if (alertEmail !== undefined) {
+    if (!alertEmail || (typeof alertEmail === 'string' && alertEmail.trim() === '')) {
+      updateData.alertEmail = null;
+    } else if (typeof alertEmail === 'string') {
+      const trimmed = alertEmail.trim();
+      if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          updateData.alertEmail = JSON.stringify({
+            recipients: Array.isArray(parsed.recipients) ? parsed.recipients : [],
+            enabled: Boolean(parsed.enabled),
+            severityFilter: parsed.severityFilter || 'high',
+            hourlyRateLimit: Number(parsed.hourlyRateLimit) || 10,
+          });
+        } catch {
+          return sendError(res, 400, 'Invalid JSON alert configuration');
+        }
+      } else {
+        if (!isValidEmail(trimmed)) {
+          return sendError(res, 400, 'Invalid email format');
+        }
+        const current = await emailAlertService.getConfig(organizationId);
+        updateData.alertEmail = JSON.stringify({
+          recipients: [trimmed.toLowerCase()],
+          enabled: true,
+          severityFilter: current.severityFilter || 'high',
+          hourlyRateLimit: current.hourlyRateLimit || 10,
+        });
+      }
+    } else {
+      return sendError(res, 400, 'Invalid email format');
+    }
+  }
+
   const updated = await prisma.organizations.update({
     where: { id: organizationId },
-    data: {
-      alertEmail: alertEmail || null,
-      slackWebhookUrl: slackWebhookUrl || null,
-      updated_at: new Date()
-    }
+    data: updateData
   });
 
   if (slackWebhookUrl) {

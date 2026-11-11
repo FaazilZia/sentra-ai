@@ -129,11 +129,11 @@ export class EmailAlertService {
         }
       }
 
-      // Legacy plain email address support
+      // Legacy plain email address support: preserve recipients for UI pre-population but keep alerts disabled until explicitly saved
       if (isValidEmail(raw)) {
         return {
           recipients: [raw.toLowerCase()],
-          enabled: true,
+          enabled: false,
           severityFilter: defaultFilter,
           hourlyRateLimit: defaultLimit,
           orgName: org.name || 'Your Organization',
