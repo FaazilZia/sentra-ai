@@ -443,5 +443,46 @@ describe('Organization Email Alert Channel Routes', () => {
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain('Invalid Slack webhook URL');
     });
+
+    it('updates alertEmail only while preserving existing severityFilter and hourlyRateLimit (enabled resets to true)', async () => {
+      // Existing organization has custom severityFilter, custom hourlyRateLimit, and alerts disabled (enabled: false)
+      (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+        id: orgId,
+        name: 'Alpha Corp',
+        alertEmail: JSON.stringify({
+          recipients: ['prior-recipient@alpha.com'],
+          enabled: false,
+          severityFilter: 'medium_and_high',
+          hourlyRateLimit: 35,
+        }),
+      });
+
+      (prisma.organizations.update as jest.Mock).mockImplementation(({ data }) =>
+        Promise.resolve({
+          id: orgId,
+          alertEmail: data.alertEmail,
+          slackWebhookUrl: data.slackWebhookUrl,
+        })
+      );
+
+      const res = await request(app)
+        .patch('/api/v1/organizations/alert-settings')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ alertEmail: 'updated-recipient@alpha.com' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+
+      const updateCall = (prisma.organizations.update as jest.Mock).mock.calls[0][0];
+      const savedConfig = JSON.parse(updateCall.data.alertEmail);
+
+      // Recipients updated
+      expect(savedConfig.recipients).toEqual(['updated-recipient@alpha.com']);
+      // severityFilter and hourlyRateLimit preserved from existing stored config
+      expect(savedConfig.severityFilter).toBe('medium_and_high');
+      expect(savedConfig.hourlyRateLimit).toBe(35);
+      // NOTE: enabled does NOT stay unchanged; line 115 currently overrides it to true
+      expect(savedConfig.enabled).toBe(true);
+    });
   });
 });
