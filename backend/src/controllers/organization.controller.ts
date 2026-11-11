@@ -109,12 +109,42 @@ export const updateAlertSettings = asyncHandler(async (req: any, res: Response) 
         if (!isValidEmail(trimmed)) {
           return sendError(res, 400, 'Invalid email format');
         }
-        const current = await emailAlertService.getConfig(organizationId);
+
+        // Decide enabled from the RAW stored organizations.alertEmail, not from getConfig output
+        const existingOrg = await prisma.organizations.findUnique({
+          where: { id: organizationId },
+          select: { alertEmail: true },
+        });
+        const rawStored = existingOrg?.alertEmail ? existingOrg.alertEmail.trim() : null;
+
+        const defaultLimit = Number.parseInt(process.env.ALERT_EMAIL_RATE_LIMIT_PER_HOUR || '10', 10);
+        let enabled = true;
+        let severityFilter: any = 'high';
+        let hourlyRateLimit = defaultLimit;
+
+        if (rawStored && rawStored.startsWith('{') && rawStored.endsWith('}')) {
+          try {
+            const parsed = JSON.parse(rawStored);
+            enabled = Boolean(parsed.enabled);
+            if (parsed.severityFilter) {
+              severityFilter = normalizeSeverityFilter(parsed.severityFilter);
+            }
+            if (parsed.hourlyRateLimit) {
+              hourlyRateLimit = Math.min(Math.max(Number(parsed.hourlyRateLimit) || defaultLimit, 1), 100);
+            }
+          } catch {
+            enabled = true;
+          }
+        } else {
+          // Stored value is null/empty or a legacy plain string -> enabled: true (admin is explicitly setting an email)
+          enabled = true;
+        }
+
         updateData.alertEmail = JSON.stringify({
           recipients: [trimmed.toLowerCase()],
-          enabled: true,
-          severityFilter: current.severityFilter || 'high',
-          hourlyRateLimit: current.hourlyRateLimit || 10,
+          enabled,
+          severityFilter,
+          hourlyRateLimit,
         });
       }
     } else {

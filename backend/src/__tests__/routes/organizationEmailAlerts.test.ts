@@ -444,7 +444,7 @@ describe('Organization Email Alert Channel Routes', () => {
       expect(res.body.message).toContain('Invalid Slack webhook URL');
     });
 
-    it('updates alertEmail only while preserving existing severityFilter and hourlyRateLimit (enabled resets to true)', async () => {
+    it('preserves existing enabled: false from stored JSON config when updating alertEmail only', async () => {
       // Existing organization has custom severityFilter, custom hourlyRateLimit, and alerts disabled (enabled: false)
       (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
         id: orgId,
@@ -476,13 +476,111 @@ describe('Organization Email Alert Channel Routes', () => {
       const updateCall = (prisma.organizations.update as jest.Mock).mock.calls[0][0];
       const savedConfig = JSON.parse(updateCall.data.alertEmail);
 
-      // Recipients updated
       expect(savedConfig.recipients).toEqual(['updated-recipient@alpha.com']);
-      // severityFilter and hourlyRateLimit preserved from existing stored config
       expect(savedConfig.severityFilter).toBe('medium_and_high');
       expect(savedConfig.hourlyRateLimit).toBe(35);
-      // NOTE: enabled does NOT stay unchanged; line 115 currently overrides it to true
+      expect(savedConfig.enabled).toBe(false);
+    });
+
+    it('sets enabled: true when updating alertEmail with no existing config stored (null)', async () => {
+      (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+        id: orgId,
+        name: 'Alpha Corp',
+        alertEmail: null,
+      });
+
+      (prisma.organizations.update as jest.Mock).mockImplementation(({ data }) =>
+        Promise.resolve({
+          id: orgId,
+          alertEmail: data.alertEmail,
+          slackWebhookUrl: data.slackWebhookUrl,
+        })
+      );
+
+      const res = await request(app)
+        .patch('/api/v1/organizations/alert-settings')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ alertEmail: 'new-admin@alpha.com' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+
+      const updateCall = (prisma.organizations.update as jest.Mock).mock.calls[0][0];
+      const savedConfig = JSON.parse(updateCall.data.alertEmail);
+
+      expect(savedConfig.recipients).toEqual(['new-admin@alpha.com']);
       expect(savedConfig.enabled).toBe(true);
+      expect(savedConfig.severityFilter).toBe('high');
+      expect(savedConfig.hourlyRateLimit).toBe(10);
+    });
+
+    it('sets enabled: true when updating alertEmail with legacy plain string stored', async () => {
+      (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+        id: orgId,
+        name: 'Alpha Corp',
+        alertEmail: 'old-legacy@alpha.com',
+      });
+
+      (prisma.organizations.update as jest.Mock).mockImplementation(({ data }) =>
+        Promise.resolve({
+          id: orgId,
+          alertEmail: data.alertEmail,
+          slackWebhookUrl: data.slackWebhookUrl,
+        })
+      );
+
+      const res = await request(app)
+        .patch('/api/v1/organizations/alert-settings')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ alertEmail: 'upgraded@alpha.com' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+
+      const updateCall = (prisma.organizations.update as jest.Mock).mock.calls[0][0];
+      const savedConfig = JSON.parse(updateCall.data.alertEmail);
+
+      expect(savedConfig.recipients).toEqual(['upgraded@alpha.com']);
+      expect(savedConfig.enabled).toBe(true);
+      expect(savedConfig.severityFilter).toBe('high');
+      expect(savedConfig.hourlyRateLimit).toBe(10);
+    });
+
+    it('preserves existing enabled: true from stored JSON config when updating alertEmail only', async () => {
+      (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+        id: orgId,
+        name: 'Alpha Corp',
+        alertEmail: JSON.stringify({
+          recipients: ['prior-active@alpha.com'],
+          enabled: true,
+          severityFilter: 'all',
+          hourlyRateLimit: 20,
+        }),
+      });
+
+      (prisma.organizations.update as jest.Mock).mockImplementation(({ data }) =>
+        Promise.resolve({
+          id: orgId,
+          alertEmail: data.alertEmail,
+          slackWebhookUrl: data.slackWebhookUrl,
+        })
+      );
+
+      const res = await request(app)
+        .patch('/api/v1/organizations/alert-settings')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ alertEmail: 'active-admin@alpha.com' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+
+      const updateCall = (prisma.organizations.update as jest.Mock).mock.calls[0][0];
+      const savedConfig = JSON.parse(updateCall.data.alertEmail);
+
+      expect(savedConfig.recipients).toEqual(['active-admin@alpha.com']);
+      expect(savedConfig.enabled).toBe(true);
+      expect(savedConfig.severityFilter).toBe('all');
+      expect(savedConfig.hourlyRateLimit).toBe(20);
     });
   });
 });
