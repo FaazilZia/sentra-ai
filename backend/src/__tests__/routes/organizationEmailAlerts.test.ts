@@ -341,5 +341,107 @@ describe('Organization Email Alert Channel Routes', () => {
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain('Invalid email format');
     });
+
+    it('validates and accepts structured JSON config strings', async () => {
+      (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+        id: orgId,
+        name: 'Alpha Corp',
+        alertEmail: null,
+      });
+
+      (prisma.organizations.update as jest.Mock).mockImplementation(({ data }) =>
+        Promise.resolve({
+          id: orgId,
+          alertEmail: data.alertEmail,
+          slackWebhookUrl: data.slackWebhookUrl,
+        })
+      );
+
+      const jsonPayload = JSON.stringify({
+        recipients: ['sec@alpha.com', 'soc@alpha.com'],
+        enabled: false,
+        severityFilter: 'medium_and_high',
+        hourlyRateLimit: 15,
+      });
+
+      const res = await request(app)
+        .patch('/api/v1/organizations/alert-settings')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ alertEmail: jsonPayload });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(prisma.organizations.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: orgId },
+          data: expect.objectContaining({
+            alertEmail: JSON.stringify({
+              recipients: ['sec@alpha.com', 'soc@alpha.com'],
+              enabled: false,
+              severityFilter: 'medium_and_high',
+              hourlyRateLimit: 15,
+            }),
+          }),
+        })
+      );
+    });
+
+    it('returns 400 when malformed JSON config is provided', async () => {
+      const res = await request(app)
+        .patch('/api/v1/organizations/alert-settings')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ alertEmail: '{not valid json}' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Invalid JSON alert configuration');
+    });
+
+    it('returns 400 when JSON config has invalid email recipient addresses', async () => {
+      const invalidJson = JSON.stringify({
+        recipients: ['bad-email-format'],
+        enabled: true,
+      });
+
+      const res = await request(app)
+        .patch('/api/v1/organizations/alert-settings')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ alertEmail: invalidJson });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Invalid email address format');
+    });
+
+    it('leaves alertEmail untouched when only slackWebhookUrl is updated', async () => {
+      (prisma.organizations.update as jest.Mock).mockImplementation(({ data }) =>
+        Promise.resolve({
+          id: orgId,
+          slackWebhookUrl: data.slackWebhookUrl,
+        })
+      );
+
+      const res = await request(app)
+        .patch('/api/v1/organizations/alert-settings')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ slackWebhookUrl: 'https://hooks.slack.com/services/T00/B00/X00' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      const updateCall = (prisma.organizations.update as jest.Mock).mock.calls[0][0];
+      expect(updateCall.data.alertEmail).toBeUndefined();
+      expect(updateCall.data.slackWebhookUrl).toBe('https://hooks.slack.com/services/T00/B00/X00');
+    });
+
+    it('returns 400 when invalid Slack webhook URL is provided', async () => {
+      const res = await request(app)
+        .patch('/api/v1/organizations/alert-settings')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ slackWebhookUrl: 'https://evil.com/webhook' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Invalid Slack webhook URL');
+    });
   });
 });

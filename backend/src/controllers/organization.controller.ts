@@ -3,7 +3,7 @@ import prisma from '../config/db';
 import { resolveOrganizationId } from '../utils/company';
 import { asyncHandler, sendSuccess, sendError } from '../utils/controllerHelpers';
 import { alertService } from '../services/alert.service';
-import { emailAlertService } from '../services/emailAlert.service';
+import { emailAlertService, validateRecipients, normalizeSeverityFilter } from '../services/emailAlert.service';
 import logger from '../utils/logger';
 
 export const getOrganizationById = asyncHandler(async (req: any, res: Response) => {
@@ -68,18 +68,17 @@ export const updateAlertSettings = asyncHandler(async (req: any, res: Response) 
     return parts[0].length > 0 && parts[1].includes('.');
   };
 
-  const isValidSlackWebhook = (url: string): boolean =>
-    url.startsWith('https://hooks.slack.com/');
-
-  if (slackWebhookUrl && !isValidSlackWebhook(slackWebhookUrl)) {
-    return sendError(res, 400, 'Invalid Slack webhook URL');
-  }
+  const isValidSlackWebhook = (url: unknown): boolean =>
+    typeof url === 'string' && url.startsWith('https://hooks.slack.com/');
 
   const updateData: any = {
     updated_at: new Date()
   };
 
   if (slackWebhookUrl !== undefined) {
+    if (slackWebhookUrl && !isValidSlackWebhook(slackWebhookUrl)) {
+      return sendError(res, 400, 'Invalid Slack webhook URL');
+    }
     updateData.slackWebhookUrl = slackWebhookUrl || null;
   }
 
@@ -91,11 +90,17 @@ export const updateAlertSettings = asyncHandler(async (req: any, res: Response) 
       if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
         try {
           const parsed = JSON.parse(trimmed);
+          const validation = validateRecipients(parsed.recipients || []);
+          if (!validation.valid) {
+            return sendError(res, 400, validation.error || 'Invalid email recipients in JSON configuration');
+          }
+          const defaultLimit = Number.parseInt(process.env.ALERT_EMAIL_RATE_LIMIT_PER_HOUR || '10', 10);
+          const hourlyRateLimit = Math.min(Math.max(Number(parsed.hourlyRateLimit) || defaultLimit, 1), 100);
           updateData.alertEmail = JSON.stringify({
-            recipients: Array.isArray(parsed.recipients) ? parsed.recipients : [],
+            recipients: validation.recipients,
             enabled: Boolean(parsed.enabled),
-            severityFilter: parsed.severityFilter || 'high',
-            hourlyRateLimit: Number(parsed.hourlyRateLimit) || 10,
+            severityFilter: normalizeSeverityFilter(parsed.severityFilter),
+            hourlyRateLimit,
           });
         } catch {
           return sendError(res, 400, 'Invalid JSON alert configuration');
