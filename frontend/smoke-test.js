@@ -281,8 +281,8 @@ async function run() {
     // ------------------------------------------------------------------
     try {
       await page.goto(`${FRONTEND_URL}/app/files`, { waitUntil: 'domcontentloaded' });
-      const folderBtn = page.locator('button:has-text("EU AI Act Compliance")');
-      await expectToBeVisible(folderBtn, 'EU AI Act folder directory button not found');
+      const folderBtn = page.locator('button:has-text("GDPR Compliance")');
+      await expectToBeVisible(folderBtn, 'GDPR folder directory button not found');
 
       // Upload text file
       const fileInput = page.locator('input[type="file"]');

@@ -78,6 +78,7 @@ data/
 trace/
 
 # Local development artifacts
+.claude/
 scratch/
 .local-dev/
 backend/src/scratch/

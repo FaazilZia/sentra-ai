@@ -228,7 +228,7 @@ export default function ReadinessDashboard() {
                   <div className="min-w-0">
                     <p className="text-[11px] font-semibold uppercase tracking-wider truncate">{fw.name}</p>
                     <p className="text-[9px] text-[var(--text-muted)] truncate mt-0.5 block lg:hidden xl:block">
-                      {fw.id === 'eu-ai-act' ? 'AI Act Standard' : 'Risk Framework'}
+                      Risk Framework
                     </p>
                   </div>
                 </button>

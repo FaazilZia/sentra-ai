@@ -257,7 +257,7 @@ test.describe('Compliance', () => {
     // Wait for the main title to be visible to avoid race conditions
     await expect(page.locator('text=Compliance & Audit').first()).toBeVisible({ timeout: 15000 });
 
-    const frameworks = ['GDPR', 'SOC', 'ISO', 'HIPAA', 'NIST', 'PCI', 'EU AI Act'];
+    const frameworks = ['GDPR', 'SOC', 'ISO', 'HIPAA', 'NIST', 'PCI'];
     let found = false;
     for (const fw of frameworks) {
       found = await page.locator(`text=${fw}`).isVisible().catch(() => false);

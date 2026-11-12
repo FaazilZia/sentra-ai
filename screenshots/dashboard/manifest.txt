@@ -3,9 +3,7 @@
 03-incidents.png 	 /app/incidents 	 Incident Management
 04-guardrails.png 	 /app/guardrails 	 Guardrails Center
 05-risk-center.png 	 /app/risk 	 Risk Center
-06-compliance-eu-ai-act.png 	 /app/compliance?tab=eu-ai-act 	 Compliance: EU AI Act
 06-compliance-nist-ai-rmf.png 	 /app/compliance?tab=nist-ai-rmf 	 Compliance: NIST AI RMF
-06-compliance-iso-42001.png 	 /app/compliance?tab=iso-42001 	 Compliance: ISO 42001
 06-compliance-iso-27001.png 	 /app/compliance?tab=iso-27001 	 Compliance: ISO 27001
 06-compliance-ccpa.png 	 /app/compliance?tab=ccpa 	 Compliance: CCPA
 07-evidence.png 	 /app/evidence 	 Evidence & Proof

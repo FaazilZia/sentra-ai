@@ -436,8 +436,6 @@ sentra-ai/
 | `/api/v1/compliance/stats` | GET | ✅ | GDPR/HIPAA/DPDP scores |
 | `/api/v1/compliance/audit-proof` | GET | ✅ | Evidence chain |
 | `/api/v1/compliance/re-evaluate` | POST | ✅ | Re-run compliance evaluation |
-| `/api/v1/eu-ai-act` | GET | ✅ | EU AI Act controls |
-| `/api/v1/iso42001` | GET | ✅ | ISO 42001 controls |
 | `/api/v1/iso27001` | GET | ✅ | ISO 27001 controls |
 | `/api/v1/fria` | GET/POST | ✅ | Fundamental Rights Impact Assessment |
 | `/api/v1/framework-mapper` | GET | ✅ | Cross-framework control mapping |
@@ -545,7 +543,7 @@ Ensure AI never exposes patient data (PHI) externally — even when an agent is 
 ### SaaS / Enterprise
 Control AI access to production APIs, internal systems, and customer data with org-scoped policies.
 - **Focus:** Privilege escalation & data drift
-- **Compliance:** ISO 27001, EU AI Act
+- **Compliance:** ISO 27001
 
 ---
 
