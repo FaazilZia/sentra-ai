@@ -1,0 +1,72 @@
+================================================================================
+SENTRA AI — DAY 12 REAL MULTI-INBOX DELIVERY & RATE LIMIT VERIFICATION EVIDENCE
+================================================================================
+Date and Time (UTC):   2026-11-12T01:31:09Z - 2026-11-12T01:40:05Z
+Local Time (IST):      2026-11-12T07:01:09+05:30 - 2026-11-12T07:10:05+05:30
+Target Repository:     FaazilZia/sentra-ai
+Base Branch / Commit:  main @ ff4444d992f22ea3f3191c5c0646e42fb722ad0d (PR #153)
+Target Environment:    Deployed Render Backend (https://sentra-backend-node.onrender.com)
+Security Status:       ZERO secrets, API keys, tokens, or passwords logged or committed.
+                       All recipient and user email addresses masked (x***@domain).
+================================================================================
+
+1. PRE-FLIGHT DEPLOYMENT READINESS CHECK
+--------------------------------------------------------------------------------
+• Endpoint:                           GET https://sentra-backend-node.onrender.com/ready
+• HTTP Status:                        200 OK
+• Payload:                            {"status":"ready","checks":{"db":"ok","redis":"ok","queue":"ok","schema":"ok"},"durationMs":617.632,"version":"2.0.0","timestamp":"2026-11-12T01:25:30.571Z"}
+• Transport Under Test:               Resend SMTP (smtp.resend.com, port 2587)
+• Pipeline Path Under Test:           POST /api/v1/organizations/test-alert
+                                      -> alertService.notify
+                                      -> alertPipeline.dispatchDecisionAlert
+                                      -> BullMQ alerts worker -> processAlertJob
+                                      -> emailAlertService.sendAlert
+                                      -> emailAlertService.checkAndIncrementRateLimit
+• Note:                               Did NOT use emailAlertTestRateLimiter (/email-alerts/test).
+
+2. ISOLATED FRESH TEST ORGANIZATION SETUP (STEP 1)
+--------------------------------------------------------------------------------
+• Customer Orgs Modified:             NONE (0 existing organizations touched)
+• Fresh Test Org ID:                  2c1f235f-98cd-4a13-882f-81e48d1ed972
+• Fresh Test Org Name:                Day12 Email Verify 1794447056402
+• Admin User ID:                      0664bc25-1b19-489f-a310-86417baca291
+• Admin User Email (masked):          d***@resend.dev
+• Original Config Captured (GET):     {"recipients":[],"enabled":false,"severityFilter":"high","hourlyRateLimit":10,"orgName":"Day12 Email Verify 1794447056402"}
+• Updated Test Config (PUT & GET):    {"recipients":["f***@gmail.com","z***@gmail.com"],"enabled":true,"severityFilter":"high","hourlyRateLimit":2,"orgName":"Day12 Email Verify 1794447056402"}
+• Inbox 1 (masked):                   f***@gmail.com
+• Inbox 2 (masked):                   z***@gmail.com
+
+3. SEQUENTIAL REAL ALERT DISPATCHES (STEP 2)
+--------------------------------------------------------------------------------
+• Trigger Endpoint:                   POST https://sentra-backend-node.onrender.com/api/v1/organizations/test-alert
+• Dispatches (sequential, ~8s apart):
+  - Alert #1: HTTP 200 ("Test alerts dispatched") | UTC: 2026-11-12T01:31:09.291Z | IST: 2026-11-12T07:01:09+05:30
+  - Alert #2: HTTP 200 ("Test alerts dispatched") | UTC: 2026-11-12T01:31:17.816Z | IST: 2026-11-12T07:01:17+05:30
+  - Alert #3: HTTP 200 ("Test alerts dispatched") | UTC: 2026-11-12T01:31:26.274Z | IST: 2026-11-12T07:01:26+05:30
+  - Alert #4: HTTP 200 ("Test alerts dispatched") | UTC: 2026-11-12T01:31:35.329Z | IST: 2026-11-12T07:01:35+05:30
+
+4. RENDER BACKEND LOG CONFIRMATION (STEP 3 & USER-PROVIDED LOG EXCERPTS)
+--------------------------------------------------------------------------------
+• Service:                            sentra-backend-node (Render)
+• Observed Window:                    2026-11-12T07:01:09+05:30 to 2026-11-12T07:01:50+05:30 (IST)
+• Pasted Render Log Lines (User-Confirmed):
+  - 07:01:10: "[AlertEmail] Successfully sent ... to 2 recipients"
+  - 07:01:19: "[AlertEmail] Successfully sent ... to 2 recipients"
+  - 07:01:27: "Rate limit exceeded ... limit of 2/hour reached (3/2). Email alert suppressed."
+  - 07:01:35: "Rate limit exceeded ... limit of 2/hour reached (4/2). Email alert suppressed."
+
+5. INBOX RECEIPT CONFIRMATION (STEP 4 — USER-CONFIRMED)
+--------------------------------------------------------------------------------
+• Inbox 1 (f***@gmail.com):           2 real alert emails received (Alerts #1 and #2)
+• Inbox 2 (z***@gmail.com):           2 real alert emails received (Alerts #1 and #2)
+• Suppressed Alerts:                  2 alerts suppressed (Alerts #3 at 3/2 and #4 at 4/2)
+• Expected vs Actual Match:           EXACT MATCH (2 delivered to both inboxes; 2 suppressed by checkAndIncrementRateLimit)
+• Requirement A Verdict:              PASSED — Real alert emails delivered to TWO distinct real inboxes.
+• Requirement B Verdict:              PASSED — Real per-org hourly rate limit (checkAndIncrementRateLimit) suppressed real alerts #3 and #4.
+
+6. TEST ORGANIZATION RESTORATION & CLEANUP (STEP 6)
+--------------------------------------------------------------------------------
+• Restored via:                       PUT /api/v1/organizations/email-alerts
+• Verified Restored Config (GET):     {"recipients":[],"enabled":false,"severityFilter":"high","hourlyRateLimit":10,"orgName":"Day12 Email Verify 1794447056402"}
+• Session Cleanup:                    Authenticated session logged out (POST /api/v1/auth/logout) and ephemeral local session state deleted.
+================================================================================
