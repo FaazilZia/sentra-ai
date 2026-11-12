@@ -40,7 +40,7 @@ export interface CrossFrameworkImpactProps {
   subcategoryCode: string;
   mappings: Array<{
     targetFramework: string; // e.g. "GDPR" | "HIPAA" | "DPDP" | "PCI_DSS" | "NIST_AI_RMF"
-    targetControlCode: string; // e.g. "EU-AIA-9-1"
+    targetControlCode: string; // e.g. "GDPR-ART-22"
     mappingStrength: number; // 0.0 to 1.0
     description: string;
   }>; // Returns an empty mappings array [] (not a 404) when no mappings exist for that subcategory.
