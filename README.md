@@ -73,7 +73,7 @@ Think of it as a **security checkpoint** for every `agent.run()` call in your st
 ### 🛡️ AI Governance Engine
 - **Pre-execution control** — Every AI agent action is validated before it runs
 - **Multi-tier decision pipeline** — Allowlist → Policy → Pattern → Semantic analysis
-- **Fail-closed architecture** — When the AI risk engine is unavailable, actions are blocked by default
+- **Degraded mode fallback** — When no LLM key is configured, L3 is unavailable; decisions fall back to L1/L2 pattern matching and are marked degraded
 - **Redis-backed deduplication** — Idempotent requests prevent double-processing
 - **Demo sandbox** — Unauthenticated governance testing at `/demo`
 
@@ -85,7 +85,7 @@ Think of it as a **security checkpoint** for every `agent.run()` call in your st
 - **LangChain & AI provider wrappers** — Drop-in governance for OpenAI, Azure OpenAI, Google Vertex AI, and LangChain
 
 ### 📊 Compliance Center
-- **3 Core Compliance Frameworks** — Native evaluation engines for GDPR, DPDP, and HIPAA (with cross-framework mapping for ISO 27001 & NIST AI RMF)
+- **5 Supported Regulatory Frameworks** — Native evaluation engines for GDPR, DPDP, HIPAA, PCI-DSS, and NIST AI RMF
 - **Automated Framework Mapping** — Governance decisions & posture findings mapped directly to controls
 - **FRIA (Fundamental Rights Impact Assessment)** — Built-in assessment workflows
 - **Cryptographic evidence chain** — Audit-proof evidence for compliance reviews
@@ -111,7 +111,7 @@ Think of it as a **security checkpoint** for every `agent.run()` call in your st
 - **Health scoring** — Automated reliability tracking (0–100%) per connector
 
 ### 🏢 Enterprise Multi-Tenancy
-- **Organization-scoped isolation** — All data strictly isolated per tenant (RLS enforced)
+- **Organization-scoped isolation** — All data strictly isolated per tenant (RLS policies are defined in migrations)
 - **Role-based access control** — ADMIN, AUDITOR, ENGINEER, USER roles
 - **Per-org policy management** — Independent policy sets per organization
 - **SSO / OAuth** — Google OAuth + SSO support
@@ -126,7 +126,7 @@ Think of it as a **security checkpoint** for every `agent.run()` call in your st
 
 ### 🧠 AI Features
 - **Governance chat assistant (Advisor)** — Natural language queries about compliance status
-- **Semantic risk analysis** — OpenAI-powered deep action analysis (L3, optional; runs in degraded mode when unconfigured)
+- **Semantic risk analysis** — OpenAI-powered deep action analysis (L3, optional; when no LLM key is configured, L3 is unavailable; decisions fall back to L1/L2 pattern matching and are marked degraded)
 - **AI agent inventory** — Register and track all AI agents in the organization
 - **Evaluation dashboard** — LLM evaluation and testing workflows
 - **Change history** — Full audit trail per entity
@@ -170,7 +170,7 @@ Think of it as a **security checkpoint** for every `agent.run()` call in your st
 1. **L0 — Allowlist:** Known-safe actions short-circuited in <2ms
 2. **L1 — Policy Engine:** Org-specific rules with Redis-cached policy lookup
 3. **L2 — Pattern Engine:** Regex-based detection for PII, prompt injection, and high-risk patterns
-4. **L3 — Semantic Engine:** OpenAI-powered risk analysis with fail-closed fallback
+4. **L3 — Semantic Engine:** OpenAI-powered risk analysis (when no LLM key is configured, L3 is unavailable; decisions fall back to L1/L2 pattern matching and are marked degraded)
 
 ---
 
@@ -432,7 +432,6 @@ sentra-ai/
 | `/api/v1/compliance/stats` | GET | ✅ | GDPR/HIPAA/DPDP scores |
 | `/api/v1/compliance/audit-proof` | GET | ✅ | Evidence chain |
 | `/api/v1/compliance/re-evaluate` | POST | ✅ | Re-run compliance evaluation |
-| `/api/v1/iso27001` | GET | ✅ | ISO 27001 controls |
 | `/api/v1/fria` | GET/POST | ✅ | Fundamental Rights Impact Assessment |
 | `/api/v1/framework-mapper` | GET | ✅ | Cross-framework control mapping |
 
@@ -513,7 +512,7 @@ sentra-ai/
 | Post-incident monitoring | ✅ | ✅ | ✅ |
 | Threat detection | ✅ | ✅ | ✅ |
 | **Pre-execution blocking** | ❌ | Partial | ✅ |
-| **Fail-closed architecture** | ❌ | ❌ | ✅ |
+| **Graceful degraded-mode fallback** | ❌ | ❌ | ✅ |
 | **Multi-tier decision pipeline** | ❌ | ❌ | ✅ |
 | **PII auto-redaction** | ❌ | Partial | ✅ |
 | **Prompt injection defense** | ❌ | Partial | ✅ |
@@ -539,15 +538,15 @@ Ensure AI never exposes patient data (PHI) externally — even when an agent is 
 ### SaaS / Enterprise
 Control AI access to production APIs, internal systems, and customer data with org-scoped policies.
 - **Focus:** Privilege escalation & data drift
-- **Compliance:** ISO 27001
+- **Compliance:** GDPR, HIPAA, NIST AI RMF
 
 ---
 
 ## Security Posture
 
-- ✅ **Fail-closed governance** — Actions blocked when risk engine is unavailable
+- ✅ **Degraded mode fallback** — When no LLM key is configured, L3 is unavailable; decisions fall back to L1/L2 pattern matching and are marked degraded
 - ✅ **AES-256-GCM encryption** — All connector secrets and sensitive data encrypted at rest
-- ✅ **Row-Level Security** — PostgreSQL RLS enforced across all 9 core tenant tables
+- ✅ **Row-Level Security** — PostgreSQL RLS policies are defined in migrations across all 9 core tenant tables
 - ✅ **No hardcoded credentials** — All secrets via environment variables
 - ✅ **CORS-locked** — Strict origin allowlisting (HTTP + WebSocket)
 - ✅ **Resilient rate limiting** — Distributed across endpoints when Redis is connected; automatic graceful degradation to per-instance in-memory limiter if Redis is unconfigured or offline
