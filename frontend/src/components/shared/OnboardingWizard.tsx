@@ -92,6 +92,7 @@ if (decision.status === 'BLOCK') {
           </div>
           <button
             onClick={handleClose}
+            aria-label="Close onboarding wizard"
             className="rounded-lg p-1 hover:bg-gray-800 text-gray-500 hover:text-white transition-all"
           >
             <X className="h-4 w-4" />

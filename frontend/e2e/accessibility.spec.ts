@@ -21,7 +21,10 @@ const ADMIN_PASS  = process.env.TEST_ADMIN_PASSWORD || 'Sentra@RotatedAdmin2026!
 // ── Helpers ───────────────────────────────────────────────────────────────────
 async function loginAsAdmin(page: Page) {
   await page.goto('/login', { waitUntil: 'domcontentloaded' });
-  await page.evaluate(() => localStorage.clear());
+  await page.evaluate(() => {
+    localStorage.clear();
+    localStorage.setItem('sentra_onboarded', 'true');
+  });
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.fill('input[type="email"]', ADMIN_EMAIL);
   await page.fill('input[type="password"]', ADMIN_PASS);

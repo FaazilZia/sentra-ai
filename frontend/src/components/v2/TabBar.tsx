@@ -26,7 +26,11 @@ export const TabBar: React.FC<TabBarProps> = ({
 }) => {
   if (variant === 'underline') {
     return (
-      <div className={cn("flex border-b border-slate-200 dark:border-slate-800 space-x-6 overflow-x-auto custom-scrollbar", className)}>
+      <div 
+        role="tablist" 
+        aria-label="Navigation Tabs" 
+        className={cn("flex border-b border-slate-200 dark:border-slate-800 space-x-6 overflow-x-auto custom-scrollbar focus:outline-none", className)}
+      >
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           const Icon = tab.icon;
@@ -74,6 +78,7 @@ export const TabBar: React.FC<TabBarProps> = ({
         className
       )}
       role="tablist"
+      aria-label="Sub-navigation Tabs"
     >
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
