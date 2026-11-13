@@ -25,8 +25,19 @@ export const STANDARD_ATTRIBUTE_PRESET = {
   firstName: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname',
   lastName: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname',
   name: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name',
+  displayName: 'http://schemas.microsoft.com/identity/claims/displayname',
   role: 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role',
   groups: 'http://schemas.xmlsoap.org/claims/Group',
+};
+
+export const ENTRA_ATTRIBUTE_PRESET = {
+  email: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress',
+  firstName: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname',
+  lastName: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname',
+  name: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name',
+  displayName: 'http://schemas.microsoft.com/identity/claims/displayname',
+  role: 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role',
+  groups: 'http://schemas.microsoft.com/ws/2008/06/identity/claims/groups',
 };
 
 /**
@@ -154,7 +165,10 @@ export const updateSsoConfig = async (req: any, res: Response, next: NextFunctio
 
     const defaultMapping = {
       email: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress',
-      name: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'
+      name: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name',
+      displayName: 'http://schemas.microsoft.com/identity/claims/displayname',
+      role: 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role',
+      groups: 'http://schemas.microsoft.com/ws/2008/06/identity/claims/groups',
     };
 
     // Get current org configuration to preserve the existing SCIM Bearer token if it exists
@@ -189,11 +203,14 @@ export const updateSsoConfig = async (req: any, res: Response, next: NextFunctio
       ? normalizeAllowedDomains(allowedEmailDomains)
       : normalizeAllowedDomains(samlMetadata.allowedEmailDomains);
 
-    // If Okta provider is chosen without custom mapping, use Okta preset
+    // If Okta or Entra provider is chosen without custom mapping, use corresponding preset
+    const providerLower = String(sso_provider || '').toLowerCase();
     const chosenMapping = attributeMapping || (
-      String(sso_provider).toLowerCase() === 'okta'
+      providerLower === 'okta'
         ? OKTA_ATTRIBUTE_PRESET
-        : (samlMetadata.attributeMapping || defaultMapping)
+        : providerLower.includes('entra') || providerLower.includes('azure')
+          ? ENTRA_ATTRIBUTE_PRESET
+          : (samlMetadata.attributeMapping || defaultMapping)
     );
 
     const updatedOrg = await prisma.organizations.update({
@@ -512,18 +529,35 @@ export const samlCallback = async (req: Request, res: Response, next: NextFuncti
     const attributeMapping = samlMetadata.attributeMapping || {};
     const emailClaim = attributeMapping.email || 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress';
     const nameClaim = attributeMapping.name || 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name';
+    const displayNameClaim = attributeMapping.displayName || 'http://schemas.microsoft.com/identity/claims/displayname';
     const firstNameClaim = attributeMapping.firstName || 'firstName';
     const lastNameClaim = attributeMapping.lastName || 'lastName';
     const roleClaim = attributeMapping.role || 'role';
     const groupsClaim = attributeMapping.groups || 'groups';
 
     const attributes = extract.attributes || {};
+
+    // NameID format extraction: extract.nameID may be string or object with { value, _ }
+    const extractNameIdString = (nameId: any): string => {
+      if (!nameId) return '';
+      if (typeof nameId === 'string') return nameId;
+      if (typeof nameId === 'object') {
+        return nameId.value || nameId._ || nameId.innerHtml || '';
+      }
+      return String(nameId);
+    };
+
+    const nameIdVal = extractNameIdString(extract.nameID);
+
     const rawEmail = attributes[emailClaim]
       || attributes['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress']
       || attributes['email']
-      || extract.nameID;
+      || attributes['mail']
+      || attributes['userPrincipalName']
+      || attributes['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn']
+      || nameIdVal;
 
-    // Resolve user full name from firstName + lastName if available, then nameClaim, then email prefix
+    // Resolve user full name from firstName + lastName if available, then displayName, then nameClaim, then email prefix
     const rawFirstName = attributes[firstNameClaim]
       || attributes['firstName']
       || attributes['givenName']
@@ -541,10 +575,15 @@ export const samlCallback = async (req: Request, res: Response, next: NextFuncti
       resolvedName = `${firstStr || ''} ${lastStr || ''}`.trim();
     }
     if (!resolvedName) {
-      const rawName = attributes[nameClaim]
+      const rawName = attributes[displayNameClaim]
+        || attributes['http://schemas.microsoft.com/identity/claims/displayname']
+        || attributes['displayName']
+        || attributes['displayname']
+        || attributes[nameClaim]
         || attributes['name']
         || attributes['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'];
-      resolvedName = Array.isArray(rawName) ? rawName[0] : rawName;
+      const rawNameVal = Array.isArray(rawName) ? rawName[0] : rawName;
+      resolvedName = typeof rawNameVal === 'string' ? rawNameVal.trim() : '';
     }
     if (!resolvedName && typeof rawEmail === 'string') {
       resolvedName = rawEmail.split('@')[0];
@@ -552,13 +591,26 @@ export const samlCallback = async (req: Request, res: Response, next: NextFuncti
     const name = String(resolvedName || 'SAML User').trim();
 
     // Map system role from role / groups claims
-    const rawRole = attributes[roleClaim]
-      ?? attributes[groupsClaim]
-      ?? attributes['role']
-      ?? attributes['groups']
-      ?? attributes['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']
-      ?? attributes['http://schemas.xmlsoap.org/claims/Group'];
-    const mappedRole = mapSamlRole(rawRole);
+    // Collect all candidate role and group values from Entra / SAML attributes
+    const candidateRoleValues: string[] = [];
+    const pushCandidates = (val: unknown) => {
+      if (val === undefined || val === null || val === '') return;
+      if (Array.isArray(val)) {
+        val.forEach((v) => { if (v !== undefined && v !== null && v !== '') candidateRoleValues.push(String(v)); });
+      } else {
+        candidateRoleValues.push(String(val));
+      }
+    };
+
+    pushCandidates(attributes[roleClaim]);
+    pushCandidates(attributes[groupsClaim]);
+    pushCandidates(attributes['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']);
+    pushCandidates(attributes['http://schemas.microsoft.com/ws/2008/06/identity/claims/groups']);
+    pushCandidates(attributes['http://schemas.xmlsoap.org/claims/Group']);
+    pushCandidates(attributes['role']);
+    pushCandidates(attributes['groups']);
+
+    const mappedRole = mapSamlRole(candidateRoleValues.length > 0 ? candidateRoleValues : undefined);
 
     const firstEmail = Array.isArray(rawEmail) ? rawEmail[0] : rawEmail;
     const email = String(firstEmail || '').trim().toLowerCase();
@@ -618,7 +670,7 @@ export const samlCallback = async (req: Request, res: Response, next: NextFuncti
       const updateData: any = {
         last_login_at: new Date(),
       };
-      if (rawRole !== undefined && existingUser.role !== 'SUPER_ADMIN' && existingUser.role !== mappedRole) {
+      if (candidateRoleValues.length > 0 && existingUser.role !== 'SUPER_ADMIN' && existingUser.role !== mappedRole) {
         // Sync role if assertion explicitly sent role/groups (never touching a SUPER_ADMIN)
         updateData.role = mappedRole;
       }

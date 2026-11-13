@@ -115,7 +115,7 @@ export default function SettingsSection() {
         role: 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role',
         groups: 'http://schemas.xmlsoap.org/claims/Group',
       });
-      if (!ssoProviderName || ssoProviderName === 'SAML') setSsoProviderName('Microsoft Entra ID');
+      if (!ssoProviderName || ssoProviderName === 'SAML') setSsoProviderName('Microsoft Entra ID (SAML 2.0)');
     }
   };
 

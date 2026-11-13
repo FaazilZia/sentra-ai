@@ -712,7 +712,7 @@ export default function Settings() {
         role: 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role',
         groups: 'http://schemas.xmlsoap.org/claims/Group',
       });
-      if (!ssoProviderName || ssoProviderName === 'SAML') setSsoProviderName('Microsoft Entra ID');
+      if (!ssoProviderName || ssoProviderName === 'SAML') setSsoProviderName('Microsoft Entra ID (SAML 2.0)');
     }
   };
 
@@ -2659,7 +2659,7 @@ export function SsoTab({
                   className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
                 >
                   <option value="okta">Okta Preset (Recommended)</option>
-                  <option value="entra">Microsoft Entra ID / WS-Fed</option>
+                  <option value="entra">Microsoft Entra ID (SAML 2.0)</option>
                   <option value="custom">Custom Claims Mapping</option>
                 </select>
               </div>
@@ -2673,7 +2673,7 @@ export function SsoTab({
                   Claims & Attribute Mapping
                 </span>
                 <span className="text-[9px] text-[var(--text-secondary)] uppercase font-semibold">
-                  {ssoPreset === 'okta' ? 'Okta Native' : ssoPreset === 'entra' ? 'WS-Fed Standard' : 'Manual'}
+                  {ssoPreset === 'okta' ? 'Okta Native' : ssoPreset === 'entra' ? 'Entra ID (SAML 2.0)' : 'Manual'}
                 </span>
               </div>
 
