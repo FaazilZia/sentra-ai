@@ -307,6 +307,43 @@ describe('Connector API Routes', () => {
       expect(res.status).toBe(400);
       expect(testConnectorSource).not.toHaveBeenCalled();
     });
+
+    it('allows testing github connector with valid token format', async () => {
+      (testConnectorSource as jest.Mock).mockResolvedValueOnce({
+        success: true,
+        message: 'Successfully connected to GitHub as "test-user". Found 1 accessible repository(ies).',
+      });
+
+      const res = await request(app)
+        .post('/api/v1/connectors/test')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          type: 'github',
+          credentials: { token: 'github_pat_11ABCD1234efgh5678IJKL90mnop_routes_test' },
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(testConnectorSource).toHaveBeenCalledWith(
+        'github',
+        undefined,
+        expect.objectContaining({ token: 'github_pat_11ABCD1234efgh5678IJKL90mnop_routes_test' }),
+        true
+      );
+    });
+
+    it('rejects testing github connector with invalid token format', async () => {
+      const res = await request(app)
+        .post('/api/v1/connectors/test')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          type: 'github',
+          credentials: { token: 'invalid_github_token_prefix' },
+        });
+
+      expect(res.status).toBe(400);
+      expect(testConnectorSource).not.toHaveBeenCalled();
+    });
   });
 
   describe('POST /api/connectors', () => {
@@ -499,6 +536,44 @@ describe('Connector API Routes', () => {
       expect(prisma.connectors.create).toHaveBeenCalledWith(expect.objectContaining({
         data: expect.objectContaining({
           type: 'slack',
+          credentials: expect.stringMatching(/^[0-9a-fA-F]{24}:[0-9a-fA-F]{32}:/),
+        }),
+      }));
+    });
+
+    it('creates github connector with encrypted token and does not return credentials', async () => {
+      (prisma.connectors.create as jest.Mock).mockResolvedValueOnce({
+        id: 'conn-github-new',
+        organizationId: orgId,
+        name: 'GitHub Repository Scanner',
+        type: 'github',
+        config: { repositories: ['acme/repo'] },
+        credentials: '3f2a1b4c5d6e7f8a9b0c1d2e:1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d:e8f9a0b1',
+        scope: {},
+        status: 'pending',
+      });
+
+      const res = await request(app)
+        .post('/api/v1/connectors')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          name: 'GitHub Repository Scanner',
+          type: 'github',
+          credentials: {
+            token: 'github_pat_11ABCD1234efgh5678IJKL90mnop_create_test',
+          },
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.name).toBe('GitHub Repository Scanner');
+      expect(res.body.data.credentials).toBeUndefined();
+      expect(enqueueConnectorScan).toHaveBeenCalledWith('github', expect.any(String));
+
+      // Token must be stored encrypted
+      expect(prisma.connectors.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
+          type: 'github',
           credentials: expect.stringMatching(/^[0-9a-fA-F]{24}:[0-9a-fA-F]{32}:/),
         }),
       }));

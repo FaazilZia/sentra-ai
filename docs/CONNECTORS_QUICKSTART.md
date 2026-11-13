@@ -216,3 +216,44 @@ Add the following configuration to your `claude_desktop_config.json` (located at
 ```
 
 Replace `YOUR_MCP_AGENT_KEY` with an agent key generated in **Settings -> MCP Gateway**. All tool invocations and model actions are intercepted, evaluated against company security policies, and logged to the immutable audit trail.
+
+---
+
+## 8. GitHub Inbound Scanner (Repository Secrets & PII Scanning)
+
+Scans GitHub organization and personal repositories for hardcoded secrets (API keys, AWS credentials, JWT tokens, private keys) and sensitive PII (emails, SSNs, payment card numbers, phone numbers).
+
+> [!IMPORTANT]
+> **Zero Customer Code Storage Guarantee:** Sentraa scans files and repository trees in-memory. Sentraa **NEVER stores raw code or secret payloads**. Only detected violation categories, severity, file paths, repository identifiers, and commit SHAs are preserved in the audit log.
+
+### Step-by-Step GitHub Fine-Grained Token Setup (Least Privilege)
+1. In GitHub, navigate to **Settings -> Developer settings -> Personal access tokens -> Fine-grained tokens**.
+2. Click **Generate new token**.
+3. Configure token properties:
+   - **Token name:** e.g., `Sentraa Security Scanner`
+   - **Expiration:** Choose your preferred rotation period (e.g., 30 or 90 days).
+   - **Resource owner:** Select your organization or user account.
+   - **Repository access:** Choose **Only select repositories** and pick target repositories to scan (or **All repositories**).
+4. Under **Permissions -> Repository permissions**, grant only read-only access:
+   - **Contents:** `Read-only` (allows reading directory trees and file blobs).
+   - **Metadata:** `Read-only` (mandatory default on GitHub for repository discovery).
+5. Leave all other permissions set to **No access**.
+6. Click **Generate token** and copy the fine-grained token starting with `github_pat_`.
+
+### Setup in Sentraa Dashboard
+1. Go to **Settings -> Alerts & Connectors** (or **Settings -> General**).
+2. Under **Inbound Data Connectors**, click **Add Connector** and select **GitHub Repository**.
+3. Fill in:
+   - **Connector Name:** e.g., `Corporate GitHub Repositories`
+   - **Fine-Grained Personal Access Token:** Paste your fine-grained token (`github_pat_...`).
+   - **Target Repositories (Optional):** Enter comma-separated repositories (e.g. `org/frontend, org/backend`), or leave blank to automatically scan all repositories accessible to the token.
+4. Click **Test Connection** to verify token validity, discover accessible repositories, and check permissions.
+5. Click **Save Connector**.
+
+### Security & Operational Guardrails
+- **Credential Encryption:** GitHub access tokens are encrypted at rest with AES-256-GCM and never returned to the frontend or logged in plain text.
+- **SSRF Protection:** Outbound API endpoints are validated against private network addresses, localhost, link-local, and cloud metadata services.
+- **Rate Limit Resilience:** Automatic HTTP 429 and HTTP 403 rate-limit backoff respecting GitHub's `x-ratelimit-reset` and `retry-after` headers prevents API throttling.
+- **Safety Caps:** Scans are bounded to max 25 repositories, max 100 candidate files per repository, and 1MB maximum file size.
+- **Deduplication:** SHA-based file tracking automatically skips unchanged files on subsequent scans, avoiding redundant API calls and duplicate findings.
+- **Multi-Tenant Isolation:** Repositories, scan jobs, and intercepted findings are strictly scoped to the authenticated organization.

@@ -365,6 +365,60 @@ describe('Connector Worker Management & All-Type Scan Execution', () => {
       expect(mockSlackConversationsList).toHaveBeenCalled();
       expect(mockSlackConversationsHistory).toHaveBeenCalled();
     });
+
+    it('proves GitHub connector scan is actually executed', async () => {
+      process.env.ALLOW_PRIVATE_NETWORK_TARGETS = 'true';
+      const origFetch = global.fetch;
+
+      global.fetch = jest
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          headers: new Headers(),
+          json: async () => [
+            { id: 1, name: 'worker-repo', full_name: 'acme/worker-repo', default_branch: 'main' },
+          ],
+        } as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => ({
+            sha: 'tree123',
+            tree: [],
+            truncated: false,
+          }),
+        } as any);
+
+      mockConnectorsFindUnique.mockResolvedValue({
+        id: connectorId,
+        name: 'GitHub Worker Scanner',
+        type: 'github',
+        organizationId: orgId,
+        credentials: JSON.stringify({
+          token: 'github_pat_11ABCD1234efgh5678IJKL90mnop_worker_test',
+        }),
+        health_score: 100,
+        daily_cost_total: 0,
+        scan_policy: { maxDailyCost: 10 },
+      });
+      mockConnectorsUpdate.mockResolvedValue({ id: connectorId });
+
+      const job = {
+        id: 'job-github-1',
+        data: { type: 'github', connectorId, trigger: 'manual' },
+      };
+
+      try {
+        const result = await capturedProcessor!(job);
+        expect(result).toBeDefined();
+        expect(result.success).toBe(true);
+        expect(global.fetch).toHaveBeenCalled();
+      } finally {
+        global.fetch = origFetch;
+        process.env.ALLOW_PRIVATE_NETWORK_TARGETS = 'false';
+      }
+    });
   });
 
   describe('Unknown Connector Types Fail Loudly', () => {

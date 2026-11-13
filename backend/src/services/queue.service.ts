@@ -957,6 +957,442 @@ async function scanSlackSource(
   return { violations, apiCalls, bytesScanned };
 }
 
+export const GITHUB_SCAN_CONFIG = {
+  MAX_REPOS: 25,
+  MAX_FILES_PER_REPO: 100,
+  MAX_FILE_SIZE_BYTES: 1024 * 1024, // 1MB
+  PAGE_LIMIT: 50,
+  MAX_RATE_LIMIT_RETRIES: 3,
+  DEFAULT_RETRY_DELAY_MS: 1000,
+  MAX_RETRY_DELAY_MS: 10000,
+};
+
+export async function callGitHubWithBackoff<T>(
+  fn: () => Promise<T>,
+  retries = GITHUB_SCAN_CONFIG.MAX_RATE_LIMIT_RETRIES
+): Promise<T> {
+  let attempt = 0;
+  while (attempt <= retries) {
+    try {
+      return await fn();
+    } catch (err: any) {
+      attempt++;
+      const is429 =
+        err?.status === 429 ||
+        err?.statusCode === 429 ||
+        (err?.status === 403 &&
+          (err?.headers?.get?.('x-ratelimit-remaining') === '0' ||
+            String(err?.message || '').toLowerCase().includes('rate limit')));
+      if (is429 && attempt <= retries) {
+        const retryHeader = Number(err?.headers?.get?.('retry-after'));
+        const resetHeader = Number(err?.headers?.get?.('x-ratelimit-reset'));
+        let delayMs = GITHUB_SCAN_CONFIG.DEFAULT_RETRY_DELAY_MS * (2 ** (attempt - 1));
+        if (!Number.isNaN(retryHeader) && retryHeader > 0) {
+          delayMs = retryHeader * 1000;
+        } else if (!Number.isNaN(resetHeader) && resetHeader > 0) {
+          const nowSec = Math.floor(Date.now() / 1000);
+          if (resetHeader > nowSec) {
+            delayMs = (resetHeader - nowSec) * 1000;
+          }
+        }
+        delayMs = Math.min(Math.max(delayMs, 500), GITHUB_SCAN_CONFIG.MAX_RETRY_DELAY_MS);
+        logger.warn(`[GitHubScan] Rate limited (429/403). Backing off for ${delayMs}ms (attempt ${attempt}/${retries})`);
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw new Error('GitHub API rate limit exceeded after maximum retries.');
+}
+
+function isSupportedGitHubTextFile(filePath: string): boolean {
+  if (!filePath || typeof filePath !== 'string') return false;
+  const lower = filePath.toLowerCase();
+  if (
+    lower.startsWith('.git/') ||
+    lower.includes('/.git/') ||
+    lower.endsWith('.lock') ||
+    lower.endsWith('package-lock.json') ||
+    lower.endsWith('pnpm-lock.yaml') ||
+    lower.endsWith('.min.js') ||
+    lower.endsWith('.min.css') ||
+    lower.endsWith('.map')
+  ) {
+    return false;
+  }
+  if (
+    /\.(png|jpe?g|gif|webp|ico|svg|bmp|tiff?|pdf|zip|tar|gz|tgz|bz2|7z|rar|exe|bin|dll|so|dylib|wasm|woff2?|eot|ttf|otf|mp3|mp4|mov|avi|flac|wav)$/i.test(
+      lower
+    )
+  ) {
+    return false;
+  }
+  if (
+    /(^\.env|\/\.env|\.env\.[a-z0-9_-]+$|credentials|secret|id_rsa|id_ed25519|htpasswd)/i.test(lower) ||
+    /\.(js|jsx|ts|tsx|py|go|java|rb|php|sh|bash|zsh|sql|json|ya?ml|toml|ini|conf|cfg|txt|md|csv|xml|rst|properties)$/i.test(lower)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+async function recordGitHubFinding(params: {
+  connector: any;
+  repoFullName: string;
+  filePath: string;
+  line: number;
+  maskedSnippet: string;
+  category: string;
+  violatedFrameworks: string[];
+  riskLevel: 'low' | 'medium' | 'high';
+  commitSha?: string;
+}): Promise<number> {
+  const { connector, repoFullName, filePath, line, maskedSnippet, category, violatedFrameworks, riskLevel, commitSha } = params;
+  const fileKey = `github://${repoFullName}/${filePath}:${line}`;
+
+  // SECURITY: Strictly store only masked snippets, file path, and line numbers.
+  // Raw secrets and PII values are never stored in the database or written to disk.
+  await prisma.interception_logs.create({
+    data: {
+      user_id: 'system_scanner',
+      organizationId: connector.organizationId,
+      input_text: `Scan of GitHub file ${repoFullName}/${filePath}:${line} - ${maskedSnippet}`,
+      decision: 'BLOCK',
+      confidence: 'High',
+      reason: `Data scan detected sensitive ${category} in ${filePath}:${line}`,
+      policy_triggered: 'Data Governance Baseline',
+      metadata: {
+        connector_id: connector.id,
+        violationType: category,
+        fileKey,
+        repo: repoFullName,
+        filePath,
+        line,
+        maskedSnippet,
+        commitSha: commitSha || undefined,
+        source_type: 'github',
+        frameworks: violatedFrameworks,
+        riskLevel,
+        severity: riskLevel,
+      },
+      timestamp: new Date(),
+    },
+  });
+  return 1;
+}
+
+async function fetchGitHubRepos(
+  apiBaseUrl: string,
+  token: string,
+  connector: any
+): Promise<{ repos: Array<{ id: number; name: string; full_name: string; default_branch?: string }>; apiCalls: number; totalCount: number }> {
+  let apiCalls = 0;
+  const config = (connector.config as Record<string, any>) || {};
+  const scope = (connector.scope as Record<string, any>) || {};
+
+  const rawAllowed = config.repositories || scope.repositories || config.repos || scope.repos;
+  const allowedSet = Array.isArray(rawAllowed) && rawAllowed.length > 0 ? new Set(rawAllowed.map(String)) : null;
+
+  const targetRepos: Array<{ id: number; name: string; full_name: string; default_branch?: string }> = [];
+  let page = 1;
+  const perPage = GITHUB_SCAN_CONFIG.PAGE_LIMIT;
+  let totalDiscovered = 0;
+
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    Accept: 'application/vnd.github+json',
+    'User-Agent': 'Sentraa-AI-Connector',
+    'X-GitHub-Api-Version': '2022-11-28',
+  };
+
+  while (targetRepos.length < GITHUB_SCAN_CONFIG.MAX_REPOS) {
+    const res = await callGitHubWithBackoff<Response>(async () => {
+      const resp = await fetch(`${apiBaseUrl}/user/repos?per_page=${perPage}&page=${page}&sort=updated`, {
+        headers,
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!resp.ok) {
+        throw Object.assign(new Error(`GitHub user/repos returned HTTP ${resp.status}`), {
+          status: resp.status,
+          headers: resp.headers,
+        });
+      }
+      return resp;
+    });
+    apiCalls++;
+
+    const pageRepos: any = await res.json();
+    if (!Array.isArray(pageRepos)) break;
+
+    const linkHeader = res.headers.get('link') || '';
+    const lastPageMatch = linkHeader.match(/<[^>]*[?&]page=(\d+)[^>]*>;\s*rel="last"/);
+    if (lastPageMatch) {
+      const lastPageNum = Number.parseInt(lastPageMatch[1], 10);
+      if (!Number.isNaN(lastPageNum)) {
+        totalDiscovered = Math.max(totalDiscovered, lastPageNum * perPage);
+      }
+    }
+
+    for (const r of pageRepos) {
+      if (!r || !r.full_name) continue;
+      if (allowedSet && !allowedSet.has(r.full_name) && !allowedSet.has(r.name)) {
+        continue;
+      }
+      targetRepos.push({
+        id: r.id,
+        name: r.name,
+        full_name: r.full_name,
+        default_branch: r.default_branch || 'main',
+      });
+      if (targetRepos.length >= GITHUB_SCAN_CONFIG.MAX_REPOS) break;
+    }
+
+    if (!linkHeader.includes('rel="next"') || pageRepos.length === 0) {
+      break;
+    }
+    page++;
+  }
+
+  const finalTotal = totalDiscovered > 0 ? Math.max(totalDiscovered, targetRepos.length) : targetRepos.length;
+  logger.info(
+    `[GitHubScan] Repository query complete: received ${targetRepos.length} of ${finalTotal} total accessible repositories for connector ${connector.id}.`
+  );
+
+  return { repos: targetRepos, apiCalls, totalCount: finalTotal };
+}
+
+async function scanGitHubRepoFiles(
+  apiBaseUrl: string,
+  token: string,
+  repo: { id: number; name: string; full_name: string; default_branch?: string },
+  connector: any,
+  lastScannedShas: Record<string, string>
+): Promise<{ violations: number; apiCalls: number; bytesScanned: number; updatedShas: Record<string, string> }> {
+  let violations = 0;
+  let apiCalls = 0;
+  let bytesScanned = 0;
+  const updatedShas: Record<string, string> = {};
+
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    Accept: 'application/vnd.github+json',
+    'User-Agent': 'Sentraa-AI-Connector',
+    'X-GitHub-Api-Version': '2022-11-28',
+  };
+
+  const branch = repo.default_branch || 'main';
+
+  // 1. Fetch recursive git tree
+  let treeRes: any;
+  try {
+    const res = await callGitHubWithBackoff<Response>(async () => {
+      const resp = await fetch(`${apiBaseUrl}/repos/${repo.full_name}/git/trees/${branch}?recursive=1`, {
+        headers,
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!resp.ok) {
+        throw Object.assign(new Error(`git/trees returned HTTP ${resp.status}`), {
+          status: resp.status,
+          headers: resp.headers,
+        });
+      }
+      return resp;
+    });
+    apiCalls++;
+    treeRes = await res.json();
+  } catch (err: any) {
+    logger.warn(`[GitHubScan] Could not fetch tree for ${repo.full_name} (${branch}):`, err?.message || err);
+    return { violations, apiCalls, bytesScanned, updatedShas };
+  }
+
+  const treeItems: any[] = Array.isArray(treeRes?.tree) ? treeRes.tree : [];
+  logger.info(
+    `[GitHubScan] Discovered ${treeItems.length} tree items in ${repo.full_name} (tree truncated: ${Boolean(treeRes?.truncated)}).`
+  );
+
+  let fileCount = 0;
+  for (const item of treeItems) {
+    if (fileCount >= GITHUB_SCAN_CONFIG.MAX_FILES_PER_REPO) break;
+    if (item.type !== 'blob' || !item.path) continue;
+    if (item.size && item.size > GITHUB_SCAN_CONFIG.MAX_FILE_SIZE_BYTES) continue;
+    if (!isSupportedGitHubTextFile(item.path)) continue;
+
+    // Deduplication check based on blob SHA
+    const prevSha = lastScannedShas[item.path];
+    if (prevSha && prevSha === item.sha) {
+      updatedShas[item.path] = item.sha;
+      continue;
+    }
+
+    fileCount++;
+
+    // Fetch file content via blob API
+    try {
+      const blobRes = await callGitHubWithBackoff<Response>(async () => {
+        const resp = await fetch(`${apiBaseUrl}/repos/${repo.full_name}/git/blobs/${item.sha}`, {
+          headers,
+          signal: AbortSignal.timeout(10000),
+        });
+        if (!resp.ok) {
+          throw Object.assign(new Error(`git/blobs returned HTTP ${resp.status}`), {
+            status: resp.status,
+            headers: resp.headers,
+          });
+        }
+        return resp;
+      });
+      apiCalls++;
+      const blobData: any = await blobRes.json();
+      if (typeof blobData?.content === 'string') {
+        const encoding = blobData.encoding || 'base64';
+        // SECURITY & PRIVACY REQUIREMENT:
+        // File contents are held ONLY in transient memory in local variables for the duration of the scan.
+        // They are NEVER written to disk, NEVER persisted to temporary files, and NEVER printed to logs.
+        const fileContent = encoding === 'base64'
+          ? Buffer.from(blobData.content.replace(/\s+/g, ''), 'base64').toString('utf-8')
+          : blobData.content;
+
+        const scanSlice = fileContent.slice(0, 102400); // Scan up to 100KB per file in memory
+        bytesScanned += Buffer.byteLength(scanSlice);
+
+        const lines = scanSlice.split(/\r?\n/);
+        let fileViolations = 0;
+        const MAX_FINDINGS_PER_FILE = 25;
+
+        for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+          if (fileViolations >= MAX_FINDINGS_PER_FILE) break;
+          const currentLine = lines[lineIdx];
+          if (!currentLine || !currentLine.trim()) continue;
+
+          const lineScan = PIIScannerService.scan(currentLine);
+          if (lineScan.piiDetected) {
+            const lineNum = lineIdx + 1;
+            // The masked snippet uses lineScan.redactedText (e.g. [API_KEY_REDACTED]),
+            // strictly guaranteeing raw secrets/PII are never stored or logged.
+            const maskedSnippet = lineScan.redactedText.trim().slice(0, 200);
+
+            for (const category of lineScan.detectedCategories) {
+              if (fileViolations >= MAX_FINDINGS_PER_FILE) break;
+              violations += await recordGitHubFinding({
+                connector,
+                repoFullName: repo.full_name,
+                filePath: item.path,
+                line: lineNum,
+                maskedSnippet,
+                category,
+                violatedFrameworks: lineScan.violatedFrameworks,
+                riskLevel: lineScan.riskLevel,
+                commitSha: item.sha,
+              });
+              fileViolations++;
+            }
+          }
+        }
+        updatedShas[item.path] = item.sha;
+      }
+    } catch (err: any) {
+      logger.warn(`[GitHubScan] Failed to fetch or scan blob ${item.sha} (${item.path}) in ${repo.full_name}:`, err?.message || err);
+    }
+  }
+
+  return { violations, apiCalls, bytesScanned, updatedShas };
+}
+
+async function scanGitHubSource(
+  connector: any,
+  creds: any
+): Promise<{ violations: number; apiCalls: number; bytesScanned: number; warning?: string }> {
+  let violations = 0;
+  let apiCalls = 0;
+  let bytesScanned = 0;
+
+  const config = (connector.config as Record<string, any>) || {};
+  let token = '';
+  if (typeof creds === 'string') {
+    token = creds.trim();
+  } else if (creds && typeof creds === 'object') {
+    token = (creds.token || creds.personalAccessToken || creds.pat || creds.apiKey || creds.botToken || '').trim();
+  }
+  if (!token && config && typeof config === 'object') {
+    token = (config.token || config.personalAccessToken || '').trim();
+  }
+
+  if (!token) {
+    throw new Error('Missing GitHub personal access token.');
+  }
+
+  const isClassicToken = token.startsWith('ghp_');
+  if (isClassicToken) {
+    logger.warn(
+      `[GitHubScan] Over-privileged classic token ('ghp_...') detected for connector ${connector.id}. Recommend migrating to a fine-grained PAT ('github_pat_...') with read-only repository scope.`
+    );
+  }
+
+  const apiBaseUrl = (process.env.GITHUB_API_BASE_URL || 'https://api.github.com').replace(/\/+$/, '');
+  const parsedUrl = new URL(apiBaseUrl);
+  await assertSafeTarget(parsedUrl.hostname);
+
+  const repoResult = await fetchGitHubRepos(apiBaseUrl, token, connector);
+  apiCalls += repoResult.apiCalls;
+
+  if (repoResult.repos.length === 0) {
+    logger.info(`[GitHubScan] Zero readable repositories found for connector ${connector.id}.`);
+    return {
+      violations: 0,
+      apiCalls,
+      bytesScanned: 0,
+      warning: '0 accessible repositories, ensure token has repository access granted',
+    };
+  }
+
+  const existingShas: Record<string, Record<string, string>> = { ...(config.lastScannedShas || {}) };
+  const updatedShasByRepo: Record<string, Record<string, string>> = { ...existingShas };
+
+  for (const repo of repoResult.repos) {
+    try {
+      const repoShas = existingShas[repo.full_name] || {};
+      const repoScan = await scanGitHubRepoFiles(
+        apiBaseUrl,
+        token,
+        repo,
+        connector,
+        repoShas
+      );
+
+      violations += repoScan.violations;
+      apiCalls += repoScan.apiCalls;
+      bytesScanned += repoScan.bytesScanned;
+      updatedShasByRepo[repo.full_name] = { ...repoShas, ...repoScan.updatedShas };
+    } catch (err: any) {
+      logger.warn(`[GitHubScan] Error scanning repository ${repo.full_name}, skipping:`, err);
+    }
+  }
+
+  try {
+    await prisma.connectors.update({
+      where: { id: connector.id },
+      data: {
+        config: {
+          ...config,
+          lastScannedShas: updatedShasByRepo,
+        },
+      },
+    });
+  } catch (err) {
+    logger.warn(`[GitHubScan] Could not update scan shas for connector ${connector.id}:`, err);
+  }
+
+  return {
+    violations,
+    apiCalls,
+    bytesScanned,
+    warning: isClassicToken
+      ? 'Classic token is over-privileged (account-wide scope). Recommend migrating to fine-grained PAT (github_pat_...) with read-only repository access.'
+      : undefined,
+  };
+}
+
 function formatConnectorScanError(err: any): string {
   const rawMsg = err?.message || String(err);
   if (rawMsg.includes('SSRF validation failed') || rawMsg.includes('private or internal network')) {
@@ -995,10 +1431,22 @@ function formatConnectorScanError(err: any): string {
   if (rawMsg.includes('not_in_channel')) {
     return 'Slack channel error: Bot is not a member of the channel. Invite the bot using /invite.';
   }
+  if (rawMsg.includes('Bad credentials') || (rawMsg.includes('GitHub') && rawMsg.includes('401'))) {
+    return 'GitHub authentication failed: Invalid or expired personal access token.';
+  }
+  if (
+    rawMsg.includes('Resource not accessible by personal access token') ||
+    (rawMsg.includes('GitHub') && rawMsg.includes('Insufficient permissions'))
+  ) {
+    return 'GitHub authorization error: Insufficient permissions (Contents: Read, Metadata: Read).';
+  }
+  if (rawMsg.toLowerCase().includes('github rate limit') || (rawMsg.includes('GitHub') && rawMsg.includes('rate limit'))) {
+    return 'GitHub rate limit exceeded: Too many requests.';
+  }
   return `Scan failed: ${rawMsg}`;
 }
 
-export const SUPPORTED_CONNECTOR_TYPES = ['postgres', 'sql', 's3', 'gdrive', 'slack'] as const;
+export const SUPPORTED_CONNECTOR_TYPES = ['postgres', 'sql', 's3', 'gdrive', 'slack', 'github'] as const;
 
 export function isSupportedConnectorType(type: string): boolean {
   return SUPPORTED_CONNECTOR_TYPES.includes(type?.toLowerCase() as any);
@@ -1023,7 +1471,10 @@ async function executeSourceScan(type: string, connector: any, creds: any): Prom
   if (normalizedType === 'slack') {
     return await scanSlackSource(connector, creds);
   }
-  throw new Error(`Unsupported connector type "${type}". Allowed types: postgres, sql, s3, gdrive, slack.`);
+  if (normalizedType === 'github') {
+    return await scanGitHubSource(connector, creds);
+  }
+  throw new Error(`Unsupported connector type "${type}". Allowed types: postgres, sql, s3, gdrive, slack, github.`);
 }
 
 export async function processConnectorScan(
@@ -1033,7 +1484,7 @@ export async function processConnectorScan(
 ) {
   const normalizedType = type?.toLowerCase();
   if (!normalizedType || !SUPPORTED_CONNECTOR_TYPES.includes(normalizedType as any)) {
-    const errorMsg = `Unsupported connector type "${type}". Allowed types: postgres, sql, s3, gdrive, slack.`;
+    const errorMsg = `Unsupported connector type "${type}". Allowed types: postgres, sql, s3, gdrive, slack, github.`;
     logger.error(`Worker: Unsupported connector type "${type}" for connector ${connectorId}`);
     try {
       await prisma.connectors.update({

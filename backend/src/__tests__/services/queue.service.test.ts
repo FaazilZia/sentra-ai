@@ -214,6 +214,8 @@ describe('Queue Service & Background Worker Suite', () => {
       expect(isSupportedConnectorType('S3')).toBe(true);
       expect(isSupportedConnectorType('gdrive')).toBe(true);
       expect(isSupportedConnectorType('slack')).toBe(true);
+      expect(isSupportedConnectorType('github')).toBe(true);
+      expect(isSupportedConnectorType('GITHUB')).toBe(true);
     });
 
     it('returns false for unknown or falsy connector types', () => {

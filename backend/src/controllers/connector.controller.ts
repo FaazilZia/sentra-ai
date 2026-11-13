@@ -175,6 +175,19 @@ function normalizeConnectorCredentials(
     const token = rawCreds.botToken || rawCreds.token || (config as any)?.botToken || (config as any)?.token;
     return { botToken: typeof token === 'string' ? token.trim() : '' };
   }
+  if (type === 'github' && rawCreds) {
+    if (typeof rawCreds === 'string') {
+      return { token: rawCreds.trim() };
+    }
+    const token =
+      rawCreds.token ||
+      rawCreds.personalAccessToken ||
+      rawCreds.pat ||
+      rawCreds.apiKey ||
+      (config as any)?.token ||
+      (config as any)?.personalAccessToken;
+    return { token: typeof token === 'string' ? token.trim() : '' };
+  }
   return rawCreds;
 }
 
@@ -213,7 +226,7 @@ export const createConnector = asyncHandler(async (req: any, res: Response) => {
 
   const { name, type, config, credentials, scope } = req.body as {
     name: string;
-    type: 'postgres' | 'sql' | 'gdrive' | 's3' | 'slack';
+    type: 'postgres' | 'sql' | 'gdrive' | 's3' | 'slack' | 'github';
     config?: Record<string, unknown>;
     credentials?: Record<string, unknown> | string;
     scope?: Record<string, unknown>;

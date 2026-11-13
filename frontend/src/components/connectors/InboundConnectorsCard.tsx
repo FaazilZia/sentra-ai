@@ -28,6 +28,15 @@ import {
 } from '@/lib/api';
 import { useStore } from '@/store/useStore';
 
+function GitHubIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
+      <path d="M9 18c-4.51 2-5-2-7-2" />
+    </svg>
+  );
+}
+
 function getStatusBadgeClass(status: string): string {
   if (status === 'active') {
     return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
@@ -50,7 +59,7 @@ export function InboundConnectorsCard() {
 
   // Form states
   const [name, setName] = useState('');
-  const [type, setType] = useState<'postgres' | 's3' | 'gdrive' | 'slack'>('postgres');
+  const [type, setType] = useState<'postgres' | 's3' | 'gdrive' | 'slack' | 'github'>('postgres');
 
   // Postgres fields
   const [pgHost, setPgHost] = useState('');
@@ -76,6 +85,11 @@ export function InboundConnectorsCard() {
   const [slackBotToken, setSlackBotToken] = useState('');
   const [slackIncludePrivate, setSlackIncludePrivate] = useState(false);
   const [showSlackToken, setShowSlackToken] = useState(false);
+
+  // GitHub fields
+  const [githubToken, setGithubToken] = useState('');
+  const [githubRepos, setGithubRepos] = useState('');
+  const [showGithubToken, setShowGithubToken] = useState(false);
 
   // Action states
   const [testing, setTesting] = useState(false);
@@ -106,6 +120,8 @@ export function InboundConnectorsCard() {
     setPgAllowSelfSigned(false);
     setSlackBotToken('');
     setSlackIncludePrivate(false);
+    setGithubToken('');
+    setGithubRepos('');
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -178,14 +194,32 @@ export function InboundConnectorsCard() {
       };
     }
 
+    if (type === 'slack') {
+      return {
+        name,
+        type: 'slack',
+        config: {
+          includePrivateChannels: slackIncludePrivate,
+        },
+        credentials: {
+          botToken: slackBotToken.trim(),
+        },
+      };
+    }
+
+    const parsedRepos = githubRepos
+      .split(',')
+      .map((r) => r.trim())
+      .filter(Boolean);
+
     return {
       name,
-      type: 'slack',
+      type: 'github',
       config: {
-        includePrivateChannels: slackIncludePrivate,
+        repositories: parsedRepos.length > 0 ? parsedRepos : undefined,
       },
       credentials: {
-        botToken: slackBotToken.trim(),
+        token: githubToken.trim(),
       },
     };
   };
@@ -304,6 +338,8 @@ export function InboundConnectorsCard() {
         return <HardDrive className="h-4 w-4 text-emerald-400" />;
       case 'slack':
         return <MessageSquare className="h-4 w-4 text-purple-400" />;
+      case 'github':
+        return <GitHubIcon className="h-4 w-4 text-purple-400" />;
       default:
         return <Server className="h-4 w-4 text-zinc-400" />;
     }
@@ -320,6 +356,8 @@ export function InboundConnectorsCard() {
         return 'Google Drive';
       case 'slack':
         return 'Slack Workspace';
+      case 'github':
+        return 'GitHub Repository';
       default:
         return connType.toUpperCase();
     }
@@ -554,6 +592,7 @@ export function InboundConnectorsCard() {
                 <option value="s3">Amazon S3</option>
                 <option value="gdrive">Google Drive</option>
                 <option value="slack">Slack Workspace</option>
+                <option value="github">GitHub Repository</option>
               </select>
             </div>
           </div>
@@ -887,6 +926,82 @@ export function InboundConnectorsCard() {
                   <li><code className="font-mono text-purple-300">files:read</code> — Scan attached documents and text files for PII</li>
                   <li><code className="font-mono text-[var(--text-muted)]">groups:read</code>, <code className="font-mono text-[var(--text-muted)]">groups:history</code> (Optional, for private channels)</li>
                 </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Type 5: GitHub */}
+          {type === 'github' && (
+            <div className="space-y-4 pt-2">
+              <div className="flex items-start gap-2 bg-purple-500/10 border border-purple-500/20 rounded p-3 text-[10px] text-purple-300">
+                <Info className="h-4 w-4 shrink-0 text-purple-400 mt-0.5" />
+                <div className="space-y-1">
+                  <span className="font-bold uppercase tracking-wider block text-purple-200">
+                    GitHub Fine-Grained Personal Access Token (Least Privilege)
+                  </span>
+                  <p className="leading-relaxed">
+                    Sentraa scans selected repositories for sensitive secrets, credentials, and PII. Generate a fine-grained token in GitHub under{' '}
+                    <strong>Settings &gt; Developer settings &gt; Personal access tokens &gt; Fine-grained tokens</strong> with read-only permissions:
+                  </p>
+                  <ul className="list-disc list-inside space-y-0.5 pl-1 font-mono text-[9px] text-purple-200">
+                    <li>Contents: Read-only</li>
+                    <li>Metadata: Read-only</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label htmlFor="gh-token" className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest">
+                    Fine-Grained Personal Access Token *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowGithubToken(!showGithubToken)}
+                    className="text-[9px] text-[var(--text-muted)] hover:text-[var(--text-primary)] flex items-center gap-1 transition-colors"
+                  >
+                    {showGithubToken ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                    {showGithubToken ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+                <input
+                  id="gh-token"
+                  type={showGithubToken ? 'text' : 'password'}
+                  placeholder="github_pat_11..."
+                  value={githubToken}
+                  onChange={(e) => setGithubToken(e.target.value)}
+                  className="w-full bg-[var(--card-bg)] border border-[var(--border-default)] rounded px-3 py-2 text-xs font-mono text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
+                />
+                {githubToken.trim().startsWith('ghp_') && (
+                  <div className="mt-2 p-2.5 bg-amber-500/10 border border-amber-500/30 rounded text-[10px] text-amber-300 flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400 mt-0.5" />
+                    <div>
+                      <span className="font-bold uppercase tracking-wider block text-amber-200">
+                        Over-Privilege Warning (Classic Token)
+                      </span>
+                      <p className="leading-relaxed">
+                        Classic tokens (<code className="font-mono text-white">ghp_...</code>) carry broad, account-wide scope across all repositories and violate the principle of least privilege. We strongly recommend using a <strong className="text-white">Fine-Grained Personal Access Token (<code className="font-mono text-white">github_pat_...</code>)</strong> restricted to specific repositories with only <strong className="text-white">Contents: Read-only</strong> and <strong className="text-white">Metadata: Read-only</strong> permissions.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label htmlFor="gh-repos" className="text-[9px] font-semibold text-[var(--text-secondary)] uppercase tracking-widest block mb-1">
+                  Target Repositories (Optional)
+                </label>
+                <input
+                  id="gh-repos"
+                  type="text"
+                  placeholder="owner/repo-1, owner/repo-2 (leave blank to scan all accessible repos)"
+                  value={githubRepos}
+                  onChange={(e) => setGithubRepos(e.target.value)}
+                  className="w-full bg-[var(--card-bg)] border border-[var(--border-default)] rounded px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
+                />
+                <span className="text-[10px] text-[var(--text-muted)] mt-1 block">
+                  Specify comma-separated repository names (`owner/repo`), or leave blank to scan all repositories granted to the fine-grained token.
+                </span>
               </div>
             </div>
           )}

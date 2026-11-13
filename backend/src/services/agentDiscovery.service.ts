@@ -46,12 +46,17 @@ export class AgentDiscoveryService {
         where: { organizationId },
       });
 
+      const PLATFORM_NAMES: Record<string, string> = {
+        s3: 'AWS S3',
+        gdrive: 'Google Drive',
+        sql: 'PostgreSQL',
+        postgres: 'PostgreSQL',
+        slack: 'Slack Workspace',
+        github: 'GitHub Organization',
+      };
+
       for (const conn of connectors) {
-        const platformName = 
-          conn.type === 's3' ? 'AWS S3' :
-          conn.type === 'gdrive' ? 'Google Drive' :
-          conn.type === 'sql' || conn.type === 'postgres' ? 'PostgreSQL' :
-          conn.type === 'slack' ? 'Slack Workspace' : 'Custom API';
+        const platformName = PLATFORM_NAMES[conn.type] || 'Custom API';
 
         candidates.push({
           name: conn.name,
