@@ -2665,7 +2665,7 @@ export function SsoTab({
                   className="w-full bg-[var(--bg-page)] border border-[var(--border-default)] rounded px-3 py-2 text-[11px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
                 >
                   <option value="okta">Okta Preset (Recommended)</option>
-                  <option value="entra">Microsoft Entra ID (SAML 2.0)</option>
+                  <option value="entra">Microsoft Entra ID / SAML 2.0</option>
                   <option value="custom">Custom Claims Mapping</option>
                 </select>
               </div>

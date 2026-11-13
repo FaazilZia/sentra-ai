@@ -132,7 +132,7 @@ Sentraa matches incoming role and group claims strictly against an exact documen
 ### Step 1: Configure SSO in Sentraa
 1. In Sentraa AI, log in as an **Admin** and navigate to **Settings → Single Sign-On (SSO)**.
 2. **SSO Provider Name**: `Microsoft Entra ID (SAML 2.0)`.
-3. **Attribute Mapping Preset**: Select **Microsoft Entra ID (SAML 2.0)** from the dropdown. This automatically sets:
+3. **Attribute Mapping Preset**: Select **Microsoft Entra ID / SAML 2.0** from the dropdown. This automatically sets:
    * `email` → `http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress`
    * `firstName` → `http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname`
    * `lastName` → `http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname`
