@@ -218,6 +218,12 @@ export default function Settings() {
               }
             } else if (data.sso_provider?.toLowerCase() === 'okta') {
               setSsoPreset('okta');
+            } else if (
+              data.sso_provider?.toLowerCase().includes('entra') ||
+              data.sso_provider?.toLowerCase().includes('microsoft') ||
+              data.sso_provider?.toLowerCase().includes('azure ad')
+            ) {
+              setSsoPreset('entra');
             }
             if (data.saml_metadata.allowedEmailDomains) {
               const doms = Array.isArray(data.saml_metadata.allowedEmailDomains)

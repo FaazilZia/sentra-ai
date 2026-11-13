@@ -66,25 +66,55 @@ Verify or add the standard Microsoft Entra claims:
 | `name` | `http://schemas.xmlsoap.org/ws/2005/05/identity/claims` | `user.userprincipalname` | User principal name / identity |
 | `displayname` | `http://schemas.microsoft.com/identity/claims` | `user.displayname` | Formatted full name |
 
-#### 3. Group Claims (Role Mapping)
-To assign Sentraa roles via Entra Security Groups:
-1. Click **+ Add a group claim**.
-2. Under **Which groups associated with the user should be returned in the claim?**, select:
-   * **Groups assigned to the application** *(recommended)* or **Security groups**.
-3. Under **Source attribute**, select **Cloud-only group display names** (or emit group names via App Roles).
-4. Under **Advanced options**, you may check **Customize the name of the group claim** and enter `groups`.
-5. Click **Save**.
+#### 3. Group Claims vs. Entra App Roles (Role Mapping)
 
-#### Documented Supported Group Names
-Sentraa matches incoming group names strictly against an exact documented allowlist (case-insensitive). Loose substring matches (e.g. `Administrator`, `*_ADMIN`, `:ADMIN`, `Engineering-Team`) are rejected and default to `VIEWER`.
+> [!IMPORTANT]
+> **Why Entra Group Claims Emit GUIDs by Default**:
+> By default in Microsoft Entra ID, group claims emit directory Object IDs (GUIDs, e.g. `c7b8d451-9f22-48a5-8164-5969502b4d96`) rather than human-readable group names.
+> Sentraa AI strictly enforces exact name matching against `DOCUMENTED_SAML_ROLE_MAP`. **Raw GUIDs will not match any role and will safely default to `VIEWER`**.
+>
+> **The Enterprise-Recommended Solution is Entra App Roles**:
+> Defining App Roles in Microsoft Entra ID delivers deterministic, zero-configuration role assignment emitted directly in the standard role claim (`http://schemas.microsoft.com/ws/2008/06/identity/claims/role`).
 
-| Entra Security Group / App Role Name | Sentraa System Role | Permissions |
+##### Option A: Configure Entra App Roles (Recommended)
+1. In the Microsoft Entra Admin Center, navigate to **Identity → Applications → App registrations → All applications**.
+2. Select your `Sentraa AI` application.
+3. In the left navigation menu, select **App roles**, then click **+ Create app role**.
+4. Create the required roles using the exact values from the table below:
+
+| Display Name | Allowed Member Types | Value | Description | Sentraa Role |
+| :--- | :--- | :--- | :--- | :--- |
+| `Sentraa Admin` | Users/Groups | `SENTRA_ADMIN` | Organization administration, SSO settings, policies, and API keys | `ADMIN` |
+| `Sentraa Engineer` | Users/Groups | `SENTRA_ENGINEER` | Agent discovery, LLM keys, SDK integration, and policy testing | `ENGINEER` |
+| `Sentraa Auditor` | Users/Groups | `SENTRA_AUDITOR` | Read-only compliance frameworks, audit trails, and evidence | `AUDITOR` |
+| `Sentraa Member` | Users/Groups | `SENTRA_MEMBER` | Standard workspace member | `MEMBER` |
+| `Sentraa Viewer` | Users/Groups | `SENTRA_VIEWER` | Read-only dashboard view | `VIEWER` |
+
+5. Click **Apply** for each role.
+6. Now return to **Enterprise applications → Sentraa AI → Users and groups**:
+   * Click **+ Add user/group**.
+   * Select a user or corporate security group.
+   * Under **Select a role**, choose the appropriate Sentraa App Role (e.g. `Sentraa Admin` or `Sentraa Engineer`).
+   * Click **Assign**.
+7. When assigned users authenticate, Entra emits the role value under `http://schemas.microsoft.com/ws/2008/06/identity/claims/role`, which Sentraa immediately maps to the matching system role.
+
+##### Option B: Cloud-Only Group Display Names (Alternative)
+If your organization prefers using security groups without App Roles:
+1. In the SAML Single Sign-On setup screen, under **Attributes & Claims**, click **+ Add a group claim**.
+2. Select **Groups assigned to the application**.
+3. Under **Source attribute**, change the dropdown from `Group ID` to **Cloud-only group display names** (requires Microsoft Entra ID P1/P2 license and cloud-managed groups).
+4. Name your groups to match the exact documented names below (e.g. `SENTRA_ADMIN`, `SENTRA_ENGINEER`).
+
+#### Documented Supported Role & Group Names
+Sentraa matches incoming role and group claims strictly against an exact documented allowlist (case-insensitive). Loose substring matches (e.g. `Administrator`, `*_ADMIN`, `:ADMIN`, `Engineering-Team`) or raw GUIDs are rejected and default to `VIEWER`.
+
+| Entra App Role / Group Value | Sentraa System Role | Permissions |
 | :--- | :--- | :--- |
 | `ADMIN` or `SENTRA_ADMIN` | `ADMIN` | Organization administration, SSO settings, policies, and API keys |
 | `ENGINEER` or `SENTRA_ENGINEER` | `ENGINEER` | Agent discovery, LLM keys, SDK integration, and policy testing |
 | `AUDITOR` or `SENTRA_AUDITOR` | `AUDITOR` | Read-only compliance frameworks, audit trails, and evidence |
 | `MEMBER` or `SENTRA_MEMBER` | `MEMBER` | Standard workspace member |
-| `VIEWER` or `SENTRA_VIEWER` | `VIEWER` | Read-only dashboard view (default for unmapped groups) |
+| `VIEWER` or `SENTRA_VIEWER` | `VIEWER` | Read-only dashboard view (default for GUIDs and unmapped groups) |
 
 > **Security Guard on Roles**:
 > Sentraa strictly enforces tenant isolation.

@@ -235,6 +235,62 @@ describe('Microsoft Entra ID SAML SSO: Claim URIs & Attribute Extraction', () =>
 });
 
 describe('Microsoft Entra ID SAML SSO: Group and Role Mapping', () => {
+  it('maps role arriving via Entra App Role claim (http://schemas.microsoft.com/ws/2008/06/identity/claims/role)', async () => {
+    mockOrg();
+    const res = makeRes();
+
+    const samlResponse = buildSignedEntraResponse({
+      nameId: 'approle.admin@acme.com',
+      attributes: {
+        'http://schemas.microsoft.com/ws/2008/06/identity/claims/role': 'SENTRA_ADMIN',
+      },
+    });
+    await samlCallback(makeReq(samlResponse), res, jest.fn());
+
+    const createData = (prisma.users.create as jest.Mock).mock.calls[0][0].data;
+    expect(createData.role).toBe('ADMIN');
+  });
+
+  it('maps SENTRA_VIEWER arriving via Entra App Role claim to VIEWER', async () => {
+    mockOrg();
+    const res = makeRes();
+
+    const samlResponse = buildSignedEntraResponse({
+      nameId: 'approle.viewer@acme.com',
+      attributes: {
+        'http://schemas.microsoft.com/ws/2008/06/identity/claims/role': 'SENTRA_VIEWER',
+      },
+    });
+    await samlCallback(makeReq(samlResponse), res, jest.fn());
+
+    const createData = (prisma.users.create as jest.Mock).mock.calls[0][0].data;
+    expect(createData.role).toBe('VIEWER');
+  });
+
+  it('defaults to VIEWER when only Entra directory GUID groups arrive in group claim', async () => {
+    mockOrg();
+    const res = makeRes();
+
+    // Default Entra group claims emit directory Object IDs (GUIDs)
+    const entraGuidGroups = [
+      'c7b8d451-9f22-48a5-8164-5969502b4d96',
+      '9a1b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d',
+    ];
+
+    const samlResponse = buildSignedEntraResponse({
+      nameId: 'guid.user@acme.com',
+      attributes: {
+        'http://schemas.microsoft.com/ws/2008/06/identity/claims/groups': entraGuidGroups,
+      },
+    });
+    await samlCallback(makeReq(samlResponse), res, jest.fn());
+
+    const createData = (prisma.users.create as jest.Mock).mock.calls[0][0].data;
+    expect(createData.role).toBe('VIEWER');
+    expect(createData.role).not.toBe('ADMIN');
+    expect(createData.role).not.toBe('ENGINEER');
+  });
+
   it('maps SENTRA_ADMIN in Entra groups claim to ADMIN', async () => {
     mockOrg();
     const res = makeRes();

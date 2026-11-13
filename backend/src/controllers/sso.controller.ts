@@ -165,10 +165,7 @@ export const updateSsoConfig = async (req: any, res: Response, next: NextFunctio
 
     const defaultMapping = {
       email: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress',
-      name: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name',
-      displayName: 'http://schemas.microsoft.com/identity/claims/displayname',
-      role: 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role',
-      groups: 'http://schemas.microsoft.com/ws/2008/06/identity/claims/groups',
+      name: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'
     };
 
     // Get current org configuration to preserve the existing SCIM Bearer token if it exists
@@ -205,10 +202,15 @@ export const updateSsoConfig = async (req: any, res: Response, next: NextFunctio
 
     // If Okta or Entra provider is chosen without custom mapping, use corresponding preset
     const providerLower = String(sso_provider || '').toLowerCase();
+    const isEntraProvider =
+      providerLower.includes('entra') ||
+      providerLower.includes('microsoft') ||
+      providerLower.includes('azure ad');
+
     const chosenMapping = attributeMapping || (
       providerLower === 'okta'
         ? OKTA_ATTRIBUTE_PRESET
-        : providerLower.includes('entra') || providerLower.includes('azure')
+        : isEntraProvider
           ? ENTRA_ATTRIBUTE_PRESET
           : (samlMetadata.attributeMapping || defaultMapping)
     );
