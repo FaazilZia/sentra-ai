@@ -583,7 +583,12 @@ export default function ComplianceSection() {
             <StatusBadge status="compliant" label="5 Active Standards" />
           </div>
 
-          <div className="overflow-x-auto custom-scrollbar">
+          <div 
+            tabIndex={0} 
+            role="region" 
+            aria-label="Governance Control Matrix" 
+            className="overflow-x-auto custom-scrollbar focus:outline-none"
+          >
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400 uppercase text-[10px] font-bold border-b border-slate-200 dark:border-slate-800">

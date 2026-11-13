@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "test": "playwright test --config=playwright.unit.config.ts",
     "test:e2e": "playwright test"
   },
   "dependencies": {

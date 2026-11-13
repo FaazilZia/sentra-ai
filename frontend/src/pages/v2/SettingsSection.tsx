@@ -534,18 +534,24 @@ export default function SettingsSection() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
             <div className="space-y-1">
-              <label className="font-bold text-slate-700 dark:text-slate-300 block">Organization Name</label>
+              <label htmlFor="settings-org-name" className="font-bold text-slate-700 dark:text-slate-300 block">Organization Name</label>
               <input
+                id="settings-org-name"
                 type="text"
                 readOnly
+                aria-label="Organization Name"
                 value={user?.organizationName || 'Sentraa AI Workspace'}
                 className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded p-2.5 text-slate-900 dark:text-white font-semibold"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="font-bold text-slate-700 dark:text-slate-300 block">Default Theme Mode</label>
-              <select className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded p-2.5 text-slate-900 dark:text-white font-semibold">
+              <label htmlFor="settings-theme-mode" className="font-bold text-slate-700 dark:text-slate-300 block">Default Theme Mode</label>
+              <select 
+                id="settings-theme-mode"
+                aria-label="Default Theme Mode"
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded p-2.5 text-slate-900 dark:text-white font-semibold"
+              >
                 <option value="dark">Dark Mode (Default)</option>
                 <option value="light">Light Mode</option>
                 <option value="system">System Preference</option>

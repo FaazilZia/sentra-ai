@@ -324,6 +324,7 @@ export default function OverviewSection() {
                     </span>
                     <button
                       onClick={() => setSelectedNodeData(null)}
+                      aria-label="Close node details"
                       className="text-xs text-slate-400 hover:text-white"
                     >
                       ✕

@@ -246,6 +246,7 @@ export function Header() {
             <input 
               type="text" 
               placeholder="Search agents, policies, risks, incidents..." 
+              aria-label="Search agents, policies, risks, incidents"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               onKeyDown={handleSearchKeyDown}

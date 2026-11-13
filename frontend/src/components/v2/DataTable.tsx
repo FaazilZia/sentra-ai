@@ -97,7 +97,12 @@ export function DataTable<T>({
       )}
 
       {/* Table Container */}
-      <div className="overflow-x-auto custom-scrollbar flex-1">
+      <div 
+        tabIndex={0} 
+        role="region" 
+        aria-label="Data table" 
+        className="overflow-x-auto custom-scrollbar flex-1 focus:outline-none"
+      >
         <table className="w-full text-left text-xs border-collapse">
           <thead>
             <tr className="bg-slate-100/70 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px] font-bold">
