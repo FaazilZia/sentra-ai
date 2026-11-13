@@ -656,4 +656,89 @@ describe('Connector Test Connection Service', () => {
       expect(res.message).toContain('channels:read');
     });
   });
+
+  describe('GitHub Connection Test', () => {
+    const FAKE_GITHUB_TOKEN = 'github_pat_11ABCD1234efgh5678IJKL90mnop_test_conn_suite';
+    const origFetch = global.fetch;
+
+    beforeEach(() => {
+      process.env.ALLOW_PRIVATE_NETWORK_TARGETS = 'true';
+    });
+
+    afterEach(() => {
+      global.fetch = origFetch;
+      process.env.ALLOW_PRIVATE_NETWORK_TARGETS = 'false';
+    });
+
+    it('returns error if token is missing', async () => {
+      const res = await testConnectorSource('github', {}, {});
+      expect(res.success).toBe(false);
+      expect(res.message).toContain('token is required');
+    });
+
+    it('returns error if token format is invalid', async () => {
+      const res = await testConnectorSource('github', {}, { token: 'invalid-github-token' });
+      expect(res.success).toBe(false);
+      expect(res.message).toContain('Invalid GitHub personal access token format');
+    });
+
+    it('returns friendly error on 401 Bad credentials', async () => {
+      global.fetch = jest.fn().mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        json: async () => ({ message: 'Bad credentials' }),
+      } as any);
+
+      const res = await testConnectorSource('github', {}, { token: FAKE_GITHUB_TOKEN });
+      expect(res.success).toBe(false);
+      expect(res.message).toContain('Bad credentials');
+    });
+
+    it('returns warning state when 0 readable repositories found', async () => {
+      global.fetch = jest
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => ({ login: 'empty-user' }),
+        } as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          headers: new Headers(),
+          json: async () => [],
+        } as any);
+
+      const res = await testConnectorSource('github', {}, { token: FAKE_GITHUB_TOKEN });
+      expect(res.success).toBe(true);
+      expect(res.warning).toBe(true);
+      expect(res.message).toContain('0 accessible repositories were found');
+      expect(res.details?.repoCount).toBe(0);
+    });
+
+    it('returns success with repository count when repositories exist', async () => {
+      global.fetch = jest
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => ({ login: 'acme-org' }),
+        } as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          headers: new Headers(),
+          json: async () => [
+            { id: 1, name: 'web', full_name: 'acme-org/web' },
+            { id: 2, name: 'api', full_name: 'acme-org/api' },
+          ],
+        } as any);
+
+      const res = await testConnectorSource('github', {}, { token: FAKE_GITHUB_TOKEN });
+      expect(res.success).toBe(true);
+      expect(res.warning).toBe(false);
+      expect(res.message).toContain('Found 2 accessible repository(ies)');
+      expect(res.details?.repoCount).toBe(2);
+    });
+  });
 });

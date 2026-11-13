@@ -2,6 +2,7 @@ import { S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { Client as PgClient } from 'pg';
 import { assertSafeTarget } from '../utils/ssrfProtection';
 import { normalizePrivateKey, parseServiceAccountInput } from '../utils/credentialHelper';
+import { extractGitHubToken, GITHUB_TOKEN_REGEX } from '../validations/connector.validation';
 import logger from '../utils/logger';
 
 export interface TestConnectionResult {
@@ -189,6 +190,20 @@ const FRIENDLY_ERROR_RULES: FriendlyErrorRule[] = [
   {
     matches: (msg) => msg.includes('ratelimited'),
     friendlyMessage: 'Slack rate limit exceeded: Too many requests sent to the Slack API. Please wait before retrying.',
+  },
+  {
+    matches: (msg) => msg.includes('Bad credentials') || (msg.includes('GitHub') && msg.includes('401')),
+    friendlyMessage: 'GitHub authentication failed: Invalid or expired personal access token.',
+  },
+  {
+    matches: (msg) =>
+      msg.includes('Resource not accessible by personal access token') ||
+      (msg.includes('GitHub') && msg.includes('Insufficient permissions')),
+    friendlyMessage: 'GitHub authorization error: Insufficient permissions. Ensure the fine-grained token has repository permissions (Contents: Read, Metadata: Read).',
+  },
+  {
+    matches: (msg) => msg.toLowerCase().includes('github rate limit') || (msg.includes('GitHub') && msg.includes('rate limit')),
+    friendlyMessage: 'GitHub rate limit exceeded: Too many requests sent to the GitHub API. Please wait before retrying.',
   },
 ];
 
@@ -570,6 +585,168 @@ async function testSlackSource(
   };
 }
 
+async function testGitHubSource(
+  config: Record<string, any>,
+  credentials: any
+): Promise<TestConnectionResult> {
+  const token = extractGitHubToken(credentials, config);
+
+  if (!token) {
+    return {
+      success: false,
+      message: 'GitHub personal access token is required.',
+    };
+  }
+
+  if (!GITHUB_TOKEN_REGEX.test(token)) {
+    return {
+      success: false,
+      message: 'Invalid GitHub personal access token format. Fine-grained personal access tokens must begin with "github_pat_" (or classic "ghp_").',
+    };
+  }
+
+  const rawBaseUrl = (config?.apiBaseUrl || config?.baseUrl || 'https://api.github.com').trim().replace(/\/+$/, '');
+  const parsedUrl = new URL(rawBaseUrl);
+  await assertSafeTarget(parsedUrl.hostname);
+
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    Accept: 'application/vnd.github+json',
+    'User-Agent': 'Sentraa-AI-Connector',
+    'X-GitHub-Api-Version': '2022-11-28',
+  };
+
+  // 1. Verify authentication
+  const userRes = await fetch(`${rawBaseUrl}/user`, {
+    headers,
+    signal: AbortSignal.timeout(10000),
+  });
+
+  if (!userRes.ok) {
+    if (userRes.status === 401) {
+      return {
+        success: false,
+        message: 'GitHub authentication failed: Bad credentials or expired personal access token.',
+      };
+    }
+    if (userRes.status === 403) {
+      const errBody: any = await userRes.json().catch(() => ({}));
+      const errMsg = String(errBody?.message || '');
+      if (errMsg.toLowerCase().includes('rate limit')) {
+        return {
+          success: false,
+          message: 'GitHub rate limit exceeded: Too many requests sent to the GitHub API. Please wait before retrying.',
+        };
+      }
+      return {
+        success: false,
+        message: 'GitHub authorization error: Insufficient permissions. Ensure the fine-grained token has repository permissions (Contents: Read, Metadata: Read).',
+      };
+    }
+    const errBody: any = await userRes.json().catch(() => ({}));
+    return {
+      success: false,
+      message: `GitHub connection failed: ${errBody?.message || `HTTP ${userRes.status}`}.`,
+    };
+  }
+
+  const userData: any = await userRes.json();
+  const accountName = userData.login || userData.name || 'GitHub Account';
+
+  // 2. Count readable repositories with pagination
+  let page = 1;
+  const perPage = 100;
+  const maxPages = 10;
+  const allRepos: Array<{ id: number; name: string; full_name: string }> = [];
+  let totalDiscovered = 0;
+
+  while (page <= maxPages) {
+    const reposRes = await fetch(
+      `${rawBaseUrl}/user/repos?per_page=${perPage}&page=${page}&sort=updated`,
+      {
+        headers,
+        signal: AbortSignal.timeout(10000),
+      }
+    );
+
+    if (!reposRes.ok) {
+      if (reposRes.status === 403) {
+        return {
+          success: false,
+          message: 'GitHub authorization error: Insufficient permissions to list repositories. Ensure the token has Metadata: Read permission.',
+        };
+      }
+      const errBody: any = await reposRes.json().catch(() => ({}));
+      return {
+        success: false,
+        message: `GitHub repository listing failed: ${errBody?.message || `HTTP ${reposRes.status}`}.`,
+      };
+    }
+
+    const pageRepos: any = await reposRes.json();
+    if (!Array.isArray(pageRepos)) break;
+
+    const linkHeader = reposRes.headers.get('link') || '';
+    const lastPageMatch = linkHeader.match(/<[^>]*[?&]page=(\d+)[^>]*>;\s*rel="last"/);
+    if (lastPageMatch) {
+      const lastPageNum = Number.parseInt(lastPageMatch[1], 10);
+      if (!Number.isNaN(lastPageNum)) {
+        totalDiscovered = Math.max(totalDiscovered, lastPageNum * perPage);
+      }
+    }
+
+    for (const repo of pageRepos) {
+      if (repo && repo.full_name) {
+        allRepos.push({
+          id: repo.id,
+          name: repo.name,
+          full_name: repo.full_name,
+        });
+      }
+    }
+
+    if (!linkHeader.includes('rel="next"') || pageRepos.length === 0) {
+      break;
+    }
+    page++;
+  }
+
+  const receivedCount = allRepos.length;
+  const totalCount = totalDiscovered > 0 ? Math.max(totalDiscovered, receivedCount) : receivedCount;
+
+  logger.info(
+    `[GitHubTestConnection] Discovered ${receivedCount} accessible repositories (total estimated: ${totalCount}) for account ${accountName}.`
+  );
+
+  if (receivedCount === 0) {
+    return {
+      success: true,
+      warning: true,
+      message: `Connected to GitHub as "${accountName}", but 0 accessible repositories were found. Ensure the fine-grained token has repository access granted (Metadata: Read, Contents: Read).`,
+      details: {
+        accountName,
+        repoCount: 0,
+        receivedCount: 0,
+        totalCount: 0,
+        repos: [],
+      },
+    };
+  }
+
+  return {
+    success: true,
+    warning: false,
+    message: `Successfully connected to GitHub as "${accountName}". Found ${receivedCount} accessible repository(ies).`,
+    details: {
+      accountName,
+      repoCount: receivedCount,
+      receivedCount,
+      totalCount,
+      repos: allRepos.map((r) => r.full_name),
+    },
+  };
+}
+
 /**
  * Tests connection to an external data source without persisting credentials or modifying state.
  */
@@ -594,10 +771,13 @@ export async function testConnectorSource(
     if (normalizedType === 'slack') {
       return await testSlackSource(config, credentials);
     }
+    if (normalizedType === 'github') {
+      return await testGitHubSource(config, credentials);
+    }
 
     return {
       success: false,
-      message: `Unsupported connector type "${type}". Allowed types: postgres, s3, gdrive, slack.`,
+      message: `Unsupported connector type "${type}". Allowed types: postgres, s3, gdrive, slack, github.`,
     };
   } catch (err: any) {
     logger.warn(`Connector test connection failed for ${type}:`, err);

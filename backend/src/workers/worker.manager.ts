@@ -70,7 +70,7 @@ export function setupConnectorWorkers(): Worker | null {
           }
         });
 
-        // 4. Shared scan execution for all connector types (s3, gdrive, sql, postgres, slack)
+        // 4. Shared scan execution for all connector types (s3, gdrive, sql, postgres, slack, github)
         const scanResult = await processConnectorScan(type, connectorId, { trigger, reason });
 
         // 5. Update health score

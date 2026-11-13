@@ -51,7 +51,8 @@ export class AgentDiscoveryService {
           conn.type === 's3' ? 'AWS S3' :
           conn.type === 'gdrive' ? 'Google Drive' :
           conn.type === 'sql' || conn.type === 'postgres' ? 'PostgreSQL' :
-          conn.type === 'slack' ? 'Slack Workspace' : 'Custom API';
+          conn.type === 'slack' ? 'Slack Workspace' :
+          conn.type === 'github' ? 'GitHub Organization' : 'Custom API';
 
         candidates.push({
           name: conn.name,
