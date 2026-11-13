@@ -16,10 +16,13 @@ import AxeBuilder from '@axe-core/playwright';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const ADMIN_EMAIL = 'admin@sentra.ai';
-const ADMIN_PASS  = process.env.TEST_ADMIN_PASSWORD || 'Sentra@RotatedAdmin2026!';
+const ADMIN_PASS  = process.env.TEST_ADMIN_PASSWORD || '';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 async function loginAsAdmin(page: Page) {
+  if (!ADMIN_PASS) {
+    throw new Error('TEST_ADMIN_PASSWORD environment variable is required to run accessibility audit');
+  }
   await page.goto('/login', { waitUntil: 'domcontentloaded' });
   await page.evaluate(() => {
     localStorage.clear();

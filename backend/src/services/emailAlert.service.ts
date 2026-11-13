@@ -483,26 +483,24 @@ export class EmailAlertService {
       if (config.recipients && config.recipients.length > 0) {
         targetRecipients = config.recipients;
       } else {
-        // Fallback: If no explicit email alert recipients configured, resolve active organization member/admin
+        // Fallback: If no explicit email alert recipients configured, resolve active organization admin
         try {
           const fallbackUser = await (this.db || prisma).users?.findFirst({
             where: {
               organizationId: orgId,
+              role: 'ADMIN',
               is_active: true,
             },
-            orderBy: [
-              { role: 'asc' },
-              { created_at: 'asc' },
-            ],
+            orderBy: { created_at: 'asc' },
             select: { email: true },
           });
 
           if (fallbackUser?.email && isValidEmail(fallbackUser.email)) {
             targetRecipients = [fallbackUser.email.trim().toLowerCase()];
-            logger.info(`[AlertEmail] No explicit alert recipients configured for org ${orgId}. Defaulting test email to active member/admin: ${anonymizeText(fallbackUser.email)}`);
+            logger.info(`[AlertEmail] No explicit alert recipients configured for org ${orgId}. Defaulting test email to active admin: ${anonymizeText(fallbackUser.email)}`);
           }
         } catch (userLookupErr) {
-          logger.warn(`[AlertEmail] Failed to lookup organization user for test email fallback:`, userLookupErr);
+          logger.warn(`[AlertEmail] Failed to lookup organization admin for test email fallback:`, userLookupErr);
         }
 
         if (targetRecipients.length === 0) {

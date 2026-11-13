@@ -948,18 +948,100 @@ describe('Day 11: Per-Organization Email Alert Channel', () => {
         alertEmail: null,
       });
 
-      (prisma.users.findFirst as jest.Mock) = jest.fn().mockResolvedValue({
+      const findFirstMock = jest.fn().mockResolvedValue({
         id: 'user-admin-1',
         email: 'fallback-admin@alpha.com',
         role: 'ADMIN',
         is_active: true,
       });
+      (prisma.users.findFirst as jest.Mock) = findFirstMock;
 
       const res = await emailAlertService.sendTestEmail(orgA);
       expect(res.success).toBe(true);
+      expect(findFirstMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            organizationId: orgA,
+            role: 'ADMIN',
+            is_active: true,
+          },
+        })
+      );
       expect(mockSendMail).toHaveBeenCalledTimes(1);
       const call = mockSendMail.mock.calls[0][0];
       expect(call.to).toEqual(['fallback-admin@alpha.com']);
+    });
+
+    it('sendTestEmail fallback strictly filters for ADMIN role and ignores non-admin users', async () => {
+      (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+        id: orgA,
+        name: 'Alpha Corp',
+        alertEmail: null,
+      });
+
+      // findFirst with role: 'ADMIN' returns null when only VIEWER / non-admin users exist
+      const findFirstMock = jest.fn().mockImplementation(({ where }) => {
+        if (where.role === 'ADMIN') {
+          return Promise.resolve(null);
+        }
+        return Promise.resolve({
+          id: 'viewer-1',
+          email: 'viewer@alpha.com',
+          role: 'VIEWER',
+          is_active: true,
+        });
+      });
+      (prisma.users.findFirst as jest.Mock) = findFirstMock;
+
+      await expect(emailAlertService.sendTestEmail(orgA)).rejects.toThrow(
+        /No email alert recipients configured for this organization/
+      );
+      expect(findFirstMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            organizationId: orgA,
+            role: 'ADMIN',
+            is_active: true,
+          },
+        })
+      );
+      expect(mockSendMail).not.toHaveBeenCalled();
+    });
+
+    it('sendAlert (real alert sends) NEVER applies fallback to admin user when recipients is empty', async () => {
+      (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+        id: orgA,
+        name: 'Alpha Corp',
+        alertEmail: JSON.stringify({
+          recipients: [],
+          enabled: true,
+          severityFilter: 'all',
+          hourlyRateLimit: 10,
+        }),
+      });
+
+      const findFirstMock = jest.fn().mockResolvedValue({
+        id: 'admin-1',
+        email: 'admin@alpha.com',
+        role: 'ADMIN',
+        is_active: true,
+      });
+      (prisma.users.findFirst as jest.Mock) = findFirstMock;
+
+      const sent = await emailAlertService.sendAlert(orgA, {
+        organizationId: orgA,
+        agent: 'production-agent',
+        action: 'financial_transfer',
+        status: 'blocked',
+        risk: 'critical',
+        reason: 'Unauthorized transfer attempt',
+      });
+
+      // Real alert MUST return false and not dispatch
+      expect(sent).toBe(false);
+      // Admin lookup fallback MUST NOT be executed for real alert sends
+      expect(findFirstMock).not.toHaveBeenCalled();
+      expect(mockSendMail).not.toHaveBeenCalled();
     });
 
     it('accepts array or comma-separated string as overrideRecipient in test email', async () => {
