@@ -318,6 +318,7 @@ export default function PoliciesSection() {
           </button>
           <button
             onClick={loadPoliciesData}
+            aria-label="Refresh policies data"
             className="p-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg border border-slate-300 dark:border-slate-700"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />

@@ -116,7 +116,13 @@ export class EmailAlertService {
       if (raw.startsWith('{') && raw.endsWith('}')) {
         try {
           const parsed = JSON.parse(raw);
-          const validation = validateRecipients(parsed.recipients || []);
+          const rawRecipients = parsed.recipients ?? parsed.recipient ?? parsed.email ?? parsed.alertEmail;
+          const candidateList = Array.isArray(rawRecipients)
+            ? rawRecipients
+            : typeof rawRecipients === 'string'
+              ? rawRecipients.split(',').map((s: string) => s.trim()).filter(Boolean)
+              : [];
+          const validation = validateRecipients(candidateList);
           return {
             recipients: validation.valid ? validation.recipients : [],
             enabled: Boolean(parsed.enabled),
@@ -129,10 +135,12 @@ export class EmailAlertService {
         }
       }
 
-      // Legacy plain email address support: preserve recipients for UI pre-population but keep alerts disabled until explicitly saved
-      if (isValidEmail(raw)) {
+      // Check for comma-separated or plain single email string
+      const rawList = raw.split(',').map((s: string) => s.trim()).filter(Boolean);
+      if (rawList.length > 0 && rawList.every((email: string) => isValidEmail(email))) {
+        const validation = validateRecipients(rawList);
         return {
-          recipients: [raw.toLowerCase()],
+          recipients: validation.valid ? validation.recipients : [],
           enabled: false,
           severityFilter: defaultFilter,
           hourlyRateLimit: defaultLimit,
@@ -417,12 +425,20 @@ export class EmailAlertService {
 
       const fromAddress = process.env.SMTP_FROM || '"Sentraa AI Alerts" <alerts@sentraatech.com>';
 
-      await transporter.sendMail({
+      const mailOptions: nodemailer.SendMailOptions = {
         from: fromAddress,
-        to: config.recipients,
         subject: `🚨 [${event.status.toUpperCase()}] Sentraa AI Security Violation: ${sanitizedAction.slice(0, 80)}`,
         html
-      });
+      };
+
+      if (config.recipients.length === 1) {
+        mailOptions.to = config.recipients;
+      } else {
+        // Multi-recipient privacy: use BCC so recipients cannot see each other
+        mailOptions.bcc = config.recipients;
+      }
+
+      await transporter.sendMail(mailOptions);
 
       const maskedRecipients = config.recipients.map(r => anonymizeText(r));
       logger.info(
@@ -439,8 +455,10 @@ export class EmailAlertService {
   /**
    * Dispatches a test alert email to verify channel configuration.
    * Multi-tenant isolated and rate-limited.
+   * Resolves target recipients from override, saved config, or active org admin fallback.
+   * Preserves recipient privacy with BCC on multi-recipient dispatches.
    */
-  async sendTestEmail(orgId: string, overrideRecipient?: string): Promise<{ success: boolean; message: string; recipients: string[] }> {
+  async sendTestEmail(orgId: string, overrideRecipient?: string | string[]): Promise<{ success: boolean; message: string; recipients: string[] }> {
     const rateOk = await this.checkTestRateLimit(orgId);
     if (!rateOk) {
       throw new Error('Rate limit exceeded: Too many test alert requests. Please wait a few minutes before trying again.');
@@ -450,15 +468,47 @@ export class EmailAlertService {
     let targetRecipients: string[] = [];
 
     if (overrideRecipient) {
-      if (!isValidEmail(overrideRecipient)) {
-        throw new Error(`Invalid recipient email address: ${overrideRecipient}`);
+      const candidates = Array.isArray(overrideRecipient)
+        ? overrideRecipient
+        : typeof overrideRecipient === 'string'
+          ? overrideRecipient.split(',').map(s => s.trim()).filter(Boolean)
+          : [];
+
+      const validation = validateRecipients(candidates);
+      if (!validation.valid || validation.recipients.length === 0) {
+        throw new Error(`Invalid recipient email address: ${String(overrideRecipient).slice(0, 50)}`);
       }
-      targetRecipients = [overrideRecipient.trim().toLowerCase()];
+      targetRecipients = validation.recipients;
     } else {
-      if (!config.recipients || config.recipients.length === 0) {
-        throw new Error('No email alert recipients configured for this organization. Please add at least one recipient first.');
+      if (config.recipients && config.recipients.length > 0) {
+        targetRecipients = config.recipients;
+      } else {
+        // Fallback: If no explicit email alert recipients configured, resolve active organization member/admin
+        try {
+          const fallbackUser = await (this.db || prisma).users?.findFirst({
+            where: {
+              organizationId: orgId,
+              is_active: true,
+            },
+            orderBy: [
+              { role: 'asc' },
+              { created_at: 'asc' },
+            ],
+            select: { email: true },
+          });
+
+          if (fallbackUser?.email && isValidEmail(fallbackUser.email)) {
+            targetRecipients = [fallbackUser.email.trim().toLowerCase()];
+            logger.info(`[AlertEmail] No explicit alert recipients configured for org ${orgId}. Defaulting test email to active member/admin: ${anonymizeText(fallbackUser.email)}`);
+          }
+        } catch (userLookupErr) {
+          logger.warn(`[AlertEmail] Failed to lookup organization user for test email fallback:`, userLookupErr);
+        }
+
+        if (targetRecipients.length === 0) {
+          throw new Error('No email alert recipients configured for this organization. Please add at least one recipient first.');
+        }
       }
-      targetRecipients = config.recipients;
     }
 
     const transporter = this.getTransporter();
@@ -494,12 +544,20 @@ export class EmailAlertService {
 
     const fromAddress = process.env.SMTP_FROM || '"Sentraa AI Alerts" <alerts@sentraatech.com>';
 
-    await transporter.sendMail({
+    const mailOptions: nodemailer.SendMailOptions = {
       from: fromAddress,
-      to: targetRecipients,
       subject: `🧪 Sentraa AI: Test Alert for ${orgName}`,
       html
-    });
+    };
+
+    if (targetRecipients.length === 1) {
+      mailOptions.to = targetRecipients;
+    } else {
+      // Multi-recipient privacy: use BCC so recipients cannot see each other
+      mailOptions.bcc = targetRecipients;
+    }
+
+    await transporter.sendMail(mailOptions);
 
     const masked = targetRecipients.map(r => anonymizeText(r));
     logger.info(`[AlertEmail] Test email successfully sent to ${masked.join(', ')} for org ${orgId}`);

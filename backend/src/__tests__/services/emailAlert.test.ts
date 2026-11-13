@@ -5,6 +5,9 @@ jest.mock('../../config/db', () => ({
       findUnique: jest.fn(),
       update: jest.fn(),
     },
+    users: {
+      findFirst: jest.fn(),
+    },
     slack_config: {
       findUnique: jest.fn().mockResolvedValue(null),
     },
@@ -249,7 +252,9 @@ describe('Day 11: Per-Organization Email Alert Channel', () => {
 
       expect(mockSendMail).toHaveBeenCalledTimes(1);
       const mailCall = mockSendMail.mock.calls[0][0];
-      expect(mailCall.to).toEqual(['security@alpha.com', 'alerts@alpha.com']);
+      // Multi-recipient privacy: dispatches using BCC so recipients cannot see each other
+      expect(mailCall.bcc).toEqual(['security@alpha.com', 'alerts@alpha.com']);
+      expect(mailCall.to).toBeUndefined();
       expect(mailCall.subject).toContain('[BLOCKED]');
       expect(mailCall.subject).toContain('DROP TABLE customers;');
       expect(mailCall.html).toContain('sql-agent');
@@ -856,6 +861,150 @@ describe('Day 11: Per-Organization Email Alert Channel', () => {
 
       // Dashboard link check (configured base URL + incident ID query)
       expect(call.html).toContain('href="https://governance.sentraatech.info/app/incidents?id=inc-9999"');
+    });
+  });
+
+  describe('Recipient Privacy (BCC) & Robust Test Email Resolution', () => {
+    it('dispatches multi-recipient alerts using BCC so recipients cannot see each other', async () => {
+      (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+        id: orgA,
+        name: 'Alpha Corp',
+        alertEmail: JSON.stringify({
+          recipients: ['alice@alpha.com', 'bob@alpha.com', 'carol@alpha.com'],
+          enabled: true,
+          severityFilter: 'high',
+          hourlyRateLimit: 10,
+        }),
+      });
+
+      const sent = await emailAlertService.sendAlert(orgA, {
+        organizationId: orgA,
+        agent: 'sql-copilot',
+        action: 'SELECT * FROM secrets;',
+        status: 'blocked',
+        risk: 'high',
+        reason: 'Unauthorized database read',
+      });
+
+      expect(sent).toBe(true);
+      expect(mockSendMail).toHaveBeenCalledTimes(1);
+      const call = mockSendMail.mock.calls[0][0];
+      expect(call.bcc).toEqual(['alice@alpha.com', 'bob@alpha.com', 'carol@alpha.com']);
+      expect(call.to).toBeUndefined();
+    });
+
+    it('dispatches single-recipient alerts using To header directly', async () => {
+      (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+        id: orgA,
+        name: 'Alpha Corp',
+        alertEmail: JSON.stringify({
+          recipients: ['solo@alpha.com'],
+          enabled: true,
+          severityFilter: 'high',
+          hourlyRateLimit: 10,
+        }),
+      });
+
+      const sent = await emailAlertService.sendAlert(orgA, {
+        organizationId: orgA,
+        agent: 'sql-copilot',
+        action: 'DROP TABLE logs;',
+        status: 'blocked',
+        risk: 'high',
+        reason: 'Table drop',
+      });
+
+      expect(sent).toBe(true);
+      expect(mockSendMail).toHaveBeenCalledTimes(1);
+      const call = mockSendMail.mock.calls[0][0];
+      expect(call.to).toEqual(['solo@alpha.com']);
+      expect(call.bcc).toBeUndefined();
+    });
+
+    it('dispatches multi-recipient test emails using BCC', async () => {
+      (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+        id: orgA,
+        name: 'Alpha Corp',
+        alertEmail: JSON.stringify({
+          recipients: ['test1@alpha.com', 'test2@alpha.com'],
+          enabled: true,
+          severityFilter: 'high',
+          hourlyRateLimit: 10,
+        }),
+      });
+
+      const res = await emailAlertService.sendTestEmail(orgA);
+      expect(res.success).toBe(true);
+      expect(mockSendMail).toHaveBeenCalledTimes(1);
+      const call = mockSendMail.mock.calls[0][0];
+      expect(call.bcc).toEqual(['test1@alpha.com', 'test2@alpha.com']);
+      expect(call.to).toBeUndefined();
+    });
+
+    it('falls back to active organization admin user when alertEmail is not configured', async () => {
+      (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+        id: orgA,
+        name: 'Alpha Corp',
+        alertEmail: null,
+      });
+
+      (prisma.users.findFirst as jest.Mock) = jest.fn().mockResolvedValue({
+        id: 'user-admin-1',
+        email: 'fallback-admin@alpha.com',
+        role: 'ADMIN',
+        is_active: true,
+      });
+
+      const res = await emailAlertService.sendTestEmail(orgA);
+      expect(res.success).toBe(true);
+      expect(mockSendMail).toHaveBeenCalledTimes(1);
+      const call = mockSendMail.mock.calls[0][0];
+      expect(call.to).toEqual(['fallback-admin@alpha.com']);
+    });
+
+    it('accepts array or comma-separated string as overrideRecipient in test email', async () => {
+      (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+        id: orgA,
+        name: 'Alpha Corp',
+        alertEmail: null,
+      });
+
+      const res = await emailAlertService.sendTestEmail(orgA, 'first@alpha.com, second@alpha.com');
+      expect(res.success).toBe(true);
+      expect(mockSendMail).toHaveBeenCalledTimes(1);
+      const call = mockSendMail.mock.calls[0][0];
+      expect(call.bcc).toEqual(['first@alpha.com', 'second@alpha.com']);
+    });
+
+    it('parses legacy comma-separated plain strings and JSON variations in getConfig', async () => {
+      // 1. Comma-separated plain string
+      (prisma.organizations.findUnique as jest.Mock).mockResolvedValueOnce({
+        id: orgA,
+        name: 'Alpha Corp',
+        alertEmail: 'user1@alpha.com, user2@alpha.com',
+      });
+      const cfg1 = await emailAlertService.getConfig(orgA);
+      expect(cfg1.recipients).toEqual(['user1@alpha.com', 'user2@alpha.com']);
+      expect(cfg1.enabled).toBe(false);
+
+      // 2. JSON with singular recipient key
+      (prisma.organizations.findUnique as jest.Mock).mockResolvedValueOnce({
+        id: orgA,
+        name: 'Alpha Corp',
+        alertEmail: JSON.stringify({ recipient: 'singular@alpha.com', enabled: true }),
+      });
+      const cfg2 = await emailAlertService.getConfig(orgA);
+      expect(cfg2.recipients).toEqual(['singular@alpha.com']);
+      expect(cfg2.enabled).toBe(true);
+
+      // 3. JSON with email key
+      (prisma.organizations.findUnique as jest.Mock).mockResolvedValueOnce({
+        id: orgA,
+        name: 'Alpha Corp',
+        alertEmail: JSON.stringify({ email: 'emailkey@alpha.com', enabled: false }),
+      });
+      const cfg3 = await emailAlertService.getConfig(orgA);
+      expect(cfg3.recipients).toEqual(['emailkey@alpha.com']);
     });
   });
 });

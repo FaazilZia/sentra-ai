@@ -16,7 +16,7 @@ import AxeBuilder from '@axe-core/playwright';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const ADMIN_EMAIL = 'admin@sentra.ai';
-const ADMIN_PASS  = process.env.TEST_ADMIN_PASSWORD || 'CHANGE_ME_TEST_PASSWORD';
+const ADMIN_PASS  = process.env.TEST_ADMIN_PASSWORD || 'Sentra@RotatedAdmin2026!';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 async function loginAsAdmin(page: Page) {
