@@ -53,6 +53,7 @@ This document serves as the complete pilot onboarding pack, detailing:
 | **Multi-Tenant SMTP Email Alerts** | Verified on production Render backend with Resend SMTP relay. Hourly per-organization alert rate limiting and multi-recipient fan-out proven in [day11-email-alerts-evidence.log](evidence/day11-email-alerts-evidence.log) and [day12-email-evidence.log](evidence/day12-email-evidence.log). |
 | **Slack Webhook Alerts** | Immediate alert dispatch for high-risk and blocked actions. Documented in [CONNECTORS_QUICKSTART.md](CONNECTORS_QUICKSTART.md). |
 | **Okta SAML 2.0 SSO & SCIM** | SAML login and SCIM verified on a real tenant; role mapping tested with simulated assertions only. Evidence in PR #151 commit `fdebe37` and [okta-setup.md](sso/okta-setup.md). |
+| **Microsoft Entra ID SAML 2.0 SSO** | SAML 2.0 login verified locally against a real Microsoft Entra tenant with one test user. ADMIN role mapping verified. Not yet tested: other roles, group claims, SCIM provisioning, or a production deployment (each customer needs their own Entra Reply URL pointing at the production backend). Setup guide in [entra-setup.md](sso/entra-setup.md) and evidence log in [day10-entra-sso-evidence.log](evidence/day10-entra-sso-evidence.log). |
 | **Data Connectors (S3, GDrive, Slack, Postgres)** | AWS S3, Google Drive, and Slack inbound connectors were tested live (metadata-only scanning; no customer row or message data stored). PostgreSQL connector was not live-tested. |
 | **5 Supported Compliance Frameworks** | Native evaluation engines compute scores for GDPR, DPDP, HIPAA, PCI-DSS, and NIST AI RMF (implemented in `compliance.service.ts`, `pci.service.ts`, and `nistAiRmf.service.ts`) with exportable evidence. |
 
@@ -68,13 +69,10 @@ The following integrations are actively in engineering progress and scheduled fo
 2. **Native Anthropic API Wrapper**
    - *Status:* **Coming Soon**
    - *Detail:* Wrapper logic and interception tests are in place. Real-world validation against direct `api.anthropic.com` failed due to account credit balance (`BadRequestError: 400 - Your credit balance is too low` in [python-anthropic-real-call.log](evidence/python-anthropic-real-call.log)), and the GCP Vertex Anthropic route encountered quota limits. Scheduled for re-verification upon billing refill.
-3. **GitHub Code & PR Connector**
+3. **GitHub Inbound Connector**
    - *Status:* **Coming Soon**
-   - *Detail:* Repository and PR scanning for prompt injections, secret exfiltration, and CI agent governance is queued on the connector roadmap. Pilot customers needing code scanning will be prioritized for early private alpha.
-4. **Microsoft Entra ID (Azure AD) SSO**
-   - *Status:* **Coming Soon**
-   - *Detail:* While Okta SAML 2.0 with SCIM is active today, Microsoft Entra ID gallery integration and OIDC single sign-on are currently in roadmap staging. Customers with Entra ID can utilize the generic SAML 2.0 configuration detailed in our SSO runbook.
-5. **Python SDK on PyPI (`sentraa-ai`)**
+   - *Detail:* Inbound repository and secret/PII scanning was implemented and unit-tested across routes, validations, BullMQ workers, and repository traversal in PR #158, but has NOT yet been tested against a live real repository. Kept as Coming Soon pending a live repo test.
+4. **Python SDK on PyPI (`sentraa-ai`)**
    - *Status:* **Coming Soon**
    - *Detail:* The Python client and provider wrappers are developed in `packages/python-sdk`, but the package is **NOT yet published to PyPI**. For the beta pilot, Node.js (`@sentra-ai/sdk` v1.1.0 on npm) or direct HTTPS REST API integration must be used.
 
@@ -144,30 +142,33 @@ async function runAgentTask(agentName: string, actionName: string, promptText: s
 }
 ```
 
-### Step 4: Drop-in LLM Provider Wrapper (Anthropic Claude Example)
+### Step 4: Drop-in LLM Provider Wrapper (Google Vertex AI Example — Verified)
 
-Wrap the client directly to enforce automatic governance across completions:
+Wrap your client directly to enforce automatic pre-execution governance across completions (note: the native Anthropic wrapper is Coming Soon / unverified pending billing refill; Google Vertex AI is verified live):
 
 ```typescript
-import Anthropic from '@anthropic-ai/sdk';
-import { wrapAnthropic } from '@sentra-ai/sdk';
+import { GoogleGenAI } from '@google/genai';
+import { wrapVertexAI } from '@sentra-ai/sdk';
 
-const baseAnthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
-// Wrap Anthropic client with Sentraa Governance
-const anthropic = wrapAnthropic(baseAnthropic, {
-  apiKey: process.env.SENTRA_API_KEY || 'sentra_test_sandbox',
-  agentName: 'customer-support-agent'
+// Initialize Google Vertex AI client (@google/genai with vertexai: true)
+const baseAI = new GoogleGenAI({
+  vertexai: true,
+  project: process.env.GCP_PROJECT_ID || 'your-gcp-project',
+  location: process.env.GCP_LOCATION || 'us-central1'
 });
 
-// Any message call is automatically evaluated before dispatch
+// Wrap Vertex AI client with Sentraa Governance
+const ai = wrapVertexAI(baseAI, {
+  agent: 'customer-support-agent'
+});
+
+// Any model invocation is automatically evaluated before reaching Google Cloud
 try {
-  const response = await anthropic.messages.create({
-    model: 'claude-3-5-sonnet-20241022',
-    max_tokens: 1024,
-    messages: [{ role: 'user', content: userInput }]
+  const response = await ai.models.generateContent({
+    model: '<model-id>', // e.g. 'gemini-2.0-flash' or 'gemini-1.5-pro'
+    contents: userInput
   });
-  console.log(response.content);
+  console.log(response.text);
 } catch (error: any) {
   if (error.status === 403) {
     console.error('Action intercepted by Sentraa Guardrails:', error.message);
@@ -225,7 +226,7 @@ Please complete this feedback form during your check-in or submit to: [Support c
 
 7. Feature Requests & Roadmap Priorities:
    - What integration should Sentraa prioritize next for your deployment?
-     [ ] AWS Bedrock  [ ] Native Anthropic  [ ] GitHub Connector  [ ] Entra ID SSO
+     [ ] AWS Bedrock  [ ] Native Anthropic  [ ] GitHub Connector (Live Repo Testing)  [ ] Python SDK (PyPI)  [ ] Entra ID SCIM & Group Claims
 ```
 
 ---
@@ -246,7 +247,7 @@ Please complete this feedback form during your check-in or submit to: [Support c
 | **Language & SDK Target** | [ ] Node.js (`@sentra-ai/sdk` v1.1.0)<br/>[ ] HTTPS REST API Direct | Python deferred |
 | **AI Providers Used** | [ ] Anthropic Claude &nbsp;&nbsp; [ ] Azure AI &nbsp;&nbsp; [ ] Vertex AI &nbsp;&nbsp; [ ] LangChain | Bedrock / Anthropic logged |
 | **Alert Destination** | Slack Channel: `#___________________`<br/>Email: `___________________` | Test alert confirmed: [ ] |
-| **SSO Setup (If Applicable)** | [ ] Okta SAML 2.0 &nbsp;&nbsp; [ ] Generic SAML 2.0<br/>*(Entra ID noted on roadmap)* | SCIM Token issued: [ ] |
+| **SSO Setup (If Applicable)** | [ ] Okta SAML 2.0 &nbsp;&nbsp; [ ] Microsoft Entra ID SAML 2.0 &nbsp;&nbsp; [ ] Generic SAML 2.0<br/>*(Entra: SAML 2.0 & ADMIN role verified locally; prod requires customer Reply URL)* | SCIM Token issued: [ ] |
 
 ### Pre-Flight Verification & Sign-Off
 
