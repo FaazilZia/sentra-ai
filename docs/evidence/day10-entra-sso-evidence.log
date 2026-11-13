@@ -1,0 +1,110 @@
+================================================================================
+SENTRA AI — DAY 10 MICROSOFT ENTRA ID SAML 2.0 SSO VERIFICATION EVIDENCE
+================================================================================
+Date and Time (UTC):   2026-11-13T14:15:00Z
+Local Time (IST):      2026-11-13T19:45:00+05:30
+Target Repository:     FaazilZia/sentra-ai
+Pull Request:          #157 (https://github.com/FaazilZia/sentra-ai/pull/157)
+Branch:                feat/day10-entra-sso
+PR Commit Head:        6b0f5a7e01130db4091010fc26e78d7bea7546a2
+Author:                FaazilZia <152073659+FaazilZia@users.noreply.github.com>
+Security Status:       ZERO secrets printed, logged, or committed; all tokens and keys redacted.
+Verification Mode:     Local PostgreSQL Database (sentra_test); Production database UNTOUCHED.
+================================================================================
+
+1. GITHUB ACTIONS CI & SAST VERIFICATION (ON HEAD COMMIT 6b0f5a7)
+--------------------------------------------------------------------------------
+• CI / test (pull_request):           SUCCESS (Run 43389390103, 17m 31s) [VERIFIED]
+• CI / Accessibility (WCAG 2.1 AA):   SUCCESS (Run 43389390103, 11m 13s) [VERIFIED]
+• Semgrep SAST:                       SUCCESS (Run 43389390098, 41s)      [VERIFIED]
+• Total Runs on Branch:               4 runs queried via GitHub API (4/4 complete, 0 failed)
+
+Unit Test Suite (backend/src/__tests__/controllers/sso.entra.test.ts):
+• 18/18 Tests Passed (100% pass rate):
+  - Claim URIs & Attribute Extraction (emailaddress, givenname, surname, displayname, NameID fallback)
+  - Group and Role Mapping (App Role claim, GUID group safe fallback to VIEWER, SUPER_ADMIN escalation guard)
+  - Cross-Org Isolation & Tenant Rejection (ORGANIZATION_MISMATCH)
+  - Deactivated User Handling (USER_DEACTIVATED)
+  - Allowed Email Domains Enforcement (Allowlist validation & rejection)
+  - Auto-Preset Selection (Entra ID provider matching)
+
+2. REAL ENTRA ID LIVE SSO AUTHENTICATION TEST
+--------------------------------------------------------------------------------
+• Identity Provider:                  Microsoft Entra ID (Azure AD)
+• Tenant Federation Entity ID:        https://sts.windows.net/8f1ec4e0-4804-4494-9d33-ea281f15e1ab/
+• Service Provider Entity ID:         http://localhost:10000/api/v1/saml/entra-test-sso/metadata
+• ACS Callback URL:                   http://localhost:10000/api/v1/saml/entra-test-sso/callback
+• Test User Email (UPN):              testuser1@faazilzia01gmail.onmicrosoft.com
+• Allowed Email Domains:              ["faazilzia01gmail.onmicrosoft.com"]
+• Target Organization:                Microsoft Entra ID Verification Org (slug: entra-test-sso)
+• Organization ID:                    org-entra-test-day10
+• User Landing Page:                  http://localhost:5173/app (Dashboard)
+• Display Name:                       TEST USER 1
+• Assigned Role:                      ADMIN
+
+3. LOCAL DATABASE EVIDENCE (sentra_test)
+--------------------------------------------------------------------------------
+Query: SELECT id, email, full_name, role, organization_id, is_active, last_login_at, created_at FROM users WHERE email ILIKE '%testuser1%';
+Output:
+  id:              1fc5689b-9091-48ce-9c29-8621a6c64434
+  email:           testuser1@faazilzia01gmail.onmicrosoft.com
+  full_name:       Test User 1
+  role:            ADMIN
+  organization_id: org-entra-test-day10
+  is_active:       true
+  last_login_at:   2026-11-13 14:04:47.532
+  created_at:      2026-11-13 09:24:41.159
+Status: VERIFIED
+
+Query: SELECT id, name, slug, sso_enabled, sso_provider FROM companies WHERE id='org-entra-test-day10';
+Output:
+  id:           org-entra-test-day10
+  name:         Microsoft Entra ID Verification Org
+  slug:         entra-test-sso
+  sso_enabled:  true
+  sso_provider: Microsoft Entra ID (SAML 2.0)
+Status: VERIFIED
+
+Query: SELECT id, timestamp, action, user_id, organization_id, outcome, metadata FROM audit_logs WHERE organization_id='org-entra-test-day10' ORDER BY timestamp DESC LIMIT 2;
+Output:
+  [Entry 1 - Re-authentication]:
+    id:              3ac6e628-f587-4233-8170-73593c9153d4
+    timestamp:       2026-11-13 14:04:47.55
+    action:          SAML_SSO_LOGIN_SUCCESS
+    user_id:         1fc5689b-9091-48ce-9c29-8621a6c64434
+    organization_id: org-entra-test-day10
+    outcome:         success
+    metadata:        {"email": "testuser1@faazilzia01gmail.onmicrosoft.com", "provider": "Microsoft Entra ID (SAML 2.0)"}
+  [Entry 2 - Initial Account Provisioning]:
+    id:              86dfe2ab-0bbc-4ec8-ba33-0d3940a66eea
+    timestamp:       2026-11-13 09:24:41.179
+    action:          SAML_SSO_LOGIN_SUCCESS
+    user_id:         1fc5689b-9091-48ce-9c29-8621a6c64434
+    organization_id: org-entra-test-day10
+    outcome:         success
+    metadata:        {"email": "testuser1@faazilzia01gmail.onmicrosoft.com", "provider": "Microsoft Entra ID (SAML 2.0)"}
+Status: VERIFIED
+
+4. SAML ASSERTION ROLE MAPPING EVIDENCE
+--------------------------------------------------------------------------------
+• Database Default Role:              'VIEWER' (schema default)
+• Code Fallback Role:                 'VIEWER' (mapSamlRole fallback on missing/unrecognized claims)
+• Role Source Claim:                  http://schemas.microsoft.com/ws/2008/06/identity/claims/role
+• Claim Value Received:               ADMIN (or SENTRA_ADMIN)
+• Mapped System Role:                 ADMIN
+• Escalation Guard:                   Active (SUPER_ADMIN attempts demoted to VIEWER)
+Status: VERIFIED
+
+5. DIFFERENCES & COMPARISON VS OKTA SAML FLOW
+--------------------------------------------------------------------------------
+• Claim URI Format:                   Entra uses full WS-Federation/Microsoft XML namespace URIs
+                                      (http://schemas.xmlsoap.org/... and http://schemas.microsoft.com/...)
+                                      whereas Okta defaults to short unqualified names (email, role).
+• Email / UPN Resolution:             Entra cloud test users without an Exchange mailbox emit user.userprincipalname
+                                      (UPN) or NameID. Handled seamlessly by Sentraa AI's fallback chain.
+• App Roles vs Group Claims:          Entra default group claims emit directory GUIDs (which safely default to VIEWER).
+                                      Enterprise role mapping requires Entra App Roles, which emit string names in the role claim.
+• Callback Processing Time:           75.8 ms (POST /api/v1/saml/entra-test-sso/callback 302).
+• Errors / Warnings:                  0 SAML callback warnings or errors in server log.
+Status: VERIFIED
+================================================================================
