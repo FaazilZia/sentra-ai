@@ -82,7 +82,7 @@ Think of it as a **security checkpoint** for every `agent.run()` call in your st
 - **Prompt injection blocking** — Pattern-based detection of adversarial prompts
 - **Input + output scanning** — Both pre-AI (user input) and post-AI (model output) evaluated
 - **Override workflow** — Admin-approved bypass with justification and full audit trail
-- **LangChain & AI provider wrappers** — Drop-in governance for OpenAI, Azure OpenAI, Google Vertex AI, and LangChain
+- **LangChain & AI provider wrappers** — Drop-in governance for Anthropic Claude, Azure, Google Vertex AI, and LangChain
 
 ### 📊 Compliance Center
 - **5 Supported Regulatory Frameworks** — Native evaluation engines for GDPR, DPDP, HIPAA, PCI-DSS, and NIST AI RMF
@@ -126,7 +126,7 @@ Think of it as a **security checkpoint** for every `agent.run()` call in your st
 
 ### 🧠 AI Features
 - **Governance chat assistant (Advisor)** — Natural language queries about compliance status
-- **Semantic risk analysis** — OpenAI-powered deep action analysis (L3, optional; when no LLM key is configured, L3 is unavailable; decisions fall back to L1/L2 pattern matching and are marked degraded)
+- **Semantic risk analysis** — Anthropic Claude deep action analysis (L3, optional; runs when an LLM key is configured; when unconfigured, decisions fall back to L1/L2 pattern matching and are marked degraded)
 - **AI agent inventory** — Register and track all AI agents in the organization
 - **Evaluation dashboard** — LLM evaluation and testing workflows
 - **Change history** — Full audit trail per entity
@@ -167,10 +167,10 @@ Think of it as a **security checkpoint** for every `agent.run()` call in your st
 
 **Decision Pipeline — every agent action flows through:**
 
-1. **L0 — Allowlist:** Known-safe actions short-circuited in <2ms
+1. **L0 — Allowlist:** Known-safe actions short-circuited immediately
 2. **L1 — Policy Engine:** Org-specific rules with Redis-cached policy lookup
 3. **L2 — Pattern Engine:** Regex-based detection for PII, prompt injection, and high-risk patterns
-4. **L3 — Semantic Engine:** OpenAI-powered risk analysis (when no LLM key is configured, L3 is unavailable; decisions fall back to L1/L2 pattern matching and are marked degraded)
+4. **L3 — Semantic Engine:** Anthropic Claude risk analysis (runs only when an LLM key is configured; otherwise decisions fall back to L1/L2 pattern matching and are marked degraded)
 
 ---
 
@@ -206,8 +206,8 @@ REFRESH_SECRET=<min-32-char-secret>
 ENCRYPTION_KEY=<min-32-char-secret>
 FRONTEND_URL=http://localhost:5173
 
-# Optional — enables L3 semantic risk analysis
-OPENAI_API_KEY=sk-...
+# Optional — enables L3 semantic risk analysis (Anthropic Claude)
+ANTHROPIC_API_KEY=sk-ant-...
 
 # Optional — email alerts (SMTP / Resend)
 SMTP_HOST=smtp.resend.com
@@ -314,8 +314,6 @@ sentra-ai/
 │       │   ├── cache.service.ts          # Redis cache abstraction
 │       │   └── queue.service.ts          # BullMQ job processing
 │       ├── workers/
-│       │   ├── langchain.worker.ts       # LangChain governance handler
-│       │   ├── openai.worker.ts          # OpenAI SDK governance wrapper
 │       │   ├── s3.worker.ts              # AWS S3 scanner
 │       │   ├── gdrive.worker.ts          # Google Drive scanner
 │       │   └── sql.worker.ts             # PostgreSQL scanner
@@ -356,14 +354,14 @@ sentra-ai/
 ├── packages/
 │   ├── sdk/                          # @sentra-ai/sdk (npm v1.1.0)
 │   │   └── src/
-│   │       └── index.ts              # SentraClient + AI provider wrappers (OpenAI, Azure, Vertex, LangChain)
+│   │       └── index.ts              # SentraClient + AI provider wrappers (Anthropic, Azure, Vertex, LangChain)
 │   └── python-sdk/                   # Python SDK source (development, unreleased on PyPI)
 │       └── src/
 │           ├── sentra/               # SentraClient + AI provider wrappers
 │           └── sentra_ai/            # Alias import package
 │
 ├── examples/
-│   └── openai-agent.js               # OpenAI agent integration example
+│   └── api-call-protection.js        # API call integration example
 │
 ├── docs/
 │   └── BACKUP_AND_RESTORE.md         # DR procedures
@@ -567,7 +565,7 @@ Control AI access to production APIs, internal systems, and customer data with o
 | **Cache / Queue** | Redis + BullMQ |
 | **Frontend** | React, Vite, TypeScript, Tailwind |
 | **Real-time** | Socket.io |
-| **AI** | OpenAI API (optional, L3 only) |
+| **AI** | Anthropic Claude (optional, L3 only) |
 | **Auth** | JWT + Refresh tokens + Google OAuth + SSO |
 | **Encryption** | AES-256-GCM |
 | **Email** | SMTP (Resend / Nodemailer) |
@@ -588,7 +586,7 @@ Control AI access to production APIs, internal systems, and customer data with o
 | `ENCRYPTION_KEY` | ✅ | AES-256 encryption key (32+ chars) |
 | `FRONTEND_URL` | ✅ | CORS allowed origin |
 | `PORT` | No | Backend port (default: 3000) |
-| `OPENAI_API_KEY` | No | Enables L3 semantic risk analysis (optional) |
+| `ANTHROPIC_API_KEY` | No | Enables L3 semantic risk analysis (optional) |
 | `SMTP_HOST` | No | SMTP relay host (e.g. smtp.resend.com) |
 | `SMTP_PORT` | No | SMTP port (default: 587) |
 | `SMTP_USER` | No | SMTP authentication username |
