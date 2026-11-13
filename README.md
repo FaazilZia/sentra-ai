@@ -82,7 +82,7 @@ Think of it as a **security checkpoint** for every `agent.run()` call in your st
 - **Prompt injection blocking** — Pattern-based detection of adversarial prompts
 - **Input + output scanning** — Both pre-AI (user input) and post-AI (model output) evaluated
 - **Override workflow** — Admin-approved bypass with justification and full audit trail
-- **LangChain & AI provider wrappers** — Drop-in governance for Anthropic Claude, Azure, Google Vertex AI, and LangChain
+- **LangChain & AI provider wrappers** — Drop-in governance for Google Vertex AI (verified), Azure, LangChain, Anthropic Claude (Coming Soon / unverified), and AWS Bedrock (SDK wrapper implemented and unit-tested, pending AWS model entitlement; Coming Soon; see [PILOT_HANDOFF.md](./docs/PILOT_HANDOFF.md))
 
 ### 📊 Compliance Center
 - **5 Supported Regulatory Frameworks** — Native evaluation engines for GDPR, DPDP, HIPAA, PCI-DSS, and NIST AI RMF
@@ -105,7 +105,8 @@ Think of it as a **security checkpoint** for every `agent.run()` call in your st
 - **AI agent discovery** — Automatic inventory of active agents in your org
 
 ### 🔗 Data Connectors
-- **AWS S3, Google Drive, PostgreSQL** — Native scanning connectors with stream-based analysis
+- **AWS S3, Google Drive, Slack** — Native scanning connectors with stream-based analysis (tested live on metadata-only; PostgreSQL connector was not live-tested)
+- **GitHub Inbound Connector** — Inbound repository and secret/PII scanning implemented and unit-tested (PR #158), pending live repository testing (Coming Soon; see [PILOT_HANDOFF.md](./docs/PILOT_HANDOFF.md) and [CONNECTORS_QUICKSTART.md](./docs/CONNECTORS_QUICKSTART.md))
 - **AES-256-GCM credential encryption** — All connector secrets encrypted at rest
 - **Budget protection** — Hard daily cost limits with automatic circuit breaker
 - **Health scoring** — Automated reliability tracking (0–100%) per connector
@@ -114,7 +115,7 @@ Think of it as a **security checkpoint** for every `agent.run()` call in your st
 - **Organization-scoped isolation** — All data strictly isolated per tenant (RLS policies are defined in migrations)
 - **Role-based access control** — ADMIN, AUDITOR, ENGINEER, USER roles
 - **Per-org policy management** — Independent policy sets per organization
-- **SSO / OAuth** — Google OAuth + SSO support
+- **SSO (SAML 2.0) & OAuth** — Google OAuth, Okta SAML 2.0 (with SCIM), and Microsoft Entra ID SAML 2.0 (SAML 2.0 login verified locally against a real Microsoft Entra tenant with one test user; ADMIN role mapping verified; not yet tested: other roles, group claims, SCIM provisioning, or production deployment; see [PILOT_HANDOFF.md](./docs/PILOT_HANDOFF.md) and [entra-setup.md](./docs/sso/entra-setup.md))
 - **RBAC** — Fine-grained permission management
 
 ### 🚨 Alerting & Observability
@@ -354,7 +355,7 @@ sentra-ai/
 ├── packages/
 │   ├── sdk/                          # @sentra-ai/sdk (npm v1.1.0)
 │   │   └── src/
-│   │       └── index.ts              # SentraClient + AI provider wrappers (Anthropic, Azure, Vertex, LangChain)
+│   │       └── index.ts              # SentraClient + AI provider wrappers (Vertex, Azure, LangChain, Bedrock, Anthropic)
 │   └── python-sdk/                   # Python SDK source (development, unreleased on PyPI)
 │       └── src/
 │           ├── sentra/               # SentraClient + AI provider wrappers
