@@ -26,8 +26,7 @@
 ## Quick links
 
 - [🚀 Live Dashboard](https://sentraatech.info) — Try Sentraa AI without signing up
-- [📦 Node.js SDK on npm](https://www.npmjs.com/package/@sentra-ai/sdk) — `npm install @sentra-ai/sdk`
-- [🐍 Python SDK on PyPI](https://pypi.org/project/sentraa-ai/) — `pip install sentraa-ai`
+- [📦 Node.js SDK on npm (v1.1.0)](https://www.npmjs.com/package/@sentra-ai/sdk) — `npm install @sentra-ai/sdk`
 - [📋 Agent Rules](./docs/AGENT_RULES.md) — Operational and safety rules for AI pair programmers
 - [📁 Project Structure](#-project-structure) — Full file tree
 - [🔌 API Reference](#-api-reference) — All 55 route modules
@@ -83,10 +82,10 @@ Think of it as a **security checkpoint** for every `agent.run()` call in your st
 - **Prompt injection blocking** — Pattern-based detection of adversarial prompts
 - **Input + output scanning** — Both pre-AI (user input) and post-AI (model output) evaluated
 - **Override workflow** — Admin-approved bypass with justification and full audit trail
-- **LangChain & OpenAI wrappers** — Drop-in governance for existing agent code
+- **LangChain & AI provider wrappers** — Drop-in governance for OpenAI, Azure OpenAI, Google Vertex AI, and LangChain
 
 ### 📊 Compliance Center
-- **5 Supported Regulatory Frameworks** — Native evaluation engines for GDPR, DPDP, HIPAA, PCI-DSS, and NIST AI RMF
+- **3 Core Compliance Frameworks** — Native evaluation engines for GDPR, DPDP, and HIPAA (with cross-framework mapping for ISO 27001 & NIST AI RMF)
 - **Automated Framework Mapping** — Governance decisions & posture findings mapped directly to controls
 - **FRIA (Fundamental Rights Impact Assessment)** — Built-in assessment workflows
 - **Cryptographic evidence chain** — Audit-proof evidence for compliance reviews
@@ -120,14 +119,14 @@ Think of it as a **security checkpoint** for every `agent.run()` call in your st
 
 ### 🚨 Alerting & Observability
 - **Threshold-based alert rules** — Custom rules with time-window analysis
-- **Multi-channel dispatch** — Email (Postmark SMTP) + Slack webhook
+- **Multi-channel dispatch** — Email (SMTP / Resend) + Slack webhook
 - **Real-time WebSocket telemetry** — Live governance events via Socket.io
 - **Drift detection & alerting** — Policy configuration drift monitoring
 - **Automations** — Trigger actions on governance events (drift, alerts, schedule)
 
 ### 🧠 AI Features
 - **Governance chat assistant (Advisor)** — Natural language queries about compliance status
-- **Semantic risk analysis** — OpenAI-powered deep action analysis (L3, optional)
+- **Semantic risk analysis** — OpenAI-powered deep action analysis (L3, optional; runs in degraded mode when unconfigured)
 - **AI agent inventory** — Register and track all AI agents in the organization
 - **Evaluation dashboard** — LLM evaluation and testing workflows
 - **Change history** — Full audit trail per entity
@@ -210,9 +209,12 @@ FRONTEND_URL=http://localhost:5173
 # Optional — enables L3 semantic risk analysis
 OPENAI_API_KEY=sk-...
 
-# Optional — email alerts
-POSTMARK_API_KEY=...
-SMTP_FROM=alerts@yourdomain.com
+# Optional — email alerts (SMTP / Resend)
+SMTP_HOST=smtp.resend.com
+SMTP_PORT=587
+SMTP_USER=resend
+SMTP_PASS=<your-smtp-token>
+SMTP_FROM=alerts@sentraatech.info
 
 # Optional — Slack alerts
 SLACK_WEBHOOK_URL=https://hooks.slack.com/...
@@ -247,17 +249,11 @@ cd frontend && npm run dev    # → http://localhost:5173
 
 ### 5. Integrate via SDK
 
-> **Language Support:** Node.js 18+ (`npm install @sentra-ai/sdk`) and Python 3.8+ (`pip install sentraa-ai`).  
-> See [QUICKSTART.md](./QUICKSTART.md) and [packages/python-sdk](./packages/python-sdk) for walkthroughs.
+> **Language Support:** Node.js 18+ (`npm install @sentra-ai/sdk` v1.1.0). Python SDK is in active development (coming soon to PyPI).  
+> See [PILOT_HANDOFF.md](./docs/PILOT_HANDOFF.md) and [packages/sdk](./packages/sdk) for integration guides.
 
-**Node.js:**
 ```bash
 npm install @sentra-ai/sdk
-```
-
-**Python:**
-```bash
-pip install sentraa-ai
 ```
 
 ```typescript
@@ -358,10 +354,10 @@ sentra-ai/
 │       └── lib/                      # API client, store, utilities
 │
 ├── packages/
-│   ├── sdk/                          # @sentra-ai/sdk (npm v1.0.6)
+│   ├── sdk/                          # @sentra-ai/sdk (npm v1.1.0)
 │   │   └── src/
-│   │       └── index.ts              # SentraClient + LangChain/OpenAI wrappers
-│   └── python-sdk/                   # sentraa-ai (Python SDK v0.1.0)
+│   │       └── index.ts              # SentraClient + AI provider wrappers (OpenAI, Azure, Vertex, LangChain)
+│   └── python-sdk/                   # Python SDK source (development, unreleased on PyPI)
 │       └── src/
 │           ├── sentra/               # SentraClient + AI provider wrappers
 │           └── sentra_ai/            # Alias import package
@@ -523,7 +519,7 @@ sentra-ai/
 | **Prompt injection defense** | ❌ | Partial | ✅ |
 | **Compliance framework mapping** | Manual | ❌ | ✅ |
 | **Shadow AI detection** | ❌ | ❌ | ✅ |
-| **LangChain/OpenAI native wrappers** | ❌ | ❌ | ✅ |
+| **AI Provider & LangChain wrappers** | ❌ | ❌ | ✅ |
 | **Full multi-tenancy + RLS** | ❌ | ❌ | Sentraa AI |
 
 ---
@@ -575,8 +571,8 @@ Control AI access to production APIs, internal systems, and customer data with o
 | **AI** | OpenAI API (optional, L3 only) |
 | **Auth** | JWT + Refresh tokens + Google OAuth + SSO |
 | **Encryption** | AES-256-GCM |
-| **Email** | Postmark |
-| **SDK** | `@sentra-ai/sdk` v1.0.6 (npm), `sentraa-ai` v0.1.0 (PyPI) |
+| **Email** | SMTP (Resend / Nodemailer) |
+| **SDK** | `@sentra-ai/sdk` v1.1.0 (npm) |
 | **CI/CD** | GitHub Actions + SonarCloud |
 | **Deployment** | Render (backend) + Vercel (frontend) |
 
@@ -593,9 +589,12 @@ Control AI access to production APIs, internal systems, and customer data with o
 | `ENCRYPTION_KEY` | ✅ | AES-256 encryption key (32+ chars) |
 | `FRONTEND_URL` | ✅ | CORS allowed origin |
 | `PORT` | No | Backend port (default: 3000) |
-| `OPENAI_API_KEY` | No | Enables L3 semantic risk analysis |
-| `POSTMARK_API_KEY` | No | Email alert dispatch |
-| `SMTP_FROM` | No | Sender address for alerts |
+| `OPENAI_API_KEY` | No | Enables L3 semantic risk analysis (optional) |
+| `SMTP_HOST` | No | SMTP relay host (e.g. smtp.resend.com) |
+| `SMTP_PORT` | No | SMTP port (default: 587) |
+| `SMTP_USER` | No | SMTP authentication username |
+| `SMTP_PASS` | No | SMTP authentication password / token |
+| `SMTP_FROM` | No | Sender email address for alert dispatch |
 | `SLACK_WEBHOOK_URL` | No | Slack notification channel |
 | `GOOGLE_CLIENT_ID` | No | Google OAuth |
 | `GOOGLE_CLIENT_SECRET` | No | Google OAuth |
