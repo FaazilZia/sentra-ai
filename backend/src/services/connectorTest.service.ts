@@ -585,6 +585,145 @@ async function testSlackSource(
   };
 }
 
+async function verifyGitHubAuth(
+  token: string,
+  apiBaseUrl: string
+): Promise<{ success: boolean; accountName?: string; errorResult?: TestConnectionResult }> {
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    Accept: 'application/vnd.github+json',
+    'User-Agent': 'Sentraa-AI-Connector',
+    'X-GitHub-Api-Version': '2022-11-28',
+  };
+
+  const userRes = await fetch(`${apiBaseUrl}/user`, {
+    headers,
+    signal: AbortSignal.timeout(10000),
+  });
+
+  if (!userRes.ok) {
+    if (userRes.status === 401) {
+      return {
+        success: false,
+        errorResult: {
+          success: false,
+          message: 'GitHub authentication failed: Bad credentials or expired personal access token.',
+        },
+      };
+    }
+    if (userRes.status === 403) {
+      const errBody: any = await userRes.json().catch(() => ({}));
+      const errMsg = String(errBody?.message || '');
+      if (errMsg.toLowerCase().includes('rate limit')) {
+        return {
+          success: false,
+          errorResult: {
+            success: false,
+            message: 'GitHub rate limit exceeded: Too many requests sent to the GitHub API. Please wait before retrying.',
+          },
+        };
+      }
+      return {
+        success: false,
+        errorResult: {
+          success: false,
+          message: 'GitHub authorization error: Insufficient permissions. Ensure the fine-grained token has repository permissions (Contents: Read, Metadata: Read).',
+        },
+      };
+    }
+    const errBody: any = await userRes.json().catch(() => ({}));
+    return {
+      success: false,
+      errorResult: {
+        success: false,
+        message: `GitHub connection failed: ${errBody?.message || `HTTP ${userRes.status}`}.`,
+      },
+    };
+  }
+
+  const userData: any = await userRes.json();
+  const accountName = userData.login || userData.name || 'GitHub Account';
+  return { success: true, accountName };
+}
+
+async function paginateAccessibleGitHubRepos(
+  token: string,
+  apiBaseUrl: string
+): Promise<{
+  success: boolean;
+  repos?: Array<{ id: number; name: string; full_name: string }>;
+  totalDiscovered?: number;
+  errorResult?: TestConnectionResult;
+}> {
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    Accept: 'application/vnd.github+json',
+    'User-Agent': 'Sentraa-AI-Connector',
+    'X-GitHub-Api-Version': '2022-11-28',
+  };
+
+  let page = 1;
+  const perPage = 100;
+  const maxPages = 10;
+  const allRepos: Array<{ id: number; name: string; full_name: string }> = [];
+  let totalDiscovered = 0;
+
+  while (page <= maxPages) {
+    const reposRes = await fetch(
+      `${apiBaseUrl}/user/repos?per_page=${perPage}&page=${page}&sort=updated`,
+      {
+        headers,
+        signal: AbortSignal.timeout(10000),
+      }
+    );
+
+    if (!reposRes.ok) {
+      if (reposRes.status === 403) {
+        return {
+          success: false,
+          errorResult: {
+            success: false,
+            message: 'GitHub authorization error: Insufficient permissions to list repositories. Ensure the token has Metadata: Read permission.',
+          },
+        };
+      }
+      const errBody: any = await reposRes.json().catch(() => ({}));
+      return {
+        success: false,
+        errorResult: {
+          success: false,
+          message: `GitHub repository listing failed: ${errBody?.message || `HTTP ${reposRes.status}`}.`,
+        },
+      };
+    }
+
+    const pageRepos: any = await reposRes.json();
+    if (!Array.isArray(pageRepos)) break;
+
+    const linkHeader = reposRes.headers.get('link') || '';
+    const lastPageMatch = linkHeader.match(/<[^>]*[?&]page=(\d+)[^>]*>;\s*rel="last"/);
+    if (lastPageMatch) {
+      const lastPageNum = Number.parseInt(lastPageMatch[1], 10);
+      if (!Number.isNaN(lastPageNum)) {
+        totalDiscovered = Math.max(totalDiscovered, lastPageNum * perPage);
+      }
+    }
+
+    for (const repo of pageRepos) {
+      if (repo?.full_name) {
+        allRepos.push({ id: repo.id, name: repo.name, full_name: repo.full_name });
+      }
+    }
+
+    if (!linkHeader.includes('rel="next"') || pageRepos.length === 0) {
+      break;
+    }
+    page++;
+  }
+
+  return { success: true, repos: allRepos, totalDiscovered };
+}
+
 async function testGitHubSource(
   config: Record<string, any>,
   credentials: any
@@ -605,144 +744,73 @@ async function testGitHubSource(
     };
   }
 
-  const rawBaseUrl = (config?.apiBaseUrl || config?.baseUrl || 'https://api.github.com').trim().replace(/\/+$/, '');
-  const parsedUrl = new URL(rawBaseUrl);
+  const isClassicToken = token.startsWith('ghp_');
+  const classicWarningMsg = 'WARNING: Classic Personal Access Token (\'ghp_...\') detected. Classic tokens are over-privileged (broad account-wide scope across all repositories) and violate the principle of least privilege. We strongly recommend using a Fine-Grained Personal Access Token (\'github_pat_...\') with read-only permissions (Contents: Read, Metadata: Read) restricted to specific repositories.';
+
+  if (isClassicToken) {
+    logger.warn(
+      `[GitHubTestConnection] Classic personal access token ('ghp_...') detected. Classic tokens carry broad account-wide scope and violate least privilege.`
+    );
+  }
+
+  const apiBaseUrl = (process.env.GITHUB_API_BASE_URL || 'https://api.github.com').replace(/\/+$/, '');
+  const parsedUrl = new URL(apiBaseUrl);
   await assertSafeTarget(parsedUrl.hostname);
 
-  const headers: Record<string, string> = {
-    Authorization: `Bearer ${token}`,
-    Accept: 'application/vnd.github+json',
-    'User-Agent': 'Sentraa-AI-Connector',
-    'X-GitHub-Api-Version': '2022-11-28',
-  };
-
   // 1. Verify authentication
-  const userRes = await fetch(`${rawBaseUrl}/user`, {
-    headers,
-    signal: AbortSignal.timeout(10000),
-  });
-
-  if (!userRes.ok) {
-    if (userRes.status === 401) {
-      return {
-        success: false,
-        message: 'GitHub authentication failed: Bad credentials or expired personal access token.',
-      };
-    }
-    if (userRes.status === 403) {
-      const errBody: any = await userRes.json().catch(() => ({}));
-      const errMsg = String(errBody?.message || '');
-      if (errMsg.toLowerCase().includes('rate limit')) {
-        return {
-          success: false,
-          message: 'GitHub rate limit exceeded: Too many requests sent to the GitHub API. Please wait before retrying.',
-        };
-      }
-      return {
-        success: false,
-        message: 'GitHub authorization error: Insufficient permissions. Ensure the fine-grained token has repository permissions (Contents: Read, Metadata: Read).',
-      };
-    }
-    const errBody: any = await userRes.json().catch(() => ({}));
-    return {
-      success: false,
-      message: `GitHub connection failed: ${errBody?.message || `HTTP ${userRes.status}`}.`,
-    };
+  const authOutcome = await verifyGitHubAuth(token, apiBaseUrl);
+  if (!authOutcome.success || !authOutcome.accountName) {
+    return authOutcome.errorResult || { success: false, message: 'GitHub authentication failed.' };
   }
-
-  const userData: any = await userRes.json();
-  const accountName = userData.login || userData.name || 'GitHub Account';
+  const accountName = authOutcome.accountName;
 
   // 2. Count readable repositories with pagination
-  let page = 1;
-  const perPage = 100;
-  const maxPages = 10;
-  const allRepos: Array<{ id: number; name: string; full_name: string }> = [];
-  let totalDiscovered = 0;
-
-  while (page <= maxPages) {
-    const reposRes = await fetch(
-      `${rawBaseUrl}/user/repos?per_page=${perPage}&page=${page}&sort=updated`,
-      {
-        headers,
-        signal: AbortSignal.timeout(10000),
-      }
-    );
-
-    if (!reposRes.ok) {
-      if (reposRes.status === 403) {
-        return {
-          success: false,
-          message: 'GitHub authorization error: Insufficient permissions to list repositories. Ensure the token has Metadata: Read permission.',
-        };
-      }
-      const errBody: any = await reposRes.json().catch(() => ({}));
-      return {
-        success: false,
-        message: `GitHub repository listing failed: ${errBody?.message || `HTTP ${reposRes.status}`}.`,
-      };
-    }
-
-    const pageRepos: any = await reposRes.json();
-    if (!Array.isArray(pageRepos)) break;
-
-    const linkHeader = reposRes.headers.get('link') || '';
-    const lastPageMatch = linkHeader.match(/<[^>]*[?&]page=(\d+)[^>]*>;\s*rel="last"/);
-    if (lastPageMatch) {
-      const lastPageNum = Number.parseInt(lastPageMatch[1], 10);
-      if (!Number.isNaN(lastPageNum)) {
-        totalDiscovered = Math.max(totalDiscovered, lastPageNum * perPage);
-      }
-    }
-
-    for (const repo of pageRepos) {
-      if (repo && repo.full_name) {
-        allRepos.push({
-          id: repo.id,
-          name: repo.name,
-          full_name: repo.full_name,
-        });
-      }
-    }
-
-    if (!linkHeader.includes('rel="next"') || pageRepos.length === 0) {
-      break;
-    }
-    page++;
+  const repoOutcome = await paginateAccessibleGitHubRepos(token, apiBaseUrl);
+  if (!repoOutcome.success || !repoOutcome.repos) {
+    return repoOutcome.errorResult || { success: false, message: 'GitHub repository listing failed.' };
   }
 
+  const allRepos = repoOutcome.repos;
   const receivedCount = allRepos.length;
-  const totalCount = totalDiscovered > 0 ? Math.max(totalDiscovered, receivedCount) : receivedCount;
+  const totalCount = (repoOutcome.totalDiscovered || 0) > 0 ? Math.max(repoOutcome.totalDiscovered || 0, receivedCount) : receivedCount;
 
   logger.info(
     `[GitHubTestConnection] Discovered ${receivedCount} accessible repositories (total estimated: ${totalCount}) for account ${accountName}.`
   );
 
   if (receivedCount === 0) {
+    const zeroRepoMsg = `Connected to GitHub as "${accountName}", but 0 accessible repositories were found. Ensure the fine-grained token has repository access granted (Metadata: Read, Contents: Read).`;
     return {
       success: true,
       warning: true,
-      message: `Connected to GitHub as "${accountName}", but 0 accessible repositories were found. Ensure the fine-grained token has repository access granted (Metadata: Read, Contents: Read).`,
+      message: isClassicToken ? `${zeroRepoMsg} ${classicWarningMsg}` : zeroRepoMsg,
       details: {
         accountName,
         repoCount: 0,
         receivedCount: 0,
         totalCount: 0,
         repos: [],
+        tokenType: isClassicToken ? 'classic' : 'fine-grained',
+        isOverPrivileged: isClassicToken,
+        overPrivilegeWarning: isClassicToken ? classicWarningMsg : undefined,
       },
     };
   }
 
+  const successMsg = `Successfully connected to GitHub as "${accountName}". Found ${receivedCount} accessible repository(ies).`;
   return {
     success: true,
-    warning: false,
-    message: `Successfully connected to GitHub as "${accountName}". Found ${receivedCount} accessible repository(ies).`,
+    warning: isClassicToken,
+    message: isClassicToken ? `${successMsg} ${classicWarningMsg}` : successMsg,
     details: {
       accountName,
       repoCount: receivedCount,
       receivedCount,
       totalCount,
       repos: allRepos.map((r) => r.full_name),
+      tokenType: isClassicToken ? 'classic' : 'fine-grained',
+      isOverPrivileged: isClassicToken,
+      overPrivilegeWarning: isClassicToken ? classicWarningMsg : undefined,
     },
   };
 }

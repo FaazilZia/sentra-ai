@@ -1041,41 +1041,45 @@ async function recordGitHubFinding(params: {
   connector: any;
   repoFullName: string;
   filePath: string;
+  line: number;
+  maskedSnippet: string;
+  category: string;
+  violatedFrameworks: string[];
+  riskLevel: 'low' | 'medium' | 'high';
   commitSha?: string;
-  scanResult: PIIScanResult;
 }): Promise<number> {
-  const { connector, repoFullName, filePath, commitSha, scanResult } = params;
-  let count = 0;
-  for (const category of scanResult.detectedCategories) {
-    count++;
-    const fileKey = `github://${repoFullName}/${filePath}`;
+  const { connector, repoFullName, filePath, line, maskedSnippet, category, violatedFrameworks, riskLevel, commitSha } = params;
+  const fileKey = `github://${repoFullName}/${filePath}:${line}`;
 
-    await prisma.interception_logs.create({
-      data: {
-        user_id: 'system_scanner',
-        organizationId: connector.organizationId,
-        input_text: `Scan of GitHub file in ${repoFullName}/${filePath}`,
-        decision: 'BLOCK',
-        confidence: 'High',
-        reason: `Data scan detected sensitive PII: ${category}`,
-        policy_triggered: 'Data Governance Baseline',
-        metadata: {
-          connector_id: connector.id,
-          violationType: category,
-          fileKey,
-          repo: repoFullName,
-          filePath,
-          commitSha: commitSha || undefined,
-          source_type: 'github',
-          frameworks: scanResult.violatedFrameworks,
-          riskLevel: scanResult.riskLevel,
-          severity: scanResult.riskLevel,
-        },
-        timestamp: new Date(),
+  // SECURITY: Strictly store only masked snippets, file path, and line numbers.
+  // Raw secrets and PII values are never stored in the database or written to disk.
+  await prisma.interception_logs.create({
+    data: {
+      user_id: 'system_scanner',
+      organizationId: connector.organizationId,
+      input_text: `Scan of GitHub file ${repoFullName}/${filePath}:${line} - ${maskedSnippet}`,
+      decision: 'BLOCK',
+      confidence: 'High',
+      reason: `Data scan detected sensitive ${category} in ${filePath}:${line}`,
+      policy_triggered: 'Data Governance Baseline',
+      metadata: {
+        connector_id: connector.id,
+        violationType: category,
+        fileKey,
+        repo: repoFullName,
+        filePath,
+        line,
+        maskedSnippet,
+        commitSha: commitSha || undefined,
+        source_type: 'github',
+        frameworks: violatedFrameworks,
+        riskLevel,
+        severity: riskLevel,
       },
-    });
-  }
-  return count;
+      timestamp: new Date(),
+    },
+  });
+  return 1;
 }
 
 async function fetchGitHubRepos(
@@ -1242,22 +1246,48 @@ async function scanGitHubRepoFiles(
       const blobData: any = await blobRes.json();
       if (typeof blobData?.content === 'string') {
         const encoding = blobData.encoding || 'base64';
+        // SECURITY & PRIVACY REQUIREMENT:
+        // File contents are held ONLY in transient memory in local variables for the duration of the scan.
+        // They are NEVER written to disk, NEVER persisted to temporary files, and NEVER printed to logs.
         const fileContent = encoding === 'base64'
           ? Buffer.from(blobData.content.replace(/\s+/g, ''), 'base64').toString('utf-8')
           : blobData.content;
 
-        const scanSlice = fileContent.slice(0, 102400); // Scan up to 100KB per file
+        const scanSlice = fileContent.slice(0, 102400); // Scan up to 100KB per file in memory
         bytesScanned += Buffer.byteLength(scanSlice);
 
-        const scanRes = PIIScannerService.scan(scanSlice);
-        if (scanRes.piiDetected) {
-          violations += await recordGitHubFinding({
-            connector,
-            repoFullName: repo.full_name,
-            filePath: item.path,
-            commitSha: item.sha,
-            scanResult: scanRes,
-          });
+        const lines = scanSlice.split(/\r?\n/);
+        let fileViolations = 0;
+        const MAX_FINDINGS_PER_FILE = 25;
+
+        for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+          if (fileViolations >= MAX_FINDINGS_PER_FILE) break;
+          const currentLine = lines[lineIdx];
+          if (!currentLine || !currentLine.trim()) continue;
+
+          const lineScan = PIIScannerService.scan(currentLine);
+          if (lineScan.piiDetected) {
+            const lineNum = lineIdx + 1;
+            // The masked snippet uses lineScan.redactedText (e.g. [API_KEY_REDACTED]),
+            // strictly guaranteeing raw secrets/PII are never stored or logged.
+            const maskedSnippet = lineScan.redactedText.trim().slice(0, 200);
+
+            for (const category of lineScan.detectedCategories) {
+              if (fileViolations >= MAX_FINDINGS_PER_FILE) break;
+              violations += await recordGitHubFinding({
+                connector,
+                repoFullName: repo.full_name,
+                filePath: item.path,
+                line: lineNum,
+                maskedSnippet,
+                category,
+                violatedFrameworks: lineScan.violatedFrameworks,
+                riskLevel: lineScan.riskLevel,
+                commitSha: item.sha,
+              });
+              fileViolations++;
+            }
+          }
         }
         updatedShas[item.path] = item.sha;
       }
@@ -1292,11 +1322,18 @@ async function scanGitHubSource(
     throw new Error('Missing GitHub personal access token.');
   }
 
-  const rawBaseUrl = (config?.apiBaseUrl || config?.baseUrl || 'https://api.github.com').trim().replace(/\/+$/, '');
-  const parsedUrl = new URL(rawBaseUrl);
+  const isClassicToken = token.startsWith('ghp_');
+  if (isClassicToken) {
+    logger.warn(
+      `[GitHubScan] Over-privileged classic token ('ghp_...') detected for connector ${connector.id}. Recommend migrating to a fine-grained PAT ('github_pat_...') with read-only repository scope.`
+    );
+  }
+
+  const apiBaseUrl = (process.env.GITHUB_API_BASE_URL || 'https://api.github.com').replace(/\/+$/, '');
+  const parsedUrl = new URL(apiBaseUrl);
   await assertSafeTarget(parsedUrl.hostname);
 
-  const repoResult = await fetchGitHubRepos(rawBaseUrl, token, connector);
+  const repoResult = await fetchGitHubRepos(apiBaseUrl, token, connector);
   apiCalls += repoResult.apiCalls;
 
   if (repoResult.repos.length === 0) {
@@ -1316,7 +1353,7 @@ async function scanGitHubSource(
     try {
       const repoShas = existingShas[repo.full_name] || {};
       const repoScan = await scanGitHubRepoFiles(
-        rawBaseUrl,
+        apiBaseUrl,
         token,
         repo,
         connector,
@@ -1346,7 +1383,14 @@ async function scanGitHubSource(
     logger.warn(`[GitHubScan] Could not update scan shas for connector ${connector.id}:`, err);
   }
 
-  return { violations, apiCalls, bytesScanned };
+  return {
+    violations,
+    apiCalls,
+    bytesScanned,
+    warning: isClassicToken
+      ? 'Classic token is over-privileged (account-wide scope). Recommend migrating to fine-grained PAT (github_pat_...) with read-only repository access.'
+      : undefined,
+  };
 }
 
 function formatConnectorScanError(err: any): string {

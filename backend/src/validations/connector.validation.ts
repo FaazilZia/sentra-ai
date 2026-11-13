@@ -28,47 +28,25 @@ export function extractSlackToken(credentials: unknown, config?: unknown): strin
   return undefined;
 }
 
+const GITHUB_TOKEN_KEYS = ['token', 'personalAccessToken', 'pat', 'apiKey', 'botToken'] as const;
+
+function findTokenInRecord(obj: unknown): string | undefined {
+  if (!obj || typeof obj !== 'object') return undefined;
+  const record = obj as Record<string, unknown>;
+  for (const key of GITHUB_TOKEN_KEYS) {
+    const val = record[key];
+    if (typeof val === 'string' && val.trim()) {
+      return val.trim();
+    }
+  }
+  return undefined;
+}
+
 export function extractGitHubToken(credentials: unknown, config?: unknown): string | undefined {
   if (typeof credentials === 'string') {
     return credentials.trim();
   }
-  if (credentials && typeof credentials === 'object') {
-    const credObj = credentials as Record<string, unknown>;
-    if (typeof credObj.token === 'string' && credObj.token.trim()) {
-      return credObj.token.trim();
-    }
-    if (typeof credObj.personalAccessToken === 'string' && credObj.personalAccessToken.trim()) {
-      return credObj.personalAccessToken.trim();
-    }
-    if (typeof credObj.pat === 'string' && credObj.pat.trim()) {
-      return credObj.pat.trim();
-    }
-    if (typeof credObj.apiKey === 'string' && credObj.apiKey.trim()) {
-      return credObj.apiKey.trim();
-    }
-    if (typeof credObj.botToken === 'string' && credObj.botToken.trim()) {
-      return credObj.botToken.trim();
-    }
-  }
-  if (config && typeof config === 'object') {
-    const confObj = config as Record<string, unknown>;
-    if (typeof confObj.token === 'string' && confObj.token.trim()) {
-      return confObj.token.trim();
-    }
-    if (typeof confObj.personalAccessToken === 'string' && confObj.personalAccessToken.trim()) {
-      return confObj.personalAccessToken.trim();
-    }
-    if (typeof confObj.pat === 'string' && confObj.pat.trim()) {
-      return confObj.pat.trim();
-    }
-    if (typeof confObj.apiKey === 'string' && confObj.apiKey.trim()) {
-      return confObj.apiKey.trim();
-    }
-    if (typeof confObj.botToken === 'string' && confObj.botToken.trim()) {
-      return confObj.botToken.trim();
-    }
-  }
-  return undefined;
+  return findTokenInRecord(credentials) ?? findTokenInRecord(config);
 }
 
 export const createConnectorSchema = z.object({

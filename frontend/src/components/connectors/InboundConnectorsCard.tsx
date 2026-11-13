@@ -14,7 +14,6 @@ import {
   Server,
   ShieldAlert,
   MessageSquare,
-  Github,
   Eye,
   EyeOff,
 } from 'lucide-react';
@@ -28,6 +27,15 @@ import {
   CreateConnectorPayload,
 } from '@/lib/api';
 import { useStore } from '@/store/useStore';
+
+function GitHubIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
+      <path d="M9 18c-4.51 2-5-2-7-2" />
+    </svg>
+  );
+}
 
 function getStatusBadgeClass(status: string): string {
   if (status === 'active') {
@@ -331,7 +339,7 @@ export function InboundConnectorsCard() {
       case 'slack':
         return <MessageSquare className="h-4 w-4 text-purple-400" />;
       case 'github':
-        return <Github className="h-4 w-4 text-purple-400" />;
+        return <GitHubIcon className="h-4 w-4 text-purple-400" />;
       default:
         return <Server className="h-4 w-4 text-zinc-400" />;
     }
@@ -964,6 +972,19 @@ export function InboundConnectorsCard() {
                   onChange={(e) => setGithubToken(e.target.value)}
                   className="w-full bg-[var(--card-bg)] border border-[var(--border-default)] rounded px-3 py-2 text-xs font-mono text-[var(--text-primary)] focus:outline-none focus:border-[var(--royal-indigo)]"
                 />
+                {githubToken.trim().startsWith('ghp_') && (
+                  <div className="mt-2 p-2.5 bg-amber-500/10 border border-amber-500/30 rounded text-[10px] text-amber-300 flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400 mt-0.5" />
+                    <div>
+                      <span className="font-bold uppercase tracking-wider block text-amber-200">
+                        Over-Privilege Warning (Classic Token)
+                      </span>
+                      <p className="leading-relaxed">
+                        Classic tokens (<code className="font-mono text-white">ghp_...</code>) carry broad, account-wide scope across all repositories and violate the principle of least privilege. We strongly recommend using a <strong className="text-white">Fine-Grained Personal Access Token (<code className="font-mono text-white">github_pat_...</code>)</strong> restricted to specific repositories with only <strong className="text-white">Contents: Read-only</strong> and <strong className="text-white">Metadata: Read-only</strong> permissions.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>

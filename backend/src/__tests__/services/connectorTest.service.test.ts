@@ -740,5 +740,29 @@ describe('Connector Test Connection Service', () => {
       expect(res.message).toContain('Found 2 accessible repository(ies)');
       expect(res.details?.repoCount).toBe(2);
     });
+
+    it('warns that classic ghp_ tokens are over-privileged', async () => {
+      global.fetch = jest
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => ({ login: 'classic-user' }),
+        } as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          headers: new Headers(),
+          json: async () => [
+            { id: 1, name: 'web', full_name: 'classic-user/web' },
+          ],
+        } as any);
+
+      const res = await testConnectorSource('github', {}, { token: 'ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' });
+      expect(res.success).toBe(true);
+      expect(res.warning).toBe(true);
+      expect(res.message).toContain('WARNING: Classic Personal Access Token');
+      expect(res.details?.isOverPrivileged).toBe(true);
+    });
   });
 });
