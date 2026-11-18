@@ -17,7 +17,7 @@ export const anonymizeText = (text: string | null, options: MaskingOptions = {})
   const salt = options.salt || process.env.MASKING_SALT || 'default-sentra-salt';
 
   // 1. Precise Email Masking: user@domain.com -> u***@domain.com
-  const emailRegex = /\b([a-zA-Z0-9._%+-])[^@]+(@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\b/g;
+  const emailRegex = /(?<![a-zA-Z0-9._%+-])([a-zA-Z0-9._%+-])[a-zA-Z0-9._%+-]{0,63}(@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+)\b/g;
   result = result.replaceAll(emailRegex, (match, p1, p2) => {
     return options.deterministic 
       ? `[EMAIL_${hashString(match, salt)}]` 
