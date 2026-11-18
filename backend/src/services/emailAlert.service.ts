@@ -76,13 +76,147 @@ export function resolveDashboardBaseUrl(): string {
   return primary.replace(/\/+$/, '');
 }
 
+export interface SanitizedEmailError {
+  message: string;
+  code?: string;
+  responseCode?: number;
+  command?: string;
+  response?: string;
+  stack?: string;
+}
+
+/**
+ * Masks any email addresses (and PII) embedded in SMTP/Nodemailer error fields
+ * (message, stack, response) before writing to application logs.
+ */
+export function sanitizeEmailError(err: unknown): SanitizedEmailError {
+  const e = (err && typeof err === 'object' ? err : {}) as Record<string, unknown>;
+  const rawMessage =
+    err instanceof Error
+      ? err.message
+      : typeof e.message === 'string'
+        ? e.message
+        : String(err);
+
+  const sanitized: SanitizedEmailError = {
+    message: anonymizeText(rawMessage),
+  };
+
+  if (typeof e.code === 'string') {
+    sanitized.code = e.code;
+  }
+  if (typeof e.responseCode === 'number') {
+    sanitized.responseCode = e.responseCode;
+  }
+  if (typeof e.command === 'string') {
+    sanitized.command = e.command;
+  }
+  if (typeof e.response === 'string') {
+    sanitized.response = anonymizeText(e.response);
+  }
+  if (typeof e.stack === 'string') {
+    sanitized.stack = anonymizeText(e.stack);
+  }
+
+  return sanitized;
+}
+
+const DEFAULT_RECIPIENT_BATCH_SIZE = 2;
+const DEFAULT_BATCH_DELAY_MS = 600;
+
 export class EmailAlertService {
   private db: any = prisma;
   private inMemoryRateLimits = new Map<string, { count: number; resetAt: number }>();
   private inMemoryTestRateLimits = new Map<string, { count: number; resetAt: number }>();
+  private batchSize: number = DEFAULT_RECIPIENT_BATCH_SIZE;
+  private batchDelayMs: number | null = null;
 
   setDb(customPrisma: any): void {
     this.db = customPrisma;
+  }
+
+  private getEffectiveBatchDelayMs(): number {
+    if (this.batchDelayMs !== null) {
+      return this.batchDelayMs;
+    }
+    return process.env.NODE_ENV === 'test' ? 0 : DEFAULT_BATCH_DELAY_MS;
+  }
+
+  /**
+   * Sends one individual email per recipient (with only that recipient in `to` and no `bcc`)
+   * in small batches using Promise.allSettled so one failing recipient never blocks others
+   * and provider per-second rate limits (e.g., Resend) are respected.
+   */
+  private async dispatchPerRecipient(params: {
+    transporter: nodemailer.Transporter;
+    orgId: string;
+    recipients: string[];
+    fromAddress: string;
+    subject: string;
+    html: string;
+    label: string;
+  }): Promise<{
+    sentCount: number;
+    totalCount: number;
+    succeededMasked: string[];
+    failedMasked: string[];
+    firstError?: SanitizedEmailError;
+  }> {
+    const { transporter, orgId, recipients, fromAddress, subject, html, label } = params;
+    const totalCount = recipients.length;
+    const succeededMasked: string[] = [];
+    const failedMasked: string[] = [];
+    let firstError: SanitizedEmailError | undefined;
+    const delayMs = this.getEffectiveBatchDelayMs();
+
+    for (let i = 0; i < totalCount; i += this.batchSize) {
+      const batch = recipients.slice(i, i + this.batchSize);
+
+      const results = await Promise.allSettled(
+        batch.map(async (recipient) => {
+          const mailOptions: nodemailer.SendMailOptions = {
+            from: fromAddress,
+            to: [recipient],
+            subject,
+            html,
+          };
+          await transporter.sendMail(mailOptions);
+          return recipient;
+        })
+      );
+
+      for (let j = 0; j < results.length; j++) {
+        const outcome = results[j];
+        const masked = anonymizeText(batch[j]);
+
+        if (outcome.status === 'fulfilled') {
+          succeededMasked.push(masked);
+          logger.info(`[AlertEmail] ${label} delivered to ${masked} for org ${orgId}`);
+        } else {
+          const safeErr = sanitizeEmailError(outcome.reason);
+          if (!firstError) {
+            firstError = safeErr;
+          }
+          failedMasked.push(masked);
+          logger.error(
+            `[AlertEmail] ${label} failed for recipient ${masked} in org ${orgId}:`,
+            safeErr
+          );
+        }
+      }
+
+      if (i + this.batchSize < totalCount && delayMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
+
+    return {
+      sentCount: succeededMasked.length,
+      totalCount,
+      succeededMasked,
+      failedMasked,
+      firstError,
+    };
   }
 
   /**
@@ -156,7 +290,7 @@ export class EmailAlertService {
         orgName: org.name || 'Your Organization',
       };
     } catch (err: any) {
-      logger.error(`[AlertEmail] Failed to fetch email alert config for org ${orgId}:`, err);
+      logger.error(`[AlertEmail] Failed to fetch email alert config for org ${orgId}:`, sanitizeEmailError(err));
       return {
         recipients: [],
         enabled: false,
@@ -424,30 +558,31 @@ export class EmailAlertService {
       `;
 
       const fromAddress = process.env.SMTP_FROM || '"Sentraa AI Alerts" <alerts@sentraatech.com>';
+      const subject = `🚨 [${event.status.toUpperCase()}] Sentraa AI Security Violation: ${sanitizedAction.slice(0, 80)}`;
 
-      const mailOptions: nodemailer.SendMailOptions = {
-        from: fromAddress,
-        subject: `🚨 [${event.status.toUpperCase()}] Sentraa AI Security Violation: ${sanitizedAction.slice(0, 80)}`,
-        html
-      };
+      const { sentCount, totalCount, succeededMasked, failedMasked } = await this.dispatchPerRecipient({
+        transporter,
+        orgId,
+        recipients: config.recipients,
+        fromAddress,
+        subject,
+        html,
+        label: 'Alert email',
+      });
 
-      if (config.recipients.length === 1) {
-        mailOptions.to = config.recipients;
-      } else {
-        // Multi-recipient privacy: use BCC so recipients cannot see each other
-        mailOptions.bcc = config.recipients;
+      if (sentCount > 0) {
+        logger.info(
+          `[AlertEmail] Alert dispatch complete for org ${orgId}: sent ${sentCount} of ${totalCount} (${succeededMasked.join(', ')}). Status: ${event.status}`
+        );
+        return true;
       }
 
-      await transporter.sendMail(mailOptions);
-
-      const maskedRecipients = config.recipients.map(r => anonymizeText(r));
-      logger.info(
-        `[AlertEmail] Successfully sent email alert for org ${orgId} to ${config.recipients.length} recipients (${maskedRecipients.join(', ')}). Status: ${event.status}`
+      logger.error(
+        `[AlertEmail] Alert dispatch failed for org ${orgId}: sent 0 of ${totalCount} (${failedMasked.join(', ')}). Status: ${event.status}`
       );
-
-      return true;
+      return false;
     } catch (err: any) {
-      logger.error(`[AlertEmail] Failed to dispatch alert email for org ${orgId}:`, err);
+      logger.error(`[AlertEmail] Failed to dispatch alert email for org ${orgId}:`, sanitizeEmailError(err));
       return false;
     }
   }
@@ -456,7 +591,7 @@ export class EmailAlertService {
    * Dispatches a test alert email to verify channel configuration.
    * Multi-tenant isolated and rate-limited.
    * Resolves target recipients from override, saved config, or active org admin fallback.
-   * Preserves recipient privacy with BCC on multi-recipient dispatches.
+   * Preserves recipient privacy by sending one separate email per recipient with only that recipient in `to`.
    */
   async sendTestEmail(orgId: string, overrideRecipient?: string | string[]): Promise<{ success: boolean; message: string; recipients: string[] }> {
     const rateOk = await this.checkTestRateLimit(orgId);
@@ -500,7 +635,7 @@ export class EmailAlertService {
             logger.info(`[AlertEmail] No explicit alert recipients configured for org ${orgId}. Defaulting test email to active admin: ${anonymizeText(fallbackUser.email)}`);
           }
         } catch (userLookupErr) {
-          logger.warn(`[AlertEmail] Failed to lookup organization admin for test email fallback:`, userLookupErr);
+          logger.warn(`[AlertEmail] Failed to lookup organization admin for test email fallback:`, sanitizeEmailError(userLookupErr));
         }
 
         if (targetRecipients.length === 0) {
@@ -541,29 +676,33 @@ export class EmailAlertService {
     `;
 
     const fromAddress = process.env.SMTP_FROM || '"Sentraa AI Alerts" <alerts@sentraatech.com>';
+    const subject = `🧪 Sentraa AI: Test Alert for ${orgName}`;
 
-    const mailOptions: nodemailer.SendMailOptions = {
-      from: fromAddress,
-      subject: `🧪 Sentraa AI: Test Alert for ${orgName}`,
-      html
-    };
+    const { sentCount, totalCount, succeededMasked, failedMasked, firstError } = await this.dispatchPerRecipient({
+      transporter,
+      orgId,
+      recipients: targetRecipients,
+      fromAddress,
+      subject,
+      html,
+      label: 'Test email',
+    });
 
-    if (targetRecipients.length === 1) {
-      mailOptions.to = targetRecipients;
-    } else {
-      // Multi-recipient privacy: use BCC so recipients cannot see each other
-      mailOptions.bcc = targetRecipients;
+    if (sentCount === 0) {
+      logger.error(
+        `[AlertEmail] Test email dispatch failed for org ${orgId}: sent 0 of ${totalCount} (${failedMasked.join(', ')})`
+      );
+      throw new Error(firstError?.message || 'Failed to send test alert email to any recipient.');
     }
 
-    await transporter.sendMail(mailOptions);
-
-    const masked = targetRecipients.map(r => anonymizeText(r));
-    logger.info(`[AlertEmail] Test email successfully sent to ${masked.join(', ')} for org ${orgId}`);
+    logger.info(
+      `[AlertEmail] Test email dispatch complete for org ${orgId}: sent ${sentCount} of ${totalCount} (${succeededMasked.join(', ')})`
+    );
 
     return {
       success: true,
-      message: `Test alert email sent to ${targetRecipients.length} recipient(s)`,
-      recipients: masked
+      message: `Test alert email sent ${sentCount} of ${totalCount} recipient(s)`,
+      recipients: succeededMasked
     };
   }
 }

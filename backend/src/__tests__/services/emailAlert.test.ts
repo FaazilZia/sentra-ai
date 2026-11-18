@@ -27,7 +27,7 @@ jest.mock('@slack/webhook', () => ({
 import nodemailer from 'nodemailer';
 import prisma from '../../config/db';
 import logger from '../../utils/logger';
-import { emailAlertService, isValidEmail, validateRecipients, normalizeSeverityFilter, resolveDashboardBaseUrl } from '../../services/emailAlert.service';
+import { emailAlertService, isValidEmail, validateRecipients, normalizeSeverityFilter, resolveDashboardBaseUrl, sanitizeEmailError } from '../../services/emailAlert.service';
 import { processAlertJob, DecisionAlertEvent } from '../../services/alertPipeline.service';
 
 describe('Day 11: Per-Organization Email Alert Channel', () => {
@@ -250,16 +250,20 @@ describe('Day 11: Per-Organization Email Alert Channel', () => {
 
       await processAlertJob(alertEvent);
 
-      expect(mockSendMail).toHaveBeenCalledTimes(1);
-      const mailCall = mockSendMail.mock.calls[0][0];
-      // Multi-recipient privacy: dispatches using BCC so recipients cannot see each other
-      expect(mailCall.bcc).toEqual(['security@alpha.com', 'alerts@alpha.com']);
-      expect(mailCall.to).toBeUndefined();
-      expect(mailCall.subject).toContain('[BLOCKED]');
-      expect(mailCall.subject).toContain('DROP TABLE customers;');
-      expect(mailCall.html).toContain('sql-agent');
-      expect(mailCall.html).toContain('Data Protection Guardrail');
-      expect(mailCall.html).toContain('Alpha Corp');
+      expect(mockSendMail).toHaveBeenCalledTimes(2);
+      const calls = mockSendMail.mock.calls.map(c => c[0]);
+      // Multi-recipient privacy: sends one individual email per recipient with only that recipient in `to` and no `bcc`
+      expect(calls[0].to).toEqual(['security@alpha.com']);
+      expect(calls[0].bcc).toBeUndefined();
+      expect(calls[1].to).toEqual(['alerts@alpha.com']);
+      expect(calls[1].bcc).toBeUndefined();
+      for (const mailCall of calls) {
+        expect(mailCall.subject).toContain('[BLOCKED]');
+        expect(mailCall.subject).toContain('DROP TABLE customers;');
+        expect(mailCall.html).toContain('sql-agent');
+        expect(mailCall.html).toContain('Data Protection Guardrail');
+        expect(mailCall.html).toContain('Alpha Corp');
+      }
     });
 
     it('enforces multi-tenant isolation: Org A alerts never reach Org B recipients', async () => {
@@ -864,36 +868,58 @@ describe('Day 11: Per-Organization Email Alert Channel', () => {
     });
   });
 
-  describe('Recipient Privacy (BCC) & Robust Test Email Resolution', () => {
-    it('dispatches multi-recipient alerts using BCC so recipients cannot see each other', async () => {
-      (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
-        id: orgA,
-        name: 'Alpha Corp',
-        alertEmail: JSON.stringify({
-          recipients: ['alice@alpha.com', 'bob@alpha.com', 'carol@alpha.com'],
-          enabled: true,
-          severityFilter: 'high',
-          hourlyRateLimit: 10,
-        }),
-      });
+  describe('Per-Recipient Privacy, Resilience, Error Masking & Test Email Resolution', () => {
+    it('dispatches one separate email per recipient in sendAlert with exactly one `to` and no `bcc`', async () => {
+      const infoSpy = jest.spyOn(logger, 'info').mockImplementation((() => logger) as any);
+      try {
+        (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+          id: orgA,
+          name: 'Alpha Corp',
+          alertEmail: JSON.stringify({
+            recipients: ['alice@alpha.com', 'bob@alpha.com', 'carol@alpha.com'],
+            enabled: true,
+            severityFilter: 'high',
+            hourlyRateLimit: 10,
+          }),
+        });
 
-      const sent = await emailAlertService.sendAlert(orgA, {
-        organizationId: orgA,
-        agent: 'sql-copilot',
-        action: 'SELECT * FROM secrets;',
-        status: 'blocked',
-        risk: 'high',
-        reason: 'Unauthorized database read',
-      });
+        const sent = await emailAlertService.sendAlert(orgA, {
+          organizationId: orgA,
+          agent: 'sql-copilot',
+          action: 'SELECT * FROM secrets;',
+          status: 'blocked',
+          risk: 'high',
+          reason: 'Unauthorized database read',
+        });
 
-      expect(sent).toBe(true);
-      expect(mockSendMail).toHaveBeenCalledTimes(1);
-      const call = mockSendMail.mock.calls[0][0];
-      expect(call.bcc).toEqual(['alice@alpha.com', 'bob@alpha.com', 'carol@alpha.com']);
-      expect(call.to).toBeUndefined();
+        expect(sent).toBe(true);
+        expect(mockSendMail).toHaveBeenCalledTimes(3);
+
+        const calls = mockSendMail.mock.calls.map(c => c[0]);
+        expect(calls.map(c => c.to)).toEqual([
+          ['alice@alpha.com'],
+          ['bob@alpha.com'],
+          ['carol@alpha.com'],
+        ]);
+        for (const call of calls) {
+          expect(call.to).toHaveLength(1);
+          expect(call.bcc).toBeUndefined();
+        }
+
+        const loggedText = infoSpy.mock.calls.map(args => args.join(' ')).join('\n');
+        expect(loggedText).toContain('sent 3 of 3');
+        expect(loggedText).toContain('a***@alpha.com');
+        expect(loggedText).toContain('b***@alpha.com');
+        expect(loggedText).toContain('c***@alpha.com');
+        expect(loggedText).not.toContain('alice@alpha.com');
+        expect(loggedText).not.toContain('bob@alpha.com');
+        expect(loggedText).not.toContain('carol@alpha.com');
+      } finally {
+        infoSpy.mockRestore();
+      }
     });
 
-    it('dispatches single-recipient alerts using To header directly', async () => {
+    it('dispatches single-recipient alerts with exactly one `to` and no `bcc`', async () => {
       (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
         id: orgA,
         name: 'Alpha Corp',
@@ -921,7 +947,7 @@ describe('Day 11: Per-Organization Email Alert Channel', () => {
       expect(call.bcc).toBeUndefined();
     });
 
-    it('dispatches multi-recipient test emails using BCC', async () => {
+    it('dispatches one separate email per recipient in sendTestEmail with exactly one `to` and no `bcc`', async () => {
       (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
         id: orgA,
         name: 'Alpha Corp',
@@ -935,10 +961,191 @@ describe('Day 11: Per-Organization Email Alert Channel', () => {
 
       const res = await emailAlertService.sendTestEmail(orgA);
       expect(res.success).toBe(true);
-      expect(mockSendMail).toHaveBeenCalledTimes(1);
-      const call = mockSendMail.mock.calls[0][0];
-      expect(call.bcc).toEqual(['test1@alpha.com', 'test2@alpha.com']);
-      expect(call.to).toBeUndefined();
+      expect(res.message).toContain('sent 2 of 2');
+      expect(res.recipients).toEqual(['t***@alpha.com', 't***@alpha.com']);
+      expect(mockSendMail).toHaveBeenCalledTimes(2);
+      const calls = mockSendMail.mock.calls.map(c => c[0]);
+      expect(calls[0].to).toEqual(['test1@alpha.com']);
+      expect(calls[0].bcc).toBeUndefined();
+      expect(calls[1].to).toEqual(['test2@alpha.com']);
+      expect(calls[1].bcc).toBeUndefined();
+    });
+
+    it('one failing recipient does not block remaining recipients in sendAlert (Promise.allSettled)', async () => {
+      const infoSpy = jest.spyOn(logger, 'info').mockImplementation((() => logger) as any);
+      const errorSpy = jest.spyOn(logger, 'error').mockImplementation((() => logger) as any);
+      try {
+        (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+          id: orgA,
+          name: 'Alpha Corp',
+          alertEmail: JSON.stringify({
+            recipients: ['alice@alpha.com', 'failing@alpha.com', 'carol@alpha.com'],
+            enabled: true,
+            severityFilter: 'high',
+            hourlyRateLimit: 10,
+          }),
+        });
+
+        mockSendMail.mockImplementation((opts: any) => {
+          if (opts.to?.[0] === 'failing@alpha.com') {
+            return Promise.reject(new Error('550 Mailbox unavailable for failing@alpha.com'));
+          }
+          return Promise.resolve({ messageId: `msg-${opts.to?.[0]}` });
+        });
+
+        const sent = await emailAlertService.sendAlert(orgA, {
+          organizationId: orgA,
+          agent: 'sql-copilot',
+          action: 'DELETE FROM users;',
+          status: 'blocked',
+          risk: 'high',
+          reason: 'Destructive write',
+        });
+
+        expect(sent).toBe(true);
+        expect(mockSendMail).toHaveBeenCalledTimes(3);
+        const infoText = infoSpy.mock.calls.map(args => args.join(' ')).join('\n');
+        expect(infoText).toContain('sent 2 of 3');
+        expect(infoText).toContain('a***@alpha.com');
+        expect(infoText).toContain('c***@alpha.com');
+        expect(infoText).not.toContain('alice@alpha.com');
+        expect(infoText).not.toContain('carol@alpha.com');
+        expect(errorSpy).toHaveBeenCalled();
+      } finally {
+        infoSpy.mockRestore();
+        errorSpy.mockRestore();
+      }
+    });
+
+    it('one failing recipient does not block remaining recipients in sendTestEmail (Promise.allSettled)', async () => {
+      const errorSpy = jest.spyOn(logger, 'error').mockImplementation((() => logger) as any);
+      try {
+        (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+          id: orgA,
+          name: 'Alpha Corp',
+          alertEmail: JSON.stringify({
+            recipients: ['good1@alpha.com', 'bad@alpha.com', 'good2@alpha.com'],
+            enabled: true,
+            severityFilter: 'high',
+            hourlyRateLimit: 10,
+          }),
+        });
+
+        mockSendMail.mockImplementation((opts: any) => {
+          if (opts.to?.[0] === 'bad@alpha.com') {
+            return Promise.reject(new Error('550 Rejected recipient bad@alpha.com'));
+          }
+          return Promise.resolve({ messageId: `msg-${opts.to?.[0]}` });
+        });
+
+        const res = await emailAlertService.sendTestEmail(orgA);
+        expect(res.success).toBe(true);
+        expect(res.message).toContain('sent 2 of 3');
+        expect(res.recipients).toEqual(['g***@alpha.com', 'g***@alpha.com']);
+        expect(mockSendMail).toHaveBeenCalledTimes(3);
+      } finally {
+        errorSpy.mockRestore();
+      }
+    });
+
+    it('masks email addresses in err.message, err.stack, and err.response before logging', async () => {
+      const errorSpy = jest.spyOn(logger, 'error').mockImplementation((() => logger) as any);
+      try {
+        (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+          id: orgA,
+          name: 'Alpha Corp',
+          alertEmail: JSON.stringify({
+            recipients: ['victim@alpha.com'],
+            enabled: true,
+            severityFilter: 'high',
+            hourlyRateLimit: 10,
+          }),
+        });
+
+        const smtpErr: any = new Error(
+          'Message failed: 550 You can only send testing emails to your own email address (owner@alpha.com).'
+        );
+        smtpErr.code = 'EMESSAGE';
+        smtpErr.responseCode = 550;
+        smtpErr.command = 'DATA';
+        smtpErr.response =
+          '550 You can only send testing emails to your own email address (owner@alpha.com). Recipient victim@alpha.com rejected.';
+        smtpErr.stack =
+          'Error: Message failed: 550 (owner@alpha.com) rejected victim@alpha.com\n    at SMTPConnection._formatError (smtp.js:10:5)';
+
+        mockSendMail.mockRejectedValueOnce(smtpErr);
+
+        const sent = await emailAlertService.sendAlert(orgA, {
+          organizationId: orgA,
+          agent: 'agent-1',
+          action: 'exfil',
+          status: 'blocked',
+          risk: 'high',
+          reason: 'Policy block',
+        });
+
+        expect(sent).toBe(false);
+        expect(errorSpy).toHaveBeenCalled();
+
+        const serializedLogs = JSON.stringify(errorSpy.mock.calls);
+        expect(serializedLogs).not.toContain('owner@alpha.com');
+        expect(serializedLogs).not.toContain('victim@alpha.com');
+        expect(serializedLogs).toContain('o***@alpha.com');
+        expect(serializedLogs).toContain('v***@alpha.com');
+
+        // Also verify sanitizeEmailError directly preserves surrounding message while masking all fields
+        const sanitized = sanitizeEmailError(smtpErr);
+        expect(sanitized.message).toContain('550 You can only send testing emails');
+        expect(sanitized.message).toContain('o***@alpha.com');
+        expect(sanitized.message).not.toContain('owner@alpha.com');
+        expect(sanitized.response).toContain('o***@alpha.com');
+        expect(sanitized.response).toContain('v***@alpha.com');
+        expect(sanitized.response).not.toContain('owner@alpha.com');
+        expect(sanitized.response).not.toContain('victim@alpha.com');
+        expect(sanitized.stack).toContain('o***@alpha.com');
+        expect(sanitized.stack).toContain('v***@alpha.com');
+        expect(sanitized.stack).not.toContain('owner@alpha.com');
+        expect(sanitized.stack).not.toContain('victim@alpha.com');
+      } finally {
+        errorSpy.mockRestore();
+      }
+    });
+
+    it('counts hourly rate limit per alert rather than per recipient', async () => {
+      (prisma.organizations.findUnique as jest.Mock).mockResolvedValue({
+        id: orgA,
+        name: 'Alpha Corp',
+        alertEmail: JSON.stringify({
+          recipients: ['one@alpha.com', 'two@alpha.com', 'three@alpha.com'],
+          enabled: true,
+          severityFilter: 'high',
+          hourlyRateLimit: 2,
+        }),
+      });
+
+      const event: DecisionAlertEvent = {
+        organizationId: orgA,
+        agent: 'sql-copilot',
+        action: 'DROP TABLE audit;',
+        status: 'blocked',
+        risk: 'high',
+        reason: 'Destructive SQL',
+      };
+
+      // Alert #1 -> 3 per-recipient emails, counts as 1 alert toward cap of 2
+      const first = await emailAlertService.sendAlert(orgA, event);
+      expect(first).toBe(true);
+      expect(mockSendMail).toHaveBeenCalledTimes(3);
+
+      // Alert #2 -> 3 more per-recipient emails (total 6), counts as 2nd alert toward cap of 2
+      const second = await emailAlertService.sendAlert(orgA, event);
+      expect(second).toBe(true);
+      expect(mockSendMail).toHaveBeenCalledTimes(6);
+
+      // Alert #3 -> suppressed because hourly cap of 2 alerts is reached
+      const third = await emailAlertService.sendAlert(orgA, event);
+      expect(third).toBe(false);
+      expect(mockSendMail).toHaveBeenCalledTimes(6);
     });
 
     it('falls back to active organization admin user when alertEmail is not configured', async () => {
@@ -1053,9 +1260,12 @@ describe('Day 11: Per-Organization Email Alert Channel', () => {
 
       const res = await emailAlertService.sendTestEmail(orgA, 'first@alpha.com, second@alpha.com');
       expect(res.success).toBe(true);
-      expect(mockSendMail).toHaveBeenCalledTimes(1);
-      const call = mockSendMail.mock.calls[0][0];
-      expect(call.bcc).toEqual(['first@alpha.com', 'second@alpha.com']);
+      expect(mockSendMail).toHaveBeenCalledTimes(2);
+      const calls = mockSendMail.mock.calls.map(c => c[0]);
+      expect(calls[0].to).toEqual(['first@alpha.com']);
+      expect(calls[0].bcc).toBeUndefined();
+      expect(calls[1].to).toEqual(['second@alpha.com']);
+      expect(calls[1].bcc).toBeUndefined();
     });
 
     it('parses legacy comma-separated plain strings and JSON variations in getConfig', async () => {
