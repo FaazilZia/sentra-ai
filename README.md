@@ -232,6 +232,8 @@ npx prisma migrate deploy
 npx prisma db seed
 ```
 
+> **Admin Seed Password:** Set `SEED_ADMIN_PASSWORD` in your environment before running `npx prisma db seed` to specify the seeded `admin@sentra.ai` password. If omitted during local development, `prisma/seed.ts` generates a random per-run password and prints it once to your local console (never in CI logs).
+
 **Post-migration:** Apply RLS policies by running the SQL in `backend/prisma/migrations/rls_policies/migration.sql` in your database. All 9 core tables must have `rowsecurity = true`.
 
 Expected seed counts per organization:

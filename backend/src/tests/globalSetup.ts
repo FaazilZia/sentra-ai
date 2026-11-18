@@ -43,6 +43,11 @@ export default async function globalSetup(): Promise<void> {
   }
 
   try {
+    const ciTestPassword = process.env.CI_TEST_PASSWORD || process.env.TEST_ADMIN_PASSWORD;
+    if (!ciTestPassword) {
+      throw new Error('CI_TEST_PASSWORD or TEST_ADMIN_PASSWORD environment variable is required for globalSetup');
+    }
+
     console.log(`[globalSetup] Registering CI admin user...`);
     // Register test admin (ignore any error if already exists)
     await fetch(`${BASE_URL}/api/v1/auth/register`, {
@@ -50,7 +55,7 @@ export default async function globalSetup(): Promise<void> {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email: 'admin@sentra.ai',
-        password: process.env.CI_TEST_PASSWORD || 'Sentra@Admin123', // NOSONAR - test credential
+        password: ciTestPassword,
         fullName: 'CI Admin',
         organizationName: 'sentra-ci-org'
       })
@@ -60,7 +65,7 @@ export default async function globalSetup(): Promise<void> {
     const loginRes = await fetch(`${BASE_URL}/api/v1/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'admin@sentra.ai', password: process.env.CI_TEST_PASSWORD || 'Sentra@Admin123' }) // NOSONAR
+      body: JSON.stringify({ email: 'admin@sentra.ai', password: ciTestPassword })
     });
 
     const loginJson: any = await loginRes.json();
