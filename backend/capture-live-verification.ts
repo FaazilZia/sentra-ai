@@ -3,7 +3,10 @@ import fs from 'fs';
 import path from 'path';
 
 const EMAIL = process.env.DASHBOARD_TEST_EMAIL || 'demo.admin@sentra.ai';
-const PASSWORD = process.env.DASHBOARD_TEST_PASSWORD || 'DemoAdminSecurePassword123!';
+const PASSWORD = process.env.DASHBOARD_TEST_PASSWORD;
+if (!PASSWORD) {
+  throw new Error('DASHBOARD_TEST_PASSWORD environment variable is required to run capture-live-verification');
+}
 const DASHBOARD_URL = (process.env.DASHBOARD_URL || 'https://sentraatech.info').replace(/\/$/, '');
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

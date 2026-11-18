@@ -68,6 +68,10 @@ The test suite automatically defaults to:
 - `JWT_SECRET`: `test-secret-for-ci`
 - `JWT_REFRESH_SECRET`: `test-refresh-secret-for-ci`
 
+For seeding and admin Playwright / accessibility E2E tests:
+- `SEED_ADMIN_PASSWORD`: Optional. Sets the password for the seeded `admin@sentra.ai` account. If unset locally, `prisma/seed.ts` generates a random password per run and prints it once to your local console (never in CI).
+- `TEST_ADMIN_PASSWORD`: Required by `frontend/e2e/accessibility.spec.ts` and admin Playwright specs; set it to match `SEED_ADMIN_PASSWORD` when running those suites locally.
+
 ---
 
 ## Running Specific Test Suites

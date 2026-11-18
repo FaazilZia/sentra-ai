@@ -17,7 +17,7 @@
  * ------------------------------------------------------------------------------
  * cd backend
  * DEMO_ACCOUNT_EMAIL="demo.admin@sentra.ai" \
- * DEMO_ACCOUNT_PASSWORD="DemoAdminSecurePassword123!" \
+ * DEMO_ACCOUNT_PASSWORD="<your-demo-password>" \
  * npx ts-node src/scripts/seed-demo-account.ts
  * 
  * OR via npm script:
@@ -47,7 +47,7 @@ async function seedDemoAccount() {
     console.error('Please specify both DEMO_ACCOUNT_EMAIL and DEMO_ACCOUNT_PASSWORD.\n');
     console.error('Example command:');
     console.error(
-      '  DEMO_ACCOUNT_EMAIL="demo@sentra.ai" DEMO_ACCOUNT_PASSWORD="SecurePass123!" npx ts-node src/scripts/seed-demo-account.ts\n'
+      '  DEMO_ACCOUNT_EMAIL="demo@sentra.ai" DEMO_ACCOUNT_PASSWORD="<your-demo-password>" npx ts-node src/scripts/seed-demo-account.ts\n'
     );
     process.exit(1);
   }

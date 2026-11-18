@@ -8,6 +8,7 @@ import { seedGdpr } from '../src/services/gdprSeed.service';
 import { seedHipaa } from '../src/services/hipaaSeed.service';
 import { seedPci } from '../src/services/pciSeed.service';
 import { seedDpdp } from '../src/services/dpdpSeed.service';
+import { resolveSeedAdminPassword } from '../src/utils/seedPassword';
 
 dotenv.config();
 
@@ -49,7 +50,8 @@ async function main() {
   console.log(`✅ Company: ${company.name} (${company.id})`);
 
   // 2. Ensure admin user
-  const seedPassword = process.env.SEED_ADMIN_PASSWORD || process.env.TEST_ADMIN_PASSWORD || 'Sentra@RotatedAdmin2026!';
+  const { password: seedPassword, source: passwordSource, shouldLogOnce } =
+    resolveSeedAdminPassword(process.env);
   const passwordHash = await bcrypt.hash(seedPassword, 12);
   const user = await prisma.users.upsert({
     where: { email: 'admin@sentra.ai' },
@@ -66,7 +68,15 @@ async function main() {
       organizationId: DEFAULT_ORGANIZATION_ID,
     },
   });
-  console.log(`✅ Admin user: ${user.email}`);
+  if (passwordSource === 'env') {
+    console.log(`✅ Admin user: ${user.email} (password configured via environment)`);
+  } else if (shouldLogOnce) {
+    console.log(`✅ Admin user: ${user.email}`);
+    console.log(`   Generated local admin password (shown once): ${seedPassword}`);
+    console.log('   Tip: set SEED_ADMIN_PASSWORD to control this password.');
+  } else {
+    console.log(`✅ Admin user: ${user.email} (ephemeral password generated; set SEED_ADMIN_PASSWORD to control)`);
+  }
 
   // 3. AI Governance Policies
   console.log('🤖 Seeding AI Governance Policies...');
