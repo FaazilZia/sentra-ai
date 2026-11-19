@@ -56,6 +56,7 @@ module.exports = {
     'src/controllers/sso.controller.ts',
     'src/routes/sso.routes.ts',
     'src/services/emailAlert.service.ts',
+    'src/utils/seedPassword.ts',
     'src/controllers/apiKey.controller.ts',
     'src/services/nistEvidence.service.ts',
   ],

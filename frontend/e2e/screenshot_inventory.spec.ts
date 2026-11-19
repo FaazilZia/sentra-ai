@@ -3,12 +3,15 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const SCREENSHOT_DIR = '/Users/mohammadfaazilzia/Desktop/Sentra AI/screenshots';
-const DEMO_EMAIL = 'demo.admin@sentra.ai';
-const DEMO_PASS = 'DemoAdminSecurePassword123!';
+const DEMO_EMAIL = process.env.DEMO_ADMIN_EMAIL || 'demo.admin@sentra.ai';
+const DEMO_PASS = process.env.DEMO_ADMIN_PASSWORD || process.env.DASHBOARD_TEST_PASSWORD || '';
 
 test.describe.configure({ mode: 'serial' });
 
 test('Capture real visual screenshots of all 9 authenticated sections without onboarding modal', async ({ page }) => {
+  if (!DEMO_PASS) {
+    throw new Error('DEMO_ADMIN_PASSWORD or DASHBOARD_TEST_PASSWORD environment variable is required');
+  }
   test.setTimeout(180000);
   
   fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });

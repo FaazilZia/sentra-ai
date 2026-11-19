@@ -35,7 +35,7 @@ async function main() {
     },
   });
 
-  console.log(`✅ Admin user password successfully set to: ${TARGET_PASSWORD}`);
+  console.log('✅ Admin user password successfully updated.');
   console.log(`   User Email: ${user.email}`);
 
   await prisma.$disconnect();
