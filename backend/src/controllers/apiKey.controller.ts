@@ -6,6 +6,8 @@ import { resolveOrganizationId } from '../utils/company';
 import { asyncHandler, sendSuccess, sendError } from '../utils/controllerHelpers';
 
 import { parseCursorPagination } from '../utils/pagination';
+import { getRedisClient } from '../config/redis';
+import logger from '../utils/logger';
 
 export const listApiKeys = asyncHandler(async (req: any, res: Response) => {
   let limit: number;
@@ -100,6 +102,18 @@ export const deleteApiKey = asyncHandler(async (req: any, res: Response) => {
     where: { id: keyId },
     data: { is_active: false },
   });
+
+  // Evict cached API key token from Redis so revoked keys stop working immediately
+  if (existing.key_prefix) {
+    try {
+      const redis = getRedisClient();
+      if (redis) {
+        await redis.del(`ak:${existing.key_prefix}`);
+      }
+    } catch (redisErr: any) {
+      logger.warn(`Failed to delete API key cache for prefix ak:${existing.key_prefix}:`, redisErr);
+    }
+  }
 
   return sendSuccess(res, undefined, 200, 'API key revoked');
 });

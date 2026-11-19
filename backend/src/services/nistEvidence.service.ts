@@ -5,17 +5,39 @@ import { NistAiRmfService } from './nistAiRmf.service';
 
 export class NistEvidenceService {
   /**
-   * Helper to get active signing key and version.
+   * Helper to parse versioned signing keys map.
    */
-  private static getSigningKey(version: string): string {
-    const keysJson = process.env.GOVERNANCE_SIGNING_KEYS || process.env.GOVERNANCE_SIGNING_KEYS_FALLBACK || '{"v1": ""}';
+  private static parseSigningKeys(): Record<string, string> {
+    const keysJson = process.env.GOVERNANCE_SIGNING_KEYS || process.env.GOVERNANCE_SIGNING_KEYS_FALLBACK;
+    if (!keysJson) {
+      return {};
+    }
     try {
-      const keys = JSON.parse(keysJson);
-      return keys[version] || keys['v1'] || process.env.GOVERNANCE_SIGNING_KEYS_FALLBACK_VAL || '';
+      const parsed = JSON.parse(keysJson);
+      if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+        return parsed;
+      }
+      return {};
     } catch (err) {
       logger.error('Failed to parse GOVERNANCE_SIGNING_KEYS', err);
-      return process.env.GOVERNANCE_SIGNING_KEYS_FALLBACK_VAL || '';
+      return {};
     }
+  }
+
+  /**
+   * Helper to get signing key by version. Returns null if unknown, missing, or empty.
+   * Strict: never silently falls back to other versions or empty strings.
+   */
+  private static getSigningKey(version: string): string | null {
+    if (!version) return null;
+    const keys = this.parseSigningKeys();
+    if (Object.prototype.hasOwnProperty.call(keys, version)) {
+      const key = keys[version];
+      if (typeof key === 'string' && key.trim().length > 0) {
+        return key;
+      }
+    }
+    return null;
   }
 
   private static getActiveKeyVersion(): string {
@@ -103,6 +125,9 @@ export class NistEvidenceService {
     // 3. Construct cryptographic verification signature (HMAC-SHA256)
     const keyVersion = this.getActiveKeyVersion();
     const secretKey = this.getSigningKey(keyVersion);
+    if (!secretKey) {
+      throw new Error(`Cannot sign evidence: active signing key for version "${keyVersion}" is missing or empty`);
+    }
     const createdTimeStr = now.toISOString();
 
     const checksumContent = `${organizationId}_NIST_AI_RMF_${controlCode}_${params.sourceReference}_${createdTimeStr}`;
@@ -187,7 +212,12 @@ export class NistEvidenceService {
       }
 
       // HMAC Verification using versioned key rotation map
+      // Strict: unknown key version or missing/empty key fails verification with no silent fallback
       const secretKey = this.getSigningKey(ev.signing_key_version);
+      if (!secretKey) {
+        corruptedIds.push(ev.id);
+        continue;
+      }
       const expectedSignature = crypto.createHmac('sha256', secretKey).update(ev.checksum).digest('hex');
 
       if (ev.evidence_signature !== expectedSignature) {
@@ -217,6 +247,9 @@ export class NistEvidenceService {
       for (const map of mappings) {
         const keyVersion = this.getActiveKeyVersion();
         const secretKey = this.getSigningKey(keyVersion);
+        if (!secretKey) {
+          throw new Error(`Cannot sign propagated evidence: active signing key for version "${keyVersion}" is missing or empty`);
+        }
         const now = new Date();
         const createdTimeStr = now.toISOString();
 

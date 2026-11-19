@@ -1,6 +1,21 @@
 import { createApiKey, listApiKeys, deleteApiKey } from '../controllers/apiKey.controller';
 import prisma from '../config/db';
 import * as companyUtil from '../utils/company';
+import { getRedisClient } from '../config/redis';
+
+const mockRedis = {
+  del: jest.fn().mockResolvedValue(1),
+};
+
+jest.mock('../config/redis', () => ({
+  getRedisClient: jest.fn(() => mockRedis),
+}));
+
+jest.mock('../utils/logger', () => ({
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+}));
 
 jest.mock('../config/db', () => ({
   __esModule: true,
@@ -89,6 +104,46 @@ describe('ApiKey Controller Unit Tests', () => {
   });
 
   describe('listApiKeys', () => {
+    it('returns 400 if pagination parsing fails (e.g. limit > 200)', async () => {
+      req.query = { limit: '999' };
+      await listApiKeys(req, res, jest.fn());
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ success: false, message: 'limit must be ≤ 200' })
+      );
+    });
+
+    it('returns empty list if organizationId is not resolved', async () => {
+      (companyUtil.resolveOrganizationId as jest.Mock).mockResolvedValueOnce(null);
+      await listApiKeys(req, res, jest.fn());
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: true,
+          data: { data: [], nextCursor: null, total: 0 },
+        })
+      );
+    });
+
+    it('returns paginated records with nextCursor when hasMore is true', async () => {
+      req.query = { limit: '2' };
+      (prisma.api_keys.count as jest.Mock).mockResolvedValue(3);
+      (prisma.api_keys.findMany as jest.Mock).mockResolvedValue([
+        { id: 'key-1', name: 'Key 1', key_prefix: 'pref1', created_at: new Date() },
+        { id: 'key-2', name: 'Key 2', key_prefix: 'pref2', created_at: new Date() },
+        { id: 'key-3', name: 'Key 3', key_prefix: 'pref3', created_at: new Date() },
+      ]);
+
+      await listApiKeys(req, res, jest.fn());
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      const json = res.json.mock.calls[0][0];
+      expect(json.data.data.length).toBe(2);
+      expect(json.data.nextCursor).toBe('key-2');
+    });
+
     it('returns masked key records without full key or key_hash', async () => {
       (prisma.api_keys.count as jest.Mock).mockResolvedValue(2);
       (prisma.api_keys.findMany as jest.Mock).mockResolvedValue([
@@ -125,11 +180,33 @@ describe('ApiKey Controller Unit Tests', () => {
   });
 
   describe('deleteApiKey', () => {
-    it('soft deletes active api key', async () => {
+    it('returns 400 when organizationId is missing', async () => {
+      (companyUtil.resolveOrganizationId as jest.Mock).mockResolvedValueOnce(null);
+      await deleteApiKey(req, res, jest.fn());
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ success: false, message: 'Company context required' })
+      );
+    });
+
+    it('returns 404 when key is not found', async () => {
+      req.params = { keyId: 'not-found' };
+      (prisma.api_keys.findFirst as jest.Mock).mockResolvedValueOnce(null);
+      await deleteApiKey(req, res, jest.fn());
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ success: false, message: 'API key not found' })
+      );
+    });
+
+    it('soft deletes active api key and deletes ak:<prefix> from Redis cache', async () => {
       req.params = { keyId: 'key-1' };
       (prisma.api_keys.findFirst as jest.Mock).mockResolvedValue({
         id: 'key-1',
         organizationId: mockOrgId,
+        key_prefix: 'pref1234',
         is_active: true,
       });
       (prisma.api_keys.update as jest.Mock).mockResolvedValue({
@@ -144,6 +221,62 @@ describe('ApiKey Controller Unit Tests', () => {
         where: { id: 'key-1' },
         data: { is_active: false },
       });
+      expect(mockRedis.del).toHaveBeenCalledWith('ak:pref1234');
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true, message: 'API key revoked' })
+      );
+    });
+
+    it('soft deletes active api key even if Redis throws an error', async () => {
+      req.params = { keyId: 'key-2' };
+      mockRedis.del.mockRejectedValueOnce(new Error('Redis connection refused'));
+      (prisma.api_keys.findFirst as jest.Mock).mockResolvedValue({
+        id: 'key-2',
+        organizationId: mockOrgId,
+        key_prefix: 'pref5678',
+        is_active: true,
+      });
+      (prisma.api_keys.update as jest.Mock).mockResolvedValue({
+        id: 'key-2',
+        is_active: false,
+      });
+
+      await deleteApiKey(req, res, jest.fn());
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(prisma.api_keys.update).toHaveBeenCalledWith({
+        where: { id: 'key-2' },
+        data: { is_active: false },
+      });
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true, message: 'API key revoked' })
+      );
+    });
+
+    it('soft deletes active api key even when Redis client is null', async () => {
+      req.params = { keyId: 'key-3' };
+      (getRedisClient as jest.Mock).mockReturnValueOnce(null);
+      (prisma.api_keys.findFirst as jest.Mock).mockResolvedValue({
+        id: 'key-3',
+        organizationId: mockOrgId,
+        key_prefix: 'pref9999',
+        is_active: true,
+      });
+      (prisma.api_keys.update as jest.Mock).mockResolvedValue({
+        id: 'key-3',
+        is_active: false,
+      });
+
+      await deleteApiKey(req, res, jest.fn());
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(prisma.api_keys.update).toHaveBeenCalledWith({
+        where: { id: 'key-3' },
+        data: { is_active: false },
+      });
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true, message: 'API key revoked' })
+      );
     });
   });
 });
