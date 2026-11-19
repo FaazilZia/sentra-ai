@@ -16,6 +16,8 @@ describe('Production Startup Environment Validator', () => {
     REDIS_URL: 'rediss://default:StrongRedisPass123!@redis.production.sentra.internal:6380',
     METRICS_SECRET_TOKEN: 'metrics_super_secure_token_abcdef123456',
     FRONTEND_URL: 'https://app.sentra.ai',
+    BACKEND_URL: 'https://api.sentra.ai',
+    GOVERNANCE_SIGNING_KEYS: JSON.stringify({ v1: 'a_very_strong_production_governance_signing_key_12345!' }),
     NODE_TLS_REJECT_UNAUTHORIZED: '1',
     ALLOW_CUSTOM_DB_PORTS: 'false',
   });
@@ -173,6 +175,107 @@ describe('Production Startup Environment Validator', () => {
     expect(result.valid).toBe(false);
     expect(result.errors.some(e => e.includes('ALLOW_CUSTOM_DB_PORTS is set to true'))).toBe(true);
     expect(() => assertStartupEnv(env)).toThrow(/ALLOW_CUSTOM_DB_PORTS/);
+  });
+
+  // ─── Rule 15: GOVERNANCE_SIGNING_KEYS ─────────────────────────────────────
+  it('fails fast when GOVERNANCE_SIGNING_KEYS is missing or empty', () => {
+    const envMissing = getValidProductionEnv();
+    delete envMissing.GOVERNANCE_SIGNING_KEYS;
+    const resMissing = validateProductionEnv(envMissing);
+    expect(resMissing.valid).toBe(false);
+    expect(resMissing.errors.some(e => e.includes('GOVERNANCE_SIGNING_KEYS is missing'))).toBe(true);
+    expect(() => assertStartupEnv(envMissing)).toThrow(/GOVERNANCE_SIGNING_KEYS is missing/);
+
+    const envEmpty = getValidProductionEnv();
+    envEmpty.GOVERNANCE_SIGNING_KEYS = '   ';
+    const resEmpty = validateProductionEnv(envEmpty);
+    expect(resEmpty.valid).toBe(false);
+    expect(resEmpty.errors.some(e => e.includes('GOVERNANCE_SIGNING_KEYS is missing'))).toBe(true);
+  });
+
+  it('fails fast when GOVERNANCE_SIGNING_KEYS is not valid JSON or not an object', () => {
+    const envBadJson = getValidProductionEnv();
+    envBadJson.GOVERNANCE_SIGNING_KEYS = '{invalid_json:';
+    const resBadJson = validateProductionEnv(envBadJson);
+    expect(resBadJson.valid).toBe(false);
+    expect(resBadJson.errors.some(e => e.includes('GOVERNANCE_SIGNING_KEYS contains invalid JSON'))).toBe(true);
+
+    const envArray = getValidProductionEnv();
+    envArray.GOVERNANCE_SIGNING_KEYS = '["not-an-object"]';
+    const resArray = validateProductionEnv(envArray);
+    expect(resArray.valid).toBe(false);
+    expect(resArray.errors.some(e => e.includes('GOVERNANCE_SIGNING_KEYS is invalid'))).toBe(true);
+  });
+
+  it('fails fast when active signing key is missing or empty', () => {
+    const envNoActive = getValidProductionEnv();
+    envNoActive.GOVERNANCE_SIGNING_KEYS = JSON.stringify({ v2: 'a_very_strong_production_governance_signing_key_12345!' });
+    // Default active version is v1
+    const resNoActive = validateProductionEnv(envNoActive);
+    expect(resNoActive.valid).toBe(false);
+    expect(resNoActive.errors.some(e => e.includes('active key for version "v1" is missing or empty'))).toBe(true);
+
+    const envEmptyKey = getValidProductionEnv();
+    envEmptyKey.GOVERNANCE_SIGNING_KEYS = JSON.stringify({ v1: '' });
+    const resEmptyKey = validateProductionEnv(envEmptyKey);
+    expect(resEmptyKey.valid).toBe(false);
+    expect(resEmptyKey.errors.some(e => e.includes('active key for version "v1" is missing or empty'))).toBe(true);
+  });
+
+  it('fails fast when active signing key is weak (< 32 chars or placeholder)', () => {
+    const envShort = getValidProductionEnv();
+    envShort.GOVERNANCE_SIGNING_KEYS = JSON.stringify({ v1: 'short-key' });
+    const resShort = validateProductionEnv(envShort);
+    expect(resShort.valid).toBe(false);
+    expect(resShort.errors.some(e => e.includes('Active governance signing key ("v1") is weak'))).toBe(true);
+
+    const envPlaceholder = getValidProductionEnv();
+    envPlaceholder.GOVERNANCE_SIGNING_KEYS = JSON.stringify({ v1: 'placeholder-key-for-test-purposes-1234' });
+    const resPlaceholder = validateProductionEnv(envPlaceholder);
+    expect(resPlaceholder.valid).toBe(false);
+    expect(resPlaceholder.errors.some(e => e.includes('Active governance signing key ("v1") is weak'))).toBe(true);
+  });
+
+  it('supports custom GOVERNANCE_SIGNING_KEY_VERSION if specified', () => {
+    const env = getValidProductionEnv();
+    env.GOVERNANCE_SIGNING_KEY_VERSION = 'v2';
+    env.GOVERNANCE_SIGNING_KEYS = JSON.stringify({
+      v1: 'legacy_old_key_that_can_be_anything',
+      v2: 'a_very_strong_production_v2_governance_key_12345!',
+    });
+    const result = validateProductionEnv(env);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  // ─── Rule 16: BACKEND_URL ─────────────────────────────────────────────────
+  it('fails fast when BACKEND_URL is missing or empty in production', () => {
+    const envMissing = getValidProductionEnv();
+    delete envMissing.BACKEND_URL;
+    const resMissing = validateProductionEnv(envMissing);
+    expect(resMissing.valid).toBe(false);
+    expect(resMissing.errors.some(e => e.includes('BACKEND_URL is missing'))).toBe(true);
+    expect(() => assertStartupEnv(envMissing)).toThrow(/BACKEND_URL is missing/);
+
+    const envEmpty = getValidProductionEnv();
+    envEmpty.BACKEND_URL = '   ';
+    const resEmpty = validateProductionEnv(envEmpty);
+    expect(resEmpty.valid).toBe(false);
+    expect(resEmpty.errors.some(e => e.includes('BACKEND_URL is missing'))).toBe(true);
+  });
+
+  it('fails fast when BACKEND_URL is invalid or uses a placeholder in production', () => {
+    const envInvalid = getValidProductionEnv();
+    envInvalid.BACKEND_URL = 'ftp://api.sentra.ai';
+    const resInvalid = validateProductionEnv(envInvalid);
+    expect(resInvalid.valid).toBe(false);
+    expect(resInvalid.errors.some(e => e.includes('BACKEND_URL is invalid'))).toBe(true);
+
+    const envPlaceholder = getValidProductionEnv();
+    envPlaceholder.BACKEND_URL = 'https://example.com/api';
+    const resPlaceholder = validateProductionEnv(envPlaceholder);
+    expect(resPlaceholder.valid).toBe(false);
+    expect(resPlaceholder.errors.some(e => e.includes('BACKEND_URL is invalid'))).toBe(true);
   });
 
   // ─── Helper function checks ──────────────────────────────────────────────

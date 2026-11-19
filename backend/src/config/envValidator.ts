@@ -132,6 +132,35 @@ export function validateProductionEnv(env: NodeJS.ProcessEnv = process.env): Env
     errors.push(`METRICS_SECRET_TOKEN is weak. It must be at least ${MIN_METRICS_TOKEN_LENGTH} characters and not a known placeholder.`);
   }
 
+  // GOVERNANCE_SIGNING_KEYS
+  const activeKeyVersion = env.GOVERNANCE_SIGNING_KEY_VERSION?.trim() || 'v1';
+  if (!env.GOVERNANCE_SIGNING_KEYS || env.GOVERNANCE_SIGNING_KEYS.trim() === '') {
+    errors.push('GOVERNANCE_SIGNING_KEYS is missing. A valid JSON object mapping key versions to signing keys (min 32 chars) is required.');
+  } else {
+    try {
+      const parsedKeys = JSON.parse(env.GOVERNANCE_SIGNING_KEYS);
+      if (typeof parsedKeys !== 'object' || parsedKeys === null || Array.isArray(parsedKeys)) {
+        errors.push('GOVERNANCE_SIGNING_KEYS is invalid. It must be a valid JSON object map (e.g. {"v1": "..."}).');
+      } else {
+        const activeKey = parsedKeys[activeKeyVersion];
+        if (typeof activeKey !== 'string' || activeKey.trim() === '') {
+          errors.push(`GOVERNANCE_SIGNING_KEYS active key for version "${activeKeyVersion}" is missing or empty.`);
+        } else if (isWeakSecret(activeKey, MIN_SECRET_LENGTH)) {
+          errors.push(`Active governance signing key ("${activeKeyVersion}") is weak. It must be at least ${MIN_SECRET_LENGTH} characters and not a known placeholder.`);
+        }
+      }
+    } catch (err: any) {
+      errors.push(`GOVERNANCE_SIGNING_KEYS contains invalid JSON: ${err.message || 'parse error'}.`);
+    }
+  }
+
+  // BACKEND_URL
+  if (!env.BACKEND_URL || env.BACKEND_URL.trim() === '') {
+    errors.push('BACKEND_URL is missing. A valid backend URL is required in production for SAML metadata and callback URLs.');
+  } else if (!/^https?:\/\//i.test(env.BACKEND_URL.trim()) || /placeholder|changeme|example/i.test(env.BACKEND_URL.trim())) {
+    errors.push('BACKEND_URL is invalid or uses a placeholder. It must begin with http:// or https://.');
+  }
+
   // 2. Dangerous production flags that must cause startup refusal
   // NODE_TLS_REJECT_UNAUTHORIZED === '0'
   if (env.NODE_TLS_REJECT_UNAUTHORIZED === '0') {
