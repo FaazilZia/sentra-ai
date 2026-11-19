@@ -187,13 +187,13 @@ try {
 
 ### Support Channels
 
-<SUPPORT_CONTACT>
+<real support email>
 
 ---
 
 ### Pilot Feedback Form
 
-Please complete this feedback form during your check-in or submit to: <SUPPORT_CONTACT>
+Please complete this feedback form during your check-in or submit to: <real support email>
 
 ```markdown
 ### Sentraa AI Pilot Feedback Questionnaire
@@ -237,7 +237,7 @@ Please complete this feedback form during your check-in or submit to: <SUPPORT_C
 |---|---|---|
 | **Customer Organization** | `________________________________________` | |
 | **Primary Customer Contact** | Name: `__________________` Email: `__________________` | Role: `__________________` |
-| **Sentraa Account Lead** | `<ACCOUNT_LEAD_NAME>, <ACCOUNT_LEAD_CONTACT>` | |
+| **Sentraa Account Lead** | `<your full name>, <your email or phone>` | |
 | **Kickoff Date** | `YYYY-MM-DD` | |
 | **Pilot Evaluation Period** | [ ] 14 Days &nbsp;&nbsp;&nbsp; [ ] 30 Days | End Date: `YYYY-MM-DD` |
 | **Authentication Mode** | [ ] Public Sandbox (`sentra_test_sandbox`)<br/>[ ] Dedicated Tenant API Key | Key Prefix: `sentra_` |
