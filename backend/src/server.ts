@@ -229,15 +229,6 @@ const startServer = async () => {
     if ((process.env.JWT_SECRET?.length ?? 0) < 32) {
       logger.warn('[STARTUP WARNING] JWT_SECRET is shorter than 32 characters. Consider using a stronger secret for production.');
     }
-
-    // Check S3 storage configuration
-    if (!process.env.AWS_S3_BUCKET) {
-      logger.warn('\n' + '!'.repeat(70));
-      logger.warn('[STARTUP WARNING] AWS_S3_BUCKET is not configured.');
-      logger.warn('[STARTUP WARNING] Evidence files are stored on local EPHEMERAL DISK.');
-      logger.warn('[STARTUP WARNING] Uploaded evidence will be LOST when the service restarts!');
-      logger.warn('!'.repeat(70) + '\n');
-    }
   }
 
   logger.info('[BOOT] About to bind server');

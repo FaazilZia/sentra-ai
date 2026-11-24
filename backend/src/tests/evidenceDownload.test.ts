@@ -25,6 +25,7 @@ const mockPrisma = {
   users: {
     findUnique: jest.fn(),
     findFirst: jest.fn(),
+    findMany: jest.fn(),
     update: jest.fn(),
   },
   organizations: {
@@ -78,6 +79,7 @@ describe('Evidence Download Security & Avatar Uploads', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockPrisma.jwt_blacklist.findUnique.mockResolvedValue(null);
+    mockPrisma.organizations.findUnique.mockResolvedValue({ id: OWNER_ORG_ID, is_active: true, plan: 'ENTERPRISE' });
     mockPrisma.users.findUnique.mockImplementation(({ where }: any) => {
       if (where.id === OWNER_USER_ID) {
         return Promise.resolve({
@@ -256,6 +258,293 @@ describe('Evidence Download Security & Avatar Uploads', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.data.avatarUrl).toContain('/uploads/avatars/');
+    });
+  });
+
+  describe('GET /api/v1/evidence/:id/download Controller Edge Cases', () => {
+    it('blocks path traversal and returns 404 when localPath resolves outside uploads root', async () => {
+      const spy = jest.spyOn(EvidenceService, 'getEvidenceDownload').mockResolvedValueOnce({
+        status: 200,
+        type: 'local',
+        localPath: '/etc/passwd',
+        fileName: 'passwd',
+        mimeType: 'text/plain',
+        fileSize: 100,
+      });
+
+      const response = await request(app)
+        .get('/api/v1/evidence/ev-traversal/download')
+        .set('Authorization', `Bearer ${ownerToken}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe('Evidence file not found');
+      spy.mockRestore();
+    });
+
+    it('returns 404 when resolvedPath in uploads root does not exist on disk', async () => {
+      const spy = jest.spyOn(EvidenceService, 'getEvidenceDownload').mockResolvedValueOnce({
+        status: 200,
+        type: 'local',
+        localPath: path.join(process.cwd(), 'uploads', 'nonexistent-ghost-file.pdf'),
+        fileName: 'ghost.pdf',
+        mimeType: 'application/pdf',
+        fileSize: 100,
+      });
+
+      const response = await request(app)
+        .get('/api/v1/evidence/ev-ghost/download')
+        .set('Authorization', `Bearer ${ownerToken}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe('Evidence file not found');
+      spy.mockRestore();
+    });
+
+    it('handles stream error callback in res.download with 500 status', async () => {
+      const spy = jest.spyOn(EvidenceService, 'getEvidenceDownload').mockResolvedValueOnce({
+        status: 200,
+        type: 'local',
+        localPath: testEvidenceFilePath,
+        fileName: 'test-evidence-doc.pdf',
+        mimeType: 'application/pdf',
+        fileSize: 37,
+      });
+
+      const originalDownload = (app.response as any).download;
+      (app.response as any).download = function (this: any, filePath: string, filename: string, fn: (err?: any) => void) {
+        if (fn) fn(new Error('Simulated stream IO failure'));
+      };
+
+      try {
+        const response = await request(app)
+          .get('/api/v1/evidence/ev-stream-err/download')
+          .set('Authorization', `Bearer ${ownerToken}`);
+
+        expect(response.status).toBe(500);
+        expect(response.body.message).toBe('Error downloading evidence file');
+      } finally {
+        (app.response as any).download = originalDownload;
+        spy.mockRestore();
+      }
+    });
+
+    it('returns 500 when download result type is unhandled', async () => {
+      const spy = jest.spyOn(EvidenceService, 'getEvidenceDownload').mockResolvedValueOnce({
+        status: 200,
+        type: 'unhandled_ftp_type' as any,
+        fileName: 'unhandled.pdf',
+      } as any);
+
+      const response = await request(app)
+        .get('/api/v1/evidence/ev-unhandled/download')
+        .set('Authorization', `Bearer ${ownerToken}`);
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe('Unable to process evidence download');
+      spy.mockRestore();
+    });
+
+    it('retrieves evidence details via GET /api/v1/evidence/:id', async () => {
+      mockPrisma.evidence.findFirst.mockResolvedValueOnce({
+        id: 'ev-123',
+        orgId: OWNER_ORG_ID,
+        title: 'Evidence Details',
+        fileName: 'test.pdf',
+        fileUrl: '/uploads/test.pdf',
+      });
+
+      const response = await request(app)
+        .get('/api/v1/evidence/ev-123')
+        .set('Authorization', `Bearer ${ownerToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.id).toBe('ev-123');
+    });
+
+    it('deletes evidence record via DELETE /api/v1/evidence/:id', async () => {
+      mockPrisma.evidence.findFirst.mockResolvedValueOnce({
+        id: 'ev-123',
+        fileUrl: '/uploads/test.pdf',
+      });
+      mockPrisma.evidence.delete.mockResolvedValueOnce({ id: 'ev-123' });
+
+      const response = await request(app)
+        .delete('/api/v1/evidence/ev-123')
+        .set('Authorization', `Bearer ${ownerToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+  });
+
+  describe('User Routes and Profile Management', () => {
+    it('returns 400 when uploading avatar without a file', async () => {
+      const response = await request(app)
+        .put('/api/v1/user/me/avatar')
+        .set('Authorization', `Bearer ${ownerToken}`);
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('No file uploaded');
+    });
+
+    it('lists active users in organization via GET /api/v1/users', async () => {
+      mockPrisma.users.findMany.mockResolvedValueOnce([
+        { id: OWNER_USER_ID, full_name: 'Owner User', email: 'owner@sentra.ai', role: 'ADMIN', avatarUrl: null, jobTitle: 'Lead' }
+      ]);
+
+      const response = await request(app)
+        .get('/api/v1/users')
+        .set('Authorization', `Bearer ${ownerToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toHaveLength(1);
+    });
+
+    it('retrieves user profile via GET /api/v1/user/me', async () => {
+      const response = await request(app)
+        .get('/api/v1/user/me')
+        .set('Authorization', `Bearer ${ownerToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+
+    it('updates user profile via PATCH /api/v1/user/me', async () => {
+      mockPrisma.users.update.mockResolvedValueOnce({
+        id: OWNER_USER_ID,
+        email: 'owner@sentra.ai',
+        full_name: 'Updated Name',
+        jobTitle: 'VP Security',
+        avatarUrl: null,
+      });
+
+      const response = await request(app)
+        .patch('/api/v1/user/me')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ fullName: 'Updated Name', jobTitle: 'VP Security' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.fullName).toBe('Updated Name');
+      expect(response.body.data.jobTitle).toBe('VP Security');
+    });
+  });
+
+  describe('EvidenceService S3 & Production startup configuration', () => {
+    const originalEnv = { ...process.env };
+
+    afterEach(() => {
+      process.env = { ...originalEnv };
+    });
+
+    it('emits loud warning on startup in production when AWS_S3_BUCKET is missing', () => {
+      delete process.env.AWS_S3_BUCKET;
+      process.env.NODE_ENV = 'production';
+
+      let isolatedLogger: any;
+      jest.isolateModules(() => {
+        const loggerModule = require('../utils/logger');
+        isolatedLogger = loggerModule.default || loggerModule.logger || loggerModule;
+        jest.spyOn(isolatedLogger, 'warn').mockImplementation(() => {});
+        require('../services/evidence.service');
+      });
+
+      expect(isolatedLogger.warn).toHaveBeenCalledWith(
+        expect.stringContaining('CRITICAL STARTUP WARNING: AWS_S3_BUCKET is not configured in production!')
+      );
+    });
+
+    it('generates a presigned S3 URL when bucket and s3Client are configured', async () => {
+      process.env.AWS_S3_BUCKET = 'sentra-test-bucket';
+      process.env.AWS_REGION = 'us-east-1';
+      process.env.AWS_ACCESS_KEY_ID = 'test-access-key';
+      process.env.AWS_SECRET_ACCESS_KEY = 'test-secret-key';
+
+      let isolatedEvidenceService: any;
+      let isolatedDb: any;
+      jest.isolateModules(() => {
+        jest.doMock('@aws-sdk/s3-request-presigner', () => ({
+          getSignedUrl: jest.fn().mockResolvedValue('https://sentra-test-bucket.s3.us-east-1.amazonaws.com/orgs/org-123/evidence/evidence-file.pdf?X-Amz-Signature=fake'),
+        }));
+        isolatedDb = require('../config/db').default;
+        isolatedEvidenceService = require('../services/evidence.service').EvidenceService;
+      });
+
+      isolatedDb.evidence.findUnique.mockResolvedValueOnce({
+        id: 'ev-s3-presigned-1',
+        orgId: OWNER_ORG_ID,
+        fileName: 'evidence-file.pdf',
+        fileUrl: 'https://sentra-test-bucket.s3.us-east-1.amazonaws.com/orgs/org-123/evidence/evidence-file.pdf',
+        mimeType: 'application/pdf',
+        fileSize: 5000,
+      });
+
+      const result = await isolatedEvidenceService.getEvidenceDownload('ev-s3-presigned-1', OWNER_ORG_ID);
+      expect(result.status).toBe(200);
+      expect(result.type).toBe('s3');
+      expect(result.url).toContain('X-Amz-Signature=fake');
+      expect(result.fileName).toBe('evidence-file.pdf');
+      expect(result.mimeType).toBe('application/pdf');
+      expect(result.fileSize).toBe(5000);
+    });
+
+    it('catches and logs warning if S3 presigned URL generation fails', async () => {
+      process.env.AWS_S3_BUCKET = 'sentra-test-bucket';
+      process.env.AWS_REGION = 'us-east-1';
+
+      let isolatedEvidenceService: any;
+      let isolatedDb: any;
+      jest.isolateModules(() => {
+        jest.doMock('@aws-sdk/s3-request-presigner', () => ({
+          getSignedUrl: jest.fn().mockRejectedValue(new Error('KMS Decryption failed')),
+        }));
+        isolatedDb = require('../config/db').default;
+        isolatedEvidenceService = require('../services/evidence.service').EvidenceService;
+      });
+
+      isolatedDb.evidence.findUnique.mockResolvedValueOnce({
+        id: 'ev-s3-fail',
+        orgId: OWNER_ORG_ID,
+        fileName: 'evidence-file.pdf',
+        fileUrl: 'https://sentra-test-bucket.s3.us-east-1.amazonaws.com/orgs/org-123/evidence/evidence-file.pdf',
+        mimeType: 'application/pdf',
+        fileSize: 5000,
+      });
+
+      const result = await isolatedEvidenceService.getEvidenceDownload('ev-s3-fail', OWNER_ORG_ID);
+      expect(result.status).toBe(404);
+      expect(result.error).toContain('Evidence file not found on storage');
+    });
+
+    it('falls back to uploads/evidence/ subdirectory when file exists there', async () => {
+      const evidenceDir = path.join(process.cwd(), 'uploads', 'evidence');
+      if (!fs.existsSync(evidenceDir)) {
+        fs.mkdirSync(evidenceDir, { recursive: true });
+      }
+      const subfilePath = path.join(evidenceDir, 'subdir-file.pdf');
+      fs.writeFileSync(subfilePath, Buffer.from('sub-dir content'));
+
+      try {
+        mockPrisma.evidence.findUnique.mockResolvedValueOnce({
+          id: 'ev-subdir',
+          orgId: OWNER_ORG_ID,
+          fileName: 'subdir-file.pdf',
+          fileUrl: '/uploads/subdir-file.pdf',
+          mimeType: 'application/pdf',
+          fileSize: 15,
+        });
+
+        const result = await EvidenceService.getEvidenceDownload('ev-subdir', OWNER_ORG_ID);
+        expect(result.status).toBe(200);
+        expect(result.type).toBe('local');
+        if (result.type === 'local') {
+          expect(result.localPath).toBe(subfilePath);
+        }
+      } finally {
+        if (fs.existsSync(subfilePath)) fs.unlinkSync(subfilePath);
+      }
     });
   });
 });
