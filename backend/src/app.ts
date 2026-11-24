@@ -464,7 +464,43 @@ app.use(csrfProtection);
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+// Secure static uploads: serve ONLY avatars publicly; do NOT serve evidence files publicly
+const avatarsUploadDir = path.join(process.cwd(), 'uploads', 'avatars');
+const uploadsRootDir = path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(avatarsUploadDir)) {
+  fs.mkdirSync(avatarsUploadDir, { recursive: true });
+}
+
+// Migrate any legacy avatars to uploads/avatars on startup
+try {
+  if (fs.existsSync(uploadsRootDir)) {
+    const existingUploads = fs.readdirSync(uploadsRootDir);
+    for (const file of existingUploads) {
+      if (file.startsWith('avatar-')) {
+        const legacyPath = path.join(uploadsRootDir, file);
+        const destinationPath = path.join(avatarsUploadDir, file);
+        if (!fs.existsSync(destinationPath)) {
+          fs.renameSync(legacyPath, destinationPath);
+        }
+      }
+    }
+  }
+} catch {
+  // Ignore filesystem migration error during startup
+}
+
+app.use('/uploads/avatars', express.static(avatarsUploadDir));
+
+// Fallback / redirect for legacy avatar URLs (/uploads/avatar-*) to keep old avatar URLs working
+const AVATAR_FILENAME_REGEX = /^avatar-[a-zA-Z0-9_.-]+\.(png|jpg|jpeg|gif|webp)$/i;
+app.get('/uploads/:filename', (req, res) => {
+  const rawFilename = req.params.filename;
+  if (!AVATAR_FILENAME_REGEX.test(rawFilename)) {
+    return res.status(404).json({ success: false, message: 'File not found' });
+  }
+  // Redirect valid avatar requests to the dedicated public avatar endpoint (302 temporary)
+  return res.redirect(302, `/uploads/avatars/${encodeURIComponent(rawFilename)}`);
+});
 app.use(contextMiddleware);
 // Automatic audit logging for all mutating requests
 app.use(auditRequest);

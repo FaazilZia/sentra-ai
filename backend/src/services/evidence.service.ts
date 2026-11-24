@@ -3,7 +3,8 @@ import logger from '../utils/logger';
 import fs from 'fs';
 import path from 'path';
 import { randomUUID } from 'crypto';
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { EvidenceType } from '@prisma/client';
 
 // Initialize S3 Client if configured
@@ -24,7 +25,15 @@ if (bucketName) {
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
   }
-  logger.info('[Evidence] Local filesystem upload configured at: ' + uploadDir);
+  if (process.env.NODE_ENV === 'production') {
+    logger.warn('********************************************************************************');
+    logger.warn('⚠️  CRITICAL STARTUP WARNING: AWS_S3_BUCKET is not configured in production!');
+    logger.warn('⚠️  Evidence files will be stored on local EPHEMERAL DISK.');
+    logger.warn('⚠️  Files stored locally WILL BE LOST permanently upon container/dyno restart!');
+    logger.warn('********************************************************************************');
+  } else {
+    logger.info('[Evidence] Local filesystem upload configured at: ' + uploadDir);
+  }
 }
 
 export interface UploadMetadata {
@@ -160,6 +169,81 @@ export const EvidenceService = {
         user: { select: { full_name: true, email: true } }
       }
     });
+  },
+
+  /**
+   * Secure evidence download / stream resolver.
+   * Validates organization ownership, streams local file or returns short-lived presigned S3 URL.
+   */
+  async getEvidenceDownload(evidenceId: string, orgId: string) {
+    const evidence = await prisma.evidence.findUnique({
+      where: { id: evidenceId },
+      select: {
+        id: true,
+        orgId: true,
+        fileUrl: true,
+        fileName: true,
+        mimeType: true,
+        fileSize: true,
+      }
+    });
+
+    if (!evidence) {
+      return { status: 404 as const, error: 'Evidence record not found' };
+    }
+
+    if (evidence.orgId !== orgId) {
+      return { status: 403 as const, error: 'Forbidden: Access denied to evidence belonging to another organization' };
+    }
+
+    // Check if S3 is configured and fileUrl points to S3
+    if (s3Client && bucketName && evidence.fileUrl?.includes('.amazonaws.com/')) {
+      try {
+        const parsedUrl = new URL(evidence.fileUrl);
+        const s3Key = decodeURIComponent(parsedUrl.pathname.replace(/^\//, ''));
+        if (s3Key) {
+          const command = new GetObjectCommand({
+            Bucket: bucketName,
+            Key: s3Key,
+            ResponseContentDisposition: `attachment; filename="${encodeURIComponent(evidence.fileName)}"`
+          });
+          const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn: 900 });
+          return {
+            status: 200 as const,
+            type: 's3' as const,
+            url: presignedUrl,
+            fileName: evidence.fileName,
+            mimeType: evidence.mimeType,
+            fileSize: evidence.fileSize
+          };
+        }
+      } catch (err) {
+        logger.warn('[Evidence] Failed to parse S3 URL or generate presigned link:', err);
+      }
+    }
+
+    // Local file storage
+    const fileName = path.basename(evidence.fileUrl);
+    let localPath = path.join(process.cwd(), 'uploads', fileName);
+    if (!fs.existsSync(localPath)) {
+      const evidenceSubdir = path.join(process.cwd(), 'uploads', 'evidence', fileName);
+      if (fs.existsSync(evidenceSubdir)) {
+        localPath = evidenceSubdir;
+      }
+    }
+
+    if (!fs.existsSync(localPath)) {
+      return { status: 404 as const, error: 'Evidence file not found on storage' };
+    }
+
+    return {
+      status: 200 as const,
+      type: 'local' as const,
+      localPath,
+      fileName: evidence.fileName,
+      mimeType: evidence.mimeType,
+      fileSize: evidence.fileSize
+    };
   },
 
   /**

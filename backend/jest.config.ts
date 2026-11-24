@@ -58,6 +58,9 @@ module.exports = {
     'src/services/emailAlert.service.ts',
     'src/utils/seedPassword.ts',
     'src/controllers/apiKey.controller.ts',
+    'src/controllers/evidence.controller.ts',
+    'src/routes/evidence.routes.ts',
+    'src/routes/user.routes.ts',
     'src/services/nistEvidence.service.ts',
   ],
   coverageThreshold: {

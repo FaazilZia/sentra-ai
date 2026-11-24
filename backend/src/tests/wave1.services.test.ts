@@ -32,6 +32,7 @@ jest.mock('../config/db', () => ({
       create: jest.fn(),
       findMany: jest.fn(),
       findFirst: jest.fn(),
+      findUnique: jest.fn(),
       delete: jest.fn(),
     },
     ai_agents: {
@@ -55,6 +56,8 @@ jest.mock('../config/db', () => ({
   },
 }));
 
+import fs from 'fs';
+import path from 'path';
 import prisma from '../config/db';
 import { NotificationService } from '../services/notification.service';
 import { EvidenceService } from '../services/evidence.service';
@@ -266,6 +269,27 @@ describe('Wave 1 Services', () => {
       });
     });
 
+    describe('getAllEvidence', () => {
+      it('should query all evidence with entityType, entityId, and tags filters', async () => {
+        db.evidence.findMany.mockResolvedValue([]);
+        await EvidenceService.getAllEvidence(ORG_ID, {
+          entityType: EvidenceType.policy,
+          entityId: 'p-1',
+          tags: ['security', 'compliance']
+        });
+        expect(db.evidence.findMany).toHaveBeenCalledWith({
+          where: {
+            orgId: ORG_ID,
+            entityType: EvidenceType.policy,
+            entityId: 'p-1',
+            tags: { hasSome: ['security', 'compliance'] }
+          },
+          include: { user: { select: { full_name: true, email: true } } },
+          orderBy: { createdAt: 'desc' }
+        });
+      });
+    });
+
     describe('deleteEvidence', () => {
       it('should delete record from database', async () => {
         db.evidence.findFirst.mockResolvedValue({ id: 'ev-123', fileUrl: '/uploads/ev-123.pdf' });
@@ -276,6 +300,62 @@ describe('Wave 1 Services', () => {
         expect(db.evidence.delete).toHaveBeenCalledWith({
           where: { id: 'ev-123' },
         });
+      });
+    });
+
+    describe('getEvidenceDownload', () => {
+      it('should return 404 if evidence record does not exist', async () => {
+        db.evidence.findUnique.mockResolvedValue(null);
+        const result = await EvidenceService.getEvidenceDownload('ev-nonexistent', ORG_ID);
+        expect(result.status).toBe(404);
+      });
+
+      it('should return 403 if evidence belongs to another organization', async () => {
+        db.evidence.findUnique.mockResolvedValue({
+          id: 'ev-other',
+          orgId: 'different-org-id',
+          fileUrl: '/uploads/ev-other.pdf'
+        });
+        const result = await EvidenceService.getEvidenceDownload('ev-other', ORG_ID);
+        expect(result.status).toBe(403);
+      });
+
+      it('should return 404 when local evidence file does not exist on storage', async () => {
+        db.evidence.findUnique.mockResolvedValue({
+          id: 'ev-test-missing',
+          orgId: ORG_ID,
+          fileUrl: '/uploads/nonexistent-file.pdf',
+          fileName: 'missing.pdf',
+          mimeType: 'application/pdf',
+          fileSize: 1024,
+        });
+
+        const result = await EvidenceService.getEvidenceDownload('ev-test-missing', ORG_ID);
+        expect(result.status).toBe(404);
+        expect(result.error).toContain('Evidence file not found on storage');
+      });
+
+      it('should resolve local file download when record belongs to org and exists', async () => {
+        const dummyPath = path.join(process.cwd(), 'uploads', 'ev-test-download.pdf');
+        fs.writeFileSync(dummyPath, Buffer.from('mock evidence content'));
+
+        db.evidence.findUnique.mockResolvedValue({
+          id: 'ev-test-1',
+          orgId: ORG_ID,
+          fileUrl: '/uploads/ev-test-download.pdf',
+          fileName: 'policy_doc.pdf',
+          mimeType: 'application/pdf',
+          fileSize: 1024,
+        });
+
+        const result = await EvidenceService.getEvidenceDownload('ev-test-1', ORG_ID);
+        expect(result.status).toBe(200);
+        expect(result.type).toBe('local');
+        if (result.type === 'local') {
+          expect(result.localPath).toContain('ev-test-download.pdf');
+        }
+
+        if (fs.existsSync(dummyPath)) fs.unlinkSync(dummyPath);
       });
     });
   });

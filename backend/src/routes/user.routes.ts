@@ -70,10 +70,10 @@ router.put('/me/avatar', authenticate, upload.single('avatar'), async (req: any,
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
 
-    // Ensure uploads directory exists
-    const uploadDir = path.join(process.cwd(), 'uploads');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+    // Ensure uploads/avatars directory exists
+    const avatarsDir = path.join(process.cwd(), 'uploads', 'avatars');
+    if (!fs.existsSync(avatarsDir)) {
+      fs.mkdirSync(avatarsDir, { recursive: true });
     }
 
     // Create unique file name
@@ -81,13 +81,13 @@ router.put('/me/avatar', authenticate, upload.single('avatar'), async (req: any,
     const rawExt = path.extname(safeOriginalName).toLowerCase();
     const ext = ['.png', '.jpg', '.jpeg', '.gif', '.webp'].includes(rawExt) ? rawExt : '.png';
     const filename = `avatar-${req.user.id}-${Date.now()}${ext}`;
-    const filePath = path.join(uploadDir, path.basename(filename));
+    const filePath = path.join(avatarsDir, path.basename(filename));
 
-    // Save file
-    fs.writeFileSync(filePath, req.file.buffer);
+    // Save file asynchronously
+    await fs.promises.writeFile(filePath, req.file.buffer);
 
     const baseUrl = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
-    const avatarUrl = `${baseUrl}/uploads/${filename}`;
+    const avatarUrl = `${baseUrl}/uploads/avatars/${filename}`;
 
     const updated = await prisma.users.update({
       where: { id: req.user.id },
