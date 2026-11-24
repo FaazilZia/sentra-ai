@@ -32,6 +32,7 @@ jest.mock('../config/db', () => ({
       create: jest.fn(),
       findMany: jest.fn(),
       findFirst: jest.fn(),
+      findUnique: jest.fn(),
       delete: jest.fn(),
     },
     ai_agents: {
@@ -55,6 +56,8 @@ jest.mock('../config/db', () => ({
   },
 }));
 
+import fs from 'fs';
+import path from 'path';
 import prisma from '../config/db';
 import { NotificationService } from '../services/notification.service';
 import { EvidenceService } from '../services/evidence.service';
@@ -276,6 +279,47 @@ describe('Wave 1 Services', () => {
         expect(db.evidence.delete).toHaveBeenCalledWith({
           where: { id: 'ev-123' },
         });
+      });
+    });
+
+    describe('getEvidenceDownload', () => {
+      it('should return 404 if evidence record does not exist', async () => {
+        db.evidence.findUnique.mockResolvedValue(null);
+        const result = await EvidenceService.getEvidenceDownload('ev-nonexistent', ORG_ID);
+        expect(result.status).toBe(404);
+      });
+
+      it('should return 403 if evidence belongs to another organization', async () => {
+        db.evidence.findUnique.mockResolvedValue({
+          id: 'ev-other',
+          orgId: 'different-org-id',
+          fileUrl: '/uploads/ev-other.pdf'
+        });
+        const result = await EvidenceService.getEvidenceDownload('ev-other', ORG_ID);
+        expect(result.status).toBe(403);
+      });
+
+      it('should resolve local file download when record belongs to org and exists', async () => {
+        const dummyPath = path.join(process.cwd(), 'uploads', 'ev-test-download.pdf');
+        fs.writeFileSync(dummyPath, Buffer.from('mock evidence content'));
+
+        db.evidence.findUnique.mockResolvedValue({
+          id: 'ev-test-1',
+          orgId: ORG_ID,
+          fileUrl: '/uploads/ev-test-download.pdf',
+          fileName: 'policy_doc.pdf',
+          mimeType: 'application/pdf',
+          fileSize: 1024,
+        });
+
+        const result = await EvidenceService.getEvidenceDownload('ev-test-1', ORG_ID);
+        expect(result.status).toBe(200);
+        expect(result.type).toBe('local');
+        if (result.type === 'local') {
+          expect(result.localPath).toContain('ev-test-download.pdf');
+        }
+
+        if (fs.existsSync(dummyPath)) fs.unlinkSync(dummyPath);
       });
     });
   });

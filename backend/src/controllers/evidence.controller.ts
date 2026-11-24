@@ -1,4 +1,6 @@
 import { Response } from 'express';
+import fs from 'fs';
+import path from 'path';
 import { EvidenceService, UploadMetadata } from '../services/evidence.service';
 import { resolveOrganizationId } from '../utils/company';
 import { asyncHandler, sendSuccess, sendError } from '../utils/controllerHelpers';
@@ -77,6 +79,52 @@ export const getEvidenceById = asyncHandler(async (req: any, res: Response) => {
   if (!record) return sendError(res, 404, 'Evidence not found');
 
   return sendSuccess(res, record, 200);
+});
+
+export const downloadEvidenceFile = asyncHandler(async (req: any, res: Response) => {
+  const organizationId = await resolveOrganizationId(req);
+  if (!organizationId) return sendError(res, 401, 'Unauthorized');
+
+  const { id } = req.params;
+  if (!id) return sendError(res, 400, 'Evidence ID is required');
+
+  const result = await EvidenceService.getEvidenceDownload(id, organizationId);
+  if (result.status === 404) {
+    return sendError(res, 404, result.error || 'Evidence not found');
+  }
+  if (result.status === 403) {
+    return sendError(res, 403, result.error || 'Forbidden');
+  }
+
+  if (result.type === 's3' && result.url) {
+    if (req.headers.accept?.includes('application/json') && req.query.redirect !== 'true') {
+      return res.status(200).json({
+        success: true,
+        data: {
+          downloadUrl: result.url,
+          url: result.url,
+          fileName: result.fileName,
+          mimeType: result.mimeType,
+          fileSize: result.fileSize
+        }
+      });
+    }
+    return res.redirect(302, result.url);
+  }
+
+  if (result.type === 'local' && result.localPath) {
+    const stat = fs.statSync(result.localPath);
+    res.setHeader('Content-Type', result.mimeType || 'application/octet-stream');
+    res.setHeader('Content-Length', stat.size);
+    res.setHeader(
+      'Content-Disposition',
+      `inline; filename="${encodeURIComponent(result.fileName || path.basename(result.localPath))}"`
+    );
+    const readStream = fs.createReadStream(result.localPath);
+    return readStream.pipe(res);
+  }
+
+  return sendError(res, 500, 'Unable to process evidence download');
 });
 
 export const deleteEvidenceRecord = asyncHandler(async (req: any, res: Response) => {

@@ -234,6 +234,49 @@ export async function apiRequest<T>(
 }
 
 /**
+ * EVIDENCE SECURE DOWNLOAD / VIEW
+ * Retrieves evidence behind authenticate + org check via GET /api/v1/evidence/:id/download.
+ * Sends auth credentials and opens the file stream as a blob (or opens presigned S3 URL).
+ */
+export async function downloadEvidenceFile(evidenceId: string): Promise<void> {
+  const url = `${apiBaseUrl}/evidence/${evidenceId}/download`;
+  const headers = new Headers();
+  if (inMemoryImpersonationToken) {
+    headers.set('Authorization', `Bearer ${inMemoryImpersonationToken}`);
+  }
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers,
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    let errorMsg = `Failed to download evidence (HTTP ${response.status})`;
+    try {
+      const errJson = await response.json();
+      errorMsg = errJson.message || errorMsg;
+    } catch (_) {}
+    throw new Error(errorMsg);
+  }
+
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    const json = await response.json();
+    const downloadUrl = json.data?.downloadUrl || json.data?.url || json.downloadUrl || json.url;
+    if (downloadUrl) {
+      window.open(downloadUrl, '_blank');
+      return;
+    }
+  }
+
+  const blob = await response.blob();
+  const blobUrl = URL.createObjectURL(blob);
+  window.open(blobUrl, '_blank');
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+}
+
+/**
  * AUTH ENDPOINTS
  */
 export function loginRequest(email: string, password: string): Promise<TokenResponse> {

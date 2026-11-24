@@ -3,7 +3,7 @@ import {
   FolderOpen, Plus, Trash2, Download, FileText, 
   UploadCloud, X, LoaderCircle
 } from 'lucide-react';
-import { apiRequest } from '@/lib/api';
+import { apiRequest, downloadEvidenceFile } from '@/lib/api';
 import { useStore } from '@/store/useStore';
 import { cn } from '@/lib/utils';
 import { formatBytes, getFileIcon, useFileDragDrop } from '@/lib/evidenceUtils';
@@ -107,11 +107,13 @@ export function EvidenceSection({ entityType, entityId }: EvidenceSectionProps) 
     }
   };
 
-  const handleView = (url: string) => {
-    const fullUrl = url.startsWith('/') 
-      ? `${import.meta.env.VITE_API_BASE_URL?.replace('/api/v1', '') || 'http://localhost:10000'}${url}`
-      : url;
-    window.open(fullUrl, '_blank');
+  const handleView = async (item: any) => {
+    try {
+      await downloadEvidenceFile(item.id);
+    } catch (err: any) {
+      console.error('Failed to retrieve evidence file:', err);
+      addToast({ message: err?.message || 'FAILED TO RETRIEVE EVIDENCE FILE', type: 'error' });
+    }
   };
 
   return (
@@ -234,7 +236,7 @@ export function EvidenceSection({ entityType, entityId }: EvidenceSectionProps) 
 
                 <div className="flex items-center gap-1.5 shrink-0">
                   <button
-                    onClick={() => handleView(item.fileUrl)}
+                    onClick={() => handleView(item)}
                     className="p-1 rounded text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-all hover:text-[var(--royal-indigo)]"
                     title="Download File"
                   >

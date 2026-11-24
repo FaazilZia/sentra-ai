@@ -4,6 +4,7 @@ import {
   uploadEvidenceFile,
   getEvidenceList,
   getEvidenceById,
+  downloadEvidenceFile,
   deleteEvidenceRecord
 } from '../controllers/evidence.controller';
 import { authenticate } from '../middleware/auth.middleware';
@@ -21,6 +22,7 @@ router.use(express.json({ limit: '10mb' }));
 
 router.post('/', authenticate, upload.single('file'), validateFileUpload({ maxSizeBytes: 50 * 1024 * 1024 }), uploadEvidenceFile);
 router.get('/', authenticate, getEvidenceList);
+router.get('/:id/download', authenticate, downloadEvidenceFile);
 router.get('/:id', authenticate, getEvidenceById);
 router.delete('/:id', authenticate, deleteEvidenceRecord);
 

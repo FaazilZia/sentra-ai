@@ -4,7 +4,7 @@ import { TabBar } from '@/components/v2/TabBar';
 import { StatusBadge } from '@/components/v2/StatusBadge';
 import { MetricCard } from '@/components/v2/MetricCard';
 import { DataTable, Column } from '@/components/v2/DataTable';
-import { apiRequest, fetchSdkStatus } from '@/lib/api';
+import { apiRequest, fetchSdkStatus, downloadEvidenceFile } from '@/lib/api';
 import { useStore } from '@/store/useStore';
 import { 
   FolderOpen, 
@@ -127,16 +127,18 @@ export default function EvidenceSection() {
     loadEvidenceData();
   }, [loadEvidenceData]);
 
-  const handleDownload = (doc: ComplianceDocument | string) => {
+  const handleDownload = async (doc: ComplianceDocument | string) => {
     if (typeof doc === 'string') {
       addToast({ message: `Downloading artifact package: ${doc}`, type: 'success' });
       return;
     }
-    if (doc.downloadUrl) {
-      window.open(doc.downloadUrl, '_blank');
-      addToast({ message: `Opening artifact: ${doc.name}`, type: 'success' });
-    } else {
-      addToast({ message: `Downloading artifact package: ${doc.name}`, type: 'success' });
+    try {
+      addToast({ message: `Opening artifact: ${doc.name}...`, type: 'info' });
+      await downloadEvidenceFile(doc.id);
+      addToast({ message: `Artifact opened: ${doc.name}`, type: 'success' });
+    } catch (err: any) {
+      console.error('Failed to open evidence file:', err);
+      addToast({ message: err?.message || `Failed to open artifact: ${doc.name}`, type: 'error' });
     }
   };
 
