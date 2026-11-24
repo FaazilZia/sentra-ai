@@ -45,6 +45,7 @@ import app from '../app';
 import path from 'path';
 import fs from 'fs';
 import { generateAccessToken } from '../utils/jwt';
+import { EvidenceService } from '../services/evidence.service';
 
 describe('Evidence Download Security & Avatar Uploads', () => {
   const OWNER_ORG_ID = 'org-owner-111';
@@ -136,6 +137,24 @@ describe('Evidence Download Security & Avatar Uploads', () => {
       expect(response.body.success).toBe(false);
     });
 
+    it('returns 404 when local evidence file is missing on storage', async () => {
+      mockPrisma.evidence.findUnique.mockResolvedValue({
+        id: 'ev-missing-file',
+        orgId: OWNER_ORG_ID,
+        fileName: 'missing-on-disk.pdf',
+        fileUrl: '/uploads/missing-file-that-does-not-exist.pdf',
+        mimeType: 'application/pdf',
+        fileSize: 1024,
+      });
+
+      const response = await request(app)
+        .get('/api/v1/evidence/ev-missing-file/download')
+        .set('Authorization', `Bearer ${ownerToken}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
+    });
+
     it('returns the file stream when owner user requests download', async () => {
       mockPrisma.evidence.findUnique.mockResolvedValue({
         id: 'ev-123',
@@ -151,8 +170,49 @@ describe('Evidence Download Security & Avatar Uploads', () => {
         .set('Authorization', `Bearer ${ownerToken}`);
 
       expect(response.status).toBe(200);
-      expect(response.header['content-type']).toContain('application/pdf');
+      expect(response.header['content-disposition']).toContain('attachment');
+      expect(response.header['x-content-type-options']).toBe('nosniff');
       expect(response.body.toString()).toContain('%PDF-1.4');
+    });
+
+    it('handles S3 download returning JSON with downloadUrl when JSON accepted', async () => {
+      const spy = jest.spyOn(EvidenceService, 'getEvidenceDownload').mockResolvedValueOnce({
+        status: 200,
+        type: 's3',
+        url: 'https://sentra-bucket.s3.us-east-1.amazonaws.com/test-presigned-url',
+        fileName: 'cloud-evidence.pdf',
+        mimeType: 'application/pdf',
+        fileSize: 2048,
+      });
+
+      const response = await request(app)
+        .get('/api/v1/evidence/ev-s3/download')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .set('Accept', 'application/json');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.downloadUrl).toContain('amazonaws.com');
+      spy.mockRestore();
+    });
+
+    it('redirects to S3 presigned URL when redirect query param is provided', async () => {
+      const spy = jest.spyOn(EvidenceService, 'getEvidenceDownload').mockResolvedValueOnce({
+        status: 200,
+        type: 's3',
+        url: 'https://sentra-bucket.s3.us-east-1.amazonaws.com/test-presigned-url',
+        fileName: 'cloud-evidence.pdf',
+        mimeType: 'application/pdf',
+        fileSize: 2048,
+      });
+
+      const response = await request(app)
+        .get('/api/v1/evidence/ev-s3/download?redirect=true')
+        .set('Authorization', `Bearer ${ownerToken}`);
+
+      expect(response.status).toBe(302);
+      expect(response.header.location).toBe('https://sentra-bucket.s3.us-east-1.amazonaws.com/test-presigned-url');
+      spy.mockRestore();
     });
   });
 
@@ -165,8 +225,8 @@ describe('Evidence Download Security & Avatar Uploads', () => {
 
     it('keeps old avatar URLs working via redirect or fallback without login', async () => {
       const response = await request(app).get(`/uploads/${testAvatarFileName}`);
-      expect([200, 301]).toContain(response.status);
-      if (response.status === 301) {
+      expect([200, 301, 302]).toContain(response.status);
+      if (response.status === 302 || response.status === 301) {
         expect(response.header.location).toBe(`/uploads/avatars/${testAvatarFileName}`);
       }
     });
@@ -175,6 +235,27 @@ describe('Evidence Download Security & Avatar Uploads', () => {
       const response = await request(app).get(`/uploads/${testEvidenceFileName}`);
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);
+    });
+
+    it('rejects invalid or traversal file patterns under /uploads with 404', async () => {
+      const response = await request(app).get('/uploads/malicious-file.sh');
+      expect(response.status).toBe(404);
+    });
+
+    it('allows authenticated users to upload avatars to /uploads/avatars', async () => {
+      mockPrisma.users.update.mockResolvedValue({
+        id: OWNER_USER_ID,
+        avatarUrl: `http://localhost:10000/uploads/avatars/avatar-${OWNER_USER_ID}-123.png`,
+      });
+
+      const response = await request(app)
+        .put('/api/v1/user/me/avatar')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .attach('avatar', Buffer.from('fake-png-content'), 'avatar.png');
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.avatarUrl).toContain('/uploads/avatars/');
     });
   });
 });

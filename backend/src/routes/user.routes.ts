@@ -83,8 +83,8 @@ router.put('/me/avatar', authenticate, upload.single('avatar'), async (req: any,
     const filename = `avatar-${req.user.id}-${Date.now()}${ext}`;
     const filePath = path.join(avatarsDir, path.basename(filename));
 
-    // Save file
-    fs.writeFileSync(filePath, req.file.buffer);
+    // Save file asynchronously
+    await fs.promises.writeFile(filePath, req.file.buffer);
 
     const baseUrl = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
     const avatarUrl = `${baseUrl}/uploads/avatars/${filename}`;

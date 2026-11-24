@@ -256,7 +256,9 @@ export async function downloadEvidenceFile(evidenceId: string): Promise<void> {
     try {
       const errJson = await response.json();
       errorMsg = errJson.message || errorMsg;
-    } catch (_) {}
+    } catch (_ignored) {
+      // Response body was not JSON; fallback to generic error message
+    }
     throw new Error(errorMsg);
   }
 

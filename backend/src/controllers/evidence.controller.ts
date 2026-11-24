@@ -1,10 +1,11 @@
 import { Response } from 'express';
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 import { EvidenceService, UploadMetadata } from '../services/evidence.service';
 import { resolveOrganizationId } from '../utils/company';
 import { asyncHandler, sendSuccess, sendError } from '../utils/controllerHelpers';
 import { EvidenceType } from '@prisma/client';
+import logger from '../utils/logger';
 
 export const uploadEvidenceFile = asyncHandler(async (req: any, res: Response) => {
   const organizationId = await resolveOrganizationId(req);
@@ -113,15 +114,25 @@ export const downloadEvidenceFile = asyncHandler(async (req: any, res: Response)
   }
 
   if (result.type === 'local' && result.localPath) {
-    const stat = fs.statSync(result.localPath);
-    res.setHeader('Content-Type', result.mimeType || 'application/octet-stream');
-    res.setHeader('Content-Length', stat.size);
-    res.setHeader(
-      'Content-Disposition',
-      `inline; filename="${encodeURIComponent(result.fileName || path.basename(result.localPath))}"`
-    );
-    const readStream = fs.createReadStream(result.localPath);
-    return readStream.pipe(res);
+    const uploadsRoot = path.resolve(process.cwd(), 'uploads');
+    const resolvedPath = path.resolve(result.localPath);
+
+    // Guard against path traversal attacks
+    if (!resolvedPath.startsWith(uploadsRoot) || !fs.existsSync(resolvedPath)) {
+      return sendError(res, 404, 'Evidence file not found');
+    }
+
+    const safeFilename = path.basename(result.fileName || resolvedPath).replace(/[\r\n\t"]/g, '_');
+
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
+
+    return res.download(resolvedPath, safeFilename, (err) => {
+      if (err && !res.headersSent) {
+        logger.error({ err }, 'Error streaming evidence download');
+        return sendError(res, 500, 'Error downloading evidence file');
+      }
+    });
   }
 
   return sendError(res, 500, 'Unable to process evidence download');

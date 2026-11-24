@@ -178,8 +178,13 @@ export const EvidenceService = {
   async getEvidenceDownload(evidenceId: string, orgId: string) {
     const evidence = await prisma.evidence.findUnique({
       where: { id: evidenceId },
-      include: {
-        user: { select: { full_name: true, email: true } }
+      select: {
+        id: true,
+        orgId: true,
+        fileUrl: true,
+        fileName: true,
+        mimeType: true,
+        fileSize: true,
       }
     });
 
@@ -192,23 +197,28 @@ export const EvidenceService = {
     }
 
     // Check if S3 is configured and fileUrl points to S3
-    if (s3Client && bucketName && evidence.fileUrl && evidence.fileUrl.includes('.amazonaws.com/')) {
-      const s3Key = evidence.fileUrl.split('.amazonaws.com/')[1];
-      if (s3Key) {
-        const command = new GetObjectCommand({
-          Bucket: bucketName,
-          Key: s3Key,
-          ResponseContentDisposition: `inline; filename="${encodeURIComponent(evidence.fileName)}"`
-        });
-        const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn: 900 });
-        return {
-          status: 200 as const,
-          type: 's3' as const,
-          url: presignedUrl,
-          fileName: evidence.fileName,
-          mimeType: evidence.mimeType,
-          fileSize: evidence.fileSize
-        };
+    if (s3Client && bucketName && evidence.fileUrl?.includes('.amazonaws.com/')) {
+      try {
+        const parsedUrl = new URL(evidence.fileUrl);
+        const s3Key = decodeURIComponent(parsedUrl.pathname.replace(/^\//, ''));
+        if (s3Key) {
+          const command = new GetObjectCommand({
+            Bucket: bucketName,
+            Key: s3Key,
+            ResponseContentDisposition: `attachment; filename="${encodeURIComponent(evidence.fileName)}"`
+          });
+          const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn: 900 });
+          return {
+            status: 200 as const,
+            type: 's3' as const,
+            url: presignedUrl,
+            fileName: evidence.fileName,
+            mimeType: evidence.mimeType,
+            fileSize: evidence.fileSize
+          };
+        }
+      } catch (err) {
+        logger.warn('[Evidence] Failed to parse S3 URL or generate presigned link:', err);
       }
     }
 

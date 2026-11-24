@@ -269,6 +269,27 @@ describe('Wave 1 Services', () => {
       });
     });
 
+    describe('getAllEvidence', () => {
+      it('should query all evidence with entityType, entityId, and tags filters', async () => {
+        db.evidence.findMany.mockResolvedValue([]);
+        await EvidenceService.getAllEvidence(ORG_ID, {
+          entityType: EvidenceType.policy,
+          entityId: 'p-1',
+          tags: ['security', 'compliance']
+        });
+        expect(db.evidence.findMany).toHaveBeenCalledWith({
+          where: {
+            orgId: ORG_ID,
+            entityType: EvidenceType.policy,
+            entityId: 'p-1',
+            tags: { hasSome: ['security', 'compliance'] }
+          },
+          include: { user: { select: { full_name: true, email: true } } },
+          orderBy: { createdAt: 'desc' }
+        });
+      });
+    });
+
     describe('deleteEvidence', () => {
       it('should delete record from database', async () => {
         db.evidence.findFirst.mockResolvedValue({ id: 'ev-123', fileUrl: '/uploads/ev-123.pdf' });
@@ -297,6 +318,21 @@ describe('Wave 1 Services', () => {
         });
         const result = await EvidenceService.getEvidenceDownload('ev-other', ORG_ID);
         expect(result.status).toBe(403);
+      });
+
+      it('should return 404 when local evidence file does not exist on storage', async () => {
+        db.evidence.findUnique.mockResolvedValue({
+          id: 'ev-test-missing',
+          orgId: ORG_ID,
+          fileUrl: '/uploads/nonexistent-file.pdf',
+          fileName: 'missing.pdf',
+          mimeType: 'application/pdf',
+          fileSize: 1024,
+        });
+
+        const result = await EvidenceService.getEvidenceDownload('ev-test-missing', ORG_ID);
+        expect(result.status).toBe(404);
+        expect(result.error).toContain('Evidence file not found on storage');
       });
 
       it('should resolve local file download when record belongs to org and exists', async () => {
