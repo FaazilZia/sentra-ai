@@ -55,7 +55,7 @@ This document serves as the complete pilot onboarding pack, detailing:
 | **Okta SAML 2.0 SSO & SCIM** | SAML login and SCIM verified on a real tenant; role mapping tested with simulated assertions only. Evidence in PR #151 commit `fdebe37` and [okta-setup.md](sso/okta-setup.md). |
 | **Microsoft Entra ID SAML 2.0 SSO** | SAML 2.0 login verified locally against a real Microsoft Entra tenant with one test user. ADMIN role mapping verified. Not yet tested: other roles, group claims, SCIM provisioning, or a production deployment (each customer needs their own Entra Reply URL pointing at the production backend). Setup guide in [entra-setup.md](sso/entra-setup.md) and evidence log in [day10-entra-sso-evidence.log](evidence/day10-entra-sso-evidence.log). |
 | **Data Connectors (S3, GDrive, Slack, Postgres)** | AWS S3, Google Drive, and Slack inbound connectors were tested live (metadata-only scanning; no customer row or message data stored). PostgreSQL connector was not live-tested. |
-| **GitHub Inbound Connector** | Tested locally against a real private repository. Verified: Test Connection; a scan of a real private repo with canary files (email, card number, AWS-style key) producing findings with masked snippets only; no duplicate findings on a rescan; no raw secrets or token in the database, logs or API responses; a clean error on an invalid or expired token (tested with a synthetic invalid token, and GitHub returns the same 401 for revoked tokens); and tenant isolation between two orgs. NOT verified: production environment, GitHub organization repos at scale, and rate-limit backoff under real throttling. (Warning in setup: Always enter your Target Repositories. If the field is left blank, the connector scans EVERY repository the token can read, including your public repositories, which can produce many unrelated findings. Documented in [CONNECTORS_QUICKSTART.md](CONNECTORS_QUICKSTART.md)). |
+| **GitHub Inbound Connector** | Implemented and verified via unit tests with mock GitHub API fixtures (31 tests in `backend/src/__tests__/services/githubInboundConnector.test.ts`). Verified in unit tests: token format validation, connection test error handling, synthetic canary secret/PII detection with masked snippets only, blob SHA deduplication on rescan, memory-only file processing with zero raw secrets or tokens in database/logs/API responses, rate-limit retry backoff handling, and multi-tenant isolation. NOT verified: live scanning against a real GitHub repository (private or public), real GitHub PAT authentication against api.github.com, production environment, GitHub organization repos at scale, and rate-limit backoff under real network throttling. (Warning in setup: Always enter your Target Repositories. If the field is left blank, the connector scans EVERY repository the token can read, including your public repositories, which can produce many unrelated findings. Documented in [CONNECTORS_QUICKSTART.md](CONNECTORS_QUICKSTART.md)). |
 | **5 Supported Compliance Frameworks** | Native evaluation engines compute scores for GDPR, DPDP, HIPAA, PCI-DSS, and NIST AI RMF (implemented in `compliance.service.ts`, `pci.service.ts`, and `nistAiRmf.service.ts`) with exportable evidence. |
 
 ---
@@ -187,13 +187,13 @@ try {
 
 ### Support Channels
 
-<real support email>
+faazilzia01@gmail.com
 
 ---
 
 ### Pilot Feedback Form
 
-Please complete this feedback form during your check-in or submit to: <real support email>
+Please complete this feedback form during your check-in or submit to: faazilzia01@gmail.com
 
 ```markdown
 ### Sentraa AI Pilot Feedback Questionnaire
@@ -224,7 +224,7 @@ Please complete this feedback form during your check-in or submit to: <real supp
 
 7. Feature Requests & Roadmap Priorities:
    - What integration should Sentraa prioritize next for your deployment?
-     [ ] AWS Bedrock  [ ] Native Anthropic  [ ] GitHub Connector (Production Environment & Org Scale)  [ ] Python SDK (PyPI)  [ ] Entra ID SCIM & Group Claims
+     [ ] AWS Bedrock  [ ] Native Anthropic  [ ] GitHub Connector (Live Repo Testing & Org Scale)  [ ] Python SDK (PyPI)  [ ] Entra ID SCIM & Group Claims
 ```
 
 ---
@@ -237,7 +237,7 @@ Please complete this feedback form during your check-in or submit to: <real supp
 |---|---|---|
 | **Customer Organization** | `________________________________________` | |
 | **Primary Customer Contact** | Name: `__________________` Email: `__________________` | Role: `__________________` |
-| **Sentraa Account Lead** | `<your full name>, <your email or phone>` | |
+| **Sentraa Account Lead** | Faazil Zia, faazilzia01@gmail.com | |
 | **Kickoff Date** | `YYYY-MM-DD` | |
 | **Pilot Evaluation Period** | [ ] 14 Days &nbsp;&nbsp;&nbsp; [ ] 30 Days | End Date: `YYYY-MM-DD` |
 | **Authentication Mode** | [ ] Public Sandbox (`sentra_test_sandbox`)<br/>[ ] Dedicated Tenant API Key | Key Prefix: `sentra_` |

@@ -221,9 +221,9 @@ Replace `YOUR_MCP_AGENT_KEY` with an agent key generated in **Settings -> MCP Ga
 
 ## 8. GitHub Inbound Scanner (Repository Secrets & PII Scanning)
 
-**Status:** Tested locally against a real private repository.
-- **Verified:** Test Connection; a scan of a real private repo with canary files (email, card number, AWS-style key) producing findings with masked snippets only; no duplicate findings on a rescan; no raw secrets or token in the database, logs or API responses; a clean error on an invalid or expired token (tested with a synthetic invalid token, and GitHub returns the same 401 for revoked tokens); and tenant isolation between two orgs.
-- **NOT verified:** production environment, GitHub organization repos at scale, and rate-limit backoff under real throttling.
+**Status:** Implemented and verified via unit tests with mock GitHub API fixtures (live repository testing pending).
+- **Verified (via unit tests with mock GitHub API fixtures in `backend/src/__tests__/services/githubInboundConnector.test.ts`):** Token format validation (`github_pat_` and `ghp_`); Test Connection error handling (401 Bad credentials, 403 Rate Limit); synthetic repo scan with mock canary files (email, card number, API secret) producing findings with masked snippets only; no duplicate findings on rescan via blob SHA deduplication; memory-only file processing with zero raw secrets or tokens in database, logs, or API responses; rate-limit retry backoff handling; and tenant isolation between two organizations.
+- **NOT verified:** Live scanning against a real GitHub repository (private or public), real GitHub PAT authentication against api.github.com, production environment, GitHub organization repos at scale, and rate-limit backoff under real network throttling.
 
 Scans GitHub organization and personal repositories for hardcoded secrets (API keys, AWS credentials, JWT tokens, private keys) and sensitive PII (emails, SSNs, payment card numbers, phone numbers).
 
