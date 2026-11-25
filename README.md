@@ -143,6 +143,10 @@ Think of it as a **security checkpoint** for every `agent.run()` call in your st
 - **Search** — Cross-platform governance search
 - **Shared links** — Shareable governance views
 
+### 🔒 Evidence Storage Security (Verified in Production)
+- **Private Amazon S3 storage & access control (verified 2026-11-25)** — Evidence uploads route to a private Amazon S3 bucket (`ap-south-1`) with Block Public Access enabled. File downloads require authentication and tenant organization membership, returning 15-minute presigned URLs (`X-Amz-Expires=900`); unauthenticated and cross-tenant access are rejected (401/403), and public static evidence serving is disabled (see [s3-evidence-storage-production.md](./docs/evidence/s3-evidence-storage-production.md)).
+- *Scope limits:* Tested for functional access control on small files; large-file multi-part transfers, load concurrency, IAM key rotation, and multi-region replication were not evaluated.
+
 ---
 
 ## Architecture
