@@ -221,6 +221,10 @@ Replace `YOUR_MCP_AGENT_KEY` with an agent key generated in **Settings -> MCP Ga
 
 ## 8. GitHub Inbound Scanner (Repository Secrets & PII Scanning)
 
+**Status:** Coming Soon — Implemented and verified with 31 unit tests using mock GitHub API data. Not yet tested against a live GitHub repository.
+- **Verified (via unit tests with mock GitHub API fixtures in `backend/src/__tests__/services/githubInboundConnector.test.ts`):** Token format validation (`github_pat_` and `ghp_`); Test Connection error handling (401 Bad credentials, 403 Rate Limit); synthetic repo scan with mock canary files (email, card number, API secret) producing findings with masked snippets only; no duplicate findings on rescan via blob SHA deduplication; memory-only file processing with zero raw secrets or tokens in database, logs, or API responses; rate-limit retry backoff handling; and tenant isolation between two organizations.
+- **NOT verified:** Live scanning against a real GitHub repository (private or public), real GitHub PAT authentication against api.github.com, production environment, GitHub organization repos at scale, and rate-limit backoff under real network throttling.
+
 Scans GitHub organization and personal repositories for hardcoded secrets (API keys, AWS credentials, JWT tokens, private keys) and sensitive PII (emails, SSNs, payment card numbers, phone numbers).
 
 > [!IMPORTANT]
@@ -246,7 +250,9 @@ Scans GitHub organization and personal repositories for hardcoded secrets (API k
 3. Fill in:
    - **Connector Name:** e.g., `Corporate GitHub Repositories`
    - **Fine-Grained Personal Access Token:** Paste your fine-grained token (`github_pat_...`).
-   - **Target Repositories (Optional):** Enter comma-separated repositories (e.g. `org/frontend, org/backend`), or leave blank to automatically scan all repositories accessible to the token.
+   - **Target Repositories:** Enter comma-separated repositories (e.g. `org/frontend, org/backend`).
+     > [!WARNING]
+     > Always enter your Target Repositories. If the field is left blank, the connector scans EVERY repository the token can read, including your public repositories, which can produce many unrelated findings.
 4. Click **Test Connection** to verify token validity, discover accessible repositories, and check permissions.
 5. Click **Save Connector**.
 

@@ -71,7 +71,7 @@ The following integrations are actively in engineering progress and scheduled fo
    - *Detail:* Wrapper logic and interception tests are in place. Real-world validation against direct `api.anthropic.com` failed due to account credit balance (`BadRequestError: 400 - Your credit balance is too low` in [python-anthropic-real-call.log](evidence/python-anthropic-real-call.log)), and the GCP Vertex Anthropic route encountered quota limits. Scheduled for re-verification upon billing refill.
 3. **GitHub Inbound Connector**
    - *Status:* **Coming Soon**
-   - *Detail:* Inbound repository and secret/PII scanning was implemented and unit-tested across routes, validations, BullMQ workers, and repository traversal in PR #158, but has NOT yet been tested against a live real repository. Kept as Coming Soon pending a live repo test.
+   - *Detail:* Implemented and verified with 31 unit tests using mock GitHub API data. Not yet tested against a live GitHub repository.
 4. **Python SDK on PyPI (`sentraa-ai`)**
    - *Status:* **Coming Soon**
    - *Detail:* The Python client and provider wrappers are developed in `packages/python-sdk`, but the package is **NOT yet published to PyPI**. For the beta pilot, Node.js (`@sentra-ai/sdk` v1.1.0 on npm) or direct HTTPS REST API integration must be used.
@@ -189,13 +189,13 @@ try {
 
 ### Support Channels
 
-[Support contact - to be added by Sentraa before sending]
+faazilzia01@gmail.com
 
 ---
 
 ### Pilot Feedback Form
 
-Please complete this feedback form during your check-in or submit to: [Support contact - to be added by Sentraa before sending]
+Please complete this feedback form during your check-in or submit to: faazilzia01@gmail.com
 
 ```markdown
 ### Sentraa AI Pilot Feedback Questionnaire
@@ -226,7 +226,7 @@ Please complete this feedback form during your check-in or submit to: [Support c
 
 7. Feature Requests & Roadmap Priorities:
    - What integration should Sentraa prioritize next for your deployment?
-     [ ] AWS Bedrock  [ ] Native Anthropic  [ ] GitHub Connector (Live Repo Testing)  [ ] Python SDK (PyPI)  [ ] Entra ID SCIM & Group Claims
+     [ ] AWS Bedrock  [ ] Native Anthropic  [ ] GitHub Connector (Live Repo Testing — Implemented and verified with 31 unit tests using mock GitHub API data; not yet tested against a live GitHub repository)  [ ] Python SDK (PyPI)  [ ] Entra ID SCIM & Group Claims
 ```
 
 ---
@@ -239,7 +239,7 @@ Please complete this feedback form during your check-in or submit to: [Support c
 |---|---|---|
 | **Customer Organization** | `________________________________________` | |
 | **Primary Customer Contact** | Name: `__________________` Email: `__________________` | Role: `__________________` |
-| **Sentraa Account Lead** | `[Account Lead - to be added by Sentraa]` | |
+| **Sentraa Account Lead** | Faazil Zia, faazilzia01@gmail.com | |
 | **Kickoff Date** | `YYYY-MM-DD` | |
 | **Pilot Evaluation Period** | [ ] 14 Days &nbsp;&nbsp;&nbsp; [ ] 30 Days | End Date: `YYYY-MM-DD` |
 | **Authentication Mode** | [ ] Public Sandbox (`sentra_test_sandbox`)<br/>[ ] Dedicated Tenant API Key | Key Prefix: `sentra_` |
