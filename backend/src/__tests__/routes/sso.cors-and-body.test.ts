@@ -12,7 +12,7 @@
 import request from 'supertest';
 import fs from 'node:fs';
 import path from 'node:path';
-import app from '../../app';
+import app, { isDevLocalOrigin } from '../../app';
 import prisma from '../../config/db';
 import * as ssoController from '../../controllers/sso.controller';
 
@@ -143,23 +143,64 @@ describe('SAML ACS Callback CORS & Body Parsing Integration', () => {
     expect(backendRenderYaml).toContain('https://sentraatech.info');
   });
 
-  it('verifies that local development origin check allows localhost regardless of FRONTEND_URL', () => {
-    const isProduction = false;
-    const prodFrontendUrl = 'https://sentra-ai-tau.vercel.app,https://sentra-ai.vercel.app,https://sentraatech.info,https://www.sentraatech.info';
-    const allowedOrigins = prodFrontendUrl.split(',').map(o => o.trim());
+  it('strictly validates development localhost origins and rejects lookalikes/malformed origins (helper test)', () => {
+    const originalEnv = process.env.NODE_ENV;
 
-    const testOrigin = 'http://localhost:5173';
-    const isAllowedInDev = allowedOrigins.includes(testOrigin) ||
-                          (!isProduction && testOrigin.includes('localhost')) ||
-                          testOrigin.endsWith('.vercel.app');
+    try {
+      // 1. Outside production (development/test):
+      process.env.NODE_ENV = 'development';
 
-    expect(isAllowedInDev).toBe(true);
+      // Allowed outside production:
+      expect(isDevLocalOrigin('http://localhost:5173')).toBe(true);
+      expect(isDevLocalOrigin('https://localhost:5173')).toBe(true);
+      expect(isDevLocalOrigin('http://127.0.0.1:5173')).toBe(true);
+      expect(isDevLocalOrigin('https://127.0.0.1:3000')).toBe(true);
 
-    const isProd = true;
-    const isAllowedInProd = allowedOrigins.includes(testOrigin) ||
-                           (!isProd && testOrigin.includes('localhost')) ||
-                           testOrigin.endsWith('.vercel.app');
+      // Rejected in development: lookalikes, paths, and malformed
+      expect(isDevLocalOrigin('https://localhost.evil.com')).toBe(false);
+      expect(isDevLocalOrigin('http://evil.com/localhost')).toBe(false);
+      expect(isDevLocalOrigin('http://localhost.evil.com:5173')).toBe(false);
+      expect(isDevLocalOrigin('malformed-origin')).toBe(false);
+      expect(isDevLocalOrigin('://invalid')).toBe(false);
+      expect(isDevLocalOrigin('')).toBe(false);
+      expect(isDevLocalOrigin('ftp://localhost:21')).toBe(false);
 
-    expect(isAllowedInProd).toBe(false);
+      // 2. In production:
+      process.env.NODE_ENV = 'production';
+
+      // All localhost and lookalike origins are strictly rejected in production mode
+      expect(isDevLocalOrigin('http://localhost:5173')).toBe(false);
+      expect(isDevLocalOrigin('https://localhost:5173')).toBe(false);
+      expect(isDevLocalOrigin('http://127.0.0.1:5173')).toBe(false);
+      expect(isDevLocalOrigin('https://localhost.evil.com')).toBe(false);
+      expect(isDevLocalOrigin('http://evil.com/localhost')).toBe(false);
+      expect(isDevLocalOrigin('http://localhost.evil.com:5173')).toBe(false);
+      expect(isDevLocalOrigin('malformed-origin')).toBe(false);
+    } finally {
+      process.env.NODE_ENV = originalEnv;
+    }
+  });
+
+  it('strictly rejects adversarial and lookalike origins via Express CORS HTTP middleware', async () => {
+    const rejectedOrigins = [
+      'https://localhost.evil.com',
+      'http://evil.com/localhost',
+      'http://localhost.evil.com:5173',
+      'http://attacker.com',
+      'not-a-valid-url',
+    ];
+
+    for (const origin of rejectedOrigins) {
+      const res = await request(app)
+        .get('/ping')
+        .set('Origin', origin);
+
+      expect(res.status).toBe(500);
+      expect(res.body).toMatchObject({
+        success: false,
+        message: 'Not allowed by CORS',
+      });
+      expect(res.headers['access-control-allow-origin']).toBeUndefined();
+    }
   });
 });

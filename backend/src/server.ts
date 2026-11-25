@@ -12,6 +12,7 @@ import http, { createServer } from 'http';
 import https from 'https';
 import { Server } from 'socket.io';
 import app from './app';
+import { isDevLocalOrigin } from './utils/corsHelper';
 import prisma, { initializePrisma } from './config/db';
 import { IntakeFormService } from './services/intakeForm.service';
 import { ComplianceSeedingService } from './services/complianceSeeding.service';
@@ -73,7 +74,7 @@ const io = new Server(httpServer, {
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
       const isAllowed = allowedOrigins.includes(origin) ||
-                        (!isProduction && origin.includes('localhost')) ||
+                        isDevLocalOrigin(origin) ||
                         origin.endsWith('.vercel.app');
       if (isAllowed) {
         callback(null, true);

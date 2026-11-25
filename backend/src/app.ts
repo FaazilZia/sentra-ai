@@ -68,6 +68,7 @@ import evidenceRoutes from './routes/evidence.routes';
 import searchRoutes from './routes/search.routes';
 import slackRoutes from './routes/slack.routes';
 import jiraRoutes from './routes/jira.routes';
+import { isDevLocalOrigin } from './utils/corsHelper';
 import changeHistoryRoutes from './routes/changeHistory.routes';
 import intakeRoutes from './routes/intakeForm.routes';
 import interceptRoutes from './routes/intercept.routes';
@@ -401,6 +402,8 @@ const allowedOrigins = corsOrigins
   ? corsOrigins.split(',').map(o => o.trim()) 
   : ['http://localhost:5173'];
 
+export { isDevLocalOrigin };
+
 // SAML 2.0 ACS Callback CORS Exemption:
 // In the SAML 2.0 HTTP-POST binding, Identity Providers (such as Okta) submit a cross-origin form POST
 // directly from the user's browser, transmitting the IdP domain in the Origin header (e.g. https://trial-1398524.okta.com).
@@ -432,7 +435,7 @@ app.use(cors((req, callback) => {
   }
 
   const isAllowed = allowedOrigins.includes(origin) || 
-                    (!isProduction && origin.includes('localhost')) ||
+                    isDevLocalOrigin(origin) ||
                     origin.endsWith('.vercel.app');
 
   if (isAllowed) {
