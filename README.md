@@ -106,7 +106,7 @@ Think of it as a **security checkpoint** for every `agent.run()` call in your st
 
 ### 🔗 Data Connectors
 - **AWS S3, Google Drive, Slack** — Native scanning connectors with stream-based analysis (tested live on metadata-only; PostgreSQL connector was not live-tested)
-- **GitHub Inbound Connector** — Inbound repository and secret/PII scanning implemented and verified via unit tests with mock GitHub API fixtures (31 tests in `backend/src/__tests__/services/githubInboundConnector.test.ts` verifying token validation, connection test error handling, synthetic canary secret/PII detection with masked snippets, blob SHA deduplication, rate-limit retry backoff, multi-tenant isolation, and zero secret leakage). NOT verified: live repository scanning against a real GitHub repository, real GitHub PAT authentication against api.github.com, production environment, and organization repos at scale; see [PILOT_HANDOFF.md](./docs/PILOT_HANDOFF.md) and [CONNECTORS_QUICKSTART.md](./docs/CONNECTORS_QUICKSTART.md))
+- **GitHub Inbound Connector** — Implemented and verified with 31 unit tests using mock GitHub API data. Not yet tested against a live GitHub repository (Coming Soon; see [PILOT_HANDOFF.md](./docs/PILOT_HANDOFF.md) and [CONNECTORS_QUICKSTART.md](./docs/CONNECTORS_QUICKSTART.md))
 - **AES-256-GCM credential encryption** — All connector secrets encrypted at rest
 - **Budget protection** — Hard daily cost limits with automatic circuit breaker
 - **Health scoring** — Automated reliability tracking (0–100%) per connector

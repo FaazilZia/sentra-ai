@@ -55,7 +55,6 @@ This document serves as the complete pilot onboarding pack, detailing:
 | **Okta SAML 2.0 SSO & SCIM** | SAML login and SCIM verified on a real tenant; role mapping tested with simulated assertions only. Evidence in PR #151 commit `fdebe37` and [okta-setup.md](sso/okta-setup.md). |
 | **Microsoft Entra ID SAML 2.0 SSO** | SAML 2.0 login verified locally against a real Microsoft Entra tenant with one test user. ADMIN role mapping verified. Not yet tested: other roles, group claims, SCIM provisioning, or a production deployment (each customer needs their own Entra Reply URL pointing at the production backend). Setup guide in [entra-setup.md](sso/entra-setup.md) and evidence log in [day10-entra-sso-evidence.log](evidence/day10-entra-sso-evidence.log). |
 | **Data Connectors (S3, GDrive, Slack, Postgres)** | AWS S3, Google Drive, and Slack inbound connectors were tested live (metadata-only scanning; no customer row or message data stored). PostgreSQL connector was not live-tested. |
-| **GitHub Inbound Connector** | Implemented and verified via unit tests with mock GitHub API fixtures (31 tests in `backend/src/__tests__/services/githubInboundConnector.test.ts`). Verified in unit tests: token format validation, connection test error handling, synthetic canary secret/PII detection with masked snippets only, blob SHA deduplication on rescan, memory-only file processing with zero raw secrets or tokens in database/logs/API responses, rate-limit retry backoff handling, and multi-tenant isolation. NOT verified: live scanning against a real GitHub repository (private or public), real GitHub PAT authentication against api.github.com, production environment, GitHub organization repos at scale, and rate-limit backoff under real network throttling. (Warning in setup: Always enter your Target Repositories. If the field is left blank, the connector scans EVERY repository the token can read, including your public repositories, which can produce many unrelated findings. Documented in [CONNECTORS_QUICKSTART.md](CONNECTORS_QUICKSTART.md)). |
 | **5 Supported Compliance Frameworks** | Native evaluation engines compute scores for GDPR, DPDP, HIPAA, PCI-DSS, and NIST AI RMF (implemented in `compliance.service.ts`, `pci.service.ts`, and `nistAiRmf.service.ts`) with exportable evidence. |
 
 ---
@@ -70,7 +69,10 @@ The following integrations are actively in engineering progress and scheduled fo
 2. **Native Anthropic API Wrapper**
    - *Status:* **Coming Soon**
    - *Detail:* Wrapper logic and interception tests are in place. Real-world validation against direct `api.anthropic.com` failed due to account credit balance (`BadRequestError: 400 - Your credit balance is too low` in [python-anthropic-real-call.log](evidence/python-anthropic-real-call.log)), and the GCP Vertex Anthropic route encountered quota limits. Scheduled for re-verification upon billing refill.
-3. **Python SDK on PyPI (`sentraa-ai`)**
+3. **GitHub Inbound Connector**
+   - *Status:* **Coming Soon**
+   - *Detail:* Implemented and verified with 31 unit tests using mock GitHub API data. Not yet tested against a live GitHub repository.
+4. **Python SDK on PyPI (`sentraa-ai`)**
    - *Status:* **Coming Soon**
    - *Detail:* The Python client and provider wrappers are developed in `packages/python-sdk`, but the package is **NOT yet published to PyPI**. For the beta pilot, Node.js (`@sentra-ai/sdk` v1.1.0 on npm) or direct HTTPS REST API integration must be used.
 
@@ -224,7 +226,7 @@ Please complete this feedback form during your check-in or submit to: faazilzia0
 
 7. Feature Requests & Roadmap Priorities:
    - What integration should Sentraa prioritize next for your deployment?
-     [ ] AWS Bedrock  [ ] Native Anthropic  [ ] GitHub Connector (Live Repo Testing & Org Scale)  [ ] Python SDK (PyPI)  [ ] Entra ID SCIM & Group Claims
+     [ ] AWS Bedrock  [ ] Native Anthropic  [ ] GitHub Connector (Live Repo Testing — Implemented and verified with 31 unit tests using mock GitHub API data; not yet tested against a live GitHub repository)  [ ] Python SDK (PyPI)  [ ] Entra ID SCIM & Group Claims
 ```
 
 ---
