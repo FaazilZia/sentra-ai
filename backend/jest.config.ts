@@ -62,6 +62,7 @@ module.exports = {
     'src/routes/evidence.routes.ts',
     'src/routes/user.routes.ts',
     'src/services/nistEvidence.service.ts',
+    'src/utils/corsHelper.ts',
   ],
   coverageThreshold: {
     global: {

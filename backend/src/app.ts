@@ -68,7 +68,8 @@ import evidenceRoutes from './routes/evidence.routes';
 import searchRoutes from './routes/search.routes';
 import slackRoutes from './routes/slack.routes';
 import jiraRoutes from './routes/jira.routes';
-import { isDevLocalOrigin } from './utils/corsHelper';
+import { isDevLocalOrigin, isOriginAllowed, getAllowedOrigins } from './utils/corsHelper';
+export { isDevLocalOrigin, isOriginAllowed, getAllowedOrigins };
 import changeHistoryRoutes from './routes/changeHistory.routes';
 import intakeRoutes from './routes/intakeForm.routes';
 import interceptRoutes from './routes/intercept.routes';
@@ -396,14 +397,6 @@ app.use(helmet({
 }));
 app.use(securityObservability);
 
-const isProduction = process.env.NODE_ENV === 'production';
-const corsOrigins = process.env.CORS_ALLOWED_ORIGINS || process.env.FRONTEND_URL;
-const allowedOrigins = corsOrigins 
-  ? corsOrigins.split(',').map(o => o.trim()) 
-  : ['http://localhost:5173'];
-
-export { isDevLocalOrigin };
-
 // SAML 2.0 ACS Callback CORS Exemption:
 // In the SAML 2.0 HTTP-POST binding, Identity Providers (such as Okta) submit a cross-origin form POST
 // directly from the user's browser, transmitting the IdP domain in the Origin header (e.g. https://trial-1398524.okta.com).
@@ -434,11 +427,7 @@ app.use(cors((req, callback) => {
     });
   }
 
-  const isAllowed = allowedOrigins.includes(origin) || 
-                    isDevLocalOrigin(origin) ||
-                    origin.endsWith('.vercel.app');
-
-  if (isAllowed) {
+  if (isOriginAllowed(origin)) {
     callback(null, {
       origin: true,
       credentials: true,

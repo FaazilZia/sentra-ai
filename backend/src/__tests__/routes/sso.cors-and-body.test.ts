@@ -12,7 +12,8 @@
 import request from 'supertest';
 import fs from 'node:fs';
 import path from 'node:path';
-import app, { isDevLocalOrigin } from '../../app';
+import app from '../../app';
+import { isDevLocalOrigin, isOriginAllowed, getAllowedOrigins, DEFAULT_ALLOWED_ORIGINS } from '../../utils/corsHelper';
 import prisma from '../../config/db';
 import * as ssoController from '../../controllers/sso.controller';
 
@@ -181,8 +182,56 @@ describe('SAML ACS Callback CORS & Body Parsing Integration', () => {
     }
   });
 
-  it('strictly rejects adversarial and lookalike origins via Express CORS HTTP middleware', async () => {
+  it('verifies getAllowedOrigins and isOriginAllowed helper resolution', () => {
+    const origFrontendUrl = process.env.FRONTEND_URL;
+    const origCorsOrigins = process.env.CORS_ALLOWED_ORIGINS;
+    const origNodeEnv = process.env.NODE_ENV;
+
+    try {
+      // Missing env -> falls back to DEFAULT_ALLOWED_ORIGINS
+      delete process.env.FRONTEND_URL;
+      delete process.env.CORS_ALLOWED_ORIGINS;
+      expect(getAllowedOrigins()).toEqual(DEFAULT_ALLOWED_ORIGINS);
+
+      // Configured via FRONTEND_URL
+      process.env.FRONTEND_URL = 'https://custom1.sentraatech.info, https://custom2.sentraatech.info';
+      expect(getAllowedOrigins()).toEqual(['https://custom1.sentraatech.info', 'https://custom2.sentraatech.info']);
+
+      // Empty or undefined origin check
+      expect(isOriginAllowed(undefined)).toBe(true);
+      expect(isOriginAllowed('')).toBe(true);
+
+      // Configured origin allowed
+      expect(isOriginAllowed('https://custom1.sentraatech.info')).toBe(true);
+
+      // Unconfigured foreign origin rejected
+      process.env.NODE_ENV = 'production';
+      expect(isOriginAllowed('https://untrusted.com')).toBe(false);
+      expect(isOriginAllowed('http://localhost:5173')).toBe(false);
+    } finally {
+      if (origFrontendUrl === undefined) {
+        delete process.env.FRONTEND_URL;
+      } else {
+        process.env.FRONTEND_URL = origFrontendUrl;
+      }
+      if (origCorsOrigins === undefined) {
+        delete process.env.CORS_ALLOWED_ORIGINS;
+      } else {
+        process.env.CORS_ALLOWED_ORIGINS = origCorsOrigins;
+      }
+      if (origNodeEnv === undefined) {
+        delete process.env.NODE_ENV;
+      } else {
+        process.env.NODE_ENV = origNodeEnv;
+      }
+    }
+  });
+
+  it('strictly rejects adversarial, lookalike, and untrusted Vercel origins via Express CORS HTTP middleware', async () => {
     const rejectedOrigins = [
+      'https://evil.vercel.app',
+      'https://sentra-ai.vercel.app.evil.com',
+      'http://evil.vercel.app',
       'https://localhost.evil.com',
       'http://evil.com/localhost',
       'http://localhost.evil.com:5173',
@@ -191,16 +240,56 @@ describe('SAML ACS Callback CORS & Body Parsing Integration', () => {
     ];
 
     for (const origin of rejectedOrigins) {
-      const res = await request(app)
+      // Test GET request
+      const resGet = await request(app)
         .get('/ping')
         .set('Origin', origin);
 
-      expect(res.status).toBe(500);
-      expect(res.body).toMatchObject({
+      expect(resGet.status).toBe(500);
+      expect(resGet.body).toMatchObject({
         success: false,
         message: 'Not allowed by CORS',
       });
-      expect(res.headers['access-control-allow-origin']).toBeUndefined();
+      expect(resGet.headers['access-control-allow-origin']).toBeUndefined();
+
+      // Test OPTIONS preflight request
+      const resOptions = await request(app)
+        .options('/ping')
+        .set('Origin', origin)
+        .set('Access-Control-Request-Method', 'GET');
+
+      expect(resOptions.status).toBe(500);
+      expect(resOptions.headers['access-control-allow-origin']).toBeUndefined();
+    }
+  });
+
+  it('allows all 4 real production frontend domains via Express CORS HTTP middleware', async () => {
+    const realProductionDomains = [
+      'https://sentraatech.info',
+      'https://www.sentraatech.info',
+      'https://sentra-ai-tau.vercel.app',
+      'https://sentra-ai.vercel.app',
+    ];
+
+    for (const origin of realProductionDomains) {
+      // Test GET request
+      const resGet = await request(app)
+        .get('/ping')
+        .set('Origin', origin);
+
+      expect(resGet.status).toBe(200);
+      expect(resGet.headers['access-control-allow-origin']).toBe(origin);
+      expect(resGet.headers['access-control-allow-credentials']).toBe('true');
+
+      // Test OPTIONS preflight request
+      const resOptions = await request(app)
+        .options('/ping')
+        .set('Origin', origin)
+        .set('Access-Control-Request-Method', 'GET');
+
+      expect(resOptions.status).toBe(204);
+      expect(resOptions.headers['access-control-allow-origin']).toBe(origin);
+      expect(resOptions.headers['access-control-allow-credentials']).toBe('true');
     }
   });
 });

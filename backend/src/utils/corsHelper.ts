@@ -1,4 +1,27 @@
 /**
+ * Shared CORS origin helpers and development localhost validation.
+ */
+
+export const DEFAULT_ALLOWED_ORIGINS = [
+  'https://sentra-ai-tau.vercel.app',
+  'https://sentra-ai.vercel.app',
+  'https://sentraatech.info',
+  'https://www.sentraatech.info',
+];
+
+/**
+ * Resolves allowed CORS origins from environment (CORS_ALLOWED_ORIGINS or FRONTEND_URL)
+ * or falls back to DEFAULT_ALLOWED_ORIGINS.
+ */
+export function getAllowedOrigins(): string[] {
+  const configured = process.env.CORS_ALLOWED_ORIGINS || process.env.FRONTEND_URL;
+  if (configured) {
+    return configured.split(',').map(o => o.trim()).filter(Boolean);
+  }
+  return DEFAULT_ALLOWED_ORIGINS;
+}
+
+/**
  * Shared CORS origin helper for development localhost checks.
  *
  * Enforces strict URL parsing:
@@ -19,4 +42,15 @@ export function isDevLocalOrigin(origin: string): boolean {
   } catch {
     return false;
   }
+}
+
+/**
+ * Checks whether an origin is allowed by CORS policy.
+ */
+export function isOriginAllowed(origin?: string): boolean {
+  if (!origin) {
+    return true;
+  }
+  const allowedOrigins = getAllowedOrigins();
+  return allowedOrigins.includes(origin) || isDevLocalOrigin(origin);
 }
