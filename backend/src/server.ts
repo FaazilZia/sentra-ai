@@ -12,6 +12,7 @@ import http, { createServer } from 'http';
 import https from 'https';
 import { Server } from 'socket.io';
 import app from './app';
+import { isDevLocalOrigin, isOriginAllowed } from './utils/corsHelper';
 import prisma, { initializePrisma } from './config/db';
 import { IntakeFormService } from './services/intakeForm.service';
 import { ComplianceSeedingService } from './services/complianceSeeding.service';
@@ -61,21 +62,11 @@ export const shutdown = async (signal: string) => {
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
 
-// Use the same CORS origins as Express — never wildcard in production
-const isProduction = process.env.NODE_ENV === 'production';
-const corsOrigins = process.env.CORS_ALLOWED_ORIGINS || process.env.FRONTEND_URL;
-const allowedOrigins = corsOrigins
-  ? corsOrigins.split(',').map(o => o.trim())
-  : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:4173'];
-
+// Use the same CORS origin policy as Express — never wildcard in production
 const io = new Server(httpServer, {
   cors: {
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      const isAllowed = allowedOrigins.includes(origin) ||
-                        (!isProduction && origin.includes('localhost')) ||
-                        origin.endsWith('.vercel.app');
-      if (isAllowed) {
+      if (isOriginAllowed(origin)) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
