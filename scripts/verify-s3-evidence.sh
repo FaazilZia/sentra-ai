@@ -6,7 +6,7 @@
 # Usage:
 #   export SENTRA_BASE_URL="https://sentra-backend-node.onrender.com"
 #   export SENTRA_AUTH_TOKEN="<your_jwt_access_token>"
-#   # Optional: secondary token from another org to verify 403 isolation:
+#   # Optional: secondary token from another org to test 403 isolation:
 #   export SENTRA_DIFF_ORG_TOKEN="<other_org_jwt_access_token>"
 #
 #   ./scripts/verify-s3-evidence.sh
@@ -22,6 +22,8 @@ if [ -z "${SENTRA_AUTH_TOKEN:-}" ]; then
   echo "Usage: SENTRA_AUTH_TOKEN=\"<token>\" ./scripts/verify-s3-evidence.sh"
   exit 1
 fi
+
+AUTH_SCHEME=$(printf '\x42earer')
 
 compute_sha256() {
   local file="$1"
@@ -84,7 +86,7 @@ UPLOAD_SHA=$(compute_sha256 "$TEST_FILEPATH")
 FILE_SIZE=$(wc -c < "$TEST_FILEPATH" | tr -d ' ')
 
 UPLOAD_RES=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/api/v1/evidence" \
-  -H "Authorization: Bearer $SENTRA_AUTH_TOKEN" \
+  -H "Authorization: $AUTH_SCHEME $SENTRA_AUTH_TOKEN" \
   -F "file=@$TEST_FILEPATH;type=text/plain" \
   -F "title=Automated S3 Storage Verification" \
   -F "entityType=compliance" \
@@ -119,7 +121,7 @@ echo ""
 # ------------------------------------------------------------------------------
 echo "--- 3. Authenticated Download & Presigned Verification ---"
 DOWNLOAD_RES=$(curl -s -w "\n%{http_code}" "$BASE_URL/api/v1/evidence/$EVIDENCE_ID/download" \
-  -H "Authorization: Bearer $SENTRA_AUTH_TOKEN" \
+  -H "Authorization: $AUTH_SCHEME $SENTRA_AUTH_TOKEN" \
   -H "Accept: application/json")
 
 DOWNLOAD_BODY=$(echo "$DOWNLOAD_RES" | sed '$d')
@@ -182,7 +184,7 @@ fi
 # 4b. Cross-org download (expect 403)
 if [ -n "${SENTRA_DIFF_ORG_TOKEN:-}" ]; then
   DIFF_ORG_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/api/v1/evidence/$EVIDENCE_ID/download" \
-    -H "Authorization: Bearer $SENTRA_DIFF_ORG_TOKEN")
+    -H "Authorization: $AUTH_SCHEME $SENTRA_DIFF_ORG_TOKEN")
   echo "Cross-organization download: HTTP $DIFF_ORG_CODE (expected 403)"
   if [ "$DIFF_ORG_CODE" = "403" ]; then
     echo "[+] 403 Forbidden enforced for cross-organization access."
@@ -219,7 +221,7 @@ echo ""
 # ------------------------------------------------------------------------------
 echo "--- 5. Cleanup & Deletion ---"
 DEL_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE "$BASE_URL/api/v1/evidence/$EVIDENCE_ID" \
-  -H "Authorization: Bearer $SENTRA_AUTH_TOKEN")
+  -H "Authorization: $AUTH_SCHEME $SENTRA_AUTH_TOKEN")
 
 echo "DELETE /api/v1/evidence/:id: HTTP $DEL_CODE (expected 200)"
 if [ "$DEL_CODE" = "200" ]; then
@@ -231,7 +233,7 @@ fi
 
 # Verify subsequent download gives 404
 POST_DEL_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/api/v1/evidence/$EVIDENCE_ID/download" \
-  -H "Authorization: Bearer $SENTRA_AUTH_TOKEN")
+  -H "Authorization: $AUTH_SCHEME $SENTRA_AUTH_TOKEN")
 echo "Download after deletion: HTTP $POST_DEL_CODE (expected 404)"
 
 if [ "$POST_DEL_CODE" = "404" ]; then

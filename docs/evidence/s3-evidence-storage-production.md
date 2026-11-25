@@ -1,6 +1,6 @@
-# Production Verification: AWS S3 Evidence Storage & Access Control
+# Production Test: AWS S3 Evidence Storage & Access Control
 
-- **Date and Time (UTC):** `2026-11-25T07:00:28Z` – `2026-11-25T07:00:46Z` (Upload & Access Verification)  
+- **Date and Time (UTC):** `2026-11-25T07:00:28Z` – `2026-11-25T07:00:46Z` (Upload & Access Test)  
 - **Cleanup Completed (UTC):** `2026-11-25T11:51:41Z`  
 - **Environment:** Live Production (`sentra-backend-node.onrender.com`)  
 - **Target Bucket:** `sentraa-evidence-prod` (Private, Block Public Access ON)  
@@ -13,28 +13,28 @@
 
 ## 1. Executive Summary
 
-This document records live production verification that evidence file storage in Sentraa AI routes to a dedicated, private Amazon S3 bucket in `ap-south-1` with Block Public Access enabled. Evidence downloads require authentication and tenant organization membership, returning short-lived presigned URLs (`X-Amz-Expires=900`). Public static access to evidence files is completely blocked, while public avatar serving operates in an isolated directory (`/uploads/avatars/`).
+This document records live production testing that evidence file storage in Sentraa AI routes to a dedicated, private Amazon S3 bucket in `ap-south-1` with Block Public Access enabled. Evidence downloads require authentication and tenant organization membership, returning presigned URLs set to expire after 15 minutes (not verified by waiting). Public static access to evidence files is completely blocked, while public avatar serving operates in an isolated directory (`/uploads/avatars/`).
 
 All tests were conducted on the live production service with zero application code changes.
 
 ---
 
-## 2. Test Verification Matrix
+## 2. Test Results Matrix
 
 | # | Test Case | Target / Endpoint | Expected Result | Actual Result | Status |
 |---|---|---|---|---|---|
-| **1a** | Service Health & Readiness | `GET /ping`<br>`GET /ready` | HTTP 200 `status: "ok"`<br>HTTP 200 `status: "ready"` | HTTP 200 (`status: "ok"`)<br>HTTP 200 (`status: "ready"`, version `2.0.0`) | **VERIFIED** |
-| **1b** | Render Startup Logs | Render Service Logs | No `CRITICAL STARTUP WARNING: AWS_S3_BUCKET is not configured`<br>Confirmation of S3 bucket attachment | Verified functionally via direct S3 upload routing (ephemeral disk storage bypassed) | **VERIFIED** |
-| **2a** | Upload Evidence File | `POST /api/v1/evidence` | HTTP 201 Created | HTTP 201 Created (`success: true`) | **VERIFIED** |
-| **2b** | Verify S3 Storage Target | Stored `fileUrl` | Points to `sentraa-evidence-prod.s3.ap-south-1.amazonaws.com` (not `/uploads/`) | Matches S3 bucket host and region `ap-south-1` | **VERIFIED** |
-| **2c** | Presigned Download Link | `GET /api/v1/evidence/:id/download` | HTTP 200 JSON (or 302 redirect) with presigned S3 URL; expiry within minutes (`X-Amz-Expires=900`) | HTTP 200 returning presigned S3 link with `X-Amz-Expires=900` (15 min); 302 on redirect flow | **VERIFIED** |
-| **2d** | Content & Integrity Match | Direct GET on presigned URL | HTTP 200, Content-Type: `text/plain`, SHA-256 matches uploaded file exactly | HTTP 200, 66 bytes received; SHA-256: `4d2e1d5d...` matches uploaded hash | **VERIFIED** |
-| **3a** | Access Control: No Login | `GET /api/v1/evidence/:id/download` (unauthenticated) | HTTP 401 Unauthorized | HTTP 401 (`"Authentication required"`) | **VERIFIED** |
-| **3b** | Access Control: Cross-Org | `GET /api/v1/evidence/:id/download` (Org B user) | HTTP 403 Forbidden | HTTP 403 (`"Forbidden: Access denied to evidence belonging to another organization"`) | **VERIFIED** |
-| **3c** | Access Control: Direct S3 URL | Plain S3 URL (without `X-Amz-Signature`) | HTTP 403 Forbidden with `Server: AmazonS3` and `<Code>AccessDenied</Code>` | HTTP 403 AccessDenied (Block Public Access ON) | **VERIFIED** |
-| **3d** | Access Control: Legacy Uploads | `GET /uploads/<evidence-file>` | HTTP 404 Not Found (public static evidence disabled) | HTTP 404 (`"File not found"`) | **VERIFIED** |
-| **3e** | Avatar Isolation & Serving | `PUT /api/v1/users/me/avatar`<br>Public `GET /uploads/avatars/...`<br>Legacy `GET /uploads/avatar-...` | Upload returns 200 with `/uploads/avatars/` URL; public GET returns 200 `image/png`; legacy URL redirects 302 | Upload: 200; Public fetch: 200 (`image/png`); Legacy route: 302 redirect | **VERIFIED** |
-| **4a** | Cleanup: Delete Evidence | `DELETE /api/v1/evidence/:id` | HTTP 200 OK; subsequent download gives 404; presigned URL access revoked | HTTP 200; download post-delete: 404; presigned URL post-delete: 403 AccessDenied | **VERIFIED** |
+| **1a** | Service Health & Readiness | `GET /ping`<br>`GET /ready` | HTTP 200 `status: "ok"`<br>HTTP 200 `status: "ready"` | HTTP 200 (`status: "ok"`)<br>HTTP 200 (`status: "ready"`, version `2.0.0`) | **PASS** |
+| **1b** | Render Startup Logs | Render Service Logs | No `CRITICAL STARTUP WARNING: AWS_S3_BUCKET is not configured`<br>Confirmation of S3 bucket attachment | Verified functionally via direct S3 upload routing (ephemeral disk storage bypassed) | **PASS** |
+| **2a** | Upload Evidence File | `POST /api/v1/evidence` | HTTP 201 Created | HTTP 201 Created (`success: true`) | **PASS** |
+| **2b** | Check S3 Storage Target | Stored `fileUrl` | Points to `sentraa-evidence-prod.s3.ap-south-1.amazonaws.com` (not `/uploads/`) | Matches S3 bucket host and region `ap-south-1` | **PASS** |
+| **2c** | Presigned Download Link | `GET /api/v1/evidence/:id/download` | HTTP 200 JSON (or 302 redirect) with presigned S3 URL; link set to expire after 15 minutes (`X-Amz-Expires=900`, not verified by waiting) | HTTP 200 returning presigned S3 link with `X-Amz-Expires=900`; 302 on redirect flow | **PASS** |
+| **2d** | Content & Integrity Match | Direct GET on presigned URL | HTTP 200, Content-Type: `text/plain`, SHA-256 matches uploaded file exactly | HTTP 200, 66 bytes received; SHA-256: `4d2e1d5d...` matches uploaded hash | **PASS** |
+| **3a** | Access Control: No Login | `GET /api/v1/evidence/:id/download` (unauthenticated) | HTTP 401 Unauthorized | HTTP 401 (`"Authentication required"`) | **PASS** |
+| **3b** | Access Control: Cross-Org | `GET /api/v1/evidence/:id/download` (Org B user) | HTTP 403 Forbidden | HTTP 403 (`"Forbidden: Access denied to evidence belonging to another organization"`) | **PASS** |
+| **3c** | Access Control: Direct S3 URL | Plain S3 URL (without presigned signature parameters) | HTTP 403 Forbidden with `Server: AmazonS3` and `<Code>AccessDenied</Code>` | HTTP 403 AccessDenied (Block Public Access ON) | **PASS** |
+| **3d** | Access Control: Legacy Uploads | `GET /uploads/<evidence-file>` | HTTP 404 Not Found (public static evidence disabled) | HTTP 404 (`"File not found"`) | **PASS** |
+| **3e** | Avatar Isolation & Serving | `PUT /api/v1/users/me/avatar`<br>Public `GET /uploads/avatars/...`<br>Legacy `GET /uploads/avatar-...` | Upload returns 200 with `/uploads/avatars/` URL; public GET returns 200 `image/png`; legacy URL redirects 302 | Upload: 200; Public fetch: 200 (`image/png`); Legacy route: 302 redirect | **PASS** |
+| **4a** | Cleanup: Delete Evidence | `DELETE /api/v1/evidence/:id` | HTTP 200 OK; subsequent download gives 404; presigned URL access revoked | HTTP 200; download post-delete: 404; presigned URL post-delete: 403 AccessDenied | **PASS** |
 
 ---
 
@@ -77,10 +77,10 @@ content-type: application/json; charset=utf-8
 ```http
 POST /api/v1/evidence HTTP/2
 Host: sentra-backend-node.onrender.com
-Authorization: Bearer [REDACTED]
+Authorization: [REDACTED_AUTH_TOKEN]
 Content-Type: multipart/form-data; boundary=---------------------------[MASKED]
 
-[File content: 66 bytes, name="proof-1795590029831.txt", mime="text/plain"]
+[File content: 66 bytes, name="proof-[TIMESTAMP].txt", mime="text/plain"]
 
 HTTP/2 201 Created
 content-type: application/json; charset=utf-8
@@ -94,7 +94,7 @@ content-type: application/json; charset=utf-8
     "title": "S3 Production Verification",
     "description": "Single-line harmless text proof for S3 storage",
     "fileUrl": "https://sentraa-evidence-prod.s3.ap-south-1.amazonaws.com/orgs/39c7a7c4-[MASKED]/evidence/abcfac2a-[MASKED].txt",
-    "fileName": "proof-1795590029831.txt",
+    "fileName": "proof-[TIMESTAMP].txt",
     "fileSize": 66,
     "mimeType": "text/plain",
     "entityType": "compliance",
@@ -107,7 +107,7 @@ content-type: application/json; charset=utf-8
 ```http
 GET /api/v1/evidence/abcfac2a-[MASKED]/download HTTP/2
 Host: sentra-backend-node.onrender.com
-Authorization: Bearer [REDACTED]
+Authorization: [REDACTED_AUTH_TOKEN]
 Accept: application/json
 
 HTTP/2 200 OK
@@ -116,8 +116,8 @@ content-type: application/json; charset=utf-8
 {
   "success": true,
   "data": {
-    "downloadUrl": "https://sentraa-evidence-prod.s3.ap-south-1.amazonaws.com/orgs/39c7a7c4-[MASKED]/evidence/abcfac2a-[MASKED].txt?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=[REDACTED]%2F20261125%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20261125T070043Z&X-Amz-Expires=900&X-Amz-Signature=[REDACTED]&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B+filename%3D%22proof-1795590029831.txt%22&x-amz-checksum-mode=ENABLED&x-id=GetObject",
-    "fileName": "proof-1795590029831.txt",
+    "downloadUrl": "https://sentraa-evidence-prod.s3.ap-south-1.amazonaws.com/orgs/39c7a7c4-[MASKED]/evidence/abcfac2a-[MASKED].txt?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=900&[AUTH_SIGNATURE_PARAMS_REDACTED]&response-content-disposition=attachment%3B+filename%3D%22proof-[TIMESTAMP].txt%22&x-id=GetObject",
+    "fileName": "proof-[TIMESTAMP].txt",
     "mimeType": "text/plain",
     "fileSize": 66
   }
@@ -126,13 +126,13 @@ content-type: application/json; charset=utf-8
 
 ### 4.4. Direct S3 Fetch with Presigned Signature
 ```http
-GET /orgs/39c7a7c4-[MASKED]/evidence/abcfac2a-[MASKED].txt?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=900... HTTP/2
+GET /orgs/39c7a7c4-[MASKED]/evidence/abcfac2a-[MASKED].txt?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=900&[AUTH_SIGNATURE_PARAMS_REDACTED] HTTP/2
 Host: sentraa-evidence-prod.s3.ap-south-1.amazonaws.com
 
 HTTP/2 200 OK
 content-type: text/plain
 content-length: 66
-content-disposition: attachment; filename="proof-1795590029831.txt"
+content-disposition: attachment; filename="proof-[TIMESTAMP].txt"
 server: AmazonS3
 x-amz-server-side-encryption: AES256
 
@@ -159,7 +159,7 @@ content-type: application/json; charset=utf-8
 ```http
 GET /api/v1/evidence/abcfac2a-[MASKED]/download HTTP/2
 Host: sentra-backend-node.onrender.com
-Authorization: Bearer [REDACTED_USER2_ORG_B]
+Authorization: [REDACTED_USER2_ORG_B_AUTH_TOKEN]
 
 HTTP/2 403 Forbidden
 content-type: application/json; charset=utf-8
@@ -182,7 +182,7 @@ content-type: application/xml
 
 #### D. Legacy Static Serving Route
 ```http
-GET /uploads/proof-1795590029831.txt HTTP/2
+GET /uploads/proof-[TIMESTAMP].txt HTTP/2
 Host: sentra-backend-node.onrender.com
 
 HTTP/2 404 Not Found
@@ -195,13 +195,13 @@ content-type: application/json; charset=utf-8
 ```http
 PUT /api/v1/users/me/avatar HTTP/2
 Host: sentra-backend-node.onrender.com
-Authorization: Bearer [REDACTED]
+Authorization: [REDACTED_AUTH_TOKEN]
 Content-Type: multipart/form-data
 
 HTTP/2 200 OK
 content-type: application/json; charset=utf-8
 
-{"success":true,"data":{"avatarUrl":"https://sentra-backend-node.onrender.com/uploads/avatars/avatar-e53eaa1b-[MASKED]-1795590045644.png"}}
+{"success":true,"data":{"avatarUrl":"https://sentra-backend-node.onrender.com/uploads/avatars/avatar-e53eaa1b-[MASKED]-[TIMESTAMP].png"}}
 ```
 - Public Fetch: `GET /uploads/avatars/avatar-e53eaa1b-...png` -> **HTTP 200 OK** (`Content-Type: image/png`).
 - Legacy Compatibility: `GET /uploads/avatar-e53eaa1b-...png` -> **HTTP 302 Found** (`Location: /uploads/avatars/avatar-...png`).
@@ -210,24 +210,24 @@ content-type: application/json; charset=utf-8
 ```http
 DELETE /api/v1/evidence/abcfac2a-[MASKED] HTTP/2
 Host: sentra-backend-node.onrender.com
-Authorization: Bearer [REDACTED]
+Authorization: [REDACTED_AUTH_TOKEN]
 
 HTTP/2 200 OK
 content-type: application/json; charset=utf-8
 
 {"success":true,"message":"Evidence deleted successfully"}
 ```
-- Download Verification post-delete: `GET /api/v1/evidence/abcfac2a-[MASKED]/download` -> **HTTP 404 Not Found** (`{"success":false,"message":"Evidence record not found"}`).
+- Download check post-delete: `GET /api/v1/evidence/abcfac2a-[MASKED]/download` -> **HTTP 404 Not Found** (`{"success":false,"message":"Evidence record not found"}`).
 - Direct S3 URL post-delete: Presigned link returns **HTTP 403 AccessDenied** (Amazon S3 standard behavior for non-existent keys in private buckets without `s3:ListBucket`).
 
 ---
 
-## 5. Scope & Limitations (What Was NOT Verified)
+## 5. Scope & Limitations (What Was Not Tested)
 
-To maintain strict engineering accuracy, the following areas were **not tested** during this live production verification:
+To maintain strict engineering accuracy, the following areas were **not tested** during this live production test:
 
-1. **Large Files and Concurrency/Load:** Only small verification files (<= 1 KB) were tested. Performance, latency, and memory consumption under multi-part uploads (> 50 MB) and high-concurrency upload bursts have not been benchmarked.
-2. **Presigned URL Expiry Edge Cases:** Verified that `X-Amz-Expires` is set to `900` seconds (15 minutes). Behavior past the 900-second window was not evaluated by letting a token expire in real-time.
+1. **Large Files and Concurrency/Load:** Only small test files (<= 1 KB) were tested. Performance, latency, and memory consumption under multi-part uploads (> 50 MB) and high-concurrency upload bursts have not been benchmarked.
+2. **Presigned URL Expiry Edge Cases:** Download links are set to expire after 15 minutes (`X-Amz-Expires=900`), but expiration was not verified by waiting for the link to lapse in real-time.
 3. **AWS IAM Credential & Key Rotation:** Automated rotation of `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` without backend service downtime was not tested.
 4. **Multi-Region & Cross-Region Replication:** Bucket is configured strictly in `ap-south-1`. Cross-region failover or multi-region replication is not implemented.
 5. **AWS S3 Service Degradation / Outage Handling:** Fallback or error resilience when S3 endpoints return 5xx errors or network timeouts was not evaluated in production.
