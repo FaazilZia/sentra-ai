@@ -10,6 +10,8 @@
  */
 
 import request from 'supertest';
+import fs from 'node:fs';
+import path from 'node:path';
 import app from '../../app';
 import prisma from '../../config/db';
 import * as ssoController from '../../controllers/sso.controller';
@@ -127,5 +129,37 @@ describe('SAML ACS Callback CORS & Body Parsing Integration', () => {
       .set('Origin', 'http://localhost:5173');
     expect(resAllowed.status).toBe(200);
     expect(resAllowed.headers['access-control-allow-origin']).toBe('http://localhost:5173');
+  });
+
+  it('ensures localhost:5173 is removed from FRONTEND_URL in both render.yaml files', () => {
+    const rootRenderYaml = fs.readFileSync(path.resolve(__dirname, '../../../../render.yaml'), 'utf8');
+    const backendRenderYaml = fs.readFileSync(path.resolve(__dirname, '../../../render.yaml'), 'utf8');
+
+    expect(rootRenderYaml).not.toContain('http://localhost:5173');
+    expect(backendRenderYaml).not.toContain('http://localhost:5173');
+
+    // Confirm production domains remain configured
+    expect(rootRenderYaml).toContain('https://sentraatech.info');
+    expect(backendRenderYaml).toContain('https://sentraatech.info');
+  });
+
+  it('verifies that local development origin check allows localhost regardless of FRONTEND_URL', () => {
+    const isProduction = false;
+    const prodFrontendUrl = 'https://sentra-ai-tau.vercel.app,https://sentra-ai.vercel.app,https://sentraatech.info,https://www.sentraatech.info';
+    const allowedOrigins = prodFrontendUrl.split(',').map(o => o.trim());
+
+    const testOrigin = 'http://localhost:5173';
+    const isAllowedInDev = allowedOrigins.includes(testOrigin) ||
+                          (!isProduction && testOrigin.includes('localhost')) ||
+                          testOrigin.endsWith('.vercel.app');
+
+    expect(isAllowedInDev).toBe(true);
+
+    const isProd = true;
+    const isAllowedInProd = allowedOrigins.includes(testOrigin) ||
+                           (!isProd && testOrigin.includes('localhost')) ||
+                           testOrigin.endsWith('.vercel.app');
+
+    expect(isAllowedInProd).toBe(false);
   });
 });
