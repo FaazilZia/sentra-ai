@@ -72,8 +72,19 @@ export class AttackGraphService {
     const [agents, connectors, mcpKeys, llmKeys] = await Promise.all([
       prisma.agent.findMany({ where: { organizationId } }),
       prisma.connectors.findMany({ where: { organizationId } }),
-      prisma.mcp_agent_keys.findMany({ where: { organizationId, is_active: true } }),
-      prisma.llm_keys.findMany({ where: { organizationId } }),
+      prisma.mcp_agent_keys.findMany({
+        where: {
+          organizationId,
+          is_active: true,
+          organization: { is_active: true },
+        },
+      }),
+      prisma.llm_keys.findMany({
+        where: {
+          organizationId,
+          organizations: { is_active: true },
+        },
+      }),
     ]);
 
     const nodes: AttackGraphNode[] = [];

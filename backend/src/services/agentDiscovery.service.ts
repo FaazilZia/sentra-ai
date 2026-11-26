@@ -83,7 +83,11 @@ export class AgentDiscoveryService {
     // 3. Scan MCP Agent Keys
     try {
       const mcpKeys = await prisma.mcp_agent_keys.findMany({
-        where: { organizationId, is_active: true },
+        where: {
+          organizationId,
+          is_active: true,
+          organization: { is_active: true },
+        },
       });
 
       for (const key of mcpKeys) {
@@ -111,7 +115,10 @@ export class AgentDiscoveryService {
     // 4. Scan LLM API Keys
     try {
       const llmKeys = await prisma.llm_keys.findMany({
-        where: { organizationId },
+        where: {
+          organizationId,
+          organizations: { is_active: true },
+        },
       });
 
       for (const key of llmKeys) {

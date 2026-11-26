@@ -34,7 +34,10 @@ export const LLMKeysService = {
 
   async getKeys(organizationId: string) {
     return prisma.llm_keys.findMany({
-      where: { organizationId },
+      where: {
+        organizationId,
+        organizations: { is_active: true },
+      },
       select: {
         id: true,
         provider: true,
