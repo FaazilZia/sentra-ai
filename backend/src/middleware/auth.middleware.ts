@@ -22,18 +22,35 @@ async function resolveApiKey(token: string): Promise<{ organizationId: string; s
   if (redis) {
     try {
       const cached = await redis.get(`ak:${lookupPrefix}`);
-      if (cached) return JSON.parse(cached);
-      if (cached === 'null') return null; // negative cache
+      if (cached) {
+        if (cached === 'null') return null; // negative cache
+        const parsed = JSON.parse(cached);
+        // Fast-path: ensure owning company is still active even if cached
+        const company = await prisma.organizations.findUnique({
+          where: { id: parsed.organizationId },
+          select: { is_active: true },
+        });
+        if (!company || !company.is_active) {
+          await redis.del(`ak:${lookupPrefix}`).catch(() => {});
+          await redis.set(`ak:${lookupPrefix}`, 'null', 'EX', 60).catch(() => {});
+          return null;
+        }
+        return parsed;
+      }
     } catch { /* cache miss — proceed to DB */ }
   }
 
   // 2. DB lookup + bcrypt (slow path — happens once per key per TTL)
   const keyRecord = await prisma.api_keys.findFirst({
-    where: { key_prefix: lookupPrefix, is_active: true },
+    where: {
+      key_prefix: lookupPrefix,
+      is_active: true,
+      organizations: { is_active: true },
+    },
     include: { organizations: true },
   });
 
-  if (!keyRecord) {
+  if (!keyRecord || !keyRecord.organizations || !keyRecord.organizations.is_active) {
     // Negative cache: don't hammer DB with invalid keys
     if (redis) await redis.set(`ak:${lookupPrefix}`, 'null', 'EX', 60).catch(() => {});
     return null;

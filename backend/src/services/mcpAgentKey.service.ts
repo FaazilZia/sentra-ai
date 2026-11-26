@@ -76,10 +76,14 @@ export class McpAgentKeyService {
       where: {
         key_prefix: keyPrefix,
         is_active: true,
+        organization: { is_active: true },
+      },
+      include: {
+        organization: true,
       },
     });
 
-    if (!keyRecord) {
+    if (!keyRecord || !keyRecord.organization || !keyRecord.organization.is_active) {
       logger.warn(`[MCP-AUTH] Authentication failed: key prefix "${keyPrefix}" not found or inactive`);
       throw new Error('Unauthorized');
     }
