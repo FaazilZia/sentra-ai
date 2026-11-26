@@ -63,6 +63,10 @@ module.exports = {
     'src/routes/user.routes.ts',
     'src/services/nistEvidence.service.ts',
     'src/utils/corsHelper.ts',
+    'src/middleware/auth.middleware.ts',
+    'src/services/mcpAgentKey.service.ts',
+    'src/services/llmKeys.service.ts',
+    'src/services/attackGraph.service.ts',
   ],
   coverageThreshold: {
     global: {

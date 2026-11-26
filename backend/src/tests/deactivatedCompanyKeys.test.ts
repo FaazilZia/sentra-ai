@@ -5,6 +5,7 @@ import { McpController } from '../controllers/mcp.controller';
 import { LLMKeysService } from '../services/llmKeys.service';
 import { AgentDiscoveryService } from '../services/agentDiscovery.service';
 import { AttackGraphService } from '../services/attackGraph.service';
+import * as redisConfig from '../config/redis';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 
@@ -277,6 +278,92 @@ describe('Security: Block Deactivated Company Keys', () => {
       expect(resDeactivated.statusCode).toBe(resInvalid.statusCode);
       expect(resDeactivated.body).toEqual(resInvalid.body);
       expect(resDeactivated.body.message).toBe('Invalid or expired credentials');
+    });
+
+    it('redis cache path: active company returns cached key successfully', async () => {
+      const cachedPrefix = 'c0ffee01';
+      const mockKey = `sentra_${cachedPrefix}_testsecretvalue12345`;
+      const mockRedis = {
+        get: jest.fn().mockResolvedValue(JSON.stringify({
+          organizationId: ACTIVE_ORG_ID,
+          slug: 'active-test-corp',
+          id: 'ak-cached-active',
+        })),
+        set: jest.fn().mockResolvedValue('OK'),
+        del: jest.fn().mockResolvedValue(1),
+      };
+      const spy = jest.spyOn(redisConfig, 'getRedisClient').mockReturnValue(mockRedis as any);
+
+      const req: any = { headers: { authorization: `Bearer ${mockKey}` } };
+      const res = createMockRes();
+      const next = jest.fn();
+
+      await authenticate(req, res, next);
+
+      expect(next).toHaveBeenCalled();
+      expect(req.user).toBeDefined();
+      expect(req.user.organizationId).toBe(ACTIVE_ORG_ID);
+      expect(res.status).not.toHaveBeenCalled();
+
+      spy.mockRestore();
+    });
+
+    it('redis cache path: deactivated company rejects cached key and invalidates cache', async () => {
+      const cachedPrefix = 'c0ffee02';
+      const mockKey = `sentra_${cachedPrefix}_testsecretvalue12345`;
+      const mockRedis = {
+        get: jest.fn().mockResolvedValue(JSON.stringify({
+          organizationId: DEACTIVATED_ORG_ID,
+          slug: 'deactivated-test-corp',
+          id: 'ak-cached-deactivated',
+        })),
+        set: jest.fn().mockResolvedValue('OK'),
+        del: jest.fn().mockResolvedValue(1),
+      };
+      const spy = jest.spyOn(redisConfig, 'getRedisClient').mockReturnValue(mockRedis as any);
+
+      const req: any = { headers: { authorization: `Bearer ${mockKey}` } };
+      const res = createMockRes();
+      const next = jest.fn();
+
+      await authenticate(req, res, next);
+
+      expect(next).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Invalid or expired credentials',
+      });
+      expect(mockRedis.del).toHaveBeenCalledWith(`ak:${cachedPrefix}`);
+      expect(mockRedis.set).toHaveBeenCalledWith(`ak:${cachedPrefix}`, 'null', 'EX', 60);
+
+      spy.mockRestore();
+    });
+
+    it('redis cache path: negative cache returns 401 immediately', async () => {
+      const cachedPrefix = 'c0ffee03';
+      const mockKey = `sentra_${cachedPrefix}_testsecretvalue12345`;
+      const mockRedis = {
+        get: jest.fn().mockResolvedValue('null'),
+        set: jest.fn().mockResolvedValue('OK'),
+        del: jest.fn().mockResolvedValue(1),
+      };
+      const spy = jest.spyOn(redisConfig, 'getRedisClient').mockReturnValue(mockRedis as any);
+
+      const req: any = { headers: { authorization: `Bearer ${mockKey}` } };
+      const res = createMockRes();
+      const next = jest.fn();
+
+      await authenticate(req, res, next);
+
+      expect(next).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Invalid or expired credentials',
+      });
+
+      spy.mockRestore();
     });
   });
 
