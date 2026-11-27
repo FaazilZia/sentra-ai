@@ -65,6 +65,7 @@ update-render-env.sh
 !backend/tests/load/run.sh
 !backend/scripts/backup-encrypted-export.sh
 !backend/scripts/restore-encrypted-backup.sh
+!scripts/verify-s3-evidence.sh
 
 # Playwright test artifacts
 frontend/test-results/
